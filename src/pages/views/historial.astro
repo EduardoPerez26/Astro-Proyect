@@ -1,0 +1,88 @@
+---
+import DashboardLayout from '../../layouts/DashboardLayout.astro';
+---
+
+<DashboardLayout title="Historial de Validaciones - Sistema de Inventario">
+    <section class="tab active" id="validaciones">
+        <div class="page-header">
+            <div class="page-header-left">
+                <h1 class="page-title">Historial de validaciones</h1>
+                <p class="page-subtitle">Filtra y revisa los resultados históricos de validaciones.</p>
+            </div>
+            <div class="page-header-actions">
+                <button class="btn btn-secondary" onclick="window.history.back()">
+                    <i class="fa-solid fa-arrow-left"></i>
+                    Volver
+                </button>
+            </div>
+        </div>
+
+        <div class="filters-panel">
+            <div class="filters-header">
+                <i class="fa-solid fa-filter"></i>
+                Filtros de historial
+            </div>
+            <div class="filters-grid">
+                <div class="filter-group">
+                    <label class="filter-label" for="validationFilterRestaurant">Restaurante</label>
+                    <select id="validationFilterRestaurant" class="form-control">
+                        <option value="">Todos los restaurantes</option>
+                        <option value="taco-bell">Taco Bell</option>
+                        <option value="burger-king">Burger King</option>
+                        <option value="popeyes">Popeyes</option>
+                        <option value="kfc">KFC</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label" for="validationResultSelect">Resultado</label>
+                    <select id="validationResultSelect" class="form-control">
+                        <option value="">Todos</option>
+                        <option value="exitoso">Exitoso</option>
+                        <option value="con_errores">Con errores</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label" for="validationSortSelect">Ordenar por</label>
+                    <select id="validationSortSelect" class="form-control">
+                        <option value="newest">Más recientes</option>
+                        <option value="oldest">Más antiguos</option>
+                        <option value="errors">Mayor número de errores</option>
+                    </select>
+                </div>
+                <div class="filter-group" style="display:flex; align-items:flex-end; justify-content:flex-end;">
+                    <button id="validationFilterReset" class="btn btn-secondary" type="button">
+                        <i class="fa-solid fa-rotate"></i>
+                        Limpiar filtros
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="card" style="margin-bottom: 24px;">
+            <div class="card-body">
+                <div class="results-info" id="validationResultsInfo">Cargando historial de validaciones...</div>
+                <div class="table-responsive">
+                    <table class="table" id="validationHistoryTable" style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr>
+                                <th>Archivo</th>
+                                <th>Restaurante</th>
+                                <th>Validado por</th>
+                                <th>Resultado</th>
+                                <th>Errores</th>
+                                <th>Fecha</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colspan="6" style="padding: 16px; text-align: center; color: var(--gray-600);">Cargando historial de validaciones...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script is:inline src="/js/scripts.js"></script>
+</DashboardLayout>

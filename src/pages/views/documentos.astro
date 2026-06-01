@@ -1,0 +1,66 @@
+---
+import DashboardLayout from '../../layouts/DashboardLayout.astro';
+---
+
+<DashboardLayout title="Documentos - Sistema de Inventario">
+    <section class="tab active" id="documentos">
+        <div class="page-header">
+            <div class="page-header-left">
+                <h1 class="page-title">Documentos</h1>
+                <p class="page-subtitle">Archivos agrupados por restaurante disponibles para descarga.</p>
+            </div>
+            <div class="page-header-actions">
+                <button class="btn btn-secondary" onclick="window.history.back()">
+                    <i class="fa-solid fa-arrow-left"></i>
+                    Volver
+                </button>
+            </div>
+        </div>
+
+        <div class="filters-panel">
+            <div class="filters-header">
+                <i class="fa-solid fa-filter"></i>
+                Filtros de documentos
+            </div>
+            <div class="filters-grid">
+                <div class="filter-group">
+                    <label class="filter-label" for="documentFilterRestaurant">Restaurante</label>
+                    <select id="documentFilterRestaurant" class="form-control">
+                        <option value="">Todos los restaurantes</option>
+                        <option value="taco-bell">Taco Bell</option>
+                        <option value="burger-king">Burger King</option>
+                        <option value="popeyes">Popeyes</option>
+                        <option value="kfc">KFC</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label" for="documentSearchInput">Buscar archivo</label>
+                    <input id="documentSearchInput" class="form-control" type="text" placeholder="Nombre, usuario o restaurante">
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label" for="documentSortSelect">Ordenar por</label>
+                    <select id="documentSortSelect" class="form-control">
+                        <option value="newest">Más recientes</option>
+                        <option value="oldest">Más antiguos</option>
+                        <option value="name">Nombre A-Z</option>
+                    </select>
+                </div>
+                <div class="filter-group" style="display:flex; align-items:flex-end; justify-content:flex-end;">
+                    <button id="documentFilterReset" class="btn btn-secondary" type="button">
+                        <i class="fa-solid fa-rotate"></i>
+                        Limpiar filtros
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="card" style="margin-bottom: 24px;">
+            <div class="card-body">
+                <div class="results-info" id="documentResultsInfo">Cargando documentos...</div>
+                <div id="documentsByRestaurant"></div>
+            </div>
+        </div>
+    </section>
+
+    <script is:inline src="/js/scripts.js"></script>
+</DashboardLayout>

@@ -1,0 +1,58 @@
+---
+import DashboardLayout from '../../layouts/DashboardLayout.astro';
+---
+
+<DashboardLayout title="Dashboard - Sistema de Inventario">
+    <section class="tab active" id="inicio">
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="page-header-left">
+                <h1 class="page-title">Dashboard</h1>
+                <p class="page-subtitle">Bienvenido al panel de control del sistema de inventario</p>
+            </div>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="cards-grid">
+            <div class="card">
+                <div class="card-body">
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: var(--primary-light);">
+                            <i class="fa-solid fa-shop" style="color: var(--primary);"></i>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-value">4</div>
+                            <div class="stat-label">Restaurantes</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-body">
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: var(--success-light);">
+                            <i class="fa-solid fa-file-excel" style="color: var(--success);"></i>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-value">12</div>
+                            <div class="stat-label">Archivos Procesados</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-body">
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: var(--warning-light);">
+                            <i class="fa-solid fa-check-double" style="color: var(--warning);"></i>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-value">98%</div>
+                            <div class="stat-label">Tasa de Validacion</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</DashboardLayout>

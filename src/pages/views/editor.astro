@@ -1,0 +1,119 @@
+---
+import DashboardLayout from '../../layouts/DashboardLayout.astro';
+---
+
+<DashboardLayout title="Editor Excel - Sistema de Inventario" includeSheetJS={true}>
+    <section class="tab active" id="editor">
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="page-header-left">
+                <h1 class="page-title">Editor de Excel</h1>
+                <p class="page-subtitle">Sube y modifica tus hojas con una experiencia clara y profesional</p>
+            </div>
+            <div class="page-header-actions">
+                <button class="btn btn-secondary" onclick="window.history.back()">
+                    <i class="fa-solid fa-arrow-left"></i>
+                    Volver
+                </button>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <!-- Toolbar -->
+        <div class="card" style="margin-bottom: 24px;">
+            <div class="card-body" style="padding: 16px 20px;">
+                <div class="toolbar" style="flex-wrap: wrap; gap: 16px;">
+                    <label class="btn btn-primary" for="excelFile" style="cursor: pointer;">
+                        <i class="fa-solid fa-upload"></i>
+                        Subir Excel
+                    </label>
+                    <input type="file" id="excelFile" accept=".xlsx,.xls" style="display: none;">
+                    
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <label style="font-size: 14px; color: var(--gray-600); font-weight: 500;">Restaurante:</label>
+                        <select id="restaurantSelect" class="form-control" style="width: auto; min-width: 150px;">
+                            <option value="">Seleccionar...</option>
+                            <option value="taco-bell">Taco Bell</option>
+                            <option value="burger-king">Burger King</option>
+                            <option value="popeyes">Popeyes</option>
+                            <option value="kfc">KFC</option>
+                        </select>
+                    </div>
+                    
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <label style="font-size: 14px; color: var(--gray-600); font-weight: 500;">Hoja:</label>
+                        <select id="sheetSelector" class="form-control" style="width: auto; min-width: 150px;"></select>
+                    </div>
+                    
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <label style="font-size: 14px; color: var(--gray-600); font-weight: 500;">Columna:</label>
+                        <select id="conceptColumnSelect" class="form-control" style="width: auto; min-width: 80px;">
+                            <option value="0">A</option>
+                            <option value="1">B</option>
+                            <option value="2">C</option>
+                            <option value="3">D</option>
+                            <option value="4">E</option>
+                            <option value="5">F</option>
+                            <option value="6">G</option>
+                            <option value="7">H</option>
+                            <option value="8">I</option>
+                            <option value="9">J</option>
+                        </select>
+                    </div>
+                    
+                    <div style="flex: 1;"></div>
+                    
+                    <button id="validateBtn" class="btn btn-secondary">
+                        <i class="fa-solid fa-check-double"></i>
+                        Validar
+                    </button>
+                  
+                    <button id="saveBtn" class="btn btn-success">
+                        <i class="fa-solid fa-floppy-disk"></i>
+                        Guardar
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Excel Card -->
+        <div class="excel-card">
+            <div class="sheet-info">
+                <div style="display: flex; align-items: center; gap: 16px;">
+                    <div>
+                        <span style="color: var(--gray-500); font-size: 13px;">Archivo:</span>
+                        <span id="status" style="font-weight: 600; color: var(--gray-800); margin-left: 8px;">Sin archivo</span>
+                    </div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <div class="badge badge-in-review" id="sheetName">
+                        <i class="fa-solid fa-file"></i>
+                        Hoja: ---
+                    </div>
+                    <div class="badge badge-pending" id="formulaInfo">
+                        <i class="fa-solid fa-function"></i>
+                        Formulas: 0
+                    </div>
+                </div>
+            </div>
+            <div class="validation-status" id="validationStatus">
+                <i class="fa-solid fa-circle-info"></i>
+                Validacion pendiente - Sube un archivo para comenzar
+            </div>
+            <div class="table-container table-wrapper" id="tableContainer">
+                <div class="empty">
+                    <i class="fa-solid fa-file-excel"></i>
+                    <h2 style="font-size: 18px; font-weight: 600; color: var(--gray-800); margin-bottom: 8px;">Sube un archivo Excel</h2>
+                    <p>Formatos compatibles: .xlsx y .xls</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script is:inline src="/js/validators/taco-bell.js"></script>
+    <script is:inline src="/js/validators/burger-king.js"></script>
+    <script is:inline src="/js/validators/popeyes.js"></script>
+    <script is:inline src="/js/validators/kfc.js"></script>
+    <script is:inline src="/js/validator.js"></script>
+    <script is:inline src="/js/scripts.js"></script>
+</DashboardLayout>

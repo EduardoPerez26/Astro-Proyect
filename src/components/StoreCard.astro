@@ -1,0 +1,30 @@
+---
+// Componente StoreCard - Tarjeta de tienda/restaurante
+interface Props {
+  name: string;
+  description: string;
+  icon: string;
+  colorClass: string;
+  restaurant: string;
+}
+
+const { name, description, icon, colorClass, restaurant } = Astro.props;
+---
+
+<div class="card">
+    <div class="card-body">
+        <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 20px;">
+            <div style={`width: 56px; height: 56px; background: var(--${colorClass}-light); border-radius: var(--radius); display: flex; align-items: center; justify-content: center;`}>
+                <i class={`fa-solid ${icon}`} style={`font-size: 24px; color: var(--${colorClass});`}></i>
+            </div>
+            <div>
+                <h3 style="font-size: 18px; font-weight: 600; color: var(--gray-800);">{name}</h3>
+                <p style="font-size: 13px; color: var(--gray-500);">{description}</p>
+            </div>
+        </div>
+        <a class="btn btn-primary" href={`/views/editor?restaurant=${restaurant}`} style="width: 100%;">
+            <i class="fa-solid fa-file-excel"></i>
+            Conciliacion
+        </a>
+    </div>
+</div>

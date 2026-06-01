@@ -1,0 +1,121 @@
+---
+import DashboardLayout from '../../layouts/DashboardLayout.astro';
+import StoreCard from '../../components/StoreCard.astro';
+
+const stores = [
+    {
+        name: "Taco Bell",
+        description: "Comida rápida mexicana",
+        icon: "fa-utensils",
+        colorClass: "primary",
+        restaurant: "taco-bell"
+    },
+    {
+        name: "Burger King",
+        description: "Hamburguesas y más",
+        icon: "fa-burger",
+        colorClass: "warning",
+        restaurant: "burger-king"
+    },
+    {
+        name: "Popeyes",
+        description: "Pollo frito estilo Louisiana",
+        icon: "fa-drumstick-bite",
+        colorClass: "danger",
+        restaurant: "popeyes"
+    },
+    {
+        name: "KFC",
+        description: "Kentucky Fried Chicken",
+        icon: "fa-bowl-food",
+        colorClass: "success",
+        restaurant: "kfc"
+    }
+];
+---
+
+<DashboardLayout title="Tiendas">
+    <section class="tab active" id="tiendas">
+        <!-- Hero -->
+        <section class="hero">
+            <div class="hero-content">
+                <span class="hero-badge"><i class="fa-solid fa-shop"></i> Gestor de Tiendas</span>
+                <h1 class="hero-title">Control centralizado de conciliaciones</h1>
+                <p class="hero-text">Supervisa el estado de todas las sucursales, revisa incidencias y accede a cada conciliación con un solo clic.</p>
+            </div>
+            <div class="hero-visual">
+                <div class="hero-visual-icon">
+                    <i class="fa-solid fa-chart-line"></i>
+                </div>
+            </div>
+        </section>
+
+        <div class="page-header" style="margin-top: 32px; margin-bottom: 16px;">
+            <div class="page-header-left">
+                <h2 class="page-title">Resumen de sucursales</h2>
+                <p class="page-subtitle">Datos recientes y estado general de cada tienda.</p>
+            </div>
+        </div>
+
+
+        <!-- Store Cards Grid -->
+        <div class="cards-grid" style="grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); margin-bottom: 24px;">
+            {stores.map((store) => (
+                <StoreCard {...store} />
+            ))}
+        </div>
+
+        <div class="table-container">
+            <div class="table-toolbar">
+                <div class="results-info">Sucursales activas <span class="results-count">4</span></div>
+                <div class="view-toggle">
+                    <button class="view-toggle-btn active"><i class="fa-solid fa-list"></i> Lista</button>
+                    <button class="view-toggle-btn"><i class="fa-solid fa-filter"></i> Filtros</button>
+                </div>
+            </div>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Ubicación</th>
+                            <th>Estado</th>
+                            <th>Conciliaciones</th>
+                            <th>Última revisión</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Taco Bell</td>
+                            <td>Centro Comercial Plaza</td>
+                            <td><span class="badge badge-approved"><i class="fa-solid fa-check"></i> Estable</span></td>
+                            <td>12 / 12</td>
+                            <td>1 hora atrás</td>
+                        </tr>
+                        <tr>
+                            <td>Burger King</td>
+                            <td>Avenida Reforma</td>
+                            <td><span class="badge badge-warning"><i class="fa-solid fa-exclamation"></i> En revisión</span></td>
+                            <td>9 / 12</td>
+                            <td>30 minutos atrás</td>
+                        </tr>
+                        <tr>
+                            <td>Popeyes</td>
+                            <td>Zona Norte</td>
+                            <td><span class="badge badge-approved"><i class="fa-solid fa-check"></i> Estable</span></td>
+                            <td>11 / 12</td>
+                            <td>2 horas atrás</td>
+                        </tr>
+                        <tr>
+                            <td>KFC</td>
+                            <td>Plaza Central</td>
+                            <td><span class="badge badge-danger"><i class="fa-solid fa-triangle-exclamation"></i> Incidencia</span></td>
+                            <td>8 / 12</td>
+                            <td>15 minutos atrás</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+</DashboardLayout>
