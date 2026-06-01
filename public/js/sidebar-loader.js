@@ -1,7 +1,7 @@
 // Sidebar loader adaptado para Astro con Backend
 const SIDEBAR_API_URL = 'http://localhost:3001/api';
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
     const sidebar = document.getElementById('sidebar');
     const sidebarToggle = document.getElementById('sidebarToggle');
     const logoutBtn = document.getElementById('logoutBtn');
@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', function() {
     verificarAutenticacion();
 
     // Cargar info del usuario en el sidebar desde la base de datos
-    cargarInfoUsuario();
+    await cargarInfoUsuario();
 
     // Toggle sidebar
     if (sidebarToggle) {
@@ -41,21 +41,23 @@ document.addEventListener('DOMContentLoaded', function() {
         topbarLogoutBtn.addEventListener('click', cerrarSesion);
     }
 
-    // Menu de perfil en el topbar
-    const profileMenuToggle = document.getElementById('profileMenuToggle');
+    // Menu de perfil en el topbar o sidebar
+    const sidebarProfileToggle = document.getElementById('sidebarProfileToggle');
+    const topbarProfileToggle = document.getElementById('topbarProfileToggle');
     const profileMenu = document.getElementById('profileMenu');
+    const profileToggle = sidebarProfileToggle || topbarProfileToggle;
 
-    if (profileMenuToggle && profileMenu) {
-        profileMenuToggle.addEventListener('click', function(event) {
+    if (profileToggle && profileMenu) {
+        profileToggle.addEventListener('click', function(event) {
             event.stopPropagation();
             profileMenu.classList.toggle('active');
-            profileMenuToggle.classList.toggle('active');
+            profileToggle.classList.toggle('active');
         });
 
         document.addEventListener('click', function(event) {
-            if (!profileMenu.contains(event.target) && !profileMenuToggle.contains(event.target)) {
+            if (!profileMenu.contains(event.target) && !profileToggle.contains(event.target)) {
                 profileMenu.classList.remove('active');
-                profileMenuToggle.classList.remove('active');
+                profileToggle.classList.remove('active');
             }
         });
     }
@@ -97,6 +99,13 @@ function verificarAutenticacion() {
 
 // Cargar informacion del usuario en el header
 async function cargarInfoUsuario() {
+    const usuarioCache = JSON.parse(localStorage.getItem('usuario') || '{}');
+    if (Object.keys(usuarioCache).length > 0) {
+        actualizarInformacionUsuario(usuarioCache);
+    } else {
+        actualizarInformacionUsuario({ nombre: 'Cargando...', rol: '' });
+    }
+
     const token = localStorage.getItem('token');
     const modoOffline = localStorage.getItem('modoOffline');
 
@@ -127,25 +136,27 @@ async function cargarInfoUsuario() {
 }
 
 function actualizarInformacionUsuario(usuario) {
-    const headerUserName = document.querySelector('.header-user-name');
-    const headerUserRole = document.querySelector('.header-user-role');
-    const avatar = document.querySelector('.avatar');
+    const headerUserName = document.getElementById('sidebarUserName') || document.querySelector('.header-user-name');
+    const headerUserRole = document.getElementById('sidebarUserRole') || document.querySelector('.header-user-role');
+    const avatar = document.getElementById('sidebarAvatar') || document.querySelector('.avatar');
 
-    if (headerUserName && (usuario.nombre_completo || usuario.nombre)) {
-        headerUserName.textContent = usuario.nombre_completo || usuario.nombre;
+    const nombre = usuario.nombre_completo || usuario.nombre || 'Usuario';
+    const rol = usuario.rol || '';
+
+    if (headerUserName) {
+        headerUserName.textContent = nombre;
     }
 
-    if (headerUserRole && usuario.rol) {
+    if (headerUserRole) {
         const roles = {
             'admin': 'Administrador',
             'supervisor': 'Supervisor',
             'usuario': 'Usuario'
         };
-        headerUserRole.textContent = roles[usuario.rol] || usuario.rol;
+        headerUserRole.textContent = roles[rol] || rol || 'Rol';
     }
 
-    if (avatar && (usuario.nombre_completo || usuario.nombre)) {
-        const nombre = usuario.nombre_completo || usuario.nombre;
+    if (avatar && nombre) {
         const iniciales = nombre.split(' ')
             .map(n => n[0])
             .join('')
