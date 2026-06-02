@@ -361,4 +361,30 @@ router.delete('/:id', verificarToken, esAdmin, async (req, res) => {
     }
 });
 
+router.get('/usuarios', async (req, res) => {
+    try {
+        const [usuarios] = await db.query(`
+            SELECT
+                nombre_completo,
+                username,
+                email,
+                rol
+            FROM usuarios
+            ORDER BY nombre_completo
+        `);
+
+        res.json({
+            success: true,
+            data: usuarios
+        });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+});
+
 module.exports = router;

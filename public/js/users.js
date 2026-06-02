@@ -11,6 +11,34 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
+async function loadStatsUser() {
+    const token = localStorage.getItem('token');
+    try {
+        const res = await fetch(`${API_URL}/users/stats/summary`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (!res.ok) {
+            console.warn('No se pudo cargar estadísticas');
+            return;
+        }
+        
+        const data = await res.json();
+        
+        if (data.error) {
+            console.warn('Error en estadísticas:', data.mensaje);
+            return;
+        }
+        
+        const stats = data.stats;
+        const totalUsuarios = document.getElementById('totalUsuarios');
+        if (totalUsuarios) totalUsuarios.textContent = stats.total_usuarios || 0;
+        
+    } catch (err) {
+        console.warn('Error cargando estadísticas:', err.message);
+    }
+}
+
 async function setupUsersUI() {
     // Comprobar que el usuario es admin
     const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
@@ -89,6 +117,48 @@ async function loadUsers() {
                 </tr>
             `;
         }
+    }
+}
+
+async function cargarUsuarios() {
+    try {
+        const response = await fetch('/api/usuarios');
+        const result = await response.json();
+
+        const tbody = document.querySelector('#UsersTable tbody');
+        const info = document.getElementById('usersInfo');
+
+        if (!result.success) {
+            throw new Error('Error al cargar usuarios');
+        }
+
+        const usuarios = result.data;
+
+        info.textContent = `${usuarios.length} usuarios encontrados`;
+
+        tbody.innerHTML = usuarios.map(usuario => `
+            <tr>
+                <td>${usuario.nombre_completo || ''}</td>
+                <td>${usuario.username || ''}</td>
+                <td>${usuario.email || ''}</td>
+                <td>
+                    <span class="role-badge ${usuario.rol}">
+                        ${usuario.rol}
+                    </span>
+                </td>
+            </tr>
+        `).join('');
+
+    } catch (error) {
+        console.error(error);
+
+        document.querySelector('#UsersTable tbody').innerHTML = `
+            <tr>
+                <td colspan="4" style="text-align:center;color:red;padding:20px">
+                    Error al cargar usuarios
+                </td>
+            </tr>
+        `;
     }
 }
 
