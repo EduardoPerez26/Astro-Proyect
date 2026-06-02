@@ -49,9 +49,42 @@ const esSupervisorOAdmin = (req, res, next) => {
     next();
 };
 
+// Middleware para verificar permisos por nombre.
+// Uso: checkPermission('ver_reportes') => devuelve middleware
+const checkPermission = (permiso) => {
+    return async (req, res, next) => {
+        try {
+            if (!req.usuario) {
+                return res.status(401).json({ error: true, message: 'Usuario no autenticado' });
+            }
+
+            // Los administradores tienen acceso total
+            if (req.usuario.rol === 'admin') {
+                return next();
+            }
+
+            // Consultar si el rol del usuario tiene el permiso solicitado
+            const [rows] = await pool.query(
+                'SELECT 1 FROM roles_permisos WHERE rol = ? AND permiso_nombre = ? LIMIT 1',
+                [req.usuario.rol, permiso]
+            );
+
+            if (rows.length === 0) {
+                return res.status(403).json({ error: true, message: 'Acceso denegado: permiso requerido: ' + permiso });
+            }
+
+            next();
+        } catch (error) {
+            console.error('Error en checkPermission:', error);
+            res.status(500).json({ error: true, message: 'Error al verificar permiso' });
+        }
+    };
+};
+
 module.exports = {
     verificarToken,
     esAdmin,
-    esSupervisorOAdmin
+    esSupervisorOAdmin,
+    checkPermission
 };
 

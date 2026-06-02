@@ -18,6 +18,8 @@ const authRoutes = require('./routes/auth.routes');
 const archivosRoutes = require('./routes/archivos.routes');
 const usuariosRoutes = require('./routes/usuarios.routes');
 const restaurantesRoutes = require('./routes/restaurantes.routes');
+const permissionsRoutes = require('./routes/permissions.routes');
+const statsRoutes = require('./routes/stats.routes');
 
 // Crear aplicacion Express
 const app = express();
@@ -70,6 +72,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/archivos', archivosRoutes);
 app.use('/api/usuarios', usuariosRoutes);
 app.use('/api/restaurantes', restaurantesRoutes);
+app.use('/api/permissions', permissionsRoutes);
+app.use('/api/stats', statsRoutes);
 
 // ============================================
 // MANEJO DE ERRORES

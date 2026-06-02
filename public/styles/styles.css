@@ -810,6 +810,72 @@ body.sidebar-collapsed .main-wrapper {
 }
 
 .card-note {
+
+/* Estilos para la página de Permisos */
+.permissions-panel {
+    display: grid;
+    grid-template-columns: 1fr 380px 320px;
+    gap: 20px;
+    align-items: start;
+}
+
+.permissions-panel .card {
+    background: var(--white);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-lg);
+    padding: 18px;
+    box-shadow: var(--shadow-sm);
+}
+
+.permissions-panel h2 {
+    font-size: 16px;
+    margin-bottom: 12px;
+}
+
+.permissions-panel input[type="text"],
+.permissions-panel input[type="email"],
+.permissions-panel select {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: var(--radius);
+    border: 1px solid var(--gray-200);
+    background: var(--white);
+    margin-bottom: 10px;
+}
+
+.permissions-panel button {
+    padding: 10px 14px;
+    background: var(--primary);
+    color: var(--white);
+    border-radius: var(--radius);
+    border: none;
+    font-weight: 600;
+}
+
+.permissions-panel button[disabled] {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.permissions-list ul {
+    list-style: none;
+    padding-left: 0;
+    display: grid;
+    gap: 8px;
+}
+
+.permissions-list li {
+    padding: 10px;
+    border-radius: var(--radius);
+    border: 1px solid var(--gray-100);
+    background: var(--gray-50);
+}
+
+@media (max-width: 980px) {
+    .permissions-panel {
+        grid-template-columns: 1fr;
+    }
+}
     font-size: 13px;
     color: var(--gray-500);
     margin-top: 10px;

@@ -1,0 +1,42 @@
+---
+import DashboardLayout from '../../layouts/DashboardLayout.astro';
+---
+
+<DashboardLayout title="Permisos">
+    <section class="tab active" id="permisos">
+        <section class="page-header" style="margin-top: 16px; margin-bottom: 12px;">
+            <div class="page-header-left">
+                <div>
+                    <h1 class="page-title">Gestión de Permisos</h1>
+                    <p class="page-subtitle">Crear permisos y asignarlos a roles.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="permissions-panel">
+        <div class="card permissions-list">
+            <h2>Permisos existentes</h2>
+            <div id="permisosList">Cargando permisos...</div>
+        </div>
+
+        <div class="card">
+            <h2>Crear permiso</h2>
+            <input type="text" id="permName" placeholder="Nombre del permiso (ej: view_dashboard)" />
+            <input type="text" id="permDesc" placeholder="Descripción" />
+            <button id="createPermBtn">Crear permiso</button>
+        </div>
+
+        <div class="card">
+            <h2>Asignar permisos a rol</h2>
+            <select id="roleSelect">
+                <option value="supervisor">supervisor</option>
+                <option value="usuario">usuario</option>
+            </select>
+            <div id="rolePerms">Cargando...</div>
+            <button id="saveRolePermsBtn">Guardar asignaciones</button>
+        </div>
+        </section>
+    </section>
+
+    <script type="module" src="/js/permissions.js"></script>
+</DashboardLayout>

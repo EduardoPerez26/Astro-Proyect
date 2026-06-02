@@ -11,14 +11,14 @@ const path = require('path');
 const fs = require('fs');
 const XLSX = require('xlsx');
 const { pool } = require('../config/database');
-const { verificarToken } = require('../middleware/auth.middleware');
+const { verificarToken, checkPermission } = require('../middleware/auth.middleware');
 const upload = require('../middleware/upload.middleware');
 
 // ============================================
 // POST /api/archivos/subir
 // ============================================
 // Sube un archivo Excel al servidor y lo procesa
-router.post('/subir', verificarToken, upload.single('archivo'), async (req, res) => {
+router.post('/subir', verificarToken, checkPermission('upload_files'), upload.single('archivo'), async (req, res) => {
     try {
         // Verificar que se subio un archivo
         if (!req.file) {
@@ -116,7 +116,7 @@ router.post('/subir', verificarToken, upload.single('archivo'), async (req, res)
 // GET /api/archivos
 // ============================================
 // Lista todos los archivos del usuario (o todos si es admin)
-router.get('/', verificarToken, async (req, res) => {
+router.get('/', verificarToken, checkPermission('view_archivos'), async (req, res) => {
     try {
         let query = `
             SELECT 
@@ -163,7 +163,7 @@ router.get('/', verificarToken, async (req, res) => {
 // POST /api/archivos/:id/validaciones
 // ============================================
 // Guarda el resultado de una validacion para un archivo
-router.post('/:id/validaciones', verificarToken, async (req, res) => {
+router.post('/:id/validaciones', verificarToken, checkPermission('validate_files'), async (req, res) => {
     try {
         const archivoId = req.params.id;
         const {
@@ -228,7 +228,7 @@ router.post('/:id/validaciones', verificarToken, async (req, res) => {
 // GET /api/validaciones
 // ============================================
 // Lista el historial de validaciones desde la base de datos
-router.get('/validaciones', verificarToken, async (req, res) => {
+router.get('/validaciones', verificarToken, checkPermission('view_validaciones'), async (req, res) => {
     try {
         let query = `
             SELECT

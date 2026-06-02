@@ -259,6 +259,30 @@ CREATE TABLE IF NOT EXISTS sesiones (
     INDEX idx_usuario (usuario_id)
 );
 
+    -- ============================================
+    -- TABLA: permisos
+    -- ============================================
+    -- Lista de permisos que el sistema puede usar para controlar accesos
+    CREATE TABLE IF NOT EXISTS permisos (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        nombre VARCHAR(100) NOT NULL UNIQUE,
+        descripcion VARCHAR(255),
+        fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+
+    -- ============================================
+    -- TABLA: roles_permisos
+    -- ============================================
+    -- Asigna permisos a roles (rol es el texto que se guarda en usuarios.rol)
+    CREATE TABLE IF NOT EXISTS roles_permisos (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        rol VARCHAR(50) NOT NULL,
+        permiso_nombre VARCHAR(100) NOT NULL,
+        fecha_asignacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE KEY uk_rol_permiso (rol, permiso_nombre),
+        FOREIGN KEY (permiso_nombre) REFERENCES permisos(nombre) ON DELETE CASCADE
+    );
+
 -- ============================================
 -- DATOS INICIALES
 -- ============================================
@@ -275,6 +299,31 @@ INSERT INTO restaurantes (codigo, nombre, descripcion, icono, color_clase) VALUE
 ('burger-king', 'Burger King', 'Hamburguesas y mas', 'fa-burger', 'warning'),
 ('popeyes', 'Popeyes', 'Pollo frito estilo Louisiana', 'fa-drumstick-bite', 'danger'),
 ('kfc', 'KFC', 'Kentucky Fried Chicken', 'fa-bowl-food', 'success');
+
+-- ============================================
+-- PERMISOS INICIALES
+-- Inserta permisos por defecto y asignaciones de ejemplo a roles
+-- Los administradores (`rol = 'admin'`) tienen acceso total implicitamente.
+INSERT INTO permisos (nombre, descripcion) VALUES
+('view_dashboard','Ver el dashboard'),
+('view_archivos','Ver lista de archivos'),
+('upload_files','Subir archivos'),
+('validate_files','Guardar validaciones'),
+('view_validaciones','Ver historial de validaciones'),
+('view_tiendas','Ver tiendas/restaurantes'),
+('manage_users','Gestionar usuarios (crear/editar/desactivar)')
+ON DUPLICATE KEY UPDATE descripcion = VALUES(descripcion);
+
+-- Asignaciones de ejemplo: supervisores y usuarios
+INSERT INTO roles_permisos (rol, permiso_nombre) VALUES
+('supervisor','view_dashboard'),
+('supervisor','view_archivos'),
+('supervisor','view_validaciones'),
+('supervisor','validate_files'),
+('supervisor','view_tiendas'),
+('usuario','upload_files'),
+('usuario','view_archivos')
+ON DUPLICATE KEY UPDATE permiso_nombre = permiso_nombre;
 
 -- ============================================
 -- VISTAS UTILES

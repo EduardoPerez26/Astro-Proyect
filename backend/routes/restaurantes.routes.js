@@ -7,13 +7,13 @@
 const express = require('express');
 const router = express.Router();
 const { pool } = require('../config/database');
-const { verificarToken, esAdmin } = require('../middleware/auth.middleware');
+const { verificarToken, esAdmin, checkPermission } = require('../middleware/auth.middleware');
 
 // ============================================
 // GET /api/restaurantes
 // ============================================
 // Lista todos los restaurantes activos
-router.get('/', async (req, res) => {
+router.get('/', verificarToken, checkPermission('view_tiendas'), async (req, res) => {
     try {
         const [restaurantes] = await pool.query(
             'SELECT * FROM restaurantes WHERE activo = TRUE ORDER BY nombre'
@@ -37,7 +37,7 @@ router.get('/', async (req, res) => {
 // GET /api/restaurantes/:id
 // ============================================
 // Obtiene un restaurante por ID
-router.get('/:id', async (req, res) => {
+router.get('/:id', verificarToken, checkPermission('view_tiendas'), async (req, res) => {
     try {
         const [restaurantes] = await pool.query(
             'SELECT * FROM restaurantes WHERE id = ?',
