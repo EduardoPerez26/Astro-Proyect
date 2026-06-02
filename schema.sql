@@ -260,6 +260,21 @@ CREATE TABLE IF NOT EXISTS sesiones (
 );
 
     -- ============================================
+    -- TABLA: categorias_permisos
+    -- ============================================
+    -- Categorías para agrupar permisos por área funcional
+    CREATE TABLE IF NOT EXISTS categorias_permisos (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        nombre VARCHAR(50) NOT NULL UNIQUE,
+        descripcion VARCHAR(255),
+        icono VARCHAR(50) DEFAULT 'fa-folder',
+        color VARCHAR(20) DEFAULT 'primary',
+        orden INT DEFAULT 0,
+        activo BOOLEAN DEFAULT TRUE,
+        fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+
+    -- ============================================
     -- TABLA: permisos
     -- ============================================
     -- Lista de permisos que el sistema puede usar para controlar accesos
@@ -267,7 +282,14 @@ CREATE TABLE IF NOT EXISTS sesiones (
         id INT AUTO_INCREMENT PRIMARY KEY,
         nombre VARCHAR(100) NOT NULL UNIQUE,
         descripcion VARCHAR(255),
-        fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        categoria_id INT,
+        icono VARCHAR(50) DEFAULT 'fa-key',
+        nivel INT DEFAULT 1 COMMENT '1=básico, 2=intermedio, 3=avanzado',
+        activo BOOLEAN DEFAULT TRUE,
+        fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (categoria_id) REFERENCES categorias_permisos(id) ON DELETE SET NULL,
+        INDEX idx_categoria (categoria_id),
+        INDEX idx_activo (activo)
     );
 
     -- ============================================
@@ -281,6 +303,48 @@ CREATE TABLE IF NOT EXISTS sesiones (
         fecha_asignacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         UNIQUE KEY uk_rol_permiso (rol, permiso_nombre),
         FOREIGN KEY (permiso_nombre) REFERENCES permisos(nombre) ON DELETE CASCADE
+    );
+
+    -- ============================================
+    -- TABLA: historial_permisos
+    -- ============================================
+    -- Registro de auditoría de cambios en permisos y asignaciones
+    CREATE TABLE IF NOT EXISTS historial_permisos (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        usuario_id INT NOT NULL,
+        accion VARCHAR(50) NOT NULL COMMENT 'crear, eliminar, asignar, quitar, modificar',
+        tipo_objeto VARCHAR(50) NOT NULL COMMENT 'permiso, rol_permiso, categoria',
+        objeto_id INT,
+        objeto_nombre VARCHAR(255),
+        detalles_anteriores JSON,
+        detalles_nuevos JSON,
+        ip_address VARCHAR(45),
+        user_agent VARCHAR(255),
+        fecha_accion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE,
+        INDEX idx_usuario (usuario_id),
+        INDEX idx_fecha (fecha_accion),
+        INDEX idx_accion (accion)
+    );
+
+    -- ============================================
+    -- TABLA: permisos_usuario_excepcion
+    -- ============================================
+    -- Permisos especiales a nivel de usuario individual (excepciones al rol)
+    CREATE TABLE IF NOT EXISTS permisos_usuario_excepcion (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        usuario_id INT NOT NULL,
+        permiso_nombre VARCHAR(100) NOT NULL,
+        tipo ENUM('conceder', 'denegar') DEFAULT 'conceder',
+        razon VARCHAR(255),
+        fecha_asignacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        fecha_expiracion TIMESTAMP NULL,
+        activo BOOLEAN DEFAULT TRUE,
+        FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE,
+        FOREIGN KEY (permiso_nombre) REFERENCES permisos(nombre) ON DELETE CASCADE,
+        UNIQUE KEY uk_usuario_permiso (usuario_id, permiso_nombre),
+        INDEX idx_usuario (usuario_id),
+        INDEX idx_activo (activo)
     );
 
 -- ============================================
@@ -301,18 +365,54 @@ INSERT INTO restaurantes (codigo, nombre, descripcion, icono, color_clase) VALUE
 ('kfc', 'KFC', 'Kentucky Fried Chicken', 'fa-bowl-food', 'success');
 
 -- ============================================
+-- CATEGORIAS DE PERMISOS INICIALES
+INSERT INTO categorias_permisos (nombre, descripcion, icono, color, orden) VALUES
+('dashboard', 'Permisos del dashboard y vista principal', 'fa-gauge', 'info', 1),
+('archivos', 'Gestión de archivos Excel', 'fa-file-excel', 'success', 2),
+('validaciones', 'Validaciones y reportes', 'fa-clipboard-check', 'warning', 3),
+('tiendas', 'Gestión de tiendas/restaurantes', 'fa-store', 'primary', 4),
+('usuarios', 'Administración de usuarios', 'fa-users', 'danger', 5),
+('configuracion', 'Configuración del sistema', 'fa-gear', 'secondary', 6)
+ON DUPLICATE KEY UPDATE descripcion = VALUES(descripcion);
+
+-- ============================================
 -- PERMISOS INICIALES
 -- Inserta permisos por defecto y asignaciones de ejemplo a roles
 -- Los administradores (`rol = 'admin'`) tienen acceso total implicitamente.
-INSERT INTO permisos (nombre, descripcion) VALUES
-('view_dashboard','Ver el dashboard'),
-('view_archivos','Ver lista de archivos'),
-('upload_files','Subir archivos'),
-('validate_files','Guardar validaciones'),
-('view_validaciones','Ver historial de validaciones'),
-('view_tiendas','Ver tiendas/restaurantes'),
-('manage_users','Gestionar usuarios (crear/editar/desactivar)')
-ON DUPLICATE KEY UPDATE descripcion = VALUES(descripcion);
+INSERT INTO permisos (nombre, descripcion, categoria_id, icono, nivel) VALUES
+-- Dashboard
+('view_dashboard', 'Ver el dashboard principal', 1, 'fa-gauge-high', 1),
+('view_stats', 'Ver estadísticas del sistema', 1, 'fa-chart-line', 2),
+
+-- Archivos
+('view_archivos', 'Ver lista de archivos', 2, 'fa-file-lines', 1),
+('upload_files', 'Subir archivos Excel', 2, 'fa-file-import', 1),
+('download_files', 'Descargar archivos Excel', 2, 'fa-file-export', 2),
+('delete_files', 'Eliminar archivos Excel', 2, 'fa-trash', 3),
+('edit_file_notes', 'Editar notas de archivos', 2, 'fa-pen', 2),
+
+-- Validaciones
+('validate_files', 'Ejecutar validaciones de archivos', 3, 'fa-circle-check', 2),
+('view_validaciones', 'Ver historial de validaciones', 3, 'fa-clock-rotate-left', 1),
+('export_validaciones', 'Exportar reportes de validación', 3, 'fa-file-pdf', 3),
+
+-- Tiendas
+('view_tiendas', 'Ver tiendas/restaurantes', 4, 'fa-store', 1),
+('manage_tiendas', 'Gestionar tiendas (crear/editar)', 4, 'fa-store-slash', 3),
+
+-- Usuarios
+('manage_users', 'Gestionar usuarios (crear/editar/desactivar)', 5, 'fa-user-gear', 3),
+('view_users', 'Ver lista de usuarios', 5, 'fa-users', 2),
+('manage_roles', 'Gestionar roles y permisos', 5, 'fa-key', 3),
+
+-- Configuración
+('view_config', 'Ver configuración del sistema', 6, 'fa-sliders', 2),
+('manage_config', 'Modificar configuración del sistema', 6, 'fa-screwdriver-wrench', 3)
+ON DUPLICATE KEY UPDATE 
+    descripcion = VALUES(descripcion),
+    categoria_id = VALUES(categoria_id),
+    icono = VALUES(icono),
+    nivel = VALUES(nivel);
 
 -- Asignaciones de ejemplo: supervisores y usuarios
 INSERT INTO roles_permisos (rol, permiso_nombre) VALUES

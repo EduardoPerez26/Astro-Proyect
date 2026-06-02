@@ -567,7 +567,9 @@ function recalculateCrossSheetFormulas(crossSheetDependents) {
         const cell = worksheet[address];
         if (cell && cell.f) {
             const newValue = evaluateFormulaWithContext(cell.f, sheetName);
-            console.log("RECALCULANDO:", sheetName, addr, cell.f);
+            console.log("RECALCULANDO:", sheetName, address, cell.f);
+
+
 
             // Solo actualizar si obtuvimos un valor valido
             if (newValue !== null && !isNaN(newValue)) {
@@ -599,8 +601,6 @@ function evaluateFormulaWithContext(formula, sheetName) {
 
         if (xlookupMatch) {
             console.log("XLOOKUP DETECTADO");
-        }
-        if (xlookupMatch) {
             return evaluateXLOOKUP(formula, sheetName);
         }
 
@@ -841,10 +841,10 @@ function evaluateXLOOKUP(formula, currentSheetName) {
         // ==========================
 
         const lookupRange =
-            parseSheetRange(lookupRangeArg);
+            parseSheetRange(lookupRangeArg, currentSheetName);
 
         const returnRange =
-            parseSheetRange(returnRangeArg);
+            parseSheetRange(returnRangeArg, currentSheetName);
 
         if (!lookupRange || !returnRange)
             return null;
@@ -877,22 +877,34 @@ function evaluateXLOOKUP(formula, currentSheetName) {
 
             const value =
                 lookupCell?.v;
-            const left =
-                String(value || '')
-                    .trim()
-                    .replace(/^0+/, '');
 
-            const right =
-                String(lookupValue || '')
-                    .trim()
-                    .replace(/^0+/, '');
+            // Comparacion mejorada: usar comparacion numerica si ambos son numeros
+            let matches = false;
+            
+            if (value === undefined || value === null) {
+                continue;
+            }
+
+            // Si ambos son numeros, comparar numericamente
+            const numValue = Number(value);
+            const numLookup = Number(lookupValue);
+            
+            if (!isNaN(numValue) && !isNaN(numLookup)) {
+                matches = numValue === numLookup;
+            } else {
+                // Comparacion como strings (case-insensitive)
+                const strValue = String(value).trim().toLowerCase();
+                const strLookup = String(lookupValue).trim().toLowerCase();
+                matches = strValue === strLookup;
+            }
 
             console.log({
                 lookupValue,
-                salesValue: value
+                salesValue: value,
+                matches
             });
 
-            if (left === right) {
+            if (matches) {
 
                 const returnAddr =
                     XLSX.utils.encode_cell({
@@ -1096,10 +1108,9 @@ function parseRange(rangeStr) {
     return { startCol: 0, startRow: 0, endCol: 0, endRow: 0 };
 }
 
-function parseSheetRange(rangeStr) {
+function parseSheetRange(rangeStr, sheetName) {
 
-    let sheetName =
-        currentSheetName;
+    let currentSheet = sheetName || currentSheetName;
 
     let range =
         rangeStr.trim();
@@ -1109,7 +1120,7 @@ function parseSheetRange(rangeStr) {
         const parts =
             range.split('!');
 
-        sheetName =
+        currentSheet =
             parts[0]
                 .replace(/^['"]|['"]$/g, '');
 
@@ -1127,7 +1138,7 @@ function parseSheetRange(rangeStr) {
     if (columnMatch) {
 
         return {
-            sheet: sheetName,
+            sheet: currentSheet,
             startCol:
                 XLSX.utils.decode_col(
                     columnMatch[1]
@@ -1151,7 +1162,7 @@ function parseSheetRange(rangeStr) {
     if (rowMatch) {
 
         return {
-            sheet: sheetName,
+            sheet: currentSheet,
             startCol:
                 XLSX.utils.decode_col(
                     rowMatch[1]

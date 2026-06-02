@@ -2,41 +2,739 @@
 import DashboardLayout from '../../layouts/DashboardLayout.astro';
 ---
 
-<DashboardLayout title="Permisos">
+<DashboardLayout title="Permisos y Roles">
     <section class="tab active" id="permisos">
-        <section class="page-header" style="margin-top: 16px; margin-bottom: 12px;">
+        <!-- Page Header -->
+        <section class="page-header" style="margin-top: 16px; margin-bottom: 24px;">
             <div class="page-header-left">
                 <div>
-                    <h1 class="page-title">Gestión de Permisos</h1>
-                    <p class="page-subtitle">Crear permisos y asignarlos a roles.</p>
+                    <h1 class="page-title">
+                        <i class="fas fa-shield-halved" style="color: var(--primary); margin-right: 12px;"></i>
+                        Gestión de Permisos
+                    </h1>
+                    <p class="page-subtitle">Administra permisos, roles y asignaciones del sistema</p>
                 </div>
+            </div>
+            <div class="page-header-actions">
+                <button class="btn btn-secondary" onclick="refreshData()">
+                    <i class="fas fa-rotate-right"></i> Actualizar
+                </button>
             </div>
         </section>
 
-        <section class="permissions-panel">
-        <div class="card permissions-list">
-            <h2>Permisos existentes</h2>
-            <div id="permisosList">Cargando permisos...</div>
+        <!-- Stats Cards -->
+        <div class="stats-grid" id="permisosStats">
+            <div class="stat-card">
+                <div class="stat-icon" style="background: var(--primary-light); color: var(--primary);">
+                    <i class="fas fa-key"></i>
+                </div>
+                <div class="stat-content">
+                    <span class="stat-value" id="totalPermisos">0</span>
+                    <span class="stat-label">Permisos</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon" style="background: var(--success-light); color: var(--success);">
+                    <i class="fas fa-folder"></i>
+                </div>
+                <div class="stat-content">
+                    <span class="stat-value" id="totalCategorias">0</span>
+                    <span class="stat-label">Categorías</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon" style="background: var(--warning-light); color: var(--warning);">
+                    <i class="fas fa-user-tag"></i>
+                </div>
+                <div class="stat-content">
+                    <span class="stat-value" id="totalRoles">0</span>
+                    <span class="stat-label">Roles</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon" style="background: var(--danger-light); color: var(--danger);">
+                    <i class="fas fa-link"></i>
+                </div>
+                <div class="stat-content">
+                    <span class="stat-value" id="totalAsignaciones">0</span>
+                    <span class="stat-label">Asignaciones</span>
+                </div>
+            </div>
         </div>
 
-        <div class="card">
-            <h2>Crear permiso</h2>
-            <input type="text" id="permName" placeholder="Nombre del permiso (ej: view_dashboard)" />
-            <input type="text" id="permDesc" placeholder="Descripción" />
-            <button id="createPermBtn">Crear permiso</button>
+        <!-- Main Content Grid -->
+        <div class="permisos-layout">
+            <!-- Left Panel: Permisos por Categoría -->
+            <div class="card permisos-categories-panel">
+                <div class="card-header">
+                    <h2><i class="fas fa-folder-open"></i> Permisos por Categoría</h2>
+                    <div class="card-header-actions">
+                        <select id="categoriaFilter" class="filter-select">
+                            <option value="">Todas las categorías</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div id="permisosPorCategoria">
+                        <div class="loading-spinner">
+                            <i class="fas fa-spinner fa-spin"></i>
+                            <span>Cargando permisos...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel: Gestión de Roles -->
+            <div class="card roles-panel">
+                <div class="card-header">
+                    <h2><i class="fas fa-user-shield"></i> Asignación de Roles</h2>
+                </div>
+                <div class="card-body">
+                    <!-- Role Selector -->
+                    <div class="role-selector">
+                        <label for="roleSelect">Seleccionar Rol:</label>
+                        <select id="roleSelect" class="role-select">
+                            <option value="">Cargando roles...</option>
+                        </select>
+                    </div>
+
+                    <!-- Role Info Card -->
+                    <div class="role-info-card" id="roleInfoCard" style="display: none;">
+                        <div class="role-badge" id="roleBadge">admin</div>
+                        <div class="role-stats">
+                            <span id="rolePermisosCount">0 permisos asignados</span>
+                        </div>
+                    </div>
+
+                    <!-- Permissions Matrix by Category -->
+                    <div id="rolePermsMatrix" class="role-permissions-matrix">
+                        <div class="loading-spinner">
+                            <i class="fas fa-spinner fa-spin"></i>
+                            <span>Cargando...</span>
+                        </div>
+                    </div>
+
+                    <!-- Save Button -->
+                    <div class="role-actions">
+                        <button id="saveRolePermsBtn" class="btn btn-primary btn-block">
+                            <i class="fas fa-save"></i> Guardar Cambios
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <div class="card">
-            <h2>Asignar permisos a rol</h2>
-            <select id="roleSelect">
-                <option value="supervisor">supervisor</option>
-                <option value="usuario">usuario</option>
-            </select>
-            <div id="rolePerms">Cargando...</div>
-            <button id="saveRolePermsBtn">Guardar asignaciones</button>
+        <!-- Bottom Section: Create Permission & History -->
+        <div class="bottom-section">
+            <!-- Create Permission Form -->
+            <div class="card create-permission-card">
+                <div class="card-header">
+                    <h2><i class="fas fa-plus-circle"></i> Crear Nuevo Permiso</h2>
+                </div>
+                <div class="card-body">
+                    <form id="createPermissionForm" class="permission-form">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="permName">Nombre del Permiso *</label>
+                                <input type="text" id="permName" placeholder="ej: view_reports" required 
+                                       pattern="[a-z_]+" title="Solo letras minúsculas y guiones bajos">
+                                <small class="form-hint">Usa solo letras minúsculas y guiones bajos</small>
+                            </div>
+                            <div class="form-group">
+                                <label for="permDesc">Descripción</label>
+                                <input type="text" id="permDesc" placeholder="Descripción del permiso">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="permCategoria">Categoría</label>
+                                <select id="permCategoria">
+                                    <option value="">Sin categoría</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="permIcono">Icono</label>
+                                <select id="permIcono">
+                                    <option value="fa-key">fa-key</option>
+                                    <option value="fa-eye">fa-eye</option>
+                                    <option value="fa-eye-slash">fa-eye-slash</option>
+                                    <option value="fa-plus">fa-plus</option>
+                                    <option value="fa-pen">fa-pen</option>
+                                    <option value="fa-trash">fa-trash</option>
+                                    <option value="fa-download">fa-download</option>
+                                    <option value="fa-upload">fa-upload</option>
+                                    <option value="fa-file-export">fa-file-export</option>
+                                    <option value="fa-file-import">fa-file-import</option>
+                                    <option value="fa-gear">fa-gear</option>
+                                    <option value="fa-users">fa-users</option>
+                                    <option value="fa-chart-bar">fa-chart-bar</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="permNivel">Nivel</label>
+                                <select id="permNivel">
+                                    <option value="1">1 - Básico</option>
+                                    <option value="2">2 - Intermedio</option>
+                                    <option value="3">3 - Avanzado</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" id="createPermBtn" class="btn btn-primary">
+                                <i class="fas fa-plus"></i> Crear Permiso
+                            </button>
+                            <button type="reset" class="btn btn-secondary">
+                                <i class="fas fa-eraser"></i> Limpiar
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- History Panel -->
+            <div class="card history-card">
+                <div class="card-header">
+                    <h2><i class="fas fa-clock-rotate-left"></i> Historial de Cambios</h2>
+                    <div class="card-header-actions">
+                        <button class="btn btn-sm btn-secondary" onclick="loadHistory()">
+                            <i class="fas fa-rotate-right"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div id="permisosHistory" class="history-list">
+                        <div class="loading-spinner">
+                            <i class="fas fa-spinner fa-spin"></i>
+                            <span>Cargando historial...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-        </section>
     </section>
 
     <script type="module" src="/js/permissions.js"></script>
 </DashboardLayout>
+
+<style>
+    /* Stats Grid */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+
+    .stat-card {
+        background: var(--white);
+        border: 1px solid var(--gray-200);
+        border-radius: var(--radius-lg);
+        padding: 20px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        box-shadow: var(--shadow-sm);
+        transition: var(--transition);
+    }
+
+    .stat-card:hover {
+        box-shadow: var(--shadow-md);
+        transform: translateY(-2px);
+    }
+
+    .stat-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: var(--radius);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+    }
+
+    .stat-content {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .stat-value {
+        font-size: 24px;
+        font-weight: 700;
+        color: var(--gray-900);
+        line-height: 1;
+    }
+
+    .stat-label {
+        font-size: 13px;
+        color: var(--gray-500);
+        margin-top: 4px;
+    }
+
+    /* Main Layout */
+    .permisos-layout {
+        display: grid;
+        grid-template-columns: 1fr 400px;
+        gap: 24px;
+        margin-bottom: 24px;
+    }
+
+    /* Categories Panel */
+    .permisos-categories-panel {
+        min-height: 500px;
+    }
+
+    .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px 20px;
+        border-bottom: 1px solid var(--gray-200);
+    }
+
+    .card-header h2 {
+        font-size: 16px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 0;
+    }
+
+    .card-header h2 i {
+        color: var(--primary);
+    }
+
+    .card-body {
+        padding: 20px;
+        max-height: 450px;
+        overflow-y: auto;
+    }
+
+    /* Category Groups */
+    .category-group {
+        margin-bottom: 20px;
+    }
+
+    .category-group:last-child {
+        margin-bottom: 0;
+    }
+
+    .category-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 12px;
+        background: var(--gray-50);
+        border-radius: var(--radius);
+        margin-bottom: 8px;
+        cursor: pointer;
+        transition: var(--transition);
+    }
+
+    .category-header:hover {
+        background: var(--gray-100);
+    }
+
+    .category-header i {
+        font-size: 14px;
+        width: 20px;
+        text-align: center;
+    }
+
+    .category-header h3 {
+        flex: 1;
+        font-size: 14px;
+        font-weight: 600;
+        margin: 0;
+    }
+
+    .category-badge {
+        font-size: 11px;
+        padding: 2px 8px;
+        border-radius: 99px;
+        background: var(--gray-200);
+        color: var(--gray-600);
+        font-weight: 600;
+    }
+
+    .category-permissions {
+        padding-left: 30px;
+    }
+
+    .permission-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 12px;
+        border-radius: var(--radius);
+        transition: var(--transition);
+        cursor: default;
+    }
+
+    .permission-item:hover {
+        background: var(--gray-50);
+    }
+
+    .permission-item i {
+        font-size: 14px;
+        color: var(--gray-500);
+        width: 18px;
+        text-align: center;
+    }
+
+    .permission-info {
+        flex: 1;
+    }
+
+    .permission-name {
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--gray-800);
+    }
+
+    .permission-desc {
+        font-size: 11px;
+        color: var(--gray-500);
+        margin-top: 2px;
+    }
+
+    .permission-level {
+        font-size: 11px;
+        padding: 2px 8px;
+        border-radius: 99px;
+        font-weight: 600;
+    }
+
+    .level-1 {
+        background: var(--success-light);
+        color: var(--success);
+    }
+
+    .level-2 {
+        background: var(--warning-light);
+        color: var(--warning);
+    }
+
+    .level-3 {
+        background: var(--danger-light);
+        color: var(--danger);
+    }
+
+    /* Roles Panel */
+    .roles-panel {
+        position: sticky;
+        top: 80px;
+        height: fit-content;
+    }
+
+    .role-selector {
+        margin-bottom: 16px;
+    }
+
+    .role-selector label {
+        display: block;
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--gray-600);
+        margin-bottom: 8px;
+    }
+
+    .role-select {
+        width: 100%;
+        padding: 12px 16px;
+        border: 1px solid var(--gray-300);
+        border-radius: var(--radius);
+        font-size: 14px;
+        background: var(--white);
+        cursor: pointer;
+        transition: var(--transition);
+    }
+
+    .role-select:hover {
+        border-color: var(--primary);
+    }
+
+    .role-select:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px var(--primary-light);
+    }
+
+    .role-info-card {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 16px;
+        background: var(--gray-50);
+        border-radius: var(--radius);
+        margin-bottom: 16px;
+    }
+
+    .role-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 14px;
+        border-radius: 99px;
+        font-size: 13px;
+        font-weight: 600;
+        text-transform: capitalize;
+        background: var(--primary);
+        color: var(--white);
+    }
+
+    .role-stats {
+        font-size: 13px;
+        color: var(--gray-600);
+    }
+
+    /* Role Permissions Matrix */
+    .role-permissions-matrix {
+        margin-bottom: 16px;
+    }
+
+    .matrix-category {
+        margin-bottom: 16px;
+    }
+
+    .matrix-category-title {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--gray-500);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 8px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid var(--gray-200);
+    }
+
+    .matrix-category-title i {
+        font-size: 12px;
+    }
+
+    .matrix-permission {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 0;
+    }
+
+    .matrix-permission label {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        cursor: pointer;
+        font-size: 13px;
+    }
+
+    .matrix-permission input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        accent-color: var(--primary);
+        cursor: pointer;
+    }
+
+    .matrix-permission i {
+        font-size: 14px;
+        color: var(--gray-400);
+        width: 18px;
+        text-align: center;
+    }
+
+    .matrix-permission .perm-text {
+        flex: 1;
+    }
+
+    .matrix-permission .perm-name {
+        font-weight: 500;
+        color: var(--gray-800);
+    }
+
+    .matrix-permission .perm-desc {
+        font-size: 11px;
+        color: var(--gray-500);
+        margin-top: 2px;
+    }
+
+    /* Bottom Section */
+    .bottom-section {
+        display: grid;
+        grid-template-columns: 1fr 400px;
+        gap: 24px;
+    }
+
+    /* Form Styles */
+    .permission-form {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .form-row {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .form-group label {
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--gray-700);
+    }
+
+    .form-group input,
+    .form-group select {
+        padding: 10px 14px;
+        border: 1px solid var(--gray-300);
+        border-radius: var(--radius);
+        font-size: 14px;
+        transition: var(--transition);
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px var(--primary-light);
+    }
+
+    .form-hint {
+        font-size: 11px;
+        color: var(--gray-500);
+    }
+
+    .form-actions {
+        display: flex;
+        gap: 12px;
+        padding-top: 8px;
+    }
+
+    /* History List */
+    .history-list {
+        max-height: 300px;
+        overflow-y: auto;
+    }
+
+    .history-item {
+        display: flex;
+        gap: 12px;
+        padding: 12px;
+        border-bottom: 1px solid var(--gray-100);
+    }
+
+    .history-item:last-child {
+        border-bottom: none;
+    }
+
+    .history-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        flex-shrink: 0;
+    }
+
+    .history-icon.crear {
+        background: var(--success-light);
+        color: var(--success);
+    }
+
+    .history-icon.modificar {
+        background: var(--info-light);
+        color: var(--info);
+    }
+
+    .history-icon.eliminar {
+        background: var(--danger-light);
+        color: var(--danger);
+    }
+
+    .history-icon.asignar {
+        background: var(--warning-light);
+        color: var(--warning);
+    }
+
+    .history-content {
+        flex: 1;
+    }
+
+    .history-title {
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--gray-800);
+    }
+
+    .history-meta {
+        font-size: 11px;
+        color: var(--gray-500);
+        margin-top: 4px;
+    }
+
+    /* Utility */
+    .loading-spinner {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        padding: 40px;
+        color: var(--gray-500);
+    }
+
+    .loading-spinner i {
+        font-size: 24px;
+    }
+
+    .filter-select {
+        padding: 6px 12px;
+        border: 1px solid var(--gray-300);
+        border-radius: var(--radius);
+        font-size: 12px;
+        background: var(--white);
+    }
+
+    .btn-block {
+        width: 100%;
+    }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .permisos-layout {
+            grid-template-columns: 1fr;
+        }
+
+        .bottom-section {
+            grid-template-columns: 1fr;
+        }
+
+        .roles-panel {
+            position: static;
+        }
+    }
+
+    @media (max-width: 640px) {
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .form-row {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
