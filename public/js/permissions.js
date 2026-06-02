@@ -25,7 +25,7 @@ async function setupAdminUI() {
         return;
     }
 
-    // Cargar datos iniciales
+    // Cargar datos inicialesa
     await Promise.all([
         loadCategorias(),
         loadPermisos(),
@@ -38,29 +38,77 @@ async function setupAdminUI() {
     setupEventListeners();
 }
 
+const reloadHistoryBtn = document.getElementById('reloadHistoryBtn');
+
+if (reloadHistoryBtn) {
+    reloadHistoryBtn.addEventListener('click', loadHistory);
+}
+
 function setupEventListeners() {
     // Formulario de crear permiso
     const createForm = document.getElementById('createPermissionForm');
     createForm.addEventListener('submit', handleCreatePermission);
 
+    // Búsqueda de permisos
+    const searchInput = document.getElementById('searchPermission');
+    if (searchInput) {
+        searchInput.addEventListener('input', debounce(() => {
+            renderPermisosPorCategoria(searchInput.value);
+        }, 300));
+    }
+
     // Filtro por categoría
     const categoriaFilter = document.getElementById('categoriaFilter');
-    categoriaFilter.addEventListener('change', () => renderPermisosPorCategoria());
+    if (categoriaFilter) {
+        categoriaFilter.addEventListener('change', () => renderPermisosPorCategoria());
+    }
 
     // Selector de rol
     const roleSelect = document.getElementById('roleSelect');
-    roleSelect.addEventListener('change', () => loadRolePermissions(roleSelect.value));
+    if (roleSelect) {
+        roleSelect.addEventListener('change', () => loadRolePermissions(roleSelect.value));
+    }
 
     // Botón guardar asignaciones
     const saveBtn = document.getElementById('saveRolePermsBtn');
-    saveBtn.addEventListener('click', handleSaveRolePermissions);
+    if (saveBtn) {
+        saveBtn.addEventListener('click', handleSaveRolePermissions);
+    }
+
+    // Preview del icono
+    const iconSelect = document.getElementById('permIcono');
+    if (iconSelect) {
+        iconSelect.addEventListener('change', (e) => {
+            const preview = document.getElementById('iconPreview');
+            if (preview) {
+                preview.className = `fas ${e.target.value} preview-icon`;
+            }
+        });
+    }
+}
+
+// Función debounce para búsqueda
+function debounce(func, wait) {
+    let timeout;
+
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
 }
 
 // Función global para recargar todos los datos
 async function refreshData() {
-    const btn = document.querySelector('.page-header-actions .btn');
-    btn.classList.add('loading');
-    btn.disabled = true;
+    const btn = document.querySelector('.page-header-actions .btn-primary');
+    if (btn) {
+        btn.classList.add('loading');
+        btn.disabled = true;
+    }
     
     await Promise.all([
         loadCategorias(),
@@ -74,15 +122,50 @@ async function refreshData() {
         await loadRolePermissions(currentRole);
     }
     
-    btn.classList.remove('loading');
-    btn.disabled = false;
+    if (btn) {
+        btn.classList.remove('loading');
+        btn.disabled = false;
+    }
     
     Swal.fire({
         icon: 'success',
         title: 'Datos actualizados',
         timer: 1500,
-        showConfirmButton: false
+        showConfirmButton: false,
+        toast: true,
+        position: 'top-end'
     });
+}
+
+// Función para exportar permisos
+async function exportPermissions() {
+    try {
+        const token = localStorage.getItem('token');
+        const res = await fetch(`${API_URL}/permissions/export`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (res.ok) {
+            const blob = await res.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'permisos.csv';
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+            
+            Swal.fire({
+                icon: 'success',
+                title: 'Exportado',
+                timer: 1500,
+                showConfirmButton: false
+            });
+        }
+    } catch (err) {
+        console.error('Error exportando permisos:', err);
+    }
 }
 
 // Cargar categorías
@@ -111,17 +194,21 @@ async function loadCategorias() {
         
         // Actualizar select de categorías en formulario
         const select = document.getElementById('permCategoria');
-        select.innerHTML = '<option value="">Sin categoría</option>';
-        allCategorias.forEach(cat => {
-            select.innerHTML += `<option value="${cat.id}">${cat.nombre}</option>`;
-        });
+        if (select) {
+            select.innerHTML = '<option value="">Sin categoría</option>';
+            allCategorias.forEach(cat => {
+                select.innerHTML += `<option value="${cat.id}">${cat.nombre}</option>`;
+            });
+        }
         
         // Actualizar filtro de categorías
         const filter = document.getElementById('categoriaFilter');
-        filter.innerHTML = '<option value="">Todas las categorías</option>';
-        allCategorias.forEach(cat => {
-            filter.innerHTML += `<option value="${cat.id}">${cat.nombre}</option>`;
-        });
+        if (filter) {
+            filter.innerHTML = '<option value="">Todas las categorías</option>';
+            allCategorias.forEach(cat => {
+                filter.innerHTML += `<option value="${cat.id}">${cat.nombre}</option>`;
+            });
+        }
         
     } catch (err) {
         console.warn('Error cargando categorías (continuando sin ellas):', err.message);
@@ -132,7 +219,7 @@ async function loadCategorias() {
 // Cargar permisos
 async function loadPermisos() {
     const token = localStorage.getItem('token');
-    const categoriaId = document.getElementById('categoriaFilter').value;
+    const categoriaId = document.getElementById('categoriaFilter')?.value;
     
     try {
         let url = `${API_URL}/permissions`;
@@ -158,18 +245,31 @@ async function loadPermisos() {
     } catch (err) {
         console.error('Error cargando permisos:', err);
         allPermisos = [];
-        document.getElementById('permisosPorCategoria').innerHTML = 
-            '<p style="text-align:center; color:var(--danger); padding:20px;">Error cargando permisos. Asegúrate de que la base de datos esté actualizada.</p>';
+        const container = document.getElementById('permisosPorCategoria');
+        if (container) {
+            container.innerHTML = '<div class="error-state"><i class="fas fa-exclamation-triangle"></i><p>Error cargando permisos. Asegúrate de que la base de datos esté actualizada.</p></div>';
+        }
     }
 }
 
 // Renderizar permisos agrupados por categoría
-function renderPermisosPorCategoria() {
+function renderPermisosPorCategoria(searchTerm = '') {
     const container = document.getElementById('permisosPorCategoria');
+    if (!container) return;
     
     if (allPermisos.length === 0) {
-        container.innerHTML = '<p style="text-align:center; color:var(--gray-500); padding:40px;">No hay permisos disponibles</p>';
+        container.innerHTML = '<div class="empty-state"><i class="fas fa-key"></i><p>No hay permisos disponibles</p></div>';
         return;
+    }
+    
+    // Filtrar por búsqueda
+    let permisosFiltrados = allPermisos;
+    if (searchTerm) {
+        const term = searchTerm.toLowerCase();
+        permisosFiltrados = allPermisos.filter(p => 
+            p.nombre.toLowerCase().includes(term) ||
+            (p.descripcion && p.descripcion.toLowerCase().includes(term))
+        );
     }
     
     // Agrupar por categoría
@@ -186,7 +286,7 @@ function renderPermisosPorCategoria() {
         permisos: [] 
     };
     
-    allPermisos.forEach(perm => {
+    permisosFiltrados.forEach(perm => {
         const catId = perm.categoria_id || 'null';
         if (!grouped[catId]) {
             grouped[catId] = { 
@@ -206,24 +306,26 @@ function renderPermisosPorCategoria() {
         const colorText = `var(--${categoria.color || 'primary'})`;
         
         html += `
-            <div class="category-group">
-                <div class="category-header" style="border-left: 3px solid ${colorText};">
-                    <i class="fas ${categoria.icono}" style="color: ${colorText};"></i>
-                    <h3>${categoria.nombre}</h3>
-                    <span class="category-badge">${permisos.length}</span>
+            <div class="category-group-modern">
+                <div class="category-header-modern" style="border-left: 3px solid ${colorText};">
+                    <div class="category-icon-modern" style="background: ${colorClass}; color: ${colorText};">
+                        <i class="fas ${categoria.icono}"></i>
+                    </div>
+                    <span class="category-title-modern">${categoria.nombre}</span>
+                    <span class="category-count-modern">${permisos.length}</span>
                 </div>
-                <div class="category-permissions">
+                <div class="category-permissions-modern">
         `;
         
         permisos.forEach(perm => {
             html += `
-                <div class="permission-item">
+                <div class="permission-item-modern">
                     <i class="fas ${perm.icono}" style="color: ${colorText};"></i>
-                    <div class="permission-info">
-                        <div class="permission-name">${perm.nombre}</div>
-                        <div class="permission-desc">${perm.descripcion || ''}</div>
+                    <div class="permission-info-modern">
+                        <div class="permission-name-modern">${perm.nombre}</div>
+                        <div class="permission-desc-modern">${perm.descripcion || ''}</div>
                     </div>
-                    <span class="permission-level level-${perm.nivel}">Nivel ${perm.nivel}</span>
+                    <span class="permission-level-modern level-${perm.nivel}">Nivel ${perm.nivel}</span>
                 </div>
             `;
         });
@@ -234,7 +336,7 @@ function renderPermisosPorCategoria() {
         `;
     });
     
-    container.innerHTML = html || '<p style="text-align:center; color:var(--gray-500);">No hay permisos</p>';
+    container.innerHTML = html || '<div class="empty-state"><i class="fas fa-search"></i><p>No se encontraron permisos</p></div>';
 }
 
 // Cargar roles disponibles
@@ -244,29 +346,52 @@ async function loadRoles() {
         const res = await fetch(`${API_URL}/permissions/roles/list`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
+        
+        if (!res.ok) {
+            console.warn('No se pudo cargar roles, usando roles por defecto');
+            allRoles = ['admin', 'supervisor', 'usuario'];
+            updateRoleSelect();
+            return;
+        }
+        
         const data = await res.json();
         
-        if (data.error) throw new Error(data.mensaje);
+        if (data.error) {
+            console.warn('Error en respuesta de roles, usando roles por defecto:', data.mensaje);
+            allRoles = ['admin', 'supervisor', 'usuario'];
+        } else {
+            allRoles = data.roles || ['admin', 'supervisor', 'usuario'];
+        }
         
-        allRoles = data.roles;
+        updateRoleSelect();
         
-        const roleSelect = document.getElementById('roleSelect');
+    } catch (err) {
+        console.warn('Error cargando roles, usando roles por defecto:', err.message);
+        allRoles = ['admin', 'supervisor', 'usuario'];
+        updateRoleSelect();
+    }
+}
+
+// Actualizar el select de roles
+function updateRoleSelect() {
+    const roleSelect = document.getElementById('roleSelect');
+    if (roleSelect && Array.isArray(allRoles)) {
         roleSelect.innerHTML = '<option value="">Seleccione un rol...</option>';
         allRoles.forEach(rol => {
             roleSelect.innerHTML += `<option value="${rol}">${rol.charAt(0).toUpperCase() + rol.slice(1)}</option>`;
         });
-        
-    } catch (err) {
-        console.error('Error cargando roles:', err);
     }
 }
 
 // Cargar permisos de un rol específico
 async function loadRolePermissions(rol) {
     if (!rol) {
-        document.getElementById('rolePermsMatrix').innerHTML = 
-            '<p style="text-align:center; color:var(--gray-500); padding:40px;">Seleccione un rol para ver sus permisos</p>';
-        document.getElementById('roleInfoCard').style.display = 'none';
+        const matrix = document.getElementById('rolePermsMatrix');
+        if (matrix) {
+            matrix.innerHTML = '<div class="empty-state"><i class="fas fa-user-shield"></i><p>Seleccione un rol para ver sus permisos</p></div>';
+        }
+        const infoCard = document.getElementById('roleInfoCard');
+        if (infoCard) infoCard.style.display = 'none';
         return;
     }
     
@@ -285,9 +410,14 @@ async function loadRolePermissions(rol) {
         const assignedPerms = new Set(roleData.permisos.map(p => p.permiso_nombre));
         
         // Actualizar info del rol
-        document.getElementById('roleInfoCard').style.display = 'flex';
-        document.getElementById('roleBadge').textContent = rol.charAt(0).toUpperCase() + rol.slice(1);
-        document.getElementById('rolePermisosCount').textContent = `${assignedPerms.size} permisos asignados`;
+        const infoCard = document.getElementById('roleInfoCard');
+        if (infoCard) {
+            infoCard.style.display = 'flex';
+            const badge = document.getElementById('roleBadge');
+            if (badge) badge.textContent = rol.charAt(0).toUpperCase() + rol.slice(1);
+            const count = document.getElementById('rolePermisosCount');
+            if (count) count.textContent = assignedPerms.size;
+        }
         
         // Agrupar permisos por categoría
         const grouped = {};
@@ -314,6 +444,9 @@ async function loadRolePermissions(rol) {
         });
         
         // Renderizar matriz
+        const matrix = document.getElementById('rolePermsMatrix');
+        if (!matrix) return;
+        
         let html = '';
         Object.entries(grouped).forEach(([catId, { categoria, permisos }]) => {
             if (permisos.length === 0) return;
@@ -321,8 +454,8 @@ async function loadRolePermissions(rol) {
             const colorText = `var(--${categoria.color || 'primary'})`;
             
             html += `
-                <div class="matrix-category">
-                    <div class="matrix-category-title">
+                <div class="matrix-category-modern">
+                    <div class="matrix-category-title-modern">
                         <i class="fas ${categoria.icono}" style="color: ${colorText};"></i>
                         ${categoria.nombre}
                     </div>
@@ -330,13 +463,13 @@ async function loadRolePermissions(rol) {
             
             permisos.forEach(perm => {
                 html += `
-                    <div class="matrix-permission">
+                    <div class="matrix-permission-modern">
                         <label>
                             <input type="checkbox" data-perm="${perm.nombre}" ${perm.checked ? 'checked' : ''}/>
                             <i class="fas ${perm.icono}"></i>
-                            <div class="perm-text">
-                                <div class="perm-name">${perm.nombre}</div>
-                                <div class="perm-desc">${perm.descripcion || ''}</div>
+                            <div class="matrix-perm-text">
+                                <div class="matrix-perm-name">${perm.nombre}</div>
+                                <div class="matrix-perm-desc">${perm.descripcion || ''}</div>
                             </div>
                         </label>
                     </div>
@@ -348,12 +481,14 @@ async function loadRolePermissions(rol) {
             `;
         });
         
-        document.getElementById('rolePermsMatrix').innerHTML = html;
+        matrix.innerHTML = html || '<div class="empty-state"><p>No hay permisos disponibles</p></div>';
         
     } catch (err) {
         console.error('Error cargando permisos del rol:', err);
-        document.getElementById('rolePermsMatrix').innerHTML = 
-            '<p class="error-message">Error cargando permisos</p>';
+        const matrix = document.getElementById('rolePermsMatrix');
+        if (matrix) {
+            matrix.innerHTML = '<div class="error-state"><i class="fas fa-exclamation-triangle"></i><p>Error cargando permisos</p></div>';
+        }
     }
 }
 
@@ -379,8 +514,10 @@ async function handleCreatePermission(e) {
     
     const token = localStorage.getItem('token');
     const btn = document.getElementById('createPermBtn');
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creando...';
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creando...';
+    }
     
     try {
         const res = await fetch(`${API_URL}/permissions`, {
@@ -408,7 +545,9 @@ async function handleCreatePermission(e) {
                 icon: 'success',
                 title: data.mensaje,
                 timer: 1500,
-                showConfirmButton: false
+                showConfirmButton: false,
+                toast: true,
+                position: 'top-end'
             });
         } else {
             throw new Error(data.mensaje || 'Error al crear permiso');
@@ -421,8 +560,11 @@ async function handleCreatePermission(e) {
             confirmButtonColor: '#6366f1'
         });
     } finally {
-        btn.disabled = false;
-        btn.innerHTML = '<i class="fas fa-plus"></i> Crear Permiso';
+        const btn = document.getElementById('createPermBtn');
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-plus-circle"></i> Crear Permiso';
+        }
     }
 }
 
@@ -443,8 +585,10 @@ async function handleSaveRolePermissions() {
     
     const token = localStorage.getItem('token');
     const btn = document.getElementById('saveRolePermsBtn');
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+    }
     
     try {
         const res = await fetch(`${API_URL}/permissions/roles/${currentRole}`, {
@@ -460,7 +604,8 @@ async function handleSaveRolePermissions() {
         
         if (res.ok && !data.error) {
             // Actualizar contador
-            document.getElementById('rolePermisosCount').textContent = `${permisos.length} permisos asignados`;
+            const count = document.getElementById('rolePermisosCount');
+            if (count) count.textContent = permisos.length;
             
             await loadStats();
             await loadHistory();
@@ -469,7 +614,9 @@ async function handleSaveRolePermissions() {
                 icon: 'success',
                 title: 'Permisos guardados',
                 timer: 1500,
-                showConfirmButton: false
+                showConfirmButton: false,
+                toast: true,
+                position: 'top-end'
             });
         } else {
             throw new Error(data.mensaje || 'Error al guardar');
@@ -482,8 +629,11 @@ async function handleSaveRolePermissions() {
             confirmButtonColor: '#6366f1'
         });
     } finally {
-        btn.disabled = false;
-        btn.innerHTML = '<i class="fas fa-save"></i> Guardar Cambios';
+        const btn = document.getElementById('saveRolePermsBtn');
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-save"></i> Guardar Cambios';
+        }
     }
 }
 
@@ -508,10 +658,15 @@ async function loadStats() {
         }
         
         const stats = data.stats;
-        document.getElementById('totalPermisos').textContent = stats.total_permisos || 0;
-        document.getElementById('totalCategorias').textContent = stats.total_categorias || 0;
-        document.getElementById('totalRoles').textContent = stats.total_roles || 0;
-        document.getElementById('totalAsignaciones').textContent = stats.total_asignaciones || 0;
+        const totalPermisos = document.getElementById('totalPermisos');
+        const totalCategorias = document.getElementById('totalCategorias');
+        const totalRoles = document.getElementById('totalRoles');
+        const totalAsignaciones = document.getElementById('totalAsignaciones');
+        
+        if (totalPermisos) totalPermisos.textContent = stats.total_permisos || 0;
+        if (totalCategorias) totalCategorias.textContent = stats.total_categorias || 0;
+        if (totalRoles) totalRoles.textContent = stats.total_roles || 0;
+        if (totalAsignaciones) totalAsignaciones.textContent = stats.total_asignaciones || 0;
         
     } catch (err) {
         console.warn('Error cargando estadísticas:', err.message);
@@ -531,9 +686,10 @@ async function loadHistory() {
         
         const history = data.history;
         const container = document.getElementById('permisosHistory');
+        if (!container) return;
         
         if (history.length === 0) {
-            container.innerHTML = '<p style="text-align:center; color:var(--gray-500); padding:20px;">No hay historial reciente</p>';
+            container.innerHTML = '<div class="empty-state"><i class="fas fa-clock"></i><p>No hay historial reciente</p></div>';
             return;
         }
         
@@ -550,16 +706,16 @@ async function loadHistory() {
             const fecha = new Date(item.fecha_accion).toLocaleString();
             
             html += `
-                <div class="history-item">
-                    <div class="history-icon ${accion.class}">
+                <div class="history-item-modern">
+                    <div class="history-icon-modern ${accion.class}">
                         <i class="fas ${accion.icon}"></i>
                     </div>
-                    <div class="history-content">
-                        <div class="history-title">
+                    <div class="history-content-modern">
+                        <div class="history-title-modern">
                             <strong>${item.nombre_completo || item.username}</strong> ${accion.text} 
                             ${item.tipo_objeto === 'rol_permiso' ? `al rol <strong>${item.objeto_nombre}</strong>` : `<strong>${item.objeto_nombre}</strong>`}
                         </div>
-                        <div class="history-meta">
+                        <div class="history-meta-modern">
                             <i class="far fa-clock"></i> ${fecha}
                         </div>
                     </div>
@@ -571,7 +727,12 @@ async function loadHistory() {
         
     } catch (err) {
         console.error('Error cargando historial:', err);
-        document.getElementById('permisosHistory').innerHTML = 
-            '<p style="text-align:center; color:var(--gray-500);">Error cargando historial</p>';
+        const container = document.getElementById('permisosHistory');
+        if (container) {
+            container.innerHTML = '<div class="error-state"><i class="fas fa-exclamation-triangle"></i><p>Error cargando historial</p></div>';
+        }
     }
 }
+window.loadHistory = loadHistory;
+window.refreshData = refreshData;
+window.exportPermissions = exportPermissions

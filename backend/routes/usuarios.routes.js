@@ -18,7 +18,7 @@ router.get('/', verificarToken, esAdmin, async (req, res) => {
     try {
         const [usuarios] = await pool.query(
             `SELECT id, username, nombre_completo, email, rol, activo, fecha_creacion 
-             FROM usuarios ORDER BY nombre_completo`
+             FROM usuarios ORDER BY fecha_creacion DESC`
         );
 
         res.json({
@@ -32,6 +32,128 @@ router.get('/', verificarToken, esAdmin, async (req, res) => {
             error: true,
             mensaje: 'Error al obtener usuarios'
         });
+    }
+});
+
+// ============================================
+// GET /api/usuarios/stats
+// ============================================
+// Estadísticas de usuarios (solo admin)
+router.get('/stats', verificarToken, esAdmin, async (req, res) => {
+    try {
+        const [stats] = await pool.query(`
+            SELECT 
+                (SELECT COUNT(*) FROM usuarios) AS total_usuarios,
+                (SELECT COUNT(*) FROM usuarios WHERE activo = TRUE) AS usuarios_activos,
+                (SELECT COUNT(*) FROM usuarios WHERE rol = 'admin' AND activo = TRUE) AS admin_count,
+                (SELECT MAX(fecha_creacion) FROM usuarios) AS ultimo_registro
+        `);
+
+        res.json({
+            error: false,
+            stats: stats[0]
+        });
+
+    } catch (error) {
+        console.error('Error al obtener estadísticas:', error);
+        res.status(500).json({
+            error: true,
+            mensaje: 'Error al obtener estadísticas'
+        });
+    }
+});
+
+// ============================================
+// POST /api/usuarios
+// ============================================
+// Crea un nuevo usuario (solo admin)
+router.post('/', verificarToken, esAdmin, async (req, res) => {
+    const conn = await pool.getConnection();
+    try {
+        const { username, nombre_completo, email, password, rol = 'usuario' } = req.body;
+
+        // Validaciones
+        if (!username || !nombre_completo || !email || !password) {
+            return res.status(400).json({
+                error: true,
+                mensaje: 'Todos los campos son requeridos'
+            });
+        }
+
+        // Validar longitud de contraseña
+        if (password.length < 8) {
+            return res.status(400).json({
+                error: true,
+                mensaje: 'La contraseña debe tener al menos 8 caracteres'
+            });
+        }
+
+        // Validar rol válido
+        const rolesValidos = ['admin', 'supervisor', 'usuario'];
+        if (!rolesValidos.includes(rol)) {
+            return res.status(400).json({
+                error: true,
+                mensaje: 'Rol no válido'
+            });
+        }
+
+        await conn.beginTransaction();
+
+        // Verificar si el username ya existe
+        const [existingUsername] = await conn.query(
+            'SELECT id FROM usuarios WHERE username = ?',
+            [username]
+        );
+
+        if (existingUsername.length > 0) {
+            await conn.rollback();
+            return res.status(409).json({
+                error: true,
+                mensaje: 'El nombre de usuario ya está en uso'
+            });
+        }
+
+        // Verificar si el email ya existe
+        const [existingEmail] = await conn.query(
+            'SELECT id FROM usuarios WHERE email = ?',
+            [email]
+        );
+
+        if (existingEmail.length > 0) {
+            await conn.rollback();
+            return res.status(409).json({
+                error: true,
+                mensaje: 'El correo electrónico ya está registrado'
+            });
+        }
+
+        // Hashear contraseña
+        const salt = await bcrypt.genSalt(10);
+        const passwordHash = await bcrypt.hash(password, salt);
+
+        // Insertar usuario
+        await conn.query(
+            `INSERT INTO usuarios (username, password, nombre_completo, email, rol, activo) 
+             VALUES (?, ?, ?, ?, ?, TRUE)`,
+            [username, passwordHash, nombre_completo, email, rol]
+        );
+
+        await conn.commit();
+
+        res.status(201).json({
+            error: false,
+            mensaje: 'Usuario creado exitosamente'
+        });
+
+    } catch (error) {
+        await conn.rollback();
+        console.error('Error al crear usuario:', error);
+        res.status(500).json({
+            error: true,
+            mensaje: 'Error al crear usuario'
+        });
+    } finally {
+        conn.release();
     }
 });
 
@@ -77,6 +199,48 @@ router.get('/:id', verificarToken, async (req, res) => {
 });
 
 // ============================================
+// PATCH /api/usuarios/:id/status
+// ============================================
+// Cambia el estado de un usuario (solo admin)
+router.patch('/:id/status', verificarToken, esAdmin, async (req, res) => {
+    try {
+        const { activo } = req.body;
+
+        // No permitir desactivarse a si mismo
+        if (req.usuario.id === parseInt(req.params.id) && activo === false) {
+            return res.status(400).json({
+                error: true,
+                mensaje: 'No puedes desactivar tu propia cuenta'
+            });
+        }
+
+        const [result] = await pool.query(
+            'UPDATE usuarios SET activo = ? WHERE id = ?',
+            [activo, req.params.id]
+        );
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({
+                error: true,
+                mensaje: 'Usuario no encontrado'
+            });
+        }
+
+        res.json({
+            error: false,
+            mensaje: `Usuario ${activo ? 'activado' : 'desactivado'} exitosamente`
+        });
+
+    } catch (error) {
+        console.error('Error al cambiar estado del usuario:', error);
+        res.status(500).json({
+            error: true,
+            mensaje: 'Error al cambiar estado del usuario'
+        });
+    }
+});
+
+// ============================================
 // PUT /api/usuarios/:id
 // ============================================
 // Actualiza un usuario
@@ -109,6 +273,13 @@ router.put('/:id', verificarToken, async (req, res) => {
         // Solo admin puede cambiar rol y estado
         if (req.usuario.rol === 'admin') {
             if (rol) {
+                const rolesValidos = ['admin', 'supervisor', 'usuario'];
+                if (!rolesValidos.includes(rol)) {
+                    return res.status(400).json({
+                        error: true,
+                        mensaje: 'Rol no válido'
+                    });
+                }
                 updates.push('rol = ?');
                 params.push(rol);
             }
@@ -119,6 +290,12 @@ router.put('/:id', verificarToken, async (req, res) => {
         }
 
         if (password) {
+            if (password.length < 8) {
+                return res.status(400).json({
+                    error: true,
+                    mensaje: 'La contraseña debe tener al menos 8 caracteres'
+                });
+            }
             const salt = await bcrypt.genSalt(10);
             const passwordHash = await bcrypt.hash(password, salt);
             updates.push('password = ?');
