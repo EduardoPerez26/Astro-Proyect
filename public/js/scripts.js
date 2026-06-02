@@ -92,8 +92,6 @@ async function handleFileUpload(e) {
 
                 if (!workbook) return;
 
-                console.log("========== RECALCULANDO ==========");
-
                 workbook.SheetNames.forEach(sheetName => {
 
                     const ws = workbook.Sheets[sheetName];
