@@ -18,7 +18,6 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
             </div>
         </div>
 
-        <!-- Tabs -->
         <!-- Toolbar -->
         <div class="card" style="margin-bottom: 24px;">
             <div class="card-body" style="padding: 16px 20px;">
@@ -28,6 +27,13 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
                         Subir Excel
                     </label>
                     <input type="file" id="excelFile" accept=".xlsx,.xls" style="display: none;">
+                    
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <input type="checkbox" id="useTemplate" style="width: 16px; height: 16px;">
+                        <label for="useTemplate" style="font-size: 14px; color: var(--gray-600); font-weight: 500; cursor: pointer;">
+                            Usar template
+                        </label>
+                    </div>
                     
                     <div style="display: flex; align-items: center; gap: 8px;">
                         <label style="font-size: 14px; color: var(--gray-600); font-weight: 500;">Restaurante:</label>
@@ -114,6 +120,7 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
     <script is:inline src="/js/validators/burger-king.js"></script>
     <script is:inline src="/js/validators/popeyes.js"></script>
     <script is:inline src="/js/validators/kfc.js"></script>
+    <script is:inline src="/js/template-processor.js"></script>
     <script is:inline src="/js/validator.js"></script>
     <script is:inline src="/js/scripts.js"></script>
 </DashboardLayout>

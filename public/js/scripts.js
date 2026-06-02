@@ -10,8 +10,6 @@ let cellFormulas = new Map();
 let renderUpdateTimer = null;
 let isRendering = false;
 let archivoActualId = null; // ID del archivo en la base de datos
-let originalFile = null;
-let workbookEdited = false;
 
 /* Elementos del DOM */
 
@@ -21,32 +19,6 @@ const statusText = document.getElementById('status');
 const sheetName = document.getElementById('sheetName');
 const saveBtn = document.getElementById('saveBtn');
 const sheetSelector = document.getElementById('sheetSelector');
-const documentsByRestaurant = document.getElementById('documentsByRestaurant');
-const documentFilterRestaurant = document.getElementById('documentFilterRestaurant');
-const documentSearchInput = document.getElementById('documentSearchInput');
-const documentSortSelect = document.getElementById('documentSortSelect');
-const documentFilterReset = document.getElementById('documentFilterReset');
-const documentResultsInfo = document.getElementById('documentResultsInfo');
-
-const validationHistoryTable = document.getElementById('validationHistoryTable');
-const validationFilterRestaurant = document.getElementById('validationFilterRestaurant');
-const validationSearchInput = document.getElementById('validationSearchInput');
-const validationResultSelect = document.getElementById('validationResultSelect');
-const validationSortSelect = document.getElementById('validationSortSelect');
-const validationFilterReset = document.getElementById('validationFilterReset');
-const validationResultsInfo = document.getElementById('validationResultsInfo');
-
-let uploadedFiles = [];
-let validationHistory = [];
-
-function normalizeFilterValue(value) {
-    return String(value || '')
-        .trim()
-        .toLowerCase()
-        .replace(/\s+/g, ' ')
-        .replace(/\s/g, '-')
-        .replace(/_+/g, '-');
-}
 
 /* TABS */
 
@@ -63,93 +35,160 @@ if (saveBtn) {
     saveBtn.addEventListener('click', saveExcelFile);
 }
 
-document.addEventListener('DOMContentLoaded', function() {
-    if (documentsByRestaurant) {
-        setupDocumentFilters();
-        loadUploadedFiles();
-    }
-
-    if (validationHistoryTable) {
-        setupValidationFilters();
-        loadValidationHistory();
-    }
-
-    activateTabFromHash();
-    window.addEventListener('hashchange', activateTabFromHash);
-});
-
 /* Change Tab */
 
 navBtns.forEach(btn => {
     btn.addEventListener('click', () => {
-        switchToTab(btn.dataset.tab);
+        navBtns.forEach(b => b.classList.remove('active'));
+        tabs.forEach(tab => tab.classList.remove('active'));
+
+        btn.classList.add('active');
+        const target = btn.dataset.tab;
+
+        const targetElement = document.getElementById(target);
+        if (targetElement) {
+            targetElement.classList.add('active');
+        }
     });
 });
-
-function switchToTab(tabId) {
-    navBtns.forEach(b => b.classList.remove('active'));
-    tabs.forEach(tab => tab.classList.remove('active'));
-
-    const targetBtn = document.querySelector(`.nav-btn[data-tab="${tabId}"]`);
-    if (targetBtn) {
-        targetBtn.classList.add('active');
-    }
-
-    const targetElement = document.getElementById(tabId);
-    if (targetElement) {
-        targetElement.classList.add('active');
-    }
-}
-
-function activateTabFromHash() {
-    const hash = window.location.hash.replace('#', '');
-    if (hash && document.getElementById(hash)) {
-        switchToTab(hash);
-        return;
-    }
-
-    if (tabs.length === 0) return;
-
-    const defaultTab = document.getElementById('editor') || tabs[0];
-    const defaultTabId = typeof defaultTab === 'string' ? defaultTab : defaultTab.id;
-    if (defaultTabId) {
-        switchToTab(defaultTabId);
-    }
-}
 
 
 /* Upload Excel File */
 
-function handleFileUpload(e) {
+async function handleFileUpload(e) {
     const file = e.target.files[0];
 
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = function (event) {
-        const data = new Uint8Array(event.target.result);
-        workbook = XLSX.read(data, { type: 'array', cellFormula: true });
+    const useTemplate = document.getElementById('useTemplate')?.checked;
+    const restaurant = document.getElementById('restaurantSelect')?.value;
 
-        originalFile = file;
-        workbookEdited = false;
-
-        window.XLSX_CALC = window.XLSX_CALC || getCalcEngine();
-        const calc = getCalcEngine();
-        if (!calc) {
-            updateValidationStatus('No se encontro el motor xlsx-calc. Las formulas no se recalcularan.', 'alert');
+    // Si se activo "Usar template"
+    if (useTemplate) {
+        if (!restaurant) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Selecciona un restaurante',
+                text: 'Para usar templates, primero selecciona un restaurante.',
+            });
+            e.target.value = '';
+            return;
         }
 
-        currentSheetName = workbook.SheetNames[0];
-        loadSheet(currentSheetName);
+        try {
+            Swal.fire({
+                title: 'Procesando...',
+                text: 'Aplicando template al archivo',
+                allowOutsideClick: false,
+                didOpen: () => Swal.showLoading()
+            });
 
-        renderSheetSelector();
+            // Procesar con template
+            workbook = await processWithTemplate(
+                file,
+                restaurant
+            );
+            function recalculateAllSheets() {
 
-        if (statusText) {
-            statusText.textContent = file.name;
+                if (!workbook) return;
+
+                console.log("========== RECALCULANDO ==========");
+
+                workbook.SheetNames.forEach(sheetName => {
+
+                    const ws = workbook.Sheets[sheetName];
+
+                    if (!ws) return;
+
+                    Object.keys(ws).forEach(addr => {
+
+                        const cell = ws[addr];
+
+                        if (cell && cell.f) {
+
+                            console.log(
+                                sheetName,
+                                addr,
+                                cell.f
+                            );
+
+                            cell.f = cell.f.replace(
+                                /_xlfn\./gi,
+                                ''
+                            );
+
+                            const value =
+                                evaluateFormulaWithContext(
+                                    cell.f,
+                                    sheetName
+                                );
+
+                            console.log(
+                                "RESULTADO:",
+                                value
+                            );
+
+                            if (
+                                value !== null &&
+                                value !== undefined
+                            ) {
+                                cell.v = value;
+                            }
+                        }
+                    });
+                });
+            }
+            recalculateAllSheets();
+
+            Swal.close();
+
+            Swal.fire({
+                icon: 'success',
+                title: 'Template aplicado',
+                text: 'Los datos se mapearon al template correctamente',
+                timer: 2000,
+                showConfirmButton: false
+            });
+
+        } catch (error) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error al aplicar template',
+                text: error.message || 'No se pudo procesar el archivo con el template',
+            });
+            e.target.value = '';
+            return;
         }
-    };
+    } else {
+        // Carga normal sin template
+        const reader = new FileReader();
+        const loadPromise = new Promise((resolve, reject) => {
+            reader.onload = function (event) {
+                const data = new Uint8Array(event.target.result);
+                workbook = XLSX.read(data, { type: 'array', cellFormula: true });
+                resolve();
+            };
+            reader.onerror = reject;
+        });
+        reader.readAsArrayBuffer(file);
+        await loadPromise;
+    }
 
-    reader.readAsArrayBuffer(file);
+    // Continuar con el proceso normal
+    window.XLSX_CALC = window.XLSX_CALC || getCalcEngine();
+    const calc = getCalcEngine();
+    if (!calc) {
+        updateValidationStatus('No se encontro el motor xlsx-calc. Las formulas no se recalcularan.', 'alert');
+    }
+
+    currentSheetName = workbook.SheetNames[0];
+    loadSheet(currentSheetName);
+
+    renderSheetSelector();
+
+    if (statusText) {
+        statusText.textContent = file.name + (useTemplate ? ' (con template)' : '');
+    }
 }
 
 /* Table Render */
@@ -157,7 +196,7 @@ function handleFileUpload(e) {
 function renderTable() {
 
     if (!tableContainer || isRendering) return;
-    
+
     isRendering = true;
 
     if (!tableData.length) {
@@ -243,7 +282,7 @@ function addCellListeners() {
 
     editable.forEach(cell => {
         // Guardar valor original al enfocar
-        cell.addEventListener('focus', function() {
+        cell.addEventListener('focus', function () {
             this.dataset.originalValue = this.innerText;
         });
 
@@ -261,7 +300,7 @@ function addCellListeners() {
         });
 
         // Permitir confirmar con Enter
-        cell.addEventListener('keydown', function(e) {
+        cell.addEventListener('keydown', function (e) {
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
                 this.blur();
@@ -316,17 +355,15 @@ function commitCellChange(row, col, text) {
         expandWorksheetRef(address);
     }
 
-    workbookEdited = true;
-
     // Recalcular formulas del workbook
     evaluateWorkbookFormulas();
-    
+
     // Actualizar datos de la hoja desde el worksheet recalculado
     updateCurrentSheetData();
-    
+
     // Actualizar celdas dependientes en el DOM sin re-renderizar toda la tabla
     updateDependentCells(address);
-    
+
     // Actualizar info de formulas
     refreshFormulaInfo();
 }
@@ -335,19 +372,19 @@ function commitCellChange(row, col, text) {
 // Ahora busca en TODAS las hojas del workbook
 function findDependentCells(changedAddress, changedSheetName) {
     const dependents = [];
-    
+
     // Buscar en la hoja actual
     cellFormulas.forEach((formula, key) => {
         // Verificar referencia directa (sin nombre de hoja) o con nombre de hoja actual
         const regexDirect = new RegExp(`\\$?${changedAddress.replace(/([A-Z]+)(\d+)/, '\\$?$1\\$?$2')}(?![0-9A-Z])`, 'i');
         const regexWithSheet = new RegExp(`['"]?${changedSheetName}['"]?!\\$?${changedAddress.replace(/([A-Z]+)(\d+)/, '\\$?$1\\$?$2')}(?![0-9A-Z])`, 'i');
-        
+
         if (regexDirect.test(formula) || regexWithSheet.test(formula)) {
             const [row, col] = key.split(',').map(Number);
             dependents.push({ row, col, key, sheetName: currentSheetName });
         }
     });
-    
+
     return dependents;
 }
 
@@ -355,33 +392,33 @@ function findDependentCells(changedAddress, changedSheetName) {
 // Busca TODAS las formulas que referencien la hoja modificada (para VLOOKUP, SUMIF, etc.)
 function findCrossSheetDependents(changedAddress, changedSheetName) {
     if (!workbook || !workbook.SheetNames) return [];
-    
+
     const dependents = [];
-    
+
     workbook.SheetNames.forEach(sheetName => {
         if (sheetName === changedSheetName) return; // Saltar hoja actual
-        
+
         const worksheet = workbook.Sheets[sheetName];
         if (!worksheet) return;
-        
+
         const range = worksheet['!ref'] ? XLSX.utils.decode_range(worksheet['!ref']) : null;
         if (!range) return;
-        
+
         // Buscar celdas con formulas que referencien la hoja modificada
         for (let r = range.s.r; r <= range.e.r; r++) {
             for (let c = range.s.c; c <= range.e.c; c++) {
                 const addr = XLSX.utils.encode_cell({ r, c });
                 const cell = worksheet[addr];
-                
+
                 if (cell && cell.f) {
                     const formula = cell.f;
-                    
+
                     // Verificar si la formula contiene CUALQUIER referencia a la hoja modificada
                     // Esto incluye VLOOKUP, SUMIF, INDEX, MATCH, referencias directas, rangos, etc.
-                    const containsSheetRef = formula.includes(changedSheetName + '!') || 
-                                            formula.includes("'" + changedSheetName + "'!") ||
-                                            formula.includes('"' + changedSheetName + '"!');
-                    
+                    const containsSheetRef = formula.includes(changedSheetName + '!') ||
+                        formula.includes("'" + changedSheetName + "'!") ||
+                        formula.includes('"' + changedSheetName + '"!');
+
                     if (containsSheetRef) {
                         dependents.push({
                             row: r,
@@ -395,39 +432,39 @@ function findCrossSheetDependents(changedAddress, changedSheetName) {
             }
         }
     });
-    
+
     return dependents;
 }
 
 // Actualiza las celdas dependientes en el DOM
 function updateDependentCells(changedAddress) {
     const dependents = findDependentCells(changedAddress, currentSheetName);
-    
+
     // Buscar dependientes en otras hojas
     const crossSheetDependents = findCrossSheetDependents(changedAddress, currentSheetName);
-    
+
     // Recalcular formulas en otras hojas que dependen de esta celda
     if (crossSheetDependents.length > 0) {
         recalculateCrossSheetFormulas(crossSheetDependents);
         showCrossSheetUpdateNotification(crossSheetDependents);
     }
-    
+
     if (dependents.length === 0) return;
-    
+
     // Recalcular las formulas de las celdas dependientes en la hoja actual
     if (dependents.length > 0) {
         recalculateDependentFormulas(dependents);
-        
+
         // Actualizar tableData con los nuevos valores
         updateCurrentSheetData();
-        
+
         dependents.forEach(({ row, col }) => {
             const cellElement = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
-            
+
             if (cellElement) {
                 const newValue = tableData[row][col];
                 cellElement.innerText = formatCellValue(newValue);
-                
+
                 // Efecto visual para mostrar que la celda se actualizo
                 cellElement.classList.add('cell-updated');
                 setTimeout(() => {
@@ -435,7 +472,7 @@ function updateDependentCells(changedAddress) {
                 }, 500);
             }
         });
-        
+
         // Si hay dependientes de dependientes, necesitamos actualizar recursivamente
         dependents.forEach(({ row, col }) => {
             const depAddress = cellAddress(row, col);
@@ -443,13 +480,13 @@ function updateDependentCells(changedAddress) {
             if (nestedDependents.length > 0) {
                 recalculateDependentFormulas(nestedDependents);
                 updateCurrentSheetData();
-                
+
                 nestedDependents.forEach(({ row: r, col: c }) => {
                     const cellElement = document.querySelector(`[data-row="${r}"][data-col="${c}"]`);
                     if (cellElement) {
                         const newValue = tableData[r][c];
                         cellElement.innerText = formatCellValue(newValue);
-                        
+
                         cellElement.classList.add('cell-updated');
                         setTimeout(() => {
                             cellElement.classList.remove('cell-updated');
@@ -467,11 +504,11 @@ function showCrossSheetUpdateNotification(crossSheetDependents) {
     crossSheetDependents.forEach(d => {
         sheetCounts[d.sheetName] = (sheetCounts[d.sheetName] || 0) + 1;
     });
-    
+
     const message = Object.entries(sheetCounts)
         .map(([sheet, count]) => `${sheet}: ${count} celda(s)`)
         .join(', ');
-    
+
     // Crear o actualizar notificacion
     let notification = document.getElementById('crossSheetNotification');
     if (!notification) {
@@ -495,13 +532,13 @@ function showCrossSheetUpdateNotification(crossSheetDependents) {
         `;
         document.body.appendChild(notification);
     }
-    
+
     notification.innerHTML = `
         <i class="fa-solid fa-link" style="font-size: 16px;"></i>
         <span>Actualizado en otras hojas: ${message}</span>
     `;
     notification.style.display = 'flex';
-    
+
     // Ocultar despues de 3 segundos
     setTimeout(() => {
         notification.style.display = 'none';
@@ -526,11 +563,12 @@ function recalculateCrossSheetFormulas(crossSheetDependents) {
     crossSheetDependents.forEach(({ address, sheetName, formula }) => {
         const worksheet = workbook.Sheets[sheetName];
         if (!worksheet) return;
-        
+
         const cell = worksheet[address];
         if (cell && cell.f) {
             const newValue = evaluateFormulaWithContext(cell.f, sheetName);
-            
+            console.log("RECALCULANDO:", sheetName, addr, cell.f);
+
             // Solo actualizar si obtuvimos un valor valido
             if (newValue !== null && !isNaN(newValue)) {
                 cell.v = newValue;
@@ -543,32 +581,52 @@ function recalculateCrossSheetFormulas(crossSheetDependents) {
 // Evalua una formula con contexto de hoja especifica
 function evaluateFormulaWithContext(formula, sheetName) {
     try {
+
+        console.log("FORMULA:", formula);
+        formula =
+            formula.replace(
+                /_xlfn\./gi,
+                ''
+            );
+
         const worksheet = workbook.Sheets[sheetName];
         let evalFormula = formula;
-        
+
+        const xlookupMatch =
+            formula.match(
+                /(?:_xlfn\.)?XLOOKUP\s*\(/i
+            );
+
+        if (xlookupMatch) {
+            console.log("XLOOKUP DETECTADO");
+        }
+        if (xlookupMatch) {
+            return evaluateXLOOKUP(formula, sheetName);
+        }
+
         // Manejar SUMIFS: SUMIFS(sumRange, criteriaRange1, criteria1, ...)
         const sumifsMatch = formula.match(/SUMIFS\s*\(/i);
         if (sumifsMatch) {
             return evaluateSUMIFS(formula, sheetName);
         }
-        
+
         // Manejar SUMIF: SUMIF(criteriaRange, criteria, sumRange)
         const sumifMatch = formula.match(/SUMIF\s*\(/i);
         if (sumifMatch) {
             return evaluateSUMIF(formula, sheetName);
         }
-        
+
         // Manejar SUM con referencias a otras hojas
         evalFormula = evalFormula.replace(/SUM\s*\(\s*['"]?([^'"!\s]+)['"]?!([^)]+)\)/gi, (match, refSheet, rangeStr) => {
             const cleanSheet = refSheet.replace(/^['"]|['"]$/g, '');
             return evaluateSUMRange(cleanSheet, rangeStr.trim());
         });
-        
+
         // Manejar SUM local
         evalFormula = evalFormula.replace(/SUM\s*\(\s*([A-Z]+\d+:[A-Z]+\d+)\s*\)/gi, (match, rangeStr) => {
             return evaluateSUMRange(sheetName, rangeStr.trim());
         });
-        
+
         // Manejar referencias a otras hojas: 'Sheet'!A1 o Sheet!A1
         evalFormula = evalFormula.replace(/['"]?([^'"!+\-*/(),\s]+)['"]?!\$?([A-Z]+)\$?(\d+)/gi, (match, refSheet, col, row) => {
             const cleanSheet = refSheet.replace(/^['"]|['"]$/g, '').trim();
@@ -582,7 +640,7 @@ function evaluateFormulaWithContext(formula, sheetName) {
             }
             return '0';
         });
-        
+
         // Manejar referencias locales
         evalFormula = evalFormula.replace(/\$?([A-Z]+)\$?(\d+)/gi, (match, col, row) => {
             if (!worksheet) return '0';
@@ -593,7 +651,7 @@ function evaluateFormulaWithContext(formula, sheetName) {
             }
             return '0';
         });
-        
+
         const result = Function('"use strict"; return (' + evalFormula + ')')();
         return typeof result === 'number' && !isNaN(result) ? result : null;
     } catch (e) {
@@ -608,55 +666,55 @@ function evaluateSUMIFS(formula, currentSheetName) {
         // Extraer los argumentos de SUMIFS
         const argsMatch = formula.match(/SUMIFS\s*\(\s*(.+)\s*\)/i);
         if (!argsMatch) return null;
-        
+
         // Parsear los argumentos separados por coma (cuidando las comillas)
         const argsStr = argsMatch[1];
         const args = parseFormulaArgs(argsStr);
-        
+
         if (args.length < 3) return null;
-        
+
         // Primer argumento es el rango de suma
         const sumRangeStr = args[0].trim();
-        
+
         // Parsear rango de suma
         let sumSheet = currentSheetName;
         let sumRange = sumRangeStr;
-        
+
         if (sumRangeStr.includes('!')) {
             const parts = sumRangeStr.split('!');
             sumSheet = parts[0].replace(/^['"]|['"]$/g, '');
             sumRange = parts[1];
         }
-        
+
         const sumWorksheet = workbook.Sheets[sumSheet];
         if (!sumWorksheet) return null;
-        
+
         const sumRangeParsed = parseRange(sumRange);
-        
+
         // Recopilar los pares de criterio (criteria_range, criteria)
         const criteriaPairs = [];
         for (let i = 1; i < args.length; i += 2) {
             if (i + 1 >= args.length) break;
-            
+
             const criteriaRangeStr = args[i].trim();
             const criteriaStr = args[i + 1].trim();
-            
+
             // Parsear rango de criterio
             let critSheet = currentSheetName;
             let critRange = criteriaRangeStr;
-            
+
             if (criteriaRangeStr.includes('!')) {
                 const parts = criteriaRangeStr.split('!');
                 critSheet = parts[0].replace(/^['"]|['"]$/g, '');
                 critRange = parts[1];
             }
-            
+
             const criteriaWorksheet = workbook.Sheets[critSheet];
             if (!criteriaWorksheet) return null;
-            
+
             // Obtener el valor del criterio
             let criteriaValue = criteriaStr.replace(/^["']|["']$/g, '');
-            
+
             // Si es una referencia de celda con hoja
             if (criteriaValue.includes('!')) {
                 const parts = criteriaValue.split('!');
@@ -672,50 +730,195 @@ function evaluateSUMIFS(formula, currentSheetName) {
                 const cell = ws ? ws[criteriaValue.replace(/\$/g, '')] : null;
                 criteriaValue = cell ? String(cell.v || '') : '';
             }
-            
+
             criteriaPairs.push({
                 worksheet: criteriaWorksheet,
                 range: parseRange(critRange),
                 value: criteriaValue
             });
         }
-        
+
         if (criteriaPairs.length === 0) return null;
-        
+
         let sum = 0;
-        
+
         // Iterar sobre las filas del primer rango de criterio
         const firstCritRange = criteriaPairs[0].range;
-        
+
         for (let r = firstCritRange.startRow; r <= Math.min(firstCritRange.endRow, 5000); r++) {
             let allMatch = true;
-            
+
             // Verificar todos los criterios para esta fila
             for (const { worksheet, range, value } of criteriaPairs) {
                 const critAddr = XLSX.utils.encode_cell({ r, c: range.startCol });
                 const critCell = worksheet[critAddr];
                 const critValue = critCell ? String(critCell.v || '') : '';
-                
+
                 if (critValue.toLowerCase().trim() !== value.toLowerCase().trim()) {
                     allMatch = false;
                     break;
                 }
             }
-            
+
             // Si todos los criterios coinciden, sumar el valor correspondiente
             if (allMatch) {
                 const sumAddr = XLSX.utils.encode_cell({ r, c: sumRangeParsed.startCol });
                 const sumCell = sumWorksheet[sumAddr];
-                
+
                 if (sumCell && typeof sumCell.v === 'number') {
                     sum += sumCell.v;
                 }
             }
         }
-        
+
         return sum;
     } catch (e) {
         return null;
+    }
+}
+
+function evaluateXLOOKUP(formula, currentSheetName) {
+    console.log("ENTRO A XLOOKUP");
+    try {
+
+        const argsMatch =
+            formula.match(/XLOOKUP\s*\((.*)\)/i);
+
+        if (!argsMatch) return null;
+
+        const args =
+            parseFormulaArgs(argsMatch[1]);
+
+        if (args.length < 3) return null;
+
+        const lookupValueArg =
+            args[0].trim();
+
+        const lookupRangeArg =
+            args[1].trim();
+
+        const returnRangeArg =
+            args[2].trim();
+
+        let lookupValue;
+
+        // ==========================
+        // valor buscado
+        // ==========================
+
+        if (/^\$?[A-Z]+\$?\d+$/i.test(lookupValueArg)) {
+
+            const addr =
+                lookupValueArg.replace(/\$/g, '');
+
+            const ws =
+                workbook.Sheets[currentSheetName];
+
+            const cell =
+                ws[addr];
+
+            lookupValue =
+                cell?.v;
+
+            console.log(
+                "XLOOKUP BUSCANDO:",
+                lookupValue,
+                "en",
+                lookupRangeArg,
+                "devolviendo",
+                returnRangeArg
+            );
+
+        } else {
+
+            lookupValue =
+                lookupValueArg
+                    .replace(/^["']|["']$/g, '');
+        }
+
+        // ==========================
+        // rango busqueda
+        // ==========================
+
+        const lookupRange =
+            parseSheetRange(lookupRangeArg);
+
+        const returnRange =
+            parseSheetRange(returnRangeArg);
+
+        if (!lookupRange || !returnRange)
+            return null;
+
+        const lookupSheet =
+            workbook.Sheets[lookupRange.sheet];
+
+        const returnSheet =
+            workbook.Sheets[returnRange.sheet];
+
+        if (!lookupSheet || !returnSheet)
+            return null;
+
+        for (
+            let row =
+             lookupRange.startRow;
+            row <= lookupRange.endRow;
+            row++
+            
+        ) {
+
+            const lookupAddr =
+                XLSX.utils.encode_cell({
+                    r: row,
+                    c: lookupRange.startCol
+                });
+
+            const lookupCell =
+                lookupSheet[lookupAddr];
+
+            const value =
+                lookupCell?.v;
+            const left =
+                String(value || '')
+                    .trim()
+                    .replace(/^0+/, '');
+
+            const right =
+                String(lookupValue || '')
+                    .trim()
+                    .replace(/^0+/, '');
+
+            console.log({
+                lookupValue,
+                salesValue: value
+            });
+
+            if (left === right) {
+
+                const returnAddr =
+                    XLSX.utils.encode_cell({
+                        r: row,
+                        c: returnRange.startCol
+                    });
+
+                const returnCell =
+                    returnSheet[returnAddr];
+
+                return returnCell?.v ?? 0;
+            }
+        }
+
+        // valor por defecto de XLOOKUP
+        if (args.length >= 4) {
+
+            return args[3]
+                .replace(/^["']|["']$/g, '');
+        }
+
+        return 0;
+
+    } catch (error) {
+
+        return 0;
     }
 }
 
@@ -726,10 +929,10 @@ function parseFormulaArgs(argsStr) {
     let depth = 0;
     let inQuote = false;
     let quoteChar = '';
-    
+
     for (let i = 0; i < argsStr.length; i++) {
         const char = argsStr[i];
-        
+
         if ((char === '"' || char === "'") && !inQuote) {
             inQuote = true;
             quoteChar = char;
@@ -750,11 +953,11 @@ function parseFormulaArgs(argsStr) {
             current += char;
         }
     }
-    
+
     if (current.trim()) {
         args.push(current.trim());
     }
-    
+
     return args;
 }
 
@@ -764,32 +967,32 @@ function evaluateSUMIF(formula, currentSheetName) {
         // Parsear los argumentos de SUMIF: SUMIF(criteriaRange, criteria, sumRange)
         const argsMatch = formula.match(/SUMIF\s*\(\s*([^,]+)\s*,\s*([^,]+)\s*,\s*([^)]+)\s*\)/i);
         if (!argsMatch) return null;
-        
+
         let [, criteriaRangeStr, criteriaStr, sumRangeStr] = argsMatch;
-        
+
         // Parsear rango de criterios
         let critSheet = currentSheetName;
         let critRange = criteriaRangeStr.trim();
-        
+
         if (critRange.includes('!')) {
             const parts = critRange.split('!');
             critSheet = parts[0].replace(/^['"]|['"]$/g, '');
             critRange = parts[1];
         }
-        
+
         // Parsear rango de suma
         let sumSheet = currentSheetName;
         let sumRange = sumRangeStr.trim();
-        
+
         if (sumRange.includes('!')) {
             const parts = sumRange.split('!');
             sumSheet = parts[0].replace(/^['"]|['"]$/g, '');
             sumRange = parts[1];
         }
-        
+
         // Obtener el valor del criterio
         let criteriaValue = criteriaStr.trim().replace(/^["']|["']$/g, '');
-        
+
         // Si es una referencia de celda
         if (/^['"]?[^'"!]*['"]?![A-Z]+\d+$/i.test(criteriaValue)) {
             const parts = criteriaValue.split('!');
@@ -803,36 +1006,36 @@ function evaluateSUMIF(formula, currentSheetName) {
             const cell = ws ? ws[criteriaValue.replace(/\$/g, '')] : null;
             criteriaValue = cell ? String(cell.v || '') : '';
         }
-        
+
         const criteriaWorksheet = workbook.Sheets[critSheet];
         const sumWorksheet = workbook.Sheets[sumSheet];
-        
+
         if (!criteriaWorksheet || !sumWorksheet) return null;
-        
+
         // Parsear los rangos
         const critRangeParsed = parseRange(critRange);
         const sumRangeParsed = parseRange(sumRange);
-        
+
         let sum = 0;
-        
+
         // Iterar sobre el rango de criterios
         for (let r = critRangeParsed.startRow; r <= Math.min(critRangeParsed.endRow, 5000); r++) {
             const critAddr = XLSX.utils.encode_cell({ r, c: critRangeParsed.startCol });
             const critCell = criteriaWorksheet[critAddr];
             const critValue = critCell ? String(critCell.v || '') : '';
-            
+
             // Comparar con el criterio
             if (critValue.toLowerCase().trim() === criteriaValue.toLowerCase().trim()) {
                 // Obtener el valor correspondiente del rango de suma
                 const sumAddr = XLSX.utils.encode_cell({ r, c: sumRangeParsed.startCol });
                 const sumCell = sumWorksheet[sumAddr];
-                
+
                 if (sumCell && typeof sumCell.v === 'number') {
                     sum += sumCell.v;
                 }
             }
         }
-        
+
         return sum;
     } catch (e) {
         return null;
@@ -844,10 +1047,10 @@ function evaluateSUMRange(sheetName, rangeStr) {
     try {
         const worksheet = workbook.Sheets[sheetName];
         if (!worksheet) return '0';
-        
+
         const range = parseRange(rangeStr);
         let sum = 0;
-        
+
         for (let r = range.startRow; r <= Math.min(range.endRow, 5000); r++) {
             for (let c = range.startCol; c <= range.endCol; c++) {
                 const addr = XLSX.utils.encode_cell({ r, c });
@@ -857,7 +1060,7 @@ function evaluateSUMRange(sheetName, rangeStr) {
                 }
             }
         }
-        
+
         return sum.toString();
     } catch (e) {
         return '0';
@@ -867,7 +1070,7 @@ function evaluateSUMRange(sheetName, rangeStr) {
 // Parsea un rango como "A1:B10" o "A:A"
 function parseRange(rangeStr) {
     const clean = rangeStr.replace(/\$/g, '').trim();
-    
+
     // Rango con filas: A1:B10
     const rowMatch = clean.match(/([A-Z]+)(\d+):([A-Z]+)(\d+)/i);
     if (rowMatch) {
@@ -878,7 +1081,7 @@ function parseRange(rangeStr) {
             endRow: parseInt(rowMatch[4]) - 1
         };
     }
-    
+
     // Rango de columna completa: A:A
     const colMatch = clean.match(/([A-Z]+):([A-Z]+)/i);
     if (colMatch) {
@@ -889,8 +1092,82 @@ function parseRange(rangeStr) {
             endRow: 5000
         };
     }
-    
+
     return { startCol: 0, startRow: 0, endCol: 0, endRow: 0 };
+}
+
+function parseSheetRange(rangeStr) {
+
+    let sheetName =
+        currentSheetName;
+
+    let range =
+        rangeStr.trim();
+
+    if (range.includes('!')) {
+
+        const parts =
+            range.split('!');
+
+        sheetName =
+            parts[0]
+                .replace(/^['"]|['"]$/g, '');
+
+        range =
+            parts[1];
+    }
+
+    range =
+        range.replace(/\$/g, '');
+
+    // A:A
+    const columnMatch =
+        range.match(/^([A-Z]+):([A-Z]+)$/i);
+
+    if (columnMatch) {
+
+        return {
+            sheet: sheetName,
+            startCol:
+                XLSX.utils.decode_col(
+                    columnMatch[1]
+                ),
+            endCol:
+                XLSX.utils.decode_col(
+                    columnMatch[2]
+                ),
+            startRow: 0,
+            endRow: 10000
+        };
+    }
+
+    // A1:A500
+
+    const rowMatch =
+        range.match(
+            /^([A-Z]+)(\d+):([A-Z]+)(\d+)$/i
+        );
+
+    if (rowMatch) {
+
+        return {
+            sheet: sheetName,
+            startCol:
+                XLSX.utils.decode_col(
+                    rowMatch[1]
+                ),
+            endCol:
+                XLSX.utils.decode_col(
+                    rowMatch[3]
+                ),
+            startRow:
+                parseInt(rowMatch[2]) - 1,
+            endRow:
+                parseInt(rowMatch[4]) - 1
+        };
+    }
+
+    return null;
 }
 
 function getCalcEngine() {
@@ -928,10 +1205,10 @@ function suppressConsoleDuring(fn) {
 
 function evaluateWorkbookFormulas() {
     if (!workbook) return;
-    
+
     // Usar el motor de XLSX-calc
     const calc = getCalcEngine();
-    
+
     if (typeof calc === 'function') {
         try {
             calc(workbook, { continue_after_error: true, log_error: false });
@@ -946,7 +1223,7 @@ function evaluateFormula(formula, worksheet) {
     try {
         // Reemplazar referencias de celdas con sus valores
         let evalFormula = formula;
-        
+
         // Manejar funciones SUM
         evalFormula = evalFormula.replace(/SUM\(([A-Z]+)(\d+):([A-Z]+)(\d+)\)/gi, (match, startCol, startRow, endCol, endRow) => {
             let sum = 0;
@@ -954,7 +1231,7 @@ function evaluateFormula(formula, worksheet) {
             const endC = XLSX.utils.decode_col(endCol);
             const startR = parseInt(startRow) - 1;
             const endR = parseInt(endRow) - 1;
-            
+
             for (let r = startR; r <= endR; r++) {
                 for (let c = startC; c <= endC; c++) {
                     const addr = XLSX.utils.encode_cell({ r, c });
@@ -966,7 +1243,7 @@ function evaluateFormula(formula, worksheet) {
             }
             return sum.toString();
         });
-        
+
         // Reemplazar referencias individuales de celdas (soporta $A$1, $A1, A$1, A1)
         evalFormula = evalFormula.replace(/\$?([A-Z]+)\$?(\d+)/gi, (match, col, row) => {
             const addr = col.toUpperCase() + row;
@@ -976,7 +1253,7 @@ function evaluateFormula(formula, worksheet) {
             }
             return '0';
         });
-        
+
         // Evaluar la expresion matematica
         const result = Function('"use strict"; return (' + evalFormula + ')')();
         return typeof result === 'number' ? result : 0;
@@ -1072,18 +1349,9 @@ function saveExcelFile() {
         denyButtonColor: '#10b981',
     }).then((result) => {
         if (result.isConfirmed) {
-            // Descargar localmente sin sobrescribir las formulas en el archivo original cuando no hubo edicion
-            if (originalFile && !workbookEdited) {
-                const link = document.createElement('a');
-                link.href = URL.createObjectURL(originalFile);
-                link.download = originalFile.name;
-                document.body.appendChild(link);
-                link.click();
-                link.remove();
-                URL.revokeObjectURL(link.href);
-            } else {
-                XLSX.writeFile(workbook, 'archivo-editado.xlsx');
-            }
+            // Descargar localmente
+            evaluateWorkbookFormulas();
+            XLSX.writeFile(workbook, 'archivo-editado.xlsx');
             Swal.fire({
                 title: 'Archivo descargado',
                 text: 'El Excel se descargo correctamente.',
@@ -1099,59 +1367,50 @@ function saveExcelFile() {
 }
 
 // Guardar archivo en el servidor (base de datos)
-async function guardarEnServidor({ silent = false } = {}) {
+async function guardarEnServidor() {
     const token = localStorage.getItem('token');
     const restaurante = document.getElementById('restaurantSelect')?.value;
 
     if (!token) {
-        if (!silent) {
-            Swal.fire({
-                icon: 'error',
-                title: 'Sesion expirada',
-                text: 'Por favor inicia sesion nuevamente',
-            }).then(() => {
-                window.location.href = '/';
-            });
-        }
-        return null;
+        Swal.fire({
+            icon: 'error',
+            title: 'Sesion expirada',
+            text: 'Por favor inicia sesion nuevamente',
+        }).then(() => {
+            window.location.href = '/';
+        });
+        return;
     }
 
     if (!restaurante) {
-        if (!silent) {
-            Swal.fire({
-                icon: 'warning',
-                title: 'Restaurante no seleccionado',
-                text: 'Por favor selecciona un restaurante antes de guardar',
-            });
-        }
-        return null;
+        Swal.fire({
+            icon: 'warning',
+            title: 'Restaurante no seleccionado',
+            text: 'Por favor selecciona un restaurante antes de guardar',
+        });
+        return;
     }
 
-    let swalInstance = null;
-    if (!silent) {
-        swalInstance = Swal.fire({
-            title: 'Guardando...',
-            text: 'Subiendo archivo al servidor',
-            allowOutsideClick: false,
-            didOpen: () => {
-                Swal.showLoading();
-            }
-        });
-    }
+    // Mostrar loading
+    Swal.fire({
+        title: 'Guardando...',
+        text: 'Subiendo archivo al servidor',
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
 
     try {
-        // Si no hubo ediciones, enviar el archivo original exacto para no perder formulas ni metadatos.
+        // Convertir workbook a archivo
+        evaluateWorkbookFormulas();
+        const wbout = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+        const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+
+        // Crear FormData
         const formData = new FormData();
         const nombreArchivo = statusText?.textContent || 'archivo-excel.xlsx';
-
-        if (originalFile && !workbookEdited) {
-            formData.append('archivo', originalFile, originalFile.name);
-        } else {
-            const wbout = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
-            const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-            formData.append('archivo', blob, nombreArchivo);
-        }
-
+        formData.append('archivo', blob, nombreArchivo);
         formData.append('restaurante', restaurante);
         formData.append('procesar_datos', 'true');
 
@@ -1165,350 +1424,30 @@ async function guardarEnServidor({ silent = false } = {}) {
 
         const data = await response.json();
 
-        if (response.ok && data.error === false) {
+        if (response.ok && data.success) {
             archivoActualId = data.archivo.id;
 
-            if (!silent) {
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Archivo guardado',
-                    html: `
-                        <p>El archivo se guardo correctamente en el servidor.</p>
-                        <p style="font-size: 13px; color: #666; margin-top: 10px;">
-                            ID: ${data.archivo.id}<br>
-                            Registros procesados: ${data.registros_procesados || 0}
-                        </p>
-                    `,
-                    confirmButtonColor: '#10b981'
-                });
-            }
-            return data;
+            Swal.fire({
+                icon: 'success',
+                title: 'Archivo guardado',
+                html: `
+                    <p>El archivo se guardo correctamente en el servidor.</p>
+                    <p style="font-size: 13px; color: #666; margin-top: 10px;">
+                        ID: ${data.archivo.id}<br>
+                        Registros procesados: ${data.registros_procesados || 0}
+                    </p>
+                `,
+                confirmButtonColor: '#10b981'
+            });
+        } else {
+            throw new Error(data.message || 'Error al guardar');
         }
-
-        throw new Error(data.message || 'Error al guardar');
     } catch (error) {
         console.error('Error guardando archivo:', error);
-        if (!silent) {
-            Swal.fire({
-                icon: 'error',
-                title: 'Error al guardar',
-                text: error.message || 'No se pudo guardar el archivo en el servidor',
-            });
-        }
-        return null;
-    } finally {
-        if (!silent && swalInstance) {
-            Swal.close();
-        }
-    }
-}
-
-function setupValidationFilters() {
-    if (validationFilterRestaurant) {
-        validationFilterRestaurant.addEventListener('change', renderValidationHistory);
-    }
-    if (validationSearchInput) {
-        validationSearchInput.addEventListener('input', renderValidationHistory);
-    }
-    if (validationResultSelect) {
-        validationResultSelect.addEventListener('change', renderValidationHistory);
-    }
-    if (validationSortSelect) {
-        validationSortSelect.addEventListener('change', renderValidationHistory);
-    }
-    if (validationFilterReset) {
-        validationFilterReset.addEventListener('click', () => {
-            if (validationFilterRestaurant) validationFilterRestaurant.value = '';
-            if (validationSearchInput) validationSearchInput.value = '';
-            if (validationResultSelect) validationResultSelect.value = '';
-            if (validationSortSelect) validationSortSelect.value = 'newest';
-            renderValidationHistory();
-        });
-    }
-}
-
-function renderValidationHistory() {
-    if (!validationHistoryTable) return;
-
-    const filters = {
-        restaurant: validationFilterRestaurant?.value || '',
-        search: (validationSearchInput?.value || '').trim().toLowerCase(),
-        resultado: validationResultSelect?.value || '',
-        sort: validationSortSelect?.value || 'newest'
-    };
-
-    let filtered = validationHistory.slice();
-
-    if (filters.restaurant) {
-        filtered = filtered.filter(item => normalizeFilterValue(item.restaurante) === normalizeFilterValue(filters.restaurant));
-    }
-
-    if (filters.search) {
-        filtered = filtered.filter(item => {
-            const fileName = String(item.nombre_original || '').toLowerCase();
-            const user = String(item.validado_por || '').toLowerCase();
-            const restaurante = normalizeFilterValue(item.restaurante);
-            return fileName.includes(filters.search) || user.includes(filters.search) || restaurante.includes(filters.search);
-        });
-    }
-
-    if (filters.resultado) {
-        filtered = filtered.filter(item => item.resultado === filters.resultado);
-    }
-
-    if (filters.sort === 'oldest') {
-        filtered.sort((a, b) => new Date(a.fecha_validacion) - new Date(b.fecha_validacion));
-    } else if (filters.sort === 'errors') {
-        filtered.sort((a, b) => (b.total_errores || 0) - (a.total_errores || 0));
-    } else {
-        filtered.sort((a, b) => new Date(b.fecha_validacion) - new Date(a.fecha_validacion));
-    }
-
-    if (validationResultsInfo) {
-        validationResultsInfo.textContent = `${filtered.length} resultados encontrados`;
-    }
-
-    const tbody = validationHistoryTable.querySelector('tbody');
-    if (!tbody) return;
-
-    if (filtered.length === 0) {
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="6" style="padding: 16px; text-align: center; color: var(--gray-600);">No se encontraron validaciones.</td>
-            </tr>
-        `;
-        return;
-    }
-
-    tbody.innerHTML = filtered.map(validacion => `
-        <tr>
-            <td>${validacion.nombre_original || 'N/A'}</td>
-            <td>${validacion.restaurante || 'N/A'}</td>
-            <td>${validacion.validado_por || 'N/A'}</td>
-            <td>${validacion.resultado || 'N/A'}</td>
-            <td>${validacion.total_errores || 0}</td>
-            <td>${validacion.fecha_validacion ? new Date(validacion.fecha_validacion).toLocaleString('es-ES') : 'N/A'}</td>
-        </tr>
-    `).join('');
-}
-
-async function loadUploadedFiles() {
-    const token = localStorage.getItem('token');
-    if (!token || !documentsByRestaurant) return;
-
-    try {
-        const response = await fetch(`${API_URL}/archivos`, {
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
-        });
-
-        const data = await response.json();
-
-        if (!response.ok || data.error) {
-            throw new Error(data.mensaje || 'No se pudieron cargar los archivos');
-        }
-
-        const archivos = Array.isArray(data.archivos) ? data.archivos : [];
-        uploadedFiles = archivos;
-
-        if (archivos.length === 0) {
-            if (documentResultsInfo) {
-                documentResultsInfo.textContent = 'No hay documentos guardados.';
-            }
-            documentsByRestaurant.innerHTML = `
-                <div class="empty">
-                    <h2 style="font-size: 18px; font-weight: 600; color: var(--gray-800); margin-bottom: 8px;">No hay archivos guardados</h2>
-                    <p style="color: var(--gray-600);">Aún no se han subido documentos al sistema.</p>
-                </div>
-            `;
-            return;
-        }
-
-        renderDocuments();
-
-    } catch (error) {
-        console.error('Error cargando archivos:', error);
-        if (documentResultsInfo) {
-            documentResultsInfo.textContent = 'Error al cargar documentos.';
-        }
-        documentsByRestaurant.innerHTML = `
-            <div class="empty">
-                <h2 style="font-size: 18px; font-weight: 600; color: var(--danger); margin-bottom: 8px;">Error al cargar documentos</h2>
-                <p style="color: var(--gray-600);">${error.message || 'Comprueba tu conexión o tu sesión.'}</p>
-            </div>
-        `;
-    }
-}
-
-function setupDocumentFilters() {
-    if (documentFilterRestaurant) {
-        documentFilterRestaurant.addEventListener('change', () => {
-            if (documentSearchInput) {
-                documentSearchInput.value = '';
-            }
-            renderDocuments();
-        });
-    }
-    if (documentSearchInput) {
-        documentSearchInput.addEventListener('input', renderDocuments);
-    }
-    if (documentSortSelect) {
-        documentSortSelect.addEventListener('change', renderDocuments);
-    }
-    if (documentFilterReset) {
-        documentFilterReset.addEventListener('click', () => {
-            if (documentFilterRestaurant) documentFilterRestaurant.value = '';
-            if (documentSearchInput) documentSearchInput.value = '';
-            if (documentSortSelect) documentSortSelect.value = 'newest';
-            renderDocuments();
-        });
-    }
-}
-
-function renderDocuments() {
-    if (!documentsByRestaurant) return;
-
-    const filters = {
-        restaurant: documentFilterRestaurant?.value || '',
-        search: (documentSearchInput?.value || '').trim().toLowerCase(),
-        sort: documentSortSelect?.value || 'newest'
-    };
-
-    let filtered = uploadedFiles.slice();
-
-    if (filters.restaurant) {
-        filtered = filtered.filter(archivo => normalizeFilterValue(archivo.restaurante) === normalizeFilterValue(filters.restaurant));
-    }
-
-    if (filters.search) {
-        filtered = filtered.filter(archivo => {
-            const name = String(archivo.nombre_original || '').toLowerCase();
-            const user = String(archivo.subido_por || '').toLowerCase();
-            const restaurante = normalizeFilterValue(archivo.restaurante);
-            return name.includes(filters.search) || user.includes(filters.search) || restaurante.includes(filters.search);
-        });
-    }
-
-    if (filters.sort === 'oldest') {
-        filtered.sort((a, b) => new Date(a.fecha_subida) - new Date(b.fecha_subida));
-    } else if (filters.sort === 'name') {
-        filtered.sort((a, b) => String(a.nombre_original || '').localeCompare(String(b.nombre_original || '')));
-    } else {
-        filtered.sort((a, b) => new Date(b.fecha_subida) - new Date(a.fecha_subida));
-    }
-
-    if (documentResultsInfo) {
-        documentResultsInfo.textContent = `${filtered.length} documentos encontrados`;
-    }
-
-    if (filtered.length === 0) {
-        documentsByRestaurant.innerHTML = `
-            <div class="empty">
-                <h2 style="font-size: 18px; font-weight: 600; color: var(--gray-800); margin-bottom: 8px;">No se encontraron documentos</h2>
-                <p style="color: var(--gray-600);">Prueba con otro filtro o borra los criterios de búsqueda.</p>
-            </div>
-        `;
-        return;
-    }
-
-    documentsByRestaurant.innerHTML = `
-        <div class="document-grid">
-            ${filtered.map(archivo => {
-                const safeName = String(archivo.nombre_original || '').replace(/'/g, "\\'");
-                return `
-                <div class="document-card">
-                    <div class="document-card-header">
-                        <div class="document-card-title">${archivo.nombre_original || 'Archivo sin nombre'}</div>
-                        <span class="badge badge-in-review">${archivo.restaurante || 'Sin restaurante'}</span>
-                    </div>
-                    <div class="document-card-body">
-                        <div class="document-card-row"><strong>Subido por:</strong> ${archivo.subido_por || 'N/A'}</div>
-                        <div class="document-card-row"><strong>Fecha:</strong> ${archivo.fecha_subida ? new Date(archivo.fecha_subida).toLocaleString('es-ES') : 'Sin fecha'}</div>
-                        <div class="document-card-row"><strong>ID:</strong> ${archivo.id ?? '—'}</div>
-                    </div>
-                    <div class="document-card-footer">
-                        <button class="btn btn-secondary" type="button" onclick="descargarArchivo(${JSON.stringify(archivo.id)}, '${safeName}');">
-                            <i class="fa-solid fa-download"></i>
-                            Descargar
-                        </button>
-                    </div>
-                </div>
-            `;
-            }).join('')}
-        </div>
-    `;
-}
-
-async function loadValidationHistory() {
-    const token = localStorage.getItem('token');
-    if (!token || !validationHistoryTable) return;
-
-    try {
-        const response = await fetch(`${API_URL}/archivos/validaciones`, {
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
-        });
-
-        const data = await response.json();
-
-        if (!response.ok || data.error) {
-            throw new Error(data.mensaje || 'No se pudo cargar el historial de validaciones');
-        }
-
-        validationHistory = Array.isArray(data.validaciones) ? data.validaciones : [];
-        renderValidationHistory();
-    } catch (error) {
-        console.error('Error cargando historial de validaciones:', error);
-        const tbody = validationHistoryTable.querySelector('tbody');
-        if (tbody) {
-            tbody.innerHTML = `
-                <tr>
-                    <td colspan="6" style="padding: 16px; text-align: center; color: var(--danger);">Error al cargar el historial de validaciones.</td>
-                </tr>
-            `;
-        }
-    }
-}
-
-async function descargarArchivo(id, nombreArchivo) {
-    const token = localStorage.getItem('token');
-    if (!token) {
         Swal.fire({
             icon: 'error',
-            title: 'Sesion expirada',
-            text: 'Por favor inicia sesion nuevamente',
-        });
-        return;
-    }
-
-    try {
-        const response = await fetch(`${API_URL}/archivos/${id}/descargar`, {
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
-        });
-
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
-            throw new Error(errorData.mensaje || 'No se pudo descargar el archivo');
-        }
-
-        const blob = await response.blob();
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = nombreArchivo || `archivo-${id}.xlsx`;
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-        URL.revokeObjectURL(link.href);
-    } catch (error) {
-        console.error('Error descargando archivo:', error);
-        Swal.fire({
-            icon: 'error',
-            title: 'Error de descarga',
-            text: error.message || 'No se pudo descargar el archivo',
+            title: 'Error al guardar',
+            text: error.message || 'No se pudo guardar el archivo en el servidor',
         });
     }
 }
@@ -1559,21 +1498,60 @@ function loadSheet(sheet) {
     cellFormulas.clear();
 
     evaluateWorkbookFormulas();
+
     updateCurrentSheetData();
 
     if (sheetName) {
         sheetName.textContent = `Hoja: ${sheet}`;
     }
-    
+
     // Resetear el estado de validación al cargar una nueva hoja
     if (typeof rowValidation !== 'undefined') {
         rowValidation = [];
     }
-    if (typeof updateValidationStatus === 'function') {
-        updateValidationStatus('Validacion pendiente - Presiona "Validar" para verificar los conceptos', '');
-    } else if (typeof window !== 'undefined' && typeof window.updateValidationStatus === 'function') {
-        window.updateValidationStatus('Validacion pendiente - Presiona "Validar" para verificar los conceptos', '');
-    }
-    
+    updateValidationStatus('Validacion pendiente - Presiona "Validar" para verificar los conceptos', '');
+
     renderTable();
+}
+
+function recalculateAllSheets() {
+
+    if (!workbook) return;
+
+    workbook.SheetNames.forEach(sheetName => {
+
+        const ws = workbook.Sheets[sheetName];
+
+        if (!ws) return;
+
+        Object.keys(ws).forEach(addr => {
+
+            const cell = ws[addr];
+
+            if (
+                cell &&
+                cell.f
+            ) {
+
+                cell.f =
+                    cell.f.replace(
+                        /_xlfn\./gi,
+                        ''
+                    );
+
+                const value =
+                    evaluateFormulaWithContext(
+                        cell.f,
+                        sheetName
+                    );
+
+                if (
+                    value !== null &&
+                    value !== undefined
+                ) {
+                    cell.v = value;
+                }
+            }
+        });
+    });
 }
