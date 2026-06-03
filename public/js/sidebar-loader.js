@@ -1,5 +1,5 @@
 // Sidebar loader adaptado para Astro con Backend y Control de Permisos
-const API_URL = 'http://localhost:3001/api';
+window.API_URL = window.API_URL || 'http://localhost:3001/api';
 
 document.addEventListener('DOMContentLoaded', function() {
     const sidebar = document.getElementById('sidebar');
@@ -88,7 +88,7 @@ async function cerrarSesion() {
     // Intentar cerrar sesion en el servidor
     if (token && !localStorage.getItem('modoOffline')) {
         try {
-            await fetch(`${API_URL}/auth/logout`, {
+            await fetch(`${window.API_URL}/auth/logout`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`

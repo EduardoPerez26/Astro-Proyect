@@ -2,8 +2,7 @@
 // HISTORIAL DE VALIDACIONES
 // ============================================
 
-const API_URL = localStorage.getItem('apiUrl') || 'http://localhost:3001/api';
-
+window.API_URL = window.API_URL || localStorage.getItem('apiUrl') || 'http://localhost:3001/api';
 let validaciones = [];
 let paginaActual = 1;
 const porPagina = 15;
@@ -43,7 +42,7 @@ async function cargarValidaciones() {
     }
     
     try {
-        const response = await fetch(`${API_URL}/validaciones`, {
+        const response = await fetch(`${window.API_URL}/validaciones`, {
             headers: {
                 'Authorization': `Bearer ${token}`
             }

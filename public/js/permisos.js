@@ -2,7 +2,7 @@
 // CONFIGURACION DE PERMISOS
 // ============================================
 
-const API_URL = 'http://localhost:3001/api';
+window.API_URL = window.API_URL || 'http://localhost:3001/api';
 let currentUserId = null;
 let currentUser = null;
 let originalPermissions = {};
@@ -141,7 +141,7 @@ async function loadUserData() {
     }
     
     try {
-        const response = await fetch(`${API_URL}/usuarios/${currentUserId}`, {
+        const response = await fetch(`${window.API_URL}/usuarios/${currentUserId}`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
         
@@ -289,7 +289,7 @@ async function savePermissions() {
     }
     
     try {
-        const response = await fetch(`${API_URL}/usuarios/${currentUserId}/permisos`, {
+        const response = await fetch(`${window.API_URL}/usuarios/${currentUserId}/permisos`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',

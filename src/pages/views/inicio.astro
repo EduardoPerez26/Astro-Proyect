@@ -3,56 +3,213 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
 ---
 
 <DashboardLayout title="Dashboard - Sistema de Inventario">
-    <section class="tab active" id="inicio">
-        <!-- Page Header -->
-        <div class="page-header">
-            <div class="page-header-left">
-                <h1 class="page-title">Dashboard</h1>
-                <p class="page-subtitle">Bienvenido al panel de control del sistema de inventario</p>
-            </div>
-        </div>
 
-        <!-- Stats Cards -->
-        <div class="cards-grid">
-            <div class="card">
-                <div class="card-body">
-                    <div class="stat-card">
-                        <div class="stat-icon" style="background: var(--primary-light);">
-                            <i class="fa-solid fa-shop" style="color: var(--primary);"></i>
-                        </div>
-                        <div class="stat-info">
-                            <div class="stat-value">4</div>
-                            <div class="stat-label">Restaurantes</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="card">
-                <div class="card-body">
-                    <div class="stat-card">
-                        <div class="stat-icon" style="background: var(--success-light);">
-                            <i class="fa-solid fa-file-excel" style="color: var(--success);"></i>
-                        </div>
-                        <div class="stat-info">
-                            <div class="stat-value">12</div>
-                            <div class="stat-label">Archivos Procesados</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="card">
-                <div class="card-body">
-                    <div class="stat-card">
-                        <div class="stat-icon" style="background: var(--warning-light);">
-                            <i class="fa-solid fa-check-double" style="color: var(--warning);"></i>
-                        </div>
-                        <div class="stat-info">
-                            <div class="stat-value">98%</div>
-                            <div class="stat-label">Tasa de Validacion</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+<section class="tab active">
+
+  <!-- HERO -->
+  <div class="welcome-card">
+    <div>
+      <h1>Sistema de Inventario</h1>
+      <p>
+        Monitorea inventarios, conciliaciones, validaciones y desempeño
+        de restaurantes en tiempo real.
+      </p>
+
+      <div style="display:flex; gap:12px; margin-top:20px;">
+        <button class="btn-primary">
+          <i class="fa-solid fa-file-excel"></i>
+          Subir Archivo
+        </button>
+
+        <button class="btn-secondary">
+          <i class="fa-solid fa-chart-column"></i>
+          Ver Reportes
+        </button>
+      </div>
+    </div>
+
+    <div style="text-align:center;">
+      <i class="fa-solid fa-chart-line"
+         style="font-size:120px; opacity:.15;"></i>
+    </div>
+  </div>
+
+  <!-- KPIs -->
+  <div class="cards-grid">
+
+    <div class="card">
+      <div class="card-body">
+        <div class="stat-card">
+          <div class="stat-card-icon">
+            <i class="fa-solid fa-shop"></i>
+          </div>
+          <div class="stat-info">
+            <div class="stat-value" id="kpiRestaurantes">0</div>
+            <div class="stat-label">Restaurantes</div>
+          </div>
         </div>
-    </section>
-</DashboardLayout>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-body">
+        <div class="stat-card">
+          <div class="stat-card-icon" style="background:var(--success-light); color:var(--success)">
+            <i class="fa-solid fa-file-excel"></i>
+          </div>
+          <div class="stat-info">
+            <div class="stat-value" id="kpiArchivos">0</div>
+            <div class="stat-label">Archivos Procesados</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-body">
+        <div class="stat-card">
+          <div class="stat-card-icon" style="background:var(--warning-light); color:var(--warning)">
+            <i class="fa-solid fa-check-double"></i>
+          </div>
+          <div class="stat-info">
+            <div class="stat-value" id="kpiTasa">0%</div>
+            <div class="stat-label">Tasa de Validación</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-body">
+        <div class="stat-card">
+          <div class="stat-card-icon" style="background:var(--danger-light); color:var(--danger)">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+          </div>
+          <div class="stat-info">
+            <div class="stat-value" id="kpiIncidencias">0</div>
+            <div class="stat-label">Incidencias</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- GRAFICOS -->
+  <div
+      style="
+      display:grid;
+      grid-template-columns:2fr 1fr;
+      gap:20px;
+      margin-top:24px;
+  "
+  >
+
+    <!-- BARRAS -->
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">
+          <i class="fa-solid fa-chart-column"></i>
+          Archivos Procesados por Mes
+        </h3>
+      </div>
+
+      <div class="card-body">
+        <canvas id="inventoryChart"></canvas>
+      </div>
+    </div>
+
+    <!-- PIE -->
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">
+          <i class="fa-solid fa-chart-pie"></i>
+          Archivos por Restaurante
+        </h3>
+      </div>
+
+      <div class="card-body">
+        <canvas id="restaurantChart"></canvas>
+      </div>
+    </div>
+
+  </div>
+
+</section>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script type="module">
+const API_URL = window.API_URL || 'http://localhost:3001/api';
+
+async function cargarDashboard() {
+  const token = localStorage.getItem('token');
+
+  try {
+    // Obtener archivos
+    const resArchivos = await fetch(`${API_URL}/archivos`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const dataArchivos = await resArchivos.json();
+    const archivos = dataArchivos.archivos || [];
+
+    // KPIs
+    const totalArchivos = archivos.length;
+    const totalRestaurantes = [...new Set(archivos.map(a => a.restaurante_id))].length;
+    const validacionesExitosas = archivos.filter(a => a.estado === 'validado').length;
+    const tasaValidacion = totalArchivos ? Math.round((validacionesExitosas / totalArchivos) * 100) : 0;
+    const totalIncidencias = archivos.filter(a => a.estado === 'con_errores').length;
+
+    document.getElementById('kpiRestaurantes').textContent = totalRestaurantes;
+    document.getElementById('kpiArchivos').textContent = totalArchivos;
+    document.getElementById('kpiTasa').textContent = tasaValidacion + '%';
+    document.getElementById('kpiIncidencias').textContent = totalIncidencias;
+
+    // Gráfico de Archivos por Mes
+    const meses = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+    const archivosPorMes = Array(12).fill(0);
+    archivos.forEach(a => {
+      const fecha = new Date(a.fecha_subida);
+      archivosPorMes[fecha.getMonth()] += 1;
+    });
+
+    new Chart(document.getElementById('inventoryChart'), {
+      type: 'bar',
+      data: {
+        labels: meses,
+        datasets: [{
+          label: 'Archivos',
+          data: archivosPorMes,
+          backgroundColor: '#4f46e5',
+          borderRadius: 8
+        }]
+      },
+      options: { responsive: true, plugins: { legend: { display: false } } }
+    });
+
+    // Gráfico de Archivos por Restaurante
+    const restaurantesMap = {};
+    archivos.forEach(a => {
+      const nombre = a.restaurante_nombre || a.restaurante || 'Desconocido';
+      restaurantesMap[nombre] = (restaurantesMap[nombre] || 0) + 1;
+    });
+
+    new Chart(document.getElementById('restaurantChart'), {
+      type: 'doughnut',
+      data: {
+        labels: Object.keys(restaurantesMap),
+        datasets: [{ data: Object.values(restaurantesMap), backgroundColor: [
+          '#4f46e5', '#16a34a', '#f59e0b', '#ef4444', '#6366f1'
+        ]}]
+      },
+      options: { responsive: true }
+    });
+
+  } catch (err) {
+    console.error('Error cargando dashboard:', err);
+  }
+}
+
+document.addEventListener('DOMContentLoaded', cargarDashboard);
+</script>

@@ -1,5 +1,5 @@
 // Configuracion de la API
-const API_URL = 'http://localhost:3001/api';
+window.API_URL = window.API_URL || 'http://localhost:3001/api';
 
 let workbook;
 let currentSheetName;
@@ -1128,7 +1128,7 @@ async function guardarEnServidor() {
         formData.append('restaurante', restaurante);
         formData.append('procesar_datos', 'true');
 
-        const response = await fetch(`${API_URL}/archivos/subir`, {
+        const response = await fetch(`${window.API_URL}/archivos/subir`, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${token}`

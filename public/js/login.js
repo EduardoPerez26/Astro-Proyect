@@ -2,8 +2,7 @@
 // Configuracion de la API
 
 
-const API_URL = 'http://localhost:3001/api';
-
+window.API_URL = window.API_URL || 'http://localhost:3001/api';
 document.addEventListener('DOMContentLoaded', function() {
     const loginBtn = document.getElementById('loginBtn');
     const usernameInput = document.getElementById('username');
@@ -37,7 +36,7 @@ document.addEventListener('DOMContentLoaded', function() {
             loginBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Verificando...';
 
             try {
-                const response = await fetch(`${API_URL}/auth/login`, {
+                const response = await fetch(`${window.API_URL}/auth/login`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -127,7 +126,7 @@ document.addEventListener('DOMContentLoaded', function() {
 // Verificar si el token es valido
 async function verificarSesion(token) {
     try {
-        const response = await fetch(`${API_URL}/auth/verificar`, {
+        const response = await fetch(`${window.API_URL}/auth/verificar`, {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${token}`

@@ -1,13 +1,20 @@
-// Sistema de validacion principal
+// ================================
+// Sistema de validación principal
+// ================================
+
 let conceptColumnIndex = 0;
 let currentValidator = null;
+let currentArchivoId = null;
 
+// Elementos del DOM
 const conceptColumnSelect = document.getElementById('conceptColumnSelect');
 const validationStatus = document.getElementById('validationStatus');
 const validateBtn = document.getElementById('validateBtn');
 const restaurantSelect = document.getElementById('restaurantSelect');
 
-// Mapa de validadores disponibles
+// ================================
+// Validadores disponibles
+// ================================
 const validators = {
     'taco-bell': () => window.TacoBellValidator,
     'burger-king': () => window.BurgerKingValidator,
@@ -15,31 +22,38 @@ const validators = {
     'kfc': () => window.KFCValidator
 };
 
+// ================================
+// Funciones auxiliares
+// ================================
 function setValidator(restaurantId) {
     const getValidator = validators[restaurantId];
     if (getValidator) {
         currentValidator = getValidator();
         console.log(`Validador cargado: ${currentValidator.name}`);
-        updateValidationStatus(`Validador: ${currentValidator.name} - Presiona "Validar" para verificar los conceptos`, '');
+        updateValidationStatus(`Validador: ${currentValidator.name} - Presiona "Validar" para verificar los conceptos`);
     } else {
         currentValidator = null;
-        updateValidationStatus('Selecciona un restaurante para validar', '');
+        updateValidationStatus('Selecciona un restaurante para validar');
     }
 }
 
 function normalizeConcept(value) {
-    return String(value || '').trim().replace(/\s+/g, ' ').toLowerCase();
+    return String(value || '')
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // eliminar acentos
+        .trim().replace(/\s+/g, ' ')
+        .toLowerCase();
 }
 
 function updateValidationStatus(message, statusClass = '') {
     if (!validationStatus) return;
     validationStatus.textContent = message;
     validationStatus.className = 'validation-status';
-    if (statusClass) {
-        validationStatus.classList.add(statusClass);
-    }
+    if (statusClass) validationStatus.classList.add(statusClass);
 }
 
+// ================================
+// Validación de conceptos
+// ================================
 function validateConcepts() {
     if (!currentValidator) {
         Swal.fire({
@@ -49,28 +63,23 @@ function validateConcepts() {
             confirmButtonColor: '#2563eb',
             background: '#ffffff',
             color: '#1e293b',
-            backdrop: `rgba(0,0,0,0.4)`,
-            customClass: {
-                popup: 'custom-alert',
-                title: 'custom-title',
-            }
+            backdrop: 'rgba(0,0,0,0.4)',
+            customClass: { popup: 'custom-alert', title: 'custom-title' }
         });
-        return;
+        return { errores: [], tiempoValidacion: 0 };
     }
 
-    if (typeof rowValidation === 'undefined') {
-        window.rowValidation = [];
-    } else {
-        rowValidation = [];
-    }
+    window.rowValidation = [];
 
-    if (typeof tableData === 'undefined' || !tableData.length) {
+    if (!tableData || !tableData.length) {
         updateValidationStatus('No hay datos para validar.', 'alert');
-        return;
+        return { errores: [], tiempoValidacion: 0 };
     }
+
+    const startTime = performance.now();
 
     const expectedConcepts = currentValidator.expectedConcepts;
-    const conceptMap = new Map(expectedConcepts.map(concept => [normalizeConcept(concept), concept]));
+    const conceptMap = new Map(expectedConcepts.map(c => [normalizeConcept(c), c]));
     const foundConcepts = new Set();
     const unknownRows = [];
     const columnCount = tableData[0].length || 1;
@@ -79,9 +88,7 @@ function validateConcepts() {
         const conceptCell = tableData[i][conceptColumnIndex];
         const normalizedConcept = normalizeConcept(conceptCell);
 
-        if (!normalizedConcept) {
-            continue;
-        }
+        if (!normalizedConcept) continue;
 
         if (conceptMap.has(normalizedConcept)) {
             foundConcepts.add(normalizedConcept);
@@ -91,8 +98,7 @@ function validateConcepts() {
         }
     }
 
-    const missingConcepts = expectedConcepts.filter(concept => !foundConcepts.has(normalizeConcept(concept)));
-
+    const missingConcepts = expectedConcepts.filter(c => !foundConcepts.has(normalizeConcept(c)));
     if (missingConcepts.length) {
         missingConcepts.forEach(concept => {
             const newRow = new Array(columnCount).fill('');
@@ -102,141 +108,134 @@ function validateConcepts() {
         });
     }
 
+    // Mensaje y alerta
     let message = '';
     let statusClass = 'success';
-
     if (missingConcepts.length) {
-        message += `Faltan conceptos: ${missingConcepts.join(', ')}. Se agregaron filas vacias para ellos.`;
+        message += `Faltan conceptos: ${missingConcepts.join(', ')}. Se agregaron filas vacías para ellos. `;
         statusClass = 'alert';
     }
-
     if (unknownRows.length) {
-        if (message) {
-            message += ' ';
-        }
         const unknownUnique = [...new Set(unknownRows)];
         message += `Conceptos no reconocidos: ${unknownUnique.join(', ')}.`;
         statusClass = 'alert';
     }
-
     if (!message) {
-        message = `${currentValidator.name}: Todos los conceptos validos estan presentes.`;
+        message = `${currentValidator.name}: Todos los conceptos válidos están presentes.`;
     }
-
     updateValidationStatus(message, statusClass);
 
-    // Construir HTML para la alerta
-    let alertHtml = '';
-    
-    if (missingConcepts.length) {
-        alertHtml += `
-            <div style="text-align:left; margin-bottom: 16px;">
-                <h4 style="color: #dc2626; font-size: 16px; font-weight: 600; margin-bottom: 8px;">
-                    <i class="fa-solid fa-circle-exclamation" style="margin-right: 8px;"></i>
-                    Conceptos Faltantes (${missingConcepts.length})
-                </h4>
-                <ul style="list-style: none; padding: 0; margin: 0; max-height: 150px; overflow-y: auto;">
-                    ${missingConcepts.map(c => `
-                        <li style="padding: 6px 12px; background: #fef2f2; border-left: 3px solid #dc2626; margin-bottom: 4px; border-radius: 4px; font-size: 14px;">
-                            ${c}
-                        </li>
-                    `).join('')}
-                </ul>
-                <p style="font-size: 12px; color: #6b7280; margin-top: 8px;">
-                    Se agregaron filas vacias para estos conceptos al final de la tabla.
-                </p>
-            </div>
-        `;
-    }
-    
-    if (unknownRows.length) {
-        const unknownUnique = [...new Set(unknownRows)];
-        alertHtml += `
-            <div style="text-align:left;">
-                <h4 style="color: #f59e0b; font-size: 16px; font-weight: 600; margin-bottom: 8px;">
-                    <i class="fa-solid fa-triangle-exclamation" style="margin-right: 8px;"></i>
-                    Conceptos No Reconocidos (${unknownUnique.length})
-                </h4>
-                <ul style="list-style: none; padding: 0; margin: 0; max-height: 150px; overflow-y: auto;">
-                    ${unknownUnique.map(c => `
-                        <li style="padding: 6px 12px; background: #fffbeb; border-left: 3px solid #f59e0b; margin-bottom: 4px; border-radius: 4px; font-size: 14px;">
-                            ${c}
-                        </li>
-                    `).join('')}
-                </ul>
-                <p style="font-size: 12px; color: #6b7280; margin-top: 8px;">
-                    Estos conceptos estan en el archivo pero no en la lista de validacion.
-                </p>
-            </div>
-        `;
-    }
+    const tiempoValidacion = (performance.now() - startTime) / 1000;
 
-    if (statusClass === 'alert') {
-        Swal.fire({
-            title: `Validacion ${currentValidator.name}`,
-            html: alertHtml,
-            icon: 'warning',
-            background: '#ffffff',
-            color: '#1e293b',
-            confirmButtonColor: '#2563eb',
-            confirmButtonText: 'Entendido',
-            width: '550px',
-            backdrop: `rgba(0,0,0,0.4)`,
-            customClass: {
-                popup: 'custom-alert',
-                title: 'custom-title',
-                confirmButton: 'custom-confirm',
-                cancelButton: 'custom-cancel'
-            }
+    const errores = rowValidation
+        .map((status, idx) => status === 'unknown' ? { fila: idx+1, mensaje: tableData[idx][conceptColumnIndex] } : null)
+        .filter(Boolean);
+
+    return { errores, tiempoValidacion };
+}
+
+// ================================
+// Guardar validación en backend
+// ================================
+async function guardarValidacion({
+    archivoActualId,
+    tipo_validacion,
+    resultado,
+    total_errores,
+    detalle_errores,
+    duracion_segundos
+}) {
+    try {
+        if (!archivoActualId) {
+            throw new Error('No hay archivo guardado para asociar la validación');
+        }
+
+        const token = localStorage.getItem('token');
+        if (!token) {
+            throw new Error('No existe token de autenticación');
+        }
+
+        const payload = {
+            archivo_id: archivoActualId,
+            tipo_validacion,
+            resultado,
+            total_errores,
+            detalle_errores,
+            duracion_segundos
+        };
+
+        console.log('Enviando validación:', payload);
+
+        const response = await fetch(`${window.API_URL}/api/validaciones`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(payload)
         });
-    } else {
+
+        const responseText = await response.text();
+
+        let data;
+        try {
+            data = JSON.parse(responseText);
+        } catch (e) {
+            console.error('Respuesta no es JSON:', responseText);
+            throw new Error(`El servidor devolvió una respuesta inválida (${response.status})`);
+        }
+
+        if (!response.ok) {
+            throw new Error(data.message || `Error HTTP ${response.status}`);
+        }
+
+        if (!data.success) {
+            throw new Error(data.message || 'No se pudo guardar la validación');
+        }
+
+        console.log('Validación guardada:', data);
+
+        updateValidationStatus('Validación guardada correctamente', 'success');
+
         Swal.fire({
-            title: `Validacion ${currentValidator.name}`,
-            html: `
-                <div style="text-align: center;">
-                    <i class="fa-solid fa-circle-check" style="font-size: 48px; color: #22c55e; margin-bottom: 16px;"></i>
-                    <p style="font-size: 16px; color: #1e293b;">Todos los conceptos validos estan presentes.</p>
-                    <p style="font-size: 14px; color: #6b7280;">${expectedConcepts.length} conceptos verificados</p>
-                </div>
-            `,
-            icon: null,
-            background: '#ffffff',
-            color: '#1e293b',
-            confirmButtonColor: '#22c55e',
-            timer: 2500,
-            showConfirmButton: false,
-            backdrop: `rgba(0,0,0,0.4)`,
-            customClass: {
-                popup: 'custom-alert',
-                title: 'custom-title',
-                confirmButton: 'custom-confirm',
-                cancelButton: 'custom-cancel'
-            }
+            icon: 'success',
+            title: 'Validación guardada',
+            text: 'La validación se guardó correctamente en el servidor',
+            confirmButtonColor: '#10b981'
         });
+
+        return data;
+
+    } catch (error) {
+        console.error('Error guardando validación:', error);
+        updateValidationStatus(`Error: ${error.message}`, 'alert');
+        Swal.fire({
+            icon: 'error',
+            title: 'Error al guardar validación',
+            text: error.message,
+            confirmButtonColor: '#2563eb'
+        });
+        throw error;
     }
 }
 
+// ================================
 // Event listeners
+// ================================
 if (conceptColumnSelect) {
-    conceptColumnSelect.addEventListener('change', function () {
-        conceptColumnIndex = Number(this.value);
+    conceptColumnSelect.addEventListener('change', () => {
+        conceptColumnIndex = Number(conceptColumnSelect.value);
     });
 }
 
 if (restaurantSelect) {
-    restaurantSelect.addEventListener('change', function () {
-        setValidator(this.value);
-    });
-    
-    // Cargar validador inicial si hay uno seleccionado
-    if (restaurantSelect.value) {
-        setValidator(restaurantSelect.value);
-    }
+    restaurantSelect.addEventListener('change', () => setValidator(restaurantSelect.value));
+    if (restaurantSelect.value) setValidator(restaurantSelect.value);
 }
 
 if (validateBtn) {
-    validateBtn.addEventListener('click', function () {
-        if (typeof workbook === 'undefined' || !workbook || typeof tableData === 'undefined' || !tableData.length) {
+    validateBtn.addEventListener('click', async () => {
+        if (!workbook || !tableData?.length) {
             Swal.fire({
                 title: 'Sin archivo',
                 text: 'Primero sube un archivo Excel para validar.',
@@ -244,32 +243,35 @@ if (validateBtn) {
                 confirmButtonColor: '#2563eb',
                 background: '#ffffff',
                 color: '#1e293b',
-                backdrop: `rgba(0,0,0,0.4)`,
-                customClass: {
-                    popup: 'custom-alert',
-                    title: 'custom-title',
-                }
+                backdrop: 'rgba(0,0,0,0.4)',
+                customClass: { popup: 'custom-alert', title: 'custom-title' }
             });
             return;
         }
-        validateConcepts();
-        if (typeof renderTable === 'function') {
-            renderTable();
-        }
+
+        const { errores, tiempoValidacion } = validateConcepts();
+
+        await guardarValidacion({
+            archivoActualId: currentArchivoId,
+            tipo_validacion: 'datos',
+            resultado: errores.length ? 'con_errores' : 'exitoso',
+            total_errores: errores.length,
+            detalle_errores: errores,
+            duracion_segundos: tiempoValidacion
+        });
+
+        if (typeof renderTable === 'function') renderTable();
     });
 }
 
-// Cargar validador desde URL si viene especificado
-function loadValidatorFromURL() {
+// ================================
+// Cargar validador desde URL
+// ================================
+document.addEventListener('DOMContentLoaded', () => {
     const urlParams = new URLSearchParams(window.location.search);
     const restaurant = urlParams.get('restaurant');
     if (restaurant && validators[restaurant]) {
         setValidator(restaurant);
-        if (restaurantSelect) {
-            restaurantSelect.value = restaurant;
-        }
+        if (restaurantSelect) restaurantSelect.value = restaurant;
     }
-}
-
-// Inicializar al cargar la pagina
-document.addEventListener('DOMContentLoaded', loadValidatorFromURL);
+});

@@ -2,12 +2,12 @@
 // ADMINISTRACION DE USUARIOS
 // ============================================
 
-const API_URL = 'http://localhost:3001/api';
+window.API_URL = window.API_URL || 'http://localhost:3001/api';
 let users = [];
 let userToDelete = null;
 
 // Inicializar
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     loadUsers();
 });
 
@@ -18,39 +18,40 @@ document.addEventListener('DOMContentLoaded', function() {
 async function loadUsers() {
     const token = localStorage.getItem('token');
     const tbody = document.getElementById('usersTableBody');
-    
-    // Modo offline - datos de ejemplo
-    if (!token || localStorage.getItem('modoOffline')) {
-        users = [
-            { id: 1, nombre: 'Administrador', email: 'admin@empresa.com', username: 'admin', rol: 'admin', estado: 'activo', ultimo_acceso: '2024-01-15 10:30:00' },
-            { id: 2, nombre: 'Juan Perez', email: 'juan@empresa.com', username: 'jperez', rol: 'supervisor', estado: 'activo', ultimo_acceso: '2024-01-14 15:45:00' },
-            { id: 3, nombre: 'Maria Garcia', email: 'maria@empresa.com', username: 'mgarcia', rol: 'usuario', estado: 'activo', ultimo_acceso: '2024-01-13 09:20:00' },
-            { id: 4, nombre: 'Carlos Lopez', email: 'carlos@empresa.com', username: 'clopez', rol: 'usuario', estado: 'inactivo', ultimo_acceso: '2024-01-10 14:00:00' }
-        ];
-        renderUsers(users);
-        return;
-    }
-    
+
     try {
-        const response = await fetch(`${API_URL}/usuarios`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+        const response = await fetch(`${window.API_URL}/usuarios`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
         });
-        
-        if (response.ok) {
-            const data = await response.json();
-            users = data.usuarios || data;
-            renderUsers(users);
-        } else {
-            throw new Error('Error al cargar usuarios');
+
+        const data = await response.json();
+
+        if (!response.ok || data.error) {
+            throw new Error(data.mensaje || 'Error al cargar usuarios');
         }
+
+        users = (data.usuarios || []).map(user => ({
+            id: user.id,
+            nombre: user.nombre_completo,
+            email: user.email,
+            username: user.username,
+            rol: user.rol,
+            estado: user.activo ? 'activo' : 'inactivo',
+            ultimo_acceso: user.fecha_creacion
+        }));
+
+        renderUsers(users);
+
     } catch (error) {
-        console.error('Error:', error);
-        // Mostrar mensaje de error
+        console.error('Error cargando usuarios:', error);
+
         tbody.innerHTML = `
             <tr>
                 <td colspan="6" class="empty-state">
                     <i class="fa-solid fa-exclamation-circle"></i>
-                    <p>Error al cargar usuarios. Verifica la conexion al servidor.</p>
+                    <p>${error.message}</p>
                 </td>
             </tr>
         `;
@@ -63,7 +64,7 @@ async function loadUsers() {
 
 function renderUsers(usersToRender) {
     const tbody = document.getElementById('usersTableBody');
-    
+
     if (!usersToRender || usersToRender.length === 0) {
         tbody.innerHTML = `
             <tr>
@@ -75,7 +76,7 @@ function renderUsers(usersToRender) {
         `;
         return;
     }
-    
+
     tbody.innerHTML = usersToRender.map(user => {
         const initials = getInitials(user.nombre);
         const roleClass = user.rol;
@@ -83,7 +84,7 @@ function renderUsers(usersToRender) {
         const statusClass = user.estado;
         const statusLabel = user.estado === 'activo' ? 'Activo' : 'Inactivo';
         const lastAccess = formatDate(user.ultimo_acceso);
-        
+
         return `
             <tr data-id="${user.id}">
                 <td>
@@ -125,19 +126,19 @@ function filterUsers() {
     const searchTerm = document.getElementById('searchUsers').value.toLowerCase();
     const roleFilter = document.getElementById('filterRole').value;
     const statusFilter = document.getElementById('filterStatus').value;
-    
+
     const filtered = users.filter(user => {
-        const matchesSearch = 
+        const matchesSearch =
             user.nombre.toLowerCase().includes(searchTerm) ||
             user.email.toLowerCase().includes(searchTerm) ||
             user.username.toLowerCase().includes(searchTerm);
-        
+
         const matchesRole = !roleFilter || user.rol === roleFilter;
         const matchesStatus = !statusFilter || user.estado === statusFilter;
-        
+
         return matchesSearch && matchesRole && matchesStatus;
     });
-    
+
     renderUsers(filtered);
 }
 
@@ -151,16 +152,16 @@ function openUserModal(userId = null) {
     const title = document.getElementById('modalTitle');
     const passwordHelp = document.getElementById('passwordHelp');
     const passwordInput = document.getElementById('userPassword');
-    
+
     form.reset();
     document.getElementById('userId').value = '';
-    
+
     if (userId) {
         // Modo edicion
         title.textContent = 'Editar Usuario';
         passwordHelp.style.display = 'block';
         passwordInput.required = false;
-        
+
         const user = users.find(u => u.id === userId);
         if (user) {
             document.getElementById('userId').value = user.id;
@@ -176,7 +177,7 @@ function openUserModal(userId = null) {
         passwordHelp.style.display = 'none';
         passwordInput.required = true;
     }
-    
+
     modal.classList.add('active');
 }
 
@@ -191,16 +192,16 @@ function closeUserModal() {
 async function saveUser() {
     const userId = document.getElementById('userId').value;
     const userData = {
-        nombre: document.getElementById('userName').value,
-        email: document.getElementById('userEmail').value,
-        username: document.getElementById('userUsername').value,
+        nombre_completo: document.getElementById('userName').value.trim(),
+        email: document.getElementById('userEmail').value.trim(),
+        username: document.getElementById('userUsername').value.trim(),
         password: document.getElementById('userPassword').value,
         rol: document.getElementById('userRole').value,
-        estado: document.getElementById('userStatus').value
+        activo: document.getElementById('userStatus').value === 'activo'
     };
-    
-    // Validaciones
-    if (!userData.nombre || !userData.email || !userData.username || !userData.rol) {
+
+    // Validaciones locales
+    if (!userData.nombre_completo || !userData.email || !userData.username || !userData.rol) {
         Swal.fire({
             icon: 'warning',
             title: 'Campos requeridos',
@@ -208,18 +209,27 @@ async function saveUser() {
         });
         return;
     }
-    
+
     if (!userId && !userData.password) {
         Swal.fire({
             icon: 'warning',
-            title: 'Contrasena requerida',
-            text: 'Debes ingresar una contrasena para el nuevo usuario.'
+            title: 'Contraseña requerida',
+            text: 'Debes ingresar una contraseña para el nuevo usuario.'
         });
         return;
     }
-    
+
+    if (userData.password && userData.password.length < 8) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Contraseña inválida',
+            text: 'La contraseña debe tener al menos 8 caracteres.'
+        });
+        return;
+    }
+
     const token = localStorage.getItem('token');
-    
+
     // Modo offline
     if (!token || localStorage.getItem('modoOffline')) {
         if (userId) {
@@ -237,10 +247,10 @@ async function saveUser() {
             };
             users.push(newUser);
         }
-        
+
         renderUsers(users);
         closeUserModal();
-        
+
         Swal.fire({
             icon: 'success',
             title: userId ? 'Usuario actualizado' : 'Usuario creado',
@@ -250,14 +260,17 @@ async function saveUser() {
         });
         return;
     }
-    
+
+    // Enviar al backend
     try {
-        const url = userId 
+        const url = userId
             ? `${API_URL}/usuarios/${userId}`
             : `${API_URL}/usuarios`;
-        
+
         const method = userId ? 'PUT' : 'POST';
-        
+
+        console.log('Enviando usuario:', userData); // Para depuración
+
         const response = await fetch(url, {
             method,
             headers: {
@@ -266,22 +279,36 @@ async function saveUser() {
             },
             body: JSON.stringify(userData)
         });
-        
+
         const data = await response.json();
-        
-        if (response.ok && data.success) {
+
+        if (response.ok && !data.error) {
             closeUserModal();
             loadUsers();
-            
+
             Swal.fire({
                 icon: 'success',
                 title: userId ? 'Usuario actualizado' : 'Usuario creado',
-                text: data.message || 'Los cambios se guardaron correctamente.',
+                text: data.mensaje || 'Los cambios se guardaron correctamente.',
                 timer: 2000,
                 showConfirmButton: false
             });
+        } else if (response.status === 409) {
+            // Conflicto: username o email duplicado
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: data.mensaje || 'El nombre de usuario o correo electrónico ya existe.'
+            });
+        } else if (response.status === 400) {
+            // Validaciones del backend
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: data.mensaje || 'Datos inválidos. Revisa los campos.'
+            });
         } else {
-            throw new Error(data.message || 'Error al guardar');
+            throw new Error(data.mensaje || 'Error al guardar el usuario.');
         }
     } catch (error) {
         Swal.fire({
@@ -317,50 +344,51 @@ function closeDeleteModal() {
 
 async function confirmDelete() {
     if (!userToDelete) return;
-    
+
     const token = localStorage.getItem('token');
-    
-    // Modo offline
-    if (!token || localStorage.getItem('modoOffline')) {
-        users = users.filter(u => u.id !== userToDelete);
-        renderUsers(users);
-        closeDeleteModal();
-        
-        Swal.fire({
-            icon: 'success',
-            title: 'Usuario eliminado',
-            timer: 2000,
-            showConfirmButton: false
-        });
-        return;
-    }
-    
+
     try {
-        const response = await fetch(`${API_URL}/usuarios/${userToDelete}`, {
-            method: 'DELETE',
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        
+        const response = await fetch(
+            `${window.API_URL}/usuarios/${userToDelete}`,
+            {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            }
+        );
+
         const data = await response.json();
-        
-        if (response.ok && data.success) {
+
+        console.log('DELETE STATUS:', response.status);
+        console.log('DELETE RESPONSE:', data);
+
+        if (response.ok && !data.error) {
+
+            // Eliminar usuario de la lista local
+            users = users.filter(u => u.id !== userToDelete);
+            renderUsers(users);
+
             closeDeleteModal();
-            loadUsers();
-            
+
             Swal.fire({
                 icon: 'success',
                 title: 'Usuario eliminado',
+                text: data.mensaje,
                 timer: 2000,
                 showConfirmButton: false
             });
+
         } else {
-            throw new Error(data.message || 'Error al eliminar');
+            throw new Error(data.mensaje || 'Error al eliminar');
         }
+
     } catch (error) {
+        console.error(error);
         Swal.fire({
             icon: 'error',
             title: 'Error',
-            text: error.message || 'No se pudo eliminar el usuario.'
+            text: error.message
         });
     }
 }
@@ -397,7 +425,7 @@ function getRoleLabel(role) {
 
 function formatDate(dateString) {
     if (!dateString || dateString === 'Nunca') return 'Nunca';
-    
+
     try {
         const date = new Date(dateString);
         return date.toLocaleDateString('es-ES', {

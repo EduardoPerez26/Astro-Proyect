@@ -2,8 +2,7 @@
 // GESTION DE DOCUMENTOS
 // ============================================
 
-const API_URL = localStorage.getItem('apiUrl') || 'http://localhost:3001/api';
-
+window.API_URL = window.API_URL || 'http://localhost:3001/api';
 let documentos = [];
 let paginaActual = 1;
 const porPagina = 10;
@@ -45,7 +44,7 @@ async function cargarDocumentos() {
     }
     
     try {
-        const response = await fetch(`${API_URL}/archivos`, {
+        const response = await fetch(`${window.API_URL}/archivos`, {
             headers: {
                 'Authorization': `Bearer ${token}`
             }
@@ -310,7 +309,7 @@ async function descargarArchivo(id) {
     }
     
     try {
-        const response = await fetch(`${API_URL}/archivos/${id}/descargar`, {
+        const response = await fetch(`${window.API_URL}/archivos/${id}/descargar`, {
             headers: {
                 'Authorization': `Bearer ${token}`
             }
@@ -363,7 +362,7 @@ async function eliminarArchivo(id) {
     }
     
     try {
-        const response = await fetch(`${API_URL}/archivos/${id}`, {
+        const response = await fetch(`${window.API_URL}/archivos/${id}`, {
             method: 'DELETE',
             headers: {
                 'Authorization': `Bearer ${token}`
