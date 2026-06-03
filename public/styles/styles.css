@@ -2101,4 +2101,334 @@ input[type=file] {
     }
     
 
-    
+    .permission-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 18px 20px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.permission-info {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.permission-details h4 {
+    margin: 0;
+    font-size: 16px;
+}
+
+.permission-details p {
+    margin: 4px 0 0;
+    color: #6b7280;
+    font-size: 14px;
+}
+
+.permission-toggle {
+    display: flex;
+    align-items: center;
+}
+
+/* Ocultar checkbox real */
+.toggle-input {
+    display: none;
+}
+
+/* Switch */
+.toggle-switch {
+    width: 54px;
+    height: 30px;
+    background: #d1d5db;
+    border-radius: 999px;
+    position: relative;
+    cursor: pointer;
+    transition: all .3s ease;
+}
+
+.toggle-switch::before {
+    content: '';
+    position: absolute;
+    width: 24px;
+    height: 24px;
+    background: white;
+    border-radius: 50%;
+    left: 3px;
+    top: 3px;
+    transition: all .3s ease;
+    box-shadow: 0 2px 5px rgba(0,0,0,.15);
+}
+
+.toggle-input:checked + .toggle-switch {
+    background: #3b82f6;
+}
+
+.toggle-input:checked + .toggle-switch::before {
+    transform: translateX(24px);
+}
+
+.toggle-input:disabled + .toggle-switch {
+    opacity: .5;
+    cursor: not-allowed;
+}
+
+/* =============================================
+   LOGIN PREMIUM
+============================================= */
+
+.login-screen {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    position: relative;
+    overflow: hidden;
+
+    background:
+        radial-gradient(circle at top left,
+            rgba(59,130,246,.15),
+            transparent 40%),
+        radial-gradient(circle at bottom right,
+            rgba(37,99,235,.12),
+            transparent 40%),
+        linear-gradient(
+            135deg,
+            #f8fafc 0%,
+            #eef4ff 50%,
+            #f8fafc 100%
+        );
+}
+
+/* Glow animado */
+.login-screen::before {
+    content: '';
+    position: absolute;
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(
+        circle,
+        rgba(59,130,246,.15),
+        transparent 70%
+    );
+    top: -200px;
+    right: -150px;
+    animation: floatGlow 10s ease-in-out infinite;
+}
+
+.login-screen::after {
+    content: '';
+    position: absolute;
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(
+        circle,
+        rgba(37,99,235,.12),
+        transparent 70%
+    );
+    bottom: -150px;
+    left: -100px;
+    animation: floatGlow 12s ease-in-out infinite reverse;
+}
+
+.login-card {
+    width: 100%;
+    max-width: 460px;
+
+    position: relative;
+    z-index: 2;
+
+    background: rgba(255,255,255,.85);
+    backdrop-filter: blur(16px);
+
+    border: 1px solid rgba(255,255,255,.5);
+    border-radius: 24px;
+
+    padding: 48px;
+
+    box-shadow:
+        0 25px 50px rgba(0,0,0,.08),
+        0 10px 25px rgba(59,130,246,.08);
+
+    animation: loginAppear .8s ease-out;
+    transition: all .35s ease;
+}
+
+.login-card:hover {
+    transform: translateY(-4px);
+
+    box-shadow:
+        0 35px 70px rgba(0,0,0,.12),
+        0 15px 35px rgba(59,130,246,.18);
+}
+
+/* Halo detrás */
+.login-card::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+
+    border-radius: 24px;
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(59,130,246,.4),
+            rgba(37,99,235,.1),
+            transparent
+        );
+
+    z-index: -1;
+    opacity: .5;
+}
+
+/* Header */
+.login-header {
+    text-align: center;
+    margin-bottom: 36px;
+}
+
+.login-logo {
+    width: 82px;
+    height: 82px;
+
+    margin: 0 auto 24px;
+
+    border-radius: 22px;
+
+    background: linear-gradient(
+        135deg,
+        var(--primary),
+        var(--primary-dark)
+    );
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    box-shadow:
+        0 15px 30px rgba(59,130,246,.35);
+
+    animation: floatLogo 4s ease-in-out infinite;
+}
+
+.login-logo i {
+    font-size: 34px;
+    color: white;
+}
+
+.login-card h1 {
+    font-size: 30px;
+    font-weight: 800;
+    color: var(--gray-900);
+    margin-bottom: 10px;
+    letter-spacing: -.5px;
+}
+
+.login-subtitle {
+    color: var(--gray-500);
+    font-size: 15px;
+}
+
+/* Inputs */
+.login-form .form-group {
+    margin-bottom: 22px;
+}
+
+.login-form .form-label {
+    font-weight: 600;
+    color: var(--gray-700);
+    margin-bottom: 8px;
+}
+
+.login-form .form-control {
+    height: 56px;
+
+    border: 2px solid var(--gray-200);
+    border-radius: 14px;
+
+    background: rgba(255,255,255,.9);
+
+    transition: all .25s ease;
+}
+
+.login-form .form-control:hover {
+    border-color: var(--gray-300);
+}
+
+.login-form .form-control:focus {
+    border-color: var(--primary);
+
+    transform: translateY(-1px);
+
+    box-shadow:
+        0 0 0 4px rgba(59,130,246,.12),
+        0 10px 25px rgba(59,130,246,.10);
+}
+
+/* Botón */
+.btn-log,
+.login-form .btn {
+    height: 56px;
+
+    border-radius: 14px;
+
+    font-size: 15px;
+    font-weight: 700;
+
+    background: linear-gradient(
+        135deg,
+        var(--primary),
+        var(--primary-dark)
+    );
+
+    box-shadow:
+        0 10px 25px rgba(59,130,246,.25);
+
+    transition: all .25s ease;
+}
+
+.btn-log:hover,
+.login-form .btn:hover {
+    transform: translateY(-3px);
+
+    box-shadow:
+        0 18px 35px rgba(59,130,246,.35);
+}
+
+.btn-log:active,
+.login-form .btn:active {
+    transform: translateY(0);
+}
+
+/* Animaciones */
+
+@keyframes loginAppear {
+    from {
+        opacity: 0;
+        transform: translateY(40px) scale(.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes floatLogo {
+    0%,100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-8px);
+    }
+}
+
+@keyframes floatGlow {
+    0%,100% {
+        transform: translate(0,0);
+    }
+    50% {
+        transform: translate(30px,20px);
+    }
+}

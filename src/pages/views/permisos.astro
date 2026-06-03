@@ -3,69 +3,70 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
 ---
 
 <DashboardLayout title="Permisos - Sistema de Inventario">
-    <section class="tab active" id="permisos">
-        <!-- Page Header -->
-        <div class="page-header">
-            <div class="page-header-left">
-                <h1 class="page-title">Configuracion de Permisos</h1>
-                <p class="page-subtitle">Asigna permisos de acceso a las secciones del sistema</p>
-            </div>
-            <div class="page-header-actions">
-                <button class="btn btn-secondary" onclick="window.history.back()">
-                    <i class="fa-solid fa-arrow-left"></i>
-                    Volver
-                </button>
-            </div>
-        </div>
 
-        <!-- Info Usuario -->
-        <div class="card" style="margin-bottom: 24px;" id="userInfoCard">
-            <div class="card-body" style="padding: 20px;">
-                <div style="display: flex; align-items: center; gap: 16px;">
-                    <div class="user-avatar-large" id="userAvatar">--</div>
-                    <div>
-                        <h3 style="font-size: 18px; font-weight: 600; color: var(--gray-900);" id="permUserName">Cargando...</h3>
-                        <p style="font-size: 14px; color: var(--gray-500);" id="permUserEmail">---</p>
-                        <span class="role-badge" id="permUserRole" style="margin-top: 8px;">---</span>
-                    </div>
-                </div>
-            </div>
-        </div>
+<section class="tab active" id="permisos">
 
-        <!-- Permisos por Seccion -->
-        <div class="card">
-            <div class="card-header" style="padding: 20px; border-bottom: 1px solid var(--gray-100);">
-                <h3 style="font-size: 16px; font-weight: 600; color: var(--gray-900);">
-                    <i class="fa-solid fa-key" style="margin-right: 8px; color: var(--primary);"></i>
-                    Permisos de acceso al menu
-                </h3>
-                <p style="font-size: 13px; color: var(--gray-500); margin-top: 4px;">
-                    Selecciona las secciones a las que el usuario tendra acceso
-                </p>
-            </div>
-            <div class="card-body" style="padding: 0;">
-                <div class="permissions-list" id="permissionsList">
-                    <!-- Se genera dinamicamente -->
-                </div>
-            </div>
-        </div>
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="page-header-left">
+      <h1 class="page-title">Configuración de Permisos</h1>
+      <p class="page-subtitle">Asigna permisos de acceso a las secciones del sistema</p>
+    </div>
+    <div class="page-header-actions">
+      <button class="btn btn-secondary" onclick="window.history.back()">
+        <i class="fa-solid fa-arrow-left"></i>
+        Volver
+      </button>
+    </div>
+  </div>
 
-        <!-- Acciones -->
-        <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px;">
-            <button class="btn btn-secondary" onclick="resetPermissions()">
-                <i class="fa-solid fa-rotate-left"></i>
-                Restablecer
-            </button>
-            <button class="btn btn-primary" onclick="savePermissions()">
-                <i class="fa-solid fa-floppy-disk"></i>
-                Guardar Permisos
-            </button>
+  <!-- Info Usuario -->
+  <div class="card" style="margin-bottom: 24px;" id="userInfoCard">
+    <div class="card-body" style="padding: 20px;">
+      <div style="display: flex; align-items: center; gap: 16px;">
+        <div class="user-avatar-large" id="userAvatar">--</div>
+        <div>
+          <h3 style="font-size: 18px; font-weight: 600; color: var(--gray-900);" id="permUserName">Cargando...</h3>
+          <p style="font-size: 14px; color: var(--gray-500);" id="permUserEmail">---</p>
+          <span class="role-badge" id="permUserRole" style="margin-top: 8px;">---</span>
         </div>
-    </section>
+      </div>
+    </div>
+  </div>
 
-    <script is:inline src="/js/permisos.js"></script>
+  <!-- Permisos por Sección -->
+  <div class="card">
+    <div class="card-header" style="padding: 20px; border-bottom: 1px solid var(--gray-100);">
+      <h3 style="font-size: 16px; font-weight: 600; color: var(--gray-900);">
+        <i class="fa-solid fa-key" style="margin-right: 8px; color: var(--primary);"></i>
+        Permisos de acceso al menú
+      </h3>
+      <p style="font-size: 13px; color: var(--gray-500); margin-top: 4px;">
+        Selecciona las secciones a las que el usuario tendrá acceso
+      </p>
+    </div>
+    <div class="card-body" style="padding: 0;">
+      <div class="permissions-list" id="permissionsList">
+        <!-- Checkboxes generados dinámicamente desde permisos.js -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Acciones -->
+  <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px;">
+    <button class="btn btn-secondary" onclick="resetPermissions()">
+      <i class="fa-solid fa-rotate-left"></i>
+      Restablecer
+    </button>
+    <button class="btn btn-primary" onclick="savePermissions()">
+      <i class="fa-solid fa-floppy-disk"></i>
+      Guardar Permisos
+    </button>
+  </div>
+
+</section>
+
+<!-- Script de permisos -->
+<script type="module" src="/js/permisos.js"></script>
+
 </DashboardLayout>
-
-<style>
-   
-</style>

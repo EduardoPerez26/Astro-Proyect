@@ -343,3 +343,7 @@ function getRoleLabel(role) {
     };
     return labels[role] || role;
 }
+
+window.togglePermission = togglePermission;
+window.resetPermissions = resetPermissions;
+window.savePermissions = savePermissions;
