@@ -2,65 +2,427 @@
 import DashboardLayout from '../../layouts/DashboardLayout.astro';
 ---
 
-<DashboardLayout title="Documentos - Sistema de Inventario">
-    <section class="tab active" id="documentos">
-        <div class="page-header">
-            <div class="page-header-left">
-                <h1 class="page-title">Documentos</h1>
-                <p class="page-subtitle">Archivos agrupados por restaurante disponibles para descarga.</p>
+<DashboardLayout title="Documentos">
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Documentos</h1>
+            <p class="page-subtitle">Todos los archivos Excel subidos al sistema</p>
+        </div>
+        <button class="btn btn-primary" onclick="window.location.href='/views/editor'">
+            <i class="fa-solid fa-upload"></i>
+            Subir nuevo
+        </button>
+    </div>
+
+    <!-- Filtros -->
+    <div class="filters-bar">
+        <div class="search-box">
+            <i class="fa-solid fa-search"></i>
+            <input type="text" id="searchInput" placeholder="Buscar por nombre de archivo...">
+        </div>
+        
+        <select id="filterRestaurante" class="filter-select">
+            <option value="">Todos los restaurantes</option>
+            <option value="taco-bell">Taco Bell</option>
+            <option value="burger-king">Burger King</option>
+            <option value="popeyes">Popeyes</option>
+            <option value="kfc">KFC</option>
+        </select>
+        
+        <select id="filterEstado" class="filter-select">
+            <option value="">Todos los estados</option>
+            <option value="pendiente">Pendiente</option>
+            <option value="validado">Validado</option>
+            <option value="con_errores">Con errores</option>
+            <option value="procesado">Procesado</option>
+        </select>
+        
+        <input type="date" id="filterFechaDesde" class="filter-input" title="Desde">
+        <input type="date" id="filterFechaHasta" class="filter-input" title="Hasta">
+        
+        <button class="btn btn-secondary" onclick="limpiarFiltros()">
+            <i class="fa-solid fa-times"></i>
+            Limpiar
+        </button>
+    </div>
+
+    <!-- Tabla de documentos -->
+    <div class="table-container">
+        <table class="data-table" id="documentosTable">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Archivo</th>
+                    <th>Restaurante</th>
+                    <th>Hojas</th>
+                    <th>Tamano</th>
+                    <th>Estado</th>
+                    <th>Subido por</th>
+                    <th>Fecha</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="documentosBody">
+                <!-- Se llena con JavaScript -->
+            </tbody>
+        </table>
+        
+        <div id="emptyState" class="empty-state" style="display: none;">
+            <i class="fa-solid fa-folder-open"></i>
+            <h3>No hay documentos</h3>
+            <p>No se encontraron documentos con los filtros seleccionados</p>
+        </div>
+        
+        <div id="loadingState" class="loading-state">
+            <i class="fa-solid fa-spinner fa-spin"></i>
+            <p>Cargando documentos...</p>
+        </div>
+    </div>
+
+    <!-- Paginacion -->
+    <div class="pagination" id="pagination">
+        <button class="btn-page" id="btnPrev" onclick="cambiarPagina(-1)">
+            <i class="fa-solid fa-chevron-left"></i>
+        </button>
+        <span id="pageInfo">Pagina 1 de 1</span>
+        <button class="btn-page" id="btnNext" onclick="cambiarPagina(1)">
+            <i class="fa-solid fa-chevron-right"></i>
+        </button>
+    </div>
+
+    <!-- Modal de detalles -->
+    <div id="modalDetalles" class="modal">
+        <div class="modal-content modal-lg">
+            <div class="modal-header">
+                <h2 id="modalTitulo">Detalles del documento</h2>
+                <button class="modal-close" onclick="cerrarModal()">&times;</button>
             </div>
-            <div class="page-header-actions">
-                <button class="btn btn-secondary" onclick="window.history.back()">
-                    <i class="fa-solid fa-arrow-left"></i>
-                    Volver
+            <div class="modal-body" id="modalBody">
+                <!-- Contenido dinamico -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="cerrarModal()">Cerrar</button>
+                <button class="btn btn-primary" id="btnDescargar">
+                    <i class="fa-solid fa-download"></i>
+                    Descargar
                 </button>
             </div>
         </div>
+    </div>
 
-        <div class="filters-panel">
-            <div class="filters-header">
-                <i class="fa-solid fa-filter"></i>
-                Filtros de documentos
-            </div>
-            <div class="filters-grid">
-                <div class="filter-group">
-                    <label class="filter-label" for="documentFilterRestaurant">Restaurante</label>
-                    <select id="documentFilterRestaurant" class="form-control">
-                        <option value="">Todos los restaurantes</option>
-                        <option value="taco-bell">Taco Bell</option>
-                        <option value="burger-king">Burger King</option>
-                        <option value="popeyes">Popeyes</option>
-                        <option value="kfc">KFC</option>
-                    </select>
-                </div>
-                <div class="filter-group">
-                    <label class="filter-label" for="documentSearchInput">Buscar archivo</label>
-                    <input id="documentSearchInput" class="form-control" type="text" placeholder="Nombre, usuario o restaurante">
-                </div>
-                <div class="filter-group">
-                    <label class="filter-label" for="documentSortSelect">Ordenar por</label>
-                    <select id="documentSortSelect" class="form-control">
-                        <option value="newest">Más recientes</option>
-                        <option value="oldest">Más antiguos</option>
-                        <option value="name">Nombre A-Z</option>
-                    </select>
-                </div>
-                <div class="filter-group" style="display:flex; align-items:flex-end; justify-content:flex-end;">
-                    <button id="documentFilterReset" class="btn btn-secondary" type="button">
-                        <i class="fa-solid fa-rotate"></i>
-                        Limpiar filtros
-                    </button>
-                </div>
-            </div>
-        </div>
+    <style>
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+        
+        .page-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin: 0;
+        }
+        
+        .page-subtitle {
+            font-size: 14px;
+            color: var(--gray-500);
+            margin: 4px 0 0 0;
+        }
+        
+        .filters-bar {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+            padding: 16px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .search-box {
+            position: relative;
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        .search-box i {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--gray-400);
+        }
+        
+        .search-box input {
+            width: 100%;
+            padding: 10px 10px 10px 38px;
+            border: 1px solid var(--gray-300);
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        
+        .filter-select, .filter-input {
+            padding: 10px 12px;
+            border: 1px solid var(--gray-300);
+            border-radius: 8px;
+            font-size: 14px;
+            background: white;
+            min-width: 150px;
+        }
+        
+        .table-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .data-table th {
+            background: var(--gray-50);
+            padding: 14px 16px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 13px;
+            color: var(--gray-600);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid var(--gray-200);
+        }
+        
+        .data-table td {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--gray-100);
+            font-size: 14px;
+            color: var(--gray-700);
+        }
+        
+        .data-table tbody tr:hover {
+            background: var(--gray-50);
+        }
+        
+        .file-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .file-icon {
+            width: 36px;
+            height: 36px;
+            background: #dcfce7;
+            color: #16a34a;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .file-name {
+            font-weight: 500;
+            color: var(--gray-900);
+        }
+        
+        .file-sheets {
+            font-size: 12px;
+            color: var(--gray-500);
+        }
+        
+        .badge {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .badge-pendiente {
+            background: #fef3c7;
+            color: #d97706;
+        }
+        
+        .badge-validado {
+            background: #dcfce7;
+            color: #16a34a;
+        }
+        
+        .badge-con_errores {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+        
+        .badge-procesado {
+            background: #dbeafe;
+            color: #2563eb;
+        }
+        
+        .actions-cell {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .btn-icon {
+            width: 32px;
+            height: 32px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        
+        .btn-icon.view {
+            background: #dbeafe;
+            color: #2563eb;
+        }
+        
+        .btn-icon.download {
+            background: #dcfce7;
+            color: #16a34a;
+        }
+        
+        .btn-icon.delete {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+        
+        .btn-icon:hover {
+            transform: scale(1.1);
+        }
+        
+        .empty-state, .loading-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--gray-500);
+        }
+        
+        .empty-state i, .loading-state i {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+        
+        .empty-state h3 {
+            margin: 0 0 8px 0;
+            color: var(--gray-700);
+        }
+        
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 16px;
+            margin-top: 20px;
+        }
+        
+        .btn-page {
+            width: 36px;
+            height: 36px;
+            border: 1px solid var(--gray-300);
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .btn-page:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow: hidden;
+        }
+        
+        .modal-lg {
+            max-width: 700px;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--gray-200);
+        }
+        
+        .modal-header h2 {
+            margin: 0;
+            font-size: 20px;
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--gray-500);
+        }
+        
+        .modal-body {
+            padding: 24px;
+            overflow-y: auto;
+            max-height: 50vh;
+        }
+        
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            padding: 16px 24px;
+            border-top: 1px solid var(--gray-200);
+        }
+        
+        .detail-row {
+            display: flex;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--gray-100);
+        }
+        
+        .detail-label {
+            width: 140px;
+            font-weight: 500;
+            color: var(--gray-600);
+        }
+        
+        .detail-value {
+            flex: 1;
+            color: var(--gray-900);
+        }
+    </style>
 
-        <div class="card" style="margin-bottom: 24px;">
-            <div class="card-body">
-                <div class="results-info" id="documentResultsInfo">Cargando documentos...</div>
-                <div id="documentsByRestaurant"></div>
-            </div>
-        </div>
-    </section>
-
-    <script is:inline src="/js/scripts.js"></script>
+    <script is:inline src="/js/documentos.js"></script>
 </DashboardLayout>

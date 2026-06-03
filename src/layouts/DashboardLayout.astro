@@ -1,6 +1,7 @@
 ---
 import BaseLayout from './BaseLayout.astro';
 import Sidebar from '../components/Sidebar.astro';
+import Topbar from '../components/Topbar.astro';
 
 interface Props {
   title: string;
@@ -11,13 +12,10 @@ const { title, includeSheetJS = false } = Astro.props;
 ---
 
 <BaseLayout title={title} includeSheetJS={includeSheetJS}>
-    <div class="app-container">
-        <Sidebar />
-        <div class="main-wrapper">
-            <main class="main">
-                <slot />
-            </main>
-        </div>
-    </div>
+    <Sidebar />
+    <main class="main" id="mainContent">
+        <Topbar />
+        <slot />
+    </main>
     <script is:inline src="/js/sidebar-loader.js"></script>
 </BaseLayout>

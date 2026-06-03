@@ -19,6 +19,12 @@ router.post('/login', async (req, res) => {
     try {
         const { username, password } = req.body;
 
+        console.log('================================');
+        console.log('LOGIN INTENT');
+        console.log('Username recibido:', username);
+        console.log('Password recibida:', password);
+        console.log('================================');
+
         // Validar que se enviaron los datos
         if (!username || !password) {
             return res.status(400).json({
@@ -27,13 +33,17 @@ router.post('/login', async (req, res) => {
             });
         }
 
-        // Buscar usuario en la base de datos
+        // Buscar usuario
         const [usuarios] = await pool.query(
             'SELECT * FROM usuarios WHERE username = ? AND activo = TRUE',
             [username]
         );
 
+        console.log('Usuarios encontrados:', usuarios.length);
+
         if (usuarios.length === 0) {
+            console.log('ERROR: Usuario no encontrado o inactivo');
+
             return res.status(401).json({
                 error: true,
                 mensaje: 'Usuario o contrasena incorrectos'
@@ -42,23 +52,29 @@ router.post('/login', async (req, res) => {
 
         const usuario = usuarios[0];
 
-        if (!process.env.JWT_SECRET) {
-            return res.status(500).json({
-                error: true,
-                mensaje: 'JWT_SECRET no configurado'
-            });
-        }
+        console.log('ID Usuario:', usuario.id);
+        console.log('Username BD:', usuario.username);
+        console.log('Activo:', usuario.activo);
+        console.log('Hash BD:', usuario.password);
 
-        const passwordValido = await bcrypt.compare(password, usuario.password);
+        const passwordValido = await bcrypt.compare(
+            password,
+            usuario.password
+        );
+
+        console.log('Password válida:', passwordValido);
 
         if (!passwordValido) {
+            console.log('ERROR: Contraseña incorrecta');
+
             return res.status(401).json({
                 error: true,
                 mensaje: 'Usuario o contrasena incorrectos'
             });
         }
 
-        // Crear token JWT
+        console.log('LOGIN EXITOSO');
+
         const token = jwt.sign(
             {
                 id: usuario.id,
@@ -68,17 +84,18 @@ router.post('/login', async (req, res) => {
                 rol: usuario.rol
             },
             process.env.JWT_SECRET,
-            { expiresIn: process.env.JWT_EXPIRES_IN || '24h' }
+            {
+                expiresIn: process.env.JWT_EXPIRES_IN || '24h'
+            }
         );
 
-        // Guardar sesion en la base de datos
         await pool.query(
-            `INSERT INTO sesiones (usuario_id, token, ip_address, user_agent, fecha_expiracion)
-             VALUES (?, ?, ?, ?, DATE_ADD(NOW(), INTERVAL 24 HOUR))`,
+            `INSERT INTO sesiones
+            (usuario_id, token, ip_address, user_agent, fecha_expiracion)
+            VALUES (?, ?, ?, ?, DATE_ADD(NOW(), INTERVAL 24 HOUR))`,
             [usuario.id, token, req.ip, req.headers['user-agent']]
         );
 
-        // Responder con el token y datos del usuario
         res.json({
             error: false,
             mensaje: 'Login exitoso',
@@ -93,7 +110,8 @@ router.post('/login', async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Error en login:', error);
+        console.error('ERROR LOGIN:', error);
+
         res.status(500).json({
             error: true,
             mensaje: 'Error al iniciar sesion'

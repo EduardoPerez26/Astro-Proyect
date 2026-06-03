@@ -1,11 +1,15 @@
 // Login conectado al Backend con MySQL
 // Configuracion de la API
-const API_URL = 'http://localhost:3001/api'; // Cambia esto si tu backend esta en otro puerto/URL
 
-document.addEventListener('DOMContentLoaded', function () {
+
+const API_URL = 'http://localhost:3001/api';
+
+document.addEventListener('DOMContentLoaded', function() {
     const loginBtn = document.getElementById('loginBtn');
     const usernameInput = document.getElementById('username');
     const passwordInput = document.getElementById('password');
+
+    
 
     // Verificar si ya hay sesion activa
     const token = localStorage.getItem('token');
@@ -14,7 +18,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     if (loginBtn) {
-        loginBtn.addEventListener('click', async function () {
+        loginBtn.addEventListener('click', async function() {
             const username = usernameInput.value.trim();
             const password = passwordInput.value.trim();
 
@@ -45,7 +49,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 });
 
                 const data = await response.json();
-                if (response.ok && !data.error) {
+
+               if (response.ok && !data.error) {
+                    // Guardar token y datos del usuario
                     localStorage.setItem('token', data.token);
                     localStorage.setItem('usuario', JSON.stringify(data.usuario));
                     localStorage.setItem('isLoggedIn', 'true');
@@ -57,19 +63,19 @@ document.addEventListener('DOMContentLoaded', function () {
                         timer: 1500,
                         showConfirmButton: false
                     }).then(() => {
-                        window.location.href = '/views/tiendas';
+                        window.location.href = '/views/inicio';
                     });
                 } else {
                     Swal.fire({
                         icon: 'error',
                         title: 'Error de autenticacion',
-                        text: data.mensaje || 'Usuario o contrasena incorrectos',
+                        text: data.message || 'Usuario o contrasena incorrectos',
                         confirmButtonColor: '#6366f1'
                     });
                 }
             } catch (error) {
                 console.error('Error de conexion:', error);
-
+                
                 // Si no hay conexion al backend, mostrar opcion de modo offline
                 Swal.fire({
                     icon: 'error',
@@ -110,7 +116,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Enter key to login
     if (passwordInput) {
-        passwordInput.addEventListener('keypress', function (e) {
+        passwordInput.addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
                 loginBtn.click();
             }
@@ -142,4 +148,5 @@ async function verificarSesion(token) {
         console.log('No se pudo verificar sesion:', error);
     }
 }
+
 

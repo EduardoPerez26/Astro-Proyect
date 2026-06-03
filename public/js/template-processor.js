@@ -1,431 +1,297 @@
+// ============================================
+// PROCESADOR DE TEMPLATES EXCEL
+// Soporta múltiples hojas y fórmulas entre hojas
+// ============================================
 
-const templateConfig = {
-    // ========================================
-    // TACO BELL
-    // ========================================
-    'taco-bell': {
-        templateFile: 'template-taco-bell.xlsx',
-        sourceSheet: 'Sales',
-        preserveFormulas: true,
-        replaceSheet: true,
-    },
-
-    // ========================================
-    // BURGER KING
-    // ========================================
-    'burger-king': {
-        templateFile: 'template-burger-king.xlsx',
-        targetSheet: 'Conciliation',
-        startRow: 2,
-        columnMapping: {
-            'A': 'A',  // Codigo
-            'B': 'C',  // Fecha (en datos esta en C)
-            'C': 'B',  // Sucursal (en datos esta en B)
-            'D': 'D',  // Importe
-            'E': 'E',  // Metodo pago
-            'F': 'G',  // Observaciones (en datos esta en G)
-        },
-        copySheets: ['Ventas', 'Pagos'],
-        transforms: {
-            'D': 'number',
-            'B': 'date',
-        }
-    },
-
-    // ========================================
-    // POPEYES
-    // ========================================
-    'popeyes': {
-        templateFile: 'template-popeyes.xlsx',
-        targetSheet: 'Conciliation',
-        startRow: 2,
-        columnMapping: {
-            'A': 'A',
-            'B': 'B',
-            'C': 'C',
-            'D': 'D',
-            'E': 'E',
-            'F': 'F',
-        },
-        copySheets: [],
-        transforms: {
-            'D': 'number',
-        }
-    },
-
-    // ========================================
-    // KFC
-    // ========================================
-    'kfc': {
-        templateFile: 'template-kfc.xlsx',
-        targetSheet: 'Conciliation',
-        startRow: 2,
-        columnMapping: {
-            'A': 'B',  // En KFC los datos vienen con estructura diferente
-            'B': 'A',
-            'C': 'D',
-            'D': 'C',
-            'E': 'E',
-            'F': 'F',
-        },
-        copySheets: ['Detalle'],
-        transforms: {
-            'D': 'number',
-            'B': 'date',
-        }
-    }
-};
+// Variables globales para almacenar el template seleccionado
+window.selectedTemplateWorkbook = null;
+window.selectedTemplateFile = null;
 
 // ============================================
-// FUNCIONES DE PROCESAMIENTO DE TEMPLATES
+// PROCESAR ARCHIVO CON TEMPLATE - AUTOMATICO
 // ============================================
 
 /**
- * Obtiene la configuracion de un restaurante
+ * Procesa el archivo de datos y lo combina con el template seleccionado.
+ * 
+ * LOGICA:
+ * 1. Para cada hoja que existe en AMBOS (template Y datos): reemplaza los datos
+ * 2. Para hojas que solo existen en el template: mantiene las formulas originales
+ * 3. Para hojas que solo existen en los datos: las agrega al resultado
+ * 4. Recalcula todas las formulas al final
  */
-function getTemplateConfig(restaurant) {
-    return templateConfig[restaurant] || null;
-}
-
-/**
- * Convierte letra de columna a indice (A=0, B=1, etc.)
- */
-function columnToIndex(col) {
-    let index = 0;
-    for (let i = 0; i < col.length; i++) {
-        index = index * 26 + col.charCodeAt(i) - 64;
-    }
-    return index - 1;
-}
-
-/**
- * Convierte indice a letra de columna (0=A, 1=B, etc.)
- */
-function indexToColumn(index) {
-    let col = '';
-    index++;
-    while (index > 0) {
-        const mod = (index - 1) % 26;
-        col = String.fromCharCode(65 + mod) + col;
-        index = Math.floor((index - mod) / 26);
-    }
-    return col;
-}
-
-/**
- * Aplica transformacion a un valor segun el tipo
- */
-function applyTransform(value, type) {
-    if (value === null || value === undefined || value === '') {
-        return value;
-    }
-
-    switch (type) {
-        case 'number':
-            const num = parseFloat(value);
-            return isNaN(num) ? value : num;
-
-        case 'date':
-            if (typeof value === 'number') {
-                // Excel serial date
-                return value;
-            }
-            const date = new Date(value);
-            if (!isNaN(date.getTime())) {
-                // Convertir a serial de Excel
-                return (date.getTime() / 86400000) + 25569;
-            }
-            return value;
-
-        case 'text':
-            return String(value);
-
-        case 'uppercase':
-            return String(value).toUpperCase();
-
-        case 'lowercase':
-            return String(value).toLowerCase();
-
-        default:
-            return value;
-    }
-}
-
-/**
- * Carga un template desde la carpeta /templates/
- */
-async function loadTemplate(templateFile) {
-    try {
-        const response = await fetch(`/templates/${templateFile}`);
-        if (!response.ok) {
-            throw new Error(`Template no encontrado: ${templateFile}`);
-        }
-        const arrayBuffer = await response.arrayBuffer();
-        const data = new Uint8Array(arrayBuffer);
-        return XLSX.read(data, { type: 'array' });
-    } catch (error) {
-        console.error('Error cargando template:', error);
-        throw error;
-    }
-}
-
-/**
- * Llena el template con los datos del archivo subido
- */
-async function fillTemplateWithData(dataWorkbook, restaurant) {
-
-    const config = getTemplateConfig(restaurant);
-
-    if (!config) {
-        throw new Error(`No hay configuracion de template para: ${restaurant}`);
-    }
-
-    let templateWorkbook;
-
-    try {
-        templateWorkbook = await loadTemplate(config.templateFile);
-    } catch (error) {
-        console.warn('Template no encontrado, usando archivo de datos como base');
-        return dataWorkbook;
-    }
-
-    // ====================================================
-    // TACO BELL
-    // ====================================================
-    if (restaurant === 'taco-bell') {
-        // Para Taco Bell usamos la hoja configurada (sourceSheet)
-        // y validamos que exista en el template.
-        replaceSalesData(
-            templateWorkbook,
-            dataWorkbook,
-            config.sourceSheet || 'Sales'
-        );
-
-        return templateWorkbook;
-    }
-
-
-    // ====================================================
-    // RESTO DE RESTAURANTES
-    // ====================================================
-
-    const targetSheet =
-        templateWorkbook.Sheets[config.targetSheet];
-
-    if (!targetSheet) {
-        throw new Error(
-            `Hoja "${config.targetSheet}" no encontrada`
-        );
-    }
-
-    const dataSheet =
-        dataWorkbook.Sheets[dataWorkbook.SheetNames[0]];
-
-    const dataRange = XLSX.utils.decode_range(
-        dataSheet['!ref'] || 'A1'
-    );
-
-    for (let row = 1; row <= dataRange.e.r; row++) {
-
-        const targetRow =
-            config.startRow + row - 1;
-
-        for (const [templateCol, dataCol]
-            of Object.entries(config.columnMapping)) {
-
-            const dataAddr =
-                dataCol + (row + 1);
-
-            const templateAddr =
-                templateCol + targetRow;
-
-            const dataCell =
-                dataSheet[dataAddr];
-
-            if (!dataCell) continue;
-
-            let value = dataCell.v;
-
-            if (
-                config.transforms &&
-                config.transforms[templateCol]
-            ) {
-                value = applyTransform(
-                    value,
-                    config.transforms[templateCol]
-                );
-            }
-
-            targetSheet[templateAddr] = {
-                t: typeof value === 'number'
-                    ? 'n'
-                    : 's',
-                v: value
-            };
-        }
-    }
-
-    const lastRow =
-        config.startRow + dataRange.e.r;
-
-    const lastCol =
-        Object.keys(config.columnMapping)
-            .sort()
-            .pop();
-
-    targetSheet['!ref'] =
-        `A1:${lastCol}${lastRow}`;
-
-    if (config.copySheets?.length) {
-
-        for (const sheetName of config.copySheets) {
-
-            if (dataWorkbook.Sheets[sheetName]) {
-
-                if (
-                    !templateWorkbook.SheetNames.includes(sheetName)
-                ) {
-                    templateWorkbook.SheetNames.push(sheetName);
-                }
-
-                templateWorkbook.Sheets[sheetName] =
-                    dataWorkbook.Sheets[sheetName];
-            }
-        }
-    }
-
-    return templateWorkbook;
-}
-
-/**
- * Procesa un archivo con template
- * Esta es la funcion principal que se llama desde el editor
- */
-async function processWithTemplate(file, restaurant) {
+async function processWithTemplate(dataFile) {
     return new Promise((resolve, reject) => {
+        // Verificar que hay un template seleccionado
+        if (!window.selectedTemplateWorkbook) {
+            reject(new Error('No se ha seleccionado un archivo de plantilla.'));
+            return;
+        }
+        
         const reader = new FileReader();
-
-        reader.onload = async function (e) {
+        
+        reader.onload = function(e) {
             try {
                 const data = new Uint8Array(e.target.result);
-                const dataWorkbook = XLSX.read(data, { type: 'array' });
-
-                // Llenar el template con los datos
-                const filledWorkbook =
-                    await fillTemplateWithData(
-                        dataWorkbook,
-                        restaurant
-                    );
-
-                filledWorkbook.Workbook =
-                    filledWorkbook.Workbook || {};
-
-                filledWorkbook.Workbook.CalcPr = {
-                    calcId: "999999",
-                    fullCalcOnLoad: true,
-                    forceFullCalc: true
+                const dataWorkbook = XLSX.read(data, { type: 'array', cellFormula: true });
+                
+                console.log('[v0] Hojas en datos:', dataWorkbook.SheetNames);
+                console.log('[v0] Hojas en template:', window.selectedTemplateWorkbook.SheetNames);
+                
+                // Crear workbook resultado
+                const resultWorkbook = {
+                    SheetNames: [],
+                    Sheets: {}
                 };
+                
+                // PASO 1: Procesar hojas del template
+                for (const sheetName of window.selectedTemplateWorkbook.SheetNames) {
+                    const templateSheet = window.selectedTemplateWorkbook.Sheets[sheetName];
+                    const dataSheet = dataWorkbook.Sheets[sheetName];
+                    
+                    if (dataSheet) {
+                        // La hoja existe en ambos: COPIAR DATOS, mantener estructura del template
+                        console.log('[v0] Combinando hoja:', sheetName);
+                        resultWorkbook.Sheets[sheetName] = combineSheets(templateSheet, dataSheet);
+                    } else {
+                        // Solo existe en template: copiar completa (con formulas)
+                        console.log('[v0] Copiando hoja de template:', sheetName);
+                        resultWorkbook.Sheets[sheetName] = deepCopySheet(templateSheet);
+                    }
+                    resultWorkbook.SheetNames.push(sheetName);
+                }
+                
+                // PASO 2: Agregar hojas que solo existen en datos
+                for (const sheetName of dataWorkbook.SheetNames) {
+                    if (!resultWorkbook.SheetNames.includes(sheetName)) {
+                        console.log('[v0] Agregando hoja de datos:', sheetName);
+                        resultWorkbook.Sheets[sheetName] = deepCopySheet(dataWorkbook.Sheets[sheetName]);
+                        resultWorkbook.SheetNames.push(sheetName);
+                    }
+                }
+                
+                // PASO 3: Recalcular formulas
+                recalculateFormulas(resultWorkbook);
+                
+                console.log('[v0] Resultado final - hojas:', resultWorkbook.SheetNames);
+                resolve(resultWorkbook);
+                
+            } catch (error) {
+                console.error('[v0] Error procesando:', error);
+                reject(error);
+            }
+        };
+        
+        reader.onerror = () => reject(new Error('Error leyendo archivo'));
+        reader.readAsArrayBuffer(dataFile);
+    });
+}
 
-                resolve(filledWorkbook);
+// ============================================
+// COMBINAR HOJAS: Template + Datos
+// ============================================
+
+/**
+ * Combina una hoja del template con datos del archivo de origen.
+ * - Mantiene el encabezado del template (fila 1)
+ * - Copia los datos del archivo origen (fila 2+)
+ * - Preserva formulas del template que no tienen datos
+ */
+function combineSheets(templateSheet, dataSheet) {
+    const result = {};
+    
+    // Obtener rangos
+    const templateRange = XLSX.utils.decode_range(templateSheet['!ref'] || 'A1');
+    const dataRange = XLSX.utils.decode_range(dataSheet['!ref'] || 'A1');
+    
+    // Determinar el rango final (el mayor de ambos)
+    const maxCol = Math.max(templateRange.e.c, dataRange.e.c);
+    const maxRow = Math.max(templateRange.e.r, dataRange.e.r);
+    
+    // PASO 1: Copiar encabezado del template (fila 1, index 0)
+    for (let c = 0; c <= maxCol; c++) {
+        const addr = XLSX.utils.encode_cell({ r: 0, c: c });
+        if (templateSheet[addr]) {
+            result[addr] = { ...templateSheet[addr] };
+        }
+    }
+    
+    // PASO 2: Copiar datos del archivo de datos (fila 2+)
+    for (let r = 1; r <= dataRange.e.r; r++) {
+        for (let c = 0; c <= dataRange.e.c; c++) {
+            const addr = XLSX.utils.encode_cell({ r: r, c: c });
+            if (dataSheet[addr]) {
+                result[addr] = { ...dataSheet[addr] };
+            }
+        }
+    }
+    
+    // PASO 3: Copiar formulas del template para celdas vacias
+    // (formulas que calculan datos basados en otras celdas/hojas)
+    for (let r = 1; r <= templateRange.e.r; r++) {
+        for (let c = 0; c <= templateRange.e.c; c++) {
+            const addr = XLSX.utils.encode_cell({ r: r, c: c });
+            // Si el template tiene formula y no hay dato, copiar la formula
+            if (templateSheet[addr] && templateSheet[addr].f && !result[addr]) {
+                result[addr] = { ...templateSheet[addr] };
+            }
+        }
+    }
+    
+    // Copiar propiedades de la hoja
+    result['!ref'] = `A1:${XLSX.utils.encode_col(maxCol)}${maxRow + 1}`;
+    if (templateSheet['!cols']) result['!cols'] = templateSheet['!cols'];
+    if (templateSheet['!rows']) result['!rows'] = templateSheet['!rows'];
+    if (templateSheet['!merges']) result['!merges'] = templateSheet['!merges'];
+    
+    return result;
+}
+
+// ============================================
+// COPIA PROFUNDA DE HOJA
+// ============================================
+
+function deepCopySheet(sheet) {
+    if (!sheet) return {};
+    
+    const result = {};
+    
+    for (const key of Object.keys(sheet)) {
+        if (key.startsWith('!')) {
+            // Propiedades especiales (!ref, !cols, !rows, etc)
+            result[key] = JSON.parse(JSON.stringify(sheet[key]));
+        } else {
+            // Celdas
+            result[key] = { ...sheet[key] };
+        }
+    }
+    
+    return result;
+}
+
+// ============================================
+// RECALCULAR FORMULAS
+// ============================================
+
+function recalculateFormulas(workbook) {
+    const calc = window.XLSX_CALC || (typeof XLSX_CALC !== 'undefined' ? XLSX_CALC : null);
+    
+    if (calc && typeof calc === 'function') {
+        try {
+            calc(workbook, { continue_after_error: true });
+            console.log('[v0] Formulas recalculadas');
+        } catch (error) {
+            console.warn('[v0] Error en recalculo (ignorado):', error.message);
+        }
+    }
+}
+
+// ============================================
+// CARGAR TEMPLATE DESDE ARCHIVO
+// ============================================
+
+function loadTemplateFromFile(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+            try {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array', cellFormula: true });
+                console.log('[v0] Template cargado:', workbook.SheetNames);
+                resolve(workbook);
             } catch (error) {
                 reject(error);
             }
         };
-
-        reader.onerror = function () {
-            reject(new Error('Error leyendo el archivo'));
-        };
-
+        
+        reader.onerror = () => reject(new Error('Error leyendo template'));
         reader.readAsArrayBuffer(file);
     });
 }
 
-function copySheetData(sourceSheet, targetSheet) {
+// ============================================
+// UI: SELECTOR DE TEMPLATE
+// ============================================
 
-    const range = XLSX.utils.decode_range(
-        sourceSheet['!ref'] || 'A1'
-    );
-
-    for (let r = range.s.r; r <= range.e.r; r++) {
-
-        for (let c = range.s.c; c <= range.e.c; c++) {
-
-            const addr =
-                XLSX.utils.encode_cell({ r, c });
-
-            const sourceCell =
-                sourceSheet[addr];
-
-            if (sourceCell) {
-
-                targetSheet[addr] = {
-                    ...sourceCell
-                };
-
-            } else {
-
-                delete targetSheet[addr];
-
-            }
-        }
-    }
-
-    targetSheet['!ref'] =
-        sourceSheet['!ref'];
-}
-
-function replaceSalesData(templateWorkbook, dataWorkbook, sourceSheetName = 'Sales') {
-
-    const templateSales =
-        templateWorkbook.Sheets[sourceSheetName];
-
-    if (!templateSales) {
-        throw new Error(`Hoja "${sourceSheetName}" no encontrada en el template`);
-    }
-
-
-    const sourceSheet =
-        dataWorkbook.Sheets[dataWorkbook.SheetNames[0]];
-
-    const range =
-        XLSX.utils.decode_range(
-            sourceSheet['!ref']
-        );
-
-    for (let R = range.s.r; R <= range.e.r; R++) {
-
-        for (let C = range.s.c; C <= range.e.c; C++) {
-
-            const addr =
-                XLSX.utils.encode_cell({
-                    r: R,
-                    c: C
+function openTemplateSelector() {
+    // Crear input file dinamico si no existe
+    let templateInput = document.getElementById('templateFileInput');
+    
+    if (!templateInput) {
+        templateInput = document.createElement('input');
+        templateInput.type = 'file';
+        templateInput.id = 'templateFileInput';
+        templateInput.accept = '.xlsx,.xls';
+        templateInput.style.display = 'none';
+        document.body.appendChild(templateInput);
+        
+        templateInput.addEventListener('change', async function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            try {
+                Swal.fire({
+                    title: 'Cargando plantilla...',
+                    allowOutsideClick: false,
+                    didOpen: () => Swal.showLoading()
                 });
-
-            const sourceCell =
-                sourceSheet[addr];
-
-            if (sourceCell) {
-
-                templateSales[addr] = {
-                    ...sourceCell
-                };
-
-            } else {
-
-                delete templateSales[addr];
-
+                
+                window.selectedTemplateWorkbook = await loadTemplateFromFile(file);
+                window.selectedTemplateFile = file.name;
+                
+                updateTemplateStatus();
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Plantilla cargada',
+                    html: `
+                        <p><strong>${file.name}</strong></p>
+                        <p style="font-size: 13px; color: #666; margin-top: 8px;">
+                            Hojas encontradas: ${window.selectedTemplateWorkbook.SheetNames.join(', ')}
+                        </p>
+                    `,
+                    timer: 3000
+                });
+                
+            } catch (error) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'No se pudo cargar la plantilla: ' + error.message
+                });
             }
-        }
+            
+            // Reset para permitir seleccionar el mismo archivo
+            e.target.value = '';
+        });
     }
-
-    templateSales['!ref'] =
-        sourceSheet['!ref'];
+    
+    templateInput.click();
 }
 
-// Exportar para uso global
-window.templateConfig = templateConfig;
-window.getTemplateConfig = getTemplateConfig;
-window.loadTemplate = loadTemplate;
-window.fillTemplateWithData = fillTemplateWithData;
+function updateTemplateStatus() {
+    const statusEl = document.getElementById('templateStatus');
+    if (statusEl) {
+        if (window.selectedTemplateFile) {
+            statusEl.innerHTML = `<i class="fa-solid fa-check-circle" style="color: #10b981;"></i> ${window.selectedTemplateFile}`;
+            statusEl.style.display = 'inline-flex';
+            statusEl.style.alignItems = 'center';
+            statusEl.style.gap = '6px';
+        } else {
+            statusEl.innerHTML = `<i class="fa-solid fa-circle-xmark" style="color: #ef4444;"></i> Sin plantilla`;
+        }
+    }
+}
+
+function clearSelectedTemplate() {
+    window.selectedTemplateWorkbook = null;
+    window.selectedTemplateFile = null;
+    updateTemplateStatus();
+}
+
+// Exponer funciones globalmente
 window.processWithTemplate = processWithTemplate;
+window.openTemplateSelector = openTemplateSelector;
+window.clearSelectedTemplate = clearSelectedTemplate;
+window.updateTemplateStatus = updateTemplateStatus;

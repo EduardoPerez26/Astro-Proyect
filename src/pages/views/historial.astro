@@ -2,87 +2,507 @@
 import DashboardLayout from '../../layouts/DashboardLayout.astro';
 ---
 
-<DashboardLayout title="Historial de Validaciones - Sistema de Inventario">
-    <section class="tab active" id="validaciones">
-        <div class="page-header">
-            <div class="page-header-left">
-                <h1 class="page-title">Historial de validaciones</h1>
-                <p class="page-subtitle">Filtra y revisa los resultados históricos de validaciones.</p>
+<DashboardLayout title="Historial de Validaciones">
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Historial de Validaciones</h1>
+            <p class="page-subtitle">Registro de todas las validaciones realizadas en el sistema</p>
+        </div>
+        <button class="btn btn-secondary" onclick="exportarHistorial()">
+            <i class="fa-solid fa-file-export"></i>
+            Exportar
+        </button>
+    </div>
+
+    <!-- Stats cards -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon success">
+                <i class="fa-solid fa-check-circle"></i>
             </div>
-            <div class="page-header-actions">
-                <button class="btn btn-secondary" onclick="window.history.back()">
-                    <i class="fa-solid fa-arrow-left"></i>
-                    Volver
-                </button>
+            <div class="stat-info">
+                <span class="stat-value" id="statExitosas">0</span>
+                <span class="stat-label">Exitosas</span>
             </div>
         </div>
-
-        <div class="filters-panel">
-            <div class="filters-header">
-                <i class="fa-solid fa-filter"></i>
-                Filtros de historial
+        <div class="stat-card">
+            <div class="stat-icon warning">
+                <i class="fa-solid fa-exclamation-triangle"></i>
             </div>
-            <div class="filters-grid">
-                <div class="filter-group">
-                    <label class="filter-label" for="validationFilterRestaurant">Restaurante</label>
-                    <select id="validationFilterRestaurant" class="form-control">
-                        <option value="">Todos los restaurantes</option>
-                        <option value="taco-bell">Taco Bell</option>
-                        <option value="burger-king">Burger King</option>
-                        <option value="popeyes">Popeyes</option>
-                        <option value="kfc">KFC</option>
-                    </select>
-                </div>
-                <div class="filter-group">
-                    <label class="filter-label" for="validationResultSelect">Resultado</label>
-                    <select id="validationResultSelect" class="form-control">
-                        <option value="">Todos</option>
-                        <option value="exitoso">Exitoso</option>
-                        <option value="con_errores">Con errores</option>
-                    </select>
-                </div>
-                <div class="filter-group">
-                    <label class="filter-label" for="validationSortSelect">Ordenar por</label>
-                    <select id="validationSortSelect" class="form-control">
-                        <option value="newest">Más recientes</option>
-                        <option value="oldest">Más antiguos</option>
-                        <option value="errors">Mayor número de errores</option>
-                    </select>
-                </div>
-                <div class="filter-group" style="display:flex; align-items:flex-end; justify-content:flex-end;">
-                    <button id="validationFilterReset" class="btn btn-secondary" type="button">
-                        <i class="fa-solid fa-rotate"></i>
-                        Limpiar filtros
-                    </button>
-                </div>
+            <div class="stat-info">
+                <span class="stat-value" id="statConErrores">0</span>
+                <span class="stat-label">Con Errores</span>
             </div>
         </div>
-
-        <div class="card" style="margin-bottom: 24px;">
-            <div class="card-body">
-                <div class="results-info" id="validationResultsInfo">Cargando historial de validaciones...</div>
-                <div class="table-responsive">
-                    <table class="table" id="validationHistoryTable" style="width: 100%; border-collapse: collapse;">
-                        <thead>
-                            <tr>
-                                <th>Archivo</th>
-                                <th>Restaurante</th>
-                                <th>Validado por</th>
-                                <th>Resultado</th>
-                                <th>Errores</th>
-                                <th>Fecha</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td colspan="6" style="padding: 16px; text-align: center; color: var(--gray-600);">Cargando Usuarios...</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+        <div class="stat-card">
+            <div class="stat-icon danger">
+                <i class="fa-solid fa-times-circle"></i>
+            </div>
+            <div class="stat-info">
+                <span class="stat-value" id="statFallidas">0</span>
+                <span class="stat-label">Fallidas</span>
             </div>
         </div>
-    </section>
+        <div class="stat-card">
+            <div class="stat-icon info">
+                <i class="fa-solid fa-clock"></i>
+            </div>
+            <div class="stat-info">
+                <span class="stat-value" id="statTiempoPromedio">0s</span>
+                <span class="stat-label">Tiempo Promedio</span>
+            </div>
+        </div>
+    </div>
 
-    <script is:inline src="/js/scripts.js"></script>
+    <!-- Filtros -->
+    <div class="filters-bar">
+        <div class="search-box">
+            <i class="fa-solid fa-search"></i>
+            <input type="text" id="searchInput" placeholder="Buscar por archivo o usuario...">
+        </div>
+        
+        <select id="filterResultado" class="filter-select">
+            <option value="">Todos los resultados</option>
+            <option value="exitoso">Exitoso</option>
+            <option value="con_errores">Con errores</option>
+            <option value="fallido">Fallido</option>
+        </select>
+        
+        <select id="filterTipo" class="filter-select">
+            <option value="">Todos los tipos</option>
+            <option value="formato">Formato</option>
+            <option value="datos">Datos</option>
+            <option value="formulas">Formulas</option>
+            <option value="completa">Completa</option>
+        </select>
+        
+        <input type="date" id="filterFecha" class="filter-input">
+        
+        <button class="btn btn-secondary" onclick="limpiarFiltros()">
+            <i class="fa-solid fa-times"></i>
+            Limpiar
+        </button>
+    </div>
+
+    <!-- Tabla de validaciones -->
+    <div class="table-container">
+        <table class="data-table" id="validacionesTable">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Archivo</th>
+                    <th>Tipo</th>
+                    <th>Resultado</th>
+                    <th>Errores</th>
+                    <th>Duracion</th>
+                    <th>Usuario</th>
+                    <th>Fecha</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="validacionesBody">
+                <!-- Se llena con JavaScript -->
+            </tbody>
+        </table>
+        
+        <div id="emptyState" class="empty-state" style="display: none;">
+            <i class="fa-solid fa-clipboard-list"></i>
+            <h3>No hay validaciones</h3>
+            <p>No se encontraron validaciones con los filtros seleccionados</p>
+        </div>
+        
+        <div id="loadingState" class="loading-state">
+            <i class="fa-solid fa-spinner fa-spin"></i>
+            <p>Cargando historial...</p>
+        </div>
+    </div>
+
+    <!-- Paginacion -->
+    <div class="pagination" id="pagination">
+        <button class="btn-page" id="btnPrev" onclick="cambiarPagina(-1)">
+            <i class="fa-solid fa-chevron-left"></i>
+        </button>
+        <span id="pageInfo">Pagina 1 de 1</span>
+        <button class="btn-page" id="btnNext" onclick="cambiarPagina(1)">
+            <i class="fa-solid fa-chevron-right"></i>
+        </button>
+    </div>
+
+    <!-- Modal de errores -->
+    <div id="modalErrores" class="modal">
+        <div class="modal-content modal-lg">
+            <div class="modal-header">
+                <h2>Detalle de Errores</h2>
+                <button class="modal-close" onclick="cerrarModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- Contenido dinamico -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="cerrarModal()">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+        
+        .page-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin: 0;
+        }
+        
+        .page-subtitle {
+            font-size: 14px;
+            color: var(--gray-500);
+            margin: 4px 0 0 0;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+        
+        .stat-icon.success {
+            background: #dcfce7;
+            color: #16a34a;
+        }
+        
+        .stat-icon.warning {
+            background: #fef3c7;
+            color: #d97706;
+        }
+        
+        .stat-icon.danger {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+        
+        .stat-icon.info {
+            background: #dbeafe;
+            color: #2563eb;
+        }
+        
+        .stat-info {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--gray-900);
+        }
+        
+        .stat-label {
+            font-size: 13px;
+            color: var(--gray-500);
+        }
+        
+        .filters-bar {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+            padding: 16px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .search-box {
+            position: relative;
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        .search-box i {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--gray-400);
+        }
+        
+        .search-box input {
+            width: 100%;
+            padding: 10px 10px 10px 38px;
+            border: 1px solid var(--gray-300);
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        
+        .filter-select, .filter-input {
+            padding: 10px 12px;
+            border: 1px solid var(--gray-300);
+            border-radius: 8px;
+            font-size: 14px;
+            background: white;
+        }
+        
+        .table-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .data-table th {
+            background: var(--gray-50);
+            padding: 14px 16px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 13px;
+            color: var(--gray-600);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid var(--gray-200);
+        }
+        
+        .data-table td {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--gray-100);
+            font-size: 14px;
+            color: var(--gray-700);
+        }
+        
+        .data-table tbody tr:hover {
+            background: var(--gray-50);
+        }
+        
+        .badge {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .badge-exitoso {
+            background: #dcfce7;
+            color: #16a34a;
+        }
+        
+        .badge-con_errores {
+            background: #fef3c7;
+            color: #d97706;
+        }
+        
+        .badge-fallido {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+        
+        .badge-tipo {
+            background: var(--gray-100);
+            color: var(--gray-700);
+        }
+        
+        .error-count {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .error-count.has-errors {
+            color: #dc2626;
+        }
+        
+        .btn-icon {
+            width: 32px;
+            height: 32px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            background: #dbeafe;
+            color: #2563eb;
+        }
+        
+        .btn-icon:hover {
+            transform: scale(1.1);
+        }
+        
+        .btn-icon:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .empty-state, .loading-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--gray-500);
+        }
+        
+        .empty-state i, .loading-state i {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+        
+        .empty-state h3 {
+            margin: 0 0 8px 0;
+            color: var(--gray-700);
+        }
+        
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 16px;
+            margin-top: 20px;
+        }
+        
+        .btn-page {
+            width: 36px;
+            height: 36px;
+            border: 1px solid var(--gray-300);
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .btn-page:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow: hidden;
+        }
+        
+        .modal-lg {
+            max-width: 700px;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--gray-200);
+        }
+        
+        .modal-header h2 {
+            margin: 0;
+            font-size: 20px;
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--gray-500);
+        }
+        
+        .modal-body {
+            padding: 24px;
+            overflow-y: auto;
+            max-height: 50vh;
+        }
+        
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            padding: 16px 24px;
+            border-top: 1px solid var(--gray-200);
+        }
+        
+        .error-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .error-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 12px;
+            background: #fef2f2;
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+        
+        .error-item i {
+            color: #dc2626;
+            margin-top: 2px;
+        }
+        
+        .error-item .error-text {
+            flex: 1;
+        }
+        
+        .error-item .error-location {
+            font-size: 12px;
+            color: var(--gray-500);
+            margin-top: 4px;
+        }
+    </style>
+
+    <script is:inline src="/js/historial.js"></script>
 </DashboardLayout>

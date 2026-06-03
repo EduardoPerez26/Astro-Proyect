@@ -35,6 +35,15 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
                         </label>
                     </div>
                     
+                    <button type="button" id="selectTemplateBtn" class="btn btn-secondary" onclick="openTemplateSelector()" style="display: none;">
+                        <i class="fa-solid fa-file-import"></i>
+                        Seleccionar Plantilla
+                    </button>
+                    
+                    <span id="templateStatus" style="font-size: 13px; display: none;">
+                        <i class="fa-solid fa-circle-xmark" style="color: #ef4444;"></i> Sin plantilla
+                    </span>
+                    
                     <div style="display: flex; align-items: center; gap: 8px;">
                         <label style="font-size: 14px; color: var(--gray-600); font-weight: 500;">Restaurante:</label>
                         <select id="restaurantSelect" class="form-control" style="width: auto; min-width: 150px;">
@@ -123,4 +132,25 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
     <script is:inline src="/js/template-processor.js"></script>
     <script is:inline src="/js/validator.js"></script>
     <script is:inline src="/js/scripts.js"></script>
+    
+    <script is:inline>
+        // Mostrar/ocultar controles de template
+        document.addEventListener('DOMContentLoaded', function() {
+            const useTemplateCheckbox = document.getElementById('useTemplate');
+            const selectTemplateBtn = document.getElementById('selectTemplateBtn');
+            const templateStatus = document.getElementById('templateStatus');
+            
+            if (useTemplateCheckbox) {
+                useTemplateCheckbox.addEventListener('change', function() {
+                    if (this.checked) {
+                        selectTemplateBtn.style.display = 'inline-flex';
+                        templateStatus.style.display = 'inline-flex';
+                    } else {
+                        selectTemplateBtn.style.display = 'none';
+                        templateStatus.style.display = 'none';
+                    }
+                });
+            }
+        });
+    </script>
 </DashboardLayout>

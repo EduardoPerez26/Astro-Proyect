@@ -1,5 +1,5 @@
 ---
-// Componente Sidebar - Barra lateral de navegacion
+// Componente Sidebar - Barra lateral de navegacion con control de permisos
 ---
 
 <aside class="sidebar" id="sidebar">
@@ -11,14 +11,13 @@
             <span class="sidebar-logo-text">XBFS</span>
         </div>
     </div>
-
-    <div class="sidebar-profile">
-        <div class="header-user" id="sidebarProfileToggle" aria-expanded="false" role="button" tabindex="0">
-            <div class="avatar" id="sidebarAvatar">EP</div>
-            <div class="profile-info">
-                <div class="header-user-name" id="sidebarUserName">Cargando...</div>
-                <div class="header-user-role" id="sidebarUserRole">...</div>
-            </div>
+    
+    <!-- User Info -->
+    <div class="sidebar-user" id="sidebarUser">
+        <div class="sidebar-user-avatar" id="sidebarUserAvatar">--</div>
+        <div class="sidebar-user-info">
+            <div class="sidebar-user-name" id="sidebarUserName">Usuario</div>
+            <div class="sidebar-user-role" id="sidebarUserRole">Rol</div>
         </div>
     </div>
 
@@ -26,39 +25,39 @@
         <!-- GENERAL -->
         <div class="sidebar-section">
             <div class="sidebar-section-title">General</div>
-            <ul class="sidebar-menu">
-               
-                <li class="sidebar-menu-item">
-                    <a class="sidebar-menu-link" href="/views/perfil">
-                        <i class="fa-solid fa-user"></i>
-                        <span>Perfil</span>
+            <ul class="sidebar-menu" id="menuGeneral">
+                <li class="sidebar-menu-item" data-permission="dashboard">
+                    <a class="sidebar-menu-link" href="/views/inicio">
+                        <i class="fa-solid fa-house"></i>
+                        <span>Dashboard</span>
                     </a>
                 </li>
-                <li class="sidebar-menu-item">
+                <li class="sidebar-menu-item" data-permission="tiendas">
                     <a class="sidebar-menu-link" href="/views/tiendas">
                         <i class="fa-solid fa-shop"></i>
                         <span>Tiendas</span>
                     </a>
                 </li>
-                <li class="sidebar-menu-item">
+                <li class="sidebar-menu-item" data-permission="documentos">
                     <a class="sidebar-menu-link" href="/views/documentos">
-                        <i class="fa-solid fa-folder-open"></i>
+                        <i class="fa-solid fa-file-excel"></i>
                         <span>Documentos</span>
                     </a>
                 </li>
-                <li class="sidebar-menu-item admin-only">
-                    <a class="sidebar-menu-link" href="/views/permisos">
-                        <i class="fa-solid fa-key"></i>
-                        <span>Permisos</span>
-                    </a>
-                </li>
-                <li class="sidebar-menu-item">
+            </ul>
+        </div>
+        
+        <!-- ADMINISTRACION -->
+        <div class="sidebar-section" id="sectionAdmin">
+            <div class="sidebar-section-title">Administracion</div>
+            <ul class="sidebar-menu">
+                <li class="sidebar-menu-item" data-permission="historial">
                     <a class="sidebar-menu-link" href="/views/historial">
                         <i class="fa-solid fa-clock-rotate-left"></i>
                         <span>Historial</span>
                     </a>
                 </li>
-                <li class="sidebar-menu-item">
+                <li class="sidebar-menu-item" data-permission="usuarios">
                     <a class="sidebar-menu-link" href="/views/usuarios">
                         <i class="fa-solid fa-users"></i>
                         <span>Usuarios</span>
@@ -75,3 +74,59 @@
         </button>
     </div>
 </aside>
+
+<style>
+    .sidebar-user {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 16px 20px;
+        border-bottom: 1px solid var(--gray-100);
+        margin-bottom: 8px;
+    }
+    
+    .sidebar-user-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: var(--primary);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 14px;
+        flex-shrink: 0;
+    }
+    
+    .sidebar-user-info {
+        overflow: hidden;
+    }
+    
+    .sidebar-user-name {
+        font-weight: 500;
+        font-size: 14px;
+        color: var(--gray-900);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    .sidebar-user-role {
+        font-size: 12px;
+        color: var(--gray-500);
+    }
+    
+    .sidebar.collapsed .sidebar-user {
+        justify-content: center;
+        padding: 16px 8px;
+    }
+    
+    .sidebar.collapsed .sidebar-user-info {
+        display: none;
+    }
+    
+    .sidebar-menu-item.hidden {
+        display: none !important;
+    }
+</style>

@@ -40,11 +40,7 @@ function updateValidationStatus(message, statusClass = '') {
     }
 }
 
-if (typeof window !== 'undefined') {
-    window.updateValidationStatus = updateValidationStatus;
-}
-
-async function validateConcepts() {
+function validateConcepts() {
     if (!currentValidator) {
         Swal.fire({
             title: 'Sin validador',
@@ -217,62 +213,6 @@ async function validateConcepts() {
                 cancelButton: 'custom-cancel'
             }
         });
-    }
-
-    if (typeof archivoActualId === 'undefined' || archivoActualId === null) {
-        const uploadResult = await guardarEnServidor({ silent: true });
-        if (!uploadResult) {
-            console.warn('No se pudo subir el archivo antes de guardar la validacion.');
-            return;
-        }
-    }
-
-    guardarValidacionEnBD({
-        tipo_validacion: currentValidator.name || 'validacion',
-        resultado: statusClass === 'success' ? 'exitoso' : 'con_errores',
-        total_errores: missingConcepts.length + unknownRows.length,
-        detalle_errores: {
-            faltantes: missingConcepts,
-            no_reconocidos: unknownRows
-        },
-        duracion_segundos: 0
-    });
-}
-
-async function guardarValidacionEnBD(validacion) {
-    try {
-        if (typeof archivoActualId === 'undefined' || archivoActualId === null) {
-            console.warn('No hay archivoActualId para guardar la validacion. Guarda el archivo primero.');
-            return;
-        }
-
-        const token = localStorage.getItem('token');
-        if (!token) {
-            console.warn('No hay token de usuario disponible para guardar la validacion.');
-            return;
-        }
-
-        const response = await fetch(`${API_URL}/archivos/${archivoActualId}/validaciones`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify(validacion)
-        });
-
-        const data = await response.json();
-        if (!response.ok || data.error) {
-            console.warn('No se pudo guardar la validacion en el servidor:', data.mensaje || data);
-            return;
-        }
-
-        console.log('Validacion guardada con ID:', data.validacion_id);
-        if (typeof loadValidationHistory === 'function') {
-            loadValidationHistory();
-        }
-    } catch (error) {
-        console.error('Error guardando validacion en BD:', error);
     }
 }
 

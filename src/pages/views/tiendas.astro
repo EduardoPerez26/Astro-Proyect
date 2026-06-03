@@ -5,14 +5,14 @@ import StoreCard from '../../components/StoreCard.astro';
 const stores = [
     {
         name: "Taco Bell",
-        description: "Comida rápida mexicana",
+        description: "Comida rapida mexicana",
         icon: "fa-utensils",
         colorClass: "primary",
         restaurant: "taco-bell"
     },
     {
         name: "Burger King",
-        description: "Hamburguesas y más",
+        description: "Hamburguesas y mas",
         icon: "fa-burger",
         colorClass: "warning",
         restaurant: "burger-king"
@@ -34,37 +34,21 @@ const stores = [
 ];
 ---
 
-<DashboardLayout title="Tiendas">
+<DashboardLayout title="Tiendas - Sistema de Inventario">
     <section class="tab active" id="tiendas">
-        <!-- Hero -->
-        <section class="hero">
-            <div class="hero-content">
-                <span class="hero-badge"><i class="fa-solid fa-shop"></i> Gestor de Tiendas</span>
-                <h1 class="hero-title">Control centralizado de conciliaciones</h1>
-                <p class="hero-text">Supervisa el estado de todas las sucursales, revisa incidencias y accede a cada conciliación con un solo clic.</p>
-            </div>
-            <div class="hero-visual">
-                <div class="hero-visual-icon">
-                    <i class="fa-solid fa-chart-line"></i>
-                </div>
-            </div>
-        </section>
-
-        <div class="page-header" style="margin-top: 32px; margin-bottom: 16px;">
+        <!-- Page Header -->
+        <div class="page-header">
             <div class="page-header-left">
-                <h2 class="page-title">Resumen de sucursales</h2>
-                <p class="page-subtitle">Datos recientes y estado general de cada tienda.</p>
+                <h1 class="page-title">Tiendas</h1>
+                <p class="page-subtitle">Gestiona y supervisa todas las sucursales del sistema</p>
             </div>
         </div>
 
-
         <!-- Store Cards Grid -->
-        <div class="cards-grid" style="grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); margin-bottom: 24px;">
+        <div class="cards-grid" style="grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));">
             {stores.map((store) => (
                 <StoreCard {...store} />
             ))}
         </div>
-
-        
     </section>
 </DashboardLayout>

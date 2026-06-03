@@ -18,8 +18,7 @@ const authRoutes = require('./routes/auth.routes');
 const archivosRoutes = require('./routes/archivos.routes');
 const usuariosRoutes = require('./routes/usuarios.routes');
 const restaurantesRoutes = require('./routes/restaurantes.routes');
-const permissionsRoutes = require('./routes/permissions.routes');
-const statsRoutes = require('./routes/stats.routes');
+const validacionesRoutes = require('./routes/validaciones.routes');
 
 // Crear aplicacion Express
 const app = express();
@@ -30,13 +29,7 @@ const app = express();
 
 // CORS: Permite peticiones desde el frontend (localhost:4321 para Astro)
 app.use(cors({
-    origin: [
-        'http://localhost:4321',
-        'http://localhost:4322',
-        'http://localhost:3000',
-        'http://127.0.0.1:4321',
-        'http://127.0.0.1:4322'
-    ],
+    origin: ['http://localhost:4321', 'http://localhost:3001', 'http://127.0.0.1:4321'],
     credentials: true
 }));
 
@@ -62,7 +55,8 @@ app.get('/api', (req, res) => {
             auth: '/api/auth',
             archivos: '/api/archivos',
             usuarios: '/api/usuarios',
-            restaurantes: '/api/restaurantes'
+            restaurantes: '/api/restaurantes',
+            validaciones: '/api/validaciones'
         }
     });
 });
@@ -72,8 +66,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/archivos', archivosRoutes);
 app.use('/api/usuarios', usuariosRoutes);
 app.use('/api/restaurantes', restaurantesRoutes);
-app.use('/api/permissions', permissionsRoutes);
-app.use('/api/stats', statsRoutes);
+app.use('/api/validaciones', validacionesRoutes);
 
 // ============================================
 // MANEJO DE ERRORES
