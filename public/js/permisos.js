@@ -2,7 +2,7 @@
 // CONFIGURACION DE PERMISOS
 // ============================================
 
-window.API_URL = window.API_URL || 'http://localhost:3001/api';
+const API_URL = 'http://localhost:3001/api';
 let currentUserId = null;
 let currentUser = null;
 let originalPermissions = {};
@@ -141,27 +141,37 @@ async function loadUserData() {
     }
     
     try {
-        const response = await fetch(`${window.API_URL}/usuarios/${currentUserId}`, {
+        const response = await fetch(`${API_URL}/usuarios/${currentUserId}`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
         
         if (response.ok) {
             const data = await response.json();
             currentUser = data.usuario || data;
+            
+            // Asegurar que permisos sea un objeto
+            if (typeof currentUser.permisos === 'string') {
+                try {
+                    currentUser.permisos = JSON.parse(currentUser.permisos);
+                } catch {
+                    currentUser.permisos = {};
+                }
+            }
             currentUser.permisos = currentUser.permisos || {};
             originalPermissions = { ...currentUser.permisos };
             
             renderUserInfo();
             renderPermissions();
         } else {
-            throw new Error('Error al cargar usuario');
+            const errorData = await response.json();
+            throw new Error(errorData.mensaje || 'Error al cargar usuario');
         }
     } catch (error) {
         console.error('Error:', error);
         Swal.fire({
             icon: 'error',
             title: 'Error',
-            text: 'No se pudo cargar la informacion del usuario.',
+            text: error.message || 'No se pudo cargar la informacion del usuario.',
         }).then(() => {
             window.location.href = '/views/usuarios';
         });
@@ -175,13 +185,19 @@ async function loadUserData() {
 function renderUserInfo() {
     if (!currentUser) return;
     
-    document.getElementById('userAvatar').textContent = getInitials(currentUser.nombre);
-    document.getElementById('permUserName').textContent = currentUser.nombre;
-    document.getElementById('permUserEmail').textContent = currentUser.email;
-    
+    const avatarEl = document.getElementById('userAvatar');
+    const nameEl = document.getElementById('permUserName');
+    const emailEl = document.getElementById('permUserEmail');
     const roleEl = document.getElementById('permUserRole');
-    roleEl.textContent = getRoleLabel(currentUser.rol);
-    roleEl.className = `role-badge ${currentUser.rol}`;
+    
+    if (avatarEl) avatarEl.textContent = getInitials(currentUser.nombre || '');
+    if (nameEl) nameEl.textContent = currentUser.nombre || 'Sin nombre';
+    if (emailEl) emailEl.textContent = currentUser.email || '';
+    
+    if (roleEl) {
+        roleEl.textContent = getRoleLabel(currentUser.rol);
+        roleEl.className = `status-badge ${currentUser.rol || 'usuario'}`;
+    }
 }
 
 // ============================================
@@ -198,30 +214,25 @@ function renderPermissions() {
         const isDisabled = isRequired || (isAdminSection && currentUser.rol !== 'admin');
         
         return `
-            <div class="permission-item">
+            <div class="permission-card">
                 <div class="permission-info">
-                    <div class="permission-icon ${section.iconClass}">
+                    <div class="permission-icon">
                         <i class="fa-solid ${section.icon}"></i>
                     </div>
                     <div class="permission-details">
-                        <h4>
-                            ${section.name}
-                            ${isRequired ? '<span class="permission-required">(Requerido)</span>' : ''}
-                            ${isAdminSection ? '<span class="permission-required">(Solo Admin)</span>' : ''}
-                        </h4>
-                        <p>${section.description}</p>
+                        <h4>${section.name}</h4>
+                        <p>${section.description}${isRequired ? ' (Requerido)' : ''}${isAdminSection ? ' (Solo Admin)' : ''}</p>
                     </div>
                 </div>
-                <div class="permission-toggle">
+                <label class="toggle-switch">
                     <input type="checkbox" 
                            id="perm_${section.id}" 
-                           class="toggle-input" 
                            data-section="${section.id}"
                            ${isEnabled || isRequired ? 'checked' : ''} 
                            ${isDisabled ? 'disabled' : ''}
                            onchange="togglePermission('${section.id}', this.checked)">
-                    <label for="perm_${section.id}" class="toggle-switch"></label>
-                </div>
+                    <span class="toggle-slider"></span>
+                </label>
             </div>
         `;
     }).join('');
@@ -289,7 +300,7 @@ async function savePermissions() {
     }
     
     try {
-        const response = await fetch(`${window.API_URL}/usuarios/${currentUserId}/permisos`, {
+        const response = await fetch(`${API_URL}/usuarios/${currentUserId}/permisos`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
@@ -343,7 +354,3 @@ function getRoleLabel(role) {
     };
     return labels[role] || role;
 }
-
-window.togglePermission = togglePermission;
-window.resetPermissions = resetPermissions;
-window.savePermissions = savePermissions;

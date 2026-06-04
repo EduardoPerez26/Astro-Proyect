@@ -19,6 +19,7 @@ const archivosRoutes = require('./routes/archivos.routes');
 const usuariosRoutes = require('./routes/usuarios.routes');
 const restaurantesRoutes = require('./routes/restaurantes.routes');
 const validacionesRoutes = require('./routes/validaciones.routes');
+const conciliacionesRoutes = require('./routes/conciliaciones.routes');
 
 // Crear aplicacion Express
 const app = express();
@@ -56,7 +57,8 @@ app.get('/api', (req, res) => {
             archivos: '/api/archivos',
             usuarios: '/api/usuarios',
             restaurantes: '/api/restaurantes',
-            validaciones: '/api/validaciones'
+            validaciones: '/api/validaciones',
+            conciliaciones: '/api/conciliaciones'
         }
     });
 });
@@ -67,6 +69,7 @@ app.use('/api/archivos', archivosRoutes);
 app.use('/api/usuarios', usuariosRoutes);
 app.use('/api/restaurantes', restaurantesRoutes);
 app.use('/api/validaciones', validacionesRoutes);
+app.use('/api/conciliaciones', conciliacionesRoutes);
 
 // ============================================
 // MANEJO DE ERRORES

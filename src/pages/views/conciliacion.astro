@@ -1,0 +1,682 @@
+---
+import DashboardLayout from "../../layouts/DashboardLayout.astro";
+---
+
+<DashboardLayout title="Conciliacion">
+    <div class="page-container">
+        <!-- Header -->
+        <div class="page-header">
+            <div class="page-header-info">
+                <h1>Conciliacion de Ventas</h1>
+                <p>Sube un archivo Excel para extraer y conciliar los datos</p>
+            </div>
+            <div class="header-actions">
+                <button class="btn btn-secondary" id="btnHistorial">
+                    <i class="fa-solid fa-clock-rotate-left"></i>
+                    Historial
+                </button>
+            </div>
+        </div>
+
+        <!-- Selector de Restaurante y Fecha -->
+        <div class="conciliacion-config">
+            <div class="config-card">
+                <div class="config-row">
+                    <div class="form-group">
+                        <label for="selectRestaurante">Restaurante</label>
+                        <select id="selectRestaurante" class="form-select">
+                            <option value=""
+                                >Selecciona un restaurante...</option
+                            >
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="selectTemplate">Template</label>
+                        <select
+                            id="selectTemplate"
+                            class="form-select"
+                            disabled
+                        >
+                            <option value=""
+                                >Selecciona primero un restaurante</option
+                            >
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="fechaConciliacion">Fecha</label>
+                        <input
+                            type="date"
+                            id="fechaConciliacion"
+                            class="form-input"
+                        />
+                    </div>
+                    
+                </div>
+            </div>
+        </div>
+
+        <!-- Zona de Upload -->
+        <div class="upload-section" id="uploadSection">
+            <div class="upload-zone" id="dropZone">
+                <div class="upload-icon">
+                    <i class="fa-solid fa-cloud-arrow-up"></i>
+                </div>
+                <h3>Arrastra tu archivo Excel aqui</h3>
+                <p>o haz clic para seleccionar</p>
+                <span class="upload-hint">Formatos aceptados: .xlsx, .xls</span>
+                <input type="file" id="fileInput" accept=".xlsx,.xls" hidden />
+            </div>
+
+            <!-- Archivo cargado -->
+            <div class="file-loaded" id="fileLoaded" style="display: none;">
+                <div class="file-loaded-info">
+                    <div class="file-loaded-icon">
+                        <i class="fa-solid fa-file-excel"></i>
+                    </div>
+                    <div class="file-loaded-details">
+                        <span class="file-loaded-name" id="fileName"
+                            >archivo.xlsx</span
+                        >
+                        <span class="file-loaded-size" id="fileSize">0 KB</span>
+                    </div>
+                </div>
+                <button class="btn btn-danger btn-sm" id="btnRemoveFile">
+                    <i class="fa-solid fa-times"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Tabla de Conciliacion -->
+        <div
+            class="conciliacion-results"
+            id="resultsSection"
+            style="display: none;"
+        >
+            <!-- Resumen -->
+            <div class="results-summary">
+                <div class="summary-card total">
+                    <div class="summary-icon">
+                        <i class="fa-solid fa-list-check"></i>
+                    </div>
+                    <div class="summary-info">
+                        <span class="summary-value" id="totalConceptos">0</span>
+                        <span class="summary-label">Conceptos</span>
+                    </div>
+                </div>
+                <div class="summary-card success">
+                    <div class="summary-icon">
+                        <i class="fa-solid fa-circle-check"></i>
+                    </div>
+                    <div class="summary-info">
+                        <span class="summary-value" id="conceptosOk">0</span>
+                        <span class="summary-label">Correctos</span>
+                    </div>
+                </div>
+                <div class="summary-card warning">
+                    <div class="summary-icon">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                    </div>
+                    <div class="summary-info">
+                        <span class="summary-value" id="conceptosDiferencia"
+                            >0</span
+                        >
+                        <span class="summary-label">Con Diferencia</span>
+                    </div>
+                </div>
+                <div class="summary-card danger">
+                    <div class="summary-icon">
+                        <i class="fa-solid fa-dollar-sign"></i>
+                    </div>
+                    <div class="summary-info">
+                        <span class="summary-value" id="totalDiferencia"
+                            >$0.00</span
+                        >
+                        <span class="summary-label">Total Diferencia</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabla -->
+            <div class="table-container">
+                <div class="table-header">
+                    <h3>Detalle de Conciliacion</h3>
+                    <div class="table-actions">
+                        <button
+                            class="btn btn-secondary btn-sm"
+                            id="btnExportPdf"
+                        >
+                            <i class="fa-solid fa-file-pdf"></i>
+                            Exportar PDF
+                        </button>
+                        <button class="btn btn-primary btn-sm" id="btnGuardar">
+                            <i class="fa-solid fa-save"></i>
+                            Guardar
+                        </button>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="data-table conciliacion-table">
+                        <thead>
+                            <th>Store</th>
+                            <th>Sales TAX</th>
+                            <th>Gross Sales POS</th>
+                            <th>Discounts</th>
+                            <th>Promo</th>
+                            <th>Donations</th>
+                            <th>Net Sales</th>
+                            <th>GC Sold</th>
+                            <th>Paid Out</th>
+                            <th>Paid In</th>
+                            <th>Donation</th>
+                            <th>Total Revenue</th>
+                            <th>Mastercard</th>
+                            <th>Visa</th>
+                            <th>Discover</th>
+                            <th>Amex</th>
+                            <th>Debit</th>
+                            <th>EBT</th>
+                            <th>GC Redeem</th>
+                            <th>Acct Cash</th>
+                            <th>Deposits</th>
+                            <th>GH</th>
+                            <th>Uber</th>
+                            <th>DD</th>
+                            <th>CC Totals</th>
+                            <th>Payments Total</th>
+                            <th>O/S</th>
+                            <th>OS</th>
+                            <th>Deposit 1</th>
+                            <th>Deposit 2</th>
+                            <th>Deposit 3</th>
+                            <th>Cash +/-</th>
+                            <th>Cash Expected</th>
+                            <th>Difference</th>
+                        </thead>
+                        <tbody id="conciliacionBody">
+                            <!-- Datos dinamicos -->
+                        </tbody>
+                        <tfoot>
+                            <tr class="totals-row">
+                                <td><strong>TOTALES</strong></td>
+                                <td class="text-right"
+                                    ><strong id="totalExcel">$0.00</strong></td
+                                >
+                                <td class="text-right"
+                                    ><strong id="totalEsperado">$0.00</strong
+                                    ></td
+                                >
+                                <td class="text-right"
+                                    ><strong id="totalDiff">$0.00</strong></td
+                                >
+                                <td colspan="2"></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Notas -->
+            <div class="notes-section">
+                <label for="notasConciliacion">Notas / Observaciones</label>
+                <textarea
+                    id="notasConciliacion"
+                    class="form-textarea"
+                    rows="3"
+                    placeholder="Agrega notas o comentarios sobre esta conciliacion..."
+                ></textarea>
+            </div>
+        </div>
+
+        <!-- Modal Editar Valor Esperado -->
+        <div class="modal-overlay" id="modalEditarValor">
+            <div class="modal">
+                <div class="modal-header">
+                    <h3>Editar Valor Esperado</h3>
+                    <button class="modal-close" onclick="cerrarModalEditar()">
+                        <i class="fa-solid fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Concepto</label>
+                        <input
+                            type="text"
+                            id="editConcepto"
+                            class="form-input"
+                            readonly
+                        />
+                    </div>
+                    <div class="form-group">
+                        <label>Valor Excel</label>
+                        <input
+                            type="text"
+                            id="editValorExcel"
+                            class="form-input"
+                            readonly
+                        />
+                    </div>
+                    <div class="form-group">
+                        <label>Valor Esperado</label>
+                        <input
+                            type="number"
+                            id="editValorEsperado"
+                            class="form-input"
+                            step="0.01"
+                        />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button
+                        class="btn btn-secondary"
+                        onclick="cerrarModalEditar()">Cancelar</button
+                    >
+                    <button
+                        class="btn btn-primary"
+                        onclick="guardarValorEsperado()">Guardar</button
+                    >
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Historial -->
+        <div class="modal-overlay" id="modalHistorial">
+            <div class="modal modal-lg">
+                <div class="modal-header">
+                    <h3>Historial de Conciliaciones</h3>
+                    <button
+                        class="modal-close"
+                        onclick="cerrarModalHistorial()"
+                    >
+                        <i class="fa-solid fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Sucursal</th>
+                                    <th>Gross Sales</th>
+                                    <th>Net Sales</th>
+                                    <th>Sales Tax</th>
+                                    <th>Visa</th>
+                                    <th>Mastercard</th>
+                                    <th>Discover</th>
+                                    <th>Amex</th>
+                                    <th>Deposits</th>
+                                    <th>Difference</th>
+                                </tr>
+                            </thead>
+                            <tbody id="historialBody">
+                                <!-- Datos dinamicos -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script
+        is:inline
+        src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"
+    ></script>
+    <script is:inline src="/js/conciliacion.js"></script>
+</DashboardLayout>
+
+<style>
+    /* Configuracion de conciliacion */
+    .conciliacion-config {
+        margin-bottom: 24px;
+    }
+
+    .config-card {
+        background: var(--white);
+        border-radius: var(--radius-lg);
+        padding: 20px 24px;
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--gray-200);
+    }
+
+    .config-row {
+        display: grid;
+        grid-template-columns: 2fr 2fr 1fr;
+        gap: 20px;
+        align-items: end;
+    }
+
+    /* Upload Section */
+    .upload-section {
+        margin-bottom: 24px;
+    }
+
+    .upload-zone {
+        background: var(--white);
+        border: 2px dashed var(--gray-300);
+        border-radius: var(--radius-lg);
+        padding: 48px 24px;
+        text-align: center;
+        cursor: pointer;
+        transition: var(--transition);
+    }
+
+    .upload-zone:hover,
+    .upload-zone.dragover {
+        border-color: var(--primary);
+        background: var(--primary-light);
+    }
+
+    .upload-icon {
+        width: 64px;
+        height: 64px;
+        margin: 0 auto 16px;
+        background: var(--gray-100);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 28px;
+        color: var(--gray-400);
+        transition: var(--transition);
+    }
+
+    .upload-zone:hover .upload-icon {
+        background: var(--primary);
+        color: var(--white);
+    }
+
+    .upload-zone h3 {
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--gray-800);
+        margin: 0 0 8px 0;
+    }
+
+    .upload-zone p {
+        font-size: 14px;
+        color: var(--gray-500);
+        margin: 0 0 12px 0;
+    }
+
+    .upload-hint {
+        font-size: 12px;
+        color: var(--gray-400);
+    }
+
+    /* File Loaded */
+    .file-loaded {
+        background: var(--white);
+        border-radius: var(--radius-lg);
+        padding: 16px 20px;
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--success);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .file-loaded-info {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+
+    .file-loaded-icon {
+        width: 48px;
+        height: 48px;
+        background: rgba(16, 185, 129, 0.1);
+        border-radius: var(--radius);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        color: var(--success);
+    }
+
+    .file-loaded-details {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .file-loaded-name {
+        font-weight: 600;
+        color: var(--gray-800);
+    }
+
+    .file-loaded-size {
+        font-size: 13px;
+        color: var(--gray-500);
+    }
+
+    /* Results Summary */
+    .results-summary {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+
+    .summary-card {
+        background: var(--white);
+        border-radius: var(--radius-lg);
+        padding: 20px;
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--gray-200);
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+
+    .summary-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: var(--radius);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+    }
+
+    .summary-card.total .summary-icon {
+        background: rgba(59, 130, 246, 0.1);
+        color: #3b82f6;
+    }
+
+    .summary-card.success .summary-icon {
+        background: rgba(16, 185, 129, 0.1);
+        color: #10b981;
+    }
+
+    .summary-card.warning .summary-icon {
+        background: rgba(245, 158, 11, 0.1);
+        color: #f59e0b;
+    }
+
+    .summary-card.danger .summary-icon {
+        background: rgba(239, 68, 68, 0.1);
+        color: #ef4444;
+    }
+
+    .summary-info {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .summary-value {
+        font-size: 24px;
+        font-weight: 700;
+        color: var(--gray-900);
+        line-height: 1;
+    }
+
+    .summary-label {
+        font-size: 13px;
+        color: var(--gray-500);
+        margin-top: 4px;
+    }
+
+    /* Conciliacion Table */
+    .conciliacion-table td {
+        padding: 14px 16px;
+    }
+
+    .conciliacion-table .text-right {
+        text-align: right;
+    }
+
+    .conciliacion-table .text-center {
+        text-align: center;
+    }
+
+    .valor-excel {
+        font-family: "SF Mono", "Consolas", monospace;
+        font-weight: 500;
+    }
+
+    .valor-esperado {
+        font-family: "SF Mono", "Consolas", monospace;
+        color: var(--gray-600);
+    }
+
+    .valor-diferencia {
+        font-family: "SF Mono", "Consolas", monospace;
+        font-weight: 600;
+    }
+
+    .valor-diferencia.positivo {
+        color: #10b981;
+    }
+
+    .valor-diferencia.negativo {
+        color: #ef4444;
+    }
+
+    .valor-diferencia.cero {
+        color: var(--gray-400);
+    }
+
+    .estado-icon {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+    }
+
+    .estado-icon.ok {
+        background: rgba(16, 185, 129, 0.1);
+        color: #10b981;
+    }
+
+    .estado-icon.diferencia {
+        background: rgba(245, 158, 11, 0.1);
+        color: #f59e0b;
+    }
+
+    .totals-row {
+        background: var(--gray-50);
+        border-top: 2px solid var(--gray-200);
+    }
+
+    .totals-row td {
+        padding: 16px;
+    }
+
+    /* Notes Section */
+    .notes-section {
+        background: var(--white);
+        border-radius: var(--radius-lg);
+        padding: 20px 24px;
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--gray-200);
+        margin-top: 24px;
+    }
+
+    .notes-section label {
+        display: block;
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--gray-700);
+        margin-bottom: 8px;
+    }
+
+    .form-textarea {
+        width: 100%;
+        padding: 12px 14px;
+        font-size: 14px;
+        border: 1px solid var(--gray-300);
+        border-radius: var(--radius);
+        resize: vertical;
+        transition: var(--transition);
+    }
+
+    .form-textarea:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 2px var(--primary-light);
+    }
+
+    /* Form Elements */
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .form-group label {
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--gray-700);
+    }
+
+    .form-select,
+    .form-input {
+        padding: 10px 14px;
+        font-size: 14px;
+        border: 1px solid var(--gray-300);
+        border-radius: var(--radius);
+        background: var(--white);
+        transition: var(--transition);
+    }
+
+    .form-select:focus,
+    .form-input:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 2px var(--primary-light);
+    }
+
+    .form-select:disabled {
+        background: var(--gray-100);
+        cursor: not-allowed;
+    }
+
+    /* Table Responsive */
+    .table-responsive {
+        overflow-x: auto;
+    }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+        .config-row {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .results-summary {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    @media (max-width: 768px) {
+        .config-row {
+            grid-template-columns: 1fr;
+        }
+
+        .results-summary {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>

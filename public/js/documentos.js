@@ -2,10 +2,13 @@
 // GESTION DE DOCUMENTOS
 // ============================================
 
-window.API_URL = window.API_URL || 'http://localhost:3001/api';
+const API_URL = 'http://localhost:3001/api';
+
 let documentos = [];
+let documentosFiltrados = [];
 let paginaActual = 1;
 const porPagina = 10;
+const ITEMS_POR_PAGINA = 10;
 let documentoSeleccionado = null;
 
 // ============================================
@@ -44,7 +47,7 @@ async function cargarDocumentos() {
     }
     
     try {
-        const response = await fetch(`${window.API_URL}/archivos`, {
+        const response = await fetch(`${API_URL}/archivos`, {
             headers: {
                 'Authorization': `Bearer ${token}`
             }
@@ -78,14 +81,14 @@ function mostrarDocumentos() {
     const table = document.getElementById('documentosTable');
     
     // Aplicar filtros
-    let filtrados = aplicarFiltros(documentos);
+    documentosFiltrados = aplicarFiltros(documentos);
     
     // Paginacion
-    const total = filtrados.length;
+    const total = documentosFiltrados.length;
     const totalPaginas = Math.ceil(total / porPagina);
     const inicio = (paginaActual - 1) * porPagina;
     const fin = inicio + porPagina;
-    const paginados = filtrados.slice(inicio, fin);
+    const paginados = documentosFiltrados.slice(inicio, fin);
     
     if (paginados.length === 0) {
         table.style.display = 'none';
@@ -100,31 +103,35 @@ function mostrarDocumentos() {
         <tr>
             <td>${doc.id}</td>
             <td>
-                <div class="file-info">
+                <div class="file-cell">
                     <div class="file-icon">
                         <i class="fa-solid fa-file-excel"></i>
                     </div>
-                    <div>
-                        <div class="file-name">${doc.nombre_original}</div>
-                        <div class="file-sheets">${doc.numero_hojas || 1} hoja(s)</div>
+                    <div class="file-info">
+                        <span class="file-name">${doc.nombre_original}</span>
+                        <span class="file-meta">${doc.numero_hojas || 1} hoja(s)</span>
                     </div>
                 </div>
             </td>
             <td>${doc.restaurante_nombre || doc.restaurante || '-'}</td>
-            <td>${doc.nombres_hojas || '-'}</td>
             <td>${formatearTamano(doc.tamano_bytes)}</td>
-            <td><span class="badge badge-${doc.estado}">${formatearEstado(doc.estado)}</span></td>
-            <td>${doc.usuario_nombre || doc.subido_por || '-'}</td>
+            <td><span class="status-badge ${doc.estado}">${formatearEstado(doc.estado)}</span></td>
+            <td>
+                <div class="user-cell">
+                    <div class="user-avatar">${(doc.usuario_nombre || doc.subido_por || 'U').charAt(0).toUpperCase()}</div>
+                    <span>${doc.usuario_nombre || doc.subido_por || '-'}</span>
+                </div>
+            </td>
             <td>${formatearFecha(doc.fecha_subida)}</td>
             <td>
-                <div class="actions-cell">
-                    <button class="btn-icon view" onclick="verDetalles(${doc.id})" title="Ver detalles">
+                <div class="action-buttons">
+                    <button class="action-btn view" onclick="verDetalles(${doc.id})" title="Ver detalles">
                         <i class="fa-solid fa-eye"></i>
                     </button>
-                    <button class="btn-icon download" onclick="descargarArchivo(${doc.id})" title="Descargar">
+                    <button class="action-btn download" onclick="descargarArchivo(${doc.id})" title="Descargar">
                         <i class="fa-solid fa-download"></i>
                     </button>
-                    <button class="btn-icon delete" onclick="eliminarArchivo(${doc.id})" title="Eliminar">
+                    <button class="action-btn delete" onclick="eliminarArchivo(${doc.id})" title="Eliminar">
                         <i class="fa-solid fa-trash"></i>
                     </button>
                 </div>
@@ -217,13 +224,29 @@ function limpiarFiltros() {
 // ============================================
 
 function actualizarPaginacion(totalPaginas) {
-    const pageInfo = document.getElementById('pageInfo');
+    const pagination = document.getElementById('pagination');
     const btnPrev = document.getElementById('btnPrev');
     const btnNext = document.getElementById('btnNext');
+    const currentPageEl = document.getElementById('currentPage');
+    const showingFrom = document.getElementById('showingFrom');
+    const showingTo = document.getElementById('showingTo');
+    const totalItems = document.getElementById('totalItems');
     
-    pageInfo.textContent = `Pagina ${paginaActual} de ${totalPaginas || 1}`;
-    btnPrev.disabled = paginaActual <= 1;
-    btnNext.disabled = paginaActual >= totalPaginas;
+    if (!pagination) return;
+    
+    const total = documentosFiltrados.length;
+    const desde = total > 0 ? ((paginaActual - 1) * ITEMS_POR_PAGINA) + 1 : 0;
+    const hasta = Math.min(paginaActual * ITEMS_POR_PAGINA, total);
+    
+    if (showingFrom) showingFrom.textContent = desde;
+    if (showingTo) showingTo.textContent = hasta;
+    if (totalItems) totalItems.textContent = total;
+    if (currentPageEl) currentPageEl.textContent = paginaActual;
+    
+    if (btnPrev) btnPrev.disabled = paginaActual <= 1;
+    if (btnNext) btnNext.disabled = paginaActual >= totalPaginas;
+    
+    pagination.style.display = total > 0 ? 'flex' : 'none';
 }
 
 function cambiarPagina(direccion) {
@@ -309,7 +332,7 @@ async function descargarArchivo(id) {
     }
     
     try {
-        const response = await fetch(`${window.API_URL}/archivos/${id}/descargar`, {
+        const response = await fetch(`${API_URL}/archivos/${id}/descargar`, {
             headers: {
                 'Authorization': `Bearer ${token}`
             }
@@ -362,7 +385,7 @@ async function eliminarArchivo(id) {
     }
     
     try {
-        const response = await fetch(`${window.API_URL}/archivos/${id}`, {
+        const response = await fetch(`${API_URL}/archivos/${id}`, {
             method: 'DELETE',
             headers: {
                 'Authorization': `Bearer ${token}`

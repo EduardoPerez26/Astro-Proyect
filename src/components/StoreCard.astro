@@ -1,6 +1,7 @@
 ---
 // Componente StoreCard - Tarjeta de tienda/restaurante
 interface Props {
+  id: number;
   name: string;
   description: string;
   icon: string;
@@ -8,23 +9,89 @@ interface Props {
   restaurant: string;
 }
 
-const { name, description, icon, colorClass, restaurant } = Astro.props;
+const { id, name, description, icon, colorClass, restaurant } = Astro.props;
 ---
 
-<div class="card">
+<div class="card store-card">
     <div class="card-body">
-        <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 20px;">
-            <div style={`width: 56px; height: 56px; background: var(--${colorClass}-light); border-radius: var(--radius); display: flex; align-items: center; justify-content: center;`}>
-                <i class={`fa-solid ${icon}`} style={`font-size: 24px; color: var(--${colorClass});`}></i>
+        <div class="store-card-header">
+            <div class={`store-icon bg-${colorClass}`}>
+                <i class={`fa-solid ${icon}`}></i>
             </div>
-            <div>
-                <h3 style="font-size: 18px; font-weight: 600; color: var(--gray-800);">{name}</h3>
-                <p style="font-size: 13px; color: var(--gray-500);">{description}</p>
+            <div class="store-info">
+                <h3>{name}</h3>
+                <p>{description}</p>
             </div>
         </div>
-        <a class="btn btn-primary" href={`/views/editor?restaurant=${restaurant}`} style="width: 100%;">
+        <a class="btn btn-primary btn-block" href={`/views/conciliacion?restaurante=${id}`}>
             <i class="fa-solid fa-file-excel"></i>
             Conciliacion
         </a>
     </div>
 </div>
+
+<style>
+.store-card {
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.store-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+}
+
+.store-card-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.store-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: var(--radius);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+}
+
+.store-icon.bg-primary {
+    background: var(--primary-light);
+    color: var(--primary);
+}
+
+.store-icon.bg-warning {
+    background: var(--warning-light);
+    color: var(--warning);
+}
+
+.store-icon.bg-danger {
+    background: var(--danger-light);
+    color: var(--danger);
+}
+
+.store-icon.bg-success {
+    background: var(--success-light);
+    color: var(--success);
+}
+
+.store-info h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--gray-800);
+    margin: 0 0 4px 0;
+}
+
+.store-info p {
+    font-size: 13px;
+    color: var(--gray-500);
+    margin: 0;
+}
+
+.btn-block {
+    width: 100%;
+    justify-content: center;
+}
+</style>

@@ -1,166 +1,152 @@
 ---
-import DashboardLayout from "../../layouts/DashboardLayout.astro";
+import DashboardLayout from '../../layouts/DashboardLayout.astro';
 ---
 
-<DashboardLayout title="Usuarios - Sistema de Inventario">
-    <section class="tab active" id="usuarios">
-        <!-- Page Header -->
+<DashboardLayout title="Usuarios">
+    <div class="page-container">
+        <!-- Header -->
         <div class="page-header">
-            <div class="page-header-left">
-                <h1 class="page-title">Administracion de Usuarios</h1>
-                <p class="page-subtitle">Gestiona los usuarios del sistema</p>
+            <div class="page-header-info">
+                <h1>Administracion de Usuarios</h1>
+                <p>Gestiona los usuarios del sistema</p>
             </div>
-            <div class="page-header-actions">
-                <button class="btn btn-primary" onclick="openUserModal()">
-                    <i class="fa-solid fa-user-plus"></i>
-                    Nuevo Usuario
-                </button>
+            <button class="btn btn-primary" onclick="openUserModal()">
+                <i class="fa-solid fa-user-plus"></i>
+                Nuevo Usuario
+            </button>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon blue">
+                    <i class="fa-solid fa-users"></i>
+                </div>
+                <div class="stat-info">
+                    <h3 id="totalUsuarios">0</h3>
+                    <p>Total Usuarios</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon green">
+                    <i class="fa-solid fa-user-check"></i>
+                </div>
+                <div class="stat-info">
+                    <h3 id="usuariosActivos">0</h3>
+                    <p>Activos</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon red">
+                    <i class="fa-solid fa-user-xmark"></i>
+                </div>
+                <div class="stat-info">
+                    <h3 id="usuariosInactivos">0</h3>
+                    <p>Inactivos</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon purple">
+                    <i class="fa-solid fa-user-shield"></i>
+                </div>
+                <div class="stat-info">
+                    <h3 id="usuariosAdmin">0</h3>
+                    <p>Administradores</p>
+                </div>
             </div>
         </div>
 
         <!-- Filtros -->
-        <div class="card" style="margin-bottom: 24px;">
-            <div class="card-body" style="padding: 16px 20px;">
-                <div class="toolbar" style="flex-wrap: wrap; gap: 16px;">
-                    <div class="search-box" style="flex: 1; min-width: 200px;">
-                        <i class="fa-solid fa-magnifying-glass"></i>
-                        <input
-                            type="text"
-                            id="searchUsers"
-                            placeholder="Buscar usuarios..."
-                            oninput="filterUsers()"
-                        />
-                    </div>
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                        <label
-                            style="font-size: 14px; color: var(--gray-600); font-weight: 500;"
-                            >Rol:</label
-                        >
-                        <select
-                            id="filterRole"
-                            class="form-control"
-                            style="width: auto; min-width: 150px;"
-                            onchange="filterUsers()"
-                        >
-                            <option value="">Todos</option>
-                            <option value="admin">Administrador</option>
-                            <option value="supervisor">Supervisor</option>
-                            <option value="usuario">Usuario</option>
-                        </select>
-                    </div>
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                        <label
-                            style="font-size: 14px; color: var(--gray-600); font-weight: 500;"
-                            >Estado:</label
-                        >
-                        <select
-                            id="filterStatus"
-                            class="form-control"
-                            style="width: auto; min-width: 120px;"
-                            onchange="filterUsers()"
-                        >
-                            <option value="">Todos</option>
-                            <option value="activo">Activo</option>
-                            <option value="inactivo">Inactivo</option>
-                        </select>
-                    </div>
-                </div>
+        <div class="filters-bar">
+            <div class="filter-group">
+                <label>Buscar:</label>
+                <input type="text" id="searchUsers" placeholder="Nombre, email o usuario..." oninput="filterUsers()">
+            </div>
+            <div class="filter-group">
+                <label>Rol:</label>
+                <select id="filterRole" onchange="filterUsers()">
+                    <option value="">Todos</option>
+                    <option value="admin">Administrador</option>
+                    <option value="supervisor">Supervisor</option>
+                    <option value="usuario">Usuario</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Estado:</label>
+                <select id="filterStatus" onchange="filterUsers()">
+                    <option value="">Todos</option>
+                    <option value="activo">Activo</option>
+                    <option value="inactivo">Inactivo</option>
+                </select>
             </div>
         </div>
 
-        <!-- Tabla de usuarios -->
-        <div class="card">
-            <div class="card-body" style="padding: 0;">
-                <div class="table-container">
-                    <table class="data-table" id="usersTable">
-                        <thead>
-                            <tr>
-                                <th>Usuario</th>
-                                <th>Email</th>
-                                <th>Rol</th>
-                                <th>Estado</th>
-                                <th>Ultimo acceso</th>
-                                <th style="text-align: center;">Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody id="usersTableBody">
-                            <!-- Se llena dinamicamente -->
-                        </tbody>
-                    </table>
-                </div>
+        <!-- Tabla -->
+        <div class="table-container">
+            <table class="data-table" id="usersTable">
+                <thead>
+                    <tr>
+                        <th>Usuario</th>
+                        <th>Email</th>
+                        <th>Rol</th>
+                        <th>Estado</th>
+                        <th>Fecha registro</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="usersTableBody">
+                    <tr>
+                        <td colspan="6">
+                            <div class="empty-state">
+                                <i class="fa-solid fa-spinner fa-spin"></i>
+                                <p>Cargando usuarios...</p>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="pagination">
+                <div class="pagination-info" id="paginationInfo">Mostrando 0 usuarios</div>
+                <div class="pagination-buttons" id="paginationButtons"></div>
             </div>
         </div>
-    </section>
+    </div>
 
     <!-- Modal Crear/Editar Usuario -->
     <div class="modal-overlay" id="userModal">
-        <div class="modal" style="max-width: 500px;">
+        <div class="modal">
             <div class="modal-header">
-                <h3 class="modal-title" id="modalTitle">Nuevo Usuario</h3>
+                <h3 id="modalTitle">Nuevo Usuario</h3>
                 <button class="modal-close" onclick="closeUserModal()">
                     <i class="fa-solid fa-xmark"></i>
                 </button>
             </div>
             <div class="modal-body">
                 <form id="userForm">
-                    <input type="hidden" id="userId" value="" />
-
+                    <input type="hidden" id="userId" value="">
+                    
                     <div class="form-group">
-                        <label class="form-label" for="userName"
-                            >Nombre completo</label
-                        >
-                        <input
-                            type="text"
-                            id="userName"
-                            class="form-control"
-                            placeholder="Ej: Juan Perez"
-                            required
-                        />
+                        <label class="form-label" for="userName">Nombre completo</label>
+                        <input type="text" id="userName" class="form-control" placeholder="Ej: Juan Perez" required>
                     </div>
-
+                    
                     <div class="form-group">
                         <label class="form-label" for="userEmail">Email</label>
-                        <input
-                            type="email"
-                            id="userEmail"
-                            class="form-control"
-                            placeholder="Ej: juan@empresa.com"
-                            required
-                        />
+                        <input type="email" id="userEmail" class="form-control" placeholder="Ej: juan@empresa.com" required>
                     </div>
-
+                    
                     <div class="form-group">
-                        <label class="form-label" for="userUsername"
-                            >Usuario</label
-                        >
-                        <input
-                            type="text"
-                            id="userUsername"
-                            class="form-control"
-                            placeholder="Ej: jperez"
-                            required
-                        />
+                        <label class="form-label" for="userUsername">Usuario</label>
+                        <input type="text" id="userUsername" class="form-control" placeholder="Ej: jperez" required>
                     </div>
-
+                    
                     <div class="form-group" id="passwordGroup">
-                        <label class="form-label" for="userPassword"
-                            >Contrasena</label
-                        >
-                        <input
-                            type="password"
-                            id="userPassword"
-                            class="form-control"
-                            placeholder="Minimo 6 caracteres"
-                        />
-                        <small class="form-help" id="passwordHelp"
-                            >Deja vacio para mantener la contrasena actual</small
-                        >
+                        <label class="form-label" for="userPassword">Contrasena</label>
+                        <input type="password" id="userPassword" class="form-control" placeholder="Minimo 6 caracteres">
+                        <small class="form-text" id="passwordHelp">Deja vacio para mantener la contrasena actual</small>
                     </div>
-
-                    <div
-                        class="form-row"
-                        style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;"
-                    >
+                    
+                    <div class="form-row">
                         <div class="form-group">
                             <label class="form-label" for="userRole">Rol</label>
                             <select id="userRole" class="form-control" required>
@@ -170,16 +156,10 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
                                 <option value="usuario">Usuario</option>
                             </select>
                         </div>
-
+                        
                         <div class="form-group">
-                            <label class="form-label" for="userStatus"
-                                >Estado</label
-                            >
-                            <select
-                                id="userStatus"
-                                class="form-control"
-                                required
-                            >
+                            <label class="form-label" for="userStatus">Estado</label>
+                            <select id="userStatus" class="form-control" required>
                                 <option value="activo">Activo</option>
                                 <option value="inactivo">Inactivo</option>
                             </select>
@@ -188,16 +168,8 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
                 </form>
             </div>
             <div class="modal-footer">
-                <button
-                    type="button"
-                    class="btn btn-secondary"
-                    onclick="closeUserModal()">Cancelar</button
-                >
-                <button
-                    type="button"
-                    class="btn btn-primary"
-                    onclick="saveUser()"
-                >
+                <button type="button" class="btn btn-secondary" onclick="closeUserModal()">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="saveUser()">
                     <i class="fa-solid fa-floppy-disk"></i>
                     Guardar
                 </button>
@@ -209,47 +181,22 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
     <div class="modal-overlay" id="deleteModal">
         <div class="modal" style="max-width: 400px;">
             <div class="modal-header">
-                <h3 class="modal-title">Confirmar eliminacion</h3>
+                <h3>Confirmar eliminacion</h3>
                 <button class="modal-close" onclick="closeDeleteModal()">
                     <i class="fa-solid fa-xmark"></i>
                 </button>
             </div>
-            <div class="modal-body" style="text-align: center; padding: 24px;">
-                <div
-                    style="width: 64px; height: 64px; background: #fef2f2; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;"
-                >
-                    <i
-                        class="fa-solid fa-triangle-exclamation"
-                        style="font-size: 28px; color: #ef4444;"></i>
+            <div class="modal-body" style="text-align: center;">
+                <div class="stat-icon red" style="width: 64px; height: 64px; font-size: 28px; margin: 0 auto 16px;">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
                 </div>
-                <p style="color: var(--gray-700); margin-bottom: 8px;">
-                    Estas seguro de eliminar al usuario:
-                </p>
-                <p
-                    style="font-weight: 600; color: var(--gray-900);"
-                    id="deleteUserName"
-                >
-                </p>
-                <p
-                    style="font-size: 13px; color: var(--gray-500); margin-top: 12px;"
-                >
-                    Esta accion no se puede deshacer.
-                </p>
+                <p>Estas seguro de eliminar al usuario:</p>
+                <p style="font-weight: 600;" id="deleteUserName"></p>
+                <p class="form-text">Esta accion no se puede deshacer.</p>
             </div>
-            <div
-                class="modal-footer"
-                style="justify-content: center; gap: 12px;"
-            >
-                <button
-                    type="button"
-                    class="btn btn-secondary"
-                    onclick="closeDeleteModal()">Cancelar</button
-                >
-                <button
-                    type="button"
-                    class="btn btn-danger"
-                    onclick="confirmDelete()"
-                >
+            <div class="modal-footer" style="justify-content: center;">
+                <button type="button" class="btn btn-secondary" onclick="closeDeleteModal()">Cancelar</button>
+                <button type="button" class="btn btn-danger" onclick="confirmDelete()">
                     <i class="fa-solid fa-trash"></i>
                     Eliminar
                 </button>
@@ -259,4 +206,3 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
 
     <script is:inline src="/js/usuarios.js"></script>
 </DashboardLayout>
-

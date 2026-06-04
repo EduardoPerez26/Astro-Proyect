@@ -2,10 +2,13 @@
 // HISTORIAL DE VALIDACIONES
 // ============================================
 
-window.API_URL = window.API_URL || localStorage.getItem('apiUrl') || 'http://localhost:3001/api';
+const API_URL = 'http://localhost:3001/api';
+
 let validaciones = [];
+let validacionesFiltradas = [];
 let paginaActual = 1;
 const porPagina = 15;
+const ITEMS_POR_PAGINA = 15;
 
 // ============================================
 // INICIALIZACION
@@ -42,7 +45,7 @@ async function cargarValidaciones() {
     }
     
     try {
-        const response = await fetch(`${window.API_URL}/validaciones`, {
+        const response = await fetch(`${API_URL}/validaciones`, {
             headers: {
                 'Authorization': `Bearer ${token}`
             }
@@ -96,13 +99,13 @@ function mostrarValidaciones() {
     const emptyState = document.getElementById('emptyState');
     const table = document.getElementById('validacionesTable');
     
-    let filtradas = aplicarFiltros(validaciones);
+    validacionesFiltradas = aplicarFiltros(validaciones);
     
-    const total = filtradas.length;
+    const total = validacionesFiltradas.length;
     const totalPaginas = Math.ceil(total / porPagina);
     const inicio = (paginaActual - 1) * porPagina;
     const fin = inicio + porPagina;
-    const paginadas = filtradas.slice(inicio, fin);
+    const paginadas = validacionesFiltradas.slice(inicio, fin);
     
     if (paginadas.length === 0) {
         table.style.display = 'none';
@@ -117,28 +120,36 @@ function mostrarValidaciones() {
         <tr>
             <td>${val.id}</td>
             <td>
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <i class="fa-solid fa-file-excel" style="color: #16a34a;"></i>
+                <div class="file-cell">
+                    <div class="file-icon">
+                        <i class="fa-solid fa-file-excel"></i>
+                    </div>
                     <span>${val.archivo_nombre || 'Archivo #' + val.archivo_id}</span>
                 </div>
             </td>
-            <td><span class="badge badge-tipo">${formatearTipo(val.tipo_validacion)}</span></td>
-            <td><span class="badge badge-${val.resultado}">${formatearResultado(val.resultado)}</span></td>
+            <td><span class="status-badge procesando">${formatearTipo(val.tipo_validacion)}</span></td>
+            <td><span class="status-badge ${val.resultado === 'exitoso' ? 'validado' : val.resultado === 'con_errores' ? 'pendiente' : 'error'}">${formatearResultado(val.resultado)}</span></td>
             <td>
-                <div class="error-count ${val.total_errores > 0 ? 'has-errors' : ''}">
-                    ${val.total_errores > 0 ? '<i class="fa-solid fa-exclamation-circle"></i>' : ''}
-                    <span>${val.total_errores || 0}</span>
-                </div>
+                <span class="status-badge ${val.total_errores > 0 ? 'error' : 'validado'}">
+                    ${val.total_errores || 0} errores
+                </span>
             </td>
             <td>${val.duracion_segundos ? val.duracion_segundos.toFixed(2) + 's' : '-'}</td>
-            <td>${val.usuario_nombre || 'Usuario #' + val.usuario_id}</td>
+            <td>
+                <div class="user-cell">
+                    <div class="user-avatar">${(val.usuario_nombre || 'U').charAt(0).toUpperCase()}</div>
+                    <span>${val.usuario_nombre || 'Usuario #' + val.usuario_id}</span>
+                </div>
+            </td>
             <td>${formatearFecha(val.fecha_validacion)}</td>
             <td>
-                <button class="btn-icon" onclick="verErrores(${val.id})" 
-                        ${val.total_errores === 0 ? 'disabled' : ''} 
-                        title="${val.total_errores > 0 ? 'Ver errores' : 'Sin errores'}">
-                    <i class="fa-solid fa-eye"></i>
-                </button>
+                <div class="action-buttons">
+                    <button class="action-btn view" onclick="verErrores(${val.id})" 
+                            ${val.total_errores === 0 ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : ''} 
+                            title="${val.total_errores > 0 ? 'Ver errores' : 'Sin errores'}">
+                        <i class="fa-solid fa-eye"></i>
+                    </button>
+                </div>
             </td>
         </tr>
     `).join('');
@@ -218,13 +229,29 @@ function limpiarFiltros() {
 // ============================================
 
 function actualizarPaginacion(totalPaginas) {
-    const pageInfo = document.getElementById('pageInfo');
+    const pagination = document.getElementById('pagination');
     const btnPrev = document.getElementById('btnPrev');
     const btnNext = document.getElementById('btnNext');
+    const currentPageEl = document.getElementById('currentPage');
+    const showingFrom = document.getElementById('showingFrom');
+    const showingTo = document.getElementById('showingTo');
+    const totalItems = document.getElementById('totalItems');
     
-    pageInfo.textContent = `Pagina ${paginaActual} de ${totalPaginas || 1}`;
-    btnPrev.disabled = paginaActual <= 1;
-    btnNext.disabled = paginaActual >= totalPaginas;
+    if (!pagination) return;
+    
+    const total = validacionesFiltradas.length;
+    const desde = total > 0 ? ((paginaActual - 1) * ITEMS_POR_PAGINA) + 1 : 0;
+    const hasta = Math.min(paginaActual * ITEMS_POR_PAGINA, total);
+    
+    if (showingFrom) showingFrom.textContent = desde;
+    if (showingTo) showingTo.textContent = hasta;
+    if (totalItems) totalItems.textContent = total;
+    if (currentPageEl) currentPageEl.textContent = paginaActual;
+    
+    if (btnPrev) btnPrev.disabled = paginaActual <= 1;
+    if (btnNext) btnNext.disabled = paginaActual >= totalPaginas;
+    
+    pagination.style.display = total > 0 ? 'flex' : 'none';
 }
 
 function cambiarPagina(direccion) {
