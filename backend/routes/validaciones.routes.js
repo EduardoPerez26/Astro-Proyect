@@ -121,64 +121,113 @@ router.get('/:id', verificarToken, async (req, res) => {
 // POST /api/validaciones
 // ============================================
 // Registra una nueva validacion
+// ============================================
+// POST /api/validaciones
+// ============================================
+// Registra una nueva validacion
 router.post('/', verificarToken, async (req, res) => {
     try {
-        const { 
-            archivo_id = null, 
-            tipo_validacion = 'conceptos', 
-            resultado = 'exitoso', 
-            total_errores = 0, 
+
+        const {
+            archivo_id = null,
+            tipo_validacion = 'conceptos',
+            resultado = 'exitoso',
+            total_errores = 0,
             detalle_errores = null,
             duracion_segundos = null
         } = req.body;
-        
-        // Verificar que la tabla existe
-        try {
-            const [result] = await pool.query(`
-                INSERT INTO historial_validaciones 
-                (archivo_id, usuario_id, tipo_validacion, resultado, total_errores, detalle_errores, duracion_segundos)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
-            `, [
+
+        console.log('================================');
+        console.log('NUEVA VALIDACION');
+        console.log({
+            archivo_id,
+            usuario_id: req.usuario.id,
+            tipo_validacion,
+            resultado,
+            total_errores,
+            detalle_errores,
+            duracion_segundos
+        });
+
+        const [result] = await pool.query(`
+            INSERT INTO historial_validaciones (
                 archivo_id,
-                req.usuario.id,
+                usuario_id,
                 tipo_validacion,
                 resultado,
                 total_errores,
-                typeof detalle_errores === 'string' ? detalle_errores : JSON.stringify(detalle_errores || {}),
+                detalle_errores,
                 duracion_segundos
-            ]);
-            
-            // Actualizar estado del archivo si existe
-            if (archivo_id) {
-                const nuevoEstado = resultado === 'exitoso' ? 'validado' : 
-                                  resultado === 'con_errores' ? 'con_errores' : 'pendiente';
-                
-                await pool.query(
-                    'UPDATE archivos_excel SET estado = ? WHERE id = ?',
-                    [nuevoEstado, archivo_id]
-                );
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        `, [
+            archivo_id,
+            req.usuario.id,
+            tipo_validacion,
+            resultado,
+            total_errores,
+            typeof detalle_errores === 'string'
+                ? detalle_errores
+                : JSON.stringify(detalle_errores || {}),
+            duracion_segundos
+        ]);
+
+        console.log('VALIDACION GUARDADA');
+        console.log('INSERT ID:', result.insertId);
+
+        // Actualizar estado del archivo
+        if (archivo_id) {
+
+            let nuevoEstado = 'pendiente';
+
+            if (resultado === 'exitoso') {
+                nuevoEstado = 'validado';
+            } else if (
+                resultado === 'con_errores' ||
+                resultado === 'con_advertencias'
+            ) {
+                nuevoEstado = 'con_errores';
             }
-            
-            res.status(201).json({
-                success: true,
-                message: 'Validacion registrada',
-                id: result.insertId
-            });
-        } catch (dbError) {
-            // Si la tabla no existe, retornar success de todos modos para no bloquear la validacion
-            console.warn('Error guardando validacion en BD:', dbError.message);
-            res.status(201).json({
-                success: true,
-                message: 'Validacion completada (sin persistir)',
-                warning: 'La tabla historial_validaciones puede no existir'
-            });
+
+            await pool.query(
+                'UPDATE archivos_excel SET estado = ? WHERE id = ?',
+                [nuevoEstado, archivo_id]
+            );
+
+            console.log(
+                'ARCHIVO ACTUALIZADO',
+                archivo_id,
+                nuevoEstado
+            );
         }
-        
-    } catch (error) {
-        console.error('Error registrando validacion:', error);
-        res.status(500).json({
+
+        console.log('================================');
+
+        return res.status(201).json({
+            success: true,
+            message: 'Validacion registrada',
+            id: result.insertId
+        });
+
+    } catch (dbError) {
+
+        console.error('================================');
+        console.error('ERROR GUARDANDO VALIDACION');
+        console.error('MESSAGE:', dbError.message);
+        console.error('CODE:', dbError.code);
+        console.error('SQLSTATE:', dbError.sqlState);
+        console.error('ERRNO:', dbError.errno);
+        console.error('SQL:', dbError.sql);
+        console.error(dbError);
+        console.error('================================');
+
+        return res.status(500).json({
             success: false,
-            message: 'Error al registrar validacion'
+            message: 'Error al guardar validacion',
+            error: dbError.message,
+            code: dbError.code,
+            sqlState: dbError.sqlState,
+            errno: dbError.errno
         });
     }
 });

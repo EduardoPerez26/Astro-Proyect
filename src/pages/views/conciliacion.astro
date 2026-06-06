@@ -43,28 +43,56 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
                         </select>
                     </div>
                     <div class="form-group">
-                        <label for="fechaConciliacion">Fecha</label>
-                        <input
-                            type="date"
-                            id="fechaConciliacion"
-                            class="form-input"
-                        />
+                        <label>Fecha</label>
+
+                        <select id="fechaConciliacion" class="form-select">
+                            <option value=""> Selecciona una fecha </option>
+                        </select>
                     </div>
-                    
                 </div>
             </div>
         </div>
 
         <!-- Zona de Upload -->
         <div class="upload-section" id="uploadSection">
-            <div class="upload-zone" id="dropZone">
-                <div class="upload-icon">
-                    <i class="fa-solid fa-cloud-arrow-up"></i>
+            <!-- Zona de Upload -->
+            <div class="upload-section" id="uploadSection">
+                <!-- Inputs separados -->
+                <div class="multi-upload-container">
+                    <div class="upload-card">
+                        <h4>
+                            <i class="fa-solid fa-file-excel"></i>
+                            Archivo Sales *
+                        </h4>
+
+                        <input type="file" id="salesFile" accept=".xlsx,.xls" />
+
+                        <select
+                            id="salesDateFilter"
+                            class="form-select"
+                            style="margin-top:10px;"
+                        >
+                            <option value=""> Todas las fechas </option>
+                        </select>
+                    </div>
+
+                    <div class="upload-card">
+                        <h4>
+                            <i class="fa-solid fa-credit-card"></i>
+                            Archivo EBT (Opcional)
+                        </h4>
+
+                        <input type="file" id="ebtFile" accept=".xlsx,.xls" />
+
+                        <select
+                            id="ebtDateFilter"
+                            class="form-select"
+                            style="margin-top:10px;"
+                        >
+                            <option value=""> Todas las fechas </option>
+                        </select>
+                    </div>
                 </div>
-                <h3>Arrastra tu archivo Excel aqui</h3>
-                <p>o haz clic para seleccionar</p>
-                <span class="upload-hint">Formatos aceptados: .xlsx, .xls</span>
-                <input type="file" id="fileInput" accept=".xlsx,.xls" hidden />
             </div>
 
             <!-- Archivo cargado -->
@@ -157,60 +185,45 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
                 <div class="table-responsive">
                     <table class="data-table conciliacion-table">
                         <thead>
-                            <th>Store</th>
-                            <th>Sales TAX</th>
-                            <th>Gross Sales POS</th>
-                            <th>Discounts</th>
-                            <th>Promo</th>
-                            <th>Donations</th>
-                            <th>Net Sales</th>
-                            <th>GC Sold</th>
-                            <th>Paid Out</th>
-                            <th>Paid In</th>
-                            <th>Donation</th>
-                            <th>Total Revenue</th>
-                            <th>Mastercard</th>
-                            <th>Visa</th>
-                            <th>Discover</th>
-                            <th>Amex</th>
-                            <th>Debit</th>
-                            <th>EBT</th>
-                            <th>GC Redeem</th>
-                            <th>Acct Cash</th>
-                            <th>Deposits</th>
-                            <th>GH</th>
-                            <th>Uber</th>
-                            <th>DD</th>
-                            <th>CC Totals</th>
-                            <th>Payments Total</th>
-                            <th>O/S</th>
-                            <th>OS</th>
-                            <th>Deposit 1</th>
-                            <th>Deposit 2</th>
-                            <th>Deposit 3</th>
-                            <th>Cash +/-</th>
-                            <th>Cash Expected</th>
-                            <th>Difference</th>
-                        </thead>
-                        <tbody id="conciliacionBody">
-                            <!-- Datos dinamicos -->
-                        </tbody>
-                        <tfoot>
-                            <tr class="totals-row">
-                                <td><strong>TOTALES</strong></td>
-                                <td class="text-right"
-                                    ><strong id="totalExcel">$0.00</strong></td
-                                >
-                                <td class="text-right"
-                                    ><strong id="totalEsperado">$0.00</strong
-                                    ></td
-                                >
-                                <td class="text-right"
-                                    ><strong id="totalDiff">$0.00</strong></td
-                                >
-                                <td colspan="2"></td>
+                            <tr>
+                                <th>Store</th>
+                                <th>Sales TAX</th>
+                                <th>Gross Sales POS</th>
+                                <th>Discounts</th>
+                                <th>Promo</th>
+                                <th>Donations</th>
+                                <th>Net Sales</th>
+                                <th>GC Sold</th>
+                                <th>Paid Out</th>
+                                <th>Paid In</th>
+                                <th>Donation</th>
+                                <th>Total Revenue</th>
+                                <th>Mastercard</th>
+                                <th>Visa</th>
+                                <th>Discover</th>
+                                <th>Amex</th>
+                                <th>Debit</th>
+                                <th>EBT</th>
+                                <th>GC Redeem</th>
+                                <th>Acct Cash</th>
+                                <th>Deposits</th>
+                                <th>GH</th>
+                                <th>Uber</th>
+                                <th>DD</th>
+                                <th>CC Totals</th>
+                                <th>Payments Total</th>
+                                <th>O/S</th>
+                                <th>OS</th>
+                                <th>Deposit 1</th>
+                                <th>Deposit 2</th>
+                                <th>Deposit 3</th>
+                                <th>Cash +/-</th>
+                                <th>Cash Expected</th>
+                                <th>Difference</th>
                             </tr>
-                        </tfoot>
+                        </thead>
+
+                        <tbody id="conciliacionBody"></tbody>
                     </table>
                 </div>
             </div>
@@ -322,6 +335,7 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
         is:inline
         src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"
     ></script>
+    <script is:inline src="/js/restaurant-configs.js"></script>
     <script is:inline src="/js/conciliacion.js"></script>
 </DashboardLayout>
 
@@ -659,6 +673,72 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
         overflow-x: auto;
     }
 
+    .multi-upload-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+
+    .upload-card {
+        background: #fff;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 1rem;
+    }
+
+    .upload-card h4 {
+        margin-bottom: 0.75rem;
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: #1f2937;
+    }
+
+    .upload-card input[type="file"] {
+        width: 100%;
+        border: 1px dashed #cbd5e1;
+        border-radius: 8px;
+        padding: 12px;
+        background: #f8fafc;
+        cursor: pointer;
+    }
+
+    .upload-card input[type="file"]:hover {
+        background: #f1f5f9;
+    }
+
+    .table-container {
+        position: relative;
+        z-index: 1;
+    }
+
+    .table-header {
+        position: relative;
+        z-index: 100;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .table-actions {
+        position: relative;
+        z-index: 1000;
+    }
+
+    .table-actions .btn {
+        position: relative;
+        z-index: 9999;
+        pointer-events: auto;
+    }
+
+    .table-responsive {
+        overflow-x: auto;
+        overflow-y: auto;
+        max-height: 600px;
+        position: relative;
+        z-index: 1;
+    }
+
     /* Responsive */
     @media (max-width: 1024px) {
         .config-row {
@@ -679,4 +759,27 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
             grid-template-columns: 1fr;
         }
     }
+
+    .upload-zone {
+        pointer-events: auto;
+    }
+
+    .multi-upload-container {
+        position: relative;
+        z-index: 999;
+    }
+
+    .upload-card input[type="file"] {
+        display: block !important;
+        width: 100% !important;
+        height: auto !important;
+        min-height: 42px !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+        position: static !important;
+        pointer-events: auto !important;
+        cursor: pointer !important;
+    }
+
+    
 </style>

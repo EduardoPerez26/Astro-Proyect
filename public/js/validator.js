@@ -2,7 +2,8 @@
 const VALIDATOR_API_URL = 'http://localhost:3001/api';
 let conceptColumnIndex = 0;
 let currentValidator = null;
-let currentArchivoId = null; // ID del archivo cargado
+let currentArchivoId =
+    localStorage.getItem('archivo_id') || null; // ID del archivo cargado
 
 const conceptColumnSelect = document.getElementById('conceptColumnSelect');
 const validationStatus = document.getElementById('validationStatus');
@@ -18,14 +19,30 @@ const validators = {
 };
 
 function setValidator(restaurantId) {
+
+    console.log('restaurantId recibido:', restaurantId);
+    console.log('validators disponibles:', Object.keys(validators));
+
     const getValidator = validators[restaurantId];
+
     if (getValidator) {
         currentValidator = getValidator();
-        console.log(`Validador cargado: ${currentValidator.name}`);
-        updateValidationStatus(`Validador: ${currentValidator.name} - Presiona "Validar" para verificar los conceptos`, '');
+
+        console.log('Validador cargado:', currentValidator.name);
+
+        updateValidationStatus(
+            `Validador: ${currentValidator.name} - Presiona "Validar" para verificar los conceptos`,
+            ''
+        );
     } else {
+        console.error('No existe validador para:', restaurantId);
+
         currentValidator = null;
-        updateValidationStatus('Selecciona un restaurante para validar', '');
+
+        updateValidationStatus(
+            'Selecciona un restaurante para validar',
+            ''
+        );
     }
 }
 
@@ -79,6 +96,25 @@ function validateConcepts() {
 
     for (let i = 0; i < tableData.length; i++) {
         const conceptCell = tableData[i][conceptColumnIndex];
+
+        if (!conceptCell) {
+            continue;
+        }
+
+        const ignoredConcepts = [
+            'MEMO',
+            'CONCEPT',
+            'CONCEPTO'
+        ];
+
+        if (
+            ignoredConcepts.includes(
+                String(conceptCell).trim().toUpperCase()
+            )
+        ) {
+            continue;
+        }
+
         const normalizedConcept = normalizeConcept(conceptCell);
 
         if (!normalizedConcept) {
@@ -129,7 +165,7 @@ function validateConcepts() {
 
     // Construir HTML para la alerta
     let alertHtml = '';
-    
+
     if (missingConcepts.length) {
         alertHtml += `
             <div style="text-align:left; margin-bottom: 16px;">
@@ -150,7 +186,7 @@ function validateConcepts() {
             </div>
         `;
     }
-    
+
     if (unknownRows.length) {
         const unknownUnique = [...new Set(unknownRows)];
         alertHtml += `
@@ -216,7 +252,7 @@ function validateConcepts() {
             }
         });
     }
-    
+
     // Guardar historial de validacion en la base de datos
     guardarHistorialValidacion({
         tipoValidacion: 'conceptos',
@@ -240,7 +276,7 @@ if (restaurantSelect) {
     restaurantSelect.addEventListener('change', function () {
         setValidator(this.value);
     });
-    
+
     // Cargar validador inicial si hay uno seleccionado
     if (restaurantSelect.value) {
         setValidator(restaurantSelect.value);
@@ -290,41 +326,117 @@ document.addEventListener('DOMContentLoaded', loadValidatorFromURL);
 // ============================================
 // GUARDAR HISTORIAL DE VALIDACION
 // ============================================
+// ============================================
+// GUARDAR HISTORIAL DE VALIDACION
+// ============================================
 async function guardarHistorialValidacion(validacionData) {
     const token = localStorage.getItem('token');
-    
-    // Si no hay token, modo offline, o no hay archivo_id, no guardar
-    if (!token || localStorage.getItem('modoOffline') || !currentArchivoId) {
-        console.log('[v0] Historial no guardado: sin token, modo offline, o sin archivo_id');
+
+    console.log('====================================');
+    console.log('DEBUG VALIDACION');
+    console.log({
+        token,
+        modoOffline: localStorage.getItem('modoOffline'),
+        currentArchivoId
+    });
+
+    console.log(
+        'EVAL:',
+        '!token =', !token,
+        '| modoOffline =', localStorage.getItem('modoOffline'),
+        '| !currentArchivoId =', !currentArchivoId
+    );
+
+    const bloquear =
+        !token ||
+        localStorage.getItem('modoOffline') ||
+        !currentArchivoId;
+
+    console.log('BLOQUEAR =', bloquear);
+
+    if (bloquear) {
+        console.log('[v0] Historial no guardado');
         return;
     }
-    
+
+    console.log('VA A HACER FETCH');
+
     try {
-        const response = await fetch(`${VALIDATOR_API_URL}/validaciones`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({
-                archivo_id: currentArchivoId,
-                tipo_validacion: validacionData.tipoValidacion || 'conceptos',
-                resultado: validacionData.resultado || 'exitoso',
-                total_errores: validacionData.totalErrores || 0,
-                detalle_errores: JSON.stringify(validacionData.detalleErrores || {}),
-                duracion_segundos: validacionData.duracion || 0
-            })
-        });
-        
+
+        const payload = {
+            archivo_id: currentArchivoId,
+            tipo_validacion: validacionData.tipoValidacion || 'conceptos',
+            resultado: validacionData.resultado || 'exitoso',
+            total_errores: validacionData.totalErrores || 0,
+            detalle_errores: JSON.stringify(
+                validacionData.detalleErrores || {}
+            ),
+            duracion_segundos: validacionData.duracion || 0
+        };
+
+        console.log('POST URL:', `${VALIDATOR_API_URL}/validaciones`);
+        console.log('PAYLOAD:', payload);
+
+        const response = await fetch(
+            `${VALIDATOR_API_URL}/validaciones`,
+            {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(payload)
+            }
+        );
+
+        console.log('STATUS:', response.status);
+        console.log('OK:', response.ok);
+
+        const responseText = await response.text();
+
+        console.log('RESPONSE:', responseText);
+
         if (!response.ok) {
-            console.warn('No se pudo guardar el historial de validacion');
+            console.warn(
+                'No se pudo guardar el historial de validacion'
+            );
+            return;
         }
+
+        console.log(
+            'Historial guardado correctamente'
+        );
+
     } catch (error) {
-        console.warn('Error guardando historial:', error.message);
+
+        console.error(
+            'Error guardando historial:',
+            error
+        );
+
     }
+
+    console.log('====================================');
 }
 
 // Funcion para establecer el ID del archivo actual
 function setCurrentArchivoId(id) {
     currentArchivoId = id;
+
+    if (id) {
+        localStorage.setItem('archivo_id', id);
+    }
+
+    console.log('[VALIDADOR] archivo_id:', currentArchivoId);
 }
+
+function normalizeConcept(concept) {
+    return String(concept || '')
+        .trim()
+        .replace(/\s+/g, ' ')
+        .replace(/\s*-\s*/g, ' - ')
+        .toUpperCase();
+}
+
+
+

@@ -88,9 +88,9 @@ async function handleFileUpload(e) {
 
             // Procesar con template (ya no necesita restaurant)
             workbook = await processWithTemplate(file);
-            
+
             Swal.close();
-            
+
             Swal.fire({
                 icon: 'success',
                 title: 'Plantilla aplicada',
@@ -150,7 +150,7 @@ async function handleFileUpload(e) {
 function renderTable() {
 
     if (!tableContainer || isRendering) return;
-    
+
     isRendering = true;
 
     if (!tableData.length) {
@@ -236,7 +236,7 @@ function addCellListeners() {
 
     editable.forEach(cell => {
         // Guardar valor original al enfocar
-        cell.addEventListener('focus', function() {
+        cell.addEventListener('focus', function () {
             this.dataset.originalValue = this.innerText;
         });
 
@@ -254,7 +254,7 @@ function addCellListeners() {
         });
 
         // Permitir confirmar con Enter
-        cell.addEventListener('keydown', function(e) {
+        cell.addEventListener('keydown', function (e) {
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
                 this.blur();
@@ -311,13 +311,13 @@ function commitCellChange(row, col, text) {
 
     // Recalcular formulas del workbook
     evaluateWorkbookFormulas();
-    
+
     // Actualizar datos de la hoja desde el worksheet recalculado
     updateCurrentSheetData();
-    
+
     // Actualizar celdas dependientes en el DOM sin re-renderizar toda la tabla
     updateDependentCells(address);
-    
+
     // Actualizar info de formulas
     refreshFormulaInfo();
 }
@@ -326,19 +326,19 @@ function commitCellChange(row, col, text) {
 // Ahora busca en TODAS las hojas del workbook
 function findDependentCells(changedAddress, changedSheetName) {
     const dependents = [];
-    
+
     // Buscar en la hoja actual
     cellFormulas.forEach((formula, key) => {
         // Verificar referencia directa (sin nombre de hoja) o con nombre de hoja actual
         const regexDirect = new RegExp(`\\$?${changedAddress.replace(/([A-Z]+)(\d+)/, '\\$?$1\\$?$2')}(?![0-9A-Z])`, 'i');
         const regexWithSheet = new RegExp(`['"]?${changedSheetName}['"]?!\\$?${changedAddress.replace(/([A-Z]+)(\d+)/, '\\$?$1\\$?$2')}(?![0-9A-Z])`, 'i');
-        
+
         if (regexDirect.test(formula) || regexWithSheet.test(formula)) {
             const [row, col] = key.split(',').map(Number);
             dependents.push({ row, col, key, sheetName: currentSheetName });
         }
     });
-    
+
     return dependents;
 }
 
@@ -346,33 +346,33 @@ function findDependentCells(changedAddress, changedSheetName) {
 // Busca TODAS las formulas que referencien la hoja modificada (para VLOOKUP, SUMIF, etc.)
 function findCrossSheetDependents(changedAddress, changedSheetName) {
     if (!workbook || !workbook.SheetNames) return [];
-    
+
     const dependents = [];
-    
+
     workbook.SheetNames.forEach(sheetName => {
         if (sheetName === changedSheetName) return; // Saltar hoja actual
-        
+
         const worksheet = workbook.Sheets[sheetName];
         if (!worksheet) return;
-        
+
         const range = worksheet['!ref'] ? XLSX.utils.decode_range(worksheet['!ref']) : null;
         if (!range) return;
-        
+
         // Buscar celdas con formulas que referencien la hoja modificada
         for (let r = range.s.r; r <= range.e.r; r++) {
             for (let c = range.s.c; c <= range.e.c; c++) {
                 const addr = XLSX.utils.encode_cell({ r, c });
                 const cell = worksheet[addr];
-                
+
                 if (cell && cell.f) {
                     const formula = cell.f;
-                    
+
                     // Verificar si la formula contiene CUALQUIER referencia a la hoja modificada
                     // Esto incluye VLOOKUP, SUMIF, INDEX, MATCH, referencias directas, rangos, etc.
-                    const containsSheetRef = formula.includes(changedSheetName + '!') || 
-                                            formula.includes("'" + changedSheetName + "'!") ||
-                                            formula.includes('"' + changedSheetName + '"!');
-                    
+                    const containsSheetRef = formula.includes(changedSheetName + '!') ||
+                        formula.includes("'" + changedSheetName + "'!") ||
+                        formula.includes('"' + changedSheetName + '"!');
+
                     if (containsSheetRef) {
                         dependents.push({
                             row: r,
@@ -386,39 +386,39 @@ function findCrossSheetDependents(changedAddress, changedSheetName) {
             }
         }
     });
-    
+
     return dependents;
 }
 
 // Actualiza las celdas dependientes en el DOM
 function updateDependentCells(changedAddress) {
     const dependents = findDependentCells(changedAddress, currentSheetName);
-    
+
     // Buscar dependientes en otras hojas
     const crossSheetDependents = findCrossSheetDependents(changedAddress, currentSheetName);
-    
+
     // Recalcular formulas en otras hojas que dependen de esta celda
     if (crossSheetDependents.length > 0) {
         recalculateCrossSheetFormulas(crossSheetDependents);
         showCrossSheetUpdateNotification(crossSheetDependents);
     }
-    
+
     if (dependents.length === 0) return;
-    
+
     // Recalcular las formulas de las celdas dependientes en la hoja actual
     if (dependents.length > 0) {
         recalculateDependentFormulas(dependents);
-        
+
         // Actualizar tableData con los nuevos valores
         updateCurrentSheetData();
-        
+
         dependents.forEach(({ row, col }) => {
             const cellElement = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
-            
+
             if (cellElement) {
                 const newValue = tableData[row][col];
                 cellElement.innerText = formatCellValue(newValue);
-                
+
                 // Efecto visual para mostrar que la celda se actualizo
                 cellElement.classList.add('cell-updated');
                 setTimeout(() => {
@@ -426,7 +426,7 @@ function updateDependentCells(changedAddress) {
                 }, 500);
             }
         });
-        
+
         // Si hay dependientes de dependientes, necesitamos actualizar recursivamente
         dependents.forEach(({ row, col }) => {
             const depAddress = cellAddress(row, col);
@@ -434,13 +434,13 @@ function updateDependentCells(changedAddress) {
             if (nestedDependents.length > 0) {
                 recalculateDependentFormulas(nestedDependents);
                 updateCurrentSheetData();
-                
+
                 nestedDependents.forEach(({ row: r, col: c }) => {
                     const cellElement = document.querySelector(`[data-row="${r}"][data-col="${c}"]`);
                     if (cellElement) {
                         const newValue = tableData[r][c];
                         cellElement.innerText = formatCellValue(newValue);
-                        
+
                         cellElement.classList.add('cell-updated');
                         setTimeout(() => {
                             cellElement.classList.remove('cell-updated');
@@ -458,11 +458,11 @@ function showCrossSheetUpdateNotification(crossSheetDependents) {
     crossSheetDependents.forEach(d => {
         sheetCounts[d.sheetName] = (sheetCounts[d.sheetName] || 0) + 1;
     });
-    
+
     const message = Object.entries(sheetCounts)
         .map(([sheet, count]) => `${sheet}: ${count} celda(s)`)
         .join(', ');
-    
+
     // Crear o actualizar notificacion
     let notification = document.getElementById('crossSheetNotification');
     if (!notification) {
@@ -486,13 +486,13 @@ function showCrossSheetUpdateNotification(crossSheetDependents) {
         `;
         document.body.appendChild(notification);
     }
-    
+
     notification.innerHTML = `
         <i class="fa-solid fa-link" style="font-size: 16px;"></i>
         <span>Actualizado en otras hojas: ${message}</span>
     `;
     notification.style.display = 'flex';
-    
+
     // Ocultar despues de 3 segundos
     setTimeout(() => {
         notification.style.display = 'none';
@@ -517,11 +517,11 @@ function recalculateCrossSheetFormulas(crossSheetDependents) {
     crossSheetDependents.forEach(({ address, sheetName, formula }) => {
         const worksheet = workbook.Sheets[sheetName];
         if (!worksheet) return;
-        
+
         const cell = worksheet[address];
         if (cell && cell.f) {
             const newValue = evaluateFormulaWithContext(cell.f, sheetName);
-            
+
             // Solo actualizar si obtuvimos un valor valido
             if (newValue !== null && !isNaN(newValue)) {
                 cell.v = newValue;
@@ -536,30 +536,30 @@ function evaluateFormulaWithContext(formula, sheetName) {
     try {
         const worksheet = workbook.Sheets[sheetName];
         let evalFormula = formula;
-        
+
         // Manejar SUMIFS: SUMIFS(sumRange, criteriaRange1, criteria1, ...)
         const sumifsMatch = formula.match(/SUMIFS\s*\(/i);
         if (sumifsMatch) {
             return evaluateSUMIFS(formula, sheetName);
         }
-        
+
         // Manejar SUMIF: SUMIF(criteriaRange, criteria, sumRange)
         const sumifMatch = formula.match(/SUMIF\s*\(/i);
         if (sumifMatch) {
             return evaluateSUMIF(formula, sheetName);
         }
-        
+
         // Manejar SUM con referencias a otras hojas
         evalFormula = evalFormula.replace(/SUM\s*\(\s*['"]?([^'"!\s]+)['"]?!([^)]+)\)/gi, (match, refSheet, rangeStr) => {
             const cleanSheet = refSheet.replace(/^['"]|['"]$/g, '');
             return evaluateSUMRange(cleanSheet, rangeStr.trim());
         });
-        
+
         // Manejar SUM local
         evalFormula = evalFormula.replace(/SUM\s*\(\s*([A-Z]+\d+:[A-Z]+\d+)\s*\)/gi, (match, rangeStr) => {
             return evaluateSUMRange(sheetName, rangeStr.trim());
         });
-        
+
         // Manejar referencias a otras hojas: 'Sheet'!A1 o Sheet!A1
         evalFormula = evalFormula.replace(/['"]?([^'"!+\-*/(),\s]+)['"]?!\$?([A-Z]+)\$?(\d+)/gi, (match, refSheet, col, row) => {
             const cleanSheet = refSheet.replace(/^['"]|['"]$/g, '').trim();
@@ -573,7 +573,7 @@ function evaluateFormulaWithContext(formula, sheetName) {
             }
             return '0';
         });
-        
+
         // Manejar referencias locales
         evalFormula = evalFormula.replace(/\$?([A-Z]+)\$?(\d+)/gi, (match, col, row) => {
             if (!worksheet) return '0';
@@ -584,7 +584,7 @@ function evaluateFormulaWithContext(formula, sheetName) {
             }
             return '0';
         });
-        
+
         const result = Function('"use strict"; return (' + evalFormula + ')')();
         return typeof result === 'number' && !isNaN(result) ? result : null;
     } catch (e) {
@@ -599,55 +599,55 @@ function evaluateSUMIFS(formula, currentSheetName) {
         // Extraer los argumentos de SUMIFS
         const argsMatch = formula.match(/SUMIFS\s*\(\s*(.+)\s*\)/i);
         if (!argsMatch) return null;
-        
+
         // Parsear los argumentos separados por coma (cuidando las comillas)
         const argsStr = argsMatch[1];
         const args = parseFormulaArgs(argsStr);
-        
+
         if (args.length < 3) return null;
-        
+
         // Primer argumento es el rango de suma
         const sumRangeStr = args[0].trim();
-        
+
         // Parsear rango de suma
         let sumSheet = currentSheetName;
         let sumRange = sumRangeStr;
-        
+
         if (sumRangeStr.includes('!')) {
             const parts = sumRangeStr.split('!');
             sumSheet = parts[0].replace(/^['"]|['"]$/g, '');
             sumRange = parts[1];
         }
-        
+
         const sumWorksheet = workbook.Sheets[sumSheet];
         if (!sumWorksheet) return null;
-        
+
         const sumRangeParsed = parseRange(sumRange);
-        
+
         // Recopilar los pares de criterio (criteria_range, criteria)
         const criteriaPairs = [];
         for (let i = 1; i < args.length; i += 2) {
             if (i + 1 >= args.length) break;
-            
+
             const criteriaRangeStr = args[i].trim();
             const criteriaStr = args[i + 1].trim();
-            
+
             // Parsear rango de criterio
             let critSheet = currentSheetName;
             let critRange = criteriaRangeStr;
-            
+
             if (criteriaRangeStr.includes('!')) {
                 const parts = criteriaRangeStr.split('!');
                 critSheet = parts[0].replace(/^['"]|['"]$/g, '');
                 critRange = parts[1];
             }
-            
+
             const criteriaWorksheet = workbook.Sheets[critSheet];
             if (!criteriaWorksheet) return null;
-            
+
             // Obtener el valor del criterio
             let criteriaValue = criteriaStr.replace(/^["']|["']$/g, '');
-            
+
             // Si es una referencia de celda con hoja
             if (criteriaValue.includes('!')) {
                 const parts = criteriaValue.split('!');
@@ -663,47 +663,47 @@ function evaluateSUMIFS(formula, currentSheetName) {
                 const cell = ws ? ws[criteriaValue.replace(/\$/g, '')] : null;
                 criteriaValue = cell ? String(cell.v || '') : '';
             }
-            
+
             criteriaPairs.push({
                 worksheet: criteriaWorksheet,
                 range: parseRange(critRange),
                 value: criteriaValue
             });
         }
-        
+
         if (criteriaPairs.length === 0) return null;
-        
+
         let sum = 0;
-        
+
         // Iterar sobre las filas del primer rango de criterio
         const firstCritRange = criteriaPairs[0].range;
-        
+
         for (let r = firstCritRange.startRow; r <= Math.min(firstCritRange.endRow, 5000); r++) {
             let allMatch = true;
-            
+
             // Verificar todos los criterios para esta fila
             for (const { worksheet, range, value } of criteriaPairs) {
                 const critAddr = XLSX.utils.encode_cell({ r, c: range.startCol });
                 const critCell = worksheet[critAddr];
                 const critValue = critCell ? String(critCell.v || '') : '';
-                
+
                 if (critValue.toLowerCase().trim() !== value.toLowerCase().trim()) {
                     allMatch = false;
                     break;
                 }
             }
-            
+
             // Si todos los criterios coinciden, sumar el valor correspondiente
             if (allMatch) {
                 const sumAddr = XLSX.utils.encode_cell({ r, c: sumRangeParsed.startCol });
                 const sumCell = sumWorksheet[sumAddr];
-                
+
                 if (sumCell && typeof sumCell.v === 'number') {
                     sum += sumCell.v;
                 }
             }
         }
-        
+
         return sum;
     } catch (e) {
         return null;
@@ -717,10 +717,10 @@ function parseFormulaArgs(argsStr) {
     let depth = 0;
     let inQuote = false;
     let quoteChar = '';
-    
+
     for (let i = 0; i < argsStr.length; i++) {
         const char = argsStr[i];
-        
+
         if ((char === '"' || char === "'") && !inQuote) {
             inQuote = true;
             quoteChar = char;
@@ -741,11 +741,11 @@ function parseFormulaArgs(argsStr) {
             current += char;
         }
     }
-    
+
     if (current.trim()) {
         args.push(current.trim());
     }
-    
+
     return args;
 }
 
@@ -755,32 +755,32 @@ function evaluateSUMIF(formula, currentSheetName) {
         // Parsear los argumentos de SUMIF: SUMIF(criteriaRange, criteria, sumRange)
         const argsMatch = formula.match(/SUMIF\s*\(\s*([^,]+)\s*,\s*([^,]+)\s*,\s*([^)]+)\s*\)/i);
         if (!argsMatch) return null;
-        
+
         let [, criteriaRangeStr, criteriaStr, sumRangeStr] = argsMatch;
-        
+
         // Parsear rango de criterios
         let critSheet = currentSheetName;
         let critRange = criteriaRangeStr.trim();
-        
+
         if (critRange.includes('!')) {
             const parts = critRange.split('!');
             critSheet = parts[0].replace(/^['"]|['"]$/g, '');
             critRange = parts[1];
         }
-        
+
         // Parsear rango de suma
         let sumSheet = currentSheetName;
         let sumRange = sumRangeStr.trim();
-        
+
         if (sumRange.includes('!')) {
             const parts = sumRange.split('!');
             sumSheet = parts[0].replace(/^['"]|['"]$/g, '');
             sumRange = parts[1];
         }
-        
+
         // Obtener el valor del criterio
         let criteriaValue = criteriaStr.trim().replace(/^["']|["']$/g, '');
-        
+
         // Si es una referencia de celda
         if (/^['"]?[^'"!]*['"]?![A-Z]+\d+$/i.test(criteriaValue)) {
             const parts = criteriaValue.split('!');
@@ -794,36 +794,36 @@ function evaluateSUMIF(formula, currentSheetName) {
             const cell = ws ? ws[criteriaValue.replace(/\$/g, '')] : null;
             criteriaValue = cell ? String(cell.v || '') : '';
         }
-        
+
         const criteriaWorksheet = workbook.Sheets[critSheet];
         const sumWorksheet = workbook.Sheets[sumSheet];
-        
+
         if (!criteriaWorksheet || !sumWorksheet) return null;
-        
+
         // Parsear los rangos
         const critRangeParsed = parseRange(critRange);
         const sumRangeParsed = parseRange(sumRange);
-        
+
         let sum = 0;
-        
+
         // Iterar sobre el rango de criterios
         for (let r = critRangeParsed.startRow; r <= Math.min(critRangeParsed.endRow, 5000); r++) {
             const critAddr = XLSX.utils.encode_cell({ r, c: critRangeParsed.startCol });
             const critCell = criteriaWorksheet[critAddr];
             const critValue = critCell ? String(critCell.v || '') : '';
-            
+
             // Comparar con el criterio
             if (critValue.toLowerCase().trim() === criteriaValue.toLowerCase().trim()) {
                 // Obtener el valor correspondiente del rango de suma
                 const sumAddr = XLSX.utils.encode_cell({ r, c: sumRangeParsed.startCol });
                 const sumCell = sumWorksheet[sumAddr];
-                
+
                 if (sumCell && typeof sumCell.v === 'number') {
                     sum += sumCell.v;
                 }
             }
         }
-        
+
         return sum;
     } catch (e) {
         return null;
@@ -835,10 +835,10 @@ function evaluateSUMRange(sheetName, rangeStr) {
     try {
         const worksheet = workbook.Sheets[sheetName];
         if (!worksheet) return '0';
-        
+
         const range = parseRange(rangeStr);
         let sum = 0;
-        
+
         for (let r = range.startRow; r <= Math.min(range.endRow, 5000); r++) {
             for (let c = range.startCol; c <= range.endCol; c++) {
                 const addr = XLSX.utils.encode_cell({ r, c });
@@ -848,7 +848,7 @@ function evaluateSUMRange(sheetName, rangeStr) {
                 }
             }
         }
-        
+
         return sum.toString();
     } catch (e) {
         return '0';
@@ -858,7 +858,7 @@ function evaluateSUMRange(sheetName, rangeStr) {
 // Parsea un rango como "A1:B10" o "A:A"
 function parseRange(rangeStr) {
     const clean = rangeStr.replace(/\$/g, '').trim();
-    
+
     // Rango con filas: A1:B10
     const rowMatch = clean.match(/([A-Z]+)(\d+):([A-Z]+)(\d+)/i);
     if (rowMatch) {
@@ -869,7 +869,7 @@ function parseRange(rangeStr) {
             endRow: parseInt(rowMatch[4]) - 1
         };
     }
-    
+
     // Rango de columna completa: A:A
     const colMatch = clean.match(/([A-Z]+):([A-Z]+)/i);
     if (colMatch) {
@@ -880,7 +880,7 @@ function parseRange(rangeStr) {
             endRow: 5000
         };
     }
-    
+
     return { startCol: 0, startRow: 0, endCol: 0, endRow: 0 };
 }
 
@@ -919,10 +919,10 @@ function suppressConsoleDuring(fn) {
 
 function evaluateWorkbookFormulas() {
     if (!workbook) return;
-    
+
     // Usar el motor de XLSX-calc
     const calc = getCalcEngine();
-    
+
     if (typeof calc === 'function') {
         try {
             calc(workbook, { continue_after_error: true, log_error: false });
@@ -937,7 +937,7 @@ function evaluateFormula(formula, worksheet) {
     try {
         // Reemplazar referencias de celdas con sus valores
         let evalFormula = formula;
-        
+
         // Manejar funciones SUM
         evalFormula = evalFormula.replace(/SUM\(([A-Z]+)(\d+):([A-Z]+)(\d+)\)/gi, (match, startCol, startRow, endCol, endRow) => {
             let sum = 0;
@@ -945,7 +945,7 @@ function evaluateFormula(formula, worksheet) {
             const endC = XLSX.utils.decode_col(endCol);
             const startR = parseInt(startRow) - 1;
             const endR = parseInt(endRow) - 1;
-            
+
             for (let r = startR; r <= endR; r++) {
                 for (let c = startC; c <= endC; c++) {
                     const addr = XLSX.utils.encode_cell({ r, c });
@@ -957,7 +957,7 @@ function evaluateFormula(formula, worksheet) {
             }
             return sum.toString();
         });
-        
+
         // Reemplazar referencias individuales de celdas (soporta $A$1, $A1, A$1, A1)
         evalFormula = evalFormula.replace(/\$?([A-Z]+)\$?(\d+)/gi, (match, col, row) => {
             const addr = col.toUpperCase() + row;
@@ -967,7 +967,7 @@ function evaluateFormula(formula, worksheet) {
             }
             return '0';
         });
-        
+
         // Evaluar la expresion matematica
         const result = Function('"use strict"; return (' + evalFormula + ')')();
         return typeof result === 'number' ? result : 0;
@@ -1084,7 +1084,7 @@ function saveExcelFile() {
 async function guardarEnServidor() {
     const token = localStorage.getItem('token');
     const restaurante = document.getElementById('restaurantSelect')?.value;
-    
+
     if (!token) {
         Swal.fire({
             icon: 'error',
@@ -1120,7 +1120,7 @@ async function guardarEnServidor() {
         evaluateWorkbookFormulas();
         const wbout = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
         const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-        
+
         // Crear FormData
         const formData = new FormData();
         const nombreArchivo = statusText?.textContent || 'archivo-excel.xlsx';
@@ -1140,7 +1140,15 @@ async function guardarEnServidor() {
 
         if (response.ok && data.success) {
             archivoActualId = data.archivo.id;
-            
+
+            if (typeof setCurrentArchivoId === 'function') {
+                setCurrentArchivoId(data.archivo.id);
+            }
+
+            localStorage.setItem('archivo_id', data.archivo.id);
+
+            console.log('Archivo ID asignado:', data.archivo.id);
+
             Swal.fire({
                 icon: 'success',
                 title: 'Archivo guardado',
@@ -1217,12 +1225,12 @@ function loadSheet(sheet) {
     if (sheetName) {
         sheetName.textContent = `Hoja: ${sheet}`;
     }
-    
+
     // Resetear el estado de validación al cargar una nueva hoja
     if (typeof rowValidation !== 'undefined') {
         rowValidation = [];
     }
     updateValidationStatus('Validacion pendiente - Presiona "Validar" para verificar los conceptos', '');
-    
+
     renderTable();
 }

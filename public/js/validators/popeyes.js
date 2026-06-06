@@ -2,22 +2,24 @@
 const PopeyesValidator = {
     name: 'Popeyes',
     expectedConcepts: [
-        'Gross Food Sales',
-        'Employee Meals',
-        'Coupons/Promotions',
-        'Sales Tax Payable',
-        'Non Taxable Sales',
-        'Donations',
-        'Gift Cards Sold',
-        'Gift Cards Redeemed',
-        'Paid Outs',
-        'Credit Card Expected',
-        'AMEX Expected',
-        'Cash Expected',
-        'Uber Eats',
-        'DoorDash',
-        'GrubHub',
-        'Catering Sales'
+        "Amex Expected Deposit",
+        "Ca CRV",
+        "Cash Expected Deposit",
+        "CC Expected Deposit",
+        "Delivery Fee",
+        "DoorDash",
+        "EBT Expected",
+        "EZ Cater",
+        "Gift Card Redeemed",
+        "Gift Cards Sales",
+        "GrubHub",
+        "Kiosk Expected Payment",
+        "Sales Beverages",
+        "Sales Food",
+        "Sales Other",
+        "Sales Tax Payable",
+        "Uber",
+        "WL DD Tips"
     ]
 };
 

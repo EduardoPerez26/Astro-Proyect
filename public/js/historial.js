@@ -28,14 +28,14 @@ async function cargarValidaciones() {
     const emptyState = document.getElementById('emptyState');
     const loadingState = document.getElementById('loadingState');
     const table = document.getElementById('validacionesTable');
-    
+
     loadingState.style.display = 'block';
     table.style.display = 'none';
     emptyState.style.display = 'none';
-    
+
     const token = localStorage.getItem('token');
     const modoOffline = localStorage.getItem('modoOffline');
-    
+
     if (modoOffline) {
         validaciones = generarDatosEjemplo();
         actualizarEstadisticas();
@@ -43,23 +43,30 @@ async function cargarValidaciones() {
         loadingState.style.display = 'none';
         return;
     }
-    
+
     try {
         const response = await fetch(`${API_URL}/validaciones`, {
             headers: {
                 'Authorization': `Bearer ${token}`
             }
         });
-        
+
         if (!response.ok) {
             throw new Error('Error al cargar validaciones');
         }
-        
+
         const data = await response.json();
         validaciones = data.validaciones || [];
+        validaciones = validaciones.map(v => ({
+            ...v,
+            archivo_id: Number(v.archivo_id || 0),
+            usuario_id: Number(v.usuario_id || 0),
+            total_errores: Number(v.total_errores || 0),
+            duracion_segundos: Number(v.duracion_segundos || 0)
+        }));
         actualizarEstadisticas();
         mostrarValidaciones();
-        
+
     } catch (error) {
         console.error('Error cargando validaciones:', error);
         validaciones = generarDatosEjemplo();
@@ -78,12 +85,19 @@ function actualizarEstadisticas() {
     const exitosas = validaciones.filter(v => v.resultado === 'exitoso').length;
     const conErrores = validaciones.filter(v => v.resultado === 'con_errores').length;
     const fallidas = validaciones.filter(v => v.resultado === 'fallido').length;
-    
-    const tiempos = validaciones.filter(v => v.duracion_segundos).map(v => v.duracion_segundos);
-    const tiempoPromedio = tiempos.length > 0 
-        ? (tiempos.reduce((a, b) => a + b, 0) / tiempos.length).toFixed(1) 
-        : 0;
-    
+
+    const tiempos = validaciones
+        .filter(v => v.duracion_segundos !== null && v.duracion_segundos !== undefined)
+        .map(v => Number(v.duracion_segundos));
+
+    const tiempoPromedio =
+        tiempos.length > 0
+            ? (
+                tiempos.reduce((a, b) => a + b, 0) /
+                tiempos.length
+            ).toFixed(1)
+            : 0;
+
     document.getElementById('statExitosas').textContent = exitosas;
     document.getElementById('statConErrores').textContent = conErrores;
     document.getElementById('statFallidas').textContent = fallidas;
@@ -98,24 +112,24 @@ function mostrarValidaciones() {
     const tbody = document.getElementById('validacionesBody');
     const emptyState = document.getElementById('emptyState');
     const table = document.getElementById('validacionesTable');
-    
+
     validacionesFiltradas = aplicarFiltros(validaciones);
-    
+
     const total = validacionesFiltradas.length;
     const totalPaginas = Math.ceil(total / porPagina);
     const inicio = (paginaActual - 1) * porPagina;
     const fin = inicio + porPagina;
     const paginadas = validacionesFiltradas.slice(inicio, fin);
-    
+
     if (paginadas.length === 0) {
         table.style.display = 'none';
         emptyState.style.display = 'block';
         return;
     }
-    
+
     table.style.display = 'table';
     emptyState.style.display = 'none';
-    
+
     tbody.innerHTML = paginadas.map(val => `
         <tr>
             <td>${val.id}</td>
@@ -134,7 +148,13 @@ function mostrarValidaciones() {
                     ${val.total_errores || 0} errores
                 </span>
             </td>
-            <td>${val.duracion_segundos ? val.duracion_segundos.toFixed(2) + 's' : '-'}</td>
+            <td>
+    ${val.duracion_segundos !== null &&
+            val.duracion_segundos !== undefined
+            ? Number(val.duracion_segundos).toFixed(2) + 's'
+            : '-'
+        }
+</td>
             <td>
                 <div class="user-cell">
                     <div class="user-avatar">${(val.usuario_nombre || 'U').charAt(0).toUpperCase()}</div>
@@ -153,7 +173,7 @@ function mostrarValidaciones() {
             </td>
         </tr>
     `).join('');
-    
+
     actualizarPaginacion(totalPaginas);
 }
 
@@ -166,7 +186,7 @@ function configurarFiltros() {
     const filterResultado = document.getElementById('filterResultado');
     const filterTipo = document.getElementById('filterTipo');
     const filterFecha = document.getElementById('filterFecha');
-    
+
     [searchInput, filterResultado, filterTipo, filterFecha].forEach(el => {
         if (el) {
             el.addEventListener('change', () => {
@@ -188,7 +208,7 @@ function aplicarFiltros(vals) {
     const resultado = document.getElementById('filterResultado')?.value || '';
     const tipo = document.getElementById('filterTipo')?.value || '';
     const fecha = document.getElementById('filterFecha')?.value || '';
-    
+
     return vals.filter(val => {
         if (search) {
             const archivo = (val.archivo_nombre || '').toLowerCase();
@@ -197,20 +217,20 @@ function aplicarFiltros(vals) {
                 return false;
             }
         }
-        
+
         if (resultado && val.resultado !== resultado) {
             return false;
         }
-        
+
         if (tipo && val.tipo_validacion !== tipo) {
             return false;
         }
-        
+
         if (fecha) {
             const fechaVal = new Date(val.fecha_validacion).toISOString().split('T')[0];
             if (fechaVal !== fecha) return false;
         }
-        
+
         return true;
     });
 }
@@ -236,21 +256,21 @@ function actualizarPaginacion(totalPaginas) {
     const showingFrom = document.getElementById('showingFrom');
     const showingTo = document.getElementById('showingTo');
     const totalItems = document.getElementById('totalItems');
-    
+
     if (!pagination) return;
-    
+
     const total = validacionesFiltradas.length;
     const desde = total > 0 ? ((paginaActual - 1) * ITEMS_POR_PAGINA) + 1 : 0;
     const hasta = Math.min(paginaActual * ITEMS_POR_PAGINA, total);
-    
+
     if (showingFrom) showingFrom.textContent = desde;
     if (showingTo) showingTo.textContent = hasta;
     if (totalItems) totalItems.textContent = total;
     if (currentPageEl) currentPageEl.textContent = paginaActual;
-    
+
     if (btnPrev) btnPrev.disabled = paginaActual <= 1;
     if (btnNext) btnNext.disabled = paginaActual >= totalPaginas;
-    
+
     pagination.style.display = total > 0 ? 'flex' : 'none';
 }
 
@@ -266,22 +286,22 @@ function cambiarPagina(direccion) {
 function verErrores(id) {
     const val = validaciones.find(v => v.id === id);
     if (!val || !val.detalle_errores) return;
-    
+
     const modalBody = document.getElementById('modalBody');
     let errores = [];
-    
+
     try {
-        errores = typeof val.detalle_errores === 'string' 
-            ? JSON.parse(val.detalle_errores) 
+        errores = typeof val.detalle_errores === 'string'
+            ? JSON.parse(val.detalle_errores)
             : val.detalle_errores;
     } catch {
         errores = [{ mensaje: val.detalle_errores }];
     }
-    
+
     if (!Array.isArray(errores)) {
         errores = [errores];
     }
-    
+
     modalBody.innerHTML = `
         <div style="margin-bottom: 16px;">
             <strong>Archivo:</strong> ${val.archivo_nombre || 'Archivo #' + val.archivo_id}<br>
@@ -300,7 +320,7 @@ function verErrores(id) {
             `).join('')}
         </ul>
     `;
-    
+
     document.getElementById('modalErrores').classList.add('active');
 }
 
@@ -314,7 +334,7 @@ function cerrarModal() {
 
 function exportarHistorial() {
     const filtradas = aplicarFiltros(validaciones);
-    
+
     if (filtradas.length === 0) {
         Swal.fire({
             icon: 'warning',
@@ -323,7 +343,7 @@ function exportarHistorial() {
         });
         return;
     }
-    
+
     // Crear CSV
     const headers = ['ID', 'Archivo', 'Tipo', 'Resultado', 'Errores', 'Duracion', 'Usuario', 'Fecha'];
     const rows = filtradas.map(v => [
@@ -336,12 +356,12 @@ function exportarHistorial() {
         v.usuario_nombre || 'Usuario #' + v.usuario_id,
         new Date(v.fecha_validacion).toLocaleString()
     ]);
-    
+
     let csv = headers.join(',') + '\n';
     rows.forEach(row => {
         csv += row.map(cell => `"${cell}"`).join(',') + '\n';
     });
-    
+
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -351,7 +371,7 @@ function exportarHistorial() {
     a.click();
     window.URL.revokeObjectURL(url);
     a.remove();
-    
+
     Swal.fire({
         icon: 'success',
         title: 'Exportado',

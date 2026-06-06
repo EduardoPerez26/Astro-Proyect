@@ -10,9 +10,20 @@ let templates = [];
 let templateActual = null;
 let datosExtraidos = [];
 let valoresEsperados = {};
-let archivoActual = null;
-let workbook = null;
+let salesFile = null;
+let ebtFile = null;
+let currentRestaurantConfig = null;
+let salesWorkbook = null;
+let ebtWorkbook = null;
 let editandoIndex = -1;
+let workbook = null;
+let fechaConciliacionActual = null;
+let ebtPorTienda = {};
+let salesRows = [];
+let fechaSeleccionada = null;
+
+let fechaSalesSeleccionada = null;
+let fechaEBTSeleccionada = null;
 
 // ============================================
 // INICIALIZACION
@@ -45,43 +56,296 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 function initEventListeners() {
-    // Selector de restaurante
-    document.getElementById('selectRestaurante').addEventListener('change', onRestauranteChange);
 
-    // Selector de template
-    document.getElementById('selectTemplate').addEventListener('change', onTemplateChange);
+    // ==========================
+    // Restaurante
+    // ==========================
 
-    // Cambio de fecha
-    document.getElementById('fechaConciliacion').addEventListener('change', onFechaChange);
+    const restauranteSelect =
+        document.getElementById(
+            'selectRestaurante'
+        );
 
-    // Drag and drop
-    const dropZone = document.getElementById('dropZone');
-    const fileInput = document.getElementById('fileInput');
+    if (restauranteSelect) {
 
-    dropZone.addEventListener('click', () => fileInput.click());
-    dropZone.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        dropZone.classList.add('dragover');
-    });
-    dropZone.addEventListener('dragleave', () => {
-        dropZone.classList.remove('dragover');
-    });
-    dropZone.addEventListener('drop', (e) => {
-        e.preventDefault();
-        dropZone.classList.remove('dragover');
-        const file = e.dataTransfer.files[0];
-        if (file) procesarArchivo(file);
-    });
+        restauranteSelect.addEventListener(
+            'change',
+            onRestauranteChange
+        );
 
-    fileInput.addEventListener('change', (e) => {
-        if (e.target.files[0]) procesarArchivo(e.target.files[0]);
-    });
+    }
 
+    // ==========================
+    // Template
+    // ==========================
+
+    const templateSelect =
+        document.getElementById(
+            'selectTemplate'
+        );
+
+    if (templateSelect) {
+
+        templateSelect.addEventListener(
+            'change',
+            onTemplateChange
+        );
+
+    }
+
+    // ==========================
+    // Fecha
+    // ==========================
+
+    const fechaInput =
+        document.getElementById(
+            'fechaConciliacion'
+        );
+
+    if (fechaInput) {
+
+        fechaInput.addEventListener(
+            'change',
+            () => {
+
+                fechaSeleccionada =
+                    fechaInput.value;
+
+                if (
+                    salesWorkbook &&
+                    currentRestaurantConfig
+                ) {
+
+                    generarConciliacionDesdeTemplate();
+
+                }
+
+            }
+        );
+
+    }
+
+    // ==========================
+    // SALES FILE
+    // ==========================
+
+    const salesInput =
+        document.getElementById(
+            'salesFile'
+        );
+
+    if (salesInput) {
+
+        salesInput.addEventListener(
+            'change',
+            async (e) => {
+
+                const file =
+                    e.target.files[0];
+
+                if (!file) return;
+
+                try {
+
+                    const buffer =
+                        await file.arrayBuffer();
+
+                    salesWorkbook =
+                        XLSX.read(
+                            buffer,
+                            {
+                                type: 'array'
+                            }
+                        );
+
+                    workbook =
+                        salesWorkbook;
+
+                    const sheetName =
+                        salesWorkbook.SheetNames[0];
+
+                    const sheet =
+                        salesWorkbook.Sheets[
+                        sheetName
+                        ];
+
+                    salesRows =
+                        XLSX.utils.sheet_to_json(
+                            sheet,
+                            {
+                                range: 1,
+                                defval: 0
+                            }
+                        );
+
+                    cargarFechasEnFiltro(
+                        salesRows,
+                        'salesDateFilter',
+                        'Date'
+                    );
+
+                    generarConciliacionDesdeTemplate();
+
+                } catch (error) {
+
+                    console.error(error);
+
+                }
+
+            }
+        );
+
+    }
+
+    // ==========================
+    // EBT FILE
+    // ==========================
+
+    const ebtInput =
+        document.getElementById(
+            'ebtFile'
+        );
+
+    if (ebtInput) {
+
+        ebtInput.addEventListener(
+            'change',
+            async (e) => {
+
+                const file = e.target.files[0];
+
+                if (!file) return;
+
+                const buffer = await file.arrayBuffer();
+
+                ebtWorkbook = XLSX.read(
+                    buffer,
+                    { type: 'array' }
+                );
+
+                procesarEBT();
+
+                if (salesWorkbook) {
+                    generarConciliacionDesdeTemplate();
+                }
+            }
+        );
+
+    }
+
+
+    // ==========================
+    // Drag & Drop
+    // ==========================
+
+    const dropZone =
+        document.getElementById(
+            'dropZone'
+        );
+
+    if (dropZone && salesInput) {
+
+        dropZone.addEventListener(
+            'click',
+            () => salesInput.click()
+        );
+
+        dropZone.addEventListener(
+            'dragover',
+            (e) => {
+
+                e.preventDefault();
+
+                dropZone.classList.add(
+                    'dragover'
+                );
+
+            }
+        );
+
+        dropZone.addEventListener(
+            'dragleave',
+            () => {
+
+                dropZone.classList.remove(
+                    'dragover'
+                );
+
+            }
+        );
+
+        dropZone.addEventListener(
+            'drop',
+            async (e) => {
+
+                e.preventDefault();
+
+                dropZone.classList.remove(
+                    'dragover'
+                );
+
+                const file =
+                    e.dataTransfer.files[0];
+
+                if (!file)
+                    return;
+
+                salesInput.files =
+                    e.dataTransfer.files;
+
+                salesInput.dispatchEvent(
+                    new Event('change')
+                );
+
+            }
+        );
+
+    }
+
+    // ==========================
     // Botones
-    document.getElementById('btnRemoveFile').addEventListener('click', removerArchivo);
-    document.getElementById('btnGuardar').addEventListener('click', guardarConciliacion);
-    document.getElementById('btnExportPdf').addEventListener('click', exportarPDF);
-    document.getElementById('btnHistorial').addEventListener('click', abrirHistorial);
+    // ==========================
+
+    document
+        .getElementById(
+            'btnRemoveFile'
+        )
+        ?.addEventListener(
+            'click',
+            removerArchivo
+        );
+
+    document
+        .getElementById(
+            'btnGuardar'
+        )
+        ?.addEventListener(
+            'click',
+            guardarConciliacion
+        );
+
+    document
+        .getElementById(
+            'btnExportPdf'
+        )
+        ?.addEventListener(
+            'click',
+            exportarPDF
+        );
+
+    document
+        .getElementById(
+            'btnHistorial'
+        )
+        ?.addEventListener(
+            'click',
+            abrirHistorial
+        );
+
+    console.log(
+        'Event listeners inicializados'
+    );
+
 }
 
 // ============================================
@@ -101,18 +365,35 @@ async function cargarRestaurantes() {
             renderRestaurantes();
         }
     } catch (error) {
+        console.log(restaurantes);
         console.error('Error cargando restaurantes:', error);
         Swal.fire('Error', 'No se pudieron cargar los restaurantes', 'error');
     }
 }
 
 function renderRestaurantes() {
-    const select = document.getElementById('selectRestaurante');
-    select.innerHTML = '<option value="">Selecciona un restaurante...</option>';
+
+    const select =
+        document.getElementById(
+            'selectRestaurante'
+        );
+
+    select.innerHTML =
+        '<option value="">Selecciona un restaurante...</option>';
 
     restaurantes.forEach(r => {
-        select.innerHTML += `<option value="${r.id}">${r.nombre}</option>`;
+
+        select.innerHTML += `
+            <option
+                value="${r.id}"
+                data-codigo="${r.codigo || ''}"
+            >
+                ${r.nombre}
+            </option>
+        `;
+
     });
+
 }
 
 async function cargarTemplates(restauranteId) {
@@ -186,27 +467,88 @@ async function cargarValoresEsperados() {
 // ============================================
 
 async function onRestauranteChange() {
-    const restauranteId = document.getElementById('selectRestaurante').value;
+
+    const select =
+        document.getElementById(
+            'selectRestaurante'
+        );
+
+    const restauranteId =
+        select.value;
+
+    const codigo =
+        select.selectedOptions[0]
+            ?.dataset?.codigo;
+
+    console.log(
+        'RestaurantConfigs:',
+        window.RestaurantConfigs
+    );
+
+    currentRestaurantConfig =
+        window.RestaurantConfigs?.[
+        codigo
+        ] || null;
+
+    console.log(
+        'ID:',
+        restauranteId
+    );
+
+    console.log(
+        'Código:',
+        codigo
+    );
+
+    console.log(
+        'Config:',
+        currentRestaurantConfig
+    );
 
     if (!restauranteId) {
-        document.getElementById('selectTemplate').disabled = true;
-        document.getElementById('selectTemplate').innerHTML = '<option value="">Selecciona primero un restaurante</option>';
+
+        document.getElementById(
+            'selectTemplate'
+        ).disabled = true;
+
+        document.getElementById(
+            'selectTemplate'
+        ).innerHTML =
+            '<option value="">Selecciona primero un restaurante</option>';
+
         templateActual = null;
+
         return;
     }
 
-    await cargarTemplates(restauranteId);
+    await cargarTemplates(
+        restauranteId
+    );
+
     await cargarValoresEsperados();
 }
 
 function onTemplateChange() {
-    const templateId = document.getElementById('selectTemplate').value;
-    templateActual = templates.find(t => t.id == templateId) || null;
 
-    // Si hay archivo cargado, re-procesar con el nuevo template
-    if (workbook && templateActual) {
+    const templateId =
+        document.getElementById(
+            'selectTemplate'
+        ).value;
+
+    templateActual =
+        templates.find(
+            t => t.id == templateId
+        ) || null;
+
+    if (
+        workbook &&
+        templateActual
+    ) {
+
         extraerDatos();
+
     }
+
 }
 
 function onFechaChange() {
@@ -219,124 +561,45 @@ function onFechaChange() {
 
 async function procesarArchivo(file) {
 
-    if (!file.name.match(/\.(xlsx|xls)$/i)) {
-        Swal.fire(
-            'Error',
-            'Solo se permiten archivos Excel',
-            'error'
-        );
-        return;
-    }
-
-    if (!templateActual) {
-        Swal.fire(
-            'Atención',
-            'Selecciona un template primero',
-            'warning'
-        );
-        return;
-    }
-
-    archivoActual = file;
-
-    document.getElementById(
-        'dropZone'
-    ).style.display = 'none';
-
-    document.getElementById(
-        'fileLoaded'
-    ).style.display = 'flex';
-
-    document.getElementById(
-        'fileName'
-    ).textContent = file.name;
-
-    document.getElementById(
-        'fileSize'
-    ).textContent =
-        formatBytes(file.size);
-
     try {
 
-        const fileBuffer =
+        const buffer =
             await file.arrayBuffer();
 
-        const userWorkbook =
+        workbook =
             XLSX.read(
-                new Uint8Array(
-                    fileBuffer
-                ),
+                buffer,
                 {
                     type: 'array'
                 }
             );
 
-        workbook = userWorkbook;
+        salesWorkbook =
+            workbook;
 
-        // Si el archivo ya trae Conciliation
-        if (
-            userWorkbook.Sheets[
-            'Conciliation'
-            ]
-        ) {
+        console.log(
+            'Workbook cargado:',
+            workbook.SheetNames
+        );
 
-            console.log(
-                'Conciliation encontrada'
-            );
+        if (templateActual) {
 
-        } else {
+            extraerDatos();
 
-            console.log(
-                'Conciliation NO encontrada'
-            );
-
-            if (
-                templateActual.archivo_template
-            ) {
-
-                const response =
-                    await fetch(
-                        templateActual.archivo_template
-                    );
-
-                const templateBuffer =
-                    await response.arrayBuffer();
-
-                const templateWorkbook =
-                    XLSX.read(
-                        new Uint8Array(
-                            templateBuffer
-                        ),
-                        {
-                            type: 'array'
-                        }
-                    );
-
-                workbook =
-                    combineTemplateWithUserExcel(
-                        templateWorkbook,
-                        userWorkbook
-                    );
-            }
         }
-
-        extraerDatos();
 
     } catch (error) {
 
-        console.error(
-            'Error procesando archivo:',
-            error
-        );
+        console.error(error);
 
         Swal.fire(
             'Error',
-            error.message,
+            'No se pudo leer el archivo',
             'error'
         );
 
-        removerArchivo();
     }
+
 }
 
 function combineTemplateWithUserExcel(
@@ -412,424 +675,621 @@ function extraerDatos() {
     // DETECTAR DAILY SALES AUTOMATICAMENTE
     // ============================================
     // Si existe la hoja Conciliation, usarla
-    if (workbook.Sheets['Conciliation']) {
+    if (currentRestaurantConfig) {
 
         console.log(
-            'Usando hoja Conciliation'
+            'Generando conciliación desde configuración'
         );
 
-        extraerDailySales();
+        generarConciliacionDesdeTemplate();
         return;
-    }
 
-    console.log(
-        'No existe Conciliation, usando template'
-    );
+        const config = templateActual.configuracion;
 
-    generarConciliacionDesdeTemplate();
-    return;
+        let sheetName;
 
-    const config = templateActual.configuracion;
-
-    let sheetName;
-
-    if (typeof config.hoja === 'number') {
-        sheetName = workbook.SheetNames[config.hoja];
-    } else if (typeof config.hoja === 'string') {
-        sheetName = config.hoja;
-    } else {
-        sheetName = workbook.SheetNames[0];
-    }
-
-    const sheet = workbook.Sheets[sheetName];
-
-    if (!sheet) {
-        Swal.fire(
-            'Error',
-            `No se encontró la hoja "${config.hoja}" en el archivo`,
-            'error'
-        );
-        return;
-    }
-
-    config.conceptos.forEach(concepto => {
-
-        let valorExcel = 0;
-
-        if (concepto.celdaValor) {
-
-            const cell = sheet[concepto.celdaValor];
-
-            valorExcel = cell
-                ? parseFloat(
-                    String(cell.v || cell.w || 0)
-                        .replace(/[$,]/g, '')
-                ) || 0
-                : 0;
-
-        } else if (concepto.fila && config.columnas.valor) {
-
-            const cellRef =
-                config.columnas.valor + concepto.fila;
-
-            const cell = sheet[cellRef];
-
-            valorExcel = cell
-                ? parseFloat(
-                    String(cell.v || cell.w || 0)
-                        .replace(/[$,]/g, '')
-                ) || 0
-                : 0;
+        if (typeof config.hoja === 'number') {
+            sheetName = workbook.SheetNames[config.hoja];
+        } else if (typeof config.hoja === 'string') {
+            sheetName = config.hoja;
+        } else {
+            sheetName = workbook.SheetNames[0];
         }
 
-        const esperadoInfo =
-            valoresEsperados[concepto.nombre] || {};
+        const sheet = workbook.Sheets[sheetName];
 
-        const valorEsperado =
-            esperadoInfo.valor || 0;
+        if (!sheet) {
+            Swal.fire(
+                'Error',
+                `No se encontró la hoja "${config.hoja}" en el archivo`,
+                'error'
+            );
+            return;
+        }
 
-        datosExtraidos.push({
-            concepto: concepto.nombre,
-            valorExcel,
-            valorEsperado,
-            diferencia: valorExcel - valorEsperado,
-            tipo: concepto.tipo || 'moneda'
+        config.conceptos.forEach(concepto => {
+
+            let valorExcel = 0;
+
+            if (concepto.celdaValor) {
+
+                const cell = sheet[concepto.celdaValor];
+
+                valorExcel = cell
+                    ? parseFloat(
+                        String(cell.v || cell.w || 0)
+                            .replace(/[$,]/g, '')
+                    ) || 0
+                    : 0;
+
+            } else if (concepto.fila && config.columnas.valor) {
+
+                const cellRef =
+                    config.columnas.valor + concepto.fila;
+
+                const cell = sheet[cellRef];
+
+                valorExcel = cell
+                    ? parseFloat(
+                        String(cell.v || cell.w || 0)
+                            .replace(/[$,]/g, '')
+                    ) || 0
+                    : 0;
+            }
+
+            const esperadoInfo =
+                valoresEsperados[concepto.nombre] || {};
+
+            const valorEsperado =
+                esperadoInfo.valor || 0;
+
+            datosExtraidos.push({
+                concepto: concepto.nombre,
+                valorExcel,
+                valorEsperado,
+                diferencia: valorExcel - valorEsperado,
+                tipo: concepto.tipo || 'moneda'
+            });
+
         });
 
-    });
+        document.getElementById(
+            'resultsSection'
+        ).style.display = 'block';
 
-    document.getElementById(
-        'resultsSection'
-    ).style.display = 'block';
-
-    renderTablaSucursales();
-    actualizarResumen();
-}
-
-function extraerDailySales() {
-
-    const conciliationSheet =
-        workbook.Sheets['Conciliation'];
-
-    if (!conciliationSheet) {
-        throw new Error(
-            'No se encontró la hoja Conciliation'
-        );
+        renderTablaSucursales();
+        actualizarResumen();
     }
 
-    const conciliationRows =
-        XLSX.utils.sheet_to_json(
-            conciliationSheet,
-            { defval: 0 }
+    function extraerDailySales() {
+
+        const conciliationSheet =
+            workbook.Sheets['Conciliation'];
+
+        if (!conciliationSheet) {
+            throw new Error(
+                'No se encontró la hoja Conciliation'
+            );
+        }
+
+        const conciliationRows =
+            XLSX.utils.sheet_to_json(
+                conciliationSheet,
+                { defval: 0 }
+            );
+
+        console.log(
+            'Filas conciliación:',
+            conciliationRows.length
         );
 
-    console.log(
-        'Filas conciliación:',
-        conciliationRows.length
-    );
 
 
+        const rowsLimpios =
+            conciliationRows.filter(
+                row =>
+                    row['Store'] &&
+                    String(row['Store']).trim() !== ''
+            );
 
-    const rowsLimpios =
-        conciliationRows.filter(
-            row =>
-                row['Store'] &&
-                String(row['Store']).trim() !== ''
-        );
+        console.log('TOTAL FILAS:', conciliationRows.length);
+        console.log('FILAS LIMPIAS:', rowsLimpios.length);
+        console.log(rowsLimpios[0]);
 
-    console.log('TOTAL FILAS:', conciliationRows.length);
-    console.log('FILAS LIMPIAS:', rowsLimpios.length);
-    console.log(rowsLimpios[0]);
+        datosExtraidos = rowsLimpios.map(row => ({
 
-    datosExtraidos = rowsLimpios.map(row => ({
+            store: row['Store'] || '',
 
-        store: row['Store'] || '',
+            salesTax: row['Sales TAX'] || 0,
 
-        salesTax: row['Sales TAX'] || 0,
+            grossSalesPos: row['Gross Sales POS'] || 0,
 
-        grossSalesPos: row['Gross Sales POS'] || 0,
+            discounts: row['Discounts'] || 0,
 
-        discounts: row['Discounts'] || 0,
+            promo: row['Promo'] || 0,
 
-        promo: row['Promo'] || 0,
+            donations: row['Donations'] || 0,
 
-        donations: row['Donations'] || 0,
+            netSales: row['Net Sales'] || 0,
 
-        netSales: row['Net Sales'] || 0,
+            gcSold: row['GC Sold'] || 0,
 
-        gcSold: row['GC Sold'] || 0,
+            paidOut: row['Paid Out'] || 0,
 
-        paidOut: row['Paid Out'] || 0,
+            paidIn: row['Paid In'] || 0,
 
-        paidIn: row['Paid In'] || 0,
+            donation: row['Donation'] || 0,
 
-        donation: row['Donation'] || 0,
+            totalRevenue: row['Total Revenue'] || 0,
 
-        totalRevenue: row['Total Revenue'] || 0,
+            mastercard: row['Mastercard'] || 0,
 
-        mastercard: row['Mastercard'] || 0,
+            visa: row['Visa'] || 0,
 
-        visa: row['Visa'] || 0,
+            discover: row['Discover'] || 0,
 
-        discover: row['Discover'] || 0,
+            amex: row['Amex'] || 0,
 
-        amex: row['Amex'] || 0,
+            debit: row['Debit'] || 0,
 
-        debit: row['Debit'] || 0,
+            ebt: row['EBT'] || 0,
 
-        ebt: row['EBT'] || 0,
+            gcRedeem: row['GC Redeem'] || 0,
 
-        gcRedeem: row['GC Redeem'] || 0,
+            acctCash: row['Acct Cash'] || 0,
 
-        acctCash: row['Acct Cash'] || 0,
+            deposits: row['Deposits'] || 0,
 
-        deposits: row['Deposits'] || 0,
+            gh: row['GH'] || 0,
 
-        gh: row['GH'] || 0,
+            uber: row['Uber'] || 0,
 
-        uber: row['Uber'] || 0,
+            dd: row['DD'] || 0,
 
-        dd: row['DD'] || 0,
+            ccTotals: row['CC Totals'] || 0,
 
-        ccTotals: row['CC Totals'] || 0,
+            paymentsTotal: row['Payments Total'] || 0,
 
-        paymentsTotal: row['Payments Total'] || 0,
+            osSlash: row['O/S'] || 0,
 
-        osSlash: row['O/S'] || 0,
+            os: row['OS'] || 0,
 
-        os: row['OS'] || 0,
+            deposit1: row['Deposit 1'] || 0,
 
-        deposit1: row['Deposit 1'] || 0,
+            deposit2: row['Deposit 2'] || 0,
 
-        deposit2: row['Deposit 2'] || 0,
+            deposit3: row['Deposit 3'] || 0,
 
-        deposit3: row['Deposit 3'] || 0,
+            cashPlusMinus: row['Cash +/-'] || 0,
 
-        cashPlusMinus: row['Cash +/-'] || 0,
+            cashExpected: row['Cash Expected'] || 0,
 
-        cashExpected: row['Cash Expected'] || 0,
+            difference: row['Difference'] || 0
 
-        difference: row['Difference'] || 0
+        }));
 
-    }));
+        console.log('DESPUES DEL MAP');
+        console.log(datosExtraidos.length);
+        console.log(datosExtraidos[0]);
 
-    console.log('DESPUES DEL MAP');
-    console.log(datosExtraidos.length);
-    console.log(datosExtraidos[0]);
+        renderTablaSucursales();
+    }
 
-    renderTablaSucursales();
+}
+
+
+function normalizarFecha(fecha) {
+
+    const d = fecha instanceof Date
+        ? fecha
+        : new Date(fecha);
+
+    if (isNaN(d)) {
+        return '';
+    }
+
+    return `${String(d.getMonth() + 1).padStart(2, '0')}/${String(
+        d.getDate()
+    ).padStart(2, '0')}/${d.getFullYear()}`;
 }
 
 
 function generarConciliacionDesdeTemplate() {
 
-    const salesSheet =
-        workbook.Sheets['Sales'];
-
-    if (!salesSheet) {
+    if (!salesWorkbook) {
 
         Swal.fire(
             'Error',
-            'No existe la hoja Sales',
+            'No hay archivo Sales cargado',
             'error'
         );
 
         return;
     }
 
-    const salesRows =
+    // SIEMPRE usar el archivo SALES
+    const salesBook =
+        salesWorkbook || workbook;
+
+    if (!salesBook) {
+
+        Swal.fire(
+            'Error',
+            'No hay archivo Sales cargado',
+            'error'
+        );
+
+        return;
+    }
+
+    const sourceSheetName =
+        detectarHojaOrigen(
+            salesBook
+        );
+
+    const sourceSheet =
+        salesBook.Sheets[
+        sourceSheetName
+        ];
+    if (!sourceSheet) {
+
+        Swal.fire(
+            'Error',
+            'No se encontró hoja origen',
+            'error'
+        );
+
+        return;
+    }
+
+    // Obtener fecha más reciente
+
+    const rows =
         XLSX.utils.sheet_to_json(
-            salesSheet,
+            sourceSheet,
             {
+                range: 1,
                 defval: 0
             }
         );
+    cargarFechasEnFiltro(
+        rows,
+        'salesDateFilter',
+        'Date'
+    );
 
-    const rowsLimpios =
-        salesRows.filter(
-            row =>
-                row['Store'] &&
-                String(row['Store']).trim() !== ''
+    // ======================================
+    // FECHA MÁS RECIENTE
+    // ======================================
+
+    // =====================================
+    // FECHA MÁS RECIENTE
+    // =====================================
+
+    const fechasValidas =
+        rows
+            .map(row => obtenerFechaFila(row))
+            .filter(Boolean)
+            .map(fecha => {
+
+                if (fecha instanceof Date) {
+                    return fecha;
+                }
+
+                const d = new Date(fecha);
+
+                return isNaN(d)
+                    ? null
+                    : d;
+
+            })
+            .filter(Boolean);
+
+    if (!fechasValidas.length) {
+
+        console.error(
+            'No se encontraron fechas válidas'
         );
 
+        return;
+    }
+
+    const fechaMax =
+        new Date(
+            Math.max(
+                ...fechasValidas.map(
+                    f => f.getTime()
+                )
+            )
+        );
+
+    const fechaMasReciente =
+        `${String(
+            fechaMax.getMonth() + 1
+        ).padStart(2, '0')}/${String(
+            fechaMax.getDate()
+        ).padStart(2, '0')}/${fechaMax.getFullYear()}`;
+
     console.log(
-        'Sales rows:',
-        rowsLimpios.length
+        'Fecha más reciente:',
+        fechaMasReciente
+    );
+
+    // Guardar fecha global
+
+    fechaConciliacionActual =
+        fechaMasReciente;
+
+    // Llenar input
+
+    const fechaInput =
+        document.getElementById(
+            'fechaConciliacion'
+        );
+
+    if (fechaInput) {
+
+        fechaInput.value =
+            `${fechaMax.getFullYear()}-${String(
+                fechaMax.getMonth() + 1
+            ).padStart(2, '0')}-${String(
+                fechaMax.getDate()
+            ).padStart(2, '0')}`;
+
+    }
+
+    // Filtrar solo la fecha más reciente
+
+    const fechaFiltro =
+        fechaSalesSeleccionada &&
+            fechaSalesSeleccionada.trim() !== ''
+            ? fechaSalesSeleccionada
+            : fechaMasReciente;
+
+    const rowsFiltradas =
+        rows.filter(row => {
+
+            const fecha =
+                obtenerFechaFila(row);
+
+            if (!fecha) {
+                return false;
+            }
+
+            return (
+                normalizarFecha(fecha) ===
+                normalizarFecha(fechaFiltro)
+            );
+
+        });
+
+    console.log(
+        'Registros filtrados:',
+        rowsFiltradas.length
+    );
+
+    console.log(
+        'Fecha más reciente:',
+        fechaMasReciente
+    );
+
+    // ======================================
+    // FILTRAR SOLO ESA FECHA
+    // ======================================
+
+    console.log(
+        'Registros fecha actual:',
+        rowsFiltradas.length
+    );
+
+    console.log(
+        'Primer registro:',
+        rows[0]
+    );
+
+    const c =
+        currentRestaurantConfig.columns;
+
+    console.log('Fecha filtro:', fechaFiltro);
+
+    console.log(
+        'Primeras fechas:',
+        rows.slice(0, 5).map(
+            r => obtenerFechaFila(r)
+        )
+    );
+
+    console.log(
+        'Rows filtradas:',
+        rowsFiltradas.length
     );
 
     datosExtraidos =
-        rowsLimpios.map(row => {
+        rowsFiltradas.map(row => {
 
-            const deposit1 =
-                Number(row['Deposit 1']) || 0;
+            const store = row[c.store] || '';
 
-            const deposit2 =
-                Number(row['Deposit 2']) || 0;
+            const salesTax = Number(row[c.salesTax]) || 0;
+            const netSales = Number(row[c.netSales]) || 0;
 
-            const deposit3 =
-                Number(row['Deposit 3']) || 0;
+            const discounts = Number(row[c.discounts]) || 0;
+            const promo = Number(row[c.promo]) || 0;
+            const donations = Number(row[c.donation]) || 0;
+
+            const gcSold = Number(row[c.giftCardSold]) || 0;
+            const gcRedeem =
+                Math.abs(
+                    Number(row[c.giftCardRedeemed]) || 0
+                );
+
+            const paidOut = Number(row[c.paidOut]) || 0;
+            const paidIn = Number(row[c.paidIn]) || 0;
+
+            const mastercard = Number(row[c.mastercard]) || 0;
+            const visa = Number(row[c.visa]) || 0;
+            const discover = Number(row[c.discover]) || 0;
+            const amex = Number(row[c.amex]) || 0;
+            const debit = Number(row[c.debit]) || 0;
+
+            const acctCashOriginal =
+                Number(row[c.acctCash]) || 0;
+
+            const gh = Number(row[c.grubhub]) || 0;
+            const uber = Number(row[c.uber]) || 0;
+            const dd = Number(row[c.doordash]) || 0;
+
+            const deposit1 = Number(row[c.deposit1]) || 0;
+            const deposit2 = Number(row[c.deposit2]) || 0;
+            const deposit3 = Number(row[c.deposit3]) || 0;
+
+            const ebt = obtenerEBTPorStore(store) || 0;
+
+            // =====================================
+            // CALCULOS CORREGIDOS
+            // =====================================
+
+            const acctCash =
+                acctCashOriginal -
+                paidOut -
+                ebt;
+
+
+            // Gross Sales POS
+            const grossSalesPos =
+                netSales +
+                promo +
+                discounts -
+                uber;
+
+            // CC Totals
+            const ccTotals =
+                mastercard +
+                visa +
+                discover +
+                debit;
+
+            // Deposits
+            const deposits =
+                deposit1 +
+                deposit2 +
+                deposit3;
+
+            // Total Revenue
+            const totalRevenue =
+                netSales +
+                salesTax +
+                gcSold +
+                donations +
+                paidIn -
+                paidOut;
+
+            // Payments Total
+            const paymentsTotal =
+                mastercard +
+                visa +
+                discover +
+                amex +
+                debit +
+                gcRedeem +
+                acctCash +
+                gh +
+                uber +
+                dd +
+                ebt;
+
+            // O/S
+            const oS =
+                totalRevenue -
+                paymentsTotal;
+
+            const os =
+                totalRevenue -
+                paymentsTotal;
+
+            // Cash Expected
+            const cashExpected =
+                acctCash;
+
+
+            //AGREGADO
+
+
+            // Cash +/-
+            const cashPlusMinus =
+                Number(
+                    row[c.cashPlusMinus]
+                ) || 0;
+
+            // Difference
+            const difference =
+                cashExpected -
+                (
+                    deposit1 +
+                    deposit2 +
+                    deposit3
+                ) +
+                cashPlusMinus +
+                ebt;
 
             return {
 
-                store:
-                    row['Store'] || '',
+                store,
 
-                salesTax:
-                    Number(
-                        row['Sales Tax']
-                    ) || 0,
+                salesTax,
+                grossSalesPos,
+                discounts,
+                promo,
+                donations,
 
-                grossSalesPos:
-                    Number(
-                        row['Gross Sales']
-                    ) || 0,
+                netSales,
 
-                discounts:
-                    Number(
-                        row['Discounts']
-                    ) || 0,
+                gcSold,
+                paidOut,
+                paidIn,
 
-                promo:
-                    Number(
-                        row['Promo']
-                    ) || 0,
+                donation: donations,
 
-                donations:
-                    Number(
-                        row['Donation']
-                    ) || 0,
+                totalRevenue,
 
-                netSales:
-                    Number(
-                        row['Net Sales']
-                    ) || 0,
+                mastercard,
+                visa,
+                discover,
+                amex,
+                debit,
 
-                gcSold:
-                    Number(
-                        row['Gift Cards Sold']
-                    ) || 0,
+                ebt,
 
-                paidOut:
-                    Number(
-                        row['Paid Out']
-                    ) || 0,
-
-                paidIn: 0,
-
-                donation:
-                    Number(
-                        row['Donation']
-                    ) || 0,
-
-                totalRevenue:
-                    Number(
-                        row['Register Sales']
-                    ) || 0,
-
-                mastercard:
-                    Number(
-                        row['Mastercard']
-                    ) || 0,
-
-                visa:
-                    Number(
-                        row['Visa']
-                    ) || 0,
-
-                discover:
-                    Number(
-                        row['Discover']
-                    ) || 0,
-
-                amex:
-                    Number(
-                        row['Amex']
-                    ) || 0,
-
-                debit:
-                    Number(
-                        row['Debit']
-                    ) || 0,
-
-                ebt: 0,
-
-                gcRedeem:
-                    Number(
-                        row['Gift Card Redeemed']
-                    ) || 0,
-
-                acctCash:
-                    Number(
-                        row['Acct Cash']
-                    ) || 0,
+                gcRedeem,
+                acctCash,
 
                 deposit1,
                 deposit2,
                 deposit3,
 
-                deposits:
-                    deposit1 +
-                    deposit2 +
-                    deposit3,
+                deposits,
 
-                gh:
-                    Number(
-                        row['Grub Hub Payments']
-                    ) || 0,
+                gh,
+                uber,
+                dd,
 
-                uber:
-                    Number(
-                        row['Uber Payments']
-                    ) || 0,
+                ccTotals,
 
-                dd:
-                    Number(
-                        row['DoorDash Payment']
-                    ) || 0,
+                paymentsTotal,
 
-                ccTotals:
-                    (Number(row['Visa']) || 0) +
-                    (Number(row['Mastercard']) || 0) +
-                    (Number(row['Discover']) || 0) +
-                    (Number(row['Amex']) || 0),
+                os,
 
-                paymentsTotal:
-                    (Number(row['Visa']) || 0) +
-                    (Number(row['Mastercard']) || 0) +
-                    (Number(row['Discover']) || 0) +
-                    (Number(row['Amex']) || 0) +
-                    (Number(row['Debit']) || 0),
+                oS,
 
-                osSlash: 0,
+                cashPlusMinus,
 
-                os: 0,
+                cashExpected,
 
-                cashPlusMinus:
-                    Number(
-                        row['Cash +/-']
-                    ) || 0,
-
-                cashExpected:
-                    Number(
-                        row['Acct Cash']
-                    ) || 0,
-
-                difference:
-                    (
-                        deposit1 +
-                        deposit2 +
-                        deposit3
-                    ) -
-                    (
-                        Number(
-                            row['Acct Cash']
-                        ) || 0
-                    )
+                difference
             };
         });
 
     console.log(
-        'Conciliacion generada:',
+        'Registros generados:',
         datosExtraidos.length
     );
 
@@ -838,6 +1298,9 @@ function generarConciliacionDesdeTemplate() {
     ).style.display = 'block';
 
     renderTablaSucursales();
+
+    actualizarResumen();
+    actualizarTotales();
 }
 // ============================================
 // RENDERIZADO
@@ -1186,76 +1649,369 @@ function formatDate(dateStr) {
     });
 }
 
+
+function detectarHojaOrigen(
+    book = workbook
+) {
+
+    if (
+        currentRestaurantConfig?.sourceSheet &&
+        book.SheetNames.includes(
+            currentRestaurantConfig.sourceSheet
+        )
+    ) {
+
+        return currentRestaurantConfig.sourceSheet;
+
+    }
+
+    return book.SheetNames[0];
+
+}
+
 function renderTablaSucursales() {
 
-    console.log(
-        'renderTablaSucursales',
-        datosExtraidos.length
-    );
-
     const tbody =
-        document.getElementById(
-            'conciliacionBody'
-        );
+        document.getElementById('conciliacionBody');
 
     if (!tbody) {
-        console.error(
-            'No existe conciliacionBody'
-        );
+        console.error('No existe conciliacionBody');
+        return;
+    }
+
+    if (!datosExtraidos.length) {
+
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="34" style="text-align:center;padding:20px;">
+                    No hay datos
+                </td>
+            </tr>
+        `;
+
         return;
     }
 
     tbody.innerHTML =
         datosExtraidos.map(row => `
-            <tr>
-                <td>${row.store}</td>
-                <td>${formatMoney(row.salesTax)}</td>
-                <td>${formatMoney(row.grossSalesPos)}</td>
-                <td>${formatMoney(row.discounts)}</td>
-                <td>${formatMoney(row.promo)}</td>
-                <td>${formatMoney(row.donations)}</td>
-                <td>${formatMoney(row.netSales)}</td>
-                <td>${formatMoney(row.gcSold)}</td>
-                <td>${formatMoney(row.paidOut)}</td>
-                <td>${formatMoney(row.paidIn)}</td>
-                <td>${formatMoney(row.donation)}</td>
-                <td>${formatMoney(row.totalRevenue)}</td>
-                <td>${formatMoney(row.mastercard)}</td>
-                <td>${formatMoney(row.visa)}</td>
-                <td>${formatMoney(row.discover)}</td>
-                <td>${formatMoney(row.amex)}</td>
-                <td>${formatMoney(row.debit)}</td>
-                <td>${formatMoney(row.ebt)}</td>
-                <td>${formatMoney(row.gcRedeem)}</td>
-                <td>${formatMoney(row.acctCash)}</td>
-                <td>${formatMoney(row.deposits)}</td>
-                <td>${formatMoney(row.gh)}</td>
-                <td>${formatMoney(row.uber)}</td>
-                <td>${formatMoney(row.dd)}</td>
-                <td>${formatMoney(row.ccTotals)}</td>
-                <td>${formatMoney(row.paymentsTotal)}</td>
-                <td>${formatMoney(row.osSlash)}</td>
-                <td>${formatMoney(row.os)}</td>
-                <td>${formatMoney(row.deposit1)}</td>
-                <td>${formatMoney(row.deposit2)}</td>
-                <td>${formatMoney(row.deposit3)}</td>
-                <td>${formatMoney(row.cashPlusMinus)}</td>
-                <td>${formatMoney(row.cashExpected)}</td>
-                <td class="${Math.abs(row.difference) > 0.01
-                ? 'difference'
-                : 'success'
-            }">
-                    ${formatMoney(row.difference)}
-                </td>
-            </tr>
-        `).join('');
 
-    const resultsSection =
-        document.getElementById(
-            'resultsSection'
+        <tr>
+
+            <td>${row.store || ''}</td>
+
+            <td>${formatMoney(row.salesTax)}</td>
+
+            <td>${formatMoney(row.grossSalesPos)}</td>
+
+            <td>${formatMoney(row.discounts)}</td>
+
+            <td>${formatMoney(row.promo)}</td>
+
+            <td>${formatMoney(row.donations)}</td>
+
+            <td>${formatMoney(row.netSales)}</td>
+
+            <td>${formatMoney(row.gcSold)}</td>
+
+            <td>${formatMoney(row.paidOut)}</td>
+
+            <td>${formatMoney(row.paidIn)}</td>
+
+            <td>${formatMoney(row.donation)}</td>
+
+            <td>${formatMoney(row.totalRevenue)}</td>
+
+            <td>${formatMoney(row.mastercard)}</td>
+
+            <td>${formatMoney(row.visa)}</td>
+
+            <td>${formatMoney(row.discover)}</td>
+
+            <td>${formatMoney(row.amex)}</td>
+
+            <td>${formatMoney(row.debit)}</td>
+
+            <td>${formatMoney(row.ebt)}</td>
+
+            <td>${formatMoney(row.gcRedeem)}</td>
+
+            <td>${formatMoney(row.acctCash)}</td>
+
+            <td>${formatMoney(row.deposits)}</td>
+
+            <td>${formatMoney(row.gh)}</td>
+
+            <td>${formatMoney(row.uber)}</td>
+
+            <td>${formatMoney(row.dd)}</td>
+
+            <td>${formatMoney(row.ccTotals)}</td>
+
+            <td>${formatMoney(row.paymentsTotal)}</td>
+
+            <td>${formatMoney(row.oS)}</td>
+
+            <td>${formatMoney(row.os)}</td>
+
+            <td>${formatMoney(row.deposit1)}</td>
+
+            <td>${formatMoney(row.deposit2)}</td>
+
+            <td>${formatMoney(row.deposit3)}</td>
+
+            <td>${formatMoney(row.cashPlusMinus)}</td>
+
+            <td>${formatMoney(row.cashExpected)}</td>
+
+            <td class="${Math.abs(row.difference) > 0.01 ? 'text-danger' : ''}">
+                ${formatMoney(row.difference)}
+            </td>
+
+        </tr>
+
+    `).join('');
+
+    actualizarTotales();
+
+}
+
+function actualizarTotales() {
+
+    const totalSalesTax =
+        datosExtraidos.reduce(
+            (s, r) => s + (r.salesTax || 0),
+            0
         );
 
-    if (resultsSection) {
-        resultsSection.style.display = 'block';
+    const totalNetSales =
+        datosExtraidos.reduce(
+            (s, r) => s + (r.netSales || 0),
+            0
+        );
+
+    const totalDifference =
+        datosExtraidos.reduce(
+            (s, r) => s + (r.difference || 0),
+            0
+        );
+
+    const totalExcel =
+        document.getElementById('totalExcel');
+
+    const totalEsperado =
+        document.getElementById('totalEsperado');
+
+    const totalDiff =
+        document.getElementById('totalDiff');
+
+    if (totalExcel)
+        totalExcel.textContent =
+            formatMoney(totalSalesTax);
+
+    if (totalEsperado)
+        totalEsperado.textContent =
+            formatMoney(totalNetSales);
+
+    if (totalDiff)
+        totalDiff.textContent =
+            formatMoney(totalDifference);
+
+}
+
+
+function procesarEBT() {
+
+    if (!ebtWorkbook) {
+        return;
     }
+
+    const hoja =
+        ebtWorkbook.Sheets['Net Sales'];
+
+    if (!hoja) {
+        console.warn(
+            'No existe hoja Net Sales'
+        );
+        return;
+    }
+
+    const rows =
+        XLSX.utils.sheet_to_json(
+            hoja,
+            {
+                defval: ''
+            }
+        );
+
+    if (!rows.length) {
+        return;
+    }
+
+    // Buscar fecha más reciente
+
+    const fechas =
+        rows.map(r =>
+            new Date(
+                r['Funded Date']
+            )
+        );
+
+    const fechaMax =
+        new Date(
+            Math.max(
+                ...fechas
+            )
+        );
+
+    const fechaTexto =
+        fechaMax.toLocaleDateString(
+            'en-US'
+        );
+
+    console.log(
+        'Fecha más reciente:',
+        fechaTexto
+    );
+
+    ebtPorTienda = {};
+
+    rows.forEach(row => {
+
+        const fecha =
+            new Date(
+                row['Funded Date']
+            ).toLocaleDateString(
+                'en-US'
+            );
+
+        if (
+            fecha !==
+            fechaTexto
+        ) {
+            return;
+        }
+
+        const siteName =
+            row['Site Name'] || '';
+
+        const match =
+            siteName.match(
+                /#(\d+)/
+            );
+
+        if (!match) {
+            return;
+        }
+
+        const store =
+            Number(
+                match[1]
+            );
+
+        const amount =
+            Number(
+                row[
+                'Processed Transaction Amount'
+                ]
+            ) || 0;
+
+        ebtPorTienda[
+            store
+        ] =
+            (
+                ebtPorTienda[
+                store
+                ] || 0
+            ) + amount;
+
+    });
+
+    console.log(
+        'EBT por tienda:',
+        ebtPorTienda
+    );
+}
+
+function obtenerEBTPorStore(
+    store
+) {
+
+    return (
+        ebtPorTienda[
+        Number(store)
+        ] || 0
+    );
+
+}
+
+
+
+document
+    .getElementById(
+        'salesDateFilter'
+    )
+    .addEventListener(
+        'change',
+        e => {
+
+            fechaSalesSeleccionada =
+                e.target.value;
+
+            generarConciliacionDesdeTemplate();
+        }
+    );
+
+function cargarFechasEnFiltro(
+    rows,
+    selectId,
+    campoFecha = 'Date'
+) {
+
+    const select =
+        document.getElementById(selectId);
+
+    if (!select) return;
+
+    const fechas = [
+        ...new Set(
+            rows
+                .map(row => row[campoFecha])
+                .filter(Boolean)
+        )
+    ];
+
+    fechas.sort((a, b) => {
+
+        const fechaA = new Date(a);
+        const fechaB = new Date(b);
+
+        return fechaB - fechaA;
+
+    });
+
+    select.innerHTML =
+        '<option value="">Selecciona fecha</option>';
+
+    fechas.forEach(fecha => {
+
+        select.innerHTML += `
+            <option value="${fecha}">
+                ${fecha}
+            </option>
+        `;
+
+    });
+
+}
+
+function obtenerFechaFila(row) {
+
+    return (
+        row['Date'] ||
+        row['Accounting Date'] ||
+        row['Business Date'] ||
+        row['Sales Date'] ||
+        null
+    );
+
 }
