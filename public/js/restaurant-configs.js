@@ -35,6 +35,8 @@ window.RestaurantConfigs = {
 
             acctCash: 'Acct Cash',
 
+            mobileCC: 'Mobile CC',
+
             os :'OS',
 
             oS:'O/S',
