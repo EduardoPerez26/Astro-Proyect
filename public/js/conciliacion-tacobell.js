@@ -307,9 +307,9 @@ function generarConciliacionTacoBell() {
                 paymentsTotal;
 
             const os =
-                totalRevenue -
-                paymentsTotal;
-
+                Number(
+                    row[c.cashPlusMinus]
+                ) || 0;
             // Cash Expected
             const cashExpected =
                 acctCash;
@@ -400,9 +400,15 @@ function generarConciliacionTacoBell() {
     document.getElementById(
         'resultsSection'
     ).style.display = 'block';
+    
+    console.log(datosExtraidos[0]);
+    console.log(datosExtraidos.length);
 
     renderTablaSucursales();
 
+    llenarFiltroTiendas();
+
     actualizarResumen();
-    actualizarTotales();
+
+    actualizarTotales()
 }

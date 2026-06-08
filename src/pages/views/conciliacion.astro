@@ -164,23 +164,30 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
                 </div>
             </div>
 
+            <!-- FILTRO POR TIENDA Y POR NUM DE TIENDA -->
+            <div class="filters-container">
+                <div class="form-group">
+                    <label>Tienda</label>
+                    <select id="filterStore" class="form-select">
+                        <option value="">Todas las tiendas</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Nombre tienda</label>
+                    <input
+                        type="text"
+                        id="filterStoreName"
+                        class="form-input"
+                        placeholder="Buscar sucursal..."
+                    />
+                </div>
+            </div>
+
             <!-- Tabla -->
             <div class="table-container">
                 <div class="table-header">
                     <h3>Detalle de Conciliacion</h3>
-                    <div class="table-actions">
-                        <button
-                            class="btn btn-secondary btn-sm"
-                            id="btnExportPdf"
-                        >
-                            <i class="fa-solid fa-file-pdf"></i>
-                            Exportar PDF
-                        </button>
-                        <button class="btn btn-primary btn-sm" id="btnGuardar">
-                            <i class="fa-solid fa-save"></i>
-                            Guardar
-                        </button>
-                    </div>
                 </div>
                 <div class="table-responsive">
                     <table class="data-table conciliacion-table">
@@ -193,107 +200,7 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
                 </div>
             </div>
 
-            <!-- Notas -->
-            <div class="notes-section">
-                <label for="notasConciliacion">Notas / Observaciones</label>
-                <textarea
-                    id="notasConciliacion"
-                    class="form-textarea"
-                    rows="3"
-                    placeholder="Agrega notas o comentarios sobre esta conciliacion..."
-                ></textarea>
-            </div>
-        </div>
 
-        <!-- Modal Editar Valor Esperado -->
-        <div class="modal-overlay" id="modalEditarValor">
-            <div class="modal">
-                <div class="modal-header">
-                    <h3>Editar Valor Esperado</h3>
-                    <button class="modal-close" onclick="cerrarModalEditar()">
-                        <i class="fa-solid fa-times"></i>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <div class="form-group">
-                        <label>Concepto</label>
-                        <input
-                            type="text"
-                            id="editConcepto"
-                            class="form-input"
-                            readonly
-                        />
-                    </div>
-                    <div class="form-group">
-                        <label>Valor Excel</label>
-                        <input
-                            type="text"
-                            id="editValorExcel"
-                            class="form-input"
-                            readonly
-                        />
-                    </div>
-                    <div class="form-group">
-                        <label>Valor Esperado</label>
-                        <input
-                            type="number"
-                            id="editValorEsperado"
-                            class="form-input"
-                            step="0.01"
-                        />
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button
-                        class="btn btn-secondary"
-                        onclick="cerrarModalEditar()">Cancelar</button
-                    >
-                    <button
-                        class="btn btn-primary"
-                        onclick="guardarValorEsperado()">Guardar</button
-                    >
-                </div>
-            </div>
-        </div>
-
-        <!-- Modal Historial -->
-        <div class="modal-overlay" id="modalHistorial">
-            <div class="modal modal-lg">
-                <div class="modal-header">
-                    <h3>Historial de Conciliaciones</h3>
-                    <button
-                        class="modal-close"
-                        onclick="cerrarModalHistorial()"
-                    >
-                        <i class="fa-solid fa-times"></i>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <div class="table-responsive">
-                        <table class="data-table">
-                            <thead>
-                                <tr>
-                                    <th>Sucursal</th>
-                                    <th>Gross Sales</th>
-                                    <th>Net Sales</th>
-                                    <th>Sales Tax</th>
-                                    <th>Visa</th>
-                                    <th>Mastercard</th>
-                                    <th>Discover</th>
-                                    <th>Amex</th>
-                                    <th>Deposits</th>
-                                    <th>Difference</th>
-                                </tr>
-                            </thead>
-                            <tbody id="historialBody">
-                                <!-- Datos dinamicos -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <!-- Scripts -->
     <script
@@ -767,5 +674,20 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
 
     .conciliacion-table {
         min-width: max-content;
+    }
+
+    .filters-container {
+        display: grid;
+        grid-template-columns: 250px 1fr;
+        gap: 16px;
+        margin-bottom: 16px;
+        padding: 16px;
+        background: #fff;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+    }
+
+    .filters-container input {
+        width: 100%;
     }
 </style>

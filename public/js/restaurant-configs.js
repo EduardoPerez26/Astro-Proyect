@@ -20,8 +20,10 @@ window.RestaurantConfigs = {
 
             { key: 'gcSold', label: 'GC Sold' },
 
+
             { key: 'paidOut', label: 'Paid Out' },
             { key: 'paidIn', label: 'Paid In' },
+            { key: 'totalRevenue', label: 'Total Revenue' },
 
             { key: 'mastercard', label: 'Mastercard' },
             { key: 'visa', label: 'Visa' },
@@ -44,6 +46,15 @@ window.RestaurantConfigs = {
             { key: 'ccTotals', label: 'CC Totals' },
 
             { key: 'paymentsTotal', label: 'Payments Total' },
+            { key: 'oS', label: 'O/S' },
+            { key: 'os', label: 'OS' },
+
+
+            { key: 'deposit1', label: 'Deposit 1' },
+            { key: 'deposit2', label: 'Deposit 2' },
+            { key: 'deposit3', label: 'Deposit 3' },
+
+            { key: 'cashPlusMinus', label: 'Cash +/-' },
 
             { key: 'cashExpected', label: 'Cash Expected' },
 
@@ -131,26 +142,36 @@ window.RestaurantConfigs = {
             { key: 'other', label: 'Other' },
 
             { key: 'serviceFee', label: 'Service Fee' },
+            { key: 'salesOther', label: 'Sales Other' },
 
-            { key: 'salesTax', label: 'Sales Tax' },
-
-            { key: 'taxExemptSales', label: 'Tax Exempt Sales' },
-
-            { key: 'deliveryFee', label: 'Delivery Fee' },
-            { key: 'deliveryFeeNet', label: 'Delivery Fee Net' },
-            { key: 'deliveryTipsNet', label: 'Delivery Tips Net' },
+            { key: 'deliveryFee', label: 'Delivery Fee Net' },
+            { key: 'deliveryTips', label: 'Delivery Tips' },
+            { key: 'totalTips', label: 'Total Tips' },
 
             { key: 'discounts', label: 'Discounts' },
-
-            { key: 'gcSold', label: 'GC Sold' },
+            { key: 'discountPromo', label: '$ Off Promo' },
 
             { key: 'netSales', label: 'Net Sales' },
 
+            { key: 'salesTax', label: 'Sales Tax' },
+            { key: 'taxExemptSales', label: 'Tax Exempt Sales' },
+
+            { key: 'caCrv', label: 'CA CRV' },
+
+            { key: 'gcSold', label: 'GC Sold' },
+
+            { key: 'paidOut', label: 'Paid Out' },
+
+            { key: 'donations', label: 'Donations' },
+
+            { key: 'nonRedeemable', label: 'Non Redeemable' },
+
             { key: 'totalRevenue', label: 'Total Revenue' },
 
-            { key: 'mastercard', label: 'Master Card' },
-            { key: 'visa', label: 'Visa' },
             { key: 'amex', label: 'AMEX' },
+            { key: 'amexPrPd', label: 'AMEX PrPd' },
+            { key: 'visa', label: 'Visa' },
+            { key: 'mastercard', label: 'Master Card' },
             { key: 'discover', label: 'Discover' },
             { key: 'debit', label: 'Debit' },
 
@@ -160,19 +181,40 @@ window.RestaurantConfigs = {
             { key: 'gh', label: 'Grub Hub' },
             { key: 'uber', label: 'Uber Eats' },
 
+            { key: 'doorDashShortage', label: 'DoorDash S/O' },
+            { key: 'uberShortage', label: 'Uber S/O' },
+
+            { key: 'postmates', label: 'Postmates' },
+
             { key: 'ebt', label: 'EBT' },
 
             { key: 'kiosk', label: 'Kiosk' },
 
             { key: 'gcRedeem', label: 'GC Redeem' },
 
-            { key: 'cashApp', label: 'Cash App' },
+            { key: 'onlineCatering', label: 'Online Catering' },
+            { key: 'ezCater', label: 'EZ Cater' },
+
+            { key: 'wlTips', label: 'WL Tips' },
+
+            { key: 'paidOutSmallwares', label: 'Paid Out Smallwares' },
+            { key: 'paidOutCleaning', label: 'Paid Out Cleaning' },
+            { key: 'paidOutOffice', label: 'Paid Out Office' },
+            { key: 'paidOutFood', label: 'Paid Out Food' },
+            { key: 'paidOutCashOut', label: 'Paid Out Cash Out' },
+
+            { key: 'cashDeposit', label: 'Cash Deposit' },
+
+            { key: 'delTotals', label: 'Del Totals' },
 
             { key: 'paymentsTotal', label: 'Payments Total' },
 
             { key: 'cashOverShort', label: 'Cash Over / Short' },
 
-            { key: 'cashDeposit', label: 'Cash Deposit' },
+            { key: 'totalDiscounts', label: 'Total Discounts' },
+
+            { key: 'cashOverShortDebit', label: 'Cash Handling Debit' },
+            { key: 'cashOverShortCredit', label: 'Cash Handling Credit' },
 
             { key: 'cashExpected', label: 'Cash Expected' },
 
@@ -181,55 +223,95 @@ window.RestaurantConfigs = {
         ],
 
 
+       
         columns: {
 
-            food: 'Net Sales - Food',
+    // SALES
+    food: 'Net Sales - Food',
+    beverage: 'Net Sales - Beverages',
+    other: 'Net Sales - Other',
 
-            beverage: 'Net Sales - Beverages',
+    serviceFee: 'Tips & Service Charges',
+    salesOther: 'Sales - Other',
 
-            other: 'Net Sales - Other',
+    deliveryFee: 'Delivery Fee',
+    deliveryFeeNet: 'Delivery Fees Net',
+    deliveryTips: 'Delivery Tips',
+    deliveryTipsNet: 'Delivery Tips Net',
 
-            salesTax: 'Sales Tax Payable',
+    // DISCOUNTS
+    discounts: 'Discounts',
+    discountPromo: 'Promotions',
 
-            taxExemptSales: 'Tax Exempt Sales',
+    discountEmployee: 'Promotions - Employee',
+    discountGuestRecovery: 'Promotions - Guest Recovery',
+    discountManager: 'Promotions - Manager',
+    discountMilitary: 'Promotions - Military',
+    discountPolice: 'Promotions - Police',
+    discountSenior: 'Promotions - Senior Citizens',
+    discountOther: 'Promotions - Other',
+    discountOpenDollar: 'Promotions - Open $',
+    discountOpenPercent: 'Promotions - Open %',
+    discount10: 'Promotions - 10%',
 
-            donations: 'Donations',
+    // TAX
+    salesTax: 'Sales Tax Payable',
+    taxExemptSales: 'Tax Exempt Sales',
+    caCrv: 'CA CRV',
 
-            gcSold: 'Revenues - Gift Card Sales',
+    // REVENUE
+    donations: 'Donations',
+    gcSold: 'Revenues - Gift Card Sales',
+    nonRedeemable: 'Non Redeemable Tender',
 
-            mastercard: 'Payments - Master Card',
+    // CREDIT CARDS
+    amex: 'Payments - AMEX',
+    amexPrPd: 'Payments - AMEX PrePaid',
+    visa: 'Payments - Visa',
+    mastercard: 'Payments - Master Card',
+    discover: 'Payments - Discover',
+    debit: 'Payments - Debit',
 
-            visa: 'Payments - Visa',
+    // DELIVERY
+    dd: 'Payments - Door Dash',
+    gh: 'Payments - Grub Hub',
+    uber: 'Payments - Uber Eats',
+    postmates: 'Payments - Postmates',
 
-            amex: 'Payments - AMEX',
+    doorDashShortage: 'DoorDash Shortage',
+    uberShortage: 'Uber Shortage',
 
-            discover: 'Payments - Discover',
+    // OTHER PAYMENTS
+    ebt: 'Payments - EBT',
+    kiosk: 'Payments - Kiosk',
+    gcRedeem: 'Payments - Gift Card',
+    cashApp: 'Payments - Cash App',
 
-            debit: 'Payments - Debit',
+    onlineCatering: 'Payments - Online Catering',
+    ezCater: 'Payments - EZ Cater',
 
-            ebt: 'Payments - EBT',
+    wlTips: 'WL DD Tips',
 
-            gcRedeem: 'Payments - Gift Card',
+    // PAID OUT
+    paidOut: 'Paid Out',
 
-            uber: 'Payments - Uber Eats',
+    paidOutSmallwares: 'Paid Out Smallwares',
+    paidOutCleaning: 'Paid Out Cleaning Supplies',
+    paidOutOffice: 'Paid Out Office Supplies',
+    paidOutFood: 'Paid Out Food',
+    paidOutCashOut: 'Paid Out Cash Out',
 
-            dd: 'Payments - Door Dash',
+    // CASH
+    cashDeposit: 'Cash Deposit',
 
-            gh: 'Payments - Grub Hub',
+    cashOverShort: 'Cash Handling - Over/Short',
 
-            cashDeposit: 'Cash Deposit',
+    cashOverShortDebit:
+        'Cash Handling - Over/Short Debit',
 
-            cashHandlingOverShort: 'Cash Handling - Over/Short',
-
-            deliveryFee: 'Delivery Fee',
-
-            deliveryFeeNet: 'Delivery Fees Net',
-
-            deliveryTipsNet: 'Delivery Tips Net',
-
-            serviceFee: 'Tips & Service Charges'
-
-        }
+    cashOverShortCredit:
+        'Cash Handling - Over/Short Credit'
+}
     }
 
 };

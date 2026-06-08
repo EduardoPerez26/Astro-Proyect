@@ -21,9 +21,12 @@ let fechaConciliacionActual = null;
 let ebtPorTienda = {};
 let salesRows = [];
 let fechaSeleccionada = null;
+let fechaEBTSeleccionada = '';
+
+let filtroStore = '';
+let filtroStoreName = '';
 
 let fechaSalesSeleccionada = null;
-let fechaEBTSeleccionada = null;
 
 // ============================================
 // INICIALIZACION
@@ -212,22 +215,54 @@ function initEventListeners() {
             'change',
             async (e) => {
 
-                const file = e.target.files[0];
+                const file =
+                    e.target.files[0];
 
                 if (!file) return;
 
-                const buffer = await file.arrayBuffer();
+                const buffer =
+                    await file.arrayBuffer();
 
-                ebtWorkbook = XLSX.read(
-                    buffer,
-                    { type: 'array' }
+                ebtWorkbook =
+                    XLSX.read(
+                        buffer,
+                        { type: 'array' }
+                    );
+
+                const hoja =
+                    ebtWorkbook.Sheets['Net Sales'];
+
+                if (!hoja) {
+
+                    Swal.fire(
+                        'Error',
+                        'No existe la hoja Net Sales',
+                        'error'
+                    );
+
+                    return;
+                }
+
+                const rows =
+                    XLSX.utils.sheet_to_json(
+                        hoja,
+                        { defval: '' }
+                    );
+
+                cargarFechasEnFiltro(
+                    rows,
+                    'ebtDateFilter',
+                    'Funded Date'
                 );
 
                 procesarEBT();
 
                 if (salesWorkbook) {
+
                     generarConciliacionDesdeTemplate();
+
                 }
+
             }
         );
 
@@ -342,9 +377,93 @@ function initEventListeners() {
             abrirHistorial
         );
 
-    console.log(
-        'Event listeners inicializados'
-    );
+
+    document
+        .getElementById('filterStore')
+        ?.addEventListener('input', (e) => {
+
+            filtroStore = e.target.value
+                .trim()
+                .toLowerCase();
+
+            renderTablaSucursales();
+
+        });
+
+    document
+        .getElementById('filterStoreName')
+        ?.addEventListener('input', (e) => {
+
+            filtroStoreName = e.target.value
+                .trim()
+                .toLowerCase();
+
+            renderTablaSucursales();
+
+        });
+
+    document
+        .getElementById('filterStoreSelect')
+        ?.addEventListener('change', (e) => {
+
+            filtroStore = e.target.value;
+
+            renderTablaSucursales();
+
+        });
+
+    document
+        .getElementById('filterStore')
+        ?.addEventListener(
+            'change',
+            e => {
+
+                filtroStore =
+                    e.target.value;
+
+                renderTablaSucursales();
+
+            }
+        );
+    document
+        .getElementById('ebtDateFilter')
+        ?.addEventListener(
+            'change',
+            e => {
+
+                fechaEBTSeleccionada =
+                    e.target.value;
+
+                procesarEBT();
+
+                if (salesWorkbook) {
+
+                    generarConciliacionDesdeTemplate();
+
+                }
+
+            }
+        );
+
+    document
+        .getElementById('ebtDateFilter')
+        ?.addEventListener(
+            'change',
+            e => {
+
+                fechaEBTSeleccionada =
+                    e.target.value;
+
+                procesarEBT();
+
+                if (salesWorkbook) {
+
+                    generarConciliacionDesdeTemplate();
+
+                }
+
+            }
+        );
 
 }
 
@@ -481,30 +600,11 @@ async function onRestauranteChange() {
         select.selectedOptions[0]
             ?.dataset?.codigo;
 
-    console.log(
-        'RestaurantConfigs:',
-        window.RestaurantConfigs
-    );
-
     currentRestaurantConfig =
         window.RestaurantConfigs?.[
         codigo
         ] || null;
 
-    console.log(
-        'ID:',
-        restauranteId
-    );
-
-    console.log(
-        'Código:',
-        codigo
-    );
-
-    console.log(
-        'Config:',
-        currentRestaurantConfig
-    );
 
     if (!restauranteId) {
 
@@ -881,9 +981,32 @@ function extraerDatos() {
 
 function normalizarFecha(fecha) {
 
-    const d = fecha instanceof Date
-        ? fecha
-        : new Date(fecha);
+    if (!fecha) return '';
+
+    // Fecha serial de Excel
+    if (typeof fecha === 'number') {
+
+        const excelEpoch =
+            new Date(
+                Date.UTC(1899, 11, 30)
+            );
+
+        const d =
+            new Date(
+                excelEpoch.getTime() +
+                fecha * 86400000
+            );
+
+        return `${String(d.getUTCMonth() + 1).padStart(2, '0')}/${String(
+            d.getUTCDate()
+        ).padStart(2, '0')}/${d.getUTCFullYear()}`;
+    }
+
+    // Texto o Date normal
+    const d =
+        fecha instanceof Date
+            ? fecha
+            : new Date(fecha);
 
     if (isNaN(d)) {
         return '';
@@ -915,7 +1038,6 @@ function generarConciliacionDesdeTemplate() {
             .selectedOptions[0]
             ?.dataset?.codigo;
 
-    console.log('Código restaurante:', codigo);
 
     switch (codigo) {
 
@@ -1305,6 +1427,10 @@ function detectarHojaOrigen(
 
 function renderTablaSucursales() {
 
+    
+
+    
+
     const thead =
         document.getElementById(
             'conciliacionTableHead'
@@ -1363,7 +1489,35 @@ function renderTablaSucursales() {
     // BODY
     // ==========================
 
-    datosExtraidos.forEach(row => {
+    const filasFiltradas =
+        datosExtraidos.filter(row => {
+
+            const store =
+                String(row.store || '')
+                    .toLowerCase();
+
+            const nombre =
+                String(
+                    row.unitName ||
+                    row.storeName ||
+                    ''
+                ).toLowerCase();
+
+            const cumpleStore =
+                !filtroStore ||
+                String(row.store) === String(filtroStore);
+
+            const cumpleNombre =
+                !filtroStoreName ||
+                nombre.includes(filtroStoreName);
+
+            return (
+                cumpleStore &&
+                cumpleNombre
+            );
+
+        });
+    filasFiltradas.forEach(row => {
 
         const tr =
             document.createElement('tr');
@@ -1464,47 +1618,59 @@ function procesarEBT() {
         ebtWorkbook.Sheets['Net Sales'];
 
     if (!hoja) {
-        console.warn(
-            'No existe hoja Net Sales'
-        );
         return;
     }
 
     const rows =
         XLSX.utils.sheet_to_json(
             hoja,
-            {
-                defval: ''
-            }
+            { defval: '' }
         );
 
     if (!rows.length) {
         return;
     }
 
-    // Buscar fecha más reciente
-
     const fechas =
-        rows.map(r =>
+        rows
+            .map(r =>
+                new Date(
+                    r['Funded Date']
+                )
+            )
+            .filter(
+                d => !isNaN(d)
+            );
+
+    let fechaTexto;
+
+    if (fechaEBTSeleccionada) {
+
+        fechaTexto =
             new Date(
-                r['Funded Date']
-            )
-        );
+                fechaEBTSeleccionada
+            ).toLocaleDateString(
+                'en-US'
+            );
 
-    const fechaMax =
-        new Date(
-            Math.max(
-                ...fechas
-            )
-        );
+    } else {
 
-    const fechaTexto =
-        fechaMax.toLocaleDateString(
-            'en-US'
-        );
+        const fechaMax =
+            new Date(
+                Math.max(
+                    ...fechas
+                )
+            );
+
+        fechaTexto =
+            fechaMax.toLocaleDateString(
+                'en-US'
+            );
+
+    }
 
     console.log(
-        'Fecha más reciente:',
+        'Fecha EBT usada:',
         fechaTexto
     );
 
@@ -1519,10 +1685,7 @@ function procesarEBT() {
                 'en-US'
             );
 
-        if (
-            fecha !==
-            fechaTexto
-        ) {
+        if (fecha !== fechaTexto) {
             return;
         }
 
@@ -1539,9 +1702,7 @@ function procesarEBT() {
         }
 
         const store =
-            Number(
-                match[1]
-            );
+            Number(match[1]);
 
         const amount =
             Number(
@@ -1550,21 +1711,12 @@ function procesarEBT() {
                 ]
             ) || 0;
 
-        ebtPorTienda[
-            store
-        ] =
-            (
-                ebtPorTienda[
-                store
-                ] || 0
-            ) + amount;
+        ebtPorTienda[store] =
+            (ebtPorTienda[store] || 0)
+            + amount;
 
     });
 
-    console.log(
-        'EBT por tienda:',
-        ebtPorTienda
-    );
 }
 
 function obtenerEBTPorStore(
@@ -1651,3 +1803,92 @@ function obtenerFechaFila(row) {
 
 }
 
+function cargarFiltroTiendas() {
+
+    const select =
+        document.getElementById(
+            'filterStoreSelect'
+        );
+
+    if (!select) return;
+
+    const tiendas =
+        [...new Set(
+            datosExtraidos.map(
+                row => row.store
+            )
+        )]
+            .filter(Boolean)
+            .sort();
+
+    select.innerHTML =
+        '<option value="">Todas las tiendas</option>';
+
+    tiendas.forEach(store => {
+
+        const row =
+            datosExtraidos.find(
+                r => r.store == store
+            );
+
+        const nombre =
+            row?.unitName || '';
+
+        select.innerHTML += `
+            <option value="${store}">
+                ${store} - ${nombre}
+            </option>
+        `;
+
+    });
+
+}
+function cargarFiltroTiendas() {
+
+    console.log('datosExtraidos:', datosExtraidos);
+
+    const select =
+        document.getElementById('filterStoreSelect');
+
+    if (!select) return;
+
+    const tiendas =
+        [...new Set(
+            datosExtraidos.map(row => row.store)
+        )];
+
+    console.log('tiendas encontradas:', tiendas);
+
+}
+
+function llenarFiltroTiendas() {
+
+    const select =
+        document.getElementById('filterStore');
+
+    console.log('SELECT:', select);
+
+    const tiendas = [
+        ...new Set(
+            datosExtraidos
+                .map(r => r.store)
+                .filter(Boolean)
+        )
+    ];
+
+    console.log('TIENDAS:', tiendas);
+
+    if (!select) return;
+
+    select.innerHTML =
+        '<option value="">Todas las tiendas</option>';
+
+    tiendas.forEach(store => {
+
+        select.innerHTML += `
+            <option value="${store}">
+                ${store}
+            </option>
+        `;
+    });
+}
