@@ -184,43 +184,8 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
                 </div>
                 <div class="table-responsive">
                     <table class="data-table conciliacion-table">
-                        <thead>
-                            <tr>
-                                <th>Store</th>
-                                <th>Sales TAX</th>
-                                <th>Gross Sales POS</th>
-                                <th>Discounts</th>
-                                <th>Promo</th>
-                                <th>Donations</th>
-                                <th>Net Sales</th>
-                                <th>GC Sold</th>
-                                <th>Paid Out</th>
-                                <th>Paid In</th>
-                                <th>Donation</th>
-                                <th>Total Revenue</th>
-                                <th>Mastercard</th>
-                                <th>Visa</th>
-                                <th>Discover</th>
-                                <th>Amex</th>
-                                <th>Debit</th>
-                                <th>EBT</th>
-                                <th>GC Redeem</th>
-                                <th>Acct Cash</th>
-                                <th>Deposits</th>
-                                <th>GH</th>
-                                <th>Uber</th>
-                                <th>DD</th>
-                                <th>CC Totals</th>
-                                <th>Payments Total</th>
-                                <th>O/S</th>
-                                <th>OS</th>
-                                <th>Deposit 1</th>
-                                <th>Deposit 2</th>
-                                <th>Deposit 3</th>
-                                <th>Cash +/-</th>
-                                <th>Cash Expected</th>
-                                <th>Difference</th>
-                            </tr>
+                        <thead id="conciliacionTableHead">
+                            <!-- JS generará las columnas -->
                         </thead>
 
                         <tbody id="conciliacionBody"></tbody>
@@ -336,6 +301,10 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
         src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"
     ></script>
     <script is:inline src="/js/restaurant-configs.js"></script>
+
+    <script is:inline src="/js/conciliacion-tacobell.js"></script>
+    <script is:inline src="/js/conciliacion-popeyes.js"></script>
+
     <script is:inline src="/js/conciliacion.js"></script>
 </DashboardLayout>
 
@@ -780,6 +749,23 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
         pointer-events: auto !important;
         cursor: pointer !important;
     }
+    .conciliacion-table thead {
+        position: sticky;
+        top: 0;
+        z-index: 20;
+    }
 
-    
+    .conciliacion-table thead th {
+        background: #ffffff;
+        position: sticky;
+        top: 0;
+        white-space: nowrap;
+        padding: 14px 16px;
+        font-weight: 700;
+        border-bottom: 2px solid #e5e7eb;
+    }
+
+    .conciliacion-table {
+        min-width: max-content;
+    }
 </style>

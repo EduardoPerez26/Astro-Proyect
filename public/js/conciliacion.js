@@ -436,6 +436,7 @@ function renderTemplates() {
     }
 }
 
+
 async function cargarValoresEsperados() {
     const restauranteId = document.getElementById('selectRestaurante').value;
     const fecha = document.getElementById('fechaConciliacion').value;
@@ -896,411 +897,44 @@ function normalizarFecha(fecha) {
 
 function generarConciliacionDesdeTemplate() {
 
-    if (!salesWorkbook) {
+    if (!currentRestaurantConfig) {
 
         Swal.fire(
             'Error',
-            'No hay archivo Sales cargado',
+            'No existe configuración para el restaurante seleccionado',
             'error'
         );
 
         return;
     }
 
-    // SIEMPRE usar el archivo SALES
-    const salesBook =
-        salesWorkbook || workbook;
-
-    if (!salesBook) {
-
-        Swal.fire(
-            'Error',
-            'No hay archivo Sales cargado',
-            'error'
-        );
-
-        return;
-    }
-
-    const sourceSheetName =
-        detectarHojaOrigen(
-            salesBook
-        );
-
-    const sourceSheet =
-        salesBook.Sheets[
-        sourceSheetName
-        ];
-    if (!sourceSheet) {
-
-        Swal.fire(
-            'Error',
-            'No se encontró hoja origen',
-            'error'
-        );
-
-        return;
-    }
-
-    // Obtener fecha más reciente
-
-    const rows =
-        XLSX.utils.sheet_to_json(
-            sourceSheet,
-            {
-                range: 1,
-                defval: 0
-            }
-        );
-    cargarFechasEnFiltro(
-        rows,
-        'salesDateFilter',
-        'Date'
-    );
-
-    // ======================================
-    // FECHA MÁS RECIENTE
-    // ======================================
-
-    // =====================================
-    // FECHA MÁS RECIENTE
-    // =====================================
-
-    const fechasValidas =
-        rows
-            .map(row => obtenerFechaFila(row))
-            .filter(Boolean)
-            .map(fecha => {
-
-                if (fecha instanceof Date) {
-                    return fecha;
-                }
-
-                const d = new Date(fecha);
-
-                return isNaN(d)
-                    ? null
-                    : d;
-
-            })
-            .filter(Boolean);
-
-    if (!fechasValidas.length) {
-
-        console.error(
-            'No se encontraron fechas válidas'
-        );
-
-        return;
-    }
-
-    const fechaMax =
-        new Date(
-            Math.max(
-                ...fechasValidas.map(
-                    f => f.getTime()
-                )
-            )
-        );
-
-    const fechaMasReciente =
-        `${String(
-            fechaMax.getMonth() + 1
-        ).padStart(2, '0')}/${String(
-            fechaMax.getDate()
-        ).padStart(2, '0')}/${fechaMax.getFullYear()}`;
-
-    console.log(
-        'Fecha más reciente:',
-        fechaMasReciente
-    );
-
-    // Guardar fecha global
-
-    fechaConciliacionActual =
-        fechaMasReciente;
-
-    // Llenar input
-
-    const fechaInput =
+    const codigo =
         document.getElementById(
-            'fechaConciliacion'
-        );
+            'selectRestaurante'
+        )
+            .selectedOptions[0]
+            ?.dataset?.codigo;
 
-    if (fechaInput) {
+    console.log('Código restaurante:', codigo);
 
-        fechaInput.value =
-            `${fechaMax.getFullYear()}-${String(
-                fechaMax.getMonth() + 1
-            ).padStart(2, '0')}-${String(
-                fechaMax.getDate()
-            ).padStart(2, '0')}`;
+    switch (codigo) {
 
-    }
+        case 'taco-bell':
+            return generarConciliacionTacoBell();
 
-    // Filtrar solo la fecha más reciente
+        case 'popeyes':
+            return generarConciliacionPopeyes();
 
-    const fechaFiltro =
-        fechaSalesSeleccionada &&
-            fechaSalesSeleccionada.trim() !== ''
-            ? fechaSalesSeleccionada
-            : fechaMasReciente;
+        default:
 
-    const rowsFiltradas =
-        rows.filter(row => {
-
-            const fecha =
-                obtenerFechaFila(row);
-
-            if (!fecha) {
-                return false;
-            }
-
-            return (
-                normalizarFecha(fecha) ===
-                normalizarFecha(fechaFiltro)
+            Swal.fire(
+                'Error',
+                `Restaurante no configurado: ${codigo}`,
+                'error'
             );
 
-        });
+    }
 
-    console.log(
-        'Registros filtrados:',
-        rowsFiltradas.length
-    );
-
-    console.log(
-        'Fecha más reciente:',
-        fechaMasReciente
-    );
-
-    // ======================================
-    // FILTRAR SOLO ESA FECHA
-    // ======================================
-
-    console.log(
-        'Registros fecha actual:',
-        rowsFiltradas.length
-    );
-
-    console.log(
-        'Primer registro:',
-        rows[0]
-    );
-
-    const c =
-        currentRestaurantConfig.columns;
-
-    console.log('Fecha filtro:', fechaFiltro);
-
-    console.log(
-        'Primeras fechas:',
-        rows.slice(0, 5).map(
-            r => obtenerFechaFila(r)
-        )
-    );
-
-    console.log(
-        'Rows filtradas:',
-        rowsFiltradas.length
-    );
-
-    datosExtraidos =
-        rowsFiltradas.map(row => {
-
-            const store = row[c.store] || '';
-
-            const salesTax = Number(row[c.salesTax]) || 0;
-            const netSales = Number(row[c.netSales]) || 0;
-
-            const discounts = Number(row[c.discounts]) || 0;
-            const promo = Number(row[c.promo]) || 0;
-            const donations = Number(row[c.donation]) || 0;
-
-            const gcSold = Number(row[c.giftCardSold]) || 0;
-            const gcRedeem =
-                Math.abs(
-                    Number(row[c.giftCardRedeemed]) || 0
-                );
-
-            const paidOut = Number(row[c.paidOut]) || 0;
-            const paidIn = Number(row[c.paidIn]) || 0;
-
-            const mastercard = Number(row[c.mastercard]) || 0;
-            const visa = Number(row[c.visa]) || 0;
-            const discover = Number(row[c.discover]) || 0;
-            const amex = Number(row[c.amex]) || 0;
-            const debit = Number(row[c.debit]) || 0;
-
-            const acctCashOriginal =
-                Number(row[c.acctCash]) || 0;
-
-            const gh = Number(row[c.grubhub]) || 0;
-            const uber = Number(row[c.uber]) || 0;
-            const dd = Number(row[c.doordash]) || 0;
-
-            const deposit1 = Number(row[c.deposit1]) || 0;
-            const deposit2 = Number(row[c.deposit2]) || 0;
-            const deposit3 = Number(row[c.deposit3]) || 0;
-
-            const ebt = obtenerEBTPorStore(store) || 0;
-
-            // =====================================
-            // CALCULOS CORREGIDOS
-            // =====================================
-
-            const acctCash =
-                acctCashOriginal -
-                paidOut -
-                ebt;
-
-
-            // Gross Sales POS
-            const grossSalesPos =
-                netSales +
-                promo +
-                discounts -
-                uber;
-
-            // CC Totals
-            const ccTotals =
-                mastercard +
-                visa +
-                discover +
-                debit;
-
-            // Deposits
-            const deposits =
-                deposit1 +
-                deposit2 +
-                deposit3;
-
-            // Total Revenue
-            const totalRevenue =
-                netSales +
-                salesTax +
-                gcSold +
-                donations +
-                paidIn -
-                paidOut;
-
-            // Payments Total
-            const paymentsTotal =
-                mastercard +
-                visa +
-                discover +
-                amex +
-                debit +
-                gcRedeem +
-                acctCash +
-                gh +
-                uber +
-                dd +
-                ebt;
-
-            // O/S
-            const oS =
-                totalRevenue -
-                paymentsTotal;
-
-            const os =
-                totalRevenue -
-                paymentsTotal;
-
-            // Cash Expected
-            const cashExpected =
-                acctCash;
-
-
-            //AGREGADO
-
-
-            // Cash +/-
-            const cashPlusMinus =
-                Number(
-                    row[c.cashPlusMinus]
-                ) || 0;
-
-            // Difference
-            const difference =
-                cashExpected -
-                (
-                    deposit1 +
-                    deposit2 +
-                    deposit3
-                ) +
-                cashPlusMinus +
-                ebt;
-
-            return {
-
-                store,
-
-                salesTax,
-                grossSalesPos,
-                discounts,
-                promo,
-                donations,
-
-                netSales,
-
-                gcSold,
-                paidOut,
-                paidIn,
-
-                donation: donations,
-
-                totalRevenue,
-
-                mastercard,
-                visa,
-                discover,
-                amex,
-                debit,
-
-                ebt,
-
-                gcRedeem,
-                acctCash,
-
-                deposit1,
-                deposit2,
-                deposit3,
-
-                deposits,
-
-                gh,
-                uber,
-                dd,
-
-                ccTotals,
-
-                paymentsTotal,
-
-                os,
-
-                oS,
-
-                cashPlusMinus,
-
-                cashExpected,
-
-                difference
-            };
-        });
-
-    console.log(
-        'Registros generados:',
-        datosExtraidos.length
-    );
-
-    document.getElementById(
-        'resultsSection'
-    ).style.display = 'block';
-
-    renderTablaSucursales();
-
-    actualizarResumen();
-    actualizarTotales();
 }
 // ============================================
 // RENDERIZADO
@@ -1671,107 +1305,108 @@ function detectarHojaOrigen(
 
 function renderTablaSucursales() {
 
+    const thead =
+        document.getElementById(
+            'conciliacionTableHead'
+        );
+
     const tbody =
-        document.getElementById('conciliacionBody');
+        document.getElementById(
+            'conciliacionBody'
+        );
 
-    if (!tbody) {
-        console.error('No existe conciliacionBody');
+    thead.innerHTML = '';
+    tbody.innerHTML = '';
+
+    if (
+        !currentRestaurantConfig ||
+        !currentRestaurantConfig.tableColumns ||
+        currentRestaurantConfig.tableColumns.length === 0
+    ) {
+        console.error(
+            'No hay columnas configuradas',
+            currentRestaurantConfig
+        );
+
         return;
     }
 
-    if (!datosExtraidos.length) {
+    const columnas =
+        currentRestaurantConfig.tableColumns ||
+        Object.keys(currentRestaurantConfig.columns).map(key => ({
+            key,
+            label: currentRestaurantConfig.columns[key]
+        }));
 
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="34" style="text-align:center;padding:20px;">
-                    No hay datos
-                </td>
-            </tr>
-        `;
+    // ==========================
+    // HEADERS
+    // ==========================
 
-        return;
-    }
+    const headerRow =
+        document.createElement('tr');
 
-    tbody.innerHTML =
-        datosExtraidos.map(row => `
+    columnas.forEach(col => {
 
-        <tr>
+        const th =
+            document.createElement('th');
 
-            <td>${row.store || ''}</td>
+        th.textContent =
+            col.label;
 
-            <td>${formatMoney(row.salesTax)}</td>
+        headerRow.appendChild(th);
 
-            <td>${formatMoney(row.grossSalesPos)}</td>
+    });
 
-            <td>${formatMoney(row.discounts)}</td>
+    thead.appendChild(headerRow);
 
-            <td>${formatMoney(row.promo)}</td>
+    // ==========================
+    // BODY
+    // ==========================
 
-            <td>${formatMoney(row.donations)}</td>
+    datosExtraidos.forEach(row => {
 
-            <td>${formatMoney(row.netSales)}</td>
+        const tr =
+            document.createElement('tr');
 
-            <td>${formatMoney(row.gcSold)}</td>
+        columnas.forEach(col => {
 
-            <td>${formatMoney(row.paidOut)}</td>
+            const td =
+                document.createElement('td');
 
-            <td>${formatMoney(row.paidIn)}</td>
+            const valor =
+                row[col.key];
 
-            <td>${formatMoney(row.donation)}</td>
+            if (
+                typeof valor === 'number'
+            ) {
 
-            <td>${formatMoney(row.totalRevenue)}</td>
+                td.textContent =
+                    valor.toLocaleString(
+                        'en-US',
+                        {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2
+                        }
+                    );
 
-            <td>${formatMoney(row.mastercard)}</td>
+                td.classList.add(
+                    'text-right'
+                );
 
-            <td>${formatMoney(row.visa)}</td>
+            } else {
 
-            <td>${formatMoney(row.discover)}</td>
+                td.textContent =
+                    valor ?? '';
 
-            <td>${formatMoney(row.amex)}</td>
+            }
 
-            <td>${formatMoney(row.debit)}</td>
+            tr.appendChild(td);
 
-            <td>${formatMoney(row.ebt)}</td>
+        });
 
-            <td>${formatMoney(row.gcRedeem)}</td>
+        tbody.appendChild(tr);
 
-            <td>${formatMoney(row.acctCash)}</td>
-
-            <td>${formatMoney(row.deposits)}</td>
-
-            <td>${formatMoney(row.gh)}</td>
-
-            <td>${formatMoney(row.uber)}</td>
-
-            <td>${formatMoney(row.dd)}</td>
-
-            <td>${formatMoney(row.ccTotals)}</td>
-
-            <td>${formatMoney(row.paymentsTotal)}</td>
-
-            <td>${formatMoney(row.oS)}</td>
-
-            <td>${formatMoney(row.os)}</td>
-
-            <td>${formatMoney(row.deposit1)}</td>
-
-            <td>${formatMoney(row.deposit2)}</td>
-
-            <td>${formatMoney(row.deposit3)}</td>
-
-            <td>${formatMoney(row.cashPlusMinus)}</td>
-
-            <td>${formatMoney(row.cashExpected)}</td>
-
-            <td class="${Math.abs(row.difference) > 0.01 ? 'text-danger' : ''}">
-                ${formatMoney(row.difference)}
-            </td>
-
-        </tr>
-
-    `).join('');
-
-    actualizarTotales();
+    });
 
 }
 
@@ -2015,3 +1650,4 @@ function obtenerFechaFila(row) {
     );
 
 }
+

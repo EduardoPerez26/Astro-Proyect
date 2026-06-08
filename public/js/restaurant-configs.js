@@ -1,11 +1,55 @@
 window.RestaurantConfigs = {
 
-   
+
     'taco-bell': {
 
         sourceSheet: 'Sales',
 
         ebtSheet: 'EBT AMOUNTS',
+        tableColumns: [
+
+            { key: 'store', label: 'Store' },
+
+            { key: 'salesTax', label: 'Sales Tax' },
+            { key: 'grossSalesPos', label: 'Gross Sales POS' },
+            { key: 'discounts', label: 'Discounts' },
+            { key: 'promo', label: 'Promo' },
+            { key: 'donations', label: 'Donations' },
+
+            { key: 'netSales', label: 'Net Sales' },
+
+            { key: 'gcSold', label: 'GC Sold' },
+
+            { key: 'paidOut', label: 'Paid Out' },
+            { key: 'paidIn', label: 'Paid In' },
+
+            { key: 'mastercard', label: 'Mastercard' },
+            { key: 'visa', label: 'Visa' },
+            { key: 'discover', label: 'Discover' },
+            { key: 'amex', label: 'Amex' },
+            { key: 'debit', label: 'Debit' },
+
+            { key: 'ebt', label: 'EBT' },
+
+            { key: 'gcRedeem', label: 'GC Redeem' },
+
+            { key: 'acctCash', label: 'Acct Cash' },
+
+            { key: 'deposits', label: 'Deposits' },
+
+            { key: 'gh', label: 'Grub Hub' },
+            { key: 'uber', label: 'Uber' },
+            { key: 'dd', label: 'Door Dash' },
+
+            { key: 'ccTotals', label: 'CC Totals' },
+
+            { key: 'paymentsTotal', label: 'Payments Total' },
+
+            { key: 'cashExpected', label: 'Cash Expected' },
+
+            { key: 'difference', label: 'Difference' }
+
+        ],
 
         columns: {
 
@@ -37,9 +81,9 @@ window.RestaurantConfigs = {
 
             mobileCC: 'Mobile CC',
 
-            os :'OS',
+            os: 'OS',
 
-            oS:'O/S',
+            oS: 'O/S',
 
             cashPlusMinus: 'Cash +/-',
 
@@ -70,122 +114,123 @@ window.RestaurantConfigs = {
         }
 
     },
-    
+
     'popeyes': {
 
-    sourceSheet: 'Sales',
+        sourceSheet: 'Sales',
 
-    ebtSheet: 'EBT',
+        ebtSheet: 'EBT',
+        tableColumns: [
 
-    tableColumns: [
+            { key: 'fecha', label: 'Date' },
+            { key: 'store', label: 'Store' },
+            { key: 'unitName', label: 'Unit Name' },
 
-        { key:'store', label:'Store' },
+            { key: 'food', label: 'Food' },
+            { key: 'beverage', label: 'Beverages' },
+            { key: 'other', label: 'Other' },
 
-        { key:'salesTax', label:'Sales Tax' },
+            { key: 'serviceFee', label: 'Service Fee' },
 
-        { key:'grossSalesPos', label:'Gross Sales POS' },
+            { key: 'salesTax', label: 'Sales Tax' },
 
-        { key:'discounts', label:'Discounts' },
+            { key: 'taxExemptSales', label: 'Tax Exempt Sales' },
 
-        { key:'promo', label:'Promo' },
+            { key: 'deliveryFee', label: 'Delivery Fee' },
+            { key: 'deliveryFeeNet', label: 'Delivery Fee Net' },
+            { key: 'deliveryTipsNet', label: 'Delivery Tips Net' },
 
-        { key:'donations', label:'Donations' },
+            { key: 'discounts', label: 'Discounts' },
 
-        { key:'netSales', label:'Net Sales' },
+            { key: 'gcSold', label: 'GC Sold' },
 
-        { key:'gcSold', label:'GC Sold' },
+            { key: 'netSales', label: 'Net Sales' },
 
-        { key:'paidOut', label:'Paid Out' },
+            { key: 'totalRevenue', label: 'Total Revenue' },
 
-        { key:'paidIn', label:'Paid In' },
+            { key: 'mastercard', label: 'Master Card' },
+            { key: 'visa', label: 'Visa' },
+            { key: 'amex', label: 'AMEX' },
+            { key: 'discover', label: 'Discover' },
+            { key: 'debit', label: 'Debit' },
 
-        { key:'totalRevenue', label:'Total Revenue' },
+            { key: 'ccTotals', label: 'CC Totals' },
 
-        { key:'mastercard', label:'Mastercard' },
+            { key: 'dd', label: 'Door Dash' },
+            { key: 'gh', label: 'Grub Hub' },
+            { key: 'uber', label: 'Uber Eats' },
 
-        { key:'visa', label:'Visa' },
+            { key: 'ebt', label: 'EBT' },
 
-        { key:'discover', label:'Discover' },
+            { key: 'kiosk', label: 'Kiosk' },
 
-        { key:'amex', label:'Amex' },
+            { key: 'gcRedeem', label: 'GC Redeem' },
 
-        { key:'debit', label:'Debit' },
+            { key: 'cashApp', label: 'Cash App' },
 
-        { key:'ebt', label:'EBT' },
+            { key: 'paymentsTotal', label: 'Payments Total' },
 
-        { key:'gcRedeem', label:'GC Redeem' },
+            { key: 'cashOverShort', label: 'Cash Over / Short' },
 
-        { key:'acctCash', label:'Acct Cash' },
+            { key: 'cashDeposit', label: 'Cash Deposit' },
 
-        { key:'deposits', label:'Deposits' },
+            { key: 'cashExpected', label: 'Cash Expected' },
 
-        { key:'gh', label:'GH' },
+            { key: 'difference', label: 'Difference' }
 
-        { key:'uber', label:'Uber' },
+        ],
 
-        { key:'dd', label:'DD' },
 
-        { key:'ccTotals', label:'CC Totals' },
+        columns: {
 
-        { key:'paymentsTotal', label:'Payments Total' },
+            food: 'Net Sales - Food',
 
-        { key:'os', label:'OS' },
+            beverage: 'Net Sales - Beverages',
 
-        { key:'cashExpected', label:'Cash Expected' },
+            other: 'Net Sales - Other',
 
-        { key:'difference', label:'Difference' }
+            salesTax: 'Sales Tax Payable',
 
-    ],
+            taxExemptSales: 'Tax Exempt Sales',
 
-    columns: {
+            donations: 'Donations',
 
-        store:'Store',
+            gcSold: 'Revenues - Gift Card Sales',
 
-        salesTax:'Sales Tax',
+            mastercard: 'Payments - Master Card',
 
-        netSales:'Net Sales',
+            visa: 'Payments - Visa',
 
-        discounts:'Discounts',
+            amex: 'Payments - AMEX',
 
-        promo:'Promo',
+            discover: 'Payments - Discover',
 
-        donation:'Donation',
+            debit: 'Payments - Debit',
 
-        giftCardSold:'Gift Card Sold',
+            ebt: 'Payments - EBT',
 
-        giftCardRedeemed:'Gift Card Redeemed',
+            gcRedeem: 'Payments - Gift Card',
 
-        paidOut:'Paid Out',
+            uber: 'Payments - Uber Eats',
 
-        paidIn:'Paid In',
+            dd: 'Payments - Door Dash',
 
-        mastercard:'Mastercard',
+            gh: 'Payments - Grub Hub',
 
-        visa:'Visa',
+            cashDeposit: 'Cash Deposit',
 
-        discover:'Discover',
+            cashHandlingOverShort: 'Cash Handling - Over/Short',
 
-        amex:'Amex',
+            deliveryFee: 'Delivery Fee',
 
-        debit:'Debit',
+            deliveryFeeNet: 'Delivery Fees Net',
 
-        acctCash:'Acct Cash',
+            deliveryTipsNet: 'Delivery Tips Net',
 
-        deposit1:'Deposit 1',
+            serviceFee: 'Tips & Service Charges'
 
-        deposit2:'Deposit 2',
-
-        deposit3:'Deposit 3',
-
-        cashPlusMinus:'Cash +/-',
-
-        uber:'Uber',
-
-        doordash:'DD',
-
-        grubhub:'GH'
+        }
     }
-}
 
 };
 
