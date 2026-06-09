@@ -144,36 +144,30 @@ window.RestaurantConfigs = {
             { key: 'serviceFee', label: 'Service Fee' },
             { key: 'salesOther', label: 'Sales Other' },
 
-            { key: 'deliveryFee', label: 'Delivery Fee Net' },
+            { key: 'deliveryFee', label: 'Delivery Fee' },
             { key: 'deliveryTips', label: 'Delivery Tips' },
             { key: 'totalTips', label: 'Total Tips' },
 
             { key: 'discounts', label: 'Discounts' },
-            { key: 'discountPromo', label: '$ Off Promo' },
+            { key: 'discountsPromo', label: '$ Off Promo' },
 
             { key: 'netSales', label: 'Net Sales' },
 
-            { key: 'salesTax', label: 'Sales Tax' },
+            { key: 'salesTax', label: 'Sales TAX' },
             { key: 'taxExemptSales', label: 'Tax Exempt Sales' },
 
-            { key: 'caCrv', label: 'CA CRV' },
-
+            { key: 'caCrv', label: 'Ca CRV' },
             { key: 'gcSold', label: 'GC Sold' },
 
             { key: 'paidOut', label: 'Paid Out' },
 
             { key: 'donations', label: 'Donations' },
-
             { key: 'nonRedeemable', label: 'Non Redeemable' },
 
             { key: 'totalRevenue', label: 'Total Revenue' },
 
             { key: 'amex', label: 'AMEX' },
-            { key: 'amexPrPd', label: 'AMEX PrPd' },
-            { key: 'visa', label: 'Visa' },
-            { key: 'mastercard', label: 'Master Card' },
-            { key: 'discover', label: 'Discover' },
-            { key: 'debit', label: 'Debit' },
+            { key: 'amexPrPd', label: 'Amex PrPd' },
 
             { key: 'ccTotals', label: 'CC Totals' },
 
@@ -181,8 +175,8 @@ window.RestaurantConfigs = {
             { key: 'gh', label: 'Grub Hub' },
             { key: 'uber', label: 'Uber Eats' },
 
-            { key: 'doorDashShortage', label: 'DoorDash S/O' },
-            { key: 'uberShortage', label: 'Uber S/O' },
+            { key: 'doorDashShortage', label: 'DoorDash Shortage' },
+            { key: 'uberShortage', label: 'Uber Shortage' },
 
             { key: 'postmates', label: 'Postmates' },
 
@@ -190,7 +184,7 @@ window.RestaurantConfigs = {
 
             { key: 'kiosk', label: 'Kiosk' },
 
-            { key: 'gcRedeem', label: 'GC Redeem' },
+            { key: 'gcRedeem', label: 'Gift Card Redeemed' },
 
             { key: 'onlineCatering', label: 'Online Catering' },
             { key: 'ezCater', label: 'EZ Cater' },
@@ -198,8 +192,8 @@ window.RestaurantConfigs = {
             { key: 'wlTips', label: 'WL Tips' },
 
             { key: 'paidOutSmallwares', label: 'Paid Out Smallwares' },
-            { key: 'paidOutCleaning', label: 'Paid Out Cleaning' },
-            { key: 'paidOutOffice', label: 'Paid Out Office' },
+            { key: 'paidOutCleaning', label: 'Paid Out Cleaning Supplies' },
+            { key: 'paidOutOffice', label: 'Paid Out Office Supplies' },
             { key: 'paidOutFood', label: 'Paid Out Food' },
             { key: 'paidOutCashOut', label: 'Paid Out Cash Out' },
 
@@ -209,109 +203,121 @@ window.RestaurantConfigs = {
 
             { key: 'paymentsTotal', label: 'Payments Total' },
 
-            { key: 'cashOverShort', label: 'Cash Over / Short' },
+            { key: 'oS', label: 'O/S' },
+
+            { key: 'discountsPromo', label: 'Discounts - $ Off Promo' },
+            { key: 'discountEmployee', label: 'Discounts - Employee' },
+            { key: 'discountGuestRecovery', label: 'Discounts - Guest Recovery' },
+            { key: 'discountManager', label: 'Discounts - Manager' },
+            { key: 'discountMilitary', label: 'Discounts - Military' },
+            { key: 'discountPolice', label: 'Discounts - Police' },
+            { key: 'discountSenior', label: 'Discounts - Senior Citizens' },
+            { key: 'discountsOther', label: 'Discounts - Other' },
+            { key: 'discountOpenDollar', label: 'Discounts - Open $' },
+            { key: 'discountOpenPercent', label: 'Discounts - Open %' },
+            { key: 'discount10', label: 'Discounts - 10%' },
 
             { key: 'totalDiscounts', label: 'Total Discounts' },
+            { key: 'cashDeposit1', label: 'Cash Deposit' },
+
 
             { key: 'cashOverShortDebit', label: 'Cash Handling Debit' },
             { key: 'cashOverShortCredit', label: 'Cash Handling Credit' },
 
             { key: 'cashExpected', label: 'Cash Expected' },
-
             { key: 'difference', label: 'Difference' }
-
         ],
 
 
-       
+
         columns: {
 
-    // SALES
-    food: 'Net Sales - Food',
-    beverage: 'Net Sales - Beverages',
-    other: 'Net Sales - Other',
+            // SALES
+            food: 'Net Sales - Food',
+            beverage: 'Net Sales - Beverages',
+            other: 'Net Sales - Other',
 
-    serviceFee: 'Tips & Service Charges',
-    salesOther: 'Sales - Other',
+            serviceFee: 'Tips & Service Charges',
+            salesOther: 'Sales - Other',
 
-    deliveryFee: 'Delivery Fee',
-    deliveryFeeNet: 'Delivery Fees Net',
-    deliveryTips: 'Delivery Tips',
-    deliveryTipsNet: 'Delivery Tips Net',
+            deliveryFee: 'Delivery Fee',
+            deliveryFeeNet: 'Delivery Fees Net',
+            deliveryTips: 'Delivery Tips',
+            deliveryTipsNet: 'Delivery Tips Net',
 
-    // DISCOUNTS
-    discounts: 'Discounts',
-    discountPromo: 'Promotions',
+            // DISCOUNTS
+            discounts: 'Discounts',
+            discountsPromo: '$ Off Promo',
 
-    discountEmployee: 'Promotions - Employee',
-    discountGuestRecovery: 'Promotions - Guest Recovery',
-    discountManager: 'Promotions - Manager',
-    discountMilitary: 'Promotions - Military',
-    discountPolice: 'Promotions - Police',
-    discountSenior: 'Promotions - Senior Citizens',
-    discountOther: 'Promotions - Other',
-    discountOpenDollar: 'Promotions - Open $',
-    discountOpenPercent: 'Promotions - Open %',
-    discount10: 'Promotions - 10%',
+            discountEmployee: 'Promotions - Employee',
+            discountGuestRecovery: 'Promotions - Guest Recovery',
+            discountManager: 'Promotions - Manager',
+            discountMilitary: 'Promotions - Military',
+            discountPolice: 'Promotions - Police',
+            discountSenior: 'Promotions - Senior Citizens',
+            discountOther: 'Promotions - Other',
+            discountOpenDollar: 'Promotions - Open $',
+            discountOpenPercent: 'Promotions - Open %',
+            discount10: 'Promotions - 10%',
 
-    // TAX
-    salesTax: 'Sales Tax Payable',
-    taxExemptSales: 'Tax Exempt Sales',
-    caCrv: 'CA CRV',
+            // TAX
+            salesTax: 'Sales Tax Payable',
+            taxExemptSales: 'Tax Exempt Sales',
+            caCrv: 'CA CRV',
 
-    // REVENUE
-    donations: 'Donations',
-    gcSold: 'Revenues - Gift Card Sales',
-    nonRedeemable: 'Non Redeemable Tender',
+            // REVENUE
+            donations: 'Donations',
+            gcSold: 'Revenues - Gift Card Sales',
+            nonRedeemable: 'Non Redeemable Tender',
 
-    // CREDIT CARDS
-    amex: 'Payments - AMEX',
-    amexPrPd: 'Payments - AMEX PrePaid',
-    visa: 'Payments - Visa',
-    mastercard: 'Payments - Master Card',
-    discover: 'Payments - Discover',
-    debit: 'Payments - Debit',
+            // CREDIT CARDS
+            amex: 'Payments - AMEX',
+            amexPrPd: 'Payments - AMEX PrePaid',
+            visa: 'Payments - Visa',
+            mastercard: 'Payments - Master Card',
+            discover: 'Payments - Discover',
+            debit: 'Payments - Debit',
 
-    // DELIVERY
-    dd: 'Payments - Door Dash',
-    gh: 'Payments - Grub Hub',
-    uber: 'Payments - Uber Eats',
-    postmates: 'Payments - Postmates',
+            // DELIVERY
+            dd: 'Payments - Door Dash',
+            gh: 'Payments - Grub Hub',
+            uber: 'Payments - Uber Eats',
+            postmates: 'Payments - Postmates',
 
-    doorDashShortage: 'DoorDash Shortage',
-    uberShortage: 'Uber Shortage',
+            doorDashShortage: 'DoorDash Shortage',
+            uberShortage: 'Uber Shortage',
 
-    // OTHER PAYMENTS
-    ebt: 'Payments - EBT',
-    kiosk: 'Payments - Kiosk',
-    gcRedeem: 'Payments - Gift Card',
-    cashApp: 'Payments - Cash App',
+            // OTHER PAYMENTS
+            ebt: 'Payments - EBT',
+            kiosk: 'Payments - Kiosk',
+            gcRedeem: 'Payments - Gift Card',
+            cashApp: 'Payments - Cash App',
 
-    onlineCatering: 'Payments - Online Catering',
-    ezCater: 'Payments - EZ Cater',
+            onlineCatering: 'Payments - Online Catering',
+            ezCater: 'Payments - EZ Cater',
 
-    wlTips: 'WL DD Tips',
+            wlTips: 'WL DD Tips',
 
-    // PAID OUT
-    paidOut: 'Paid Out',
+            // PAID OUT
+            paidOut: 'Paid Out',
 
-    paidOutSmallwares: 'Paid Out Smallwares',
-    paidOutCleaning: 'Paid Out Cleaning Supplies',
-    paidOutOffice: 'Paid Out Office Supplies',
-    paidOutFood: 'Paid Out Food',
-    paidOutCashOut: 'Paid Out Cash Out',
+            paidOutSmallwares: 'Paid Out Smallwares',
+            paidOutCleaning: 'Paid Out Cleaning Supplies',
+            paidOutOffice: 'Paid Out Office Supplies',
+            paidOutFood: 'Paid Out Food',
+            paidOutCashOut: 'Paid Out Cash Out',
 
-    // CASH
-    cashDeposit: 'Cash Deposit',
+            // CASH
+            cashDeposit: 'Cash Deposit',
 
-    cashOverShort: 'Cash Handling - Over/Short',
+            cashOverShort: 'Cash Handling - Over/Short',
 
-    cashOverShortDebit:
-        'Cash Handling - Over/Short Debit',
+            cashOverShortDebit:
+                'Cash Handling - Over/Short Debit',
 
-    cashOverShortCredit:
-        'Cash Handling - Over/Short Credit'
-}
+            cashOverShortCredit:
+                'Cash Handling - Over/Short Credit'
+        }
     }
 
 };

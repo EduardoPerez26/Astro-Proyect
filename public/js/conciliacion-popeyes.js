@@ -340,63 +340,67 @@ function normalizarFecha(valor) {
 }
 
 function monto(grupo, cuenta) {
-
     const total =
         grupo.registros
-            .filter(
-                r => r.Account === cuenta
-            )
+            .filter(r => r.Account === cuenta)
             .reduce(
                 (sum, r) =>
                     sum +
-                    (
-                        Number(r['Credit Amount']) || 0
-                    ) -
-                    (
-                        Number(r['Debit Amount']) || 0
-                    ),
+                    (Number(r['Credit Amount']) || 0) -
+                    (Number(r['Debit Amount']) || 0),
                 0
             );
 
     return Math.abs(total);
+}
+
+function montoSinAbs(grupo, cuenta) {
+
+    return grupo.registros
+        .filter(
+            r => r.Account === cuenta
+        )
+        .reduce(
+            (sum, r) =>
+                sum +
+                (Number(r['Credit Amount']) -
+                 Number(r['Debit Amount'])),
+            0
+        );
 
 }
 
+
 function generarSalesPopeyes(rawRows) {
 
-    const grupos =
-        agruparPorFechaYTienda(rawRows);
-
+    const grupos = agruparPorFechaYTienda(rawRows);
 
     return grupos.map(grupo => {
 
-
-        const store =
-            grupo.store;
-
-        const unitName =
-            grupo.unitName;
-
-        const fecha =
-            grupo.fecha;
+        const store = String(grupo.store).trim();
+        const unitName = grupo.unitName;
+        const fecha = grupo.fecha;
 
         // ==========================
         // SALES
         // ==========================
 
-        const food =
-            monto(grupo, 'Net Sales - Food');
+        const food = monto(grupo, 'Net Sales - Food');
 
-        const beverage =
-            monto(grupo, 'Net Sales - Beverages');
+        const beverage = monto(grupo, 'Net Sales - Beverages');
 
-        const other =
-            monto(grupo, 'Net Sales - Other');
+        const other = monto(grupo, 'Net Sales - Other');
+
+        const serviceFee =
+            monto(grupo, 'Service Fees negative Offset');
+
+        const salesOther =
+            other + serviceFee;
 
         const netSales =
             food +
             beverage +
-            other;
+            salesOther;
 
         const salesTax =
             monto(grupo, 'Sales Tax Payable');
@@ -417,18 +421,10 @@ function generarSalesPopeyes(rawRows) {
             monto(grupo, 'Revenues - Gift Card Sales');
 
         // ==========================
-        // FEES
+        // DELIVERY / TIPS
         // ==========================
 
-        const serviceFee =
-            monto(grupo, 'Service Fees negative Offset');
-
-        const salesOther = monto(grupo, 'Sales Other');
-
         const deliveryFee =
-            monto(grupo, 'Delivery Fee');
-
-        const deliveryFeeNet =
             monto(grupo, 'Delivery Fees Net');
 
         const deliveryTips =
@@ -445,56 +441,58 @@ function generarSalesPopeyes(rawRows) {
             deliveryTipsNet +
             wlTips;
 
-
-
         // ==========================
         // DISCOUNTS
         // ==========================
 
-
-
-        const discountsPromo = monto(grupo, 'Discounts - $ Off Promo');
-
-        const discounts = monto(grupo, 'Discounts')
-
-        const discountsWraps =
-            monto(grupo, 'Promotions - Wraps');
+        const discountsPromo =
+            monto(grupo, 'Discounts - $ Off Promo');
 
         const discountEmployee =
-            monto(grupo, 'Promotions - Employee');
+            monto(grupo, 'Discounts - Employee');
 
         const discountGuestRecovery =
-            monto(grupo, 'Promotions - Guest Recovery');
+            monto(grupo, 'Discounts - Guest Recovery');
 
         const discountManager =
-            monto(grupo, 'Promotions - Manager');
+            monto(grupo, 'Discounts - Manager');
 
         const discountMilitary =
-            monto(grupo, 'Promotions - Military');
+            monto(grupo, 'Discounts - Military');
 
         const discountPolice =
-            monto(grupo, 'Promotions - Police');
+            monto(grupo, 'Discounts - Police');
 
         const discountSenior =
-            monto(grupo, 'Promotions - Senior Citizens');
+            monto(grupo, 'Discounts - Senior Citizens');
 
         const discountsOther =
-            monto(grupo, 'Promotions - Other');
-
-        const discountOpenDollar =
-            monto(grupo, 'Promotions - Open $');
-
-        const discountOpenPercent =
-            monto(grupo, 'Promotions - Open %');
+            monto(grupo, 'Discounts - Other');
 
         const discount10 =
-            monto(grupo, 'Promotions - 10%');
+            monto(grupo, 'Discounts - 10%');
 
+        const discountOpenDollar =
+            monto(grupo, 'Discounts - Open $');
 
+        const discountOpenPercent =
+            monto(grupo, 'Discounts - Open %');
 
+        const discounts =
+            discountEmployee +
+            discountGuestRecovery +
+            discountManager +
+            discountMilitary +
+            discountPolice +
+            discountSenior +
+            discountsOther +
+            discountOpenDollar +
+            discountOpenPercent +
+            discount10;
 
-
-
+        const totalDiscounts =
+            discounts +
+            discountsPromo;
 
         // ==========================
         // CREDIT CARDS
@@ -518,44 +516,39 @@ function generarSalesPopeyes(rawRows) {
         const debit =
             monto(grupo, 'Payments - Debit');
 
-        const ccTotals =
-            amex +
-            amexPrPd +
-            visa +
-            mastercard +
-            discover +
-            debit;
+        const discoverPrPd =
+            monto(grupo, 'Payments - Discover PrPd');
 
-        // ==========================
-        // DELIVERY PAYMENTS
-        // ==========================
+        const mastercardPrPd =
+            monto(grupo, 'Payments - Master Card PrPd');
 
-        const dd =
-            monto(grupo, 'Payments - Door Dash');
+        const visaPrPd =
+            monto(grupo, 'Payments - Visa PrPd');
 
-        const gh =
-            monto(grupo, 'Payments - Grub Hub');
+        const prPdMasterCard =
+            monto(grupo, 'Payments - PrPd Master Card');
 
-        const uber =
-            monto(grupo, 'Payments - Uber Eats');
+        const prPdVisa =
+            monto(grupo, 'Payments - PrPd Visa');
 
-        const postmates =
-            monto(grupo, 'Payments - Postmates');
+        const wlMasterCard =
+            monto(grupo, 'Payments - WL MasterCard');
 
-        const delTotals =
-            dd +
-            uber +
-            gh;
+        const wlVisa =
+            monto(grupo, 'Payments - WL Visa');
 
-        const doorDashShortage =
-            monto(grupo, 'Payments - Door Dash Shortage');
+        const prPdPaypal =
+            monto(grupo, 'Payments - PrPD Paypal');
 
-        const uberShortage =
-            monto(grupo, 'Payments - Uber Shortage');
+        const prPdVenmo =
+            monto(grupo, 'Payments - PrPD Venmo');
 
-        // ==========================
-        // OTHER PAYMENTS
-        // ==========================
+        const imtPaypal =
+            monto(grupo, 'Payments - IMT Paypal');
+
+        const otherDelivery =
+            monto(grupo, 'Payments - Other Delivery');
+
 
         const ebt =
             monto(grupo, 'Payments - EBT');
@@ -572,40 +565,78 @@ function generarSalesPopeyes(rawRows) {
         const ezCater =
             monto(grupo, 'Payments - EZ Cater');
 
-        const otherDelivery =
-            monto(grupo, 'Payments - Other Delivery');
-
         const otherPayments =
             monto(grupo, 'Payments - Other');
+
+
+        const dd =
+            monto(grupo, 'Payments - Door Dash');
+
+        const gh =
+            monto(grupo, 'Payments - Grub Hub');
+
+        const uber =
+            monto(grupo, 'Payments - Uber Eats');
+
+        const postmates =
+            monto(grupo, 'Payments - Postmates');
+
+        const doorDashShortage =
+            monto(grupo, 'Payments - Door Dash Shortage');
+
+        const uberShortage =
+            monto(grupo, 'Payments - Uber Shortage');
+
+
+        const kiosk =
+            monto(grupo, 'Payments - Kiosk') +
+            monto(grupo, 'Payments - Kiosk Amex') +
+            monto(grupo, 'Payments - Kiosk Discover') +
+            monto(grupo, 'Payments - Kiosk MasterCard') +
+            monto(grupo, 'Payments - Kiosk Visa');
+
+
+
+        const ccTotals =
+            discover +
+            discoverPrPd +
+            mastercard +
+            mastercardPrPd +
+            visa +
+            visaPrPd +
+            prPdMasterCard +
+            prPdVisa +
+            wlMasterCard +
+            wlVisa +
+            prPdPaypal +
+            prPdVenmo +
+            debit +
+            otherDelivery +
+            otherPayments +
+            cashApp +
+            imtPaypal;
+        // ==========================
+        // DELIVERY PAYMENTS
+        // ==========================
+
+        const delTotals =
+            dd +
+            gh +
+            uber +
+            postmates;
+
+
+        // ==========================
+        // OTHER PAYMENTS
+        // ==========================
 
         // ==========================
         // KIOSK
         // ==========================
 
-        const kioskAmex =
-            monto(grupo, 'Payments - Kiosk Amex');
-
-        const kioskMain =
-            monto(grupo, 'Payments - Kiosk');
-
-        const kioskDiscover =
-            monto(grupo, 'Payments - Kiosk Discover');
-
-        const kioskMastercard =
-            monto(grupo, 'Payments - Kiosk MasterCard');
-
-        const kioskVisa =
-            monto(grupo, 'Payments - Kiosk Visa');
-
-        const kiosk =
-            kioskAmex +
-            kioskMain +
-            kioskDiscover +
-            kioskMastercard +
-            kioskVisa;
 
         // ==========================
-        // PAID OUTS
+        // PAID OUT
         // ==========================
 
         const paidOutSmallwares =
@@ -634,55 +665,16 @@ function generarSalesPopeyes(rawRows) {
         // CASH
         // ==========================
 
-        const cashDeposit =
+        const cashDeposit1 =
             monto(grupo, 'Cash Deposit');
 
-        const cashOverShort =
-            monto(grupo, 'Cash Handling - Over/Short');
-
         const cashOverShortDebit =
-            monto(grupo, 'Cash Handling - Over/Short Debit');
+            montoSinAbs(grupo, 'Cash Handling - Over/Short Debit');
 
         const cashOverShortCredit =
-            monto(grupo, 'Cash Handling - Over/Short Credit');
-
-        // ==========================
-        // TOTALS
-        // ==========================
-
-        const totalRevenue =
-            netSales +
-            salesTax +
-            caCrv +
-            gcSold;
-
-        const paymentsTotal =
-            ccTotals +
-            delTotals +
-            ebt +
-            gcRedeem +
-            cashApp +
-            kiosk +
-            ezCater;
-
-        const cashExpected =
-            totalRevenue -
-            ccTotals -
-            delTotals -
-            ebt -
-            gcRedeem -
-            cashApp -
-            kiosk;
-
-        const difference =
-            cashExpected -
-            (
-                cashDeposit +
-                cashOverShort
-            );
+            montoSinAbs(grupo, 'Cash Handling - Over/Short Credit');
 
         return {
-
             store,
             unitName,
             fecha,
@@ -691,37 +683,30 @@ function generarSalesPopeyes(rawRows) {
             beverage,
             other,
 
+            serviceFee,
+            salesOther,
             netSales,
 
             salesTax,
             taxExemptSales,
+            caCrv,
 
-            serviceFee,
-            salesOther,
+            donations,
+            nonRedeemable,
+            gcSold,
 
             deliveryFee,
-            deliveryFeeNet,
 
             deliveryTips,
             deliveryTipsNet,
+            wlTips,
             totalTips,
 
-            donations,
-            caCrv,
-            nonRedeemable,
-            discountsPromo,
-
-            discountsWraps,
-            discountsOther,
             discounts,
+            discountsPromo,
+            totalDiscounts,
 
-
-
-
-
-            gcSold,
-
-            totalRevenue,
+            discountsOther,
 
             amex,
             amexPrPd,
@@ -743,11 +728,8 @@ function generarSalesPopeyes(rawRows) {
             uberShortage,
 
             ebt,
-
             kiosk,
-
             gcRedeem,
-
             cashApp,
 
             onlineCatering,
@@ -763,60 +745,39 @@ function generarSalesPopeyes(rawRows) {
             paidOutFood,
             paidOutCashOut,
 
-            paymentsTotal,
 
-            cashDeposit,
-
-            cashOverShort,
             cashOverShortDebit,
             cashOverShortCredit,
-
-            cashExpected,
-
-            difference
-
+            cashDeposit1
         };
 
     });
 
 }
 
-function generarConciliationPopeyes(
-    salesData
-) {
+function generarConciliationPopeyes(salesData) {
 
     return salesData.map(row => {
 
-        const salesFee = (row.serviceFee || 0);
+        const salesOther =
+            (row.other || 0) +
+            (row.serviceFee || 0);
 
-        const salesOther = (row.other || 0) + (row.serviceFee || 0);
+        const netSales =
+            (row.food || 0) +
+            (row.beverage || 0) +
+            salesOther;
 
-        const discounts =
+        const totalTips =
+            (row.deliveryTips || 0) +
+            (row.deliveryTipsNet || 0) +
+            (row.wlTips || 0);
+
+        const totalDiscounts =
             (row.discounts || 0) +
             (row.discountsPromo || 0);
 
-        const discountsPromo = (row.discountsPromo || 0);
-
-        const totalRevenue =
-            row.food +
-            row.beverage +
-            row.other +
-            (row.deliveryFee || 0) +
-            (row.totalTips || 0) +
-            (row.salesTax || 0) +
-            (row.caCrv || 0) +
-            (row.gcSold || 0) +
-            (row.donations || 0) +
-            (row.nonRedeemable || 0) -
-            (row.discounts || 0);
-
-        const ccTotals =
-            (row.amex || 0) +
-            (row.amexPrPd || 0) +
-            (row.visa || 0) +
-            (row.mastercard || 0) +
-            (row.discover || 0) +
-            (row.debit || 0);
+        const ccTotals = row.ccTotals || 0;
 
         const delTotals =
             (row.dd || 0) +
@@ -824,9 +785,31 @@ function generarConciliationPopeyes(
             (row.uber || 0) +
             (row.postmates || 0);
 
+        const paidOut =
+            (row.paidOutSmallwares || 0) +
+            (row.paidOutCleaning || 0) +
+            (row.paidOutOffice || 0) +
+            (row.paidOutFood || 0) +
+            (row.paidOutCashOut || 0);
+
+        const totalRevenue =
+            netSales +
+            (row.salesTax || 0) +
+            (row.caCrv || 0) +
+            (row.gcSold || 0) +
+            (row.donations || 0) +
+            (row.nonRedeemable || 0);
+
         const paymentsTotal =
-            ccTotals +
-            delTotals +
+            (row.amex || 0) +
+            (row.amexPrPd || 0) +
+            (row.ccTotals || 0) +
+            (row.dd || 0) +
+            (row.gh || 0) +
+            (row.uber || 0) +
+            (row.doorDashShortage || 0) +
+            (row.uberShortage || 0) +
+            (row.postmates || 0) +
             (row.ebt || 0) +
             (row.kiosk || 0) +
             (row.gcRedeem || 0) +
@@ -837,42 +820,117 @@ function generarConciliationPopeyes(
             (row.paidOutCleaning || 0) +
             (row.paidOutOffice || 0) +
             (row.paidOutFood || 0) +
+            (row.paidOutCashOut || 0) +
+            (row.cashDeposit1 || 0 );
+
+
+
+        const sumaCashEx1 =
+            (row.other || 0) +
+            (row.deliveryFee || 0) +
+            (row.netSales || 0) +
+            (row.salesTax || 0) +
+            (row.caCrv || 0) +
+            (row.gcSold || 0) +
+            (row.donations || 0) +
+            (row.nonRedeemable || 0) +
+            (row.wlTips || 0);
+
+        const sumaCashEx2 =
+            (row.donations || 0) +
+            (row.discountsPromo || 0) +
+            (row.amex || 0) +
+            (row.amexPrPd || 0) +
+            (row.ccTotals || 0) +
+            (row.dd || 0) +
+            (row.gh || 0) +
+            (row.uber || 0) +
+            (row.doorDashShortage || 0) +
+            (row.uberShortage || 0) +
+            (row.ebt || 0) +
+            (row.kiosk || 0) +
+            (row.gcRedeem || 0) +
+            (row.onlineCatering || 0) +
+            (row.ezCater || 0) +
+            (row.paidOutSmallwares || 0) +
+            (row.paidOutCleaning || 0) +
+            (row.paidOutOffice || 0) +
+            (row.paidOutFood || 0) +
             (row.paidOutCashOut || 0);
 
-        const cashExpected =
-            totalRevenue -
-            paymentsTotal;
+
+        const sumaCashDep1 =
+            (row.other || 0) +
+            (row.deliveryFee || 0) +
+            (row.netSales || 0) +
+            (row.salesTax || 0) +
+            (row.caCrv || 0) +
+            (row.gcSold || 0) +
+            (row.donations || 0) +
+            (row.nonRedeemable || 0) +
+            (row.wlTips || 0);
+
+        const sumaCashDep2 =
+            (row.discounts || 0) +
+            (row.discountsPromo || 0) +
+            (row.amex || 0) +
+            (row.amexPrPd || 0) +
+            (row.ccTotals || 0) +
+            (row.dd || 0) +
+            (row.gh || 0) +
+            (row.uber || 0) +
+            (row.doorDashShortage || 0) +
+            (row.uberShortage || 0) +
+            (row.ebt || 0) +
+            (row.kiosk || 0) +
+            (row.gcRedeem || 0) +
+            (row.onlineCatering || 0) +
+            (row.ezCater || 0) +
+            (row.paidOutSmallwares || 0) +
+            (row.paidOutCleaning || 0) +
+            (row.paidOutOffice || 0) +
+            (row.paidOutFood || 0) +
+            (row.paidOutCashOut || 0);
+
+
+        const cashExpected = sumaCashEx1 - sumaCashEx2;
+
+        const cashDeposit = sumaCashDep1 - sumaCashDep2;
 
         const difference =
             cashExpected -
             (
-                (row.cashDeposit || 0) +
+                (row.cashDeposit1 || 0) +
                 (row.cashOverShortCredit || 0) -
                 (row.cashOverShortDebit || 0)
             );
+
+        const oS = totalRevenue - paymentsTotal;
+
 
         return {
 
             ...row,
 
-            totalRevenue,
+            salesOther,
+            netSales,
+
+            totalTips,
+
+            totalDiscounts,
 
             ccTotals,
-
             delTotals,
 
+            paidOut,
+
+            totalRevenue,
             paymentsTotal,
+            cashDeposit,
 
             cashExpected,
-
             difference,
-            salesOther,
-
-            discounts,
-            discountsPromo
-
-
-
+            oS
         };
 
     });

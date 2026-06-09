@@ -1426,11 +1426,7 @@ function detectarHojaOrigen(
 }
 
 function renderTablaSucursales() {
-
     
-
-    
-
     const thead =
         document.getElementById(
             'conciliacionTableHead'
