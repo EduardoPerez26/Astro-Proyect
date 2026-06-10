@@ -2,8 +2,7 @@
 // SISTEMA DE CONCILIACION
 // ============================================
 
-const API_URL = window.API_URL;
-
+window.API_URL
 // Estado global
 let restaurantes = [];
 let templates = [];
@@ -474,7 +473,7 @@ function initEventListeners() {
 async function cargarRestaurantes() {
     try {
         const token = localStorage.getItem('token');
-        const response = await fetch(`${API_URL}/restaurantes`, {
+        const response = await fetch(`${window.API_URL}/restaurantes`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
 
@@ -518,7 +517,7 @@ function renderRestaurantes() {
 async function cargarTemplates(restauranteId) {
     try {
         const token = localStorage.getItem('token');
-        const response = await fetch(`${API_URL}/conciliaciones/templates?restaurante_id=${restauranteId}`, {
+        const response = await fetch(`${window.API_URL}/conciliaciones/templates?restaurante_id=${restauranteId}`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
 
@@ -564,7 +563,7 @@ async function cargarValoresEsperados() {
 
     try {
         const token = localStorage.getItem('token');
-        const response = await fetch(`${API_URL}/conciliaciones/valores-esperados/${restauranteId}/${fecha}`, {
+        const response = await fetch(`${window.API_URL}/conciliaciones/valores-esperados/${restauranteId}/${fecha}`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
 
@@ -1161,7 +1160,7 @@ async function guardarConciliacion() {
             fuente: 'manual'
         }));
 
-        await fetch(`${API_URL}/conciliaciones/valores-esperados`, {
+        await fetch(`${window.API_URL}/conciliaciones/valores-esperados`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -1175,7 +1174,7 @@ async function guardarConciliacion() {
         });
 
         // Guardar conciliacion
-        const response = await fetch(`${API_URL}/conciliaciones`, {
+        const response = await fetch(`${window.API_URL}/conciliaciones`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -1279,7 +1278,7 @@ async function verConciliacion(id) {
     // Cargar y mostrar una conciliacion existente
     try {
         const token = localStorage.getItem('token');
-        const response = await fetch(`${API_URL}/conciliaciones/${id}`, {
+        const response = await fetch(`${window.API_URL}/conciliaciones/${id}`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
 

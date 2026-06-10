@@ -2,7 +2,7 @@
 // ADMINISTRACION DE USUARIOS
 // ============================================
 
-const API_URL = window.API_URL;
+window.API_URL
 let users = [];
 let userToDelete = null;
 
@@ -32,7 +32,7 @@ async function loadUsers() {
     }
 
     try {
-        const response = await fetch(`${API_URL}/usuarios`, {
+        const response = await fetch(`${window.API_URL}/usuarios`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
 
@@ -361,7 +361,7 @@ async function confirmDelete() {
     }
 
     try {
-        const response = await fetch(`${API_URL}/usuarios/${userToDelete}`, {
+        const response = await fetch(`${window.API_URL}/usuarios/${userToDelete}`, {
             method: 'DELETE',
             headers: { 'Authorization': `Bearer ${token}` }
         });

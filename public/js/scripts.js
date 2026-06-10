@@ -1,6 +1,5 @@
 // Configuracion de la API
-const API_URL = window.API_URL;
-
+window.API_URL
 let workbook;
 let currentSheetName;
 let currentWorksheet;

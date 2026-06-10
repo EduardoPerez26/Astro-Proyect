@@ -2,7 +2,7 @@
 // HISTORIAL DE VALIDACIONES
 // ============================================
 
-const API_URL = window.API_URL;
+window.API_URL
 
 let validaciones = [];
 let validacionesFiltradas = [];
@@ -45,7 +45,7 @@ async function cargarValidaciones() {
     }
 
     try {
-        const response = await fetch(`${API_URL}/validaciones`, {
+        const response = await fetch(`${window.API_URL}/validaciones`, {
             headers: {
                 'Authorization': `Bearer ${token}`
             }

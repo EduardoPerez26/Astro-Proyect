@@ -143,13 +143,13 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script type="module">
-const API_URL = window.API_URL;
+window.API_URL
 async function cargarDashboard() {
   const token = localStorage.getItem('token');
 
   try {
     // Obtener archivos
-    const resArchivos = await fetch(`${API_URL}/archivos`, {
+    const resArchivos = await fetch(`${window.API_URL}/archivos`, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
     const dataArchivos = await resArchivos.json();
