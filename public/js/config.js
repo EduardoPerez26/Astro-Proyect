@@ -1,2 +1,3 @@
 // Configuración global de la API
-window.API_URL = 'http://localhost:3001/api';
+// Configuración global de la API
+window.API_URL = "https://astro-proyect-production.up.railway.app/api";

@@ -1,5 +1,5 @@
 // Configuracion de la API
-window.API_URL = window.API_URL || 'http://localhost:3001/api';
+const API_URL = window.API_URL;
 
 let workbook;
 let currentSheetName;

@@ -2,7 +2,8 @@
 // Configuracion de la API
 
 
-window.API_URL = window.API_URL || 'http://localhost:3001/api';
+const API_URL = window.API_URL;
+
 document.addEventListener('DOMContentLoaded', function() {
     const loginBtn = document.getElementById('loginBtn');
     const usernameInput = document.getElementById('username');

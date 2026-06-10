@@ -1,5 +1,5 @@
 // Sistema de validacion principal
-const VALIDATOR_API_URL = 'http://localhost:3001/api';
+const VALIDATOR_API_URL = window.API_URL;
 let conceptColumnIndex = 0;
 let currentValidator = null;
 let currentArchivoId =

@@ -2,7 +2,7 @@
 // CONFIGURACION DE PERMISOS
 // ============================================
 
-const API_URL = 'http://localhost:3001/api';
+const API_URL = window.API_URL;
 let currentUserId = null;
 let currentUser = null;
 let originalPermissions = {};

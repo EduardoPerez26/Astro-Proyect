@@ -1,5 +1,5 @@
 // Sidebar loader adaptado para Astro con Backend y Control de Permisos
-window.API_URL = window.API_URL || 'http://localhost:3001/api';
+const API_URL = window.API_URL;
 
 document.addEventListener('DOMContentLoaded', function() {
     const sidebar = document.getElementById('sidebar');
