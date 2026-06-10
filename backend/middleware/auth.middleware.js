@@ -1,90 +1,27 @@
+// middleware/auth.middleware.js
 const jwt = require('jsonwebtoken');
-const { pool } = require('../config/database');
+const JWT_SECRET = process.env.JWT_SECRET || 'mi_secreto_seguro';
 
-const verificarToken = async (req, res, next) => {
+function verificarToken(req, res, next) {
     const authHeader = req.headers['authorization'];
-    if (!authHeader) {
-        return res.status(401).json({ error: true, message: 'Token no proporcionado' });
-    }
+    if (!authHeader) return res.status(401).json({ error: true, mensaje: 'Token no proporcionado' });
 
     const token = authHeader.split(' ')[1];
-    if (!token) {
-        return res.status(401).json({ error: true, message: 'Token no valido' });
-    }
-
-    if (!process.env.JWT_SECRET) {
-        return res.status(500).json({ error: true, message: 'JWT_SECRET no configurado' });
-    }
+    if (!token) return res.status(401).json({ error: true, mensaje: 'Token mal formado' });
 
     try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-        const [sesiones] = await pool.query(
-            'SELECT id FROM sesiones WHERE token = ? AND activa = TRUE LIMIT 1',
-            [token]
-        );
-
-        if (sesiones.length === 0) {
-            return res.status(403).json({ error: true, message: 'Token invalido o expirado' });
-        }
-
+        const decoded = jwt.verify(token, JWT_SECRET);
         req.usuario = decoded;
         next();
     } catch (error) {
-        return res.status(403).json({ error: true, message: 'Token invalido o expirado' });
+        return res.status(401).json({ error: true, mensaje: 'Token inválido o expirado' });
     }
-};
+}
 
-const esAdmin = (req, res, next) => {
-    if (!req.usuario || req.usuario.rol !== 'admin') {
-        return res.status(403).json({ error: true, message: 'Acceso denegado: solo administradores' });
-    }
-    next();
-};
+// Middleware opcional para verificar admin
+function esAdmin(req, res, next) {
+    if (req.usuario && req.usuario.rol === 'admin') return next();
+    return res.status(403).json({ error: true, mensaje: 'Requiere rol admin' });
+}
 
-const esSupervisorOAdmin = (req, res, next) => {
-    if (!req.usuario || (req.usuario.rol !== 'admin' && req.usuario.rol !== 'supervisor')) {
-        return res.status(403).json({ error: true, message: 'Acceso denegado: solo supervisores o administradores' });
-    }
-    next();
-};
-
-// Middleware para verificar permisos por nombre.
-// Uso: checkPermission('ver_reportes') => devuelve middleware
-const checkPermission = (permiso) => {
-    return async (req, res, next) => {
-        try {
-            if (!req.usuario) {
-                return res.status(401).json({ error: true, message: 'Usuario no autenticado' });
-            }
-
-            // Los administradores tienen acceso total
-            if (req.usuario.rol === 'admin') {
-                return next();
-            }
-
-            // Consultar si el rol del usuario tiene el permiso solicitado
-            const [rows] = await pool.query(
-                'SELECT 1 FROM roles_permisos WHERE rol = ? AND permiso_nombre = ? LIMIT 1',
-                [req.usuario.rol, permiso]
-            );
-
-            if (rows.length === 0) {
-                return res.status(403).json({ error: true, message: 'Acceso denegado: permiso requerido: ' + permiso });
-            }
-
-            next();
-        } catch (error) {
-            console.error('Error en checkPermission:', error);
-            res.status(500).json({ error: true, message: 'Error al verificar permiso' });
-        }
-    };
-};
-
-module.exports = {
-    verificarToken,
-    esAdmin,
-    esSupervisorOAdmin,
-    checkPermission
-};
-
+module.exports = { verificarToken, esAdmin };
