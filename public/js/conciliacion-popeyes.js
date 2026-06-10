@@ -364,7 +364,7 @@ function montoSinAbs(grupo, cuenta) {
             (sum, r) =>
                 sum +
                 (Number(r['Credit Amount']) -
-                 Number(r['Debit Amount'])),
+                    Number(r['Debit Amount'])),
             0
         );
 
@@ -374,6 +374,7 @@ function montoSinAbs(grupo, cuenta) {
 function generarSalesPopeyes(rawRows) {
 
     const grupos = agruparPorFechaYTienda(rawRows);
+
 
     return grupos.map(grupo => {
 
@@ -668,11 +669,24 @@ function generarSalesPopeyes(rawRows) {
         const cashDeposit1 =
             monto(grupo, 'Cash Deposit');
 
-        const cashOverShortDebit =
-            montoSinAbs(grupo, 'Cash Handling - Over/Short Debit');
+        const cashOverShort =
+            monto(grupo, 'Cash Handling - Over/Short');
 
-        const cashOverShortCredit =
-            montoSinAbs(grupo, 'Cash Handling - Over/Short Credit');
+
+        const movimientosOverShort = grupo.registros.filter(
+            r => r.Account === 'Cash Handling - Over/Short'
+        );
+
+        const cashOverShortDebit = movimientosOverShort.reduce(
+            (sum, r) => sum + (Number(r['Credit Amount']) || 0),
+            0
+        );
+
+        const cashOverShortCredit = movimientosOverShort.reduce(
+            (sum, r) => sum + (Number(r['Debit Amount']) || 0),
+            0
+        );
+
 
         return {
             store,
@@ -821,7 +835,7 @@ function generarConciliationPopeyes(salesData) {
             (row.paidOutOffice || 0) +
             (row.paidOutFood || 0) +
             (row.paidOutCashOut || 0) +
-            (row.cashDeposit1 || 0 );
+            (row.cashDeposit1 || 0);
 
 
 
