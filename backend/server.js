@@ -33,13 +33,14 @@ app.use(cors({
     origin: [
         'http://localhost:4321',
         'http://localhost:3001',
-        'http://127.0.0.1:4321',
         'https://astro-proyect-akfs.vercel.app'
     ],
-    credentials: true
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
 }));
-// Parsear JSON en el body de las peticiones
-app.use(express.json());
+
+app.options('*', cors());
 
 // Parsear datos de formularios
 app.use(express.urlencoded({ extended: true }));
