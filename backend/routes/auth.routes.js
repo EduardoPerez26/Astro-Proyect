@@ -105,10 +105,10 @@ router.post('/login', async (req, res) => {
                 username: usuario.username,
                 nombre: usuario.nombre_completo,
                 email: usuario.email,
-                rol: usuario.rol,
-                permisos: JSON.parse(usuario.permisos || '{}') // 🔹 agregar esta línea
+                rol: usuario.rol
             }
         });
+
     } catch (error) {
         console.error('ERROR LOGIN:', error);
 
