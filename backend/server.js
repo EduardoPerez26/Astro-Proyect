@@ -30,10 +30,14 @@ const app = express();
 
 // CORS: Permite peticiones desde el frontend (localhost:4321 para Astro)
 app.use(cors({
-    origin: true,
+    origin: [
+        'http://localhost:4321',
+        'http://localhost:3001',
+        'http://127.0.0.1:4321',
+        'https://astro-proyect-akfs.vercel.app/'
+    ],
     credentials: true
 }));
-
 // Parsear JSON en el body de las peticiones
 app.use(express.json());
 
