@@ -1,19 +1,14 @@
 // ============================================
 // SERVIDOR PRINCIPAL - EXPRESS
 // ============================================
-// Este archivo es el punto de entrada del backend.
-// Configura Express, middlewares y rutas.
-// ============================================
 
-// Cargar variables de entorno desde .env
 require('dotenv').config();
 
-// Importar dependencias
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
 
-// Importar rutas
+// Rutas
 const authRoutes = require('./routes/auth.routes');
 const archivosRoutes = require('./routes/archivos.routes');
 const usuariosRoutes = require('./routes/usuarios.routes');
@@ -21,20 +16,13 @@ const restaurantesRoutes = require('./routes/restaurantes.routes');
 const validacionesRoutes = require('./routes/validaciones.routes');
 const conciliacionesRoutes = require('./routes/conciliaciones.routes');
 
-// Crear aplicacion Express
 const app = express();
 
 // ============================================
 // MIDDLEWARES
 // ============================================
 
-// CORS: Permite peticiones desde el frontend (localhost:4321 para Astro)
-
-app.use(express.json());
-
-
-// Parsear datos de formularios
-app.use(express.urlencoded({ extended: true }));
+// CORS
 app.use(cors({
     origin: [
         'http://localhost:4321',
@@ -42,19 +30,24 @@ app.use(cors({
         'https://astro-proyect-akfs.vercel.app'
     ],
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization']
+    methods: ['GET','POST','PUT','DELETE','OPTIONS'],
+    allowedHeaders: ['Content-Type','Authorization']
 }));
+
+// Para preflight requests
 app.options('*', cors());
 
-// Servir archivos estaticos de la carpeta uploads
+// Parsear JSON y urlencoded
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Archivos estáticos
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // ============================================
 // RUTAS DE LA API
 // ============================================
 
-// Ruta de prueba para verificar que el servidor funciona
 app.get('/api', (req, res) => {
     res.json({
         mensaje: 'API del Sistema de Validacion de Excel',
@@ -70,7 +63,7 @@ app.get('/api', (req, res) => {
     });
 });
 
-// Montar las rutas
+// Montar rutas
 app.use('/api/auth', authRoutes);
 app.use('/api/archivos', archivosRoutes);
 app.use('/api/usuarios', usuariosRoutes);
@@ -82,8 +75,8 @@ app.use('/api/conciliaciones', conciliacionesRoutes);
 // MANEJO DE ERRORES
 // ============================================
 
-// Ruta no encontrada (404)
-app.use((req, res, next) => {
+// Ruta no encontrada
+app.use((req,res,next) => {
     res.status(404).json({
         error: true,
         mensaje: 'Ruta no encontrada',
@@ -91,7 +84,7 @@ app.use((req, res, next) => {
     });
 });
 
-// Errores generales (500)
+// Errores generales
 app.use((err, req, res, next) => {
     console.error('Error:', err);
     res.status(500).json({
@@ -106,7 +99,6 @@ app.use((err, req, res, next) => {
 // ============================================
 
 const PORT = process.env.PORT || 3000;
-
 app.listen(PORT, () => {
     console.log('============================================');
     console.log(`Servidor corriendo en http://localhost:${PORT}`);
