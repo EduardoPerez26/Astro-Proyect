@@ -29,6 +29,12 @@ const app = express();
 // ============================================
 
 // CORS: Permite peticiones desde el frontend (localhost:4321 para Astro)
+
+app.use(express.json());
+
+
+// Parsear datos de formularios
+app.use(express.urlencoded({ extended: true }));
 app.use(cors({
     origin: [
         'http://localhost:4321',
@@ -39,11 +45,7 @@ app.use(cors({
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization']
 }));
-
 app.options('*', cors());
-
-// Parsear datos de formularios
-app.use(express.urlencoded({ extended: true }));
 
 // Servir archivos estaticos de la carpeta uploads
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
