@@ -1,3 +1,21 @@
+# Dependencias
 node_modules
+**/node_modules
+
+# Artefactos de build de Astro (frontend)
 .astro
+**/.astro
 dist
+**/dist
+
+# Variables de entorno
+.env
+.env.development.local
+.env*.local
+
+# Subidas del backend
+backend/uploads/*
+!backend/uploads/.gitkeep
+
+# Vercel
+.vercel
