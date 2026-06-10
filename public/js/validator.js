@@ -378,7 +378,7 @@ async function guardarHistorialValidacion(validacionData) {
         console.log('PAYLOAD:', payload);
 
         const response = await fetch(
-            `${VALIDATOR_API_URL}/validaciones`,
+            `${window.API_URL}/validaciones`,
             {
                 method: 'POST',
                 headers: {

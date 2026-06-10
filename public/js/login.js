@@ -2,7 +2,7 @@
 // Configuracion de la API
 
 
-window.API_URL
+const API_URL = window.API_URL;
 
 document.addEventListener('DOMContentLoaded', function() {
     const loginBtn = document.getElementById('loginBtn');

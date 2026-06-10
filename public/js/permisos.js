@@ -2,7 +2,6 @@
 // CONFIGURACION DE PERMISOS
 // ============================================
 
-window.API_URL
 let currentUserId = null;
 let currentUser = null;
 let originalPermissions = {};
