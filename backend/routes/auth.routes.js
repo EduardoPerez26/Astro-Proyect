@@ -1,7 +1,5 @@
 // ============================================
-// RUTAS DE AUTENTICACION
-// ============================================
-// Maneja login, registro y verificacion de token.
+// RUTAS DE AUTENTICACION CORREGIDAS
 // ============================================
 
 const express = require('express');
@@ -11,88 +9,58 @@ const jwt = require('jsonwebtoken');
 const { pool } = require('../config/database');
 const { verificarToken } = require('../middleware/auth.middleware');
 
+const JWT_SECRET = process.env.JWT_SECRET || 'mi_secreto_seguro';
+const JWT_EXPIRES = process.env.JWT_EXPIRES_IN || '8h';
+
+// Permisos por defecto
+const defaultPermisos = {
+    admin: { dashboard: true, tiendas: true, documentos: true, perfil: true, permisos: true, historial: true, usuarios: true },
+    supervisor: { dashboard: true, tiendas: true, documentos: true, perfil: true, permisos: false, historial: true, usuarios: false },
+    usuario: { dashboard: true, tiendas: false, documentos: true, perfil: true, permisos: false, historial: false, usuarios: false }
+};
+
 // ============================================
 // POST /api/auth/login
 // ============================================
-// Inicia sesion y devuelve un token JWT
 router.post('/login', async (req, res) => {
     try {
         const { username, password } = req.body;
 
-        console.log('================================');
-        console.log('LOGIN INTENT');
-        console.log('Username recibido:', username);
-        console.log('Password recibida:', password);
-        console.log('================================');
-
-        // Validar que se enviaron los datos
         if (!username || !password) {
-            return res.status(400).json({
-                error: true,
-                mensaje: 'Usuario y contrasena son requeridos'
-            });
+            return res.status(400).json({ error: true, mensaje: 'Usuario y contraseña son obligatorios' });
         }
 
-        // Buscar usuario
-        const [usuarios] = await pool.query(
-            'SELECT * FROM usuarios WHERE username = ? AND activo = TRUE',
-            [username]
+        const [rows] = await pool.query(
+            `SELECT * FROM usuarios WHERE (username = ? OR email = ?) AND activo = TRUE LIMIT 1`,
+            [username, username]
         );
 
-        console.log('Usuarios encontrados:', usuarios.length);
-
-        if (usuarios.length === 0) {
-            console.log('ERROR: Usuario no encontrado o inactivo');
-
-            return res.status(401).json({
-                error: true,
-                mensaje: 'Usuario o contrasena incorrectos'
-            });
+        if (rows.length === 0) {
+            return res.status(401).json({ error: true, mensaje: 'Usuario o contraseña incorrectos' });
         }
 
-        const usuario = usuarios[0];
+        const usuario = rows[0];
 
-        console.log('ID Usuario:', usuario.id);
-        console.log('Username BD:', usuario.username);
-        console.log('Activo:', usuario.activo);
-        console.log('Hash BD:', usuario.password);
-
-        const passwordValido = await bcrypt.compare(
-            password,
-            usuario.password
-        );
-
-        console.log('Password válida:', passwordValido);
-
-        if (!passwordValido) {
-            console.log('ERROR: Contraseña incorrecta');
-
-            return res.status(401).json({
-                error: true,
-                mensaje: 'Usuario o contrasena incorrectos'
-            });
+        const isValid = await bcrypt.compare(password, usuario.password);
+        if (!isValid) {
+            return res.status(401).json({ error: true, mensaje: 'Usuario o contraseña incorrectos' });
         }
 
-        console.log('LOGIN EXITOSO');
-
+        // Crear token JWT
         const token = jwt.sign(
             {
                 id: usuario.id,
                 username: usuario.username,
-                nombre: usuario.nombre_completo,
-                email: usuario.email,
                 rol: usuario.rol
             },
-            process.env.JWT_SECRET,
-            {
-                expiresIn: process.env.JWT_EXPIRES_IN || '24h'
-            }
+            JWT_SECRET,
+            { expiresIn: JWT_EXPIRES }
         );
 
+        // Guardar sesión
         await pool.query(
-            `INSERT INTO sesiones
-            (usuario_id, token, ip_address, user_agent, fecha_expiracion)
-            VALUES (?, ?, ?, ?, DATE_ADD(NOW(), INTERVAL 24 HOUR))`,
+            `INSERT INTO sesiones (usuario_id, token, ip_address, user_agent, fecha_expiracion)
+             VALUES (?, ?, ?, ?, DATE_ADD(NOW(), INTERVAL 8 HOUR))`,
             [usuario.id, token, req.ip, req.headers['user-agent']]
         );
 
@@ -103,60 +71,52 @@ router.post('/login', async (req, res) => {
             usuario: {
                 id: usuario.id,
                 username: usuario.username,
-                nombre: usuario.nombre_completo,
+                nombre_completo: usuario.nombre_completo,
                 email: usuario.email,
-                rol: usuario.rol
+                rol: usuario.rol,
+                permisos: usuario.permisos,
+                activo: usuario.activo
             }
         });
 
     } catch (error) {
         console.error('ERROR LOGIN:', error);
-
-        res.status(500).json({
-            error: true,
-            mensaje: 'Error al iniciar sesion'
-        });
+        res.status(500).json({ error: true, mensaje: 'Error al iniciar sesión', detalle: error.message });
     }
 });
 
 // ============================================
 // POST /api/auth/register
 // ============================================
-// Registra un nuevo usuario
 router.post('/register', async (req, res) => {
     try {
         const { username, password, nombre_completo, email, rol } = req.body;
 
-        // Validar datos requeridos
         if (!username || !password || !nombre_completo || !email) {
-            return res.status(400).json({
-                error: true,
-                mensaje: 'Todos los campos son requeridos'
-            });
+            return res.status(400).json({ error: true, mensaje: 'Todos los campos son requeridos' });
         }
 
-        // Verificar si el usuario ya existe
+        // Revisar duplicados
         const [existente] = await pool.query(
             'SELECT id FROM usuarios WHERE username = ? OR email = ?',
             [username, email]
         );
-
         if (existente.length > 0) {
-            return res.status(400).json({
-                error: true,
-                mensaje: 'El usuario o email ya existe'
-            });
+            return res.status(400).json({ error: true, mensaje: 'El usuario o email ya existe' });
         }
 
-        // Encriptar contrasena
-        const salt = await bcrypt.genSalt(10);
-        const passwordHash = await bcrypt.hash(password, salt);
+        // Normalizar rol y permisos
+        const rolValido = ['admin', 'supervisor', 'usuario'];
+        const rolFinal = rol ? rol.toLowerCase() : 'usuario';
+        const rolAsignado = rolValido.includes(rolFinal) ? rolFinal : 'usuario';
+        const permisosAsignados = defaultPermisos[rolAsignado];
 
-        // Insertar usuario
+        const passwordHash = await bcrypt.hash(password, 10);
+
         const [resultado] = await pool.query(
-            `INSERT INTO usuarios (username, password, nombre_completo, email, rol)
-             VALUES (?, ?, ?, ?, ?)`,
-            [username, passwordHash, nombre_completo, email, rol || 'usuario']
+            `INSERT INTO usuarios (username, password, nombre_completo, email, rol, activo, permisos)
+             VALUES (?, ?, ?, ?, ?, TRUE, ?)`,
+            [username, passwordHash, nombre_completo, email, rolAsignado, JSON.stringify(permisosAsignados)]
         );
 
         res.status(201).json({
@@ -166,90 +126,52 @@ router.post('/register', async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Error en registro:', error);
-        res.status(500).json({
-            error: true,
-            mensaje: 'Error al registrar usuario'
-        });
+        console.error('ERROR REGISTER:', error);
+        res.status(500).json({ error: true, mensaje: 'Error al registrar usuario', detalle: error.message });
     }
 });
 
 // ============================================
 // GET /api/auth/verify
 // ============================================
-// Verifica si el token es valido y devuelve datos del usuario
 router.get('/verify', verificarToken, async (req, res) => {
     try {
-        // El middleware ya verifico el token y puso los datos en req.usuario
-        res.json({
-            error: false,
-            mensaje: 'Token valido',
-            usuario: req.usuario
-        });
+        res.json({ error: false, mensaje: 'Token válido', usuario: req.usuario });
     } catch (error) {
-        res.status(500).json({
-            error: true,
-            mensaje: 'Error al verificar token'
-        });
+        res.status(500).json({ error: true, mensaje: 'Error al verificar token' });
     }
 });
 
 // ============================================
 // GET /api/auth/profile
 // ============================================
-// Retorna los datos del usuario desde la base de datos
 router.get('/profile', verificarToken, async (req, res) => {
     try {
-        const [usuarios] = await pool.query(
+        const [rows] = await pool.query(
             'SELECT id, username, nombre_completo, email, rol, activo, fecha_creacion FROM usuarios WHERE id = ? AND activo = TRUE',
             [req.usuario.id]
         );
-
-        if (usuarios.length === 0) {
-            return res.status(404).json({
-                error: true,
-                mensaje: 'Usuario no encontrado'
-            });
+        if (rows.length === 0) {
+            return res.status(404).json({ error: true, mensaje: 'Usuario no encontrado' });
         }
-
-        const usuario = usuarios[0];
-
-        res.json({
-            error: false,
-            usuario
-        });
+        res.json({ error: false, usuario: rows[0] });
     } catch (error) {
-        console.error('Error al cargar perfil:', error);
-        res.status(500).json({
-            error: true,
-            mensaje: 'Error al obtener datos del perfil'
-        });
+        console.error('ERROR PROFILE:', error);
+        res.status(500).json({ error: true, mensaje: 'Error al obtener perfil' });
     }
 });
 
 // ============================================
 // POST /api/auth/logout
 // ============================================
-// Cierra la sesion (invalida el token en la BD)
 router.post('/logout', verificarToken, async (req, res) => {
     try {
         const token = req.headers['authorization'].split(' ')[1];
-
-        // Marcar la sesion como inactiva
-        await pool.query(
-            'UPDATE sesiones SET activa = FALSE WHERE token = ?',
-            [token]
-        );
-
-        res.json({
-            error: false,
-            mensaje: 'Sesion cerrada exitosamente'
-        });
+        await pool.query('UPDATE sesiones SET activa = FALSE WHERE token = ?', [token]);
+        res.json({ error: false, mensaje: 'Sesión cerrada exitosamente' });
     } catch (error) {
-        res.status(500).json({
-            error: true,
-            mensaje: 'Error al cerrar sesion'
-        });
+        console.error('ERROR LOGOUT:', error);
+        res.status(500).json({ error: true, mensaje: 'Error al cerrar sesión' });
     }
 });
 
