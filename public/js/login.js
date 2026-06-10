@@ -4,12 +4,12 @@
 
 const API_URL = window.API_URL;
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     const loginBtn = document.getElementById('loginBtn');
     const usernameInput = document.getElementById('username');
     const passwordInput = document.getElementById('password');
 
-    
+
 
     // Verificar si ya hay sesion activa
     const token = localStorage.getItem('token');
@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     if (loginBtn) {
-        loginBtn.addEventListener('click', async function() {
+        loginBtn.addEventListener('click', async function () {
             const username = usernameInput.value.trim();
             const password = passwordInput.value.trim();
 
@@ -37,20 +37,27 @@ document.addEventListener('DOMContentLoaded', function() {
             loginBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Verificando...';
 
             try {
+
+                console.log('Username:', username);
+                console.log('Password:', password);
+                console.log('API URL:', window.API_URL);
                 const response = await fetch(`${window.API_URL}/auth/login`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        username: username,
-                        password: password
+                        username,
+                        password
                     })
                 });
 
                 const data = await response.json();
 
-               if (response.ok && !data.error) {
+                console.log('Status:', response.status);
+                console.log('Response:', data);
+
+                if (response.ok && !data.error) {
                     // Guardar token y datos del usuario
                     localStorage.setItem('token', data.token);
                     localStorage.setItem('usuario', JSON.stringify(data.usuario));
@@ -75,7 +82,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             } catch (error) {
                 console.error('Error de conexion:', error);
-                
+
                 // Si no hay conexion al backend, mostrar opcion de modo offline
                 Swal.fire({
                     icon: 'error',
@@ -116,7 +123,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Enter key to login
     if (passwordInput) {
-        passwordInput.addEventListener('keypress', function(e) {
+        passwordInput.addEventListener('keypress', function (e) {
             if (e.key === 'Enter') {
                 loginBtn.click();
             }
@@ -126,6 +133,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Verificar si el token es valido
 async function verificarSesion(token) {
+    console.log('Username:', username);
+    console.log('Password:', password);
+    console.log('API URL:', window.API_URL);
     try {
         const response = await fetch(`${window.API_URL}/auth/verificar`, {
             method: 'GET',
