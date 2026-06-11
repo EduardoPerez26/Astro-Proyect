@@ -27,10 +27,7 @@ app.use(cors({
     origin: [
         'http://localhost:4321',
         'http://localhost:3001',
-<<<<<<< HEAD
         'https://astro-proyect-akfs.vercel.app',
-=======
->>>>>>> f222ec885d047a7d8540a51d00f6aa1202f6da66
         'https://astro-proyect-tau.vercel.app'
     ],
     credentials: true,
