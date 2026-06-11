@@ -1872,7 +1872,10 @@ async function guardarConciliacionServidor() {
     const token = localStorage.getItem('token');
 
     const restaurante =
-        document.getElementById('selectRestaurante')?.value;
+        document
+            .getElementById('selectRestaurante')
+            ?.selectedOptions[0]
+            ?.dataset?.codigo;
 
     if (!token) {
         Swal.fire({
