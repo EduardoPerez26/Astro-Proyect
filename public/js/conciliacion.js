@@ -1903,10 +1903,25 @@ async function guardarConciliacionServidor() {
         didOpen: () => Swal.showLoading()
     });
 
+    if (!datosExtraidos.length) {
+
+        Swal.fire({
+            icon: 'warning',
+            title: 'Sin conciliación',
+            text: 'Primero genera la conciliación'
+        });
+
+        return;
+    }
+
     try {
 
+
+        const workbookFinal =
+            generarWorkbookConConciliacion();
+
         const wbout = XLSX.write(
-            workbook,
+            workbookFinal,
             {
                 bookType: 'xlsx',
                 type: 'array'
@@ -1978,6 +1993,76 @@ async function guardarConciliacionServidor() {
             text: error.message
         });
     }
+}
+
+function generarWorkbookConConciliacion() {
+
+    const nuevoWorkbook = XLSX.utils.book_new();
+
+    // Copiar todas las hojas originales
+    workbook.SheetNames.forEach(sheetName => {
+
+        const sheet = workbook.Sheets[sheetName];
+
+        XLSX.utils.book_append_sheet(
+            nuevoWorkbook,
+            sheet,
+            sheetName
+        );
+
+    });
+
+    // Crear datos de conciliación usando configuración dinámica
+    const columnas =
+        currentRestaurantConfig?.tableColumns || [];
+
+    const datosConciliacion =
+        datosExtraidos.map(row => {
+
+            const obj = {};
+
+            columnas.forEach(col => {
+
+                obj[col.label] =
+                    row[col.key];
+
+            });
+
+            return obj;
+
+        });
+
+    // Crear hoja Conciliation
+    const ws =
+        XLSX.utils.json_to_sheet(
+            datosConciliacion
+        );
+
+    // Si ya existe la hoja la reemplazamos
+    if (
+        nuevoWorkbook.SheetNames.includes(
+            'Conciliation'
+        )
+    ) {
+
+        delete nuevoWorkbook.Sheets[
+            'Conciliation'
+        ];
+
+        nuevoWorkbook.SheetNames =
+            nuevoWorkbook.SheetNames.filter(
+                n => n !== 'Conciliation'
+            );
+
+    }
+
+    XLSX.utils.book_append_sheet(
+        nuevoWorkbook,
+        ws,
+        'Conciliation'
+    );
+
+    return nuevoWorkbook;
 }
 
 
