@@ -184,5 +184,106 @@ router.get(
         }
     }
 );
+router.delete(
+    '/:id',
+    verificarToken,
+    checkPermission('upload_files'),
+    async (req, res) => {
+        try {
+
+            const [archivos] = await pool.query(
+                'SELECT * FROM archivos_excel WHERE id = ?',
+                [req.params.id]
+            );
+
+            if (archivos.length === 0) {
+                return res.status(404).json({
+                    error: true,
+                    message: 'Archivo no encontrado'
+                });
+            }
+
+            const archivo = archivos[0];
+
+            const rutaCompleta = path.join(
+                __dirname,
+                '..',
+                archivo.ruta_archivo
+            );
+
+            if (fs.existsSync(rutaCompleta)) {
+                fs.unlinkSync(rutaCompleta);
+            }
+
+            await pool.query(
+                'DELETE FROM archivos_excel WHERE id = ?',
+                [req.params.id]
+            );
+
+            res.json({
+                success: true,
+                message: 'Archivo eliminado'
+            });
+
+        } catch (error) {
+            console.error('Error eliminando archivo:', error);
+
+            res.status(500).json({
+                error: true,
+                message: 'Error eliminando archivo'
+            });
+        }
+    }
+);
+
+router.get(
+    '/:id/descargar',
+    verificarToken,
+    checkPermission('view_archivos'),
+    async (req, res) => {
+        try {
+
+            const [archivos] = await pool.query(
+                'SELECT * FROM archivos_excel WHERE id = ?',
+                [req.params.id]
+            );
+
+            if (!archivos.length) {
+                return res.status(404).json({
+                    error: true,
+                    message: 'Archivo no encontrado'
+                });
+            }
+
+            const archivo = archivos[0];
+
+            const rutaCompleta = path.join(
+                __dirname,
+                '..',
+                archivo.ruta_archivo
+            );
+
+            if (!fs.existsSync(rutaCompleta)) {
+                return res.status(404).json({
+                    error: true,
+                    message: 'El archivo físico no existe'
+                });
+            }
+
+            res.download(
+                rutaCompleta,
+                archivo.nombre_original
+            );
+
+        } catch (error) {
+            console.error('Error descargando archivo:', error);
+
+            res.status(500).json({
+                error: true,
+                message: 'Error descargando archivo'
+            });
+        }
+    }
+);
 
 module.exports = router;
