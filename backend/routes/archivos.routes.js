@@ -55,8 +55,6 @@ router.post(
                 });
             }
 
-            const { originalname, filename } = req.file;
-
             console.log('================================');
             console.log('SUBIR ARCHIVO');
             console.log('BODY:', req.body);
@@ -86,7 +84,9 @@ router.post(
             }
 
             const restauranteId = restaurantes[0].id;
-            
+
+            const { originalname, filename, size, mimetype } = req.file;
+
             const [result] = await pool.query(
                 `INSERT INTO archivos_excel
     (
