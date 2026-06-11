@@ -57,6 +57,36 @@ router.post('/login', async (req, res) => {
         console.log('Username BD:', usuario.username);
         console.log('Activo:', usuario.activo);
 
+        // ============================================
+        // OBTENER PERMISOS
+        // ============================================
+
+        let permisosUsuario = {};
+
+        if (usuario.rol === 'admin') {
+            permisosUsuario = {
+                perfil: true,
+                tiendas: true,
+                permisos: true,
+                usuarios: true,
+                dashboard: true,
+                historial: true,
+                documentos: true
+            };
+        } else {
+            if (typeof usuario.permisos === 'string') {
+                permisosUsuario = JSON.parse(usuario.permisos || '{}');
+            } else {
+                permisosUsuario = usuario.permisos || {};
+            }
+        }
+
+        console.log('Permisos usuario:', permisosUsuario);
+
+        // ============================================
+        // VALIDAR PASSWORD
+        // ============================================
+
         const passwordValido = await bcrypt.compare(
             password,
             usuario.password
@@ -105,7 +135,7 @@ router.post('/login', async (req, res) => {
                 nombre: usuario.nombre_completo,
                 email: usuario.email,
                 rol: usuario.rol,
-                permisos
+                permisos: permisosUsuario
             },
             process.env.JWT_SECRET,
             {
@@ -138,7 +168,7 @@ router.post('/login', async (req, res) => {
                 nombre: usuario.nombre_completo,
                 email: usuario.email,
                 rol: usuario.rol,
-                permisos
+                permisos: permisosUsuario
             }
         });
 
