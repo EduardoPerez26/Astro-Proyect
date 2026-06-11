@@ -263,14 +263,9 @@ router.get(
 
             const archivo = archivos[0];
 
+            const rutaCompleta = archivo.ruta_archivo;
+
             console.log('Ruta guardada:', archivo.ruta_archivo);
-
-            const rutaCompleta = path.join(
-                __dirname,
-                '..',
-                archivo.ruta_archivo
-            );
-
             console.log('Ruta completa:', rutaCompleta);
             console.log('Existe archivo:', fs.existsSync(rutaCompleta));
 
@@ -281,7 +276,10 @@ router.get(
                 });
             }
 
-            res.download(rutaCompleta, archivo.nombre_original);
+            res.download(
+                rutaCompleta,
+                archivo.nombre_original
+            );
 
         } catch (error) {
             console.error('Error descargando archivo:', error);
