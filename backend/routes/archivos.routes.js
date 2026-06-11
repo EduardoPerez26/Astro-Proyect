@@ -87,26 +87,30 @@ router.post(
 
             const restauranteId = restaurantes[0].id;
 
-            console.log('Restaurante encontrado:', {
-                id: restauranteId,
-                codigo: restaurantes[0].codigo,
-                nombre: restaurantes[0].nombre
-            });
+            const { originalname, filename, size, mimetype } = req.file;
 
             const [result] = await pool.query(
                 `INSERT INTO archivos_excel
-                (
-                    nombre_original,
-                    nombre_servidor,
-                    usuario_id,
-                    restaurante_id
-                )
-                VALUES (?, ?, ?, ?)`,
+    (
+        usuario_id,
+        restaurante_id,
+        nombre_original,
+        nombre_servidor,
+        tamano_bytes,
+        tipo_mime,
+        ruta_archivo,
+        estado
+    )
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
                 [
+                    req.usuario.id,
+                    restauranteId,
                     originalname,
                     filename,
-                    req.usuario.id,
-                    restauranteId
+                    size,
+                    mimetype,
+                    `/uploads/${filename}`,
+                    'pendiente'
                 ]
             );
 
