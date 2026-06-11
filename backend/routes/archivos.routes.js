@@ -101,7 +101,13 @@ router.post(
 
             const restauranteId = restaurantes[0].id;
 
-            const { originalname, filename, size, mimetype } = req.file;
+            const {
+                originalname,
+                filename,
+                size,
+                mimetype,
+                path: filePath
+            } = req.file;
 
             const [result] = await pool.query(
                 `INSERT INTO archivos_excel
@@ -123,7 +129,7 @@ router.post(
                     filename,
                     size,
                     mimetype,
-                    `/uploads/${filename}`,
+                    filePath,   // <- NO '/uploads/...'
                     'pendiente'
                 ]
             );
@@ -269,20 +275,17 @@ router.get(
 
             const rutaCompleta = archivo.ruta_archivo;
 
-            console.log('Ruta completa:', rutaCompleta);
-            console.log('Existe archivo:', fs.existsSync(rutaCompleta));
+console.log('Ruta completa:', rutaCompleta);
+console.log('Existe archivo:', fs.existsSync(rutaCompleta));
 
-            if (!fs.existsSync(rutaCompleta)) {
-                return res.status(404).json({
-                    error: true,
-                    message: 'El archivo físico no existe'
-                });
-            }
+if (!fs.existsSync(rutaCompleta)) {
+    return res.status(404).json({
+        error: true,
+        message: 'Archivo físico no existe'
+    });
+}
 
-            res.download(
-                rutaCompleta,
-                archivo.nombre_original
-            );
+res.download(rutaCompleta, archivo.nombre_original);
 
         } catch (error) {
             console.error('Error descargando archivo:', error);
