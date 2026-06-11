@@ -13,7 +13,7 @@ const { verificarToken, esAdmin, checkPermission } = require('../middleware/auth
 // GET /api/restaurantes
 // ============================================
 // Lista todos los restaurantes activos
-router.get('/', verificarToken, checkPermission('view_tiendas'), async (req, res) => {
+router.get('/', verificarToken, checkPermission('view_restaurantes'), async (req, res) => {
     try {
         const [restaurantes] = await pool.query(
             'SELECT * FROM restaurantes WHERE activo = TRUE ORDER BY nombre'
@@ -37,7 +37,7 @@ router.get('/', verificarToken, checkPermission('view_tiendas'), async (req, res
 // GET /api/restaurantes/:id
 // ============================================
 // Obtiene un restaurante por ID
-router.get('/:id', verificarToken, checkPermission('view_tiendas'), async (req, res) => {
+router.get('/:id', verificarToken, checkPermission('view_restaurantes'), async (req, res) => {
     try {
         const [restaurantes] = await pool.query(
             'SELECT * FROM restaurantes WHERE id = ?',
