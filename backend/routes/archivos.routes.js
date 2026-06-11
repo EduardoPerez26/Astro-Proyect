@@ -58,8 +58,11 @@ router.post(
     verificarToken,
     checkPermission('upload_files'),
     upload.single('archivo'),
+
     async (req, res) => {
         try {
+            console.log('UPLOAD DIR:', uploadDir);
+            console.log('FILE SAVED:', req.file.path);
             if (!req.file) {
                 return res.status(400).json({
                     error: true,
