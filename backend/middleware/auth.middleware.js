@@ -2,6 +2,8 @@ const jwt = require('jsonwebtoken');
 const { pool } = require('../config/database');
 
 const verificarToken = async (req, res, next) => {
+    console.log('HEADERS:', req.headers);
+    console.log('AUTHORIZATION:', req.headers.authorization);
     const authHeader = req.headers['authorization'];
     if (!authHeader) {
         return res.status(401).json({ error: true, message: 'Token no proporcionado' });
@@ -62,7 +64,7 @@ const checkPermission = (permiso) => {
             console.log('Usuario req.usuario:', req.usuario);
             console.log('Rol:', req.usuario?.rol);
             console.log('================================');
-            
+
             if (!req.usuario) {
                 return res.status(401).json({
                     error: true,

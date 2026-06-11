@@ -335,6 +335,9 @@ async function descargarArchivo(id) {
     }
 
     try {
+
+        console.log('TOKEN:', token);
+        console.log('URL:', `${window.API_URL}/archivos/${id}/descargar`);
         const response = await fetch(`${window.API_URL}/archivos/${id}/descargar`, {
             headers: {
                 'Authorization': `Bearer ${token}`
