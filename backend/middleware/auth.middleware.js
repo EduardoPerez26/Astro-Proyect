@@ -61,6 +61,59 @@ const checkPermission = (permiso) => {
                 });
             }
 
+            // Admin tiene acceso total
+            if (req.usuario.rol === 'admin') {
+                return next();
+            }
+
+            const [rows] = await pool.query(
+                'SELECT permisos FROM usuarios WHERE id = ? LIMIT 1',
+                [req.usuario.id]
+            );
+
+            if (!rows.length) {
+                return res.status(404).json({
+                    error: true,
+                    message: 'Usuario no encontrado'
+                });
+            }
+
+            let permisos = {};
+
+            if (typeof rows[0].permisos === 'string') {
+                permisos = JSON.parse(rows[0].permisos || '{}');
+            } else {
+                permisos = rows[0].permisos || {};
+            }
+
+            const mapping = {
+                view_dashboard: 'dashboard',
+
+                view_archivos: 'documentos',
+                upload_files: 'documentos',
+                validate_files: 'documentos',
+
+                view_validaciones: 'historial',
+
+                view_usuarios: 'usuarios',
+                manage_users: 'usuarios',
+
+                view_permisos: 'permisos',
+
+                view_restaurantes: 'tiendas',
+                manage_restaurantes: 'tiendas',
+
+                view_profile: 'perfil'
+            };
+            const permisoJson = mapping[permiso] || permiso;
+
+            if (!permisos[permisoJson]) {
+                return res.status(403).json({
+                    error: true,
+                    message: `Acceso denegado: permiso requerido: ${permiso}`
+                });
+            }
+
             next();
 
         } catch (error) {
