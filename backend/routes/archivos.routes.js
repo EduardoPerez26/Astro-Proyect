@@ -200,8 +200,15 @@ router.get(
 
             const archivo = archivos[0];
 
-            console.log('BD:', archivo);
-            console.log('Ruta:', archivo.ruta_archivo);
+            console.log('Current dir:', process.cwd());
+            console.log('__dirname:', __dirname);
+
+            console.log(
+                'Contenido uploads:',
+                fs.existsSync('/app/uploads')
+                    ? fs.readdirSync('/app/uploads')
+                    : 'NO EXISTE /app/uploads'
+            );
 
             if (!fs.existsSync(archivo.ruta_archivo)) {
 
