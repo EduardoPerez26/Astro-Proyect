@@ -61,8 +61,9 @@ router.post(
 
     async (req, res) => {
         try {
-            console.log('UPLOAD DIR:', uploadDir);
-            console.log('FILE SAVED:', req.file.path);
+            console.log('FILE PATH:', req.file.path);
+            console.log('DESTINATION:', req.file.destination);
+            console.log('FILENAME:', req.file.filename);
             if (!req.file) {
                 return res.status(400).json({
                     error: true,
