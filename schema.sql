@@ -348,6 +348,127 @@ CREATE TABLE IF NOT EXISTS sesiones (
     );
 
 -- ============================================
+-- TABLA: templates_conciliacion
+-- ============================================
+-- Plantillas de conciliacion por restaurante.
+-- La columna 'configuracion' guarda en JSON la definicion de los
+-- conceptos/columnas que se esperan al conciliar.
+-- ============================================
+CREATE TABLE IF NOT EXISTS templates_conciliacion (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+
+    -- Restaurante al que pertenece el template
+    restaurante_id INT NOT NULL,
+
+    -- Nombre del template (ej: 'Conciliacion diaria POS')
+    nombre VARCHAR(150) NOT NULL,
+
+    -- Descripcion opcional
+    descripcion VARCHAR(255),
+
+    -- Definicion de conceptos/columnas esperadas en formato JSON
+    configuracion JSON NOT NULL,
+
+    -- Marca si es el template por defecto del restaurante
+    es_default BOOLEAN DEFAULT FALSE,
+
+    activo BOOLEAN DEFAULT TRUE,
+    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (restaurante_id) REFERENCES restaurantes(id) ON DELETE CASCADE,
+
+    INDEX idx_restaurante (restaurante_id),
+    INDEX idx_activo (activo)
+);
+
+-- ============================================
+-- TABLA: conciliaciones
+-- ============================================
+-- Cada registro es una conciliacion guardada por un usuario.
+-- 'datos_extraidos' guarda en JSON la tabla completa (por tienda o
+-- por concepto) tal como se mostro en pantalla al momento de guardar.
+-- ============================================
+CREATE TABLE IF NOT EXISTS conciliaciones (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+
+    restaurante_id INT NOT NULL,
+    template_id INT NOT NULL,
+    usuario_id INT NOT NULL,
+
+    -- Fecha de la conciliacion
+    fecha_conciliacion DATE NOT NULL,
+
+    -- Periodo opcional que cubre la conciliacion
+    periodo_inicio DATE NULL,
+    periodo_fin DATE NULL,
+
+    -- Datos completos en JSON
+    datos_extraidos JSON NOT NULL,
+
+    -- Estadisticas calculadas en el backend al guardar
+    total_conceptos INT DEFAULT 0,
+    conceptos_ok INT DEFAULT 0,
+    conceptos_diferencia INT DEFAULT 0,
+    monto_total_diferencia DECIMAL(15,2) DEFAULT 0,
+
+    -- Notas del usuario
+    notas TEXT,
+
+    -- Estado de la conciliacion
+    estado ENUM('borrador', 'finalizada', 'revisada') DEFAULT 'borrador',
+
+    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (restaurante_id) REFERENCES restaurantes(id) ON DELETE RESTRICT,
+    FOREIGN KEY (template_id) REFERENCES templates_conciliacion(id) ON DELETE RESTRICT,
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE RESTRICT,
+
+    INDEX idx_restaurante (restaurante_id),
+    INDEX idx_template (template_id),
+    INDEX idx_usuario (usuario_id),
+    INDEX idx_fecha (fecha_conciliacion),
+    INDEX idx_estado (estado)
+);
+
+-- ============================================
+-- TABLA: valores_esperados
+-- ============================================
+-- Valores esperados por concepto/fecha para un restaurante.
+-- Se usan como referencia al conciliar. La clave unica
+-- (restaurante_id, fecha, concepto) permite el UPSERT del backend.
+-- ============================================
+CREATE TABLE IF NOT EXISTS valores_esperados (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+
+    restaurante_id INT NOT NULL,
+    fecha DATE NOT NULL,
+
+    -- Concepto/columna (ej: 'net_sales', 'discounts')
+    concepto VARCHAR(150) NOT NULL,
+
+    -- Valor esperado
+    valor DECIMAL(15,2) NOT NULL DEFAULT 0,
+
+    -- Origen del valor (ej: 'manual', 'pos', 'banco')
+    fuente VARCHAR(50) DEFAULT 'manual',
+
+    usuario_id INT NULL,
+
+    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (restaurante_id) REFERENCES restaurantes(id) ON DELETE CASCADE,
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE SET NULL,
+
+    -- Clave unica para soportar INSERT ... ON DUPLICATE KEY UPDATE
+    UNIQUE KEY uk_restaurante_fecha_concepto (restaurante_id, fecha, concepto),
+
+    INDEX idx_restaurante_fecha (restaurante_id, fecha)
+);
+
+-- ============================================
 -- DATOS INICIALES
 -- ============================================
 
@@ -363,6 +484,22 @@ INSERT INTO restaurantes (codigo, nombre, descripcion, icono, color_clase) VALUE
 ('burger-king', 'Burger King', 'Hamburguesas y mas', 'fa-burger', 'warning'),
 ('popeyes', 'Popeyes', 'Pollo frito estilo Louisiana', 'fa-drumstick-bite', 'danger'),
 ('kfc', 'KFC', 'Kentucky Fried Chicken', 'fa-bowl-food', 'success');
+
+-- Insertar un template de conciliacion por defecto para cada restaurante
+-- La configuracion define los conceptos/columnas esperadas del POS.
+INSERT INTO templates_conciliacion (restaurante_id, nombre, descripcion, configuracion, es_default)
+SELECT
+    r.id,
+    'Conciliacion diaria POS',
+    'Template por defecto generado automaticamente',
+    JSON_OBJECT(
+        'conceptos', JSON_ARRAY(
+            'sales_tax', 'gross_sales_pos', 'discounts', 'promo', 'donations',
+            'net_sales', 'gc_sold', 'paid_out', 'paid_in', 'total_revenue'
+        )
+    ),
+    TRUE
+FROM restaurantes r;
 
 -- ============================================
 -- CATEGORIAS DE PERMISOS INICIALES
