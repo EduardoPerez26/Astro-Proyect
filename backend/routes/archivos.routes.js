@@ -49,25 +49,9 @@ router.post(
     async (req, res) => {
         try {
             const { originalname, filename } = req.file;
-            const [result] = await pool.query(
-                `INSERT INTO archivos_excel (
-        usuario_id,
-        restaurante_id,
-        nombre_original,
-        nombre_servidor,
-        tamano_bytes,
-        tipo_mime,
-        ruta_archivo
-    ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-                [
-                    req.usuario.id,
-                    req.body.restaurante_id || 1,
-                    req.file.originalname,
-                    req.file.filename,
-                    req.file.size,
-                    req.file.mimetype,
-                    req.file.path
-                ]
+            const result = await pool.query(
+                'INSERT INTO archivos_excel (nombre_original, nombre_servidor, usuario_id) VALUES (?, ?, ?)',
+                [originalname, filename, req.usuario.id]
             );
             res.json({ success: true, archivoId: result[0].insertId });
         } catch (error) {
