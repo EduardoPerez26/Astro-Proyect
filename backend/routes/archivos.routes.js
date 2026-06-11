@@ -31,7 +31,7 @@ router.get(
     checkPermission('view_archivos'), // mapea al JSON: documentos
     async (req, res) => {
         try {
-            const [rows] = await pool.query('SELECT * FROM archivos ORDER BY id DESC');
+            const [rows] = await pool.query('SELECT * FROM archivos_excel ORDER BY id DESC');
             res.json(rows);
         } catch (error) {
             console.error('Error al obtener archivos:', error);
@@ -50,7 +50,7 @@ router.post(
         try {
             const { originalname, filename } = req.file;
             const result = await pool.query(
-                'INSERT INTO archivos (nombre_original, nombre_guardado, usuario_id) VALUES (?, ?, ?)',
+                'INSERT INTO archivos_excel (nombre_original, nombre_guardado, usuario_id) VALUES (?, ?, ?)',
                 [originalname, filename, req.usuario.id]
             );
             res.json({ success: true, archivoId: result[0].insertId });
