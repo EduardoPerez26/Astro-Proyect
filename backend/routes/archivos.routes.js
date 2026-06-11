@@ -263,10 +263,7 @@ router.get(
 
             const archivo = archivos[0];
 
-            const rutaCompleta = path.join(
-                process.cwd(),
-                archivo.ruta_archivo
-            );
+            const rutaCompleta = archivo.ruta_archivo;
 
             console.log('Ruta completa:', rutaCompleta);
             console.log('Existe archivo:', fs.existsSync(rutaCompleta));
