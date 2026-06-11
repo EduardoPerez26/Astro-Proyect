@@ -1143,7 +1143,7 @@ async function guardarConciliacion() {
     const restauranteId = document.getElementById('selectRestaurante').value;
     const templateId = document.getElementById('selectTemplate').value;
     const fecha = document.getElementById('fechaConciliacion').value;
-    const notas = document.getElementById('notasConciliacion').value;
+    const notas = document.getElementById('notasConciliacion')?.value || '';
 
     if (!restauranteId || !templateId || !fecha || datosExtraidos.length === 0) {
         Swal.fire('Error', 'Completa todos los campos y sube un archivo', 'warning');
@@ -1153,25 +1153,29 @@ async function guardarConciliacion() {
     try {
         const token = localStorage.getItem('token');
 
-        // Guardar valores esperados
-        const valoresArray = datosExtraidos.map(d => ({
-            concepto: d.concepto,
-            valor: d.valorEsperado,
-            fuente: 'manual'
-        }));
+        // Guardar valores esperados (solo si los datos son por concepto)
+        const valoresArray = datosExtraidos
+            .filter(d => d.concepto !== undefined && d.concepto !== null)
+            .map(d => ({
+                concepto: d.concepto,
+                valor: d.valorEsperado || 0,
+                fuente: 'manual'
+            }));
 
-        await fetch(`${window.API_URL}/conciliaciones/valores-esperados`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({
-                restaurante_id: restauranteId,
-                fecha: fecha,
-                valores: valoresArray
-            })
-        });
+        if (valoresArray.length > 0) {
+            await fetch(`${window.API_URL}/conciliaciones/valores-esperados`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    restaurante_id: restauranteId,
+                    fecha: fecha,
+                    valores: valoresArray
+                })
+            });
+        }
 
         // Guardar conciliacion
         const response = await fetch(`${window.API_URL}/conciliaciones`, {

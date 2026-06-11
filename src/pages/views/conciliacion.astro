@@ -200,6 +200,28 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
                 </div>
             </div>
 
+            <!-- Notas y acciones -->
+            <div class="notes-section">
+                <label for="notasConciliacion">Notas</label>
+                <textarea
+                    id="notasConciliacion"
+                    class="form-textarea"
+                    rows="3"
+                    placeholder="Agrega notas o comentarios sobre esta conciliacion..."
+                ></textarea>
+
+                <div class="conciliacion-actions">
+                    <button class="btn btn-secondary" id="btnExportPdf">
+                        <i class="fa-solid fa-file-pdf"></i>
+                        Exportar PDF
+                    </button>
+                    <button class="btn btn-primary" id="btnGuardar">
+                        <i class="fa-solid fa-floppy-disk"></i>
+                        Guardar conciliacion
+                    </button>
+                </div>
+            </div>
+        </div>
 
 
     <!-- Scripts -->
@@ -492,6 +514,13 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
         font-weight: 600;
         color: var(--gray-700);
         margin-bottom: 8px;
+    }
+
+    .conciliacion-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+        margin-top: 16px;
     }
 
     .form-textarea {
