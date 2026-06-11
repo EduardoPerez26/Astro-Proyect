@@ -44,19 +44,42 @@ router.get(
 router.post(
     '/subir',
     verificarToken,
-    checkPermission('upload_files'), // mapea al JSON: documentos
+    checkPermission('upload_files'),
     upload.single('archivo'),
     async (req, res) => {
         try {
             const { originalname, filename } = req.file;
-            const result = await pool.query(
-                'INSERT INTO archivos_excel (nombre_original, nombre_servidor, usuario_id) VALUES (?, ?, ?)',
-                [originalname, filename, req.usuario.id]
+
+            console.log('BODY:', req.body);
+
+            const restauranteId = req.body.restaurante_id;
+
+            const [result] = await pool.query(
+                `INSERT INTO archivos_excel
+                (nombre_original, nombre_servidor, usuario_id, restaurante_id)
+                VALUES (?, ?, ?, ?)`,
+                [
+                    originalname,
+                    filename,
+                    req.usuario.id,
+                    restauranteId
+                ]
             );
-            res.json({ success: true, archivoId: result[0].insertId });
+
+            res.json({
+                success: true,
+                archivo: {
+                    id: result.insertId
+                }
+            });
+
         } catch (error) {
             console.error('Error al subir archivo:', error);
-            res.status(500).json({ error: true, message: 'Error al subir archivo' });
+
+            res.status(500).json({
+                error: true,
+                message: 'Error al subir archivo'
+            });
         }
     }
 );

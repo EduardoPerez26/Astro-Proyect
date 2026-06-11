@@ -1124,7 +1124,7 @@ async function guardarEnServidor() {
         const formData = new FormData();
         const nombreArchivo = statusText?.textContent || 'archivo-excel.xlsx';
         formData.append('archivo', blob, nombreArchivo);
-        formData.append('restaurante', restaurante);
+        formData.append('restaurante_id', restaurante);
         formData.append('procesar_datos', 'true');
 
         const response = await fetch(`${window.API_URL}/archivos/subir`, {
