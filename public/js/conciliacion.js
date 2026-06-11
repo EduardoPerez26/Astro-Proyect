@@ -464,6 +464,65 @@ function initEventListeners() {
             }
         );
 
+    document.querySelectorAll('.tab-btn')
+        .forEach(btn => {
+
+            btn.addEventListener('click', () => {
+
+                document
+                    .querySelectorAll('.tab-btn')
+                    .forEach(b => b.classList.remove('active'));
+
+                btn.classList.add('active');
+
+                activeTab =
+                    btn.dataset.tab;
+
+                renderActiveTab();
+
+            });
+
+        });
+
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+
+        btn.addEventListener('click', () => {
+
+            document
+                .querySelectorAll('.tab-btn')
+                .forEach(b => b.classList.remove('active'));
+
+            btn.classList.add('active');
+
+            const tab = btn.dataset.tab;
+
+            switch (tab) {
+
+                case 'dailySales':
+                    renderDailySales();
+                    break;
+
+                case 'dailySalesRed':
+                    renderDailySalesRed();
+                    break;
+
+                case 'taxLiability':
+                    renderTaxLiability();
+                    break;
+
+                case 'cashSheet':
+                    renderCashSheet();
+                    break;
+
+                case 'cashSummary':
+                    renderCashSummary();
+                    break;
+            }
+
+        });
+
+    });
+
 }
 
 // ============================================
@@ -603,6 +662,19 @@ async function onRestauranteChange() {
         window.RestaurantConfigs?.[
         codigo
         ] || null;
+
+    const tabs =
+        document.getElementById('tacoBellTabs');
+
+    if (codigo === 'taco-bell') {
+
+        tabs.style.display = 'flex';
+
+    } else {
+
+        tabs.style.display = 'none';
+
+    }
 
 
     if (!restauranteId) {

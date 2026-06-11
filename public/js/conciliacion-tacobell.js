@@ -1,3 +1,15 @@
+let taxReviewData = [];
+let redData = [];
+let statisticalDeliveryData = [];
+let journalData = [];
+let statisticalJournalData = [];
+let activeTab = 'dailySales';
+
+let dailySalesData = [];
+let dailySalesRedData = [];
+let taxLiabilityData = [];
+let cashSheetData = [];
+let cashSummaryData = [];
 function generarConciliacionTacoBell() {
 
     if (!salesWorkbook) {
@@ -404,11 +416,622 @@ function generarConciliacionTacoBell() {
     console.log(datosExtraidos[0]);
     console.log(datosExtraidos.length);
 
+    generarTaxReview();
+    generarDailySalesRED();
+    generarStatisticalDelivery();
+
+    generarTaxLiability();
+    taxLiabilityData = taxReviewData;
+    generarCashSheet();
+    generarCashSummary();
+
     renderTablaSucursales();
 
     llenarFiltroTiendas();
 
     actualizarResumen();
 
-    actualizarTotales()
+    actualizarTotales();
+
+    dailySalesData =
+        datosExtraidos;
+
+    generarDailySalesRED();
+
+    dailySalesRedData = redData;
+
+    renderActiveTab();
+}
+
+function generarTaxReview() {
+
+    taxReviewData = datosExtraidos.map(row => {
+
+        const taxRate =
+            obtenerTaxRate(row.store);
+
+        const netSales =
+            Number(row.netSales || 0);
+
+        const discounts =
+            Number(row.discounts || 0);
+
+        const salesTax =
+            Number(row.salesTax || 0);
+
+        const taxCalculation =
+            netSales * taxRate;
+
+        return {
+
+            store: row.store,
+
+            taxRate,
+
+            netSales,
+
+            discounts,
+
+            taxableSales: netSales,
+
+            taxCalculation,
+
+            salesTax,
+
+            difference:
+                taxCalculation - salesTax,
+
+            rateCalculation:
+                netSales
+                    ? salesTax / netSales
+                    : 0
+
+        };
+
+    });
+
+}
+
+function generarStatisticalDelivery() {
+
+    statisticalDeliveryData = [];
+
+    let lineNo = 1;
+
+    datosExtraidos.forEach(row => {
+
+        const store = Number(row.store);
+
+        if ((row.dd || 0) !== 0) {
+
+            statisticalDeliveryData.push({
+                journal: 'SJ',
+                date: fechaConciliacionActual,
+                lineNo: lineNo++,
+                description: 'Statistical Delivery Sales',
+                memo: 'Statistical Delivery Sales',
+                account: 990300,
+                store,
+                debit: row.dd,
+                credit: 0
+            });
+
+            statisticalDeliveryData.push({
+                journal: 'SJ',
+                date: fechaConciliacionActual,
+                lineNo: lineNo++,
+                description: 'Statistical Delivery Sales',
+                memo: 'Statistical Delivery Sales',
+                account: 990301,
+                store,
+                debit: 0,
+                credit: row.dd
+            });
+        }
+
+        if ((row.uber || 0) !== 0) {
+
+            statisticalDeliveryData.push({
+                journal: 'SJ',
+                date: fechaConciliacionActual,
+                lineNo: lineNo++,
+                description: 'Statistical Delivery Sales',
+                memo: 'Statistical Delivery Sales',
+                account: 990200,
+                store,
+                debit: row.uber,
+                credit: 0
+            });
+
+            statisticalDeliveryData.push({
+                journal: 'SJ',
+                date: fechaConciliacionActual,
+                lineNo: lineNo++,
+                description: 'Statistical Delivery Sales',
+                memo: 'Statistical Delivery Sales',
+                account: 990201,
+                store,
+                debit: 0,
+                credit: row.uber
+            });
+        }
+
+    });
+
+    console.log(
+        'Statistical Delivery generado:',
+        statisticalDeliveryData.length
+    );
+}
+
+function generarDailySalesRED() {
+
+    redData = [];
+
+    let lineNo = 1;
+
+    datosExtraidos.forEach(row => {
+
+        const store = Number(row.store);
+
+        // Gross Food Sales
+        redData.push({
+            journal: 'SJ',
+            date: fechaConciliacionActual,
+            lineNo: lineNo++,
+            description: 'POS Data Upload Sabretooth',
+            memo: 'Gross Food Sales',
+            account: 400200,
+            store,
+            debit: 0,
+            credit: row.grossSalesPos || 0
+        });
+
+        // Discounts
+        if ((row.discounts || 0) !== 0) {
+
+            redData.push({
+                journal: 'SJ',
+                date: fechaConciliacionActual,
+                lineNo: lineNo++,
+                description: 'POS Data Upload Sabretooth',
+                memo: 'Discounts -Employee meals',
+                account: 410000,
+                store,
+                debit: row.discounts,
+                credit: 0
+            });
+        }
+
+        // Promo
+        if ((row.promo || 0) !== 0) {
+
+            redData.push({
+                journal: 'SJ',
+                date: fechaConciliacionActual,
+                lineNo: lineNo++,
+                description: 'POS Data Upload Sabretooth',
+                memo: 'Coupons - Promotions',
+                account: 410000,
+                store,
+                debit: row.promo,
+                credit: 0
+            });
+        }
+
+        // Sales Tax
+        if ((row.salesTax || 0) !== 0) {
+
+            redData.push({
+                journal: 'SJ',
+                date: fechaConciliacionActual,
+                lineNo: lineNo++,
+                description: 'POS Data Upload Sabretooth',
+                memo: 'Sales Tax Payable',
+                account: 222000,
+                store,
+                debit: 0,
+                credit: row.salesTax
+            });
+        }
+
+        // Donations
+        if ((row.donations || 0) !== 0) {
+
+            redData.push({
+                journal: 'SJ',
+                date: fechaConciliacionActual,
+                lineNo: lineNo++,
+                description: 'POS Data Upload Sabretooth',
+                memo: 'Donations',
+                account: 212000,
+                store,
+                debit: 0,
+                credit: row.donations
+            });
+        }
+
+        // Gift Card Sold
+        if ((row.gcSold || 0) !== 0) {
+
+            redData.push({
+                journal: 'SJ',
+                date: fechaConciliacionActual,
+                lineNo: lineNo++,
+                description: 'POS Data Upload Sabretooth',
+                memo: 'Gift Cards SOLD',
+                account: 115000,
+                store,
+                debit: 0,
+                credit: row.gcSold
+            });
+        }
+
+        // Cash Deposit
+        if ((row.acctCash || 0) !== 0) {
+
+            redData.push({
+                journal: 'SJ',
+                date: fechaConciliacionActual,
+                lineNo: lineNo++,
+                description: 'POS Data Upload Sabretooth',
+                memo: 'Cash Expected Deposit',
+                account: 110500,
+                store,
+                debit: row.acctCash,
+                credit: 0
+            });
+        }
+
+        // Credit Cards
+        if ((row.ccTotals || 0) !== 0) {
+
+            redData.push({
+                journal: 'SJ',
+                date: fechaConciliacionActual,
+                lineNo: lineNo++,
+                description: 'POS Data Upload Sabretooth',
+                memo: 'Credit Cards Expected Deposit',
+                account: 111200,
+                store,
+                debit: row.ccTotals,
+                credit: 0
+            });
+        }
+
+        // AMEX
+        if ((row.amex || 0) !== 0) {
+
+            redData.push({
+                journal: 'SJ',
+                date: fechaConciliacionActual,
+                lineNo: lineNo++,
+                description: 'POS Data Upload Sabretooth',
+                memo: 'AMEX Expected Deposit',
+                account: 111200,
+                store,
+                debit: row.amex,
+                credit: 0
+            });
+        }
+
+        // Gift Card Redeem
+        if ((row.gcRedeem || 0) !== 0) {
+
+            redData.push({
+                journal: 'SJ',
+                date: fechaConciliacionActual,
+                lineNo: lineNo++,
+                description: 'POS Data Upload Sabretooth',
+                memo: 'Gift Cards REEDEM',
+                account: 144800,
+                store,
+                debit: Math.abs(row.gcRedeem),
+                credit: 0
+            });
+        }
+
+        // GrubHub
+        if ((row.gh || 0) !== 0) {
+
+            redData.push({
+                journal: 'SJ',
+                date: fechaConciliacionActual,
+                lineNo: lineNo++,
+                description: 'POS Data Upload Sabretooth',
+                memo: 'GrubHub',
+                account: 124000,
+                store,
+                debit: row.gh,
+                credit: 0
+            });
+        }
+
+        // Uber
+        if ((row.uber || 0) !== 0) {
+
+            redData.push({
+                journal: 'SJ',
+                date: fechaConciliacionActual,
+                lineNo: lineNo++,
+                description: 'POS Data Upload Sabretooth',
+                memo: 'Uber',
+                account: 122000,
+                store,
+                debit: row.uber,
+                credit: 0
+            });
+        }
+
+        // DoorDash
+        if ((row.dd || 0) !== 0) {
+
+            redData.push({
+                journal: 'SJ',
+                date: fechaConciliacionActual,
+                lineNo: lineNo++,
+                description: 'POS Data Upload Sabretooth',
+                memo: 'DoorDash',
+                account: 123000,
+                store,
+                debit: row.dd,
+                credit: 0
+            });
+        }
+
+    });
+
+    console.log(
+        'Daily Sales RED generado:',
+        redData.length
+    );
+}
+
+function renderActiveTab() {
+
+    switch (activeTab) {
+
+        case 'dailySales':
+            renderDailySales();
+            break;
+
+        case 'dailySalesRed':
+            renderDailySalesRed();
+            break;
+
+        case 'taxLiability':
+            renderTaxLiability();
+            break;
+
+        case 'cashSheet':
+            renderCashSheet();
+            break;
+
+        case 'cashSummary':
+            renderCashSummary();
+            break;
+
+        default:
+            renderDailySales();
+    }
+
+}
+
+function renderDailySales() {
+
+    datosExtraidos =
+        dailySalesData;
+
+    renderTablaSucursales();
+
+}
+
+function renderDailySalesRed() {
+
+    renderDynamicTable(
+        dailySalesRedData
+    );
+
+}
+
+function renderTaxLiability() {
+
+    renderDynamicTable(
+        taxLiabilityData
+    );
+
+}
+
+function renderCashSheet() {
+
+    renderDynamicTable(
+        cashSheetData
+    );
+
+}
+
+function renderCashSummary() {
+
+    renderDynamicTable(
+        cashSummaryData
+    );
+
+}
+
+function renderDynamicTable(data) {
+
+    const thead =
+        document.getElementById(
+            'conciliacionTableHead'
+        );
+
+    const tbody =
+        document.getElementById(
+            'conciliacionBody'
+        );
+
+    thead.innerHTML = '';
+    tbody.innerHTML = '';
+
+    if (!data || !data.length) {
+        return;
+    }
+
+    const columns =
+        Object.keys(data[0]);
+
+    const tr =
+        document.createElement('tr');
+
+    columns.forEach(col => {
+
+        const th =
+            document.createElement('th');
+
+        th.textContent = col;
+
+        tr.appendChild(th);
+
+    });
+
+    thead.appendChild(tr);
+
+    data.forEach(row => {
+
+        const tr =
+            document.createElement('tr');
+
+        columns.forEach(col => {
+
+            const td =
+                document.createElement('td');
+
+            const value =
+                row[col];
+
+            td.textContent =
+                typeof value === 'number'
+                    ? value.toLocaleString('en-US', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    })
+                    : value ?? '';
+
+            tr.appendChild(td);
+
+        });
+
+        tbody.appendChild(tr);
+
+    });
+
+}
+
+function generarTaxLiability() {
+
+    taxLiabilityData = datosExtraidos.map(row => {
+
+        const taxableSales =
+            Number(row.netSales || 0);
+
+        const salesTax =
+            Number(row.salesTax || 0);
+
+        const taxRate =
+            taxableSales !== 0
+                ? salesTax / taxableSales
+                : 0;
+
+        return {
+
+            store: row.store,
+
+            taxableSales,
+
+            salesTax,
+
+            taxRate: limpiarDecimal(
+                taxRate * 100
+            )
+
+        };
+
+    });
+
+}
+
+function generarCashSheet() {
+
+    cashSheetData = datosExtraidos.map(row => {
+
+        return {
+
+            store: row.store,
+
+            cashExpected:
+                row.cashExpected || 0,
+
+            deposit1:
+                row.deposit1 || 0,
+
+            deposit2:
+                row.deposit2 || 0,
+
+            deposit3:
+                row.deposit3 || 0,
+
+            deposits:
+                row.deposits || 0,
+
+            cashPlusMinus:
+                row.cashPlusMinus || 0,
+
+            ebt:
+                row.ebt || 0,
+
+            difference:
+                row.difference || 0
+
+        };
+
+    });
+
+}
+
+
+function generarCashSummary() {
+
+    const resumen = {
+
+        stores:
+            datosExtraidos.length,
+
+        totalCashExpected: 0,
+
+        totalDeposits: 0,
+
+        totalEBT: 0,
+
+        totalDifference: 0
+
+    };
+
+    datosExtraidos.forEach(row => {
+
+        resumen.totalCashExpected +=
+            Number(row.cashExpected || 0);
+
+        resumen.totalDeposits +=
+            Number(row.deposits || 0);
+
+        resumen.totalEBT +=
+            Number(row.ebt || 0);
+
+        resumen.totalDifference +=
+            Number(row.difference || 0);
+
+    });
+
+    cashSummaryData = [resumen];
+
 }
