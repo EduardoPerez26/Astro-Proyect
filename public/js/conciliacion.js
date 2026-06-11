@@ -355,7 +355,7 @@ function initEventListeners() {
         )
         ?.addEventListener(
             'click',
-            guardarConciliacion
+            saveConciliacion
         );
 
     document
@@ -1139,77 +1139,6 @@ function guardarValorEsperado() {
 // GUARDAR CONCILIACION
 // ============================================
 
-async function guardarConciliacion() {
-    const restauranteId = document.getElementById('selectRestaurante').value;
-    const templateId = document.getElementById('selectTemplate').value;
-    const notas = document.getElementById('notasConciliacion')?.value || '';
-
-    if (!restauranteId || !templateId  || datosExtraidos.length === 0) {
-        Swal.fire('Error', 'Completa todos los campos y sube un archivo', 'warning');
-        return;
-    }
-
-    try {
-        const token = localStorage.getItem('token');
-
-        // Guardar valores esperados (solo si los datos son por concepto)
-        const valoresArray = datosExtraidos
-            .filter(d => d.concepto !== undefined && d.concepto !== null)
-            .map(d => ({
-                concepto: d.concepto,
-                valor: d.valorEsperado || 0,
-                fuente: 'manual'
-            }));
-
-        if (valoresArray.length > 0) {
-            await fetch(`${window.API_URL}/conciliaciones/valores-esperados`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({
-                    restaurante_id: restauranteId,
-                    fecha: fecha,
-                    valores: valoresArray
-                })
-            });
-        }
-
-        // Guardar conciliacion
-        const response = await fetch(`${window.API_URL}/conciliaciones`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({
-                restaurante_id: restauranteId,
-                template_id: templateId,
-                fecha_conciliacion: fecha,
-                datos_extraidos: datosExtraidos,
-                notas: notas
-            })
-        });
-
-        if (response.ok) {
-            const data = await response.json();
-            Swal.fire({
-                icon: 'success',
-                title: 'Conciliacion guardada',
-                text: `Se guardaron ${data.stats.total_conceptos} conceptos. ${data.stats.conceptos_diferencia} con diferencias.`,
-                timer: 2500,
-                showConfirmButton: false
-            });
-        } else {
-            throw new Error('Error al guardar');
-        }
-    } catch (error) {
-        console.error('Error guardando conciliacion:', error);
-        Swal.fire('Error', 'No se pudo guardar la conciliacion', 'error');
-    }
-}
-
 // ============================================
 // HISTORIAL
 // ============================================
@@ -1893,7 +1822,7 @@ function llenarFiltroTiendas() {
 
 function saveConciliacion() {
 
-    if (!window.workbook) {
+    if (!workbook) {
         Swal.fire({
             icon: 'warning',
             title: 'Sin datos',
@@ -2048,7 +1977,4 @@ async function guardarConciliacionServidor() {
     }
 }
 
-document.getElementById('btnGuardar')?.addEventListener(
-    'click',
-    saveConciliacion
-);
+
