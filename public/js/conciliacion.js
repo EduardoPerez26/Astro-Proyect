@@ -1142,10 +1142,9 @@ function guardarValorEsperado() {
 async function guardarConciliacion() {
     const restauranteId = document.getElementById('selectRestaurante').value;
     const templateId = document.getElementById('selectTemplate').value;
-    const fecha = document.getElementById('fechaConciliacion').value;
     const notas = document.getElementById('notasConciliacion')?.value || '';
 
-    if (!restauranteId || !templateId || !fecha || datosExtraidos.length === 0) {
+    if (!restauranteId || !templateId  || datosExtraidos.length === 0) {
         Swal.fire('Error', 'Completa todos los campos y sube un archivo', 'warning');
         return;
     }
