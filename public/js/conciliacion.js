@@ -1358,15 +1358,8 @@ function detectarHojaOrigen(
 
 function renderTablaSucursales() {
 
-    const thead =
-        document.getElementById(
-            'conciliacionTableHead'
-        );
-
-    const tbody =
-        document.getElementById(
-            'conciliacionBody'
-        );
+    const thead = document.getElementById('conciliacionTableHead');
+    const tbody = document.getElementById('conciliacionBody');
 
     thead.innerHTML = '';
     tbody.innerHTML = '';
@@ -1380,7 +1373,6 @@ function renderTablaSucursales() {
             'No hay columnas configuradas',
             currentRestaurantConfig
         );
-
         return;
     }
 
@@ -1395,16 +1387,12 @@ function renderTablaSucursales() {
     // HEADERS
     // ==========================
 
-    const headerRow =
-        document.createElement('tr');
+    const headerRow = document.createElement('tr');
 
     columnas.forEach(col => {
 
-        const th =
-            document.createElement('th');
-
-        th.textContent =
-            col.label;
+        const th = document.createElement('th');
+        th.textContent = col.label;
 
         headerRow.appendChild(th);
 
@@ -1416,50 +1404,42 @@ function renderTablaSucursales() {
     // BODY
     // ==========================
 
-    const filasFiltradas =
-        datosExtraidos.filter(row => {
+    const filasFiltradas = datosExtraidos.filter(row => {
 
-            const store =
-                String(row.store || '')
-                    .toLowerCase();
+        const nombre =
+            String(
+                row.unitName ||
+                row.storeName ||
+                ''
+            ).toLowerCase();
 
-            const nombre =
-                String(
-                    row.unitName ||
-                    row.storeName ||
-                    ''
-                ).toLowerCase();
+        const cumpleStore =
+            !filtroStore ||
+            String(row.store) === String(filtroStore);
 
-            const cumpleStore =
-                !filtroStore ||
-                String(row.store) === String(filtroStore);
+        const cumpleNombre =
+            !filtroStoreName ||
+            nombre.includes(filtroStoreName);
 
-            const cumpleNombre =
-                !filtroStoreName ||
-                nombre.includes(filtroStoreName);
+        return cumpleStore && cumpleNombre;
 
-            return (
-                cumpleStore &&
-                cumpleNombre
-            );
+    });
 
-        });
     filasFiltradas.forEach(row => {
 
-        const tr =
-            document.createElement('tr');
+        const tr = document.createElement('tr');
 
         columnas.forEach(col => {
 
-            const td =
-                document.createElement('td');
+            const td = document.createElement('td');
 
-            const valor =
-                row[col.key];
+            let valor = row[col.key];
 
-            if (
-                typeof valor === 'number'
-            ) {
+            if (typeof valor === 'number') {
+
+                if (Math.abs(valor) < 0.000001) {
+                    valor = 0;
+                }
 
                 td.textContent =
                     valor.toLocaleString(
@@ -1470,14 +1450,10 @@ function renderTablaSucursales() {
                         }
                     );
 
-                td.classList.add(
-                    'text-right'
-                );
-
+                td.classList.add('text-right');
             } else {
 
-                td.textContent =
-                    valor ?? '';
+                td.textContent = valor ?? '';
 
             }
 
