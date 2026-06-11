@@ -417,11 +417,9 @@ function generarConciliacionTacoBell() {
     console.log(datosExtraidos.length);
 
     generarTaxReview();
-    generarDailySalesRED();
     generarStatisticalDelivery();
 
     generarTaxLiability();
-    taxLiabilityData = taxReviewData;
     generarCashSheet();
     generarCashSummary();
 
@@ -433,11 +431,9 @@ function generarConciliacionTacoBell() {
 
     actualizarTotales();
 
-    dailySalesData =
-        datosExtraidos;
+    dailySalesData = datosExtraidos;
 
     generarDailySalesRED();
-
     dailySalesRedData = redData;
 
     renderActiveTab();
@@ -861,14 +857,10 @@ function renderCashSummary() {
 function renderDynamicTable(data) {
 
     const thead =
-        document.getElementById(
-            'conciliacionTableHead'
-        );
+        document.getElementById('conciliacionTableHead');
 
     const tbody =
-        document.getElementById(
-            'conciliacionBody'
-        );
+        document.getElementById('conciliacionBody');
 
     thead.innerHTML = '';
     tbody.innerHTML = '';
@@ -877,45 +869,54 @@ function renderDynamicTable(data) {
         return;
     }
 
-    const columns =
-        Object.keys(data[0]);
+    const columns = Object.keys(data[0]);
 
-    const tr =
-        document.createElement('tr');
+    const headerRow = document.createElement('tr');
 
     columns.forEach(col => {
 
-        const th =
-            document.createElement('th');
+        const th = document.createElement('th');
 
         th.textContent = col;
 
-        tr.appendChild(th);
+        headerRow.appendChild(th);
 
     });
 
-    thead.appendChild(tr);
+    thead.appendChild(headerRow);
 
     data.forEach(row => {
 
-        const tr =
-            document.createElement('tr');
+        const tr = document.createElement('tr');
 
         columns.forEach(col => {
 
-            const td =
-                document.createElement('td');
+            const td = document.createElement('td');
 
-            const value =
-                row[col];
+            let value = row[col];
 
-            td.textContent =
-                typeof value === 'number'
-                    ? value.toLocaleString('en-US', {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2
-                    })
-                    : value ?? '';
+            if (
+                typeof value === 'number' &&
+                Number.isFinite(value)
+            ) {
+
+                td.textContent =
+                    value.toLocaleString(
+                        'en-US',
+                        {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2
+                        }
+                    );
+
+                td.classList.add('text-right');
+
+            } else {
+
+                td.textContent =
+                    value ?? '';
+
+            }
 
             tr.appendChild(td);
 
@@ -924,7 +925,6 @@ function renderDynamicTable(data) {
         tbody.appendChild(tr);
 
     });
-
 }
 
 function generarTaxLiability() {
