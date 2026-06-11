@@ -275,17 +275,17 @@ router.get(
 
             const rutaCompleta = archivo.ruta_archivo;
 
-console.log('Ruta completa:', rutaCompleta);
-console.log('Existe archivo:', fs.existsSync(rutaCompleta));
+            console.log('Ruta completa:', rutaCompleta);
+            console.log('Existe archivo:', fs.existsSync(rutaCompleta));
 
-if (!fs.existsSync(rutaCompleta)) {
-    return res.status(404).json({
-        error: true,
-        message: 'Archivo físico no existe'
-    });
-}
+            if (!fs.existsSync(rutaCompleta)) {
+                return res.status(404).json({
+                    error: true,
+                    message: 'Archivo físico no existe'
+                });
+            }
 
-res.download(rutaCompleta, archivo.nombre_original);
+            res.download(rutaCompleta, archivo.nombre_original);
 
         } catch (error) {
             console.error('Error descargando archivo:', error);
