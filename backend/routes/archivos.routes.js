@@ -54,7 +54,16 @@ router.get(
                 ORDER BY a.id DESC
             `);
 
-            res.json(rows);
+            const archivos = rows.map(row => ({
+                ...row,
+                archivoExiste: (
+                    row.ruta_archivo
+                        ? fs.existsSync(row.ruta_archivo)
+                        : false
+                )
+            }));
+
+            res.json(archivos);
 
         } catch (error) {
 
@@ -248,16 +257,31 @@ router.delete(
 
             const archivo = archivos[0];
 
-            console.log('ELIMINANDO:', archivo.ruta_archivo);
+            console.log('================================');
+            console.log('ELIMINANDO ARCHIVO');
+            console.log('ID:', archivo.id);
+            console.log('Ruta:', archivo.ruta_archivo);
+            console.log('================================');
 
-            // YA NO USAR path.join()
+            // Eliminar archivo físico si existe
             if (
                 archivo.ruta_archivo &&
                 fs.existsSync(archivo.ruta_archivo)
             ) {
                 fs.unlinkSync(archivo.ruta_archivo);
+
+                console.log(
+                    'Archivo físico eliminado:',
+                    archivo.ruta_archivo
+                );
+            } else {
+                console.log(
+                    'El archivo físico no existe:',
+                    archivo.ruta_archivo
+                );
             }
 
+            // Eliminar registro de la BD
             await pool.query(
                 'DELETE FROM archivos_excel WHERE id = ?',
                 [req.params.id]
@@ -270,7 +294,10 @@ router.delete(
 
         } catch (error) {
 
-            console.error('Error eliminando archivo:', error);
+            console.error(
+                'Error eliminando archivo:',
+                error
+            );
 
             res.status(500).json({
                 error: true,
