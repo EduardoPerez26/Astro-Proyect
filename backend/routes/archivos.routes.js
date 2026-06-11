@@ -243,12 +243,18 @@ router.get(
     async (req, res) => {
         try {
 
+            console.log('=== DESCARGAR ===');
+            console.log('ID solicitado:', req.params.id);
+
             const [archivos] = await pool.query(
                 'SELECT * FROM archivos_excel WHERE id = ?',
                 [req.params.id]
             );
 
+            console.log('Resultado BD:', archivos);
+
             if (!archivos.length) {
+                console.log('NO EXISTE EN LA BD');
                 return res.status(404).json({
                     error: true,
                     message: 'Archivo no encontrado'
@@ -257,11 +263,16 @@ router.get(
 
             const archivo = archivos[0];
 
+            console.log('Ruta guardada:', archivo.ruta_archivo);
+
             const rutaCompleta = path.join(
                 __dirname,
                 '..',
                 archivo.ruta_archivo
             );
+
+            console.log('Ruta completa:', rutaCompleta);
+            console.log('Existe archivo:', fs.existsSync(rutaCompleta));
 
             if (!fs.existsSync(rutaCompleta)) {
                 return res.status(404).json({
@@ -270,10 +281,7 @@ router.get(
                 });
             }
 
-            res.download(
-                rutaCompleta,
-                archivo.nombre_original
-            );
+            res.download(rutaCompleta, archivo.nombre_original);
 
         } catch (error) {
             console.error('Error descargando archivo:', error);
