@@ -15,6 +15,7 @@ const { verificarToken } = require('../middleware/auth.middleware');
 // POST /api/auth/login
 // ============================================
 // Inicia sesion y devuelve un token JWT
+// Inicia sesion y devuelve un token JWT
 router.post('/login', async (req, res) => {
     try {
         const { username, password } = req.body;
@@ -55,7 +56,6 @@ router.post('/login', async (req, res) => {
         console.log('ID Usuario:', usuario.id);
         console.log('Username BD:', usuario.username);
         console.log('Activo:', usuario.activo);
-        console.log('Hash BD:', usuario.password);
 
         const passwordValido = await bcrypt.compare(
             password,
@@ -75,13 +75,37 @@ router.post('/login', async (req, res) => {
 
         console.log('LOGIN EXITOSO');
 
+        // ============================================
+        // OBTENER PERMISOS DEL USUARIO
+        // ============================================
+
+        let permisos = {};
+
+        try {
+            if (usuario.permisos) {
+                permisos = typeof usuario.permisos === 'string'
+                    ? JSON.parse(usuario.permisos)
+                    : usuario.permisos;
+            }
+        } catch (error) {
+            console.error('Error parseando permisos:', error);
+            permisos = {};
+        }
+
+        console.log('Permisos:', permisos);
+
+        // ============================================
+        // CREAR TOKEN
+        // ============================================
+
         const token = jwt.sign(
             {
                 id: usuario.id,
                 username: usuario.username,
                 nombre: usuario.nombre_completo,
                 email: usuario.email,
-                rol: usuario.rol
+                rol: usuario.rol,
+                permisos
             },
             process.env.JWT_SECRET,
             {
@@ -89,12 +113,20 @@ router.post('/login', async (req, res) => {
             }
         );
 
+        // ============================================
+        // GUARDAR SESION
+        // ============================================
+
         await pool.query(
             `INSERT INTO sesiones
             (usuario_id, token, ip_address, user_agent, fecha_expiracion)
             VALUES (?, ?, ?, ?, DATE_ADD(NOW(), INTERVAL 24 HOUR))`,
             [usuario.id, token, req.ip, req.headers['user-agent']]
         );
+
+        // ============================================
+        // RESPUESTA
+        // ============================================
 
         res.json({
             error: false,
@@ -105,7 +137,8 @@ router.post('/login', async (req, res) => {
                 username: usuario.username,
                 nombre: usuario.nombre_completo,
                 email: usuario.email,
-                rol: usuario.rol
+                rol: usuario.rol,
+                permisos
             }
         });
 
