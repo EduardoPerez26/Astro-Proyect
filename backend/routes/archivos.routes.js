@@ -4,7 +4,7 @@ const router = express.Router();
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
-const pool = require('../config/database');
+const { pool } = require('../config/database');
 const { verificarToken, checkPermission } = require('../middleware/auth.middleware');
 
 // Configuración de multer para subir archivos
