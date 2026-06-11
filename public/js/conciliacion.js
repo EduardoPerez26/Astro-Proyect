@@ -1429,7 +1429,7 @@ function detectarHojaOrigen(
 }
 
 function renderTablaSucursales() {
-    
+
     const thead =
         document.getElementById(
             'conciliacionTableHead'
@@ -1891,3 +1891,165 @@ function llenarFiltroTiendas() {
         `;
     });
 }
+
+function saveConciliacion() {
+
+    if (!window.workbook) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Sin datos',
+            text: 'Primero debes cargar un archivo'
+        });
+        return;
+    }
+
+    Swal.fire({
+        title: 'Guardar conciliación',
+        text: '¿Dónde deseas guardar el archivo?',
+        icon: 'question',
+        showCancelButton: true,
+        showDenyButton: !localStorage.getItem('modoOffline'),
+        confirmButtonText:
+            '<i class="fa-solid fa-download"></i> Descargar',
+        denyButtonText:
+            '<i class="fa-solid fa-cloud-arrow-up"></i> Guardar en servidor',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#2563eb',
+        denyButtonColor: '#10b981'
+    }).then((result) => {
+
+        if (result.isConfirmed) {
+
+            XLSX.writeFile(
+                workbook,
+                `conciliacion-${Date.now()}.xlsx`
+            );
+
+            Swal.fire({
+                icon: 'success',
+                title: 'Archivo descargado',
+                timer: 1500,
+                showConfirmButton: false
+            });
+
+        } else if (result.isDenied) {
+
+            guardarConciliacionServidor();
+
+        }
+    });
+}
+async function guardarConciliacionServidor() {
+
+    const token = localStorage.getItem('token');
+
+    const restaurante =
+        document.getElementById('selectRestaurante')?.value;
+
+    if (!token) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Sesión expirada'
+        });
+
+        return;
+    }
+
+    if (!restaurante) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Restaurante requerido',
+            text: 'Selecciona un restaurante'
+        });
+
+        return;
+    }
+
+    Swal.fire({
+        title: 'Guardando...',
+        text: 'Subiendo conciliación',
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading()
+    });
+
+    try {
+
+        const wbout = XLSX.write(
+            workbook,
+            {
+                bookType: 'xlsx',
+                type: 'array'
+            }
+        );
+
+        const blob = new Blob(
+            [wbout],
+            {
+                type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            }
+        );
+
+        const formData = new FormData();
+
+        formData.append(
+            'archivo',
+            blob,
+            `conciliacion-${Date.now()}.xlsx`
+        );
+
+        formData.append(
+            'restaurante_id',
+            restaurante
+        );
+
+        formData.append(
+            'procesar_datos',
+            'true'
+        );
+
+        const response = await fetch(
+            `${window.API_URL}/archivos/subir`,
+            {
+                method: 'POST',
+                headers: {
+                    Authorization: `Bearer ${token}`
+                },
+                body: formData
+            }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(
+                data.message || 'Error al guardar'
+            );
+        }
+
+        Swal.fire({
+            icon: 'success',
+            title: 'Conciliación guardada',
+            html: `
+                <p>La conciliación se guardó correctamente.</p>
+                <p style="margin-top:10px;">
+                    ID: ${data.archivo.id}
+                </p>
+            `
+        });
+
+    } catch (error) {
+
+        console.error(error);
+
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: error.message
+        });
+    }
+}
+
+document.getElementById('btnGuardar')?.addEventListener(
+    'click',
+    saveConciliacion
+);
