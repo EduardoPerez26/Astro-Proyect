@@ -133,9 +133,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
 // Verificar si el token es valido
 async function verificarSesion(token) {
-    console.log('Username:', username);
-    console.log('Password:', password);
-    console.log('API URL:', window.API_URL);
     try {
         const response = await fetch(`${window.API_URL}/auth/verificar`, {
             method: 'GET',
@@ -145,16 +142,13 @@ async function verificarSesion(token) {
         });
 
         if (response.ok) {
-            // Token valido, redirigir al dashboard
             window.location.href = '/views/inicio';
         } else {
-            // Token invalido, limpiar storage
             localStorage.removeItem('token');
             localStorage.removeItem('usuario');
             localStorage.removeItem('isLoggedIn');
         }
     } catch (error) {
-        // Error de conexion, no hacer nada
         console.log('No se pudo verificar sesion:', error);
     }
 }
