@@ -921,30 +921,35 @@ function generarConciliationPopeyes(salesData) {
 
         const oS = totalRevenue - paymentsTotal;
 
-
         return {
 
             ...row,
 
-            salesOther,
-            netSales,
+            salesOther: limpiarDecimal(salesOther),
 
-            totalTips,
+            netSales: limpiarDecimal(netSales),
 
-            totalDiscounts,
+            totalTips: limpiarDecimal(totalTips),
 
-            ccTotals,
-            delTotals,
+            totalDiscounts: limpiarDecimal(totalDiscounts),
 
-            paidOut,
+            ccTotals: limpiarDecimal(ccTotals),
 
-            totalRevenue,
-            paymentsTotal,
-            cashDeposit,
+            delTotals: limpiarDecimal(delTotals),
 
-            cashExpected,
-            difference,
-            oS
+            paidOut: limpiarDecimal(paidOut),
+
+            totalRevenue: limpiarDecimal(totalRevenue),
+
+            paymentsTotal: limpiarDecimal(paymentsTotal),
+
+            cashDeposit: limpiarDecimal(cashDeposit),
+
+            cashExpected: limpiarDecimal(cashExpected),
+
+            difference: limpiarDecimal(difference),
+
+            oS: limpiarDecimal(oS)
         };
 
     });

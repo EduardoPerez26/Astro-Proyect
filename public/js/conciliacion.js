@@ -2041,4 +2041,15 @@ function generarWorkbookConConciliacion() {
     return nuevoWorkbook;
 }
 
+function limpiarDecimal(valor) {
+
+    const numero = Number(valor) || 0;
+
+    if (Math.abs(numero) < 0.000001) {
+        return 0;
+    }
+
+    return Number(numero.toFixed(2));
+}
+
 

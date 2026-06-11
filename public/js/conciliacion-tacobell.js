@@ -376,19 +376,19 @@ function generarConciliacionTacoBell() {
                 uber,
                 dd,
 
-                ccTotals,
+                ccTotals: limpiarDecimal(ccTotals),
 
-                paymentsTotal,
+                paymentsTotal: limpiarDecimal(paymentsTotal),
 
-                os,
+                os: limpiarDecimal(os),
 
-                oS,
+                oS: limpiarDecimal(oS),
 
-                cashPlusMinus,
+                cashPlusMinus: limpiarDecimal(cashPlusMinus),
 
-                cashExpected,
+                cashExpected: limpiarDecimal(cashExpected),
 
-                difference
+                difference: limpiarDecimal(difference)
             };
         });
 
@@ -400,7 +400,7 @@ function generarConciliacionTacoBell() {
     document.getElementById(
         'resultsSection'
     ).style.display = 'block';
-    
+
     console.log(datosExtraidos[0]);
     console.log(datosExtraidos.length);
 
