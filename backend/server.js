@@ -27,7 +27,8 @@ app.use(cors({
     origin: [
         'http://localhost:4321',
         'http://localhost:3001',
-        'https://astro-proyect-akfs.vercel.app'
+        'https://astro-proyect-akfs.vercel.app',
+        'https://astro-proyect-tau.vercel.app'
     ],
     credentials: true,
     methods: ['GET','POST','PUT','DELETE','OPTIONS'],
