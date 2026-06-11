@@ -61,31 +61,50 @@ const checkPermission = (permiso) => {
                 });
             }
 
-            // Admin tiene acceso a todo
+            // Admin tiene acceso total
             if (req.usuario.rol === 'admin') {
                 return next();
             }
 
-            // Obtener permisos desde la tabla usuarios
             const [rows] = await pool.query(
                 'SELECT permisos FROM usuarios WHERE id = ? LIMIT 1',
                 [req.usuario.id]
             );
 
             if (!rows.length) {
-                return res.status(404).json({ error: true, message: 'Usuario no encontrado' });
+                return res.status(404).json({
+                    error: true,
+                    message: 'Usuario no encontrado'
+                });
             }
 
-            const permisos = JSON.parse(rows[0].permisos || '{}');
+            let permisos = {};
 
-            // Mapear nombres antiguos de checkPermission a tu JSON actual
+            if (typeof rows[0].permisos === 'string') {
+                permisos = JSON.parse(rows[0].permisos || '{}');
+            } else {
+                permisos = rows[0].permisos || {};
+            }
+
             const mapping = {
-                'view_archivos': 'documentos',
-                'upload_files': 'documentos',
-                'validate_files': 'documentos',
-                'view_validaciones': 'historial'
-            };
+                view_dashboard: 'dashboard',
 
+                view_archivos: 'documentos',
+                upload_files: 'documentos',
+                validate_files: 'documentos',
+
+                view_validaciones: 'historial',
+
+                view_usuarios: 'usuarios',
+                manage_users: 'usuarios',
+
+                view_permisos: 'permisos',
+
+                view_restaurantes: 'tiendas',
+                manage_restaurantes: 'tiendas',
+
+                view_profile: 'perfil'
+            };
             const permisoJson = mapping[permiso] || permiso;
 
             if (!permisos[permisoJson]) {
@@ -99,6 +118,7 @@ const checkPermission = (permiso) => {
 
         } catch (error) {
             console.error('Error en checkPermission:', error);
+
             res.status(500).json({
                 error: true,
                 message: 'Error al verificar permiso'
