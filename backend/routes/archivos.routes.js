@@ -48,15 +48,59 @@ router.post(
     upload.single('archivo'),
     async (req, res) => {
         try {
+            if (!req.file) {
+                return res.status(400).json({
+                    error: true,
+                    message: 'No se recibió ningún archivo'
+                });
+            }
+
             const { originalname, filename } = req.file;
 
+            console.log('================================');
+            console.log('SUBIR ARCHIVO');
             console.log('BODY:', req.body);
+            console.log('FILE:', req.file.originalname);
+            console.log('================================');
 
-            const restauranteId = req.body.restaurante_id;
+            const restauranteCodigo = req.body.restaurante_id;
+
+            if (!restauranteCodigo) {
+                return res.status(400).json({
+                    error: true,
+                    message: 'Restaurante no especificado'
+                });
+            }
+
+            // Buscar el ID real del restaurante usando el código
+            const [restaurantes] = await pool.query(
+                'SELECT id, codigo, nombre FROM restaurantes WHERE codigo = ? LIMIT 1',
+                [restauranteCodigo]
+            );
+
+            if (restaurantes.length === 0) {
+                return res.status(400).json({
+                    error: true,
+                    message: `No existe un restaurante con código: ${restauranteCodigo}`
+                });
+            }
+
+            const restauranteId = restaurantes[0].id;
+
+            console.log('Restaurante encontrado:', {
+                id: restauranteId,
+                codigo: restaurantes[0].codigo,
+                nombre: restaurantes[0].nombre
+            });
 
             const [result] = await pool.query(
                 `INSERT INTO archivos_excel
-                (nombre_original, nombre_servidor, usuario_id, restaurante_id)
+                (
+                    nombre_original,
+                    nombre_servidor,
+                    usuario_id,
+                    restaurante_id
+                )
                 VALUES (?, ?, ?, ?)`,
                 [
                     originalname,
@@ -66,10 +110,16 @@ router.post(
                 ]
             );
 
+            console.log('Archivo guardado. ID:', result.insertId);
+
             res.json({
                 success: true,
+                message: 'Archivo guardado correctamente',
                 archivo: {
-                    id: result.insertId
+                    id: result.insertId,
+                    nombre_original: originalname,
+                    nombre_servidor: filename,
+                    restaurante_id: restauranteId
                 }
             });
 
@@ -78,7 +128,7 @@ router.post(
 
             res.status(500).json({
                 error: true,
-                message: 'Error al subir archivo'
+                message: error.message || 'Error al subir archivo'
             });
         }
     }
