@@ -31,7 +31,19 @@ router.get(
     checkPermission('view_archivos'), // mapea al JSON: documentos
     async (req, res) => {
         try {
-            const [rows] = await pool.query('SELECT * FROM archivos_excel ORDER BY id DESC');
+            const [rows] = await pool.query(`
+    SELECT
+        a.*,
+        r.nombre AS restaurante_nombre,
+        u.username,
+        u.nombre_completo AS usuario_nombre
+    FROM archivos_excel a
+    LEFT JOIN restaurantes r
+        ON r.id = a.restaurante_id
+    LEFT JOIN usuarios u
+        ON u.id = a.usuario_id
+    ORDER BY a.id DESC
+`);
             res.json(rows);
         } catch (error) {
             console.error('Error al obtener archivos:', error);
