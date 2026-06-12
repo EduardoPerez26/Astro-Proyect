@@ -212,20 +212,106 @@ function generarTaxReview() {
 }
 
 function generarStatisticalDelivery() {
+
     statisticalDeliveryData = [];
+
+    let lineNo = 1;
+
     datosExtraidos.forEach(row => {
-        const amount = Number(row.gh || 0) + Number(row.uber || 0) + Number(row.dd || 0);
-        if (!amount) return;
-        statisticalDeliveryData.push({
-            journal: 'SJ',
-            lineNo: statisticalDeliveryData.length + 1,
-            description: 'Statistical Delivery Sales',
-            memo: 'Statistical Delivery Sales',
-            account: 990300,
-            locationId: row.store,
-            amount
-        });
+
+        const store = Number(row.store);
+
+        // DoorDash
+        if ((row.dd || 0) !== 0) {
+
+            statisticalDeliveryData.push({
+                journal: 'SJ',
+                date: fechaConciliacionActual,
+                lineNo: lineNo++,
+                description: 'Statistical Delivery Sales',
+                memo: 'Statistical Delivery Sales',
+                account: 990300,
+                store,
+                debit: row.dd,
+                credit: 0
+            });
+
+            statisticalDeliveryData.push({
+                journal: 'SJ',
+                date: fechaConciliacionActual,
+                lineNo: lineNo++,
+                description: 'Statistical Delivery Sales',
+                memo: 'Statistical Delivery Sales',
+                account: 990301,
+                store,
+                debit: 0,
+                credit: row.dd
+            });
+        }
+
+        // Uber
+        if ((row.uber || 0) !== 0) {
+
+            statisticalDeliveryData.push({
+                journal: 'SJ',
+                date: fechaConciliacionActual,
+                lineNo: lineNo++,
+                description: 'Statistical Delivery Sales',
+                memo: 'Statistical Delivery Sales',
+                account: 990200,
+                store,
+                debit: row.uber,
+                credit: 0
+            });
+
+            statisticalDeliveryData.push({
+                journal: 'SJ',
+                date: fechaConciliacionActual,
+                lineNo: lineNo++,
+                description: 'Statistical Delivery Sales',
+                memo: 'Statistical Delivery Sales',
+                account: 990201,
+                store,
+                debit: 0,
+                credit: row.uber
+            });
+        }
+
+        // GrubHub
+        if ((row.gh || 0) !== 0) {
+
+            statisticalDeliveryData.push({
+                journal: 'SJ',
+                date: fechaConciliacionActual,
+                lineNo: lineNo++,
+                description: 'Statistical Delivery Sales',
+                memo: 'Statistical Delivery Sales',
+                account: 990100,
+                store,
+                debit: row.gh,
+                credit: 0
+            });
+
+            statisticalDeliveryData.push({
+                journal: 'SJ',
+                date: fechaConciliacionActual,
+                lineNo: lineNo++,
+                description: 'Statistical Delivery Sales',
+                memo: 'Statistical Delivery Sales',
+                account: 990101,
+                store,
+                debit: 0,
+                credit: row.gh
+            });
+        }
+
     });
+
+    console.log(
+        'Statistical Delivery generado:',
+        statisticalDeliveryData.length
+    );
+
 }
 
 function generarDailySalesRED() {
