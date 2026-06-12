@@ -2060,35 +2060,115 @@ function generarWorkbookConConciliacion() {
 
         });
 
-    // Crear hoja Conciliation
-    const ws =
+    // ======================================
+    // CONCILIATION
+    // ======================================
+
+    const wsConciliation =
         XLSX.utils.json_to_sheet(
             datosConciliacion
         );
 
-    // Si ya existe la hoja la reemplazamos
-    if (
-        nuevoWorkbook.SheetNames.includes(
-            'Conciliation'
-        )
-    ) {
+    XLSX.utils.book_append_sheet(
+        nuevoWorkbook,
+        wsConciliation,
+        'Conciliation'
+    );
 
-        delete nuevoWorkbook.Sheets[
-            'Conciliation'
-        ];
+    // ======================================
+    // TAX REVIEW
+    // ======================================
 
-        nuevoWorkbook.SheetNames =
-            nuevoWorkbook.SheetNames.filter(
-                n => n !== 'Conciliation'
+    if (taxReviewData?.length) {
+
+        const wsTaxReview =
+            XLSX.utils.json_to_sheet(
+                taxReviewData
             );
+
+        XLSX.utils.book_append_sheet(
+            nuevoWorkbook,
+            wsTaxReview,
+            'Tax Review'
+        );
 
     }
 
-    XLSX.utils.book_append_sheet(
-        nuevoWorkbook,
-        ws,
-        'Conciliation'
-    );
+    // ======================================
+    // DAILY SALES RED
+    // ======================================
+
+    if (dailySalesREDData?.length) {
+
+        const wsDailySalesRED =
+            XLSX.utils.json_to_sheet(
+                dailySalesREDData
+            );
+
+        XLSX.utils.book_append_sheet(
+            nuevoWorkbook,
+            wsDailySalesRED,
+            'Daily Sales RED'
+        );
+
+    }
+
+    // ======================================
+    // STATISTICAL DELIVERY
+    // ======================================
+
+    if (statisticalDeliveryData?.length) {
+
+        const wsStatisticalDelivery =
+            XLSX.utils.json_to_sheet(
+                statisticalDeliveryData
+            );
+
+        XLSX.utils.book_append_sheet(
+            nuevoWorkbook,
+            wsStatisticalDelivery,
+            'Statistical Delivery'
+        );
+
+    }
+
+    // ======================================
+    // DAILY SALES 03-14
+    // ======================================
+
+    if (dailySales0314Data?.length) {
+
+        const ws0314 =
+            XLSX.utils.json_to_sheet(
+                dailySales0314Data
+            );
+
+        XLSX.utils.book_append_sheet(
+            nuevoWorkbook,
+            ws0314,
+            'Daily Sales 03-14'
+        );
+
+    }
+
+    // ======================================
+    // DAILY SALES 03-10
+    // ======================================
+
+    if (dailySales0310Data?.length) {
+
+        const ws0310 =
+            XLSX.utils.json_to_sheet(
+                dailySales0310Data
+            );
+
+        XLSX.utils.book_append_sheet(
+            nuevoWorkbook,
+            ws0310,
+            'Daily Sales 03-10'
+        );
+
+    }
 
     return nuevoWorkbook;
 }
