@@ -559,6 +559,10 @@ function generarDailySales0314() {
         const mcVisaDiscover = Number(row.ccTotals || 0);
         const gcRedeem = Number(row.gcRedeem || 0);
         const gcSold = Number(row.gcSold || 0);
+        const promo = Number(row.promo || 0);
+        const paidOut = Number(row.paidOut || 0);
+        const cashExpected = Number(row.cashExpected || 0);
+        const ebt = Number(row.ebt || 0);
 
         function pushLine(acctNo, memo, debit = 0, credit = 0) {
             dailySales0314Data.push({ journal: 'SJ', lineNo: lineNo++, description: 'POS Data Upload Sabretooth', memo, acctNo, locationId: store, debit, credit });
@@ -576,6 +580,38 @@ function generarDailySales0314() {
         if (uber) pushLine(122000, 'Uber', uber, 0);
         if (dd) pushLine(123000, 'DoorDash', dd, 0);
         if (gcSold) pushLine(244800, 'Gift Cards Sold', 0, gcSold);
+
+        if (promo)
+            pushLine(
+                410000,
+                'Coupons - Promotions',
+                promo,
+                0
+            );
+
+        if (paidOut)
+            pushLine(
+                116200,
+                'Paid Outs',
+                paidOut,
+                0
+            );
+
+        if (cashExpected)
+            pushLine(
+                101900,
+                'Cash Expected Deposit',
+                cashExpected,
+                0
+            );
+
+        if (ebt)
+            pushLine(
+                111200,
+                'EBT Expected Deposit',
+                ebt,
+                0
+            );
     });
 }
 
