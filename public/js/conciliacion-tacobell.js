@@ -441,10 +441,18 @@ function generarConciliacionTacoBell() {
 
 function generarTaxReview() {
 
+    if (!Array.isArray(datosExtraidos)) {
+        taxReviewData = [];
+        return;
+    }
+
     taxReviewData = datosExtraidos.map(row => {
 
+        const store =
+            Number(row.store || 0);
+
         const taxRate =
-            obtenerTaxRate(row.store);
+            Number(obtenerTaxRate(store) || 0);
 
         const netSales =
             Number(row.netSales || 0);
@@ -452,15 +460,29 @@ function generarTaxReview() {
         const discounts =
             Number(row.discounts || 0);
 
+        const taxableSales =
+            netSales;
+
+        const taxCalculation =
+            taxableSales * taxRate;
+
         const salesTax =
             Number(row.salesTax || 0);
 
-        const taxCalculation =
-            netSales * taxRate;
+        const difference =
+            taxCalculation - salesTax;
+
+        const rateCalculation =
+            taxableSales !== 0
+                ? salesTax / taxableSales
+                : 0;
+
+        const rateDifference =
+            taxRate - rateCalculation;
 
         return {
 
-            store: row.store,
+            store,
 
             taxRate,
 
@@ -468,23 +490,235 @@ function generarTaxReview() {
 
             discounts,
 
-            taxableSales: netSales,
+            taxableSales,
 
             taxCalculation,
 
             salesTax,
 
-            difference:
-                taxCalculation - salesTax,
+            difference,
 
-            rateCalculation:
-                netSales
-                    ? salesTax / netSales
-                    : 0
+            rateCalculation,
+
+            rateDifference
 
         };
 
     });
+
+    console.log(
+        'Tax Review generado:',
+        taxReviewData.length,
+        'registros'
+    );
+
+}
+
+function renderTaxReview() {
+
+    renderDynamicTable(
+        taxReviewData,
+        [
+            'store',
+            'taxRate',
+            'netSales',
+            'discounts',
+            'taxableSales',
+            'taxCalculation',
+            'salesTax',
+            'difference',
+            'rateCalculation',
+            'rateDifference'
+        ]
+    );
+
+}
+
+function generarDailySalesRED() {
+
+    redData = [];
+
+    let lineNo = 1;
+
+    const configuracion = [
+
+        {
+            memo: 'Gross Food Sales',
+            cuenta: 400200,
+            tipo: 'credit',
+            campo: 'grossSalesPos'
+        },
+
+        {
+            memo: 'Discounts -Employee meals',
+            cuenta: 410000,
+            tipo: 'debit',
+            campo: 'discounts'
+        },
+
+        {
+            memo: 'Coupons - Promotions',
+            cuenta: 410000,
+            tipo: 'debit',
+            campo: 'promo'
+        },
+
+        {
+            memo: 'Sales Tax Payable',
+            cuenta: 222000,
+            tipo: 'credit',
+            campo: 'salesTax'
+        },
+
+        {
+            memo: 'Non Taxable Sales',
+            cuenta: 400201,
+            tipo: 'credit',
+            campo: 'os'
+        },
+
+        {
+            memo: 'Donations',
+            cuenta: 212000,
+            tipo: 'credit',
+            campo: 'donations'
+        },
+
+        {
+            memo: 'Gift Cards SOLD',
+            cuenta: 115000,
+            tipo: 'credit',
+            campo: 'gcSold'
+        },
+
+        {
+            memo: 'Paid Outs',
+            cuenta: 116200,
+            tipo: 'debit',
+            campo: 'paidOut'
+        },
+
+        {
+            memo: 'Paid In',
+            cuenta: 116200,
+            tipo: 'credit',
+            campo: 'paidIn'
+        },
+
+        {
+            memo: 'Cash Expected Deposit',
+            cuenta: 110500,
+            tipo: 'debit',
+            campo: 'cashExpected'
+        },
+
+        {
+            memo: 'Credit Cards Expected Deposit',
+            cuenta: 111200,
+            tipo: 'debit',
+            campo: 'ccTotals'
+        },
+
+        {
+            memo: 'EBT Expected Deposit',
+            cuenta: 111200,
+            tipo: 'debit',
+            campo: 'ebt'
+        },
+
+        {
+            memo: 'AMEX Expected Deposit',
+            cuenta: 111200,
+            tipo: 'debit',
+            campo: 'amex'
+        },
+
+        {
+            memo: 'Gift Cards REEDEM',
+            cuenta: 144800,
+            tipo: 'debit',
+            campo: 'gcRedeem'
+        },
+
+        {
+            memo: 'GrubHub',
+            cuenta: 124000,
+            tipo: 'debit',
+            campo: 'gh'
+        },
+
+        {
+            memo: 'Uber',
+            cuenta: 122000,
+            tipo: 'debit',
+            campo: 'uber'
+        },
+
+        {
+            memo: 'DoorDash',
+            cuenta: 123000,
+            tipo: 'debit',
+            campo: 'dd'
+        },
+
+        {
+            memo: 'Diff Between POS and Calc (Over)/Short',
+            cuenta: 652300,
+            tipo: 'debit',
+            campo: 'difference'
+        }
+
+    ];
+
+    configuracion.forEach(config => {
+
+        datosExtraidos.forEach(row => {
+
+            const amount =
+                Number(row[config.campo] || 0);
+
+            redData.push({
+
+                journal: 'SJ',
+
+                date:
+                    fechaSeleccionada,
+
+                lineNo:
+                    lineNo++,
+
+                description:
+                    'POS Data Upload Sabretooth',
+
+                memo:
+                    config.memo,
+
+                account:
+                    config.cuenta,
+
+                location:
+                    row.store,
+
+                debit:
+                    config.tipo === 'debit'
+                        ? amount
+                        : 0,
+
+                credit:
+                    config.tipo === 'credit'
+                        ? amount
+                        : 0
+
+            });
+
+        });
+
+    });
+
+    console.log(
+        'Daily Sales RED generado:',
+        redData.length
+    );
 
 }
 
@@ -496,557 +730,408 @@ function generarStatisticalDelivery() {
 
     datosExtraidos.forEach(row => {
 
-        const store = Number(row.store);
+        const deliverySales =
+            Number(row.gh || 0) +
+            Number(row.uber || 0) +
+            Number(row.dd || 0);
 
-        if ((row.dd || 0) !== 0) {
+        statisticalDeliveryData.push({
 
-            statisticalDeliveryData.push({
-                journal: 'SJ',
-                date: fechaConciliacionActual,
-                lineNo: lineNo++,
-                description: 'Statistical Delivery Sales',
-                memo: 'Statistical Delivery Sales',
-                account: 990300,
-                store,
-                debit: row.dd,
-                credit: 0
-            });
+            journal: 'SJ',
 
-            statisticalDeliveryData.push({
-                journal: 'SJ',
-                date: fechaConciliacionActual,
-                lineNo: lineNo++,
-                description: 'Statistical Delivery Sales',
-                memo: 'Statistical Delivery Sales',
-                account: 990301,
-                store,
-                debit: 0,
-                credit: row.dd
-            });
-        }
+            date: fechaSeleccionada,
 
-        if ((row.uber || 0) !== 0) {
+            lineNo: lineNo++,
 
-            statisticalDeliveryData.push({
-                journal: 'SJ',
-                date: fechaConciliacionActual,
-                lineNo: lineNo++,
-                description: 'Statistical Delivery Sales',
-                memo: 'Statistical Delivery Sales',
-                account: 990200,
-                store,
-                debit: row.uber,
-                credit: 0
-            });
+            description:
+                'Statistical Delivery Sales',
 
-            statisticalDeliveryData.push({
-                journal: 'SJ',
-                date: fechaConciliacionActual,
-                lineNo: lineNo++,
-                description: 'Statistical Delivery Sales',
-                memo: 'Statistical Delivery Sales',
-                account: 990201,
-                store,
-                debit: 0,
-                credit: row.uber
-            });
-        }
+            memo:
+                'Statistical Delivery Sales',
+
+            account: 990300,
+
+            location: row.store,
+
+            debit: deliverySales,
+
+            credit: 0
+
+        });
+
+        statisticalDeliveryData.push({
+
+            journal: 'SJ',
+
+            date: fechaSeleccionada,
+
+            lineNo: lineNo++,
+
+            description:
+                'Statistical Delivery Sales',
+
+            memo:
+                'Statistical Delivery Sales',
+
+            account: 990301,
+
+            location: row.store,
+
+            debit: 0,
+
+            credit: deliverySales
+
+        });
 
     });
 
-    console.log(
-        'Statistical Delivery generado:',
-        statisticalDeliveryData.length
-    );
 }
 
-function generarDailySalesRED() {
+let dailySales0314Data = [];
 
-    redData = [];
+function generarDailySales0314() {
+
+    dailySales0314Data = [];
 
     let lineNo = 1;
 
+    const fecha =
+        fechaSeleccionada ||
+        document.getElementById('fechaConciliacion')?.value;
+
     datosExtraidos.forEach(row => {
 
-        const store = Number(row.store);
+        const location =
+            obtenerLocationId(row.store);
 
-        // Gross Food Sales
-        redData.push({
-            journal: 'SJ',
-            date: fechaConciliacionActual,
-            lineNo: lineNo++,
-            description: 'POS Data Upload Sabretooth',
-            memo: 'Gross Food Sales',
-            account: 400200,
-            store,
-            debit: 0,
-            credit: row.grossSalesPos || 0
-        });
+        const pushLine = (
+            memo,
+            account,
+            debit,
+            credit,
+            dept = null
+        ) => {
 
-        // Discounts
-        if ((row.discounts || 0) !== 0) {
+            if (
+                Number(debit || 0) === 0 &&
+                Number(credit || 0) === 0
+            ) {
+                return;
+            }
 
-            redData.push({
+            dailySales0314Data.push({
+
                 journal: 'SJ',
-                date: fechaConciliacionActual,
+
+                date: fecha,
+
                 lineNo: lineNo++,
-                description: 'POS Data Upload Sabretooth',
-                memo: 'Discounts -Employee meals',
-                account: 410000,
-                store,
-                debit: row.discounts,
-                credit: 0
+
+                description:
+                    'POS Data Upload Sabretooth',
+
+                memo,
+
+                deptId: dept,
+
+                acctNo: account,
+
+                locationId: location,
+
+                debit:
+                    Number(debit || 0),
+
+                credit:
+                    Number(credit || 0)
+
             });
-        }
 
-        // Promo
-        if ((row.promo || 0) !== 0) {
+        };
 
-            redData.push({
-                journal: 'SJ',
-                date: fechaConciliacionActual,
-                lineNo: lineNo++,
-                description: 'POS Data Upload Sabretooth',
-                memo: 'Coupons - Promotions',
-                account: 410000,
-                store,
-                debit: row.promo,
-                credit: 0
-            });
-        }
+        // ======================
+        // SALES
+        // ======================
 
-        // Sales Tax
-        if ((row.salesTax || 0) !== 0) {
+        pushLine(
+            'Gross Food Sales',
+            400200,
+            0,
+            row.grossSalesPos
+        );
 
-            redData.push({
-                journal: 'SJ',
-                date: fechaConciliacionActual,
-                lineNo: lineNo++,
-                description: 'POS Data Upload Sabretooth',
-                memo: 'Sales Tax Payable',
-                account: 222000,
-                store,
-                debit: 0,
-                credit: row.salesTax
-            });
-        }
+        // ======================
+        // DISCOUNTS
+        // ======================
 
-        // Donations
-        if ((row.donations || 0) !== 0) {
+        pushLine(
+            'Discounts -Employee meals',
+            410000,
+            row.discounts,
+            0
+        );
 
-            redData.push({
-                journal: 'SJ',
-                date: fechaConciliacionActual,
-                lineNo: lineNo++,
-                description: 'POS Data Upload Sabretooth',
-                memo: 'Donations',
-                account: 212000,
-                store,
-                debit: 0,
-                credit: row.donations
-            });
-        }
+        // ======================
+        // PROMOS
+        // ======================
 
-        // Gift Card Sold
-        if ((row.gcSold || 0) !== 0) {
+        pushLine(
+            'Coupons - Promotions',
+            410000,
+            row.promo,
+            0
+        );
 
-            redData.push({
-                journal: 'SJ',
-                date: fechaConciliacionActual,
-                lineNo: lineNo++,
-                description: 'POS Data Upload Sabretooth',
-                memo: 'Gift Cards SOLD',
-                account: 115000,
-                store,
-                debit: 0,
-                credit: row.gcSold
-            });
-        }
+        // ======================
+        // SALES TAX
+        // ======================
 
-        // Cash Deposit
-        if ((row.acctCash || 0) !== 0) {
+        pushLine(
+            'Sales Tax Payable',
+            222000,
+            0,
+            row.salesTax
+        );
 
-            redData.push({
-                journal: 'SJ',
-                date: fechaConciliacionActual,
-                lineNo: lineNo++,
-                description: 'POS Data Upload Sabretooth',
-                memo: 'Cash Expected Deposit',
-                account: 110500,
-                store,
-                debit: row.acctCash,
-                credit: 0
-            });
-        }
+        // ======================
+        // NON TAXABLE
+        // ======================
 
-        // Credit Cards
-        if ((row.ccTotals || 0) !== 0) {
+        pushLine(
+            'Non Taxable Sales',
+            400201,
+            0,
+            row.uber
+        );
 
-            redData.push({
-                journal: 'SJ',
-                date: fechaConciliacionActual,
-                lineNo: lineNo++,
-                description: 'POS Data Upload Sabretooth',
-                memo: 'Credit Cards Expected Deposit',
-                account: 111200,
-                store,
-                debit: row.ccTotals,
-                credit: 0
-            });
-        }
+        // ======================
+        // DONATIONS
+        // ======================
 
+        pushLine(
+            'Donations',
+            212000,
+            0,
+            row.donations
+        );
+
+        // ======================
+        // GC SOLD
+        // ======================
+
+        pushLine(
+            'Gift Cards SOLD',
+            115000,
+            0,
+            row.gcSold
+        );
+
+        // ======================
+        // CASH
+        // ======================
+
+        pushLine(
+            'Cash Expected Deposit',
+            110500,
+            row.cashExpected,
+            0
+        );
+
+        // ======================
+        // CREDIT CARDS
+        // ======================
+
+        const tarjetas =
+
+            Number(row.mastercard || 0) +
+            Number(row.visa || 0) +
+            Number(row.discover || 0) +
+            Number(row.debit || 0);
+
+        pushLine(
+            'Credit Cards Expected Deposit',
+            111200,
+            tarjetas,
+            0
+        );
+
+        // ======================
         // AMEX
-        if ((row.amex || 0) !== 0) {
+        // ======================
 
-            redData.push({
-                journal: 'SJ',
-                date: fechaConciliacionActual,
-                lineNo: lineNo++,
-                description: 'POS Data Upload Sabretooth',
-                memo: 'AMEX Expected Deposit',
-                account: 111200,
-                store,
-                debit: row.amex,
-                credit: 0
-            });
+        pushLine(
+            'AMEX Expected Deposit',
+            111200,
+            row.amex,
+            0
+        );
+
+        // ======================
+        // GC REDEEM
+        // ======================
+
+        pushLine(
+            'Gift Cards REEDEM',
+            144800,
+            row.gcRedeem,
+            0
+        );
+
+        // ======================
+        // GH
+        // ======================
+
+        pushLine(
+            'GrubHub',
+            124000,
+            row.gh,
+            0,
+            'GHD'
+        );
+
+        // ======================
+        // UBER
+        // ======================
+
+        pushLine(
+            'Uber',
+            122000,
+            row.uber,
+            0,
+            'UBD'
+        );
+
+        // ======================
+        // DD
+        // ======================
+
+        pushLine(
+            'DoorDash',
+            123000,
+            row.dd,
+            0,
+            'DDD'
+        );
+
+        // ======================
+        // OVER SHORT
+        // ======================
+
+        if (
+            Math.abs(row.os || 0) > 0.01
+        ) {
+
+            pushLine(
+                'Diff Between POS and Calc (Over)/Short',
+                610000,
+                row.os > 0
+                    ? row.os
+                    : 0,
+                row.os < 0
+                    ? Math.abs(row.os)
+                    : 0
+            );
+
         }
 
-        // Gift Card Redeem
-        if ((row.gcRedeem || 0) !== 0) {
+        // ======================
+        // PAID OUT
+        // ======================
 
-            redData.push({
-                journal: 'SJ',
-                date: fechaConciliacionActual,
-                lineNo: lineNo++,
-                description: 'POS Data Upload Sabretooth',
-                memo: 'Gift Cards REEDEM',
-                account: 144800,
-                store,
-                debit: Math.abs(row.gcRedeem),
-                credit: 0
-            });
-        }
+        if (
+            Math.abs(row.paidOut || 0) > 0.01
+        ) {
 
-        // GrubHub
-        if ((row.gh || 0) !== 0) {
+            pushLine(
+                'Paid Outs',
+                610100,
+                row.paidOut,
+                0
+            );
 
-            redData.push({
-                journal: 'SJ',
-                date: fechaConciliacionActual,
-                lineNo: lineNo++,
-                description: 'POS Data Upload Sabretooth',
-                memo: 'GrubHub',
-                account: 124000,
-                store,
-                debit: row.gh,
-                credit: 0
-            });
-        }
-
-        // Uber
-        if ((row.uber || 0) !== 0) {
-
-            redData.push({
-                journal: 'SJ',
-                date: fechaConciliacionActual,
-                lineNo: lineNo++,
-                description: 'POS Data Upload Sabretooth',
-                memo: 'Uber',
-                account: 122000,
-                store,
-                debit: row.uber,
-                credit: 0
-            });
-        }
-
-        // DoorDash
-        if ((row.dd || 0) !== 0) {
-
-            redData.push({
-                journal: 'SJ',
-                date: fechaConciliacionActual,
-                lineNo: lineNo++,
-                description: 'POS Data Upload Sabretooth',
-                memo: 'DoorDash',
-                account: 123000,
-                store,
-                debit: row.dd,
-                credit: 0
-            });
         }
 
     });
 
     console.log(
-        'Daily Sales RED generado:',
-        redData.length
-    );
-}
-
-function renderActiveTab() {
-
-    switch (activeTab) {
-
-        case 'dailySales':
-            renderDailySales();
-            break;
-
-        case 'dailySalesRed':
-            renderDailySalesRed();
-            break;
-
-        case 'taxLiability':
-            renderTaxLiability();
-            break;
-
-        case 'cashSheet':
-            renderCashSheet();
-            break;
-
-        case 'cashSummary':
-            renderCashSummary();
-            break;
-
-        default:
-            renderDailySales();
-    }
-
-}
-
-function renderDailySales() {
-
-    datosExtraidos =
-        dailySalesData;
-
-    renderTablaSucursales();
-
-}
-
-function renderDailySalesRed() {
-
-    renderDynamicTable(
-        dailySalesRedData
+        'Daily Sales 03-14 generado:',
+        dailySales0314Data.length
     );
 
 }
 
-function renderTaxLiability() {
+let dailySales0310Data = [];
 
-    renderDynamicTable(
-        taxLiabilityData
-    );
+let dailySales0310Data = [];
 
-}
+function generarDailySales0310() {
 
-function renderCashSheet() {
+    dailySales0310Data = [];
 
-    renderDynamicTable(
-        cashSheetData
-    );
+    let lineNo = 1;
 
-}
+    statisticalDeliveryData.forEach(row => {
 
-function renderCashSummary() {
+        const sales =
+            Number(row.sales || 0);
 
-    renderDynamicTable(
-        cashSummaryData
-    );
+        const tax =
+            Number(row.tax || 0);
 
-}
+        const location =
+            row.locationId;
 
-function renderDynamicTable(data) {
+        if (sales !== 0) {
 
-    const thead =
-        document.getElementById('conciliacionTableHead');
+            dailySales0310Data.push({
+                journal: 'SJ',
+                lineNo: lineNo++,
+                description: 'Statistical Delivery Sales',
+                memo: 'Statistical Delivery Sales',
+                acctNo: 990300,
+                locationId: location,
+                debit: sales,
+                credit: 0
+            });
 
-    const tbody =
-        document.getElementById('conciliacionBody');
+            dailySales0310Data.push({
+                journal: 'SJ',
+                lineNo: lineNo++,
+                description: 'Statistical Delivery Sales',
+                memo: 'Statistical Delivery Sales',
+                acctNo: 990301,
+                locationId: location,
+                debit: 0,
+                credit: sales
+            });
 
-    thead.innerHTML = '';
-    tbody.innerHTML = '';
+        }
 
-    if (!data || !data.length) {
-        return;
-    }
+        if (tax !== 0) {
 
-    const columns = Object.keys(data[0]);
+            dailySales0310Data.push({
+                journal: 'SJ',
+                lineNo: lineNo++,
+                description: 'Statistical Delivery Sales',
+                memo: 'Statistical Delivery Sales',
+                acctNo: 990200,
+                locationId: location,
+                debit: tax,
+                credit: 0
+            });
 
-    const headerRow = document.createElement('tr');
+            dailySales0310Data.push({
+                journal: 'SJ',
+                lineNo: lineNo++,
+                description: 'Statistical Delivery Sales',
+                memo: 'Statistical Delivery Sales',
+                acctNo: 990201,
+                locationId: location,
+                debit: 0,
+                credit: tax
+            });
 
-    columns.forEach(col => {
-
-        const th = document.createElement('th');
-
-        th.textContent = col;
-
-        headerRow.appendChild(th);
-
-    });
-
-    thead.appendChild(headerRow);
-
-    data.forEach(row => {
-
-        const tr = document.createElement('tr');
-
-        columns.forEach(col => {
-
-            const td = document.createElement('td');
-
-            let value = row[col];
-
-            if (
-                typeof value === 'number' &&
-                Number.isFinite(value)
-            ) {
-
-                td.textContent =
-                    value.toLocaleString(
-                        'en-US',
-                        {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2
-                        }
-                    );
-
-                td.classList.add('text-right');
-
-            } else {
-
-                td.textContent =
-                    value ?? '';
-
-            }
-
-            tr.appendChild(td);
-
-        });
-
-        tbody.appendChild(tr);
+        }
 
     });
-}
-
-function generarTaxLiability() {
-
-    taxLiabilityData = datosExtraidos.map(row => {
-
-        const taxableSales =
-            Number(row.netSales || 0);
-
-        const salesTax =
-            Number(row.salesTax || 0);
-
-        const taxRate =
-            taxableSales !== 0
-                ? salesTax / taxableSales
-                : 0;
-
-        return {
-
-            store: row.store,
-
-            taxableSales,
-
-            salesTax,
-
-            taxRate: limpiarDecimal(
-                taxRate * 100
-            )
-
-        };
-
-    });
-
-}
-
-function generarCashSheet() {
-
-    cashSheetData = datosExtraidos.map(row => {
-
-        return {
-
-            store: row.store,
-
-            cashExpected:
-                row.cashExpected || 0,
-
-            deposit1:
-                row.deposit1 || 0,
-
-            deposit2:
-                row.deposit2 || 0,
-
-            deposit3:
-                row.deposit3 || 0,
-
-            deposits:
-                row.deposits || 0,
-
-            cashPlusMinus:
-                row.cashPlusMinus || 0,
-
-            ebt:
-                row.ebt || 0,
-
-            difference:
-                row.difference || 0
-
-        };
-
-    });
-
-}
-
-
-function generarCashSummary() {
-
-    const resumen = {
-
-        stores:
-            datosExtraidos.length,
-
-        totalCashExpected: 0,
-
-        totalDeposits: 0,
-
-        totalEBT: 0,
-
-        totalDifference: 0
-
-    };
-
-    datosExtraidos.forEach(row => {
-
-        resumen.totalCashExpected +=
-            Number(row.cashExpected || 0);
-
-        resumen.totalDeposits +=
-            Number(row.deposits || 0);
-
-        resumen.totalEBT +=
-            Number(row.ebt || 0);
-
-        resumen.totalDifference +=
-            Number(row.difference || 0);
-
-    });
-
-    cashSummaryData = [resumen];
-
-}
-
-function obtenerTaxRate(store) {
-
-    const taxRates = {
-
-        37014: 0.0815,
-        37015: 0.0815,
-        37016: 0.0815,
-        37017: 0.0815
-
-    };
-
-    return taxRates[store] || 0.0815;
 
 }
