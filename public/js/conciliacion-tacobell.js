@@ -1,5 +1,4 @@
 let taxReviewData = [];
-let redData = [];
 let statisticalDeliveryData = [];
 let journalData = [];
 let statisticalJournalData = [];
@@ -441,90 +440,75 @@ function crearIndiceConciliation() {
     return index;
 }
 
+let taxReviewData = [];
+
 function generarTaxReview() {
 
-    const conciliationIndex =
-        crearIndiceConciliation();
-
-    taxReviewData = [];
-
-    const taxRates = {
-
-        37014: 0.0815,
-        37015: 0.0815,
-        37016: 0.0815,
-        37017: 0.0815
-
+    const TAX_RATES = {
+        28841: 0.08125,
+        28842: 0.08375,
+        28843: 0.09125,
+        28844: 0.08000,
+        28845: 0.08125,
+        28846: 0.08375
     };
 
-    Object.values(conciliationIndex)
-        .forEach(row => {
+    taxReviewData = datosExtraidos.map(row => {
 
-            const taxRate =
-                taxRates[row.store] || 0.0815;
+        const taxRate =
+            TAX_RATES[row.store] || 0;
 
-            // Excel C
-            const netSales =
-                Number(row.netSales || 0);
+        const netSales =
+            Number(row.netSales || 0);
 
-            // Excel D
-            const discounts =
-                Number(row.discounts || 0);
+        const salesTax =
+            Number(row.salesTax || 0);
 
-            // Excel I
-            const salesTax =
-                Number(row.salesTax || 0);
+        const discounts =
+            Number(row.discounts || 0);
 
-            // Excel G
-            const taxCalculation =
-                netSales * taxRate;
+        const taxableSales =
+            netSales;
 
-            // Excel J
-            const difference =
-                taxCalculation - salesTax;
+        const taxCalculation =
+            taxableSales * taxRate;
 
-            // Excel L
-            const actualRate =
-                netSales !== 0
-                    ? salesTax / netSales
-                    : 0;
+        const difference =
+            taxCalculation - salesTax;
 
-            // Excel M
-            const rateDifference =
-                taxRate - actualRate;
+        const rateCalculation =
+            netSales
+                ? salesTax / netSales
+                : 0;
 
-            taxReviewData.push({
+        return {
 
-                store: row.store,
+            store: row.store,
 
-                taxRate,
+            taxRate,
 
-                netSales,
+            netSales,
 
-                discounts,
+            discounts,
 
-                taxableSales: netSales,
+            taxableSales,
 
-                taxCalculation,
+            taxCalculation,
 
-                salesTax,
+            salesTax,
 
-                difference,
+            difference,
 
-                actualRate,
+            rateCalculation,
 
-                rateDifference
+            rateDifference:
+                taxRate - rateCalculation
 
-            });
+        };
 
-        });
+    });
 
-    console.log(
-        'Tax Review generado:',
-        taxReviewData.length
-    );
 }
-
 function renderTaxReview() {
 
     renderDynamicTable(
@@ -548,76 +532,35 @@ function renderTaxReview() {
 let dailySalesREDData = [];
 
 function generarDailySalesRED() {
-    if (!workbook) {
-        console.error("No hay workbook cargado");
-        return [];
-    }
 
-    const sheetName = 'Daily Sales RED';
-    const sheet = workbook.Sheets[sheetName];
+    dailySalesREDData = [];
 
-    if (!sheet) {
-        console.error(`No se encontró la hoja ${sheetName}`);
-        return [];
-    }
+    datosExtraidos.forEach(row => {
 
-    const rows = XLSX.utils.sheet_to_json(sheet, { defval: 0 });
+        dailySalesREDData.push({
 
-    const dailySalesREDData = rows.map(row => {
-        const netSales = Number(row['Net Sales'] || 0);
-        const salesTax = Number(row['Sales TAX'] || 0);
-        const grossSalesPos = Number(row['Gross Sales POS'] || 0);
-        const discounts = Number(row['Discounts'] || 0);
-        const promo = Number(row['Promo'] || 0);
-        const donations = Number(row['Donations'] || 0);
-        const gcSold = Number(row['GC Sold'] || 0);
-        const paidOut = Number(row['Paid Out'] || 0);
-        const paidIn = Number(row['Paid In'] || 0);
-        const deposit1 = Number(row['Deposit 1'] || 0);
-        const deposit2 = Number(row['Deposit 2'] || 0);
+            journal: 'SJ',
 
-        // Columnas I y J son calculadas según las fórmulas originales del Excel
-        const iColumn = grossSalesPos - discounts - promo; // Ejemplo: ajustar según la fórmula real
-        const jColumn = iColumn - donations - gcSold; // Ejemplo: ajustar según la fórmula real
+            description:
+                'POS Data Upload Sabretooth',
 
-        return {
-            store: row['Store'] || '',
-            salesTax,
-            netSales,
-            grossSalesPos,
-            discounts,
-            promo,
-            donations,
-            gcSold,
-            paidOut,
-            paidIn,
-            deposit1,
-            deposit2,
-            iColumn,
-            jColumn,
-            totalRevenue: Number(row['Total Revenue'] || 0),
-            mastercard: Number(row['Mastercard'] || 0),
-            visa: Number(row['Visa'] || 0),
-            discover: Number(row['Discover'] || 0),
-            amex: Number(row['Amex'] || 0),
-            debit: Number(row['Debit'] || 0),
-            ebt: Number(row['EBT'] || 0),
-            gcRedeem: Number(row['GC Redeem'] || 0),
-            acctCash: Number(row['Acct Cash'] || 0),
-            gh: Number(row['GH'] || 0),
-            uber: Number(row['Uber'] || 0),
-            dd: Number(row['DD'] || 0),
-            ccTotals: Number(row['CC Totals'] || 0),
-            paymentsTotal: Number(row['Payments Total'] || 0),
-            os: Number(row['OS'] || 0),
-            cashPlusMinus: Number(row['Cash +/-'] || 0),
-            cashExpected: Number(row['Cash Expected'] || 0),
-            difference: Number(row['Difference'] || 0)
-        };
+            memo:
+                'Gross Food Sales',
+
+            account: 400200,
+
+            locationId:
+                row.store,
+
+            credit:
+                Number(
+                    row.grossSalesPos || 0
+                )
+
+        });
+
     });
 
-    console.log('Daily Sales RED generados:', dailySalesREDData.length);
-    return dailySalesREDData;
 }
 
 function buscarStore(store) {
@@ -633,11 +576,18 @@ function generarStatisticalDelivery() {
 
     datosExtraidos.forEach(row => {
 
+        const amount =
+            Number(
+                row.deliverySales ||
+                row.uber ||
+                0
+            );
+
+        if (!amount) return;
+
         statisticalDeliveryData.push({
 
             journal: 'SJ',
-
-            date: fechaSalesSeleccionada,
 
             lineNo:
                 statisticalDeliveryData.length + 1,
@@ -651,12 +601,9 @@ function generarStatisticalDelivery() {
             account: 990300,
 
             locationId:
-                obtenerLocationId(row.store),
+                row.store,
 
-            amount:
-                Number(row.dd || 0) +
-                Number(row.uber || 0) +
-                Number(row.gh || 0)
+            amount
 
         });
 
@@ -672,273 +619,321 @@ function generarDailySales0314() {
 
     let lineNo = 1;
 
-    const fecha =
-        fechaSeleccionada ||
-        document.getElementById('fechaConciliacion')?.value;
-
     datosExtraidos.forEach(row => {
 
-        const location =
-            obtenerLocationId(row.store);
+        const store = Number(row.store);
 
-        const pushLine = (
-            memo,
-            account,
-            debit,
-            credit,
-            dept = null
-        ) => {
+        const grossSales =
+            Number(row.grossSalesPos || 0);
 
-            if (
-                Number(debit || 0) === 0 &&
-                Number(credit || 0) === 0
-            ) {
-                return;
-            }
+        const discounts =
+            Number(row.discounts || 0);
+
+        const salesTax =
+            Number(row.salesTax || 0);
+
+        const donations =
+            Number(row.donations || 0);
+
+        const uber =
+            Number(row.uber || 0);
+
+        const gh =
+            Number(row.grubhub || 0);
+
+        const dd =
+            Number(row.doordash || 0);
+
+        const amex =
+            Number(row.amex || 0);
+
+        const mcVisaDiscover =
+            Number(row.ccTotals || 0);
+
+        const gcRedeem =
+            Number(row.gcRedeem || 0);
+
+        const gcSold =
+            Number(row.gcSold || 0);
+
+        // Gross Food Sales
+
+        dailySales0314Data.push({
+
+            journal: 'SJ',
+            lineNo: lineNo++,
+            description:
+                'POS Data Upload Sabretooth',
+            memo:
+                'Gross Food Sales',
+            acctNo: 400200,
+            locationId: store,
+            debit: 0,
+            credit: grossSales
+
+        });
+
+        // Discounts
+
+        if (discounts !== 0) {
 
             dailySales0314Data.push({
 
                 journal: 'SJ',
-
-                date: fecha,
-
                 lineNo: lineNo++,
-
                 description:
                     'POS Data Upload Sabretooth',
-
-                memo,
-
-                deptId: dept,
-
-                acctNo: account,
-
-                locationId: location,
-
-                debit:
-                    Number(debit || 0),
-
-                credit:
-                    Number(credit || 0)
+                memo:
+                    'Discounts -Employee meals',
+                acctNo: 410000,
+                locationId: store,
+                debit: discounts,
+                credit: 0
 
             });
 
-        };
+        }
 
-        // ======================
-        // SALES
-        // ======================
+        // Sales Tax
 
-        pushLine(
-            'Gross Food Sales',
-            400200,
-            0,
-            row.grossSalesPos
-        );
+        if (salesTax !== 0) {
 
-        // ======================
-        // DISCOUNTS
-        // ======================
+            dailySales0314Data.push({
 
-        pushLine(
-            'Discounts -Employee meals',
-            410000,
-            row.discounts,
-            0
-        );
+                journal: 'SJ',
+                lineNo: lineNo++,
+                description:
+                    'POS Data Upload Sabretooth',
+                memo:
+                    'Sales Tax Payable',
+                acctNo: 222000,
+                locationId: store,
+                debit: 0,
+                credit: salesTax
 
-        // ======================
-        // PROMOS
-        // ======================
-
-        pushLine(
-            'Coupons - Promotions',
-            410000,
-            row.promo,
-            0
-        );
-
-        // ======================
-        // SALES TAX
-        // ======================
-
-        pushLine(
-            'Sales Tax Payable',
-            222000,
-            0,
-            row.salesTax
-        );
-
-        // ======================
-        // NON TAXABLE
-        // ======================
-
-        pushLine(
-            'Non Taxable Sales',
-            400201,
-            0,
-            row.uber
-        );
-
-        // ======================
-        // DONATIONS
-        // ======================
-
-        pushLine(
-            'Donations',
-            212000,
-            0,
-            row.donations
-        );
-
-        // ======================
-        // GC SOLD
-        // ======================
-
-        pushLine(
-            'Gift Cards SOLD',
-            115000,
-            0,
-            row.gcSold
-        );
-
-        // ======================
-        // CASH
-        // ======================
-
-        pushLine(
-            'Cash Expected Deposit',
-            110500,
-            row.cashExpected,
-            0
-        );
-
-        // ======================
-        // CREDIT CARDS
-        // ======================
-
-        const tarjetas =
-
-            Number(row.mastercard || 0) +
-            Number(row.visa || 0) +
-            Number(row.discover || 0) +
-            Number(row.debit || 0);
-
-        pushLine(
-            'Credit Cards Expected Deposit',
-            111200,
-            tarjetas,
-            0
-        );
-
-        // ======================
-        // AMEX
-        // ======================
-
-        pushLine(
-            'AMEX Expected Deposit',
-            111200,
-            row.amex,
-            0
-        );
-
-        // ======================
-        // GC REDEEM
-        // ======================
-
-        pushLine(
-            'Gift Cards REEDEM',
-            144800,
-            row.gcRedeem,
-            0
-        );
-
-        // ======================
-        // GH
-        // ======================
-
-        pushLine(
-            'GrubHub',
-            124000,
-            row.gh,
-            0,
-            'GHD'
-        );
-
-        // ======================
-        // UBER
-        // ======================
-
-        pushLine(
-            'Uber',
-            122000,
-            row.uber,
-            0,
-            'UBD'
-        );
-
-        // ======================
-        // DD
-        // ======================
-
-        pushLine(
-            'DoorDash',
-            123000,
-            row.dd,
-            0,
-            'DDD'
-        );
-
-        // ======================
-        // OVER SHORT
-        // ======================
-
-        if (
-            Math.abs(row.os || 0) > 0.01
-        ) {
-
-            pushLine(
-                'Diff Between POS and Calc (Over)/Short',
-                610000,
-                row.os > 0
-                    ? row.os
-                    : 0,
-                row.os < 0
-                    ? Math.abs(row.os)
-                    : 0
-            );
+            });
 
         }
 
-        // ======================
-        // PAID OUT
-        // ======================
+        // Non Taxable Sales
 
-        if (
-            Math.abs(row.paidOut || 0) > 0.01
-        ) {
+        if (uber !== 0) {
 
-            pushLine(
-                'Paid Outs',
-                610100,
-                row.paidOut,
-                0
-            );
+            dailySales0314Data.push({
+
+                journal: 'SJ',
+                lineNo: lineNo++,
+                description:
+                    'POS Data Upload Sabretooth',
+                memo:
+                    'Non Taxable Sales',
+                acctNo: 400201,
+                locationId: store,
+                debit: 0,
+                credit: uber
+
+            });
+
+        }
+
+        // Donations
+
+        if (donations !== 0) {
+
+            dailySales0314Data.push({
+
+                journal: 'SJ',
+                lineNo: lineNo++,
+                description:
+                    'POS Data Upload Sabretooth',
+                memo:
+                    'Donations',
+                acctNo: 212000,
+                locationId: store,
+                debit: 0,
+                credit: donations
+
+            });
+
+        }
+
+        // Credit Cards Expected Deposit
+
+        if (mcVisaDiscover !== 0) {
+
+            dailySales0314Data.push({
+
+                journal: 'SJ',
+                lineNo: lineNo++,
+                description:
+                    'POS Data Upload Sabretooth',
+                memo:
+                    'Credit Cards Expected Deposit',
+                acctNo: 111200,
+                locationId: store,
+                debit: mcVisaDiscover,
+                credit: 0
+
+            });
+
+        }
+
+        // AMEX
+
+        if (amex !== 0) {
+
+            dailySales0314Data.push({
+
+                journal: 'SJ',
+                lineNo: lineNo++,
+                description:
+                    'POS Data Upload Sabretooth',
+                memo:
+                    'AMEX Expected Deposit',
+                acctNo: 111200,
+                locationId: store,
+                debit: amex,
+                credit: 0
+
+            });
+
+        }
+
+        // Gift Card Redeem
+
+        if (gcRedeem !== 0) {
+
+            dailySales0314Data.push({
+
+                journal: 'SJ',
+                lineNo: lineNo++,
+                description:
+                    'POS Data Upload Sabretooth',
+                memo:
+                    'Gift Cards REDEEM',
+                acctNo: 144800,
+                locationId: store,
+                debit: gcRedeem,
+                credit: 0
+
+            });
+
+        }
+
+        // GrubHub
+
+        if (gh !== 0) {
+
+            dailySales0314Data.push({
+
+                journal: 'SJ',
+                lineNo: lineNo++,
+                description:
+                    'POS Data Upload Sabretooth',
+                memo:
+                    'GrubHub',
+                acctNo: 124000,
+                locationId: store,
+                debit: gh,
+                credit: 0
+
+            });
+
+        }
+
+        // Uber
+
+        if (uber !== 0) {
+
+            dailySales0314Data.push({
+
+                journal: 'SJ',
+                lineNo: lineNo++,
+                description:
+                    'POS Data Upload Sabretooth',
+                memo:
+                    'Uber',
+                acctNo: 122000,
+                locationId: store,
+                debit: uber,
+                credit: 0
+
+            });
+
+        }
+
+        // DoorDash
+
+        if (dd !== 0) {
+
+            dailySales0314Data.push({
+
+                journal: 'SJ',
+                lineNo: lineNo++,
+                description:
+                    'POS Data Upload Sabretooth',
+                memo:
+                    'DoorDash',
+                acctNo: 123000,
+                locationId: store,
+                debit: dd,
+                credit: 0
+
+            });
+
+        }
+
+        // Gift Cards Sold
+
+        if (gcSold !== 0) {
+
+            dailySales0314Data.push({
+
+                journal: 'SJ',
+                lineNo: lineNo++,
+                description:
+                    'POS Data Upload Sabretooth',
+                memo:
+                    'Gift Cards Sold',
+                acctNo: 244800,
+                locationId: store,
+                debit: 0,
+                credit: gcSold
+
+            });
 
         }
 
     });
 
-    console.log(
-        'Daily Sales 03-14 generado:',
-        dailySales0314Data.length
-    );
-
 }
 
 
-
 let dailySales0310Data = [];
+
+function obtenerLocationId(store) {
+
+    const LOCATION_MAP = {
+
+        28841: 43415,
+        28842: 43414,
+        28843: 43413,
+        28844: 43412,
+        28845: 43411,
+        28846: 43410,
+        30256: 43409,
+        36224: 43408,
+        37014: 43407,
+        30491: 43406,
+        29423: 43405,
+        32680: 43404,
+        34793: 43403
+
+    };
+
+    return LOCATION_MAP[store] || store;
+
+}
 
 function generarDailySales0310() {
 
@@ -948,22 +943,79 @@ function generarDailySales0310() {
 
     statisticalDeliveryData.forEach(item => {
 
-        const store =
-            Number(item.locationId);
+        const amount =
+            Number(item.amount || 0);
 
-        const sales =
-            Number(item.deliverySales || 0);
+        if (!amount) return;
 
-        const tax =
-            Number(item.deliveryTax || 0);
+        const locationId =
+            obtenerLocationId(
+                item.locationId ||
+                item.store
+            );
 
-        if (sales !== 0) {
+        // 990300 DEBIT
+
+        dailySales0310Data.push({
+
+            journal: 'SJ',
+
+            lineNo: lineNo++,
+
+            description:
+                'Statistical Delivery Sales',
+
+            memo:
+                'Statistical Delivery Sales',
+
+            acctNo: 990300,
+
+            locationId,
+
+            debit: amount,
+
+            credit: 0
+
+        });
+
+        // 990301 CREDIT
+
+        dailySales0310Data.push({
+
+            journal: 'SJ',
+
+            lineNo: lineNo++,
+
+            description:
+                'Statistical Delivery Sales',
+
+            memo:
+                'Statistical Delivery Sales',
+
+            acctNo: 990301,
+
+            locationId,
+
+            debit: 0,
+
+            credit: amount
+
+        });
+
+        const taxAmount =
+            Number(
+                item.taxAmount ||
+                item.salesTax ||
+                0
+            );
+
+        if (taxAmount !== 0) {
+
+            // 990200 DEBIT
 
             dailySales0310Data.push({
 
                 journal: 'SJ',
-
-                date: fechaSeleccionada,
 
                 lineNo: lineNo++,
 
@@ -972,80 +1024,22 @@ function generarDailySales0310() {
 
                 memo:
                     'Statistical Delivery Sales',
-
-                deptId: '',
-
-                acctNo: 990300,
-
-                locationId: store,
-
-                debit: sales,
-
-                credit: 0
-
-            });
-
-            dailySales0310Data.push({
-
-                journal: 'SJ',
-
-                date: fechaSeleccionada,
-
-                lineNo: lineNo++,
-
-                description:
-                    'Statistical Delivery Sales',
-
-                memo:
-                    'Statistical Delivery Sales',
-
-                deptId: '',
-
-                acctNo: 990301,
-
-                locationId: store,
-
-                debit: 0,
-
-                credit: sales
-
-            });
-
-        }
-
-        if (tax !== 0) {
-
-            dailySales0310Data.push({
-
-                journal: 'SJ',
-
-                date: fechaSeleccionada,
-
-                lineNo: lineNo++,
-
-                description:
-                    'Statistical Delivery Sales',
-
-                memo:
-                    'Statistical Delivery Sales',
-
-                deptId: '',
 
                 acctNo: 990200,
 
-                locationId: store,
+                locationId,
 
-                debit: tax,
+                debit: taxAmount,
 
                 credit: 0
 
             });
 
+            // 990201 CREDIT
+
             dailySales0310Data.push({
 
                 journal: 'SJ',
-
-                date: fechaSeleccionada,
 
                 lineNo: lineNo++,
 
@@ -1055,25 +1049,18 @@ function generarDailySales0310() {
                 memo:
                     'Statistical Delivery Sales',
 
-                deptId: '',
-
                 acctNo: 990201,
 
-                locationId: store,
+                locationId,
 
                 debit: 0,
 
-                credit: tax
+                credit: taxAmount
 
             });
 
         }
 
     });
-
-    console.log(
-        'Daily Sales 03-10 generado:',
-        dailySales0310Data.length
-    );
 
 }
