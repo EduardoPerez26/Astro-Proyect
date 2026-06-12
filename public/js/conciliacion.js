@@ -1099,7 +1099,7 @@ function generarConciliacionDesdeTemplate() {
             return generarConciliacionTacoBell();
 
         case 'popeyes':
-            return generarConciliationPopeyes();
+            return generarConciliacionPopeyes();
 
         default:
 
