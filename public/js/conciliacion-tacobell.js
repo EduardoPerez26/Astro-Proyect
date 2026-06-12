@@ -142,7 +142,7 @@ function generarConciliacionTacoBell() {
         'datosExtraidos[0]',
         datosExtraidos[0]
     );
-    generarTaxReview();
+    generarTaxReviewTacoBell();
 
     console.table(taxReviewData.slice(0, 3));
     generarStatisticalDelivery();
@@ -191,7 +191,7 @@ function renderActiveTab() {
 // ===========================================
 // FUNCIONES POR HOJA
 // ===========================================
-function generarTaxReview() {
+function generarTaxReviewTacoBell() {
 
     taxReviewData = datosExtraidos.map(row => {
 
