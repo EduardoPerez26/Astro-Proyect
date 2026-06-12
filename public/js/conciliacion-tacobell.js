@@ -441,8 +441,6 @@ function crearIndiceConciliation() {
     return index;
 }
 
-let taxReviewData = [];
-
 function generarTaxReview() {
 
     const conciliationIndex =
@@ -634,60 +632,36 @@ function generarStatisticalDelivery() {
 
     statisticalDeliveryData = [];
 
-    let lineNo = 1;
-
     datosExtraidos.forEach(row => {
 
-        const store = row.store;
-
-        const deliverySales =
-            Number(row.os || 0);     // Conciliation AA
-
-        const deliveryTax =
-            Number(row.gh || 0);     // Conciliation Z
-
         statisticalDeliveryData.push({
+
             journal: 'SJ',
-            lineNo: lineNo++,
+
+            date: fechaSalesSeleccionada,
+
+            lineNo:
+                statisticalDeliveryData.length + 1,
+
+            description:
+                'Statistical Delivery Sales',
+
+            memo:
+                'Statistical Delivery Sales',
+
             account: 990300,
-            locationId: store,
-            debit: deliverySales,
-            credit: 0
-        });
 
-        statisticalDeliveryData.push({
-            journal: 'SJ',
-            lineNo: lineNo++,
-            account: 990301,
-            locationId: store,
-            debit: 0,
-            credit: deliverySales
-        });
+            locationId:
+                obtenerLocationId(row.store),
 
-        statisticalDeliveryData.push({
-            journal: 'SJ',
-            lineNo: lineNo++,
-            account: 990200,
-            locationId: store,
-            debit: deliveryTax,
-            credit: 0
-        });
+            amount:
+                Number(row.dd || 0) +
+                Number(row.uber || 0) +
+                Number(row.gh || 0)
 
-        statisticalDeliveryData.push({
-            journal: 'SJ',
-            lineNo: lineNo++,
-            account: 990201,
-            locationId: store,
-            debit: 0,
-            credit: deliveryTax
         });
 
     });
-
-    console.log(
-        'Statistical Delivery generado:',
-        statisticalDeliveryData.length
-    );
 
 }
 
