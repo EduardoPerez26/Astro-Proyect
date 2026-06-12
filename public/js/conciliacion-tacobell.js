@@ -321,182 +321,203 @@ function generarStatisticalDelivery() {
 }
 
 function generarDailySalesRED() {
+
     dailySalesREDData = [];
+
+    let lineNo = 1;
+
     datosExtraidos.forEach(row => {
+
         const store = row.store;
 
-        // 400200
-        if (row.grossSalesPos) {
-            dailySalesREDData.push({
-                journal: 'SJ',
-                description: 'POS Data Upload Sabretooth',
-                memo: 'Gross Food Sales',
-                account: 400200,
-                locationId: store,
-                credit: Number(row.grossSalesPos || 0)
-            });
-        }
+        const addRow = (
+            memo,
+            account,
+            debit = 0,
+            credit = 0,
+            description2 = ''
+        ) => {
 
-        // 400201
-        if (row.discounts) {
-            dailySalesREDData.push({
-                journal: 'SJ',
-                description: 'POS Data Upload Sabretooth',
-                memo: 'Discounts',
-                account: 400201,
-                locationId: store,
-                credit: Number(row.discounts || 0)
-            });
-        }
+            debit = Number(debit || 0);
+            credit = Number(credit || 0);
 
-        // 410000
-        if (row.salesTax) {
-            dailySalesREDData.push({
-                journal: 'SJ',
-                description: 'POS Data Upload Sabretooth',
-                memo: 'Sales Tax',
-                account: 410000,
-                locationId: store,
-                credit: Number(row.salesTax || 0)
-            });
-        }
+            if (debit === 0 && credit === 0) return;
 
-        // 222000
-        if (row.gcSold) {
             dailySalesREDData.push({
                 journal: 'SJ',
+                date: fechaConciliacionActual,
+                lineNo: lineNo++,
                 description: 'POS Data Upload Sabretooth',
-                memo: 'Gift Cards Sold',
-                account: 222000,
+                memo,
+                description2,
+                account,
                 locationId: store,
-                credit: Number(row.gcSold || 0)
+                debit,
+                credit
             });
-        }
 
-        // 212000
-        if (row.gcRedeem) {
-            dailySalesREDData.push({
-                journal: 'SJ',
-                description: 'POS Data Upload Sabretooth',
-                memo: 'Gift Cards Redeemed',
-                account: 212000,
-                locationId: store,
-                credit: Number(row.gcRedeem || 0)
-            });
-        }
+        };
 
-        // 115000
-        if (row.paidIn) {
-            dailySalesREDData.push({
-                journal: 'SJ',
-                description: 'POS Data Upload Sabretooth',
-                memo: 'Paid In',
-                account: 115000,
-                locationId: store,
-                credit: Number(row.paidIn || 0)
-            });
-        }
+        // Gross Food Sales
+        addRow(
+            'Gross Food Sales',
+            400200,
+            0,
+            row.grossSalesPos
+        );
 
-        // 116200
-        if (row.paidOut) {
-            dailySalesREDData.push({
-                journal: 'SJ',
-                description: 'POS Data Upload Sabretooth',
-                memo: 'Paid Out',
-                account: 116200,
-                locationId: store,
-                credit: Number(row.paidOut || 0)
-            });
-        }
+        // Discounts - Employee meals
+        addRow(
+            'Discounts - Employee meals',
+            410000,
+            row.discounts,
+            0
+        );
 
-        // 101900
-        if (row.mastercard) {
-            dailySalesREDData.push({
-                journal: 'SJ',
-                description: 'POS Data Upload Sabretooth',
-                memo: 'Mastercard',
-                account: 101900,
-                locationId: store,
-                credit: Number(row.mastercard || 0)
-            });
-        }
+        // Coupons - Promotions
+        addRow(
+            'Coupons - Promotions',
+            410000,
+            row.promo,
+            0
+        );
 
-        // 111200
-        if (row.visa) {
-            dailySalesREDData.push({
-                journal: 'SJ',
-                description: 'POS Data Upload Sabretooth',
-                memo: 'Visa',
-                account: 111200,
-                locationId: store,
-                credit: Number(row.visa || 0)
-            });
-        }
+        // Sales Tax Payable
+        addRow(
+            'Sales Tax Payable',
+            222000,
+            0,
+            row.salesTax
+        );
 
-        // 144800
-        if (row.discover) {
-            dailySalesREDData.push({
-                journal: 'SJ',
-                description: 'POS Data Upload Sabretooth',
-                memo: 'Discover',
-                account: 144800,
-                locationId: store,
-                credit: Number(row.discover || 0)
-            });
-        }
+        // Non Taxable Sales
+        addRow(
+            'Non Taxable Sales',
+            400201,
+            0,
+            row.uber
+        );
 
-        // 124000
-        if (row.amex) {
-            dailySalesREDData.push({
-                journal: 'SJ',
-                description: 'POS Data Upload Sabretooth',
-                memo: 'AMEX',
-                account: 124000,
-                locationId: store,
-                credit: Number(row.amex || 0)
-            });
-        }
+        // Donations
+        addRow(
+            'Donations',
+            212000,
+            0,
+            row.donations
+        );
 
-        // 122000
-        if (row.debit) {
-            dailySalesREDData.push({
-                journal: 'SJ',
-                description: 'POS Data Upload Sabretooth',
-                memo: 'Debit Cards',
-                account: 122000,
-                locationId: store,
-                credit: Number(row.debit || 0)
-            });
-        }
+        // Gift Cards SOLD
+        addRow(
+            'Gift Cards SOLD',
+            115000,
+            0,
+            row.gcSold
+        );
 
-        // 123000
-        if (row.cashExpected) {
-            dailySalesREDData.push({
-                journal: 'SJ',
-                description: 'POS Data Upload Sabretooth',
-                memo: 'Cash Expected',
-                account: 123000,
-                locationId: store,
-                credit: Number(row.cashExpected || 0)
-            });
-        }
+        // Paid Outs
+        addRow(
+            'Paid Outs',
+            116200,
+            row.paidOut,
+            0
+        );
 
-        // 652300
-        if (row.ccTotals) {
-            dailySalesREDData.push({
-                journal: 'SJ',
-                description: 'POS Data Upload Sabretooth',
-                memo: 'CC Totals',
-                account: 652300,
-                locationId: store,
-                credit: Number(row.ccTotals || 0)
-            });
-        }
+        // Paid In
+        addRow(
+            'Paid In',
+            116200,
+            0,
+            row.paidIn
+        );
+
+        // Cash Expected Deposit
+        addRow(
+            'Cash Expected Deposit',
+            101900,
+            row.acctCash,
+            0
+        );
+
+        // Credit Cards Expected Deposit
+        addRow(
+            'Credit Cards Expected Deposit',
+            111200,
+            row.ccTotals,
+            0
+        );
+
+        // EBT Expected Deposit
+        addRow(
+            'EBT Expected Deposit',
+            111200,
+            row.ebt,
+            0
+        );
+
+        // AMEX Expected Deposit
+        addRow(
+            'AMEX Expected Deposit',
+            111200,
+            row.amex,
+            0
+        );
+
+        // Gift Cards REEDEM
+        addRow(
+            'Gift Cards REEDEM',
+            144800,
+            Math.abs(row.gcRedeem || 0),
+            0
+        );
+
+        // GrubHub
+        addRow(
+            'GrubHub',
+            124000,
+            row.gh,
+            0,
+            'GHD'
+        );
+
+        // Uber
+        addRow(
+            'Uber',
+            122000,
+            row.uber,
+            0,
+            'UBD'
+        );
+
+        // DoorDash
+        addRow(
+            'DoorDash',
+            123000,
+            row.dd,
+            0,
+            'DDD'
+        );
+
+        // Diff Between POS and Calc (Over)/Short
+        addRow(
+            'Diff Between POS and Calc (Over)/Short',
+            652300,
+            row.oS > 0 ? row.oS : 0,
+            row.oS < 0 ? Math.abs(row.oS) : 0,
+            'CASH'
+        );
+
     });
 
-    console.log('Daily Sales RED generado:', dailySalesREDData.length);
-}
+    console.log(
+        'Daily Sales RED generado:',
+        dailySalesREDData.length
+    );
 
+    console.table(
+        dailySalesREDData.slice(0, 20)
+    );
+
+}
 function generarDailySales0314() {
     dailySales0314Data = [];
     let lineNo = 1;
