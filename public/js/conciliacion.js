@@ -1827,7 +1827,6 @@ function llenarFiltroTiendas() {
         )
     ];
 
-    console.log('TIENDAS:', tiendas);
 
     if (!select) return;
 
