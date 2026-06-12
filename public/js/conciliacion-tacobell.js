@@ -554,6 +554,7 @@ function generarDailySales0314() {
         const donations = Number(row.donations || 0);
         const uber = Number(row.uber || 0);
         const gh = Number(row.gh || 0);
+        const cashExpected = Number(row.cashExpected || 0);
         const dd = Number(row.dd || 0);
         const amex = Number(row.amex || 0);
         const mcVisaDiscover = Number(row.ccTotals || 0);
@@ -561,7 +562,6 @@ function generarDailySales0314() {
         const gcSold = Number(row.gcSold || 0);
         const promo = Number(row.promo || 0);
         const paidOut = Number(row.paidOut || 0);
-        const cashExpected = Number(row.cashExpected || 0);
         const ebt = Number(row.ebt || 0);
 
         function pushLine(acctNo, memo, debit = 0, credit = 0) {
@@ -573,6 +573,13 @@ function generarDailySales0314() {
         if (salesTax) pushLine(222000, 'Sales Tax Payable', 0, salesTax);
         if (uber) pushLine(400201, 'Non Taxable Sales', 0, uber);
         if (donations) pushLine(212000, 'Donations', 0, donations);
+        if (cashExpected)
+            pushLine(
+                101900,
+                'Cash Expected Deposit',
+                cashExpected,
+                0
+            );
         if (mcVisaDiscover) pushLine(111200, 'Credit Cards Expected Deposit', mcVisaDiscover, 0);
         if (amex) pushLine(111200, 'AMEX Expected Deposit', amex, 0);
         if (gcRedeem) pushLine(144800, 'Gift Cards REDEEM', gcRedeem, 0);
@@ -597,13 +604,7 @@ function generarDailySales0314() {
                 0
             );
 
-        if (cashExpected)
-            pushLine(
-                101900,
-                'Cash Expected Deposit',
-                cashExpected,
-                0
-            );
+
 
         if (ebt)
             pushLine(
