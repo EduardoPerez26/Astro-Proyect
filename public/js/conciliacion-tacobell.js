@@ -195,26 +195,17 @@ function generarTaxReview() {
 
     taxReviewData = datosExtraidos.map(row => {
 
-
-
         const taxRate =
             Number(obtenerTaxRate(row.store) || 0);
 
         const netSales =
-            Number(
-                row.netSales ??
-                row.grossSalesPos ??
-                0
-            );
+            Number(row.netSales || 0);
 
         const discounts =
             Number(row.discounts || 0);
 
-        const uber =
-            Number(row.uber || 0);
-
-        const ebt =
-            Number(row.ebt || 0);
+        const salesTaxPayable =
+            Number(row.salesTax || 0);
 
         const taxableSales =
             netSales;
@@ -222,46 +213,26 @@ function generarTaxReview() {
         const taxCalculation =
             taxableSales * taxRate;
 
-        const salesTaxPayable =
-            Number(row.salesTax || 0);
-
         const taxDifference =
             taxCalculation - salesTaxPayable;
 
         const rateCalculation =
-            taxableSales
+            taxableSales !== 0
                 ? salesTaxPayable / taxableSales
                 : 0;
 
         const rateDifference =
-            rateCalculation - taxRate;
-
-        console.log(
-            row.store,
-            row.netSales,
-            row.salesTax,
-            row.discounts
-        );
+            taxRate - rateCalculation;
 
         return {
 
             store: row.store,
 
-            unitName: row.store,
-
             taxRate,
 
-            food: netSales,
-
-            beverage: 0,
-
-            other: 0,
+            netSales,
 
             discounts,
-
-            uber,
-
-            ebt,
 
             taxableSales,
 
@@ -278,6 +249,10 @@ function generarTaxReview() {
         };
 
     });
+
+    console.table(
+        taxReviewData.slice(0, 5)
+    );
 
 }
 
