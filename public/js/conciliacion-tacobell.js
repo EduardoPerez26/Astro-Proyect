@@ -323,15 +323,178 @@ function generarStatisticalDelivery() {
 function generarDailySalesRED() {
     dailySalesREDData = [];
     datosExtraidos.forEach(row => {
-        dailySalesREDData.push({
-            journal: 'SJ',
-            description: 'POS Data Upload Sabretooth',
-            memo: 'Gross Food Sales',
-            account: 400200,
-            locationId: row.store,
-            credit: Number(row.grossSalesPos || 0)
-        });
+        const store = row.store;
+
+        // 400200
+        if (row.grossSalesPos) {
+            dailySalesREDData.push({
+                journal: 'SJ',
+                description: 'POS Data Upload Sabretooth',
+                memo: 'Gross Food Sales',
+                account: 400200,
+                locationId: store,
+                credit: Number(row.grossSalesPos || 0)
+            });
+        }
+
+        // 400201
+        if (row.discounts) {
+            dailySalesREDData.push({
+                journal: 'SJ',
+                description: 'POS Data Upload Sabretooth',
+                memo: 'Discounts',
+                account: 400201,
+                locationId: store,
+                credit: Number(row.discounts || 0)
+            });
+        }
+
+        // 410000
+        if (row.salesTax) {
+            dailySalesREDData.push({
+                journal: 'SJ',
+                description: 'POS Data Upload Sabretooth',
+                memo: 'Sales Tax',
+                account: 410000,
+                locationId: store,
+                credit: Number(row.salesTax || 0)
+            });
+        }
+
+        // 222000
+        if (row.gcSold) {
+            dailySalesREDData.push({
+                journal: 'SJ',
+                description: 'POS Data Upload Sabretooth',
+                memo: 'Gift Cards Sold',
+                account: 222000,
+                locationId: store,
+                credit: Number(row.gcSold || 0)
+            });
+        }
+
+        // 212000
+        if (row.gcRedeem) {
+            dailySalesREDData.push({
+                journal: 'SJ',
+                description: 'POS Data Upload Sabretooth',
+                memo: 'Gift Cards Redeemed',
+                account: 212000,
+                locationId: store,
+                credit: Number(row.gcRedeem || 0)
+            });
+        }
+
+        // 115000
+        if (row.paidIn) {
+            dailySalesREDData.push({
+                journal: 'SJ',
+                description: 'POS Data Upload Sabretooth',
+                memo: 'Paid In',
+                account: 115000,
+                locationId: store,
+                credit: Number(row.paidIn || 0)
+            });
+        }
+
+        // 116200
+        if (row.paidOut) {
+            dailySalesREDData.push({
+                journal: 'SJ',
+                description: 'POS Data Upload Sabretooth',
+                memo: 'Paid Out',
+                account: 116200,
+                locationId: store,
+                credit: Number(row.paidOut || 0)
+            });
+        }
+
+        // 101900
+        if (row.mastercard) {
+            dailySalesREDData.push({
+                journal: 'SJ',
+                description: 'POS Data Upload Sabretooth',
+                memo: 'Mastercard',
+                account: 101900,
+                locationId: store,
+                credit: Number(row.mastercard || 0)
+            });
+        }
+
+        // 111200
+        if (row.visa) {
+            dailySalesREDData.push({
+                journal: 'SJ',
+                description: 'POS Data Upload Sabretooth',
+                memo: 'Visa',
+                account: 111200,
+                locationId: store,
+                credit: Number(row.visa || 0)
+            });
+        }
+
+        // 144800
+        if (row.discover) {
+            dailySalesREDData.push({
+                journal: 'SJ',
+                description: 'POS Data Upload Sabretooth',
+                memo: 'Discover',
+                account: 144800,
+                locationId: store,
+                credit: Number(row.discover || 0)
+            });
+        }
+
+        // 124000
+        if (row.amex) {
+            dailySalesREDData.push({
+                journal: 'SJ',
+                description: 'POS Data Upload Sabretooth',
+                memo: 'AMEX',
+                account: 124000,
+                locationId: store,
+                credit: Number(row.amex || 0)
+            });
+        }
+
+        // 122000
+        if (row.debit) {
+            dailySalesREDData.push({
+                journal: 'SJ',
+                description: 'POS Data Upload Sabretooth',
+                memo: 'Debit Cards',
+                account: 122000,
+                locationId: store,
+                credit: Number(row.debit || 0)
+            });
+        }
+
+        // 123000
+        if (row.cashExpected) {
+            dailySalesREDData.push({
+                journal: 'SJ',
+                description: 'POS Data Upload Sabretooth',
+                memo: 'Cash Expected',
+                account: 123000,
+                locationId: store,
+                credit: Number(row.cashExpected || 0)
+            });
+        }
+
+        // 652300
+        if (row.ccTotals) {
+            dailySalesREDData.push({
+                journal: 'SJ',
+                description: 'POS Data Upload Sabretooth',
+                memo: 'CC Totals',
+                account: 652300,
+                locationId: store,
+                credit: Number(row.ccTotals || 0)
+            });
+        }
     });
+
+    console.log('Daily Sales RED generado:', dailySalesREDData.length);
 }
 
 function generarDailySales0314() {
