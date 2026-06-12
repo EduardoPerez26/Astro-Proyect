@@ -622,22 +622,102 @@ function obtenerLocationId(store) {
 }
 
 function generarDailySales0310() {
+
     dailySales0310Data = [];
+
     let lineNo = 1;
-    statisticalDeliveryData.forEach(item => {
-        const amount = Number(item.amount || 0);
-        if (!amount) return;
-        const locationId = obtenerLocationId(item.locationId || item.store);
 
-        dailySales0310Data.push({ journal: 'SJ', lineNo: lineNo++, description: 'Statistical Delivery Sales', memo: 'Statistical Delivery Sales', acctNo: 990300, locationId, debit: amount, credit: 0 });
-        dailySales0310Data.push({ journal: 'SJ', lineNo: lineNo++, description: 'Statistical Delivery Sales', memo: 'Statistical Delivery Sales', acctNo: 990301, locationId, debit: 0, credit: amount });
+    datosExtraidos.forEach(row => {
 
-        const taxAmount = Number(item.taxAmount || item.salesTax || 0);
-        if (taxAmount) {
-            dailySales0310Data.push({ journal: 'SJ', lineNo: lineNo++, description: 'Statistical Delivery Sales', memo: 'Statistical Delivery Sales', acctNo: 990200, locationId, debit: taxAmount, credit: 0 });
-            dailySales0310Data.push({ journal: 'SJ', lineNo: lineNo++, description: 'Statistical Delivery Sales', memo: 'Statistical Delivery Sales', acctNo: 990201, locationId, debit: 0, credit: taxAmount });
+        const store = Number(row.store);
+
+        const dd = Number(row.dd || 0);
+        const uber = Number(row.uber || 0);
+        const gh = Number(row.gh || 0);
+
+        // DoorDash
+        if (dd !== 0) {
+
+            dailySales0310Data.push({
+                journal: 'SJ',
+                lineNo: lineNo++,
+                description: 'Statistical Delivery Sales',
+                memo: 'Statistical Delivery Sales',
+                acctNo: 990300,
+                locationId: store,
+                debit: dd,
+                credit: 0
+            });
+
+            dailySales0310Data.push({
+                journal: 'SJ',
+                lineNo: lineNo++,
+                description: 'Statistical Delivery Sales',
+                memo: 'Statistical Delivery Sales',
+                acctNo: 990301,
+                locationId: store,
+                debit: 0,
+                credit: dd
+            });
+
         }
+
+        // Uber
+        if (uber !== 0) {
+
+            dailySales0310Data.push({
+                journal: 'SJ',
+                lineNo: lineNo++,
+                description: 'Statistical Delivery Sales',
+                memo: 'Statistical Delivery Sales',
+                acctNo: 990200,
+                locationId: store,
+                debit: uber,
+                credit: 0
+            });
+
+            dailySales0310Data.push({
+                journal: 'SJ',
+                lineNo: lineNo++,
+                description: 'Statistical Delivery Sales',
+                memo: 'Statistical Delivery Sales',
+                acctNo: 990201,
+                locationId: store,
+                debit: 0,
+                credit: uber
+            });
+
+        }
+
+        // GrubHub
+        if (gh !== 0) {
+
+            dailySales0310Data.push({
+                journal: 'SJ',
+                lineNo: lineNo++,
+                description: 'Statistical Delivery Sales',
+                memo: 'Statistical Delivery Sales',
+                acctNo: 990100,
+                locationId: store,
+                debit: gh,
+                credit: 0
+            });
+
+            dailySales0310Data.push({
+                journal: 'SJ',
+                lineNo: lineNo++,
+                description: 'Statistical Delivery Sales',
+                memo: 'Statistical Delivery Sales',
+                acctNo: 990101,
+                locationId: store,
+                debit: 0,
+                credit: gh
+            });
+
+        }
+
     });
+
 }
 
 function obtenerTaxRate(store) {
