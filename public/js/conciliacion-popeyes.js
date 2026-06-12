@@ -2,12 +2,6 @@
 // POPEYES - CONCILIACIÓN COMPLETA DEFINITIVA
 // ======================================================
 
-let datosExtraidos = [];
-let dailySalesREDData = [];
-let statisticalDeliveryData = [];
-let dailySales0314Data = [];
-let dailySales0310Data = [];
-
 let workbook = null;
 
 // ======================================================
