@@ -1035,3 +1035,18 @@ function generarCashSummary() {
     cashSummaryData = [resumen];
 
 }
+
+function obtenerTaxRate(store) {
+
+    const taxRates = {
+
+        37014: 0.0815,
+        37015: 0.0815,
+        37016: 0.0815,
+        37017: 0.0815
+
+    };
+
+    return taxRates[store] || 0.0815;
+
+}

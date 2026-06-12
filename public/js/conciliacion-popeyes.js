@@ -1,8 +1,9 @@
 // conciliacion-popeyes.js
-let storeDatesData = [];
-let salesData = [];
-let conciliationData = [];
-let taxReviewData = [];
+window.taxReviewData ??= [];
+window.redData ??= [];
+window.statisticalDeliveryData ??= [];
+window.journalData ??= [];
+window.statisticalJournalData ??= [];
 async function procesarPopeyes() {
 
     const sales =
