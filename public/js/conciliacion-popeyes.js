@@ -824,13 +824,11 @@ function generarConciliationPopeyes(salesData) {
             (row.uber || 0) +
             (row.doorDashShortage || 0) +
             (row.uberShortage || 0) +
-            (row.postmates || 0) +
             (row.ebt || 0) +
             (row.kiosk || 0) +
             (row.gcRedeem || 0) +
             (row.onlineCatering || 0) +
             (row.ezCater || 0) +
-            (row.wlTips || 0) +
             (row.paidOutSmallwares || 0) +
             (row.paidOutCleaning || 0) +
             (row.paidOutOffice || 0) +
