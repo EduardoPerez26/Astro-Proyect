@@ -79,9 +79,9 @@ function generarConciliacionTacoBell() {
         const debit = Number(row[c.debit]) || 0;
         const gcRedeem = (Number(row[c.giftCardRedeemed]) || 0) * -1;
         const acctCashOriginal = Number(row[c.acctCash]) || 0;
-        const gh = Number(row[c.grubhub]) || 0;
+        const gh = Number(row.gh || 0);
         const uber = Number(row[c.uber]) || 0;
-        const dd = Number(row[c.doordash]) || 0;
+        const dd = Number(row.dd || 0);
         const deposit1 = Number(row[c.deposit1]) || 0;
         const deposit2 = Number(row[c.deposit2]) || 0;
         const deposit3 = Number(row[c.deposit3]) || 0;
@@ -148,6 +148,39 @@ function generarConciliacionTacoBell() {
     llenarFiltroTiendas();
     actualizarResumen();
     actualizarTotales();
+    renderActiveTab();
+}
+
+function renderActiveTab() {
+
+    switch (activeTab) {
+
+        case 'dailySales':
+            renderTablaSucursales();
+            break;
+
+        case 'dailySalesRed':
+            renderDailySalesRED();
+            break;
+
+        case 'taxReview':
+            renderTaxReview();
+            break;
+
+        case 'statisticalDelivery':
+            renderStatisticalDelivery();
+            break;
+
+        case 'dailySales0314':
+            renderDailySales0314();
+            break;
+
+        case 'dailySales0310':
+            renderDailySales0310();
+            break;
+
+    }
+
 }
 
 // ===========================================
@@ -272,4 +305,44 @@ function generarDailySales0310() {
 function obtenerTaxRate(store) {
     const TAX_RATES = { 37014: 0.0815, 37015: 0.0815, 37016: 0.0815, 37017: 0.0815 };
     return TAX_RATES[store] || 0;
+}
+
+function renderTaxReview() {
+
+    renderDynamicTable(
+        taxReviewData
+    );
+
+}
+
+function renderStatisticalDelivery() {
+
+    renderDynamicTable(
+        statisticalDeliveryData
+    );
+
+}
+
+function renderDailySalesRED() {
+
+    renderDynamicTable(
+        dailySalesREDData
+    );
+
+}
+
+function renderDailySales0314() {
+
+    renderDynamicTable(
+        dailySales0314Data
+    );
+
+}
+
+function renderDailySales0310() {
+
+    renderDynamicTable(
+        dailySales0310Data
+    );
+
 }

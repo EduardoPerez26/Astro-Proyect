@@ -495,30 +495,6 @@ function initEventListeners() {
             btn.classList.add('active');
 
             const tab = btn.dataset.tab;
-
-            switch (tab) {
-
-                case 'dailySales':
-                    renderDailySales();
-                    break;
-
-                case 'dailySalesRed':
-                    renderDailySalesRed();
-                    break;
-
-                case 'taxLiability':
-                    renderTaxLiability();
-                    break;
-
-                case 'cashSheet':
-                    renderCashSheet();
-                    break;
-
-                case 'cashSummary':
-                    renderCashSummary();
-                    break;
-            }
-
         });
 
     });
@@ -2123,5 +2099,39 @@ function limpiarDecimal(valor) {
 
     return Number(numero.toFixed(2));
 }
+
+function renderActiveTab() {
+
+    switch (activeTab) {
+
+        case 'dailySales':
+            renderTablaSucursales();
+            break;
+
+        case 'dailySalesRed':
+            renderDailySalesRED();
+            break;
+
+        case 'taxReview':
+            renderTaxReview();
+            break;
+
+        case 'statisticalDelivery':
+            renderStatisticalDelivery();
+            break;
+
+        case 'dailySales0314':
+            renderDailySales0314();
+            break;
+
+        case 'dailySales0310':
+            renderDailySales0310();
+            break;
+
+    }
+
+}
+
+
 
 
