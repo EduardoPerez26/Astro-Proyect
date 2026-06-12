@@ -138,7 +138,10 @@ function generarConciliacionTacoBell() {
     });
 
     document.getElementById('resultsSection').style.display = 'block';
-
+    console.log(
+        'datosExtraidos[0]',
+        datosExtraidos[0]
+    );
     generarTaxReview();
     generarStatisticalDelivery();
     generarDailySalesRED();
@@ -183,10 +186,6 @@ function renderActiveTab() {
 
 }
 
-console.log(
-    'datosExtraidos[0]',
-    datosExtraidos[0]
-);
 // ===========================================
 // FUNCIONES POR HOJA
 // ===========================================
