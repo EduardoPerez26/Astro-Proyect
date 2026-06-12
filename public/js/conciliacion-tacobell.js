@@ -218,6 +218,12 @@ function generarStatisticalDelivery() {
     let lineNo = 1;
 
     datosExtraidos.forEach(row => {
+        console.log({
+            store: row.store,
+            gh: row.gh,
+            uber: row.uber,
+            dd: row.dd
+        });
 
         const store = Number(row.store);
 
