@@ -13,8 +13,14 @@ function buildPopeyesDataFromSalesPOS() {
 
     salesData = [];
 
+    console.log('Entrando buildPopeyesDataFromSalesPOS');
+    console.log(workbook.SheetNames);
+
     const ws = workbook.Sheets['Sales  POS'];
     const rows = XLSX.utils.sheet_to_json(ws);
+
+    console.log('ROWS', rows.length);
+    console.log(rows[0]);
 
     rows.forEach(row => {
 
@@ -371,6 +377,9 @@ function generarWorkbookPopeyes() {
 // ======================================================
 
 function generarPopeyesV2() {
+
+    console.log('WORKBOOK', workbook);
+    console.log('SHEETS', workbook?.SheetNames);
 
     buildPopeyesDataFromSalesPOS();
 
