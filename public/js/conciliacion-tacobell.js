@@ -218,11 +218,11 @@ function generarTaxReviewTacoBell() {
 
         const rateCalculation =
             taxableSales !== 0
-                ? salesTaxPayable / taxableSales
+                ? (salesTaxPayable / taxableSales) * 100
                 : 0;
 
         const rateDifference =
-            taxRate - rateCalculation;
+            (taxRate * 100) - rateCalculation;
 
         return {
 
@@ -242,9 +242,9 @@ function generarTaxReviewTacoBell() {
 
             taxDifference,
 
-            rateCalculation,
+            rateCalculation: Number(rateCalculation.toFixed(3)),
 
-            rateDifference
+            rateDifference: Number(rateDifference.toFixed(3))
 
         };
 
