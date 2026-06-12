@@ -9,97 +9,70 @@ let salesData = [];
 // 1. EXTRACCIÓN ÚNICA (SOURCE OF TRUTH)
 // ======================================================
 
-function buildPopeyesDataFromSalesPOS() {
+function buildPopeyesDataFromConciliationOnly() {
 
     salesData = [];
 
-    console.log('Entrando buildPopeyesDataFromSalesPOS');
-    console.log(workbook.SheetNames);
+    const sheetName =
+        workbook.SheetNames[0];
 
-    const ws = getSalesPOSSheet(workbook);
-    const rows = XLSX.utils.sheet_to_json(ws);
+    const ws =
+        workbook.Sheets[sheetName];
 
-    console.log('ROWS', rows.length);
-    console.log(rows[0]);
+    const rows =
+        XLSX.utils.sheet_to_json(ws);
 
     rows.forEach(row => {
 
         const store =
-            Number(row['Location'] || row['Store'] || row['Unit Number'] || 0);
+            Number(row.store || row.Store || 0);
 
-        const food =
-            Number(row['Net Sales - Food'] || 0);
-
-        const beverages =
-            Number(row['Net Sales - Beverages'] || 0);
-
-        const other =
-            Number(row['Net Sales - Other'] || 0);
+        const netSales =
+            Number(row.netSales || row['Net Sales'] || 0);
 
         const salesTax =
-            Number(row['Sales Tax Payable'] || 0);
+            Number(row.salesTax || row['Sales Tax'] || 0);
 
         const discounts =
-            Number(row['Discounts'] || 0);
-
-        const promo =
-            Number(row['Coupons - Promotions'] || 0);
+            Number(row.discounts || 0);
 
         const uber =
-            Number(row['Uber'] || 0);
+            Number(row.uber || 0);
 
         const dd =
-            Number(row['DoorDash'] || 0);
+            Number(row.dd || 0);
 
         const gh =
-            Number(row['GrubHub'] || 0);
-
-        const amex =
-            Number(row['Payments - AMEX'] || 0);
-
-        const visa =
-            Number(row['Payments - Visa'] || 0);
-
-        const mc =
-            Number(row['Payments - Master Card'] || 0);
-
-        const discover =
-            Number(row['Payments - Discover'] || 0);
+            Number(row.gh || 0);
 
         const cashExpected =
-            Number(row['Cash Expected Deposit'] || 0);
+            Number(row.cashExpected || row.acctCash || 0);
 
-        const gcSold =
-            Number(row['Gift Cards SOLD'] || 0);
+        const amex =
+            Number(row.amex || 0);
 
-        const gcRedeem =
-            Number(row['Gift Cards REEDEM'] || 0);
+        const visa =
+            Number(row.visa || 0);
 
-        const paidOut =
-            Number(row['Paid Outs'] || 0);
+        const mc =
+            Number(row.mastercard || 0);
 
-        const paidIn =
-            Number(row['Paid In'] || 0);
+        const discover =
+            Number(row.discover || 0);
 
         salesData.push({
 
             store,
 
-            food,
-            beverages,
-            other,
-
-            netSales:
-                food + beverages + other,
-
+            netSales,
             salesTax,
-
             discounts,
-            promo,
 
             uber,
             dd,
             gh,
+
+            cashExpected,
 
             amex,
             visa,
@@ -107,22 +80,13 @@ function buildPopeyesDataFromSalesPOS() {
             discover,
 
             ccTotals:
-                amex + visa + mc + discover,
-
-            cashExpected,
-
-            gcSold,
-            gcRedeem,
-
-            paidOut,
-            paidIn
+                amex + visa + mc + discover
 
         });
 
     });
 
 }
-
 // ======================================================
 // 2. TAX REVIEW (100% MATCH LOGIC)
 // ======================================================
