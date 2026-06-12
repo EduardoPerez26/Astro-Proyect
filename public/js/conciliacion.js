@@ -1817,8 +1817,6 @@ function llenarFiltroTiendas() {
     const select =
         document.getElementById('filterStore');
 
-    console.log('SELECT:', select);
-
     const tiendas = [
         ...new Set(
             datosExtraidos

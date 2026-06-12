@@ -143,6 +143,8 @@ function generarConciliacionTacoBell() {
         datosExtraidos[0]
     );
     generarTaxReview();
+
+    console.table(taxReviewData.slice(0, 3));
     generarStatisticalDelivery();
     generarDailySalesRED();
     generarDailySales0314();
