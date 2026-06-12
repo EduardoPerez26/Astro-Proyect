@@ -187,28 +187,85 @@ function renderActiveTab() {
 // FUNCIONES POR HOJA
 // ===========================================
 function generarTaxReview() {
+
     taxReviewData = datosExtraidos.map(row => {
-        const taxRate = obtenerTaxRate(row.store);
-        const netSales = Number(row.netSales || 0);
-        const salesTax = Number(row.salesTax || 0);
-        const discounts = Number(row.discounts || 0);
-        const taxableSales = netSales;
-        const taxCalculation = taxableSales * taxRate;
-        const difference = taxCalculation - salesTax;
-        const rateCalculation = netSales ? salesTax / netSales : 0;
+
+        const taxRate =
+            Number(obtenerTaxRate(row.store) || 0);
+
+        const netSales =
+            Number(row.netSales || 0);
+
+        const discounts =
+            Number(row.discounts || 0);
+
+        const uber =
+            Number(row.uber || 0);
+
+        const ebt =
+            Number(row.ebt || 0);
+
+        const taxableSales =
+            netSales;
+
+        const taxCalculation =
+            taxableSales * taxRate;
+
+        const salesTaxPayable =
+            Number(row.salesTax || 0);
+
+        const taxDifference =
+            taxCalculation - salesTaxPayable;
+
+        const rateCalculation =
+            taxableSales
+                ? salesTaxPayable / taxableSales
+                : 0;
+
+        const rateDifference =
+            rateCalculation - taxRate;
+
         return {
+
             store: row.store,
+
+            unitName: row.store,
+
             taxRate,
-            netSales,
+
+            food: netSales,
+
+            beverage: 0,
+
+            other: 0,
+
             discounts,
+
+            uber,
+
+            ebt,
+
             taxableSales,
+
             taxCalculation,
-            salesTax,
-            difference,
+
+            salesTaxPayable,
+
+            taxDifference,
+
             rateCalculation,
-            rateDifference: taxRate - rateCalculation
+
+            rateDifference
+
         };
+
     });
+
+    console.log(
+        'Tax Review generado:',
+        taxReviewData.length
+    );
+
 }
 
 function generarStatisticalDelivery() {
@@ -528,8 +585,8 @@ function generarDailySales0314() {
         const salesTax = Number(row.salesTax || 0);
         const donations = Number(row.donations || 0);
         const uber = Number(row.uber || 0);
-        const gh = Number(row.grubhub || 0);
-        const dd = Number(row.doordash || 0);
+        const gh = Number(row.gh || 0);
+        const dd = Number(row.dd || 0);
         const amex = Number(row.amex || 0);
         const mcVisaDiscover = Number(row.ccTotals || 0);
         const gcRedeem = Number(row.gcRedeem || 0);
@@ -579,8 +636,43 @@ function generarDailySales0310() {
 }
 
 function obtenerTaxRate(store) {
-    const TAX_RATES = { 37014: 0.0815, 37015: 0.0815, 37016: 0.0815, 37017: 0.0815 };
+
+    const TAX_RATES = {
+
+        28841: 0.08125,
+        28842: 0.08375,
+        28843: 0.09125,
+        28844: 0.08000,
+        28845: 0.08125,
+        28846: 0.08375,
+
+        30256: 0.08125,
+        36224: 0.08125,
+
+        37014: 0.08250,
+
+        37732: 0.08375,
+
+        30491: 0.08750,
+
+        29423: 0.08250,
+
+        32680: 0.08250,
+
+        34793: 0.08975,
+
+        36225: 0.08125,
+
+        36930: 0.07975,
+
+        37171: 0.08750,
+
+        32952: 0.07900
+
+    };
+
     return TAX_RATES[store] || 0;
+
 }
 
 function renderTaxReview() {
