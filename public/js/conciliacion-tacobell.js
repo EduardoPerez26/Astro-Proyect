@@ -183,6 +183,10 @@ function renderActiveTab() {
 
 }
 
+console.log(
+    'datosExtraidos[0]',
+    datosExtraidos[0]
+);
 // ===========================================
 // FUNCIONES POR HOJA
 // ===========================================
@@ -190,17 +194,17 @@ function generarTaxReview() {
 
     taxReviewData = datosExtraidos.map(row => {
 
-        console.log({
-            store: row.store,
-            netSales: row.netSales,
-            salesTax: row.salesTax
-        });
+
 
         const taxRate =
             Number(obtenerTaxRate(row.store) || 0);
 
         const netSales =
-            Number(row.netSales || 0);
+            Number(
+                row.netSales ??
+                row.grossSalesPos ??
+                0
+            );
 
         const discounts =
             Number(row.discounts || 0);
