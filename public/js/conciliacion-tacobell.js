@@ -688,9 +688,42 @@ function obtenerTaxRate(store) {
 }
 
 function renderTaxReview() {
-    renderArrayToMainTable(
-        taxReviewData
-    );
+
+    const data = taxReviewData.map(row => ({
+
+        STORE: row.store,
+
+        TAXRATE:
+            (row.taxRate * 100).toFixed(3) + '%',
+
+        'NET SALES':
+            Number(row.netSales || 0).toFixed(2),
+
+        DISCOUNTS:
+            Number(row.discounts || 0).toFixed(2),
+
+        'TAXABLE SALES':
+            Number(row.taxableSales || 0).toFixed(2),
+
+        'TAX CALCULATION':
+            Number(row.taxCalculation || 0).toFixed(2),
+
+        'SALES TAX PAYABLE':
+            Number(row.salesTaxPayable || 0).toFixed(2),
+
+        DIFFERENCE:
+            Number(row.taxDifference || 0).toFixed(2),
+
+        'RATE CALCULATION':
+            ((row.rateCalculation || 0) * 100).toFixed(3) + '%',
+
+        'RATE DIFFERENCE':
+            ((row.rateDifference || 0) * 100).toFixed(3) + '%'
+
+    }));
+
+    renderArrayToMainTable(data);
+
 }
 
 function renderStatisticalDelivery() {
