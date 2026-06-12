@@ -626,7 +626,6 @@ function buscarStore(store) {
     );
 }
 
-let statisticalDeliveryData = [];
 
 function generarStatisticalDelivery() {
 
