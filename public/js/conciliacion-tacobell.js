@@ -79,9 +79,9 @@ function generarConciliacionTacoBell() {
         const debit = Number(row[c.debit]) || 0;
         const gcRedeem = (Number(row[c.giftCardRedeemed]) || 0) * -1;
         const acctCashOriginal = Number(row[c.acctCash]) || 0;
-        const gh = Number(row.gh || 0);
+        const gh = Number(row[c.grubhub]) || 0;
         const uber = Number(row[c.uber]) || 0;
-        const dd = Number(row.dd || 0);
+        const dd = Number(row[c.doordash]) || 0;
         const deposit1 = Number(row[c.deposit1]) || 0;
         const deposit2 = Number(row[c.deposit2]) || 0;
         const deposit3 = Number(row[c.deposit3]) || 0;
