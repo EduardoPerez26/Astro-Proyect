@@ -499,6 +499,13 @@ function initEventListeners() {
 
     });
 
+    document
+        .getElementById('btnExportCsv')
+        ?.addEventListener(
+            'click',
+            exportarTabActualCSV
+        );
+
 }
 
 // ============================================
@@ -2125,6 +2132,103 @@ function renderActiveTab() {
             renderDailySales0310();
             break;
 
+    }
+
+}
+
+function descargarCSV(data, nombreArchivo) {
+
+    if (!data || !data.length) {
+        alert('No hay datos para exportar');
+        return;
+    }
+
+    const columnas = Object.keys(data[0]);
+
+    let csv = columnas.join(',') + '\n';
+
+    data.forEach(row => {
+
+        const valores = columnas.map(col => {
+
+            let valor = row[col];
+
+            if (valor === null || valor === undefined)
+                valor = '';
+
+            valor = String(valor).replace(/"/g, '""');
+
+            return `"${valor}"`;
+
+        });
+
+        csv += valores.join(',') + '\n';
+
+    });
+
+    const blob = new Blob(
+        [csv],
+        { type: 'text/csv;charset=utf-8;' }
+    );
+
+    const url = URL.createObjectURL(blob);
+
+    const link = document.createElement('a');
+
+    link.href = url;
+    link.download = `${nombreArchivo}.csv`;
+
+    document.body.appendChild(link);
+
+    link.click();
+
+    document.body.removeChild(link);
+
+    URL.revokeObjectURL(url);
+
+}
+
+function exportarTabActualCSV() {
+
+    switch (activeTab) {
+
+        case 'taxReview':
+            descargarCSV(
+                taxReviewData,
+                'TaxReview'
+            );
+            break;
+
+        case 'dailySalesRed':
+            descargarCSV(
+                dailySalesREDData,
+                'DailySalesRED'
+            );
+            break;
+
+        case 'statisticalDelivery':
+            descargarCSV(
+                statisticalDeliveryData,
+                'StatisticalDelivery'
+            );
+            break;
+
+        case 'dailySales0314':
+            descargarCSV(
+                dailySales0314Data,
+                'DailySales0314'
+            );
+            break;
+
+        case 'dailySales0310':
+            descargarCSV(
+                dailySales0310Data,
+                'DailySales0310'
+            );
+            break;
+
+        default:
+            alert('Selecciona una pestaña');
     }
 
 }
