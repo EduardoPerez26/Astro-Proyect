@@ -190,6 +190,12 @@ function generarTaxReview() {
 
     taxReviewData = datosExtraidos.map(row => {
 
+        console.log({
+            store: row.store,
+            netSales: row.netSales,
+            salesTax: row.salesTax
+        });
+
         const taxRate =
             Number(obtenerTaxRate(row.store) || 0);
 
@@ -224,6 +230,12 @@ function generarTaxReview() {
 
         const rateDifference =
             rateCalculation - taxRate;
+
+        console.log({
+            taxableSales,
+            taxCalculation,
+            taxDifference
+        });
 
         return {
 
