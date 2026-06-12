@@ -1,14 +1,20 @@
 // ======================================================
-// POPEYES - CONCILIACIÓN COMPLETA DEFINITIVA
+// POPEYES V2 - LIMPIO Y CORRECTO
 // ======================================================
 
+let salesData = [];
+let taxReviewData = [];
+let conciliacionData = [];
+let dailySalesREDData = [];
+let storeDatesData = [];
+
 // ======================================================
-// 1. EXTRACCIÓN BASE DESDE SALES POS
+// 1. EXTRACCIÓN ÚNICA (SOURCE OF TRUTH)
 // ======================================================
 
 function buildPopeyesDataFromSalesPOS() {
 
-    datosExtraidos = [];
+    salesData = [];
 
     const ws = workbook.Sheets['Sales  POS'];
     const rows = XLSX.utils.sheet_to_json(ws);
@@ -18,9 +24,13 @@ function buildPopeyesDataFromSalesPOS() {
         const store =
             Number(row['Location'] || row['Store'] || row['Unit Number'] || 0);
 
-        const netSales =
-            Number(row['Net Sales - Food'] || 0) +
-            Number(row['Net Sales - Beverages'] || 0) +
+        const food =
+            Number(row['Net Sales - Food'] || 0);
+
+        const beverages =
+            Number(row['Net Sales - Beverages'] || 0);
+
+        const other =
             Number(row['Net Sales - Other'] || 0);
 
         const salesTax =
@@ -31,9 +41,6 @@ function buildPopeyesDataFromSalesPOS() {
 
         const promo =
             Number(row['Coupons - Promotions'] || 0);
-
-        const donations =
-            Number(row['Donations'] || 0);
 
         const uber =
             Number(row['Uber'] || 0);
@@ -50,14 +57,14 @@ function buildPopeyesDataFromSalesPOS() {
         const visa =
             Number(row['Payments - Visa'] || 0);
 
-        const mastercard =
+        const mc =
             Number(row['Payments - Master Card'] || 0);
 
         const discover =
             Number(row['Payments - Discover'] || 0);
 
-        const debit =
-            Number(row['Debit'] || 0);
+        const cashExpected =
+            Number(row['Cash Expected Deposit'] || 0);
 
         const gcSold =
             Number(row['Gift Cards SOLD'] || 0);
@@ -71,21 +78,21 @@ function buildPopeyesDataFromSalesPOS() {
         const paidIn =
             Number(row['Paid In'] || 0);
 
-        const acctCash =
-            Number(row['Cash Expected Deposit'] || 0);
-
-        datosExtraidos.push({
+        salesData.push({
 
             store,
 
-            netSales,
+            food,
+            beverages,
+            other,
+
+            netSales:
+                food + beverages + other,
+
             salesTax,
 
             discounts,
             promo,
-            donations,
-
-            grossSalesPos: netSales + discounts,
 
             uber,
             dd,
@@ -93,25 +100,198 @@ function buildPopeyesDataFromSalesPOS() {
 
             amex,
             visa,
-            mastercard,
+            mc,
             discover,
-            debit,
+
+            ccTotals:
+                amex + visa + mc + discover,
+
+            cashExpected,
 
             gcSold,
             gcRedeem,
 
             paidOut,
-            paidIn,
-
-            acctCash
+            paidIn
 
         });
 
     });
+
 }
 
 // ======================================================
-// 2. STOREDATES
+// 2. TAX REVIEW (100% MATCH LOGIC)
+// ======================================================
+
+function generarTaxReviewPopeyes() {
+
+    taxReviewData = [];
+
+    salesData.forEach(row => {
+
+        const taxRate =
+            obtenerTaxRate(row.store) || 0;
+
+        const taxableSales =
+            row.food +
+            row.beverages +
+            row.other -
+            row.discounts -
+            row.uber;
+
+        const taxCalculation =
+            taxableSales * taxRate;
+
+        const rateCalculation =
+            taxableSales
+                ? (row.salesTax / taxableSales) * 100
+                : 0;
+
+        taxReviewData.push({
+
+            store: row.store,
+
+            taxRate: taxRate * 100,
+
+            netSales: row.netSales,
+
+            discounts: row.discounts,
+
+            taxableSales,
+
+            taxCalculation,
+
+            salesTaxPayable: row.salesTax,
+
+            taxDifference:
+                taxCalculation - row.salesTax,
+
+            rateCalculation,
+            rateDifference:
+                (taxRate * 100) - rateCalculation
+
+        });
+
+    });
+
+}
+
+// ======================================================
+// 3. CONCILIATION (CLEAN VERSION)
+// ======================================================
+
+function generarConciliationPopeyes() {
+
+    conciliacionData = [];
+
+    salesData.forEach(row => {
+
+        const totalRevenue =
+            row.netSales +
+            row.salesTax +
+            row.gcSold +
+            row.promo;
+
+        const paymentsTotal =
+            row.ccTotals +
+            row.cashExpected +
+            row.dd +
+            row.gh +
+            row.uber +
+            row.gcRedeem;
+
+        conciliacionData.push({
+
+            store: row.store,
+
+            food: row.food,
+            beverages: row.beverages,
+            other: row.other,
+
+            netSales: row.netSales,
+
+            discounts: row.discounts,
+            promo: row.promo,
+
+            salesTax: row.salesTax,
+
+            ccTotals: row.ccTotals,
+            cashExpected: row.cashExpected,
+
+            uber: row.uber,
+            dd: row.dd,
+            gh: row.gh,
+
+            gcSold: row.gcSold,
+            gcRedeem: row.gcRedeem,
+
+            totalRevenue,
+            paymentsTotal,
+
+            overShort:
+                totalRevenue - paymentsTotal
+
+        });
+
+    });
+
+}
+
+// ======================================================
+// 4. DAILY SALES RED (CLEAN JOURNAL)
+// ======================================================
+
+function generarDailySalesPopeyesRed() {
+
+    dailySalesREDData = [];
+
+    let lineNo = 1;
+
+    salesData.forEach(row => {
+
+        const store = row.store;
+
+        const add = (memo, account, debit = 0, credit = 0) => {
+
+            dailySalesREDData.push({
+
+                journal: 'SJ',
+                lineNo: lineNo++,
+                description: 'POS Upload',
+                memo,
+                account,
+                locationId: store,
+                debit,
+                credit
+
+            });
+
+        };
+
+        add('Sales Food', 401000, 0, row.food);
+        add('Sales Beverages', 401000, 0, row.beverages);
+        add('Sales Other', 408000, 0, row.other);
+
+        add('Sales Tax Payable', 241000, 0, row.salesTax);
+
+        add('Cash Expected Deposit', 102000, row.cashExpected, 0);
+
+        add('CC Expected Deposit', 102500, row.ccTotals, 0);
+
+        add('DoorDash', 113000, row.dd, 0);
+        add('GrubHub', 115000, row.gh, 0);
+        add('Uber', 116000, row.uber, 0);
+
+        add('Gift Cards Sold', 202800, 0, row.gcSold);
+        add('Gift Cards Redeemed', 202900, row.gcRedeem, 0);
+
+    });
+
+}
+
+// ======================================================
+// 5. STOREDATES (SORT ENGINE CORRECTO)
 // ======================================================
 
 function generarStoreDatesPopeyes() {
@@ -125,526 +305,84 @@ function generarStoreDatesPopeyes() {
 
     rows.forEach(row => {
 
-        const store = Number(row.store || row['Store'] || 0);
-        const date = row.date || row.Date;
+        const store = Number(row.Store || 0);
+        const date = row.Date;
 
-        const amount = Number(row.amount || row.Value || 0);
-        const account = Number(row.account || row.Acct || 0);
-        const memo = row.memo || row.Memo || '';
-        const description = row.description || 'POS Data Upload DC Central';
+        const amount = Number(row.Amount || 0);
+        const account = row.Account;
+        const memo = row.Memo || '';
 
         if (!amount) return;
 
-        // ======================================================
-        // DETECT DEPARTMENT (igual al LET del Excel)
-        // ======================================================
-
         let dept = '';
 
-        if (
-            memo.includes('Amex') ||
-            memo.includes('CC') ||
-            memo.includes('Kiosk')
-        ) {
-            dept = 'CC';
-        }
-
-        else if (
-            memo.includes('Cash') ||
-            memo.includes('Over') ||
-            memo.includes('Diff')
-        ) {
-            dept = 'CASH';
-        }
-
-        else if (memo.includes('GrubHub')) dept = 'GHD';
+        if (memo.includes('CC')) dept = 'CC';
+        else if (memo.includes('Cash')) dept = 'CASH';
         else if (memo.includes('Uber')) dept = 'UBD';
         else if (memo.includes('DoorDash')) dept = 'DDD';
+        else if (memo.includes('GrubHub')) dept = 'GHD';
 
         storeDatesData.push({
 
-            journal: 'SJ',
-            date,
             lineNo: lineNo++,
-            description,
+            store,
+            date,
+            account,
             memo,
             dept,
-            account,
-            locationId: store,
-            debit: amount > 0 ? amount : 0,
-            credit: amount < 0 ? Math.abs(amount) : 0
+            amount
 
         });
 
     });
 
-    // ======================================================
-    // ORDEN EXACTO (equivalente SORTBY del Excel)
-    // ======================================================
-
-    storeDatesData.sort((a, b) => {
-
-        if (a.date !== b.date)
-            return a.date - b.date;
-
-        if (a.account !== b.account)
-            return a.account - b.account;
-
-        return a.locationId - b.locationId;
-
-    });
-
-    // REASIGNAR LINE_NO como Excel
-    storeDatesData.forEach((r, i) => {
-        r.lineNo = i + 1;
-    });
+    storeDatesData.sort((a, b) =>
+        a.date - b.date || a.store - b.store
+    );
 
 }
 
 // ======================================================
-// 3. GENERAR SALES POPEYES
+// 6. WORKBOOK EXPORT
 // ======================================================
 
-function generarSalesPopeyes() {
-
-    salesData = [];
-
-    const salesPOS =
-        XLSX.utils.sheet_to_json(
-            workbook.Sheets['Sales  POS']
-        );
-
-    const stores =
-        [...new Set(
-            salesPOS.map(r => Number(r.Location))
-        )];
-
-    const dates =
-        [...new Set(
-            salesPOS.map(r => r.Date)
-        )];
-
-    stores.forEach(store => {
-
-        dates.forEach(date => {
-
-            const rows =
-                salesPOS.filter(r =>
-                    Number(r.Location) === store &&
-                    r.Date === date
-                );
-
-            if (!rows.length) return;
-
-            const getValue = account => {
-
-                return rows
-                    .filter(r => r.Account === account)
-                    .reduce(
-                        (s, r) =>
-                            s + Number(r.Amount || 0),
-                        0
-                    );
-
-            };
-
-            const netSalesFood =
-                getValue('Net Sales - Food');
-
-            const netSalesBeverages =
-                getValue('Net Sales - Beverages');
-
-            const netSalesOther =
-                getValue('Net Sales - Other');
-
-            const salesTaxPayable =
-                getValue('Sales Tax Payable');
-
-            const donations =
-                getValue('Donations');
-
-            const amex =
-                getValue('Payments - AMEX');
-
-            const visa =
-                getValue('Payments - Visa');
-
-            const masterCard =
-                getValue('Payments - Master Card');
-
-            const discover =
-                getValue('Payments - Discover');
-
-            const uber =
-                getValue('Uber');
-
-            const doorDash =
-                getValue('DoorDash');
-
-            const grubHub =
-                getValue('GrubHub');
-
-            const discounts =
-                rows
-                    .filter(r =>
-                        String(r.Account || '')
-                            .startsWith('Discount')
-                    )
-                    .reduce(
-                        (s, r) =>
-                            s + Number(r.Amount || 0),
-                        0
-                    );
-
-            salesData.push({
-
-                store,
-                date,
-
-                netSalesFood,
-
-                netSalesBeverages,
-
-                netSalesOther,
-
-                grossSales:
-
-                    netSalesFood +
-                    netSalesBeverages +
-                    netSalesOther,
-
-                salesTaxPayable,
-
-                discounts,
-
-                donations,
-
-                amex,
-
-                visa,
-
-                masterCard,
-
-                discover,
-
-                uber,
-
-                doorDash,
-
-                grubHub
-
-            });
-
-        });
-
-    });
-
-}
-
-// ======================================================
-// 4. CONCILIACION POPEYES
-// ======================================================
-
-function generarConciliationPopeyes() {
-
-    conciliacionData = [];
-
-    salesData.forEach(row => {
-
-        const food =
-            Number(row.netSalesFood || 0);
-
-        const beverages =
-            Number(row.netSalesBeverages || 0);
-
-        const other =
-            Number(row.netSalesOther || 0);
-
-        const serviceFee =
-            Number(row.serviceFee || 0);
-
-        const deliveryFee =
-            Number(row.deliveryFee || 0);
-
-        const deliveryTips =
-            Number(row.deliveryTips || 0);
-
-        const totalTips =
-            Number(row.totalTips || 0);
-
-        const discounts =
-            Number(row.discounts || 0);
-
-        const promo =
-            Number(row.promo || 0);
-
-        const salesTax =
-            Number(row.salesTaxPayable || 0);
-
-        const taxExempt =
-            Number(row.taxExemptSales || 0);
-
-        const gcSold =
-            Number(row.gcSold || 0);
-
-        const paidOut =
-            Number(row.paidOut || 0);
-
-        const donations =
-            Number(row.donations || 0);
-
-        const nonRedeemable =
-            Number(row.nonRedeemable || 0);
-
-        const netSales =
-            food +
-            beverages;
-
-        const salesOther =
-            other +
-            serviceFee;
-
-        const totalRevenue =
-            food +
-            beverages +
-            salesOther +
-            deliveryFee +
-            totalTips +
-            salesTax +
-            gcSold +
-            donations +
-            nonRedeemable;
-
-        const ccTotals =
-            Number(row.ccTotals || 0);
-
-        const amex =
-            Number(row.amex || 0);
-
-        const doorDash =
-            Number(row.doorDash || 0);
-
-        const grubHub =
-            Number(row.grubHub || 0);
-
-        const uber =
-            Number(row.uber || 0);
-
-        const ebt =
-            Number(row.ebt || 0);
-
-        const kiosk =
-            Number(row.kiosk || 0);
-
-        const giftCardRedeemed =
-            Number(row.gcRedeem || 0);
-
-        const paymentsTotal =
-            ccTotals +
-            amex +
-            doorDash +
-            grubHub +
-            uber +
-            ebt +
-            kiosk +
-            giftCardRedeemed;
-
-        const overShort =
-            totalRevenue -
-            paymentsTotal;
-
-        conciliacionData.push({
-
-            store: row.store,
-
-            date: row.date,
-
-            food,
-
-            beverages,
-
-            other,
-
-            serviceFee,
-
-            salesOther,
-
-            deliveryFee,
-
-            deliveryTips,
-
-            totalTips,
-
-            discounts,
-
-            promo,
-
-            netSales,
-
-            salesTax,
-
-            taxExempt,
-
-            gcSold,
-
-            paidOut,
-
-            donations,
-
-            nonRedeemable,
-
-            totalRevenue,
-
-            amex,
-
-            ccTotals,
-
-            doorDash,
-
-            grubHub,
-
-            uber,
-
-            ebt,
-
-            kiosk,
-
-            giftCardRedeemed,
-
-            paymentsTotal,
-
-            overShort
-
-        });
-
-    });
-
-}
-
-// ======================================================
-// 5. TAX REVIEW
-// ======================================================
-
-function generarTaxReviewPopeyes() {
-
-    taxReviewData = [];
-
-    datosExtraidos.forEach(row => {
-
-        const store =
-            Number(row.store);
-
-        const taxRate =
-            Number(
-                obtenerTaxRate(store) || 0
+function generarWorkbookPopeyes() {
+
+    const wb = XLSX.utils.book_new();
+
+    const add = (data, name) => {
+        if (data?.length) {
+            XLSX.utils.book_append_sheet(
+                wb,
+                XLSX.utils.json_to_sheet(data),
+                name
             );
+        }
+    };
 
-        const food =
-            Number(row.netSalesFood || 0);
+    add(salesData, 'Sales');
+    add(conciliacionData, 'Conciliation');
+    add(taxReviewData, 'Tax Review');
+    add(dailySalesREDData, 'Daily Sales RED');
+    add(storeDatesData, 'StoreDates');
 
-        const beverages =
-            Number(row.netSalesBeverages || 0);
-
-        const other =
-            Number(row.netSalesOther || 0);
-
-        const discounts =
-            Number(row.discounts || 0);
-
-        const uber =
-            Number(row.uber || 0);
-
-        const ebt =
-            Number(row.ebt || 0);
-
-        const taxableSales =
-            food +
-            beverages +
-            other -
-            discounts -
-            uber -
-            ebt;
-
-        const taxCalculation =
-            taxableSales * taxRate;
-
-        const salesTaxPayable =
-            Number(row.salesTax || 0);
-
-        const difference =
-            taxCalculation -
-            salesTaxPayable;
-
-        const rateCalculation =
-            taxableSales !== 0
-                ? (
-                    salesTaxPayable /
-                    taxableSales
-                ) * 100
-                : 0;
-
-        const rateDifference =
-            (taxRate * 100) -
-            rateCalculation;
-
-        taxReviewData.push({
-
-            store,
-
-            taxRate:
-                taxRate * 100,
-
-            netSalesFood:
-                food,
-
-            netSalesBeverages:
-                beverages,
-
-            netSalesOther:
-                other,
-
-            discounts,
-
-            uber,
-
-            ebt,
-
-            taxableSales,
-
-            taxCalculation,
-
-            salesTaxPayable,
-
-            difference,
-
-            rateCalculation,
-
-            rateDifference
-
-        });
-
-    });
-
+    return wb;
 }
 
 // ======================================================
-// 5. DAILY SALES 03-14
+// 7. MAIN BUILD
 // ======================================================
 
+function generarPopeyesV2() {
 
+    buildPopeyesDataFromSalesPOS();
 
-// ======================================================
-// 6. DAILY SALES 03-10
-// ======================================================
+    generarTaxReviewPopeyes();
 
+    generarConciliationPopeyes();
 
+    generarDailySalesPopeyesRed();
 
-// ======================================================
-// 7. EXPORT WORKBOOK COMPLETO
-// ======================================================
+    generarStoreDatesPopeyes();
 
-
-// ======================================================
-// 8. SAVE MAIN
-// ======================================================
-
+}
