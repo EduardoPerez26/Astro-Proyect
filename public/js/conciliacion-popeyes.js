@@ -3,10 +3,7 @@
 // ======================================================
 
 let salesData = [];
-let taxReviewData = [];
-let conciliacionData = [];
-let dailySalesREDData = [];
-let storeDatesData = [];
+
 
 // ======================================================
 // 1. EXTRACCIÓN ÚNICA (SOURCE OF TRUTH)
