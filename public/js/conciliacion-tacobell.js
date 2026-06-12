@@ -308,41 +308,91 @@ function obtenerTaxRate(store) {
 }
 
 function renderTaxReview() {
-
-    renderDynamicTable(
+    renderArrayToMainTable(
         taxReviewData
     );
-
 }
 
 function renderStatisticalDelivery() {
-
-    renderDynamicTable(
+    renderArrayToMainTable(
         statisticalDeliveryData
     );
-
 }
 
 function renderDailySalesRED() {
-
-    renderDynamicTable(
+    renderArrayToMainTable(
         dailySalesREDData
     );
-
 }
 
 function renderDailySales0314() {
-
-    renderDynamicTable(
+    renderArrayToMainTable(
         dailySales0314Data
     );
-
 }
 
 function renderDailySales0310() {
-
-    renderDynamicTable(
+    renderArrayToMainTable(
         dailySales0310Data
     );
+}
+function renderArrayToMainTable(data) {
+
+    const head =
+        document.getElementById(
+            'conciliacionTableHead'
+        );
+
+    const body =
+        document.getElementById(
+            'conciliacionBody'
+        );
+
+    if (!head || !body) return;
+
+    head.innerHTML = '';
+    body.innerHTML = '';
+
+    if (!data || !data.length) return;
+
+    const columns =
+        Object.keys(data[0]);
+
+    const trHead =
+        document.createElement('tr');
+
+    columns.forEach(col => {
+
+        const th =
+            document.createElement('th');
+
+        th.textContent = col;
+
+        trHead.appendChild(th);
+
+    });
+
+    head.appendChild(trHead);
+
+    data.forEach(row => {
+
+        const tr =
+            document.createElement('tr');
+
+        columns.forEach(col => {
+
+            const td =
+                document.createElement('td');
+
+            td.textContent =
+                row[col] ?? '';
+
+            tr.appendChild(td);
+
+        });
+
+        body.appendChild(tr);
+
+    });
 
 }
