@@ -16,7 +16,7 @@ function buildPopeyesDataFromSalesPOS() {
     console.log('Entrando buildPopeyesDataFromSalesPOS');
     console.log(workbook.SheetNames);
 
-    const ws = workbook.Sheets['Sales  POS'];
+    const ws = getSalesPOSSheet(workbook);
     const rows = XLSX.utils.sheet_to_json(ws);
 
     console.log('ROWS', rows.length);
@@ -390,5 +390,30 @@ function generarPopeyesV2() {
     generarDailySalesPopeyesRed();
 
     generarStoreDatesPopeyes();
+
+}
+
+function getSalesPOSSheet(workbook) {
+
+    const sheetName = workbook.SheetNames.find(name => {
+
+        const n = name.toLowerCase();
+
+        return (
+            n.includes('sales') &&
+            n.includes('pos')
+        );
+
+    });
+
+    if (!sheetName) {
+
+        console.error('No se encontró hoja Sales POS');
+
+        return null;
+
+    }
+
+    return workbook.Sheets[sheetName];
 
 }
