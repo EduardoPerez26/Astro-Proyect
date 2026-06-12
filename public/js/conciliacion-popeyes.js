@@ -3,7 +3,6 @@
 // ======================================================
 
 let datosExtraidos = [];
-let taxReviewData = [];
 let dailySalesREDData = [];
 let statisticalDeliveryData = [];
 let dailySales0314Data = [];
