@@ -231,11 +231,12 @@ function generarTaxReview() {
         const rateDifference =
             rateCalculation - taxRate;
 
-        console.log({
-            taxableSales,
-            taxCalculation,
-            taxDifference
-        });
+        console.log(
+            row.store,
+            row.netSales,
+            row.salesTax,
+            row.discounts
+        );
 
         return {
 
@@ -272,11 +273,6 @@ function generarTaxReview() {
         };
 
     });
-
-    console.log(
-        'Tax Review generado:',
-        taxReviewData.length
-    );
 
 }
 
@@ -381,11 +377,6 @@ function generarStatisticalDelivery() {
         }
 
     });
-
-    console.log(
-        'Statistical Delivery generado:',
-        statisticalDeliveryData.length
-    );
 
 }
 
@@ -576,15 +567,6 @@ function generarDailySalesRED() {
         );
 
     });
-
-    console.log(
-        'Daily Sales RED generado:',
-        dailySalesREDData.length
-    );
-
-    console.table(
-        dailySalesREDData.slice(0, 20)
-    );
 
 }
 function generarDailySales0314() {
