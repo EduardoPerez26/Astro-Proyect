@@ -8,21 +8,14 @@ window.statisticalJournalData ??= [];
 // ========================
 // GLOBAL HELPERS (OBLIGATORIO)
 // ========================
-function norm(v) {
-    return String(v || '')
-        .trim()
-        .toLowerCase()
-        .replace(/\s+/g, ' ');
-}
 
-function num(v) {
-    return Number(String(v || '').replace(/[$,()]/g, '')) || 0;
+function norm(v) {
+    return String(v || '').trim().toLowerCase();
 }
 
 function toNumber(v) {
     return Number(v || 0);
 }
-
 
 async function procesarPopeyes() {
 
@@ -360,26 +353,19 @@ function normalizarFecha(valor) {
 
 }
 
-function monto(grupo, keyword) {
+function monto(grupo, cuenta) {
+    const total =
+        grupo.registros
+            .filter(r => r.Account === cuenta)
+            .reduce(
+                (sum, r) =>
+                    sum +
+                    (Number(r['Credit Amount']) || 0) -
+                    (Number(r['Debit Amount']) || 0),
+                0
+            );
 
-    const key = norm(keyword);
-
-    return grupo.registros.reduce((sum, r) => {
-
-        const acc = norm(r.Account);
-
-        if (acc.includes(key)) {
-
-            return sum +
-                (Number(r['Credit Amount']) || 0) -
-                (Number(r['Debit Amount']) || 0);
-
-        }
-
-        return sum;
-
-    }, 0);
-
+    return Math.abs(total);
 }
 
 function montoSinAbs(grupo, cuenta) {
@@ -1111,7 +1097,7 @@ function generarConciliacionPopeyes() {
     actualizarResumen();
 
     actualizarTotales();
-
 }
+
 
 
