@@ -587,20 +587,31 @@ function generarSalesPopeyes(rawRows) {
             monto(grupo, 'Payments - WL Visa');
 
         const ccTotals =
-            amex +
-            amexPrPd +
-            visa +
-            mastercard +
-            discover +
-            debit +
-            cashApp +
-            imtPaypal +
-            prPdPaypal +
-            prPdVenmo +
-            wlMasterCard +
-            wlVisa +
-            otherPayments +
-            otherDelivery;
+            monto(grupo, 'Payments - Discover') +
+            monto(grupo, 'Payments - Discover PrPd') +
+
+            monto(grupo, 'Payments - Master Card') +
+            monto(grupo, 'Payments - Master Card PrPd') +
+
+            monto(grupo, 'Payments - Visa') +
+            monto(grupo, 'Payments - Visa PrPd') +
+
+            monto(grupo, 'Payments - PrPd Master Card') +
+            monto(grupo, 'Payments - PrPd Visa') +
+
+            monto(grupo, 'Payments - WL MasterCard') +
+            monto(grupo, 'Payments - WL Visa') +
+
+            monto(grupo, 'Payments - PrPD Paypal') +
+            monto(grupo, 'Payments - PrPD Venmo') +
+
+            monto(grupo, 'Payments - Debit') +
+
+            monto(grupo, 'Payments - Other Delivery') +
+            monto(grupo, 'Payments - Other') +
+
+            monto(grupo, 'Payments - Cash App') +
+            monto(grupo, 'Payments - IMT Paypal');
 
         const delTotals =
             dd + gh + uber + postmates;
