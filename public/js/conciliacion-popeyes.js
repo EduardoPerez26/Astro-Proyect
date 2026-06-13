@@ -827,12 +827,8 @@ function generarConciliationPopeyes(salesData) {
             (row.gcRedeem || 0) +
             (row.onlineCatering || 0) +
             (row.ezCater || 0) +
-            (row.paidOutSmallwares || 0) +
-            (row.paidOutCleaning || 0) +
-            (row.paidOutOffice || 0) +
-            (row.paidOutFood || 0) +
-            (row.paidOutCashOut || 0) +
-            (row.cashDeposit1 || 0);
+            (row.paidOut || 0) +
+            (row.cashDeposit || 0);
 
 
 
