@@ -944,8 +944,6 @@ function generarConciliationPopeyes(salesData) {
 
             cashExpected: limpiarDecimal(cashExpected),
 
-            cashDeposit1: limpiarDecimal(cashDeposit1),
-
             difference: limpiarDecimal(difference),
 
             oS: limpiarDecimal(oS)
