@@ -647,7 +647,10 @@ function generarSalesPopeyes(rawRows) {
         // ==================================================
 
         const cashDeposit1 =
-            monto(grupo, 'Cash Deposit');
+            monto(grupo, 'cash deposit') +
+            monto(grupo, 'cash deposit 1') +
+            monto(grupo, 'cash deposit - pos') +
+            monto(grupo, 'cash deposits');
 
         const movimientosOS =
             grupo.registros.filter(r =>
