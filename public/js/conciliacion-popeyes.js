@@ -904,10 +904,10 @@ function generarConciliationPopeyes(salesData) {
             totalRevenue - paymentsTotal;
 
         const difference =
-            row.cashExpected || 0 -
-            row.cashDeposit || 0 -
-            row.cashOverShortDebit || 0 -
-            row.cashOverShortCredit || 0;
+        (row.cashExpected || 0 ) -
+        (row.cashDeposit || 0 ) -
+        (row.cashOverShortDebit || 0) +
+        (row.cashOverShortCredit || 0);
 
         return {
 
