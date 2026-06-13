@@ -29,41 +29,6 @@ function toNumber(v) {
 // DEBUG TOOLS
 // =========================
 
-function debugStore(row) {
-
-    const issues = [];
-
-    if (!row.netSales) issues.push('netSales = 0');
-    if (!row.ccTotals) issues.push('ccTotals = 0');
-    if (!row.cashDeposit) issues.push('cashDeposit missing');
-    if (!row.paymentsTotal) issues.push('paymentsTotal = 0');
-
-    if (issues.length) {
-        console.warn('STORE ISSUE:', row.store, issues);
-    }
-}
-
-function detectMissingAccounts(grupo) {
-
-    const expected = [
-        'Net Sales - Food',
-        'Net Sales - Beverages',
-        'Payments - AMEX',
-        'Payments - Visa',
-        'Payments - Master Card'
-    ];
-
-    const found = grupo.registros.map(r => r.Account);
-
-    expected.forEach(acc => {
-
-        if (!found.some(x => norm(x).includes(norm(acc)))) {
-            console.warn('MISSING:', grupo.store, acc);
-        }
-
-    });
-}
-
 async function procesarPopeyes() {
 
     const sales =
@@ -449,276 +414,94 @@ function generarSalesPopeyes(rawRows) {
         const unitName = grupo.unitName;
         const fecha = grupo.fecha;
 
-        // ==================================================
-        // SALES
-        // ==================================================
+        // =========================
+        // SALES BASE (CORRECTO)
+        // =========================
 
         const food = monto(grupo, 'Net Sales - Food');
         const beverage = monto(grupo, 'Net Sales - Beverages');
         const other = monto(grupo, 'Net Sales - Other');
 
-        const serviceFee =
-            monto(grupo, 'Service Fees negative Offset');
-
-        const salesOther =
-            other + serviceFee;
+        const serviceFee = monto(grupo, 'Service Fees negative Offset');
 
         const netSales =
-            food + beverage + salesOther;
+            food + beverage + other + serviceFee;
 
-        const salesTax =
-            monto(grupo, 'Sales Tax Payable');
+        const salesTax = monto(grupo, 'Sales Tax Payable');
+        const caCrv = monto(grupo, 'CA CRV');
+        const donations = monto(grupo, 'Donations');
+        const nonRedeemable = monto(grupo, 'Non Redeemable Tender');
+        const gcSold = monto(grupo, 'Revenues - Gift Card Sales');
 
-        const taxExemptSales =
-            monto(grupo, 'Tax Exempt Sales');
+        // =========================
+        // DELIVERY
+        // =========================
 
-        const caCrv =
-            monto(grupo, 'CA CRV');
+        const deliveryFee = monto(grupo, 'Delivery Fees Net');
 
-        const donations =
-            monto(grupo, 'Donations');
+        const dd = monto(grupo, 'Payments - Door Dash');
+        const gh = monto(grupo, 'Payments - Grub Hub');
+        const uber = monto(grupo, 'Payments - Uber Eats');
+        const postmates = monto(grupo, 'Payments - Postmates');
 
-        const nonRedeemable =
-            monto(grupo, 'Non Redeemable Tender');
+        // =========================
+        // DISCOUNTS (OK)
+        // =========================
 
-        const gcSold =
-            monto(grupo, 'Revenues - Gift Card Sales');
-
-        // ==================================================
-        // DELIVERY / TIPS
-        // ==================================================
-
-        const deliveryFee =
-            monto(grupo, 'Delivery Fees Net');
-
-        const deliveryTips =
-            monto(grupo, 'Delivery Tips');
-
-        const deliveryTipsNet =
-            monto(grupo, 'Delivery Tips Net');
-
-        const wlTips =
-            monto(grupo, 'WL DD Tips');
-
-        const totalTips =
-            deliveryTips +
-            deliveryTipsNet +
-            wlTips;
-
-        // ==================================================
-        // DISCOUNTS
-        // ==================================================
+        const discounts =
+            monto(grupo, 'Discounts - Employee') +
+            monto(grupo, 'Discounts - Guest Recovery') +
+            monto(grupo, 'Discounts - Manager') +
+            monto(grupo, 'Discounts - Military') +
+            monto(grupo, 'Discounts - Police') +
+            monto(grupo, 'Discounts - Senior Citizens') +
+            monto(grupo, 'Discounts - Other');
 
         const discountsPromo =
             monto(grupo, 'Discounts - $ Off Promo');
 
-        const discountEmployee =
-            monto(grupo, 'Discounts - Employee');
+        // =========================
+        // PAYMENTS (RAW CLEAN ONLY)
+        // =========================
 
-        const discountGuestRecovery =
-            monto(grupo, 'Discounts - Guest Recovery');
+        const amex = monto(grupo, 'Payments - AMEX');
+        const visa = monto(grupo, 'Payments - Visa');
+        const mastercard = monto(grupo, 'Payments - Master Card');
+        const discover = monto(grupo, 'Payments - Discover');
+        const debit = monto(grupo, 'Payments - Debit');
 
-        const discountManager =
-            monto(grupo, 'Discounts - Manager');
+        const cashApp = monto(grupo, 'Payments - Cash App');
+        const imtPaypal = monto(grupo, 'Payments - IMT Paypal');
 
-        const discountMilitary =
-            monto(grupo, 'Discounts - Military');
+        const wlVisa = monto(grupo, 'Payments - WL Visa');
+        const wlMasterCard = monto(grupo, 'Payments - WL MasterCard');
 
-        const discountPolice =
-            monto(grupo, 'Discounts - Police');
-
-        const discountSenior =
-            monto(grupo, 'Discounts - Senior Citizens');
-
-        const discountsOther =
-            monto(grupo, 'Discounts - Other');
-
-        const discount10 =
-            monto(grupo, 'Discounts - 10%');
-
-        const discountOpenDollar =
-            monto(grupo, 'Discounts - Open $');
-
-        const discountOpenPercent =
-            monto(grupo, 'Discounts - Open %');
-
-        const discounts =
-            discountEmployee +
-            discountGuestRecovery +
-            discountManager +
-            discountMilitary +
-            discountPolice +
-            discountSenior +
-            discountsOther +
-            discountOpenDollar +
-            discountOpenPercent +
-            discount10;
-
-        const totalDiscounts =
-            discounts + discountsPromo;
-
-        // ==================================================
-        // PAYMENTS (FIX CRÍTICO)
-        // ==================================================
-
-        const amex =
-            monto(grupo, 'Payments - AMEX');
-
-        const amexPrPd =
-            monto(grupo, 'Payments - PrPd Amex');
-
-        const visa =
-            monto(grupo, 'Payments - Visa');
-
-        const mastercard =
-            monto(grupo, 'Payments - Master Card');
-
-        const discover =
-            monto(grupo, 'Payments - Discover');
-
-        const debit =
-            monto(grupo, 'Payments - Debit');
-
-        const ebt =
-            monto(grupo, 'Payments - EBT');
-
-        const gcRedeem =
-            monto(grupo, 'Payments - Gift Card');
-
-        const cashApp =
-            monto(grupo, 'Payments - Cash App');
-
-        const onlineCatering =
-            monto(grupo, 'Payments - Online Catering');
-
-        const ezCater =
-            monto(grupo, 'Payments - EZ Cater');
-
-        const dd =
-            monto(grupo, 'Payments - Door Dash');
-
-        const gh =
-            monto(grupo, 'Payments - Grub Hub');
-
-        const uber =
-            monto(grupo, 'Payments - Uber Eats');
-
-        const postmates =
-            monto(grupo, 'Payments - Postmates');
-
-        const doorDashShortage =
-            monto(grupo, 'Payments - Door Dash Shortage');
-
-        const uberShortage =
-            monto(grupo, 'Payments - Uber Shortage');
-
-        const kiosk =
-            monto(grupo, 'Payments - Kiosk') +
-            monto(grupo, 'Payments - Kiosk Amex') +
-            monto(grupo, 'Payments - Kiosk Discover') +
-            monto(grupo, 'Payments - Kiosk MasterCard') +
-            monto(grupo, 'Payments - Kiosk Visa');
-
-        const otherDelivery =
-            monto(grupo, 'Payments - Other Delivery');
-
-        const otherPayments =
-            monto(grupo, 'Payments - Other');
-
-        const imtPaypal =
-            monto(grupo, 'Payments - IMT Paypal');
-
-        const prPdPaypal =
-            monto(grupo, 'Payments - PrPD Paypal');
-
-        const prPdVenmo =
-            monto(grupo, 'Payments - PrPD Venmo');
-
-        const wlMasterCard =
-            monto(grupo, 'Payments - WL MasterCard');
-
-        const wlVisa =
-            monto(grupo, 'Payments - WL Visa');
+        const prPdVisa = monto(grupo, 'Payments - PrPd Visa');
+        const prPdMasterCard = monto(grupo, 'Payments - PrPd Master Card');
 
         const ccTotals =
-            monto(grupo, 'Payments - Discover') +
-            monto(grupo, 'Payments - Discover PrPd') +
+            amex + visa + mastercard + discover + debit +
+            cashApp + imtPaypal +
+            wlVisa + wlMasterCard +
+            prPdVisa + prPdMasterCard;
 
-            monto(grupo, 'Payments - Master Card') +
-            monto(grupo, 'Payments - Master Card PrPd') +
-
-            monto(grupo, 'Payments - Visa') +
-            monto(grupo, 'Payments - Visa PrPd') +
-
-            monto(grupo, 'Payments - PrPd Master Card') +
-            monto(grupo, 'Payments - PrPd Visa') +
-
-            monto(grupo, 'Payments - WL MasterCard') +
-            monto(grupo, 'Payments - WL Visa') +
-
-            monto(grupo, 'Payments - PrPD Paypal') +
-            monto(grupo, 'Payments - PrPD Venmo') +
-
-            monto(grupo, 'Payments - Debit') +
-
-            monto(grupo, 'Payments - Other Delivery') +
-            monto(grupo, 'Payments - Other') +
-
-            monto(grupo, 'Payments - Cash App') +
-            monto(grupo, 'Payments - IMT Paypal');
-
-        const delTotals =
-            dd + gh + uber + postmates;
-
-        // ==================================================
+        // =========================
         // PAID OUT
-        // ==================================================
-
-        const paidOutSmallwares =
-            monto(grupo, 'Paid Out Smallwares');
-
-        const paidOutCleaning =
-            monto(grupo, 'Paid Out Cleaning Supplies');
-
-        const paidOutOffice =
-            monto(grupo, 'Paid Out Office Supplies');
-
-        const paidOutFood =
-            monto(grupo, 'Paid Out Food');
-
-        const paidOutCashOut =
-            monto(grupo, 'Paid Out Cash Out');
+        // =========================
 
         const paidOut =
-            paidOutSmallwares +
-            paidOutCleaning +
-            paidOutOffice +
-            paidOutFood +
-            paidOutCashOut;
+            monto(grupo, 'Paid Out Smallwares') +
+            monto(grupo, 'Paid Out Cleaning Supplies') +
+            monto(grupo, 'Paid Out Office Supplies') +
+            monto(grupo, 'Paid Out Food') +
+            monto(grupo, 'Paid Out Cash Out');
 
-        // ==================================================
+        // =========================
         // CASH
-        // ==================================================
+        // =========================
 
         const cashDeposit =
             monto(grupo, 'Cash Deposit');
-
-        const movimientosOS =
-            grupo.registros.filter(r =>
-                norm(r.Account).includes('over/short')
-            );
-
-        const cashOverShortDebit =
-            movimientosOS.reduce(
-                (s, r) => s + (Number(r['Credit Amount']) || 0),
-                0
-            );
-
-        const cashOverShortCredit =
-            movimientosOS.reduce(
-                (s, r) => s + (Number(r['Debit Amount']) || 0),
-                0
-            );
 
         return {
 
@@ -729,68 +512,41 @@ function generarSalesPopeyes(rawRows) {
             food,
             beverage,
             other,
-
             serviceFee,
-            salesOther,
             netSales,
 
             salesTax,
-            taxExemptSales,
             caCrv,
-
             donations,
             nonRedeemable,
             gcSold,
 
             deliveryFee,
-            deliveryTips,
-            deliveryTipsNet,
-            wlTips,
-            totalTips,
-
-            discounts,
-            discountsPromo,
-            totalDiscounts,
-            discountsOther,
-
-            amex,
-            amexPrPd,
-            visa,
-            mastercard,
-            discover,
-            debit,
-
-            ccTotals,
 
             dd,
             gh,
             uber,
             postmates,
-            delTotals,
 
-            doorDashShortage,
-            uberShortage,
+            discounts,
+            discountsPromo,
 
-            ebt,
-            kiosk,
-            gcRedeem,
+            amex,
+            visa,
+            mastercard,
+            discover,
+            debit,
+
             cashApp,
+            imtPaypal,
+            wlVisa,
+            wlMasterCard,
+            prPdVisa,
+            prPdMasterCard,
 
-            onlineCatering,
-            ezCater,
-
-            otherDelivery,
-            otherPayments,
+            ccTotals,
 
             paidOut,
-            paidOutSmallwares,
-            paidOutCleaning,
-            paidOutOffice,
-            paidOutFood,
-            paidOutCashOut,
-
-            cashOverShortDebit,
-            cashOverShortCredit,
             cashDeposit
         };
 
@@ -799,200 +555,58 @@ function generarSalesPopeyes(rawRows) {
 
 function generarConciliationPopeyes(salesData) {
 
-    return salesData.map(row => {
+    return salesData
+        .filter(Boolean)
+        .map(row => {
 
-        // =========================
-        // SALES
-        // =========================
+            const netSales = row.netSales;
 
-        const salesOther =
-            (row.other || 0) +
-            (row.serviceFee || 0);
-
-        const netSales = row.netSales;
-
-        // =========================
-        // DISCOUNTS
-        // =========================
-
-        const totalDiscounts =
-            (row.discounts || 0) +
-            (row.discountsPromo || 0);
-
-        // =========================
-        // DELIVERY
-        // =========================
-
-        const delTotals =
-            (row.dd || 0) +
-            (row.gh || 0) +
-            (row.uber || 0) +
-            (row.postmates || 0);
-
-        // =========================
-        // PAID OUT
-        // =========================
-
-        const paidOut =
-            (row.paidOutSmallwares || 0) +
-            (row.paidOutCleaning || 0) +
-            (row.paidOutOffice || 0) +
-            (row.paidOutFood || 0) +
-            (row.paidOutCashOut || 0);
-
-        // =========================
-        // REVENUE
-        // =========================
-
-        const totalRevenue =
-            netSales +
-            (row.salesTax || 0) +
-            (row.caCrv || 0) +
-            (row.gcSold || 0) +
-            (row.donations || 0) +
-            (row.nonRedeemable || 0);
-
-
-        const cashDepositCalculated =
-            (
-                (row.other || 0) +
-                (row.deliveryFee || 0) +
+            const totalRevenue =
                 netSales +
                 (row.salesTax || 0) +
                 (row.caCrv || 0) +
                 (row.gcSold || 0) +
                 (row.donations || 0) +
-                (row.nonRedeemable || 0) +
-                (row.wlTips || 0)
-            )
-            -
-            (
-                (row.discounts || 0) +
-                (row.discountsPromo || 0) +
-                (row.amex || 0) +
-                (row.amexPrPd || 0) +
-                (row.amexPrPd || 0) +
-                (row.ccTotals || 0) +
-                (row.dd || 0) +
-                (row.gh || 0) +
-                (row.uber || 0) +
-                (row.doorDashShortage || 0) +
-                (row.uberShortage || 0) +
-                (row.ebt || 0) +
-                (row.kiosk || 0) +
-                (row.gcRedeem || 0) +
-                (row.onlineCatering || 0) +
-                (row.ezCater || 0) +
-                paidOut
-            );
+                (row.nonRedeemable || 0);
 
-        // =========================
-        // PAYMENTS (CLEAN VERSION)
-        // =========================
-
-        const paymentsTotal =
-            (row.amex || 0) +
-            (row.amexPrPd || 0) +
-            (row.visa || 0) +
-            (row.mastercard || 0) +
-            (row.discover || 0) +
-            (row.debit || 0) +
-
-            (row.dd || 0) +
-            (row.gh || 0) +
-            (row.uber || 0) +
-            (row.postmates || 0) +
-
-            (row.ebt || 0) +
-            (row.kiosk || 0) +
-            (row.gcRedeem || 0) +
-
-            (row.onlineCatering || 0) +
-            (row.ezCater || 0) +
-
-            paidOut +
-
-            (row.cashDeposit || 0);
-
-        // =========================
-        // CASH EXPECTED (SIMPLIFICADO Y CORRECTO)
-        // =========================
-
-        const cashExpected =
-            (
-                (row.other || 0) +
+            const cashExpected =
+                totalRevenue +
                 (row.deliveryFee || 0) +
-                (row.netSales || 0) +
-                (row.salesTax || 0) +
-                (row.caCrv || 0) +
-                (row.gcSold || 0) +
-                (row.donations || 0) +
-                (row.nonRedeemable || 0) +
-                (row.wlTips || 0)
-            )
-            -
-            (
-                (row.discounts || 0) +
-                (row.discountsPromo || 0) +
-                (row.amex || 0) +
-                (row.amexPrPd || 0) +
-                (row.ccTotals || 0) +
+                (row.discountsPromo || 0)
+                -
+                (
+                    (row.discounts || 0) +
+                    (row.ccTotals || 0) +
+                    (row.dd || 0) +
+                    (row.gh || 0) +
+                    (row.uber || 0) +
+                    (row.postmates || 0) +
+                    (row.paidOut || 0)
+                );
+
+            const paymentsTotal =
+                row.ccTotals +
                 (row.dd || 0) +
                 (row.gh || 0) +
                 (row.uber || 0) +
-                (row.doorDashShortage || 0) +
-                (row.uberShortage || 0) +
-                (row.ebt || 0) +
-                (row.kiosk || 0) +
-                (row.gcRedeem || 0) +
-                (row.onlineCatering || 0) +
-                (row.ezCater || 0) +
-                (row.paidOut || 0)
-            );
+                (row.postmates || 0) +
+                (row.paidOut || 0) +
+                (row.cashDeposit || 0);
 
-        // =========================
-        // OVER / SHORT
-        // =========================
+            const oS = totalRevenue - paymentsTotal;
 
-        const oS =
-            totalRevenue - paymentsTotal;
+            const difference =
+                cashExpected - row.cashDeposit;
 
-        const difference =
-            cashExpected -
-            (
-                (row.cashDeposit || 0) -
-                (row.cashOverShortCredit || 0) +
-                (row.cashOverShortDebit || 0)
-            );
-
-        return {
-
-            ...row,
-
-            salesOther,
-            netSales,
-
-            totalDiscounts,
-
-            delTotals,
-
-            paidOut,
-
-            totalRevenue,
-
-            paymentsTotal,
-
-            cashExpected,
-
-            difference,
-
-            oS,
-            cashDepositCalculated
-
-        };
-
-    });
-
+            return {
+                ...row,
+                totalRevenue,
+                cashExpected,
+                paymentsTotal,
+                oS,
+                difference
+            };
+        });
 }
 
 function generarTaxReview() {
@@ -1151,9 +765,7 @@ function generarConciliacionPopeyes() {
     actualizarResumen();
 
     actualizarTotales();
-    debugStore();
-    detectMissingAccounts();
-    norm();
+
 }
 
 
