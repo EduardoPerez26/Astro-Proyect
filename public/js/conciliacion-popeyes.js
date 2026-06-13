@@ -822,8 +822,6 @@ function generarConciliationPopeyes(salesData) {
             (row.dd || 0) +
             (row.gh || 0) +
             (row.uber || 0) +
-            (row.doorDashShortage || 0) +
-            (row.uberShortage || 0) +
             (row.ebt || 0) +
             (row.kiosk || 0) +
             (row.gcRedeem || 0) +
