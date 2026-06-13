@@ -832,7 +832,7 @@ function generarConciliationPopeyes(salesData) {
             (row.paidOutOffice || 0) +
             (row.paidOutFood || 0) +
             (row.paidOutCashOut || 0) +
-            (row.cashDeposit || 0);
+            (row.cashDeposit1 || 0);
 
 
 
@@ -943,6 +943,8 @@ function generarConciliationPopeyes(salesData) {
             cashDeposit: limpiarDecimal(cashDeposit),
 
             cashExpected: limpiarDecimal(cashExpected),
+
+            cashDeposit1: limpiarDecimal(cashDeposit1),
 
             difference: limpiarDecimal(difference),
 
