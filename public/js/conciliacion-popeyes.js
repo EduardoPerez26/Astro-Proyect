@@ -906,8 +906,8 @@ function generarConciliationPopeyes(salesData) {
         const difference =
             cashExpected -
             (
-                (row.cashDeposit || 0) +
-                (row.cashOverShortCredit || 0) -
+                (row.cashDeposit || 0) -
+                (row.cashOverShortCredit || 0) +
                 (row.cashOverShortDebit || 0)
             );
 
