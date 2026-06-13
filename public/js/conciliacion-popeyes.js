@@ -1104,6 +1104,9 @@ function generarConciliacionPopeyes() {
     actualizarResumen();
 
     actualizarTotales();
+    debugStore();
+    detectMissingAccounts();
+    norm();
 }
 
 function norm(v) {
