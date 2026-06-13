@@ -832,7 +832,7 @@ function generarConciliationPopeyes(salesData) {
             (row.paidOutOffice || 0) +
             (row.paidOutFood || 0) +
             (row.paidOutCashOut || 0) +
-            (row.cashDeposit1 || 0);
+            (row.cashDeposit || 0);
 
 
 
