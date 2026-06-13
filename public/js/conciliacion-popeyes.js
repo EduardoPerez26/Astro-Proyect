@@ -8,13 +8,60 @@ window.statisticalJournalData ??= [];
 // ========================
 // GLOBAL HELPERS (OBLIGATORIO)
 // ========================
-
 function norm(v) {
-    return String(v || '').trim().toLowerCase();
+    return String(v || '')
+        .trim()
+        .toLowerCase()
+        .replace(/\s+/g, ' ');
+}
+
+function num(v) {
+    return Number(String(v || '').replace(/[$,()]/g, '')) || 0;
 }
 
 function toNumber(v) {
     return Number(v || 0);
+}
+
+
+
+// =========================
+// DEBUG TOOLS
+// =========================
+
+function debugStore(row) {
+
+    const issues = [];
+
+    if (!row.netSales) issues.push('netSales = 0');
+    if (!row.ccTotals) issues.push('ccTotals = 0');
+    if (!row.cashDeposit) issues.push('cashDeposit missing');
+    if (!row.paymentsTotal) issues.push('paymentsTotal = 0');
+
+    if (issues.length) {
+        console.warn('STORE ISSUE:', row.store, issues);
+    }
+}
+
+function detectMissingAccounts(grupo) {
+
+    const expected = [
+        'Net Sales - Food',
+        'Net Sales - Beverages',
+        'Payments - AMEX',
+        'Payments - Visa',
+        'Payments - Master Card'
+    ];
+
+    const found = grupo.registros.map(r => r.Account);
+
+    expected.forEach(acc => {
+
+        if (!found.some(x => norm(x).includes(norm(acc)))) {
+            console.warn('MISSING:', grupo.store, acc);
+        }
+
+    });
 }
 
 async function procesarPopeyes() {
@@ -1107,49 +1154,6 @@ function generarConciliacionPopeyes() {
     debugStore();
     detectMissingAccounts();
     norm();
-}
-
-function norm(v) {
-    return String(v || '')
-        .trim()
-        .toLowerCase()
-        .replace(/\s+/g, ' ');
-}
-
-function debugStore(row) {
-
-    const issues = [];
-
-    if (!row.netSales) issues.push('netSales = 0');
-    if (!row.ccTotals) issues.push('ccTotals = 0');
-    if (!row.cashDeposit) issues.push('cashDeposit missing');
-    if (!row.paymentsTotal) issues.push('paymentsTotal = 0');
-
-    if (issues.length) {
-        console.warn('STORE ISSUE:', row.store, issues);
-    }
-}
-
-
-function detectMissingAccounts(grupo) {
-
-    const expected = [
-        'Net Sales - Food',
-        'Net Sales - Beverages',
-        'Payments - AMEX',
-        'Payments - Visa',
-        'Payments - Master Card'
-    ];
-
-    const found = grupo.registros.map(r => r.Account);
-
-    expected.forEach(acc => {
-
-        if (!found.some(x => norm(x).includes(norm(acc)))) {
-            console.warn('MISSING IN STORE:', grupo.store, acc);
-        }
-
-    });
 }
 
 
