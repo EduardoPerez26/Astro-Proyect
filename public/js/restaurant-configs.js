@@ -197,7 +197,7 @@ window.RestaurantConfigs = {
             { key: 'paidOutFood', label: 'Paid Out Food' },
             { key: 'paidOutCashOut', label: 'Paid Out Cash Out' },
 
-            { key: 'cashDeposit', label: 'Cash Deposit' },
+            { key: 'cashDepositCalculated', label: 'Cash Deposit' },
 
             { key: 'delTotals', label: 'Del Totals' },
 
@@ -218,7 +218,6 @@ window.RestaurantConfigs = {
             { key: 'discount10', label: 'Discounts - 10%' },
 
             { key: 'totalDiscounts', label: 'Total Discounts' },
-            { key: 'cashDepositCalculated', label: 'Cash Deposit' },
             { key: 'cashDeposit', label: 'Cash Deposit' },
 
             { key: 'cashOverShortDebit', label: 'Cash Handling Debit' },
