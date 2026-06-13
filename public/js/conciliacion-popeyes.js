@@ -353,19 +353,26 @@ function normalizarFecha(valor) {
 
 }
 
-function monto(grupo, cuenta) {
-    const total =
-        grupo.registros
-            .filter(r => r.Account === cuenta)
-            .reduce(
-                (sum, r) =>
-                    sum +
-                    (Number(r['Credit Amount']) || 0) -
-                    (Number(r['Debit Amount']) || 0),
-                0
-            );
+function monto(grupo, keyword) {
 
-    return Math.abs(total);
+    const key = norm(keyword);
+
+    return grupo.registros.reduce((sum, r) => {
+
+        const acc = norm(r.Account);
+
+        if (acc.includes(key)) {
+
+            return sum +
+                (Number(r['Credit Amount']) || 0) -
+                (Number(r['Debit Amount']) || 0);
+
+        }
+
+        return sum;
+
+    }, 0);
+
 }
 
 function montoSinAbs(grupo, cuenta) {
@@ -1097,6 +1104,49 @@ function generarConciliacionPopeyes() {
     actualizarResumen();
 
     actualizarTotales();
+}
+
+function norm(v) {
+    return String(v || '')
+        .trim()
+        .toLowerCase()
+        .replace(/\s+/g, ' ');
+}
+
+function debugStore(row) {
+
+    const issues = [];
+
+    if (!row.netSales) issues.push('netSales = 0');
+    if (!row.ccTotals) issues.push('ccTotals = 0');
+    if (!row.cashDeposit) issues.push('cashDeposit missing');
+    if (!row.paymentsTotal) issues.push('paymentsTotal = 0');
+
+    if (issues.length) {
+        console.warn('STORE ISSUE:', row.store, issues);
+    }
+}
+
+
+function detectMissingAccounts(grupo) {
+
+    const expected = [
+        'Net Sales - Food',
+        'Net Sales - Beverages',
+        'Payments - AMEX',
+        'Payments - Visa',
+        'Payments - Master Card'
+    ];
+
+    const found = grupo.registros.map(r => r.Account);
+
+    expected.forEach(acc => {
+
+        if (!found.some(x => norm(x).includes(norm(acc)))) {
+            console.warn('MISSING IN STORE:', grupo.store, acc);
+        }
+
+    });
 }
 
 
