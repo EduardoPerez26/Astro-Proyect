@@ -4,6 +4,19 @@ window.redData ??= [];
 window.statisticalDeliveryData ??= [];
 window.journalData ??= [];
 window.statisticalJournalData ??= [];
+
+// ========================
+// GLOBAL HELPERS (OBLIGATORIO)
+// ========================
+
+function norm(v) {
+    return String(v || '').trim().toLowerCase();
+}
+
+function toNumber(v) {
+    return Number(v || 0);
+}
+
 async function procesarPopeyes() {
 
     const sales =
