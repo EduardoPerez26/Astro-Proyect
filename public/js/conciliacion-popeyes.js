@@ -646,11 +646,8 @@ function generarSalesPopeyes(rawRows) {
         // CASH
         // ==================================================
 
-        const cashDeposit1 =
-            monto(grupo, 'cash deposit') +
-            monto(grupo, 'cash deposit 1') +
-            monto(grupo, 'cash deposit - pos') +
-            monto(grupo, 'cash deposits');
+        const cashDeposit =
+            monto(grupo, 'Cash Deposit');
 
         const movimientosOS =
             grupo.registros.filter(r =>
@@ -740,7 +737,7 @@ function generarSalesPopeyes(rawRows) {
 
             cashOverShortDebit,
             cashOverShortCredit,
-            cashDeposit1
+            cashDeposit
         };
 
     });
@@ -830,7 +827,7 @@ function generarConciliationPopeyes(salesData) {
 
             paidOut +
 
-            (row.cashDeposit1 || 0);
+            (row.cashDeposit || 0);
 
         // =========================
         // CASH EXPECTED (SIMPLIFICADO Y CORRECTO)
@@ -850,7 +847,7 @@ function generarConciliationPopeyes(salesData) {
         const difference =
             cashExpected -
             (
-                (row.cashDeposit1 || 0) +
+                (row.cashDeposit || 0) +
                 (row.cashOverShortCredit || 0) -
                 (row.cashOverShortDebit || 0)
             );

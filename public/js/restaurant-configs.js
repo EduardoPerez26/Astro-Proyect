@@ -218,7 +218,7 @@ window.RestaurantConfigs = {
             { key: 'discount10', label: 'Discounts - 10%' },
 
             { key: 'totalDiscounts', label: 'Total Discounts' },
-            { key: 'cashDeposit1', label: 'Cash Deposit' },
+            { key: 'cashDeposit', label: 'Cash Deposit' },
 
 
             { key: 'cashOverShortDebit', label: 'Cash Handling Debit' },
