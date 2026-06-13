@@ -834,8 +834,52 @@ function generarConciliationPopeyes(salesData) {
         // =========================
 
         const cashExpected =
-            totalRevenue -
-            paymentsTotal;
+            (
+                (row.other || 0) +
+                (row.deliveryFee || 0) +
+                (row.netSales || 0) +
+                (row.salesTax || 0) +
+                (row.caCrv || 0) +
+                (row.gcSold || 0) +
+                (row.donations || 0) +
+                (row.nonRedeemable || 0) +
+                (row.wlTips || 0)
+            )
+            -
+            (
+                // DISCOUNTS
+                (row.discounts || 0) +
+                (row.discountsPromo || 0) +
+
+                // CARDS
+                (row.amex || 0) +
+                (row.amexPrPd || 0) +
+                (row.visa || 0) +
+                (row.mastercard || 0) +
+                (row.discover || 0) +
+                (row.debit || 0) +
+
+                // CC TOTALS (IMPORTANTE: ya calculado)
+                (row.ccTotals || 0) +
+
+                // DELIVERY APPS
+                (row.dd || 0) +
+                (row.gh || 0) +
+                (row.uber || 0) +
+
+                (row.doorDashShortage || 0) +
+                (row.uberShortage || 0) +
+
+                // OTHER PAYMENTS
+                (row.ebt || 0) +
+                (row.kiosk || 0) +
+                (row.gcRedeem || 0) +
+                (row.onlineCatering || 0) +
+                (row.ezCater || 0) +
+
+                // PAID OUT TOTAL (IMPORTANTE)
+                (row.paidOut || 0)
+            );
 
         // =========================
         // OVER / SHORT
