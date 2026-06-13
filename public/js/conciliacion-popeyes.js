@@ -409,7 +409,8 @@ function generarSalesPopeyes(rawRows) {
         const salesOther =
             other + serviceFee;
 
-        const netSales = row.netSales;
+        const netSales =
+            food + beverage + salesOther;
 
         const salesTax =
             monto(grupo, 'Sales Tax Payable');
@@ -754,10 +755,7 @@ function generarConciliationPopeyes(salesData) {
             (row.other || 0) +
             (row.serviceFee || 0);
 
-        const netSales =
-            (row.food || 0) +
-            (row.beverage || 0) +
-            salesOther;
+        const netSales = row.netSales;
 
         // =========================
         // DISCOUNTS
