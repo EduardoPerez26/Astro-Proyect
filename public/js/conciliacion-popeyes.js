@@ -409,8 +409,7 @@ function generarSalesPopeyes(rawRows) {
         const salesOther =
             other + serviceFee;
 
-        const netSales =
-            food + beverage + salesOther;
+        const netSales = row.netSales;
 
         const salesTax =
             monto(grupo, 'Sales Tax Payable');
