@@ -835,34 +835,47 @@ function generarConciliationPopeyes(salesData) {
 
         const cashExpected =
             (
-                (row.other || 0) +
-                (row.deliveryFee || 0) +
-                (row.netSales || 0) +
-                (row.salesTax || 0) +
-                (row.caCrv || 0) +
-                (row.gcSold || 0) +
-                (row.donations || 0) +
-                (row.nonRedeemable || 0) +
-                (row.wlTips || 0)
-            )
+                row.other ||
+                0
+            ) +
+            (row.deliveryFee || 0) +
+            (row.netSales || 0) +
+            (row.salesTax || 0) +
+            (row.caCrv || 0) +
+            (row.gcSold || 0) +
+            (row.donations || 0) +
+            (row.nonRedeemable || 0) +
+            (row.wlTips || 0)
             -
             (
-                (row.discounts || 0) +
-                (row.discountsPromo || 0) +
-                (row.amex || 0) +
-                (row.amexPrPd || 0) +
-                (row.ccTotals || 0) +
-                (row.dd || 0) +
-                (row.gh || 0) +
-                (row.uber || 0) +
-                (row.doorDashShortage || 0) +
-                (row.uberShortage || 0) +
-                (row.ebt || 0) +
-                (row.kiosk || 0) +
-                (row.gcRedeem || 0) +
-                (row.onlineCatering || 0) +
-                (row.ezCater || 0) +
-                (row.paidOut || 0)
+                row.discounts ||
+                0 +
+                row.discountsPromo ||
+                0 +
+                row.amex ||
+                0 +
+                row.amexPrPd ||
+                0 +
+                row.ccTotals ||
+                0 +
+                row.dd ||
+                0 +
+                row.gh ||
+                0 +
+                row.uber ||
+                0 +
+                row.doorDashShortage ||
+                row.uberShortage ||
+                row.ebt ||
+                row.kiosk ||
+                row.gcRedeem ||
+                row.onlineCatering ||
+                row.ezCater ||
+                row.paidOutSmallwares ||
+                row.paidOutCleaning ||
+                row.paidOutOffice ||
+                row.paidOutFood ||
+                row.paidOutCashOut
             );
 
         // =========================
