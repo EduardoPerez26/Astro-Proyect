@@ -2,11 +2,165 @@ let popeyesConciliationData = [];
 let popeyesTaxReviewData = [];
 let popeyesDailySalesRedData = [];
 let popeyesDailySales0404Data = [];
+let salesRows = [];
 
 // ==========================================
 // STOREDATES POPEYES
 // Equivalente a hoja StoreDates.xlsx
 // ==========================================
+
+// ==========================================
+// PROCESAR POPEYES
+// Flujo principal
+// ==========================================
+
+function procesarPopeyes() {
+
+    try {
+
+        if (!salesRows || salesRows.length === 0) {
+
+            Swal.fire(
+                'Error',
+                'No hay datos Sales POS cargados',
+                'error'
+            );
+
+            return false;
+
+        }
+
+        console.log(
+            'Sales POS:',
+            salesRows.length
+        );
+
+        // ==========================
+        // Store Dates
+        // ==========================
+
+        const storeDates =
+            generarStoreDatesPopeyes(
+                salesRows
+            );
+
+        console.log(
+            'StoreDates:',
+            storeDates.length
+        );
+
+        // ==========================
+        // Sales
+        // ==========================
+
+        const salesData =
+            generarSalesPopeyes(
+                salesRows,
+                storeDates
+            );
+
+        console.log(
+            'Sales:',
+            salesData.length
+        );
+
+        // ==========================
+        // Conciliation
+        // ==========================
+
+        const conciliacionData =
+            generarConciliationPopeyes(
+                salesData
+            );
+
+        console.log(
+            'Conciliation:',
+            conciliacionData.length
+        );
+
+        // ==========================
+        // Datos para tabla principal
+        // ==========================
+
+        datosExtraidos =
+            conciliacionData;
+
+        popeyesConciliationData =
+            conciliacionData;
+
+        // ==========================
+        // Mostrar sección
+        // ==========================
+
+        const resultsSection =
+            document.getElementById(
+                'resultsSection'
+            );
+
+        if (resultsSection) {
+
+            resultsSection.style.display =
+                'block';
+
+        }
+
+        // ==========================
+        // Render tabla
+        // ==========================
+
+        if (
+            typeof renderTablaSucursales ===
+            'function'
+        ) {
+
+            renderTablaSucursales();
+
+        }
+
+        // ==========================
+        // Activar pestaña principal
+        // ==========================
+
+        if (
+            typeof renderActiveTab ===
+            'function'
+        ) {
+
+            renderActiveTab();
+
+        }
+
+        console.log(
+            'POPEYES OK',
+            conciliacionData[0]
+        );
+
+        Swal.fire(
+            'Éxito',
+            `${conciliacionData.length} registros generados`,
+            'success'
+        );
+
+        return true;
+
+    } catch (error) {
+
+        console.error(
+            'Error Popeyes:',
+            error
+        );
+
+        Swal.fire(
+            'Error',
+            error.message,
+            'error'
+        );
+
+        return false;
+
+    }
+
+}
 function generarStoreDatesPopeyes(
     salesPosRows
 ) {
