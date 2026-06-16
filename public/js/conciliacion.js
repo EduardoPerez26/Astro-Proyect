@@ -2203,6 +2203,45 @@ function limpiarDecimal(valor) {
 
 function renderActiveTab() {
 
+    const codigo =
+        document.getElementById(
+            'selectRestaurante'
+        )
+            ?.selectedOptions?.[0]
+            ?.dataset?.codigo;
+
+    // =====================
+    // POPEYES
+    // =====================
+
+    if (codigo === 'popeyes') {
+
+        switch (activeTab) {
+
+            case 'conciliation':
+                renderConciliation();
+                break;
+
+            case 'taxReview':
+                renderTaxReview();
+                break;
+
+            case 'dailySalesRed':
+                renderDailySalesRed();
+                break;
+
+            case 'dailySales0404':
+                renderDailySales0404();
+                break;
+        }
+
+        return;
+    }
+
+    // =====================
+    // TACO BELL
+    // =====================
+
     switch (activeTab) {
 
         case 'dailySales':
@@ -2228,9 +2267,7 @@ function renderActiveTab() {
         case 'dailySales0310':
             renderDailySales0310();
             break;
-
     }
-
 }
 
 function descargarCSV(data, nombreArchivo) {

@@ -140,9 +140,18 @@ async function procesarPopeyes() {
         tabs.style.display = 'flex';
     }
 
+    generarTaxReviewPopeyes();
+
+    redData =
+        [...datosExtraidos];
+
+    dailySales0404Data =
+        [...datosExtraidos];
+
     renderConciliation();
 
-    renderTablaSucursales();
+    renderConciliation();
+
 
 }
 
@@ -1429,47 +1438,56 @@ function renderDailySales0404() {
 
 function inicializarTabsPopeyes() {
 
-    const tabs =
-        document.querySelectorAll(
-            '#popeyesTabs .tab-btn'
-        );
+    document
+        .querySelectorAll(
+            '.popeyes-tab-btn'
+        )
+        .forEach(btn => {
 
-    tabs.forEach(tab => {
+            btn.addEventListener(
+                'click',
+                () => {
 
-        tab.addEventListener(
-            'click',
-            () => {
+                    document
+                        .querySelectorAll(
+                            '.popeyes-tab-btn'
+                        )
+                        .forEach(b =>
+                            b.classList.remove(
+                                'active'
+                            )
+                        );
 
-                tabs.forEach(t =>
-                    t.classList.remove('active')
-                );
+                    btn.classList.add(
+                        'active'
+                    );
 
-                tab.classList.add('active');
+                    const tab =
+                        btn.dataset.tab;
 
-                switch (tab.dataset.tab) {
+                    switch (tab) {
 
-                    case 'conciliation':
-                        renderConciliation();
-                        break;
+                        case 'conciliation':
+                            renderConciliation();
+                            break;
 
-                    case 'taxReview':
-                        renderTaxReview();
-                        break;
+                        case 'taxReview':
+                            renderTaxReview();
+                            break;
 
-                    case 'dailySalesRed':
-                        renderDailySalesRed();
-                        break;
+                        case 'dailySalesRed':
+                            renderDailySalesRed();
+                            break;
 
-                    case 'dailySales0404':
-                        renderDailySales0404();
-                        break;
+                        case 'dailySales0404':
+                            renderDailySales0404();
+                            break;
+                    }
 
                 }
+            );
 
-            }
-        );
-
-    });
+        });
 
 }
 
