@@ -91,6 +91,15 @@ async function procesarPopeyes() {
         dailySales0404Data = [];
 
     }
+    document
+        .getElementById(
+            'popeyesTabs'
+        )
+        .style.display = 'flex';
+
+    inicializarTabsPopeyes();
+
+    renderConciliation();
 
     renderTablaSucursales();
 
@@ -1342,3 +1351,58 @@ document.addEventListener(
 
     }
 );
+
+function inicializarTabsPopeyes() {
+
+    const tabs =
+        document.querySelectorAll(
+            '#popeyesTabs .tab-btn'
+        );
+
+    tabs.forEach(tab => {
+
+        tab.addEventListener(
+            'click',
+            () => {
+
+                tabs.forEach(t =>
+                    t.classList.remove('active')
+                );
+
+                tab.classList.add('active');
+
+                const view =
+                    tab.dataset.tab;
+
+                switch (view) {
+
+                    case 'conciliation':
+
+                        renderConciliation();
+                        break;
+
+                    case 'taxReview':
+
+                        renderTaxReview();
+                        break;
+
+                    case 'dailySalesRed':
+
+                        renderDailySalesRed();
+                        break;
+
+                    case 'dailySales0404':
+
+                        renderDailySales0404();
+                        break;
+
+                }
+
+            }
+        );
+
+    });
+
+}
+
+
