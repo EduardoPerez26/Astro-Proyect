@@ -1046,6 +1046,36 @@ function generarConciliationPopeyes(
             Number(row.onlineCatering || 0) +
             Number(row.ezCater || 0);
 
+        // =====================
+        // O/S
+        // =====================
+
+        const overShort =
+            totalRevenue -
+            paymentsTotal;
+
+        // =====================
+        // CASH EXPECTED
+        // =====================
+
+        const cashExpected =
+            overShort;
+
+        // =====================
+        // DIFFERENCE
+        // =====================
+
+        const difference =
+            Number(
+                (
+                    cashExpected -
+                    Number(row.cashDeposit || 0)
+                ).toFixed(2)
+            );
+
+        // =====================
+        // CASH DEPOSIT CALCULATED
+        // =====================
 
         console.log({
 
@@ -1087,36 +1117,6 @@ function generarConciliationPopeyes(
             cashDepositCalculated
 
         });
-        // =====================
-        // O/S
-        // =====================
-
-        const overShort =
-            totalRevenue -
-            paymentsTotal;
-
-        // =====================
-        // CASH EXPECTED
-        // =====================
-
-        const cashExpected =
-            overShort;
-
-        // =====================
-        // DIFFERENCE
-        // =====================
-
-        const difference =
-            Number(
-                (
-                    cashExpected -
-                    Number(row.cashDeposit || 0)
-                ).toFixed(2)
-            );
-
-        // =====================
-        // CASH DEPOSIT CALCULATED
-        // =====================
 
         const cashDepositCalculated =
 
