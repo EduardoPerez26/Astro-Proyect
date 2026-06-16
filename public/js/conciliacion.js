@@ -1116,7 +1116,7 @@ function generarConciliacionDesdeTemplate() {
             return generarConciliacionTacoBell();
 
         case 'popeyes':
-            return generarConciliationPopeyes();
+            return procesarPopeyes();
 
         default:
 
