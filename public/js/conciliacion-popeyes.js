@@ -164,18 +164,22 @@ function generarStoreDatesPopeyes(
             combinaciones.set(
                 key,
                 {
+                   {
                     store,
-                    date
+                    date,
+                    formattedDate:
+                        excelDateToJSDate(date)
+                }
                 }
             );
 
-        }
+}
 
     });
 
-    return Array.from(
-        combinaciones.values()
-    );
+return Array.from(
+    combinaciones.values()
+);
 
 }
 
@@ -1145,5 +1149,19 @@ function renderArrayToMainTable(data) {
         body.appendChild(tr);
 
     });
+
+}
+
+function excelDateToJSDate(excelDate) {
+
+    if (!excelDate) return '';
+
+    const fecha = new Date(
+        (excelDate - 25569) * 86400 * 1000
+    );
+
+    return fecha.toLocaleDateString(
+        'en-US'
+    );
 
 }
