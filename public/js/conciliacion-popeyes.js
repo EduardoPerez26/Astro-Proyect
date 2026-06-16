@@ -37,6 +37,24 @@ async function procesarPopeyes() {
     // TAX REVIEW
     // ======================
 
+    generarTaxReviewPopeyes();
+
+    // ======================
+    // DAILY SALES RED
+    // ======================
+
+    redData = [...datosExtraidos];
+
+    // ======================
+    // DAILY SALES 04-04-2026
+    // ======================
+
+    generarDailySales04042026Popeyes();
+
+    // ======================
+    // TAX REVIEW
+    // ======================
+
     document
         .getElementById(
             'popeyesTabs'
@@ -1037,7 +1055,7 @@ function generarTaxReviewPopeyes() {
                 ) || 0
             );
 
-            
+
 
         const food =
             Number(row.food || 0);
