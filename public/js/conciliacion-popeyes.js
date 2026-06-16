@@ -319,7 +319,7 @@ function generarSalesPopeyes(
 ) {
 
     return storeDates.map(
-        ({ store, date }) => {
+        ({ store, date,formattedDate }) => {
 
             // =====================================
             // SALES
@@ -696,10 +696,7 @@ function generarSalesPopeyes(
             return {
 
                 store,
-                date:
-                    excelDateToJSDate(
-                        row.date
-                    ),
+                date : formattedDate,
 
                 food,
                 beverages,
