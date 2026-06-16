@@ -1080,35 +1080,42 @@ function generarConciliationPopeyes(
         const cashDepositCalculated =
 
             (
-                Number(row.food || 0) +
-                Number(salesOther || 0) +
+                Number(other || 0) +
 
-                Number(row.discountsPromo || 0) +
-                Number(row.discountEmployee || 0) +
-                Number(row.discountGuestRecovery || 0) +
-                Number(row.discountManager || 0) +
-                Number(row.discountMilitary || 0) +
-                Number(row.discountPolice || 0) +
-                Number(row.discountSenior || 0) +
-                Number(row.discountsOther || 0) +
-                Number(row.discountOpenDollar || 0) +
-                Number(row.discountOpenPercent || 0) +
-                Number(row.discount10 || 0) +
-
-                Number(row.ebt || 0)
+                Number(row.serviceFee || 0) +
+                Number(row.netSales || 0) +
+                Number(row.salesTax || 0) +
+                Number(row.caCrv || 0) +
+                Number(row.gcSold || 0) +
+                Number(row.donations || 0) +
+                Number(row.nonRedeemable || 0) +
+                Number(row.wlTips || 0)
             )
 
             -
 
             (
-                Number(row.totalDiscounts || 0) +
+                Number(row.discounts || 0) +
 
-                Number(row.totalCC || 0) +
+                Number(row.discountsPromo || 0) +
 
+                Number(row.amex || 0) +
+                Number(row.ccTotals || 0) +
                 Number(row.doorDash || 0) +
                 Number(row.grubHub || 0) +
                 Number(row.uberEats || 0) +
-                Number(row.postmates || 0)
+                Number(row.doorDashShortage || 0) +
+                Number(row.uberShortage || 0) +
+                Number(row.ebt || 0) +
+                Number(row.kiosk || 0) +
+                Number(row.giftCardRedeemed || 0) +
+                Number(row.onlineCatering || 0) +
+                Number(row.ezCater || 0) +
+                Number(row.paidOutSmallwares || 0) +
+                Number(row.paidOutCleaningSupplies || 0) +
+                Number(row.paidOutOfficeSupplies || 0) +
+                Number(row.paidOutFood || 0)  +
+                Number(row.paidOutCashOut || 0) 
             );
 
         return {
