@@ -646,16 +646,33 @@ async function onRestauranteChange() {
         codigo
         ] || null;
 
-    const tabs =
-        document.getElementById('tacoBellTabs');
+    const tacoTabs =
+        document.getElementById(
+            'tacoBellTabs'
+        );
+
+    const popeyesTabs =
+        document.getElementById(
+            'popeyesTabs'
+        );
+
+    if (tacoTabs)
+        tacoTabs.style.display = 'none';
+
+    if (popeyesTabs)
+        popeyesTabs.style.display = 'none';
 
     if (codigo === 'taco-bell') {
 
-        tabs.style.display = 'flex';
+        if (tacoTabs)
+            tacoTabs.style.display = 'flex';
 
-    } else {
+    }
 
-        tabs.style.display = 'none';
+    if (codigo === 'popeyes') {
+
+        if (popeyesTabs)
+            popeyesTabs.style.display = 'flex';
 
     }
 
