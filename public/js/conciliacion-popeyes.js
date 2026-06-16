@@ -1155,14 +1155,11 @@ function renderArrayToMainTable(data) {
 
 function excelDateToJSDate(excelDate) {
 
-    if (!excelDate) return '';
-
     const fecha = new Date(
         (excelDate - 25569) * 86400 * 1000
     );
 
-    return fecha.toLocaleDateString(
-        'en-US'
-    );
-
+    return fecha
+        .toISOString()
+        .split('T')[0];
 }
