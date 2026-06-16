@@ -97,7 +97,13 @@ async function procesarPopeyes() {
         )
         .style.display = 'flex';
 
-    inicializarTabsPopeyes();
+    if (!window.popeyesTabsInitialized) {
+
+        inicializarTabsPopeyes();
+
+        window.popeyesTabsInitialized = true;
+
+    }
 
     renderConciliation();
 
@@ -1309,49 +1315,6 @@ function renderDailySales0404() {
 // REGISTRAR PESTAÑAS
 // ======================
 
-document.addEventListener(
-    'DOMContentLoaded',
-    () => {
-
-        document
-            .getElementById(
-                'tabConciliation'
-            )
-            ?.addEventListener(
-                'click',
-                renderConciliation
-            );
-
-        document
-            .getElementById(
-                'tabTaxReview'
-            )
-            ?.addEventListener(
-                'click',
-                renderTaxReview
-            );
-
-        document
-            .getElementById(
-                'tabDailySalesRed'
-            )
-            ?.addEventListener(
-                'click',
-                renderDailySalesRed
-            );
-
-        document
-            .getElementById(
-                'tabDailySales0404'
-            )
-            ?.addEventListener(
-                'click',
-                renderDailySales0404
-            );
-
-    }
-);
-
 function inicializarTabsPopeyes() {
 
     const tabs =
@@ -1371,28 +1334,21 @@ function inicializarTabsPopeyes() {
 
                 tab.classList.add('active');
 
-                const view =
-                    tab.dataset.tab;
-
-                switch (view) {
+                switch (tab.dataset.tab) {
 
                     case 'conciliation':
-
                         renderConciliation();
                         break;
 
                     case 'taxReview':
-
                         renderTaxReview();
                         break;
 
                     case 'dailySalesRed':
-
                         renderDailySalesRed();
                         break;
 
                     case 'dailySales0404':
-
                         renderDailySales0404();
                         break;
 
@@ -1404,5 +1360,7 @@ function inicializarTabsPopeyes() {
     });
 
 }
+
+
 
 
