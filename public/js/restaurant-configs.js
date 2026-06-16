@@ -138,7 +138,7 @@ window.RestaurantConfigs = {
             { key: 'unitName', label: 'Unit Name' },
 
             { key: 'food', label: 'Food' },
-            { key: 'beverage', label: 'Beverages' },
+            { key: 'beverages', label: 'Beverages' },
             { key: 'other', label: 'Other' },
 
             { key: 'serviceFee', label: 'Service Fee' },
@@ -167,13 +167,13 @@ window.RestaurantConfigs = {
             { key: 'totalRevenue', label: 'Total Revenue' },
 
             { key: 'amex', label: 'AMEX' },
-            { key: 'amexPrPd', label: 'Amex PrPd' },
+            { key: 'amexPrpd', label: 'Amex PrPd' },
 
-            { key: 'ccTotals', label: 'CC Totals' },
+            { key: 'totalCC', label: 'CC Totals' },
 
-            { key: 'dd', label: 'Door Dash' },
-            { key: 'gh', label: 'Grub Hub' },
-            { key: 'uber', label: 'Uber Eats' },
+            { key: 'doorDash', label: 'Door Dash' },
+            { key: 'grubHub', label: 'Grub Hub' },
+            { key: 'uberEats', label: 'Uber Eats' },
 
             { key: 'doorDashShortage', label: 'DoorDash Shortage' },
             { key: 'uberShortage', label: 'Uber Shortage' },
@@ -184,7 +184,7 @@ window.RestaurantConfigs = {
 
             { key: 'kiosk', label: 'Kiosk' },
 
-            { key: 'gcRedeem', label: 'Gift Card Redeemed' },
+            { key: 'giftCardRedeemed', label: 'Gift Card Redeemed' },
 
             { key: 'onlineCatering', label: 'Online Catering' },
             { key: 'ezCater', label: 'EZ Cater' },
@@ -197,13 +197,13 @@ window.RestaurantConfigs = {
             { key: 'paidOutFood', label: 'Paid Out Food' },
             { key: 'paidOutCashOut', label: 'Paid Out Cash Out' },
 
-            { key: 'cashDepositCalculated', label: 'Cash Deposit' },
+            { key: 'cashDeposit', label: 'Cash Deposit' },
 
             { key: 'delTotals', label: 'Del Totals' },
 
             { key: 'paymentsTotal', label: 'Payments Total' },
 
-            { key: 'oS', label: 'O/S' },
+            { key: 'overShort', label: 'O/S' },
 
             { key: 'discountsPromo', label: 'Discounts - $ Off Promo' },
             { key: 'discountEmployee', label: 'Discounts - Employee' },
@@ -220,8 +220,8 @@ window.RestaurantConfigs = {
             { key: 'totalDiscounts', label: 'Total Discounts' },
             { key: 'cashDeposit', label: 'Cash Deposit' },
 
-            { key: 'cashOverShortDebit', label: 'Cash Handling Debit' },
-            { key: 'cashOverShortCredit', label: 'Cash Handling Credit' },
+            { key: 'cashHandlingDebit', label: 'Cash Handling Debit' },
+            { key: 'cashHandlingCredit', label: 'Cash Handling Credit' },
 
             { key: 'cashExpected', label: 'Cash Expected' },
             { key: 'difference', label: 'Difference' }
