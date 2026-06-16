@@ -149,7 +149,7 @@ window.RestaurantConfigs = {
             { key: 'totalTips', label: 'Total Tips' },
 
             { key: 'discounts', label: 'Discounts' },
-            { key: 'discountOffPromo', label: '$ Off Promo' },
+            { key: 'discountsPromo', label: '$ Off Promo' },
 
             { key: 'netSales', label: 'Net Sales' },
 
@@ -197,7 +197,7 @@ window.RestaurantConfigs = {
             { key: 'paidOutFood', label: 'Paid Out Food' },
             { key: 'paidOutCashOut', label: 'Paid Out Cash Out' },
 
-            { key: 'cashDeposit', label: 'Cash Deposit' },
+            { key: 'cashDepositCalculated', label: 'Cash Deposit' },
 
             { key: 'delTotals', label: 'Del Totals' },
 
@@ -233,7 +233,7 @@ window.RestaurantConfigs = {
 
             // SALES
             food: 'Net Sales - Food',
-            beverage: 'Net Sales - Beverages',
+            beverages: 'Net Sales - Beverages',
             other: 'Net Sales - Other',
 
             serviceFee: 'Tips & Service Charges',
@@ -254,7 +254,7 @@ window.RestaurantConfigs = {
             discountMilitary: 'Promotions - Military',
             discountPolice: 'Promotions - Police',
             discountSenior: 'Promotions - Senior Citizens',
-            discountOther: 'Promotions - Other',
+            discountsOther: 'Promotions - Other',
             discountOpenDollar: 'Promotions - Open $',
             discountOpenPercent: 'Promotions - Open %',
             discount10: 'Promotions - 10%',
@@ -271,16 +271,16 @@ window.RestaurantConfigs = {
 
             // CREDIT CARDS
             amex: 'Payments - AMEX',
-            amexPrPd: 'Payments - AMEX PrePaid',
+            amexPrpd: 'Payments - PrPd Amex',
             visa: 'Payments - Visa',
             mastercard: 'Payments - Master Card',
             discover: 'Payments - Discover',
             debit: 'Payments - Debit',
 
             // DELIVERY
-            dd: 'Payments - Door Dash',
-            gh: 'Payments - Grub Hub',
-            uber: 'Payments - Uber Eats',
+            doorDash: 'Payments - Door Dash',
+            grubHub: 'Payments - Grub Hub',
+            uberEats: 'Payments - Uber Eats',
             postmates: 'Payments - Postmates',
 
             doorDashShortage: 'DoorDash Shortage',
@@ -289,7 +289,7 @@ window.RestaurantConfigs = {
             // OTHER PAYMENTS
             ebt: 'Payments - EBT',
             kiosk: 'Payments - Kiosk',
-            gcRedeem: 'Payments - Gift Card',
+            giftCardRedeemed: 'Payments - Gift Card',
             cashApp: 'Payments - Cash App',
 
             onlineCatering: 'Payments - Online Catering',
