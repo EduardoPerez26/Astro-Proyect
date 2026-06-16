@@ -164,22 +164,20 @@ function generarStoreDatesPopeyes(
             combinaciones.set(
                 key,
                 {
-                   {
                     store,
                     date,
                     formattedDate:
                         excelDateToJSDate(date)
                 }
-                }
             );
 
-}
+        }
 
     });
 
-return Array.from(
-    combinaciones.values()
-);
+    return Array.from(
+        combinaciones.values()
+    );
 
 }
 
