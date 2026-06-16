@@ -20,6 +20,8 @@ function toNumber(v) {
 
 async function procesarPopeyes() {
 
+    console.log('INICIO POPEYES');
+
     const sales =
         generarSalesPopeyes(
             salesRows
@@ -30,12 +32,23 @@ async function procesarPopeyes() {
             sales
         );
 
+    console.log('CONCILIATION OK');
+
     datosExtraidos =
         conciliation;
 
     // ======================
     // TAX REVIEW
     // ======================
+    console.log('VOY A MOSTRAR TABS');
+
+    document
+        .getElementById(
+            'popeyesTabs'
+        )
+        .style.display = 'flex';
+
+    console.log('TABS MOSTRADAS');
 
     try {
 
