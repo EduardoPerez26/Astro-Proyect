@@ -20,8 +20,6 @@ function toNumber(v) {
 
 async function procesarPopeyes() {
 
-    console.log('INICIO POPEYES');
-
     const sales =
         generarSalesPopeyes(
             salesRows
@@ -32,15 +30,12 @@ async function procesarPopeyes() {
             sales
         );
 
-    console.log('CONCILIATION OK');
-
     datosExtraidos =
         conciliation;
 
     // ======================
     // TAX REVIEW
     // ======================
-    console.log('VOY A MOSTRAR TABS');
 
     document
         .getElementById(
@@ -117,12 +112,6 @@ async function procesarPopeyes() {
         window.popeyesTabsInitialized = true;
 
     }
-
-    console.log('ENTRO A PROCESAR POPEYES');
-
-    const tabs = document.getElementById('popeyesTabs');
-
-    console.log('tabs', tabs);
 
     if (tabs) {
         tabs.style.display = 'flex';
@@ -1039,86 +1028,163 @@ function generarConciliationPopeyes(salesData) {
 
 function generarTaxReviewPopeyes() {
 
-    taxReviewData =
-        datosExtraidos.map(row => {
+    taxReviewData = datosExtraidos.map(row => {
 
-            const taxRate =
+        const taxRate =
+            Number(
                 obtenerTaxRate(
                     row.store
-                );
+                ) || 0
+            );
 
-            const taxableSales =
-                row.food +
-                row.beverage +
-                row.other -
-                row.discounts -
-                row.uber -
-                row.ebt;
+            
 
-            const taxCalculation =
-                taxableSales *
-                taxRate;
+        const food =
+            Number(row.food || 0);
 
-            const salesTaxPayable =
-                row.salesTax;
+        const beverage =
+            Number(row.beverage || 0);
 
-            const taxDifference =
-                taxCalculation -
-                salesTaxPayable;
+        const other =
+            Number(row.other || 0);
 
-            const rateCalculation =
-                taxableSales !== 0
-                    ? salesTaxPayable /
+        const discounts =
+            Number(row.totalDiscounts || 0);
+
+        const uber =
+            Number(row.uber || 0);
+
+        const ebt =
+            Number(row.ebt || 0);
+
+        const salesTaxPayable =
+            Number(row.salesTax || 0);
+
+        // =====================================
+        // TAXABLE SALES
+        // Excel:
+        // C + D + E - F - G - H
+        // =====================================
+
+        const taxableSales =
+            food +
+            beverage +
+            other -
+            discounts -
+            uber -
+            ebt;
+
+        // =====================================
+        // TAX CALCULATION
+        // J * B
+        // =====================================
+
+        const taxCalculation =
+            taxableSales *
+            taxRate;
+
+        // =====================================
+        // DIFFERENCE
+        // K - L
+        // =====================================
+
+        const taxDifference =
+            taxCalculation -
+            salesTaxPayable;
+
+        // =====================================
+        // RATE CALCULATION
+        // L / J
+        // =====================================
+
+        const rateCalculation =
+            taxableSales !== 0
+                ? salesTaxPayable /
+                taxableSales
+                : 0;
+
+        // =====================================
+        // RATE DIFFERENCE
+        // B - N
+        // =====================================
+
+        const rateDifference =
+            taxRate -
+            rateCalculation;
+
+        return {
+
+            store:
+                row.store,
+
+            taxRate:
+                limpiarDecimal(
+                    taxRate
+                ),
+
+            food:
+                limpiarDecimal(
+                    food
+                ),
+
+            beverage:
+                limpiarDecimal(
+                    beverage
+                ),
+
+            other:
+                limpiarDecimal(
+                    other
+                ),
+
+            discounts:
+                limpiarDecimal(
+                    discounts
+                ),
+
+            uber:
+                limpiarDecimal(
+                    uber
+                ),
+
+            ebt:
+                limpiarDecimal(
+                    ebt
+                ),
+
+            taxableSales:
+                limpiarDecimal(
                     taxableSales
-                    : 0;
+                ),
 
-            const rateDifference =
-                taxRate -
-                rateCalculation;
+            taxCalculation:
+                limpiarDecimal(
+                    taxCalculation
+                ),
 
-            return {
+            salesTaxPayable:
+                limpiarDecimal(
+                    salesTaxPayable
+                ),
 
-                store:
-                    row.store,
+            taxDifference:
+                limpiarDecimal(
+                    taxDifference
+                ),
 
-                unitName:
-                    row.unitName,
+            rateCalculation:
+                limpiarDecimal(
+                    rateCalculation
+                ),
 
-                taxRate,
+            rateDifference:
+                limpiarDecimal(
+                    rateDifference
+                )
 
-                food:
-                    row.food,
+        };
 
-                beverage:
-                    row.beverage,
-
-                other:
-                    row.other,
-
-                discounts:
-                    row.discounts,
-
-                uber:
-                    row.uber,
-
-                ebt:
-                    row.ebt,
-
-                taxableSales,
-
-                taxCalculation,
-
-                salesTaxPayable,
-
-                taxDifference,
-
-                rateCalculation,
-
-                rateDifference
-
-            };
-
-        });
+    });
 
 }
 
@@ -1381,6 +1447,81 @@ function inicializarTabsPopeyes() {
         );
 
     });
+
+}
+
+function obtenerTaxRate(store) {
+
+    const taxRates = {
+
+        2902: 0.0775,
+        4579: 0.0875,
+        5328: 0.1075,
+        5592: 0.1075,
+        5813: 0.0913,
+        8593: 0.1025,
+        8732: 0.0925,
+        8972: 0.0813,
+        9091: 0.1075,
+        9929: 0.1075,
+
+        10545: 0.0775,
+        10752: 0.0900,
+        10921: 0.0975,
+        10989: 0.0875,
+
+        11218: 0.0775,
+
+        11422: 0.0725,
+        11423: 0.0825,
+        11424: 0.0925,
+        11425: 0.0925,
+        11438: 0.0725,
+
+        11540: 0.0775,
+        11580: 0.0900,
+        11691: 0.0775,
+        11833: 0.0825,
+
+        11921: 0.0875,
+        11922: 0.0838,
+        11949: 0.0875,
+
+        12114: 0.0875,
+        12192: 0.0900,
+
+        12967: 0.0875,
+
+        13144: 0.0875,
+
+        13684: 0.0875,
+        13691: 0.0775,
+
+        13903: 0.0838,
+        13959: 0.0775,
+
+        14183: 0.0900,
+        14184: 0.0775,
+
+        14210: 0.07875,
+
+        14589: 0.0880,
+
+        14693: 0.0875,
+
+        14719: 0.0838,
+
+        14869: 0.0825,
+
+        15462: 0.1025,
+
+        15643: 0.08625
+
+    };
+
+    return taxRates[
+        Number(store)
+    ] || 0;
 
 }
 
