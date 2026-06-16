@@ -144,6 +144,9 @@ function generarStoreDatesPopeyes(
                 row['Unit Number']
             );
 
+        const unitName =
+            row['Unit Name'];
+
         const date =
             row['Accounting Date'];
 
@@ -165,6 +168,7 @@ function generarStoreDatesPopeyes(
                 key,
                 {
                     store,
+                    unitName,
                     date,
                     formattedDate:
                         excelDateToJSDate(date)
@@ -319,7 +323,7 @@ function generarSalesPopeyes(
 ) {
 
     return storeDates.map(
-        ({ store, date,formattedDate }) => {
+        ({ store, date, formattedDate }) => {
 
             // =====================================
             // SALES
@@ -696,7 +700,7 @@ function generarSalesPopeyes(
             return {
 
                 store,
-                date : formattedDate,
+                date: formattedDate,
 
                 food,
                 beverages,
