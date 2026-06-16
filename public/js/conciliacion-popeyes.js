@@ -234,7 +234,7 @@ function sumDebit(
     return rows
         .filter(r =>
             Number(r.store) === Number(store) &&
-            normalizarFecha(r.accountingDate) === normalizarFecha(date) &&
+            normalizarFecha(row['Accounting Date']) === normalizarFecha(date) &&
             r.account === account
         )
         .reduce(
@@ -257,7 +257,7 @@ function sumCredit(
     return rows
         .filter(r =>
             Number(r.store) === Number(store) &&
-            normalizarFecha(r.accountingDate) === normalizarFecha(date) &&
+            normalizarFecha(row['Accounting Date']) === normalizarFecha(date) &&
             r.account === account
         )
         .reduce(
@@ -281,7 +281,7 @@ function sumAccount(
     return salesPosRows
         .filter(r =>
             Number(r.store) === Number(store) &&
-            normalizarFecha(r.accountingDate) === normalizarFecha(date) &&
+            normalizarFecha(row['Accounting Date']) === normalizarFecha(date) &&
             r.account === account
         )
         .reduce(
@@ -964,7 +964,7 @@ function renderConciliationPopeyes() {
             row => ({
 
                 STORE:
-                    row.store,
+                    row['Unit Number'],
 
                 DATE:
                     row.date,
