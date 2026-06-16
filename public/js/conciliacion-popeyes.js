@@ -105,6 +105,16 @@ async function procesarPopeyes() {
 
     }
 
+    console.log('ENTRO A PROCESAR POPEYES');
+
+    const tabs = document.getElementById('popeyesTabs');
+
+    console.log('tabs', tabs);
+
+    if (tabs) {
+        tabs.style.display = 'flex';
+    }
+
     renderConciliation();
 
     renderTablaSucursales();
