@@ -696,7 +696,10 @@ function generarSalesPopeyes(
             return {
 
                 store,
-                date,
+                date:
+                    excelDateToJSDate(
+                        row.date
+                    ),
 
                 food,
                 beverages,
