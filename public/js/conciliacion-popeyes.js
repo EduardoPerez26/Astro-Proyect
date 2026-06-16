@@ -369,6 +369,14 @@ function generarSalesPopeyes(
                     'Delivery Fees Net'
                 );
 
+            const deliveryFee =
+                sumCredit(
+                    salesPosRows,
+                    store,
+                    date,
+                    'Delivery Fee'
+                );
+
             const salesTax =
                 sumDebit(
                     salesPosRows,
@@ -394,11 +402,7 @@ function generarSalesPopeyes(
                 );
 
             // =====================================
-            // PROMOTIONS
-            // =====================================
-
-            // =====================================
-            // PROMOTIONS / DISCOUNTS
+            // DISCOUNTS
             // =====================================
 
             const discountsPromo =
@@ -406,15 +410,7 @@ function generarSalesPopeyes(
                     salesPosRows,
                     store,
                     date,
-                    'Promotions - Wraps'
-                );
-
-            const deliveryFee =
-                sumCredit(
-                    salesPosRows,
-                    store,
-                    date,
-                    'Delivery Fee'
+                    'Discounts - $ Off Promo'
                 );
 
             const discountEmployee =
@@ -422,7 +418,7 @@ function generarSalesPopeyes(
                     salesPosRows,
                     store,
                     date,
-                    'Promotions - Employee'
+                    'Discounts - Employee'
                 );
 
             const discountGuestRecovery =
@@ -430,7 +426,7 @@ function generarSalesPopeyes(
                     salesPosRows,
                     store,
                     date,
-                    'Promotions - Guest Recovery'
+                    'Discounts - Guest Recovery'
                 );
 
             const discountManager =
@@ -438,7 +434,7 @@ function generarSalesPopeyes(
                     salesPosRows,
                     store,
                     date,
-                    'Promotions - Manager'
+                    'Discounts - Manager'
                 );
 
             const discountMilitary =
@@ -446,7 +442,7 @@ function generarSalesPopeyes(
                     salesPosRows,
                     store,
                     date,
-                    'Promotions - Military'
+                    'Discounts - Military'
                 );
 
             const discountPolice =
@@ -454,7 +450,7 @@ function generarSalesPopeyes(
                     salesPosRows,
                     store,
                     date,
-                    'Promotions - Police'
+                    'Discounts - Police'
                 );
 
             const discountSenior =
@@ -462,7 +458,7 @@ function generarSalesPopeyes(
                     salesPosRows,
                     store,
                     date,
-                    'Promotions - Senior Citizens'
+                    'Discounts - Senior Citizens'
                 );
 
             const discountsOther =
@@ -470,7 +466,7 @@ function generarSalesPopeyes(
                     salesPosRows,
                     store,
                     date,
-                    'Promotions - Other'
+                    'Discounts - Other'
                 );
 
             const discountOpenDollar =
@@ -478,7 +474,7 @@ function generarSalesPopeyes(
                     salesPosRows,
                     store,
                     date,
-                    'Promotions - Open $'
+                    'Discounts - Open $'
                 );
 
             const discountOpenPercent =
@@ -486,7 +482,7 @@ function generarSalesPopeyes(
                     salesPosRows,
                     store,
                     date,
-                    'Promotions - Open %'
+                    'Discounts - Open %'
                 );
 
             const discount10 =
@@ -494,7 +490,7 @@ function generarSalesPopeyes(
                     salesPosRows,
                     store,
                     date,
-                    'Promotions - 10%'
+                    'Discounts - 10%'
                 );
 
             const totalDiscounts =
@@ -510,31 +506,6 @@ function generarSalesPopeyes(
                 discountOpenDollar +
                 discountOpenPercent +
                 discount10;
-
-
-            console.table([
-                {
-                    store,
-                    date,
-                    discountsPromo,
-                    discountsOther,
-                    totalDiscounts
-                }
-            ]);
-
-            console.table(
-                salesPosRows.filter(
-                    r =>
-                        Number(r['Unit Number']) === Number(store) &&
-                        (
-                            String(r['Account'] || '')
-                                .includes('Promotion')
-                            ||
-                            String(r['Account'] || '')
-                                .includes('Discount')
-                        )
-                )
-            );
 
             // =====================================
             // TIPS
@@ -739,6 +710,22 @@ function generarSalesPopeyes(
                     'Payments - EZ Cater'
                 );
 
+            const onlineCatering =
+                sumCredit(
+                    salesPosRows,
+                    store,
+                    date,
+                    'Payments - Online Catering'
+                );
+
+            const postmates =
+                sumCredit(
+                    salesPosRows,
+                    store,
+                    date,
+                    'Payments - Postmates'
+                );
+
             // =====================================
             // KIOSK
             // =====================================
@@ -802,7 +789,7 @@ function generarSalesPopeyes(
                 );
 
             // =====================================
-            // OPTIONAL ACCOUNTS
+            // PAID OUTS
             // =====================================
 
             const paidOut =
@@ -853,6 +840,10 @@ function generarSalesPopeyes(
                     'Paid Out Cash Out'
                 );
 
+            // =====================================
+            // OTHER
+            // =====================================
+
             const donations =
                 sumCredit(
                     salesPosRows,
@@ -867,22 +858,6 @@ function generarSalesPopeyes(
                     store,
                     date,
                     'Non Redeemable Tender'
-                );
-
-            const onlineCatering =
-                sumCredit(
-                    salesPosRows,
-                    store,
-                    date,
-                    'Payments - Online Catering'
-                );
-
-            const postmates =
-                sumCredit(
-                    salesPosRows,
-                    store,
-                    date,
-                    'Payments - Postmates'
                 );
 
             const wlTips =
@@ -909,6 +884,7 @@ function generarSalesPopeyes(
 
                 serviceFee,
 
+                deliveryFee,
                 deliveryFeeNet,
 
                 salesTax,
@@ -916,20 +892,16 @@ function generarSalesPopeyes(
                 caCrv,
 
                 discountsPromo,
-
                 discountEmployee,
                 discountGuestRecovery,
                 discountManager,
                 discountMilitary,
                 discountPolice,
                 discountSenior,
-
                 discountsOther,
-
                 discountOpenDollar,
                 discountOpenPercent,
                 discount10,
-
                 totalDiscounts,
 
                 deliveryTips,
@@ -966,6 +938,8 @@ function generarSalesPopeyes(
                 giftCardSold,
 
                 ezCater,
+                onlineCatering,
+                postmates,
 
                 kiosk,
                 kioskDiscover,
@@ -975,7 +949,7 @@ function generarSalesPopeyes(
 
                 cashDeposit,
                 cashHandling,
-                deliveryFee,
+
                 paidOut,
                 paidOutSmallwares,
                 paidOutCleaning,
@@ -985,10 +959,7 @@ function generarSalesPopeyes(
 
                 donations,
                 nonRedeemable,
-
-                onlineCatering,
-                postmates,
-                wlTips,
+                wlTips
 
             };
 
@@ -1003,6 +974,10 @@ function generarConciliationPopeyes(
 
     return salesData.map(row => {
 
+        // =====================
+        // SALES
+        // =====================
+
         const salesOther =
             Number(row.other || 0) +
             Number(row.serviceFee || 0);
@@ -1011,10 +986,19 @@ function generarConciliationPopeyes(
             Number(row.food || 0) +
             Number(row.beverages || 0);
 
+        // =====================
+        // DELIVERY
+        // =====================
+
         const deliveryTotals =
             Number(row.doorDash || 0) +
             Number(row.grubHub || 0) +
-            Number(row.uberEats || 0);
+            Number(row.uberEats || 0) +
+            Number(row.postmates || 0);
+
+        // =====================
+        // REVENUE
+        // =====================
 
         const totalRevenue =
             Number(row.food || 0) +
@@ -1025,6 +1009,10 @@ function generarConciliationPopeyes(
             Number(row.caCrv || 0) +
             Number(row.giftCardSold || 0) +
             Number(row.donations || 0);
+
+        // =====================
+        // PAYMENTS TOTAL
+        // =====================
 
         const paymentsTotal =
 
@@ -1049,21 +1037,33 @@ function generarConciliationPopeyes(
             Number(row.doorDash || 0) +
             Number(row.grubHub || 0) +
             Number(row.uberEats || 0) +
+            Number(row.postmates || 0) +
 
             Number(row.ebt || 0) +
 
             Number(row.giftCardRedeemed || 0) +
 
             Number(row.onlineCatering || 0) +
-
             Number(row.ezCater || 0);
+
+        // =====================
+        // O/S
+        // =====================
 
         const overShort =
             totalRevenue -
             paymentsTotal;
 
+        // =====================
+        // CASH EXPECTED
+        // =====================
+
         const cashExpected =
             overShort;
+
+        // =====================
+        // DIFFERENCE
+        // =====================
 
         const difference =
             Number(
@@ -1073,7 +1073,43 @@ function generarConciliationPopeyes(
                 ).toFixed(2)
             );
 
+        // =====================
+        // CASH DEPOSIT CALCULATED
+        // =====================
 
+        const cashDepositCalculated =
+
+            (
+                Number(row.food || 0) +
+                Number(salesOther || 0) +
+
+                Number(row.discountsPromo || 0) +
+                Number(row.discountEmployee || 0) +
+                Number(row.discountGuestRecovery || 0) +
+                Number(row.discountManager || 0) +
+                Number(row.discountMilitary || 0) +
+                Number(row.discountPolice || 0) +
+                Number(row.discountSenior || 0) +
+                Number(row.discountsOther || 0) +
+                Number(row.discountOpenDollar || 0) +
+                Number(row.discountOpenPercent || 0) +
+                Number(row.discount10 || 0) +
+
+                Number(row.ebt || 0)
+            )
+
+            -
+
+            (
+                Number(row.totalDiscounts || 0) +
+
+                Number(row.totalCC || 0) +
+
+                Number(row.doorDash || 0) +
+                Number(row.grubHub || 0) +
+                Number(row.uberEats || 0) +
+                Number(row.postmates || 0)
+            );
 
         return {
 
@@ -1093,12 +1129,11 @@ function generarConciliationPopeyes(
             discounts:
                 row.totalDiscounts || 0,
 
-            discountsPromo:
+            discountOffPromo:
                 row.discountsPromo || 0,
 
-            // =====================
-            // DISCOUNT DETAIL
-            // =====================
+            discountsPromo:
+                row.discountsPromo || 0,
 
             discountEmployee:
                 row.discountEmployee || 0,
@@ -1130,14 +1165,23 @@ function generarConciliationPopeyes(
             discount10:
                 row.discount10 || 0,
 
+            totalDiscounts:
+                row.totalDiscounts || 0,
+
             // =====================
             // CARDS
             // =====================
+
+            amex:
+                row.amex || 0,
 
             amexPrpd:
                 row.amexPrpd || 0,
 
             ccTotals:
+                row.totalCC || 0,
+
+            totalCC:
                 row.totalCC || 0,
 
             // =====================
@@ -1146,6 +1190,8 @@ function generarConciliationPopeyes(
 
             delTotals:
                 deliveryTotals,
+
+            deliveryTotals,
 
             doorDash:
                 row.doorDash || 0,
@@ -1156,20 +1202,23 @@ function generarConciliationPopeyes(
             uberEats:
                 row.uberEats || 0,
 
+            postmates:
+                row.postmates || 0,
+
             doorDashShortage:
                 row.doorDashShortage || 0,
 
             uberShortage:
                 row.uberShortage || 0,
 
-            postmates:
-                row.postmates || 0,
-
             // =====================
             // GIFT CARDS
             // =====================
 
             gcSold:
+                row.giftCardSold || 0,
+
+            giftCardSold:
                 row.giftCardSold || 0,
 
             giftCardRedeemed:
@@ -1181,6 +1230,9 @@ function generarConciliationPopeyes(
 
             onlineCatering:
                 row.onlineCatering || 0,
+
+            ezCater:
+                row.ezCater || 0,
 
             // =====================
             // TIPS
@@ -1199,8 +1251,14 @@ function generarConciliationPopeyes(
             paidOutSmallwares:
                 row.paidOutSmallwares || 0,
 
+            paidOutCleaning:
+                row.paidOutCleaning || 0,
+
             paidOutCleaningSupplies:
                 row.paidOutCleaning || 0,
+
+            paidOutOffice:
+                row.paidOutOffice || 0,
 
             paidOutOfficeSupplies:
                 row.paidOutOffice || 0,
@@ -1215,29 +1273,7 @@ function generarConciliationPopeyes(
             // CASH
             // =====================
 
-            cashDepositCalculated:
-
-                (
-                    Number(row.food || 0) +
-                    Number(salesOther || 0) +
-                    Number(row.discountsPromo || 0) +
-                    Number(row.discountEmployee || 0) +
-                    Number(row.discountManager || 0) +
-                    Number(row.discountMilitary || 0) +
-                    Number(row.discountPolice || 0) +
-                    Number(row.discountSenior || 0) +
-                    Number(row.ebt || 0)
-                )
-
-                -
-
-                (
-                    Number(row.totalDiscounts || 0) +
-                    Number(row.totalCC || 0) +
-                    Number(row.doorDash || 0) +
-                    Number(row.grubHub || 0) +
-                    Number(row.uberEats || 0)
-                ),
+            cashDepositCalculated,
 
             cashDeposit:
                 row.cashDeposit || 0,
@@ -1268,8 +1304,6 @@ function generarConciliationPopeyes(
             // TOTALS
             // =====================
 
-            deliveryTotals,
-
             totalRevenue,
 
             paymentsTotal,
@@ -1281,13 +1315,7 @@ function generarConciliationPopeyes(
 
             cashExpected,
 
-            difference,
-
-            paidOutCleaning:
-                row.paidOutCleaning || 0,
-
-            paidOutOffice:
-                row.paidOutOffice || 0
+            difference
 
         };
 
