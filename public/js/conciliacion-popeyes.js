@@ -9,6 +9,15 @@ function procesarPopeyes() {
 
         if (!salesRows || salesRows.length === 0) {
 
+
+            console.log(
+                [...new Set(
+                    salesRows.map(
+                        r => r['Account']
+                    )
+                )]
+            );
+
             Swal.fire(
                 'Error',
                 'No hay datos Sales POS cargados',
@@ -233,15 +242,24 @@ function sumDebit(
 
     return rows
         .filter(r =>
-            Number(r.store) === Number(store) &&
-            normalizarFecha(row['Accounting Date']) === normalizarFecha(date) &&
-            r.account === account
+
+            Number(
+                r['Unit Number']
+            ) === Number(store)
+
+            &&
+
+            r['Account'] === account
+
         )
         .reduce(
             (sum, r) =>
-                sum + (
-                    Number(r.debitAmount) || 0
+
+                sum +
+                Number(
+                    r['Debit Amount'] || 0
                 ),
+
             0
         );
 
@@ -256,15 +274,24 @@ function sumCredit(
 
     return rows
         .filter(r =>
-            Number(r.store) === Number(store) &&
-            normalizarFecha(row['Accounting Date']) === normalizarFecha(date) &&
-            r.account === account
+
+            Number(
+                r['Unit Number']
+            ) === Number(store)
+
+            &&
+
+            r['Account'] === account
+
         )
         .reduce(
             (sum, r) =>
-                sum + (
-                    Number(r.creditAmount) || 0
+
+                sum +
+                Number(
+                    r['Credit Amount'] || 0
                 ),
+
             0
         );
 
@@ -281,7 +308,7 @@ function sumAccount(
     return salesPosRows
         .filter(r =>
             Number(r.store) === Number(store) &&
-            normalizarFecha(row['Accounting Date']) === normalizarFecha(date) &&
+            normalizarFecha(r.accountingDate) === normalizarFecha(date) &&
             r.account === account
         )
         .reduce(
@@ -964,7 +991,7 @@ function renderConciliationPopeyes() {
             row => ({
 
                 STORE:
-                    row['Unit Number'],
+                    row.store,
 
                 DATE:
                     row.date,
