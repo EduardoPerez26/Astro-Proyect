@@ -45,11 +45,7 @@ function procesarPopeyes() {
             generarSalesPopeyes(
                 salesRows,
                 storeDates
-            );
-
-        console.log(
-            salesData[0]
-        );
+            )
 
         // ==========================
         // Conciliation
@@ -111,11 +107,6 @@ function procesarPopeyes() {
             renderActiveTab();
 
         }
-
-        console.log(
-            'POPEYES OK',
-            conciliacionData[0]
-        );
 
         Swal.fire(
             'Éxito',
