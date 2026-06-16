@@ -1080,7 +1080,7 @@ function generarConciliationPopeyes(
         const cashDepositCalculated =
 
             (
-                Number(other || 0) +
+                Number(row.other || 0) +
 
                 Number(row.serviceFee || 0) +
                 Number(row.netSales || 0) +
