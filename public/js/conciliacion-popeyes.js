@@ -4,6 +4,7 @@ window.redData ??= [];
 window.statisticalDeliveryData ??= [];
 window.journalData ??= [];
 window.statisticalJournalData ??= [];
+window.dailySales0404Data ??= [];
 
 // ========================
 // GLOBAL HELPERS (OBLIGATORIO)
@@ -29,13 +30,23 @@ async function procesarPopeyes() {
             sales
         );
 
-    const taxReview =
+    datosExtraidos =
+        conciliation;
+
+    taxReviewData =
         generarTaxReviewPopeyes(
             conciliation
         );
 
-    datosExtraidos =
-        conciliation;
+    redData =
+        generarDailySalesRedPopeyes(
+            conciliation
+        );
+
+    journalData =
+        generarDailySales04042026Popeyes(
+            conciliation
+        );
 
     renderTablaSucursales();
 
@@ -1069,6 +1080,112 @@ function renderTaxReviewTable() {
     });
 
 }
+function generarDailySales0404Popeyes() {
+
+    dailySales0404Data = [];
+
+    let lineNo = 1;
+
+    datosExtraidos.forEach(row => {
+
+        const store =
+            Number(row.store);
+
+        function pushLine(
+            acctNo,
+            memo,
+            debit = 0,
+            credit = 0,
+            dept = ''
+        ) {
+
+            dailySales0404Data.push({
+
+                lineNo: lineNo++,
+
+                journal: 'SJ',
+
+                date: row.fecha,
+
+                description:
+                    'POS Data Upload DC Central',
+
+                memo,
+
+                deptId: dept,
+
+                acctNo,
+
+                locationId: store,
+
+                debit,
+
+                credit
+
+            });
+
+        }
+
+        if (row.netSales) {
+
+            pushLine(
+                400200,
+                'Gross Food Sales',
+                0,
+                row.netSales
+            );
+
+        }
+
+        if (row.discounts) {
+
+            pushLine(
+                410000,
+                'Discounts',
+                row.discounts,
+                0
+            );
+
+        }
+
+        if (row.salesTax) {
+
+            pushLine(
+                222000,
+                'Sales Tax Payable',
+                0,
+                row.salesTax
+            );
+
+        }
+
+        if (row.ccTotals) {
+
+            pushLine(
+                111200,
+                'CC Expected Deposit',
+                row.ccTotals,
+                0,
+                'CC'
+            );
+
+        }
+
+        if (row.cashExpected) {
+
+            pushLine(
+                102000,
+                'Cash Expected Deposit',
+                row.cashExpected,
+                0,
+                'CASH'
+            );
+
+        }
+
+    });
+
+}
 
 function generarConciliacionPopeyes() {
 
@@ -1103,4 +1220,26 @@ function generarConciliacionPopeyes() {
 }
 
 
+function renderTaxReview() {
 
+    renderArrayToMainTable(
+        taxReviewData
+    );
+
+}
+
+function renderDailySalesRed() {
+
+    renderArrayToMainTable(
+        redData
+    );
+
+}
+
+function renderDailySales0404() {
+
+    renderArrayToMainTable(
+        dailySales0404Data
+    );
+
+}
