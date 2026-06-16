@@ -428,6 +428,14 @@ function generarSalesPopeyes(
                     'Promotions - Wraps'
                 );
 
+            const deliveryFee =
+                sumCredit(
+                    salesPosRows,
+                    store,
+                    date,
+                    'Delivery Fee'
+                );
+
             const promoOther =
                 sumCredit(
                     salesPosRows,
@@ -776,7 +784,8 @@ function generarSalesPopeyes(
                 kioskTotal,
 
                 cashDeposit,
-                cashHandling
+                cashHandling,
+                deliveryFee
 
             };
 
@@ -842,9 +851,136 @@ function generarConciliationPopeyes(
 
             ...row,
 
-            salesOther,
+            // =====================
+            // SALES
+            // =====================
 
+            salesOther,
             netSales,
+
+            // =====================
+            // DISCOUNTS
+            // =====================
+
+            discounts:
+                row.totalDiscounts || 0,
+
+            discountOffPromo:
+                row.promo || 0,
+
+            // =====================
+            // CARDS
+            // =====================
+
+            amexPrpd:
+                row.amexPrpd || 0,
+
+            ccTotals:
+                row.totalCC || 0,
+
+            // =====================
+            // DELIVERY
+            // =====================
+
+            delTotals:
+                deliveryTotals,
+
+            doorDash:
+                row.doorDash || 0,
+
+            grubHub:
+                row.grubHub || 0,
+
+            uberEats:
+                row.uberEats || 0,
+
+            doorDashShortage:
+                row.doorDashShortage || 0,
+
+            uberShortage:
+                row.uberShortage || 0,
+
+            postmates:
+                row.postmates || 0,
+
+            // =====================
+            // GIFT CARDS
+            // =====================
+
+            gcSold:
+                row.giftCardSold || 0,
+
+            giftCardRedeemed:
+                row.giftCardRedeemed || 0,
+
+            // =====================
+            // CATERING
+            // =====================
+
+            onlineCatering:
+                row.onlineCatering || 0,
+
+            // =====================
+            // TIPS
+            // =====================
+
+            wlTips:
+                row.wlTips || 0,
+
+            // =====================
+            // PAYOUTS
+            // =====================
+
+            paidOut:
+                row.paidOutTotal || 0,
+
+            paidOutSmallwares:
+                row.paidOutSmallwares || 0,
+
+            paidOutCleaningSupplies:
+                row.paidOutCleaning || 0,
+
+            paidOutOfficeSupplies:
+                row.paidOutOffice || 0,
+
+            paidOutFood:
+                row.paidOutFood || 0,
+
+            paidOutCashOut:
+                row.paidOutCashOut || 0,
+
+            // =====================
+            // CASH
+            // =====================
+
+            cashDeposit:
+                row.cashDeposit || 0,
+
+            cashHandlingDebit:
+                Number(row.cashHandling || 0) > 0
+                    ? Number(row.cashHandling)
+                    : 0,
+
+            cashHandlingCredit:
+                Number(row.cashHandling || 0) < 0
+                    ? Math.abs(
+                        Number(row.cashHandling)
+                    )
+                    : 0,
+
+            // =====================
+            // DONATIONS
+            // =====================
+
+            donations:
+                row.donations || 0,
+
+            nonRedeemable:
+                row.nonRedeemable || 0,
+
+            // =====================
+            // TOTALS
+            // =====================
 
             deliveryTotals,
 
@@ -853,6 +989,9 @@ function generarConciliationPopeyes(
             paymentsTotal,
 
             overShort,
+
+            os:
+                overShort,
 
             cashExpected,
 
