@@ -163,6 +163,18 @@ function generarStoreDatesPopeyes(
     salesPosRows
 ) {
 
+    console.log(
+        'Primer registro:',
+        salesRows[0]
+    );
+
+    console.log(
+        'Columnas:',
+        Object.keys(
+            salesRows[0] || {}
+        )
+    );
+
     const combinaciones =
         new Map();
 
