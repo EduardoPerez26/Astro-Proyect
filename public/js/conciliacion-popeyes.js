@@ -2,15 +2,6 @@ let popeyesConciliationData = [];
 let popeyesTaxReviewData = [];
 let popeyesDailySalesRedData = [];
 let popeyesDailySales0404Data = [];
-// ==========================================
-// STOREDATES POPEYES
-// Equivalente a hoja StoreDates.xlsx
-// ==========================================
-
-// ==========================================
-// PROCESAR POPEYES
-// Flujo principal
-// ==========================================
 
 function procesarPopeyes() {
 
@@ -159,38 +150,23 @@ function procesarPopeyes() {
     }
 
 }
+
 function generarStoreDatesPopeyes(
-    salesPosRows
+    salesRows
 ) {
-
-    console.log(
-        'Primer registro:',
-        salesRows[0]
-    );
-
-    console.log(
-        'Columnas:',
-        Object.keys(
-            salesRows[0] || {}
-        )
-    );
 
     const combinaciones =
         new Map();
 
-    salesPosRows.forEach(row => {
+    salesRows.forEach(row => {
 
         const store =
             Number(
-                row.store ??
-                row.Store
+                row['Unit Number']
             );
 
         const date =
-            normalizarFecha(
-                row.accountingDate ??
-                row.Date
-            );
+            row['Accounting Date'];
 
         if (
             !store ||
@@ -220,26 +196,7 @@ function generarStoreDatesPopeyes(
 
     return Array.from(
         combinaciones.values()
-    )
-        .sort((a, b) => {
-
-            if (
-                a.store !== b.store
-            ) {
-
-                return (
-                    a.store -
-                    b.store
-                );
-
-            }
-
-            return (
-                new Date(a.date) -
-                new Date(b.date)
-            );
-
-        });
+    );
 
 }
 

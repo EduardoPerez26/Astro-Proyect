@@ -203,10 +203,13 @@ function initEventListeners() {
                         XLSX.utils.sheet_to_json(
                             sheet,
                             {
-                                range: 1,
                                 defval: 0
                             }
                         );
+
+                    console.log(
+                        salesRows[0]
+                    );
 
                     cargarFechasEnFiltro(
                         salesRows,
