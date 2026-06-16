@@ -32,28 +32,33 @@ async function procesarPopeyes() {
 
     datosExtraidos =
         conciliation;
-
-    // ======================
-    // TAX REVIEW
-    // ======================
+    // ======================================
+    // GENERAR DATOS DE PESTAÑAS
+    // ======================================
 
     generarTaxReviewPopeyes();
 
-    // ======================
-    // DAILY SALES RED
-    // ======================
-
+    // temporal para que tenga datos
     redData = [...datosExtraidos];
 
-    // ======================
-    // DAILY SALES 04-04-2026
-    // ======================
+    // temporal para que tenga datos
+    dailySales0404Data = [...datosExtraidos];
 
-    generarDailySales04042026Popeyes();
+    console.log(
+        'TaxReview:',
+        taxReviewData.length
+    );
 
-    // ======================
-    // TAX REVIEW
-    // ======================
+    console.log(
+        'Red:',
+        redData.length
+    );
+
+    console.log(
+        '0404:',
+        dailySales0404Data.length
+    );
+
 
     document
         .getElementById(
