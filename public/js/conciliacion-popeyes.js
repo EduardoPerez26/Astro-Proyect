@@ -8,6 +8,16 @@ window.dailySales0404Data ??= [];
 
 async function procesarPopeyes() {
 
+    console.log(
+        'SALES:',
+        sales
+    );
+
+    console.log(
+        'SALES LENGTH:',
+        sales?.length
+    );
+
     const sales =
         generarSalesPopeyes(
             salesRows
