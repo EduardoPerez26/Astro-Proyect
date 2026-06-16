@@ -133,7 +133,7 @@ window.RestaurantConfigs = {
         ebtSheet: 'EBT',
         tableColumns: [
 
-            { key: 'fecha', label: 'Date' },
+            { key: 'date', label: 'Date' },
             { key: 'store', label: 'Store' },
             { key: 'unitName', label: 'Unit Name' },
 
@@ -149,7 +149,7 @@ window.RestaurantConfigs = {
             { key: 'totalTips', label: 'Total Tips' },
 
             { key: 'discounts', label: 'Discounts' },
-            { key: 'discountsPromo', label: '$ Off Promo' },
+            { key: 'discountOffPromo', label: '$ Off Promo' },
 
             { key: 'netSales', label: 'Net Sales' },
 

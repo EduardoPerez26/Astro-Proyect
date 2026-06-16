@@ -966,7 +966,13 @@ function generarConciliationPopeyes(
 
             cashExpected,
 
-            difference
+            difference,
+
+            paidOutCleaning:
+                row.paidOutCleaning || 0,
+
+            paidOutOffice:
+                row.paidOutOffice || 0
 
         };
 
