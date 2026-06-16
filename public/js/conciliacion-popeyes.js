@@ -6,18 +6,6 @@ window.journalData ??= [];
 window.statisticalJournalData ??= [];
 window.dailySales0404Data ??= [];
 
-// ========================
-// GLOBAL HELPERS (OBLIGATORIO)
-// ========================
-
-function norm(v) {
-    return String(v || '').trim().toLowerCase();
-}
-
-function toNumber(v) {
-    return Number(v || 0);
-}
-
 async function procesarPopeyes() {
 
     const sales =
@@ -25,108 +13,24 @@ async function procesarPopeyes() {
             salesRows
         );
 
-    const conciliation =
+    datosExtraidos =
         generarConciliationPopeyes(
             sales
         );
 
-    datosExtraidos =
-        conciliation;
-    // ======================================
-    // GENERAR DATOS DE PESTAÑAS
-    // ======================================
-
     generarTaxReviewPopeyes();
 
-    // temporal para que tenga datos
-    redData = [...datosExtraidos];
+    generarDailySalesRedPopeyes();
 
-    // temporal para que tenga datos
-    dailySales0404Data = [...datosExtraidos];
+    generarDailySales04042026Popeyes();
 
-    console.log(
-        'TaxReview:',
-        taxReviewData.length
-    );
+    document.getElementById(
+        'resultsSection'
+    ).style.display = 'block';
 
-    console.log(
-        'Red:',
-        redData.length
-    );
-
-    console.log(
-        '0404:',
-        dailySales0404Data.length
-    );
-
-
-    document
-        .getElementById(
-            'popeyesTabs'
-        )
-        .style.display = 'flex';
-
-    console.log('TABS MOSTRADAS');
-
-    try {
-
-        generarTaxReviewPopeyes();
-
-    } catch (e) {
-
-        console.error(
-            'Error Tax Review:',
-            e
-        );
-
-        taxReviewData = [];
-
-    }
-
-    // ======================
-    // DAILY SALES RED
-    // ======================
-
-    try {
-
-        // temporal para que cargue la pestaña
-        redData =
-            [...datosExtraidos];
-
-    } catch (e) {
-
-        console.error(
-            'Error Daily Sales Red:',
-            e
-        );
-
-        redData = [];
-
-    }
-
-    // ======================
-    // DAILY SALES 04-04-2026
-    // ======================
-
-    try {
-
-        generarDailySales04042026Popeyes();
-
-    } catch (e) {
-
-        console.error(
-            'Error Daily Sales 0404:',
-            e
-        );
-
-        dailySales0404Data = [];
-
-    }
-    document
-        .getElementById(
-            'popeyesTabs'
-        )
-        .style.display = 'flex';
+    document.getElementById(
+        'popeyesTabs'
+    ).style.display = 'flex';
 
     if (!window.popeyesTabsInitialized) {
 
@@ -136,25 +40,74 @@ async function procesarPopeyes() {
 
     }
 
-    if (tabs) {
-        tabs.style.display = 'flex';
-    }
-
-    generarTaxReviewPopeyes();
-
-    redData =
-        [...datosExtraidos];
-
-    dailySales0404Data =
-        [...datosExtraidos];
-
-    renderConciliation();
-
-    renderConciliation();
-
+    renderActiveTab();
 
 }
 
+function renderActiveTab() {
+
+    switch (activeTab) {
+
+        case 'conciliation':
+
+            renderConciliation();
+            break;
+
+        case 'taxReview':
+
+            renderTaxReview();
+            break;
+
+        case 'dailySalesRed':
+
+            renderDailySalesRED();
+            break;
+
+        case 'dailySales0404':
+
+            renderDailySales0404();
+            break;
+    }
+
+}
+
+function inicializarTabsPopeyes() {
+
+    document
+        .querySelectorAll(
+            '.popeyes-tab-btn'
+        )
+        .forEach(btn => {
+
+            btn.addEventListener(
+                'click',
+                () => {
+
+                    document
+                        .querySelectorAll(
+                            '.popeyes-tab-btn'
+                        )
+                        .forEach(b =>
+                            b.classList.remove(
+                                'active'
+                            )
+                        );
+
+                    btn.classList.add(
+                        'active'
+                    );
+
+                    activeTab =
+                        btn.dataset.tab;
+
+                    renderActiveTab();
+
+                }
+            );
+
+        });
+
+}
 function obtenerTiendas(rawRows) {
 
     return [
@@ -166,8 +119,6 @@ function obtenerTiendas(rawRows) {
     ];
 
 }
-
-
 
 function obtenerFechas(rawRows) {
 
@@ -273,8 +224,6 @@ function obtenerDepartamento(
 
 }
 
-/*STOREDATES*/
-
 function generarStoreDatesPopeyes(
     rawRows
 ) {
@@ -337,10 +286,6 @@ function generarStoreDatesPopeyes(
     return resultado;
 
 }
-
-/*SALES*/
-
-
 
 function sumaCuenta(
     registros,
@@ -497,7 +442,6 @@ function montoSinAbs(grupo, cuenta) {
         );
 
 }
-
 
 function generarSalesPopeyes(rawRows) {
 
@@ -1220,42 +1164,164 @@ function generarTaxReviewPopeyes() {
 
 }
 
-function renderTaxReviewTable() {
+function generarDailySalesRedPopeyes() {
 
-    const tbody =
-        document.getElementById(
-            'taxReviewBody'
+    dailySalesREDData = [];
+
+    let lineNo = 1;
+
+    datosExtraidos.forEach(row => {
+
+        const store =
+            Number(row.store);
+
+        function addRow(
+            memo,
+            account,
+            debit = 0,
+            credit = 0,
+            dept = ''
+        ) {
+
+            debit =
+                Number(debit || 0);
+
+            credit =
+                Number(credit || 0);
+
+            if (
+                debit === 0 &&
+                credit === 0
+            ) return;
+
+            dailySalesREDData.push({
+
+                journal:
+                    'SJ',
+
+                date:
+                    row.fecha,
+
+                lineNo:
+                    lineNo++,
+
+                description:
+                    'POS Data Upload DC Central',
+
+                memo,
+
+                deptId:
+                    dept,
+
+                account,
+
+                locationId:
+                    store,
+
+                debit,
+
+                credit
+
+            });
+
+        }
+
+        addRow(
+            'Gross Food Sales',
+            400200,
+            0,
+            row.netSales
         );
 
-    if (!tbody) return;
+        addRow(
+            'Discounts',
+            410000,
+            row.discounts
+        );
 
-    tbody.innerHTML = '';
+        addRow(
+            'Sales Tax Payable',
+            222000,
+            0,
+            row.salesTax
+        );
 
-    taxReviewData.forEach(row => {
+        addRow(
+            'Donations',
+            212000,
+            0,
+            row.donations
+        );
 
-        tbody.innerHTML += `
-            <tr>
+        addRow(
+            'Gift Cards Sold',
+            244800,
+            0,
+            row.gcSold
+        );
 
-                <td>${row.store}</td>
+        addRow(
+            'Cash Expected Deposit',
+            102000,
+            row.cashExpected,
+            0,
+            'CASH'
+        );
 
-                <td>${row.unitName}</td>
+        addRow(
+            'CC Expected Deposit',
+            111200,
+            row.ccTotals,
+            0,
+            'CC'
+        );
 
-                <td>${(row.taxRate * 100).toFixed(2)}%</td>
+        addRow(
+            'AMEX Expected Deposit',
+            111200,
+            row.amex +
+            row.amexPrPd,
+            0,
+            'CC'
+        );
 
-                <td>${formatMoney(row.taxableSales)}</td>
+        addRow(
+            'DoorDash',
+            123000,
+            row.dd,
+            0,
+            'DDD'
+        );
 
-                <td>${formatMoney(row.taxCalculation)}</td>
+        addRow(
+            'Uber',
+            122000,
+            row.uber,
+            0,
+            'UBD'
+        );
 
-                <td>${formatMoney(row.salesTaxPayable)}</td>
+        addRow(
+            'GrubHub',
+            124000,
+            row.gh,
+            0,
+            'GHD'
+        );
 
-                <td>${formatMoney(row.taxDifference)}</td>
+        addRow(
+            'POS Over Short',
+            652300,
+            row.oS > 0
+                ? row.oS
+                : 0,
 
-                <td>${(row.rateCalculation * 100).toFixed(2)}%</td>
+            row.oS < 0
+                ? Math.abs(row.oS)
+                : 0,
 
-                <td>${(row.rateDifference * 100).toFixed(2)}%</td>
-
-            </tr>
-        `;
+            'CASH'
+        );
 
     });
 
@@ -1367,39 +1433,6 @@ function generarDailySales04042026Popeyes() {
 
 }
 
-function generarConciliacionPopeyes() {
-
-    const sheet =
-        salesWorkbook.Sheets[
-        salesWorkbook.SheetNames[0]
-        ];
-
-    const rows =
-        XLSX.utils.sheet_to_json(
-            sheet,
-            { defval: 0 }
-        );
-
-    const salesData =
-        generarSalesPopeyes(rows);
-
-    datosExtraidos =
-        generarConciliationPopeyes(
-            salesData
-        );
-
-    document.getElementById(
-        'resultsSection'
-    ).style.display = 'block';
-
-    renderTablaSucursales();
-
-    actualizarResumen();
-
-    actualizarTotales();
-}
-
-
 function renderConciliation() {
 
     renderArrayToMainTable(
@@ -1431,10 +1464,6 @@ function renderDailySales0404() {
     );
 
 }
-
-// ======================
-// REGISTRAR PESTAÑAS
-// ======================
 
 function inicializarTabsPopeyes() {
 
@@ -1563,6 +1592,14 @@ function obtenerTaxRate(store) {
     return taxRates[
         Number(store)
     ] || 0;
+
+}
+
+function renderDailySalesRED() {
+
+    renderArrayToMainTable(
+        dailySalesREDData
+    );
 
 }
 
