@@ -8,16 +8,6 @@ window.dailySales0404Data ??= [];
 
 async function procesarPopeyes() {
 
-    console.log(
-        'SALES:',
-        sales
-    );
-
-    console.log(
-        'SALES LENGTH:',
-        sales?.length
-    );
-
     const sales =
         generarSalesPopeyes(
             salesRows
@@ -812,6 +802,17 @@ function generarSalesPopeyes(rawRows) {
 }
 
 function generarConciliationPopeyes(salesData) {
+
+    if (!Array.isArray(salesData)) {
+
+        console.error(
+            'generarConciliationPopeyes recibió:',
+            salesData
+        );
+
+        return [];
+
+    }
 
     return salesData.map(row => {
 
