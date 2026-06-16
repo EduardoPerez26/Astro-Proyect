@@ -58,8 +58,7 @@ function procesarPopeyes() {
             );
 
         console.log(
-            'Sales:',
-            salesData.length
+            salesData[0]
         );
 
         // ==========================
