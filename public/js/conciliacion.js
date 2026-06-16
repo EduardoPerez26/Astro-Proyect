@@ -160,9 +160,7 @@ function initEventListeners() {
                             }
                         );
 
-                    console.log(
-                        salesWorkbook.SheetNames
-                    );
+
 
                     salesWorkbook.SheetNames.forEach(name => {
 
@@ -176,15 +174,6 @@ function initEventListeners() {
                                     header: 1
                                 }
                             );
-
-                        console.log(
-                            'HOJA:',
-                            name
-                        );
-
-                        console.table(
-                            rows.slice(0, 5)
-                        );
 
                     });
 
@@ -207,9 +196,6 @@ function initEventListeners() {
                             }
                         );
 
-                    console.log(
-                        salesRows[0]
-                    );
 
                     cargarFechasEnFiltro(
                         salesRows,
@@ -221,7 +207,6 @@ function initEventListeners() {
 
                 } catch (error) {
 
-                    console.error(error);
 
                 }
 

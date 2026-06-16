@@ -28,11 +28,6 @@ function procesarPopeyes() {
 
         }
 
-        console.log(
-            'Sales POS:',
-            salesRows.length
-        );
-
         // ==========================
         // Store Dates
         // ==========================
@@ -41,11 +36,6 @@ function procesarPopeyes() {
             generarStoreDatesPopeyes(
                 salesRows
             );
-
-        console.log(
-            'StoreDates:',
-            storeDates.length
-        );
 
         // ==========================
         // Sales
@@ -69,11 +59,6 @@ function procesarPopeyes() {
             generarConciliationPopeyes(
                 salesData
             );
-
-        console.log(
-            'Conciliation:',
-            conciliacionData.length
-        );
 
         // ==========================
         // Datos para tabla principal
@@ -141,11 +126,6 @@ function procesarPopeyes() {
         return true;
 
     } catch (error) {
-
-        console.error(
-            'Error Popeyes:',
-            error
-        );
 
         Swal.fire(
             'Error',
