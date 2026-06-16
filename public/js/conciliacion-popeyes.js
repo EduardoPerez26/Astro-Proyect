@@ -240,6 +240,13 @@ function sumDebit(
     account
 ) {
 
+    console.log({
+        store,
+        date,
+        account,
+        ejemplo: rows[0]['Accounting Date']
+    });
+
     return rows
         .filter(r =>
 
