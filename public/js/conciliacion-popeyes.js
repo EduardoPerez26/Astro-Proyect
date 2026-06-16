@@ -511,6 +511,31 @@ function generarSalesPopeyes(
                 discountOpenPercent +
                 discount10;
 
+
+            console.table([
+                {
+                    store,
+                    date,
+                    discountsPromo,
+                    discountsOther,
+                    totalDiscounts
+                }
+            ]);
+
+            console.table(
+                salesPosRows.filter(
+                    r =>
+                        Number(r['Unit Number']) === Number(store) &&
+                        (
+                            String(r['Account'] || '')
+                                .includes('Promotion')
+                            ||
+                            String(r['Account'] || '')
+                                .includes('Discount')
+                        )
+                )
+            );
+
             // =====================================
             // TIPS
             // =====================================
