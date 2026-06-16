@@ -751,6 +751,8 @@ function generarConciliationPopeyes(salesData) {
         // SALES
         // =========================
 
+        const serviceFee = row.serviceFee;
+
         const salesOther =
             (row.other || 0) +
             (row.serviceFee || 0);
@@ -933,7 +935,8 @@ function generarConciliationPopeyes(salesData) {
             difference,
 
             oS,
-            cashDepositCalculated
+            cashDepositCalculated,
+            serviceFee
 
         };
 
