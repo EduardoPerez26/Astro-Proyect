@@ -33,20 +33,64 @@ async function procesarPopeyes() {
     datosExtraidos =
         conciliation;
 
-    taxReviewData =
-        generarTaxReviewPopeyes(
-            conciliation
+    // ======================
+    // TAX REVIEW
+    // ======================
+
+    try {
+
+        generarTaxReviewPopeyes();
+
+    } catch (e) {
+
+        console.error(
+            'Error Tax Review:',
+            e
         );
 
-    redData =
-        generarDailySalesRedPopeyes(
-            conciliation
+        taxReviewData = [];
+
+    }
+
+    // ======================
+    // DAILY SALES RED
+    // ======================
+
+    try {
+
+        // temporal para que cargue la pestaña
+        redData =
+            [...datosExtraidos];
+
+    } catch (e) {
+
+        console.error(
+            'Error Daily Sales Red:',
+            e
         );
 
-    journalData =
-        generarDailySales04042026Popeyes(
-            conciliation
+        redData = [];
+
+    }
+
+    // ======================
+    // DAILY SALES 04-04-2026
+    // ======================
+
+    try {
+
+        generarDailySales04042026Popeyes();
+
+    } catch (e) {
+
+        console.error(
+            'Error Daily Sales 0404:',
+            e
         );
+
+        dailySales0404Data = [];
+
+    }
 
     renderTablaSucursales();
 
@@ -955,7 +999,7 @@ function generarConciliationPopeyes(salesData) {
 
 }
 
-function generarTaxReview() {
+function generarTaxReviewPopeyes() {
 
     taxReviewData =
         datosExtraidos.map(row => {
@@ -1080,7 +1124,7 @@ function renderTaxReviewTable() {
     });
 
 }
-function generarDailySales0404Popeyes() {
+function generarDailySales04042026Popeyes() {
 
     dailySales0404Data = [];
 
@@ -1220,10 +1264,18 @@ function generarConciliacionPopeyes() {
 }
 
 
+function renderConciliation() {
+
+    renderArrayToMainTable(
+        datosExtraidos || []
+    );
+
+}
+
 function renderTaxReview() {
 
     renderArrayToMainTable(
-        taxReviewData
+        taxReviewData || []
     );
 
 }
@@ -1231,7 +1283,7 @@ function renderTaxReview() {
 function renderDailySalesRed() {
 
     renderArrayToMainTable(
-        redData
+        redData || []
     );
 
 }
@@ -1239,7 +1291,54 @@ function renderDailySalesRed() {
 function renderDailySales0404() {
 
     renderArrayToMainTable(
-        dailySales0404Data
+        dailySales0404Data || []
     );
 
 }
+
+// ======================
+// REGISTRAR PESTAÑAS
+// ======================
+
+document.addEventListener(
+    'DOMContentLoaded',
+    () => {
+
+        document
+            .getElementById(
+                'tabConciliation'
+            )
+            ?.addEventListener(
+                'click',
+                renderConciliation
+            );
+
+        document
+            .getElementById(
+                'tabTaxReview'
+            )
+            ?.addEventListener(
+                'click',
+                renderTaxReview
+            );
+
+        document
+            .getElementById(
+                'tabDailySalesRed'
+            )
+            ?.addEventListener(
+                'click',
+                renderDailySalesRed
+            );
+
+        document
+            .getElementById(
+                'tabDailySales0404'
+            )
+            ?.addEventListener(
+                'click',
+                renderDailySales0404
+            );
+
+    }
+);
