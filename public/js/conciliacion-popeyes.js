@@ -305,22 +305,44 @@ function sumCredit(
 }
 
 function sumAccount(
-    salesPosRows,
+    rows,
     store,
     date,
     account,
     field = 'debit'
 ) {
 
-    return salesPosRows
+    const amountField =
+        field === 'credit'
+            ? 'Credit Amount'
+            : 'Debit Amount';
+
+    return rows
         .filter(r =>
-            Number(r.store) === Number(store) &&
-            normalizarFecha(r.accountingDate) === normalizarFecha(date) &&
-            r.account === account
+
+            Number(
+                r['Unit Number']
+            ) === Number(store)
+
+            &&
+
+            Number(
+                r['Accounting Date']
+            ) === Number(date)
+
+            &&
+
+            r['Account'] === account
+
         )
         .reduce(
             (sum, r) =>
-                sum + (Number(r[field]) || 0),
+
+                sum +
+                Number(
+                    r[amountField] || 0
+                ),
+
             0
         );
 
