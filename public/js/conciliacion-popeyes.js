@@ -2,8 +2,6 @@ let popeyesConciliationData = [];
 let popeyesTaxReviewData = [];
 let popeyesDailySalesRedData = [];
 let popeyesDailySales0404Data = [];
-let salesRows = [];
-
 // ==========================================
 // STOREDATES POPEYES
 // Equivalente a hoja StoreDates.xlsx
