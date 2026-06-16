@@ -160,6 +160,34 @@ function initEventListeners() {
                             }
                         );
 
+                    console.log(
+                        salesWorkbook.SheetNames
+                    );
+
+                    salesWorkbook.SheetNames.forEach(name => {
+
+                        const ws =
+                            salesWorkbook.Sheets[name];
+
+                        const rows =
+                            XLSX.utils.sheet_to_json(
+                                ws,
+                                {
+                                    header: 1
+                                }
+                            );
+
+                        console.log(
+                            'HOJA:',
+                            name
+                        );
+
+                        console.table(
+                            rows.slice(0, 5)
+                        );
+
+                    });
+
                     workbook =
                         salesWorkbook;
 
