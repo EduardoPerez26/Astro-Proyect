@@ -5,7 +5,6 @@ window.statisticalDeliveryData ??= [];
 window.journalData ??= [];
 window.statisticalJournalData ??= [];
 window.dailySales0404Data ??= [];
-let activeTab = 'conciliation';
 
 async function procesarPopeyes() {
 
