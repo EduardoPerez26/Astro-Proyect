@@ -1,10 +1,11 @@
 // conciliacion-popeyes.js
 window.taxReviewData ??= [];
-window.redData ??= [];
+window.dailySalesREDData ??= [];
 window.statisticalDeliveryData ??= [];
 window.journalData ??= [];
 window.statisticalJournalData ??= [];
 window.dailySales0404Data ??= [];
+let activeTab = 'conciliation';
 
 async function procesarPopeyes() {
 
@@ -1465,61 +1466,6 @@ function renderDailySales0404() {
 
 }
 
-function inicializarTabsPopeyes() {
-
-    document
-        .querySelectorAll(
-            '.popeyes-tab-btn'
-        )
-        .forEach(btn => {
-
-            btn.addEventListener(
-                'click',
-                () => {
-
-                    document
-                        .querySelectorAll(
-                            '.popeyes-tab-btn'
-                        )
-                        .forEach(b =>
-                            b.classList.remove(
-                                'active'
-                            )
-                        );
-
-                    btn.classList.add(
-                        'active'
-                    );
-
-                    const tab =
-                        btn.dataset.tab;
-
-                    switch (tab) {
-
-                        case 'conciliation':
-                            renderConciliation();
-                            break;
-
-                        case 'taxReview':
-                            renderTaxReview();
-                            break;
-
-                        case 'dailySalesRed':
-                            renderDailySalesRed();
-                            break;
-
-                        case 'dailySales0404':
-                            renderDailySales0404();
-                            break;
-                    }
-
-                }
-            );
-
-        });
-
-}
-
 function obtenerTaxRate(store) {
 
     const taxRates = {
@@ -1595,10 +1541,10 @@ function obtenerTaxRate(store) {
 
 }
 
-function renderDailySalesRED() {
+function renderDailySalesRed() {
 
     renderArrayToMainTable(
-        dailySalesREDData
+        dailySalesREDData || []
     );
 
 }
