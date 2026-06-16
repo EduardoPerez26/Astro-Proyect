@@ -1081,8 +1081,7 @@ function generarConciliationPopeyes(
 
             (
                 Number(row.other || 0) +
-
-                Number(row.serviceFee || 0) +
+                Number(row.deliveryFee || 0) +
                 Number(row.netSales || 0) +
                 Number(row.salesTax || 0) +
                 Number(row.caCrv || 0) +
@@ -1096,26 +1095,32 @@ function generarConciliationPopeyes(
 
             (
                 Number(row.discounts || 0) +
-
                 Number(row.discountsPromo || 0) +
 
                 Number(row.amex || 0) +
-                Number(row.ccTotals || 0) +
+                Number(row.amexPrpd || 0) +
+                Number(row.totalCC || 0) +
+
                 Number(row.doorDash || 0) +
                 Number(row.grubHub || 0) +
                 Number(row.uberEats || 0) +
+
                 Number(row.doorDashShortage || 0) +
                 Number(row.uberShortage || 0) +
+
                 Number(row.ebt || 0) +
                 Number(row.kiosk || 0) +
+
                 Number(row.giftCardRedeemed || 0) +
+
                 Number(row.onlineCatering || 0) +
                 Number(row.ezCater || 0) +
+
                 Number(row.paidOutSmallwares || 0) +
-                Number(row.paidOutCleaningSupplies || 0) +
-                Number(row.paidOutOfficeSupplies || 0) +
-                Number(row.paidOutFood || 0)  +
-                Number(row.paidOutCashOut || 0) 
+                Number(row.paidOutCleaning || 0) +
+                Number(row.paidOutOffice || 0) +
+                Number(row.paidOutFood || 0) +
+                Number(row.paidOutCashOut || 0)
             );
 
         return {
