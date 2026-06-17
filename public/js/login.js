@@ -1,72 +1,73 @@
-// Login conectado al Backend con MySQL
-// Configuracion de la API
-
-
+// Login conectado al backend con MySQL
 const API_URL = window.API_URL;
 
 document.addEventListener('DOMContentLoaded', function () {
+    const loginForm = document.getElementById('loginForm');
     const loginBtn = document.getElementById('loginBtn');
     const usernameInput = document.getElementById('username');
     const passwordInput = document.getElementById('password');
+    const passwordToggle = document.getElementById('passwordToggle');
 
-
-
-    // Verificar si ya hay sesion activa
+    // Verificar si ya hay una sesión activa.
     const token = localStorage.getItem('token');
     if (token) {
         verificarSesion(token);
     }
 
-    if (loginBtn) {
-        loginBtn.addEventListener('click', async function () {
+    if (passwordToggle && passwordInput) {
+        passwordToggle.addEventListener('click', function () {
+            const isVisible = passwordInput.type === 'text';
+            passwordInput.type = isVisible ? 'password' : 'text';
+            passwordToggle.setAttribute('aria-pressed', String(!isVisible));
+            passwordToggle.setAttribute(
+                'aria-label',
+                isVisible ? 'Mostrar contraseña' : 'Ocultar contraseña'
+            );
+            passwordToggle.innerHTML = isVisible
+                ? '<i class="fa-regular fa-eye" aria-hidden="true"></i>'
+                : '<i class="fa-regular fa-eye-slash" aria-hidden="true"></i>';
+        });
+    }
+
+    if (loginForm) {
+        loginForm.addEventListener('submit', async function (event) {
+            event.preventDefault();
+
             const username = usernameInput.value.trim();
-            const password = passwordInput.value.trim();
+            const password = passwordInput.value;
 
             if (!username || !password) {
                 Swal.fire({
                     icon: 'warning',
-                    title: 'Campos vacios',
-                    text: 'Por favor ingresa usuario y contrasena',
-                    confirmButtonColor: '#6366f1'
+                    title: 'Completa los campos',
+                    text: 'Ingresa tu usuario y contraseña para continuar.',
+                    confirmButtonColor: '#0f766e'
                 });
                 return;
             }
 
-            // Mostrar loading
-            loginBtn.disabled = true;
-            loginBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Verificando...';
+            setLoading(true);
 
             try {
-
-                console.log('Username:', username);
-                console.log('Password:', password);
-                console.log('API URL:', window.API_URL);
-                const response = await fetch(`${window.API_URL}/auth/login`, {
+                const response = await fetch(`${API_URL}/auth/login`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({
-                        username,
-                        password
-                    })
+                    body: JSON.stringify({ username, password })
                 });
 
                 const data = await response.json();
 
-                console.log('Status:', response.status);
-                console.log('Response:', data);
-
                 if (response.ok && !data.error) {
-                    // Guardar token y datos del usuario
                     localStorage.setItem('token', data.token);
                     localStorage.setItem('usuario', JSON.stringify(data.usuario));
                     localStorage.setItem('isLoggedIn', 'true');
 
                     Swal.fire({
                         icon: 'success',
-                        title: 'Bienvenido!',
-                        text: `Hola ${data.usuario.nombre}`,
+                        title: '¡Bienvenido!',
+                        text: `Hola, ${data.usuario.nombre}`,
                         timer: 1500,
                         showConfirmButton: false
                     }).then(() => {
@@ -75,69 +76,65 @@ document.addEventListener('DOMContentLoaded', function () {
                 } else {
                     Swal.fire({
                         icon: 'error',
-                        title: 'Error de autenticacion',
-                        text: data.message || 'Usuario o contrasena incorrectos',
-                        confirmButtonColor: '#6366f1'
+                        title: 'No pudimos iniciar sesión',
+                        text: data.message || 'El usuario o la contraseña no son correctos.',
+                        confirmButtonColor: '#0f766e'
                     });
                 }
             } catch (error) {
-                console.error('Error de conexion:', error);
+                console.error('Error de conexión:', error);
 
-                // Si no hay conexion al backend, mostrar opcion de modo offline
                 Swal.fire({
                     icon: 'error',
-                    title: 'Error de conexion',
+                    title: 'Sin conexión con el servidor',
                     html: `
-                        <p>No se pudo conectar al servidor.</p>
-                        <p style="font-size: 13px; color: #666; margin-top: 10px;">
-                            Asegurate de que el backend este corriendo en <code>${API_URL}</code>
+                        <p>No pudimos validar tus credenciales en este momento.</p>
+                        <p style="font-size: 13px; color: #64748b; margin-top: 10px;">
+                            Verifica que el servidor esté disponible e inténtalo nuevamente.
                         </p>
                     `,
                     showCancelButton: true,
                     confirmButtonText: 'Reintentar',
-                    cancelButtonText: 'Modo sin conexion',
-                    confirmButtonColor: '#6366f1'
+                    cancelButtonText: 'Modo sin conexión',
+                    confirmButtonColor: '#0f766e'
                 }).then((result) => {
-                    if (!result.isConfirmed) {
-                        // Modo offline con credenciales por defecto
-                        if (username === 'admin' && password === 'admin123') {
-                            localStorage.setItem('isLoggedIn', 'true');
-                            localStorage.setItem('modoOffline', 'true');
-                            window.location.href = '/views/inicio';
-                        } else {
-                            Swal.fire({
-                                icon: 'info',
-                                title: 'Modo sin conexion',
-                                text: 'En modo offline usa: admin / admin123',
-                                confirmButtonColor: '#6366f1'
-                            });
-                        }
+                    if (result.isConfirmed) {
+                        loginForm.requestSubmit();
+                        return;
+                    }
+
+                    if (username === 'admin' && password === 'admin123') {
+                        localStorage.setItem('isLoggedIn', 'true');
+                        localStorage.setItem('modoOffline', 'true');
+                        window.location.href = '/views/inicio';
+                    } else {
+                        Swal.fire({
+                            icon: 'info',
+                            title: 'Modo sin conexión',
+                            text: 'En modo offline usa: admin / admin123',
+                            confirmButtonColor: '#0f766e'
+                        });
                     }
                 });
             } finally {
-                loginBtn.disabled = false;
-                loginBtn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Iniciar sesion';
+                setLoading(false);
             }
         });
     }
 
-    // Enter key to login
-    if (passwordInput) {
-        passwordInput.addEventListener('keypress', function (e) {
-            if (e.key === 'Enter') {
-                loginBtn.click();
-            }
-        });
+    function setLoading(isLoading) {
+        loginBtn.disabled = isLoading;
+        loginForm.setAttribute('aria-busy', String(isLoading));
+        loginBtn.innerHTML = isLoading
+            ? '<i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i><span>Verificando...</span>'
+            : '<span>Iniciar sesión</span><i class="fa-solid fa-arrow-right" aria-hidden="true"></i>';
     }
 });
 
-// Verificar si el token es valido
+// Verificar si el token guardado sigue siendo válido.
 async function verificarSesion(token) {
-    console.log('Username:', username);
-    console.log('Password:', password);
-    console.log('API URL:', window.API_URL);
     try {
-        const response = await fetch(`${window.API_URL}/auth/verificar`, {
+        const response = await fetch(`${API_URL}/auth/verificar`, {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${token}`
@@ -145,18 +142,14 @@ async function verificarSesion(token) {
         });
 
         if (response.ok) {
-            // Token valido, redirigir al dashboard
             window.location.href = '/views/inicio';
-        } else {
-            // Token invalido, limpiar storage
-            localStorage.removeItem('token');
-            localStorage.removeItem('usuario');
-            localStorage.removeItem('isLoggedIn');
+            return;
         }
+
+        localStorage.removeItem('token');
+        localStorage.removeItem('usuario');
+        localStorage.removeItem('isLoggedIn');
     } catch (error) {
-        // Error de conexion, no hacer nada
-        console.log('No se pudo verificar sesion:', error);
+        console.log('No se pudo verificar la sesión:', error);
     }
 }
-
-
