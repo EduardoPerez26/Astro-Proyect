@@ -15,6 +15,7 @@ const usuariosRoutes = require('./routes/usuarios.routes');
 const restaurantesRoutes = require('./routes/restaurantes.routes');
 const validacionesRoutes = require('./routes/validaciones.routes');
 const conciliacionesRoutes = require('./routes/conciliaciones.routes');
+const dashboardRoutes = require('./routes/dashboard.routes');
 
 const app = express();
 
@@ -22,14 +23,25 @@ const app = express();
 // MIDDLEWARES
 // ============================================
 
+const allowedOrigins = [
+    'https://astro-proyect-akfs.vercel.app',
+    'https://astro-proyect-tau.vercel.app'
+];
+
 // CORS
 app.use(cors({
-    origin: [
-        'http://localhost:4321',
-        'http://localhost:3001',
-        'https://astro-proyect-akfs.vercel.app',
-        'https://astro-proyect-tau.vercel.app'
-    ],
+    origin(origin, callback) {
+        const isLocal = /^http:\/\/(localhost|127\.0\.0\.1):\d+$/.test(
+            origin || ''
+        );
+
+        if (!origin || isLocal || allowedOrigins.includes(origin)) {
+            callback(null, true);
+            return;
+        }
+
+        callback(new Error('Origen no permitido por CORS'));
+    },
     credentials: true,
     methods: ['GET','POST','PUT','DELETE','OPTIONS'],
     allowedHeaders: ['Content-Type','Authorization']
@@ -59,7 +71,8 @@ app.get('/api', (req, res) => {
             usuarios: '/api/usuarios',
             restaurantes: '/api/restaurantes',
             validaciones: '/api/validaciones',
-            conciliaciones: '/api/conciliaciones'
+            conciliaciones: '/api/conciliaciones',
+            dashboard: '/api/dashboard/resumen'
         }
     });
 });
@@ -71,6 +84,7 @@ app.use('/api/usuarios', usuariosRoutes);
 app.use('/api/restaurantes', restaurantesRoutes);
 app.use('/api/validaciones', validacionesRoutes);
 app.use('/api/conciliaciones', conciliacionesRoutes);
+app.use('/api/dashboard', dashboardRoutes);
 
 // ============================================
 // MANEJO DE ERRORES

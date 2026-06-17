@@ -113,6 +113,8 @@ textarea {
 .main-wrapper {
     flex: 1;
     margin-left: var(--sidebar-width);
+    width: calc(100% - var(--sidebar-width));
+    min-width: 0;
     display: flex;
     flex-direction: column;
     transition: var(--transition);
@@ -120,22 +122,27 @@ textarea {
 
 .main-wrapper.sidebar-collapsed {
     margin-left: var(--sidebar-collapsed-width);
+    width: calc(100% - var(--sidebar-collapsed-width));
 }
 
 /* Legacy support */
 .main {
     margin-left: var(--sidebar-width);
+    width: calc(100% - var(--sidebar-width));
+    min-width: 0;
     min-height: 100vh;
-    padding: 24px 32px 40px;
+    padding: 0 32px 40px;
     transition: var(--transition);
 }
 
 body.sidebar-collapsed .main {
     margin-left: var(--sidebar-collapsed-width);
+    width: calc(100% - var(--sidebar-collapsed-width));
 }
 
 .main.sidebar-collapsed {
     margin-left: var(--sidebar-collapsed-width);
+    width: calc(100% - var(--sidebar-collapsed-width));
 }
 
 /* =============================================
@@ -1733,6 +1740,8 @@ input[type=file] {
     .main-wrapper,
     .main {
         margin-left: 0;
+        width: 100%;
+        max-width: 100%;
     }
 
     .filters-grid {
@@ -1740,7 +1749,7 @@ input[type=file] {
     }
 
     .cards-grid {
-        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
     }
 
     .welcome-card,
@@ -1807,7 +1816,7 @@ input[type=file] {
 
     .main-content,
     .main {
-        padding: 16px;
+        padding: 0 16px 16px;
     }
 
     .cards-grid {
@@ -2767,6 +2776,8 @@ input[type=file] {
 .page-container {
     padding: 0;
     max-width: 1600px;
+    width: 100%;
+    min-width: 0;
 }
 
 .page-header,
@@ -2991,7 +3002,7 @@ td {
 
 @media (max-width: 640px) {
     .main {
-        padding: 16px;
+        padding: 0 16px 16px;
     }
 
     .topbar {

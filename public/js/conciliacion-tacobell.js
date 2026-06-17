@@ -7,6 +7,106 @@ let dailySales0314Data = [];
 let dailySales0310Data = [];
 let activeTab = 'dailySales';
 
+function numeroSalesDetailTacoBell(row, campo) {
+    return Number(row?.[campo] || 0);
+}
+
+function claveTiendaTacoBell(valor) {
+    const digitos = String(valor ?? '').replace(/\D/g, '');
+    return digitos ? String(Number(digitos)) : '';
+}
+
+function convertirSalesDetailTacoBell(row) {
+    const valor = campo =>
+        numeroSalesDetailTacoBell(row, campo);
+
+    return {
+        Store: Number(claveTiendaTacoBell(row['Store Number'])),
+        Date: row['Business Date'],
+        'Net Sales': valor('(=) Net Sales'),
+        'Sales Tax': valor('Cash in Drawer (-) Tax Amount'),
+        Refunds: valor('Refunded Orders Amount'),
+        Promo: valor('Gross Sales (-) Promo Amount'),
+        Discounts: valor('Gross Sales (-) Discounts Amount'),
+        'Paid Out': valor('Cash Reconciliation - Paid Voucher Amount'),
+        'Paid In': 0,
+        'Gift Card Redeemed':
+            -valor('(-) Gift Card Redeemed Totals Amount'),
+        'Gift Cards Sold':
+            valor('Cash in Drawer (-) Gift Cards Sold Amount'),
+        Mastercard:
+            valor('Mastercard In-Store Amount') +
+            valor('Mastercard Pre-Paid Amount'),
+        Visa:
+            valor('Visa In-Store Amount') +
+            valor('Visa Pre-Paid Amount'),
+        Discover:
+            valor('Discover In-Store Amount') +
+            valor('Discover Pre-Paid Amount'),
+        Amex:
+            valor('American Express In-Store Amount') +
+            valor('American Express Pre-Paid Amount'),
+        Debit: valor('Cash in Drawer (+) Debit Sales Amount'),
+        'Cash +/-':
+            valor('Cash Reconciliation - Cash Overshort Amount'),
+        'Deposit 1':
+            valor('Cash Reconciliation - Drawer Deposit Amount'),
+        'Deposit 2': 0,
+        'Deposit 3': 0,
+        'Acct Cash': valor('Cash in Drawer'),
+        'Grub Hub Payments': valor('Grubhub Pay Totals Amount'),
+        'Uber Payments': valor('Uber Eats Pay Totals Amount'),
+        'DoorDash Payment': valor('DoorDash Pay Totals Amount'),
+        Donation: valor('TB Foundation Donation Amount')
+    };
+}
+
+function obtenerTiendasNuevasSalesDetailTacoBell(
+    rowsPrincipales,
+    fechaPrincipal
+) {
+    if (!salesDetailRows?.length) {
+        return [];
+    }
+
+    const tiendasUsadas = new Set(
+        rowsPrincipales
+            .map(row => claveTiendaTacoBell(row.Store))
+            .filter(Boolean)
+    );
+
+    const fechaDetalle = normalizarFecha(
+        fechaSalesDetailSeleccionada || fechaPrincipal
+    );
+
+    const tiendasDetalle = [];
+
+    salesDetailRows.forEach(row => {
+        const tienda = claveTiendaTacoBell(
+            row['Store Number']
+        );
+        const fecha = normalizarFecha(
+            row['Business Date']
+        );
+
+        if (
+            !tienda ||
+            !fecha ||
+            fecha !== fechaDetalle ||
+            tiendasUsadas.has(tienda)
+        ) {
+            return;
+        }
+
+        tiendasUsadas.add(tienda);
+        tiendasDetalle.push(
+            convertirSalesDetailTacoBell(row)
+        );
+    });
+
+    return tiendasDetalle;
+}
+
 // ===========================================
 // GENERAR CONCILIACION TACOBELL
 // ===========================================
@@ -25,7 +125,27 @@ function generarConciliacionTacoBell() {
         return;
     }
 
-    const rows = XLSX.utils.sheet_to_json(sourceSheet, { range: 1, defval: 0 });
+    const rows =
+        salesRows?.length
+            ? salesRows
+            : leerFilasExcel(
+                sourceSheet,
+                [
+                    'Store',
+                    'Date'
+                ],
+                0
+            );
+
+    if (!rows.length) {
+        Swal.fire(
+            'Error',
+            'No se encontraron filas validas en el archivo Sales de Taco Bell',
+            'error'
+        );
+        return;
+    }
+
     cargarFechasEnFiltro(rows, 'salesDateFilter', 'Date');
 
     // Obtener fecha más reciente
@@ -60,7 +180,18 @@ function generarConciliacionTacoBell() {
         return normalizarFecha(fecha) === normalizarFecha(fechaFiltro);
     });
 
-    datosExtraidos = rowsFiltradas.map(row => {
+    const tiendasNuevas =
+        obtenerTiendasNuevasSalesDetailTacoBell(
+            rowsFiltradas,
+            fechaFiltro
+        );
+
+    const rowsCombinadas = [
+        ...rowsFiltradas,
+        ...tiendasNuevas
+    ];
+
+    datosExtraidos = rowsCombinadas.map(row => {
         const c = currentRestaurantConfig.columns;
         const store = row[c.store] || '';
 
@@ -135,7 +266,9 @@ function generarConciliacionTacoBell() {
             cashExpected: limpiarDecimal(cashExpected),
             difference: limpiarDecimal(difference)
         };
-    });
+    }).sort(
+        (a, b) => Number(a.store) - Number(b.store)
+    );
 
     document.getElementById('resultsSection').style.display = 'block';
     console.log(
@@ -169,7 +302,7 @@ function renderActiveTab() {
             break;
 
         case 'taxReview':
-            renderTaxReview();
+            renderTacoBellTaxReview();
             break;
 
         case 'statisticalDelivery':
@@ -757,7 +890,7 @@ function obtenerTaxRate(store) {
 
 }
 
-function renderTaxReview() {
+function renderTacoBellTaxReview() {
 
     const data = taxReviewData.map(row => ({
 
@@ -785,10 +918,10 @@ function renderTaxReview() {
             Number(row.taxDifference || 0).toFixed(2),
 
         'RATE CALCULATION':
-            ((row.rateCalculation || 0) * 100).toFixed(3) + '%',
+            Number(row.rateCalculation || 0).toFixed(3) + '%',
 
         'RATE DIFFERENCE':
-            ((row.rateDifference || 0) * 100).toFixed(3) + '%'
+            Number(row.rateDifference || 0).toFixed(3) + '%'
 
     }));
 

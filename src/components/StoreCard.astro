@@ -7,54 +7,118 @@ interface Props {
   icon: string;
   colorClass: string;
   restaurant: string;
+  logoUrl?: string;
+  badge?: string;
+  enabled?: boolean;
 }
 
-const { id, name, description, icon, colorClass, restaurant } = Astro.props;
+const {
+  id,
+  name,
+  description,
+  icon,
+  colorClass,
+  restaurant,
+  logoUrl,
+  badge = '',
+  enabled = true
+} = Astro.props;
 ---
 
-<div class="card store-card">
+<article class:list={["card", "store-card", { "store-card-disabled": !enabled }]}>
     <div class="card-body">
         <div class="store-card-header">
             <div class={`store-icon bg-${colorClass}`}>
-                <i class={`fa-solid ${icon}`}></i>
+                {logoUrl && (
+                    <img
+                        src={logoUrl}
+                        alt={`Logo de ${name}`}
+                        loading="lazy"
+                        onerror="this.style.display='none';this.nextElementSibling.style.display='inline-block';"
+                    />
+                )}
+                <i
+                    class={`fa-solid ${icon} store-logo-fallback`}
+                    style={logoUrl ? "display:none;" : ""}
+                ></i>
             </div>
             <div class="store-info">
-                <h3>{name}</h3>
+                <div class="store-name-row">
+                    <h3>{name}</h3>
+                    {badge && <span class="store-badge">{badge}</span>}
+                </div>
                 <p>{description}</p>
             </div>
         </div>
-        <a class="btn btn-primary btn-block" href={`/views/conciliacion?restaurante=${id}`}>
-            <i class="fa-solid fa-file-excel"></i>
-            Conciliacion
-        </a>
+
+        {enabled ? (
+            <a class="btn btn-primary btn-block" href={`/views/conciliacion?restaurante=${id}`}>
+                <i class="fa-solid fa-file-excel"></i>
+                Abrir conciliacion
+            </a>
+        ) : (
+            <button class="btn btn-secondary btn-block" type="button" disabled>
+                <i class="fa-solid fa-lock"></i>
+                No disponible
+            </button>
+        )}
     </div>
-</div>
+</article>
 
 <style>
 .store-card {
-    transition: transform 0.2s, box-shadow 0.2s;
+    min-width: 0;
+    height: 100%;
+    overflow: hidden;
+    transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
 }
 
 .store-card:hover {
-    transform: translateY(-4px);
+    transform: translateY(-2px);
     box-shadow: var(--shadow-lg);
+    border-color: rgba(15, 118, 110, .3);
+}
+
+.store-card-disabled {
+    background: var(--gray-50);
+}
+
+.store-card-disabled:hover {
+    transform: none;
+    box-shadow: var(--shadow-sm);
+    border-color: var(--gray-200);
+}
+
+.card-body {
+    height: 100%;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
 }
 
 .store-card-header {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 16px;
-    margin-bottom: 20px;
+    margin-bottom: 24px;
 }
 
 .store-icon {
-    width: 56px;
-    height: 56px;
+    width: 64px;
+    height: 64px;
+    flex: 0 0 64px;
     border-radius: var(--radius);
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 24px;
+}
+
+.store-icon img {
+    width: 48px;
+    height: 48px;
+    object-fit: contain;
 }
 
 .store-icon.bg-primary {
@@ -79,19 +143,60 @@ const { id, name, description, icon, colorClass, restaurant } = Astro.props;
 
 .store-info h3 {
     font-size: 18px;
-    font-weight: 600;
+    font-weight: 700;
     color: var(--gray-800);
-    margin: 0 0 4px 0;
+    margin: 0;
 }
 
 .store-info p {
     font-size: 13px;
     color: var(--gray-500);
-    margin: 0;
+    line-height: 1.5;
+    margin: 8px 0 0;
+}
+
+.store-info {
+    min-width: 0;
+    flex: 1;
+}
+
+.store-name-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.store-badge {
+    flex: 0 0 auto;
+    padding: 4px 7px;
+    border-radius: var(--radius);
+    background: var(--gray-100);
+    border: 1px solid var(--gray-200);
+    color: var(--gray-600);
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
 }
 
 .btn-block {
     width: 100%;
     justify-content: center;
+}
+
+.btn:disabled {
+    cursor: not-allowed;
+    opacity: .68;
+}
+
+@media (max-width: 480px) {
+    .store-card-header {
+        align-items: center;
+    }
+
+    .store-name-row {
+        align-items: flex-start;
+        flex-direction: column;
+    }
 }
 </style>

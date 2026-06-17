@@ -6,54 +6,91 @@ const stores = [
     {
         id: 1,
         name: "Taco Bell",
-        description: "Comida rapida mexicana",
+        description: "Conciliacion con Sales, Sales Detail y EBT",
         icon: "fa-utensils",
         colorClass: "primary",
-        restaurant: "taco-bell"
+        restaurant: "taco-bell",
+        logoUrl: "https://www.tacobell.com/favicon.ico",
+        badge: "3 archivos",
+        enabled: true
     },
     {
         id: 2,
         name: "Burger King",
-        description: "Hamburguesas y mas",
+        description: "Configuracion temporalmente fuera de conciliacion",
         icon: "fa-burger",
         colorClass: "warning",
-        restaurant: "burger-king"
+        restaurant: "burger-king",
+        logoUrl: "https://www.bk.com/favicon.ico",
+        badge: "Pausado",
+        enabled: false
     },
     {
         id: 3,
         name: "Popeyes",
-        description: "Pollo frito estilo Louisiana",
+        description: "Conciliacion con un solo archivo principal",
         icon: "fa-drumstick-bite",
         colorClass: "danger",
-        restaurant: "popeyes"
+        restaurant: "popeyes",
+        logoUrl: "https://www.popeyes.com/favicon.ico",
+        badge: "1 archivo",
+        enabled: true
     },
     {
         id: 4,
         name: "KFC",
-        description: "Kentucky Fried Chicken",
+        description: "Pendiente de configuracion",
         icon: "fa-bowl-food",
         colorClass: "success",
-        restaurant: "kfc"
+        restaurant: "kfc",
+        logoUrl: "https://www.kfc.com/favicon.ico",
+        badge: "Pendiente",
+        enabled: false
     }
 ];
 ---
 
 <DashboardLayout title="Tiendas - Sistema de Inventario">
-    <section class="tab active" id="tiendas">
+    <section class="tab active tiendas-view" id="tiendas">
         <!-- Page Header -->
-        <div class="page-header">
+        <div class="page-header tiendas-header">
             <div class="page-header-left">
                 <h1 class="page-title">Tiendas</h1>
-                <p class="page-subtitle">Gestiona y supervisa todas las sucursales del sistema</p>
+                <p class="page-subtitle">Elige el restaurante que vas a conciliar. Solo se muestran como activos los flujos listos para usar.</p>
             </div>
         </div>
 
         <!-- Store Cards Grid -->
-        <div class="cards-grid" style="grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));">
+        <div class="store-grid">
             {stores.map((store) => (
                 <StoreCard {...store} />
             ))}
         </div>
     </section>
     <script src="/js/config.js" is:inline></script>
+
+    <style>
+        .tiendas-view {
+            width: 100%;
+            min-width: 0;
+        }
+
+        .tiendas-header {
+            padding-bottom: 4px;
+        }
+
+        .store-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 18px;
+            width: 100%;
+            min-width: 0;
+        }
+
+        @media (min-width: 1280px) {
+            .store-grid {
+                grid-template-columns: repeat(4, minmax(0, 1fr));
+            }
+        }
+    </style>
 </DashboardLayout>

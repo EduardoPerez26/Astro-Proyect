@@ -200,34 +200,10 @@ function redondearBurgerKing(valor) {
     return Number(numero.toFixed(2));
 }
 
-function storeIdBurgerKing(valor) {
-    const texto =
-        String(valor ?? '')
-            .trim();
-
-    if (
-        !texto ||
-        texto === 'Unit Number'
-    ) {
-        return '';
-    }
-
-    const sinCeros =
-        texto.replace(
-            /^0+(?=\d)/,
-            ''
-        );
-
-    if (/^\d+$/.test(sinCeros)) {
-        return Number(sinCeros);
-    }
-
-    return sinCeros;
-}
-
-function numeroStoreBurgerKing(valor) {
+function parseStoreBurgerKing(valor) {
     const match =
         String(valor ?? '')
+            .trim()
             .match(/\d+/);
 
     return match ? Number(match[0]) : 0;
@@ -320,7 +296,7 @@ function obtenerFilasBurgerKing() {
 function filasValidasBurgerKing(rows) {
     return rows.filter(row => {
         const store =
-            storeIdBurgerKing(
+            parseStoreBurgerKing(
                 row['Unit Number']
             );
 
@@ -383,7 +359,7 @@ function agruparFilasBurgerKing(rows, fechaTrabajo) {
         }
 
         const store =
-            storeIdBurgerKing(
+            parseStoreBurgerKing(
                 row['Unit Number']
             );
 
@@ -397,17 +373,12 @@ function agruparFilasBurgerKing(rows, fechaTrabajo) {
             return;
         }
 
-        const key =
-            String(store);
-
-        if (!grupos.has(key)) {
+        if (!grupos.has(store)) {
             grupos.set(
-                key,
+                store,
                 {
                     store,
-                    unitNumber:
-                        numeroStoreBurgerKing(store) ||
-                        store,
+                    unitNumber: store,
                     unitName: row['Unit Name'] || '',
                     date,
                     accounts: {}
@@ -416,7 +387,7 @@ function agruparFilasBurgerKing(rows, fechaTrabajo) {
         }
 
         const grupo =
-            grupos.get(key);
+            grupos.get(store);
 
         if (!grupo.accounts[account]) {
             grupo.accounts[account] = {
@@ -440,8 +411,8 @@ function agruparFilasBurgerKing(rows, fechaTrabajo) {
         ...grupos.values()
     ].sort(
         (a, b) =>
-            numeroStoreBurgerKing(a.store) -
-            numeroStoreBurgerKing(b.store)
+            Number(a.store) -
+            Number(b.store)
     );
 }
 
@@ -699,7 +670,8 @@ function generarConciliationBurgerKing(grupos) {
             salesTax +
             gcSold +
             paidOut +
-            donations +
+            donations -
+            donationDiscount +
             surcharge +
             bagCharge +
             totalWlTips;
@@ -969,9 +941,7 @@ function generarTaxAnalysisBurgerKing(conciliationData) {
         conciliationData
             .map(row => {
                 const taxRate =
-                    BURGER_KING_TAX_RATES[
-                    numeroStoreBurgerKing(row.store)
-                    ] || 0;
+                    BURGER_KING_TAX_RATES[row.store] || 0;
 
                 const discounts =
                     totalDiscountsBurgerKing(row);
@@ -1178,6 +1148,8 @@ function generarTemplateCsvBurgerKing(conciliationData) {
         lineNo = agregarLineaBurgerKing(data, lineNo, row, 421000, 'Discounts & Promotions - Police', 'debit', row.discountPolice);
         lineNo = agregarLineaBurgerKing(data, lineNo, row, 421000, 'Discounts & Promotions - Senior', 'debit', row.discountSenior);
         lineNo = agregarLineaBurgerKing(data, lineNo, row, 421000, 'Discounts & Promotions - Vendor', 'debit', row.discountVendor);
+        lineNo = agregarLineaBurgerKing(data, lineNo, row, 421000, 'Donation Discounts', 'debit', row.donationDiscount);
+
         if (row.paidOut < 0) {
             lineNo = agregarLineaBurgerKing(data, lineNo, row, 116200, 'Paid Outs', 'debit', row.paidOut);
         } else {

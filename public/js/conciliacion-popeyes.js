@@ -3,7 +3,7 @@ let popeyesTaxReviewData = [];
 let popeyesDailySalesRedData = [];
 let popeyesDailySales0404Data = [];
 
-const renderTaxReviewTacoBell =
+const renderTaxReviewTacoBellLegacy =
     typeof renderTaxReview === 'function'
         ? renderTaxReview
         : null;
@@ -1369,10 +1369,19 @@ function renderTaxReview() {
             ?.dataset?.codigo;
 
     if (
-        codigo !== 'popeyes' &&
-        renderTaxReviewTacoBell
+        codigo !== 'popeyes'
     ) {
-        renderTaxReviewTacoBell();
+        if (
+            typeof renderTacoBellTaxReview === 'function'
+        ) {
+            renderTacoBellTaxReview();
+            return;
+        }
+
+        if (renderTaxReviewTacoBellLegacy) {
+            renderTaxReviewTacoBellLegacy();
+        }
+
         return;
     }
 

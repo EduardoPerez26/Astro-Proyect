@@ -31,6 +31,192 @@ let filtroStoreName = '';
 
 let fechaSalesSeleccionada = null;
 
+function resetSelectFecha(selectId, texto = 'Todas las fechas') {
+    const select = document.getElementById(selectId);
+
+    if (select) {
+        select.innerHTML = `<option value="">${texto}</option>`;
+    }
+}
+
+function setUploadCardStatus(inputId, type = '', message = '') {
+    const input =
+        document.getElementById(inputId);
+    const card =
+        input?.closest('.upload-card');
+
+    if (!card) return;
+
+    let status =
+        card.querySelector('.upload-status');
+    const removeButton =
+        card.querySelector('.upload-remove-btn');
+
+    if (!status) {
+        status = document.createElement('div');
+        status.className = 'upload-status';
+        card.appendChild(status);
+    }
+
+    card.dataset.status = type;
+    status.textContent = message;
+
+    if (removeButton) {
+        removeButton.hidden = !type;
+    }
+}
+
+function limpiarResultadosCargados() {
+    datosExtraidos = [];
+
+    const head =
+        document.getElementById('conciliacionTableHead');
+    const body =
+        document.getElementById('conciliacionBody');
+    const results =
+        document.getElementById('resultsSection');
+
+    if (head) head.innerHTML = '';
+    if (body) body.innerHTML = '';
+    if (results) results.style.display = 'none';
+}
+
+function eliminarArchivoIndividual(tipo) {
+    if (tipo === 'sales') {
+        salesFile = null;
+        salesWorkbook = null;
+        salesRows = [];
+        workbook = null;
+        fechaSalesSeleccionada = null;
+
+        const input =
+            document.getElementById('salesFile');
+
+        if (input) input.value = '';
+
+        resetSelectFecha(
+            'salesDateFilter',
+            'Todas las fechas'
+        );
+
+        setUploadCardStatus('salesFile');
+        limpiarResultadosCargados();
+        return;
+    }
+
+    if (tipo === 'salesDetail') {
+        salesDetailFile = null;
+        salesDetailWorkbook = null;
+        salesDetailRows = [];
+        fechaSalesDetailSeleccionada = '';
+
+        const input =
+            document.getElementById('salesDetailFile');
+
+        if (input) input.value = '';
+
+        resetSelectFecha(
+            'salesDetailDateFilter',
+            'Todas las fechas'
+        );
+
+        setUploadCardStatus('salesDetailFile');
+    }
+
+    if (tipo === 'ebt') {
+        ebtFile = null;
+        ebtWorkbook = null;
+        ebtPorTienda = {};
+        fechaEBTSeleccionada = '';
+
+        const input =
+            document.getElementById('ebtFile');
+
+        if (input) input.value = '';
+
+        resetSelectFecha(
+            'ebtDateFilter',
+            'Todas las fechas'
+        );
+
+        setUploadCardStatus('ebtFile');
+    }
+
+    if (
+        salesWorkbook &&
+        currentRestaurantConfig
+    ) {
+        generarConciliacionDesdeTemplate();
+    }
+}
+
+function limpiarArchivosExtraTacoBell() {
+    salesDetailFile = null;
+    salesDetailWorkbook = null;
+    salesDetailRows = [];
+    fechaSalesDetailSeleccionada = '';
+
+    ebtFile = null;
+    ebtWorkbook = null;
+    ebtPorTienda = {};
+    fechaEBTSeleccionada = '';
+
+    const salesDetailInput =
+        document.getElementById('salesDetailFile');
+    const ebtInput =
+        document.getElementById('ebtFile');
+
+    if (salesDetailInput) {
+        salesDetailInput.value = '';
+    }
+
+    if (ebtInput) {
+        ebtInput.value = '';
+    }
+
+    resetSelectFecha(
+        'salesDetailDateFilter',
+        'Todas las fechas'
+    );
+
+    resetSelectFecha(
+        'ebtDateFilter',
+        'Todas las fechas'
+    );
+
+    setUploadCardStatus('salesDetailFile');
+    setUploadCardStatus('ebtFile');
+}
+
+function actualizarUploadsPorRestaurante(codigo) {
+    const mostrarExtras =
+        codigo === 'taco-bell';
+    const badge =
+        document.getElementById('uploadModeBadge');
+
+    document
+        .querySelectorAll('.taco-bell-extra-upload')
+        .forEach(card => {
+            card.style.display = mostrarExtras ? '' : 'none';
+        });
+
+    if (badge) {
+        const texto =
+            codigo === 'taco-bell'
+                ? 'Taco Bell: 3 archivos'
+                : codigo === 'popeyes'
+                    ? 'Popeyes: 1 archivo'
+                    : 'Selecciona restaurante';
+
+        badge.textContent = texto;
+        badge.dataset.mode = codigo || 'empty';
+    }
+
+    if (!mostrarExtras) {
+        limpiarArchivosExtraTacoBell();
+    }
+}
+
 // ============================================
 // INICIALIZACION
 // ============================================
@@ -48,6 +234,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Cargar restaurantes
     await cargarRestaurantes();
+
+    actualizarUploadsPorRestaurante('');
 
     // Verificar si viene un restaurante en la URL
     const urlParams = new URLSearchParams(window.location.search);
@@ -209,22 +397,13 @@ function initEventListeners() {
                                 'Unit Number',
                                 'Account'
                             ]
-                            : codigo === 'burger-king'
-                                ? [
-                                    'Accounting Date',
-                                    'Unit Number',
-                                    'Account'
-                                ]
                             : [
                                 'Store',
                                 'Date'
                             ];
 
                     const campoFecha =
-                        (
-                            codigo === 'popeyes' ||
-                            codigo === 'burger-king'
-                        )
+                        codigo === 'popeyes'
                             ? 'Accounting Date'
                             : 'Date';
 
@@ -242,11 +421,23 @@ function initEventListeners() {
                         campoFecha
                     );
 
+                    setUploadCardStatus(
+                        'salesFile',
+                        'loaded',
+                        `${file.name} cargado (${salesRows.length} filas)`
+                    );
+
                     generarConciliacionDesdeTemplate();
 
                 } catch (error) {
 
                     console.error(error);
+
+                    setUploadCardStatus(
+                        'salesFile',
+                        'error',
+                        'No se pudo leer el archivo'
+                    );
 
                     Swal.fire(
                         'Error',
@@ -315,10 +506,49 @@ function initEventListeners() {
                             ''
                         );
 
+                    if (!salesDetailRows.length) {
+                        throw new Error(
+                            'No se encontraron filas validas'
+                        );
+                    }
+
                     cargarFechasEnFiltro(
                         salesDetailRows,
                         'salesDetailDateFilter',
                         'Business Date'
+                    );
+
+                    const tiendasPrincipales = new Set(
+                        salesRows
+                            .map(row =>
+                                typeof claveTiendaTacoBell === 'function'
+                                    ? claveTiendaTacoBell(row.Store)
+                                    : String(row.Store || '')
+                            )
+                            .filter(Boolean)
+                    );
+
+                    const tiendasDetalle = new Set(
+                        salesDetailRows
+                            .map(row =>
+                                typeof claveTiendaTacoBell === 'function'
+                                    ? claveTiendaTacoBell(row['Store Number'])
+                                    : String(row['Store Number'] || '')
+                            )
+                            .filter(Boolean)
+                    );
+
+                    const tiendasNuevas =
+                        [...tiendasDetalle]
+                            .filter(store =>
+                                !tiendasPrincipales.has(store)
+                            )
+                            .length;
+
+                    setUploadCardStatus(
+                        'salesDetailFile',
+                        'loaded',
+                        `${file.name} cargado (${salesDetailRows.length} filas, ${tiendasNuevas} tiendas nuevas)`
                     );
 
                     if (
@@ -334,9 +564,15 @@ function initEventListeners() {
 
                     console.error(error);
 
+                    setUploadCardStatus(
+                        'salesDetailFile',
+                        'error',
+                        error.message || 'No se pudo leer el archivo'
+                    );
+
                     Swal.fire(
                         'Error',
-                        'No se pudo leer el Sales Detail Export',
+                        error.message || 'No se pudo leer el Sales Detail Export',
                         'error'
                     );
 
@@ -409,6 +645,12 @@ function initEventListeners() {
                     rows,
                     'ebtDateFilter',
                     'Funded Date'
+                );
+
+                setUploadCardStatus(
+                    'ebtFile',
+                    'loaded',
+                    `${file.name} cargado (${rows.length} filas)`
                 );
 
                 procesarEBT();
@@ -504,6 +746,27 @@ function initEventListeners() {
         ?.addEventListener(
             'click',
             removerArchivo
+        );
+
+    document
+        .getElementById('removeSalesFile')
+        ?.addEventListener(
+            'click',
+            () => eliminarArchivoIndividual('sales')
+        );
+
+    document
+        .getElementById('removeSalesDetailFile')
+        ?.addEventListener(
+            'click',
+            () => eliminarArchivoIndividual('salesDetail')
+        );
+
+    document
+        .getElementById('removeEbtFile')
+        ?.addEventListener(
+            'click',
+            () => eliminarArchivoIndividual('ebt')
         );
 
     document
@@ -699,18 +962,25 @@ function renderRestaurantes() {
     select.innerHTML =
         '<option value="">Selecciona un restaurante...</option>';
 
-    restaurantes.forEach(r => {
+    restaurantes
+        .filter(r =>
+            [
+                'taco-bell',
+                'popeyes'
+            ].includes(r.codigo)
+        )
+        .forEach(r => {
 
-        select.innerHTML += `
-            <option
-                value="${r.id}"
-                data-codigo="${r.codigo || ''}"
-            >
-                ${r.nombre}
-            </option>
-        `;
+            select.innerHTML += `
+                <option
+                    value="${r.id}"
+                    data-codigo="${r.codigo || ''}"
+                >
+                    ${r.nombre}
+                </option>
+            `;
 
-    });
+        });
 
 }
 
@@ -804,6 +1074,8 @@ async function onRestauranteChange() {
         codigo
         ] || null;
 
+    actualizarUploadsPorRestaurante(codigo);
+
     const tacoTabs =
         document.getElementById(
             'tacoBellTabs'
@@ -814,19 +1086,11 @@ async function onRestauranteChange() {
             'popeyesTabs'
         );
 
-    const burgerKingTabs =
-        document.getElementById(
-            'burgerKingTabs'
-        );
-
     if (tacoTabs)
         tacoTabs.style.display = 'none';
 
     if (popeyesTabs)
         popeyesTabs.style.display = 'none';
-
-    if (burgerKingTabs)
-        burgerKingTabs.style.display = 'none';
 
     if (codigo === 'taco-bell') {
 
@@ -846,17 +1110,8 @@ async function onRestauranteChange() {
 
     }
 
-    if (codigo === 'burger-king') {
-
-        activeTab = 'burgerKingConciliation';
-
-        if (burgerKingTabs)
-            burgerKingTabs.style.display = 'flex';
-
-    }
-
     document
-        .querySelectorAll('#tacoBellTabs .tab-btn, #popeyesTabs .tab-btn, #burgerKingTabs .tab-btn')
+        .querySelectorAll('#tacoBellTabs .tab-btn, #popeyesTabs .tab-btn')
         .forEach(btn => {
 
             btn.classList.toggle(
@@ -1053,6 +1308,8 @@ function removerArchivo() {
         if (input) {
             input.value = '';
         }
+
+        setUploadCardStatus(id);
 
     });
 }
@@ -1336,9 +1593,6 @@ function generarConciliacionDesdeTemplate() {
 
         case 'popeyes':
             return procesarPopeyes();
-
-        case 'burger-king':
-            return procesarBurgerKing();
 
         default:
 
@@ -2202,8 +2456,11 @@ function saveConciliacion() {
 
         if (result.isConfirmed) {
 
+            const workbookFinal =
+                generarWorkbookConConciliacion();
+
             XLSX.writeFile(
-                workbook,
+                workbookFinal,
                 `conciliacion-${Date.now()}.xlsx`
             );
 
@@ -2536,47 +2793,6 @@ function generarWorkbookConConciliacion() {
         'Conciliation'
     );
 
-    if (codigo === 'burger-king') {
-
-        if (burgerKingTaxAnalysisData?.length) {
-
-            XLSX.utils.book_append_sheet(
-                nuevoWorkbook,
-                XLSX.utils.json_to_sheet(
-                    burgerKingTaxAnalysisData
-                ),
-                'Tax Analysis'
-            );
-
-        }
-
-        if (burgerKingDiscrepanciesData?.length) {
-
-            XLSX.utils.book_append_sheet(
-                nuevoWorkbook,
-                XLSX.utils.json_to_sheet(
-                    burgerKingDiscrepanciesData
-                ),
-                'Discrepancies'
-            );
-
-        }
-
-        if (burgerKingTemplateCsvData?.length) {
-
-            XLSX.utils.book_append_sheet(
-                nuevoWorkbook,
-                XLSX.utils.json_to_sheet(
-                    burgerKingTemplateCsvData
-                ),
-                'Template to CSV'
-            );
-
-        }
-
-        return nuevoWorkbook;
-    }
-
     // ======================================
     // TAX REVIEW
     // ======================================
@@ -2713,34 +2929,6 @@ function renderActiveTab() {
         )
             ?.selectedOptions?.[0]
             ?.dataset?.codigo;
-
-    // =====================
-    // BURGER KING
-    // =====================
-
-    if (codigo === 'burger-king') {
-
-        switch (activeTab) {
-
-            case 'burgerKingConciliation':
-                renderConciliationBurgerKing();
-                break;
-
-            case 'burgerKingTaxAnalysis':
-                renderTaxAnalysisBurgerKing();
-                break;
-
-            case 'burgerKingDiscrepancies':
-                renderDiscrepanciesBurgerKing();
-                break;
-
-            case 'burgerKingTemplateCsv':
-                renderTemplateCsvBurgerKing();
-                break;
-        }
-
-        return;
-    }
 
     // =====================
     // POPEYES
@@ -2901,7 +3089,7 @@ function exportarTabActualCSV() {
         return;
     }
 
-    if (codigo === 'burger-king') {
+    if (false && codigo === 'burger-king') {
 
         switch (activeTab) {
 
@@ -2934,7 +3122,7 @@ function exportarTabActualCSV() {
                 break;
 
             default:
-                alert('Selecciona una pestana');
+                alert('Selecciona una pestaña');
         }
 
         return;
