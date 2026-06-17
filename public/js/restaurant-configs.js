@@ -112,6 +112,63 @@ window.RestaurantConfigs = {
 
         ebtSheet: null,
 
+        tableColumns: [
+
+            { key: 'store', label: 'Store' },
+            { key: 'unitNumber', label: 'Unit Number' },
+            { key: 'foodSalesGross', label: 'Food Sales - Gross' },
+            { key: 'beverageSales', label: 'Revenue - Beverage Sales' },
+            { key: 'nonFoodSales', label: 'Non-Food Sales' },
+            { key: 'coupons', label: 'Coupons' },
+            { key: 'surcharge', label: 'Surcharge' },
+            { key: 'bagCharge', label: 'Bag Charge' },
+            { key: 'totalWlTips', label: 'Total WL Tips' },
+            { key: 'discountPercentOff', label: 'Discount - % Off' },
+            { key: 'discountDollarOff', label: 'Discount - $ Off' },
+            { key: 'discountBogo', label: 'Discount - BOGO' },
+            { key: 'discountCompetitorCpn', label: 'Discount - Competitor Cpn' },
+            { key: 'discountEmployee', label: 'Discount - Employee' },
+            { key: 'discountFreeItem', label: 'Discount - Free Item' },
+            { key: 'discountFriendsFamily', label: 'Discount - Friends/Family' },
+            { key: 'discountGuestRecovery', label: 'Discount - Guest Recovery' },
+            { key: 'discountLoyalty', label: 'Discount - Loyalty' },
+            { key: 'discountManagerMeal', label: 'Discount - Manager Meal' },
+            { key: 'discountMilitary', label: 'Discount - Military' },
+            { key: 'discountOther', label: 'Discount - Other' },
+            { key: 'discountPolice', label: 'Discount - Police' },
+            { key: 'discountSenior', label: 'Discount - Senior' },
+            { key: 'discountVendor', label: 'Discount - Vendor' },
+            { key: 'netSales', label: 'Net Sales' },
+            { key: 'salesTax', label: 'Sales TAX' },
+            { key: 'gcSold', label: 'GC Sold' },
+            { key: 'paidOut', label: 'Paid Out' },
+            { key: 'donations', label: 'Donations' },
+            { key: 'donationDiscount', label: 'Donat Disc' },
+            { key: 'totalRevenue', label: 'Total Revenue' },
+            { key: 'amex', label: 'AMEX' },
+            { key: 'visa', label: 'Visa' },
+            { key: 'mc', label: 'MC' },
+            { key: 'discover', label: 'Discover' },
+            { key: 'ebtFoodStamps', label: 'EBT - Food Stamps' },
+            { key: 'doorDashPay', label: 'Door Dash Pay' },
+            { key: 'grubHubPay', label: 'Grub Hub Pay' },
+            { key: 'uberEatsPay', label: 'Uber Eats Pay' },
+            { key: 'totalWhiteLabelPayments', label: 'Total White Label Payments' },
+            { key: 'bkAppTotal', label: 'BK App Total' },
+            { key: 'gcRedeem', label: 'GC Redeem' },
+            { key: 'totalCashDeposit', label: 'Total Cash Deposit' },
+            { key: 'instorePayments', label: 'Instore Payments' },
+            { key: 'paypal', label: 'Paypal' },
+            { key: 'venmo', label: 'Venmo' },
+            { key: 'kiosk', label: 'Kiosk' },
+            { key: 'totalCC', label: 'Total CC' },
+            { key: 'cashExpected', label: 'Cash Expected' },
+            { key: 'paymentsTotal', label: 'Payments Total' },
+            { key: 'openChecks', label: 'Open Checks' },
+            { key: 'oS', label: 'O/S' }
+
+        ],
+
         columns: {
 
             store: 'Store',
@@ -128,7 +185,7 @@ window.RestaurantConfigs = {
 
     'popeyes': {
 
-        sourceSheet: 'Sales',
+        sourceSheet: 'Sales  POS',
 
         ebtSheet: 'EBT',
         tableColumns: [
@@ -197,7 +254,7 @@ window.RestaurantConfigs = {
             { key: 'paidOutFood', label: 'Paid Out Food' },
             { key: 'paidOutCashOut', label: 'Paid Out Cash Out' },
 
-            { key: 'cashDepositCalculated', label: 'Cash Deposit Calc' },
+            { key: 'cashDepositCalculated', label: 'Cash Deposit' },
 
             { key: 'delTotals', label: 'Del Totals' },
 
@@ -224,6 +281,88 @@ window.RestaurantConfigs = {
             { key: 'cashHandlingDebit', label: 'Cash Handling Debit' },
             { key: 'cashHandlingCredit', label: 'Cash Handling Credit' },
 
+            { key: 'cashExpected', label: 'Cash Expected' },
+            { key: 'difference', label: 'Difference' }
+        ],
+
+        conciliationColumns: [
+
+            { key: 'store', label: 'Store' },
+            { key: 'date', label: '' },
+
+            { key: 'food', label: 'Food' },
+            { key: 'beverages', label: 'Beverages' },
+            { key: 'other', label: 'Other+E3:T3' },
+
+            { key: 'serviceFee', label: 'Service Fee' },
+            { key: 'salesOther', label: 'Sales Other' },
+
+            { key: 'deliveryFee', label: 'Delivery Fee' },
+            { key: 'deliveryTips', label: 'Delivery Tips' },
+            { key: 'totalTips', label: 'Total  Tips' },
+
+            { key: 'discounts', label: 'Discounts' },
+            { key: 'discountsPromo', label: '$ Off Promo' },
+
+            { key: 'netSales', label: 'Net Sales' },
+            { key: 'salesTax', label: 'Sales TAX' },
+            { key: 'taxExemptSales', label: 'Tax Exempt Sales' },
+            { key: 'caCrv', label: 'Ca CRV' },
+            { key: 'gcSold', label: 'GC Sold' },
+            { key: 'paidOut', label: 'Paid Out' },
+            { key: 'donations', label: 'Donations' },
+            { key: 'nonRedeemable', label: 'Non Redeemable' },
+            { key: 'totalRevenue', label: 'Total Revenue' },
+
+            { key: 'amex', label: 'AMEX' },
+            { key: 'amexPrpd', label: 'Amex PrPd' },
+            { key: 'amexKiosk', label: 'Amex PrPd' },
+            { key: 'totalCC', label: 'CC Totals' },
+
+            { key: 'doorDash', label: 'Door Dash' },
+            { key: 'grubHub', label: 'Grub Hub' },
+            { key: 'uberEats', label: 'Uber Eats' },
+            { key: 'doorDashShortage', label: 'DoorDash Shortage' },
+            { key: 'uberShortage', label: 'Uber Shortage' },
+            { key: 'postmates', label: 'Postmates' },
+
+            { key: 'ebt', label: 'EBT' },
+            { key: 'kiosk', label: 'Kiosk' },
+            { key: 'giftCardRedeemed', label: 'Gift Card Redeemed' },
+            { key: 'onlineCatering', label: 'Online Catering' },
+            { key: 'ezCater', label: 'EZ Cater' },
+            { key: 'wlTips', label: 'WL Tips' },
+
+            { key: 'paidOutSmallwares', label: 'Paid Out Smallwares' },
+            { key: 'paidOutCleaning', label: 'Paid Out Cleaning Supplies' },
+            { key: 'paidOutOffice', label: 'Paid Out Office Supplies ' },
+            { key: 'paidOutFood', label: 'Paid Out Food' },
+            { key: 'paidOutCashOut', label: 'Paid Out Cash Out' },
+
+            { key: 'cashDepositCalculated', label: 'Cash Deposit' },
+            { key: 'delTotals', label: 'Del Totals' },
+            { key: 'paymentsTotal', label: 'Payments Total' },
+            { key: 'overShort', label: 'O/S' },
+            { key: 'blankAu', label: '' },
+
+            { key: 'discountsPromo', label: 'Discounts - $ Off Promo' },
+            { key: 'discountEmployee', label: 'Discounts - Employee' },
+            { key: 'discountGuestRecovery', label: 'Discounts - Guest Recovery' },
+            { key: 'discountManager', label: 'Discounts - Manager' },
+            { key: 'discountMilitary', label: 'Discounts - Military' },
+            { key: 'discountPolice', label: 'Discounts - Police' },
+            { key: 'discountSenior', label: 'Discounts - Senior Citizens' },
+            { key: 'discountsOther', label: 'Discounts - Other' },
+            { key: 'discountOpenDollar', label: 'Discounts - Open $' },
+            { key: 'discountOpenPercent', label: 'Discounts - Open %' },
+            { key: 'discount10', label: 'Discounts - 10%' },
+            { key: 'totalDiscounts', label: 'Total Discounts' },
+
+            { key: 'store', label: '' },
+            { key: 'blankBi', label: '' },
+            { key: 'cashDeposit', label: 'Cash Deposit' },
+            { key: 'cashHandlingDebit', label: 'Cash Handling - Over/Short Debit' },
+            { key: 'cashHandlingCredit', label: 'Cash Handling - Over/Short Credit' },
             { key: 'cashExpected', label: 'Cash Expected' },
             { key: 'difference', label: 'Difference' }
         ],

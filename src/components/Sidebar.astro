@@ -11,16 +11,6 @@
             <span class="sidebar-logo-text">XBFS</span>
         </div>
     </div>
-    
-    <!-- User Info -->
-    <div class="sidebar-user" id="sidebarUser">
-        <div class="sidebar-user-avatar" id="sidebarUserAvatar">--</div>
-        <div class="sidebar-user-info">
-            <div class="sidebar-user-name" id="sidebarUserName">Usuario</div>
-            <div class="sidebar-user-role" id="sidebarUserRole">Rol</div>
-        </div>
-    </div>
-
     <nav class="sidebar-nav">
         <!-- GENERAL -->
         <div class="sidebar-section">
@@ -75,58 +65,4 @@
     </div>
 </aside>
 
-<style>
-    .sidebar-user {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        padding: 16px 20px;
-        border-bottom: 1px solid var(--gray-100);
-        margin-bottom: 8px;
-    }
-    
-    .sidebar-user-avatar {
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        background: var(--primary);
-        color: white;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: 600;
-        font-size: 14px;
-        flex-shrink: 0;
-    }
-    
-    .sidebar-user-info {
-        overflow: hidden;
-    }
-    
-    .sidebar-user-name {
-        font-weight: 500;
-        font-size: 14px;
-        color: var(--gray-900);
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-    
-    .sidebar-user-role {
-        font-size: 12px;
-        color: var(--gray-500);
-    }
-    
-    .sidebar.collapsed .sidebar-user {
-        justify-content: center;
-        padding: 16px 8px;
-    }
-    
-    .sidebar.collapsed .sidebar-user-info {
-        display: none;
-    }
-    
-    .sidebar-menu-item.hidden {
-        display: none !important;
-    }
-</style>
+

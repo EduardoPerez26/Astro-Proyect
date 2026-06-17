@@ -3,318 +3,455 @@ let popeyesTaxReviewData = [];
 let popeyesDailySalesRedData = [];
 let popeyesDailySales0404Data = [];
 
-function procesarPopeyes() {
+const renderTaxReviewTacoBell =
+    typeof renderTaxReview === 'function'
+        ? renderTaxReview
+        : null;
 
-    try {
+const POPEYES_DESCRIPTION = 'POS Data Upload DC Central';
 
-        if (!salesRows || salesRows.length === 0) {
+const POPEYES_TAX_RATES = {
+    2902: 0.0775,
+    4579: 0.0875,
+    5328: 0.1075,
+    5592: 0.1075,
+    5813: 0.0913,
+    8593: 0.1025,
+    8732: 0.0925,
+    8972: 0.0813,
+    9091: 0.1075,
+    9929: 0.1075,
+    10545: 0.0775,
+    10752: 0.09,
+    10921: 0.0975,
+    10989: 0.0875,
+    11218: 0.0775,
+    11422: 0.0725,
+    11423: 0.0825,
+    11424: 0.0925,
+    11425: 0.0925,
+    11438: 0.0725,
+    11540: 0.0775,
+    11580: 0.09,
+    11691: 0.0775,
+    11833: 0.0825,
+    11921: 0.0875,
+    11922: 0.0838,
+    11949: 0.0875,
+    12114: 0.0875,
+    12192: 0.09,
+    12967: 0.0875,
+    13144: 0.0875,
+    13684: 0.0875,
+    13691: 0.0775,
+    13903: 0.0838,
+    13959: 0.0775,
+    14183: 0.09,
+    14184: 0.0775,
+    14210: 0.07875,
+    14589: 0.088,
+    14693: 0.0875,
+    14719: 0.0838,
+    14869: 0.0825,
+    15462: 0.1025,
+    15643: 8.625
+};
 
+const POPEYES_PROMO_OTHER_STORES =
+    new Set([
+        2902,
+        4579,
+        14210,
+        15462,
+        14183,
+        11422
+    ]);
 
-            console.log(
-                [...new Set(
-                    salesRows.map(
-                        r => r['Account']
-                    )
-                )]
-            );
+const POPEYES_AMEX_ACCOUNTS = [
+    'Payments - Amex PrPd',
+    'Payments - WL Amex',
+    'Payments - PrPd Amex',
+    'Payments - AMEX'
+];
 
-            Swal.fire(
-                'Error',
-                'No hay datos Sales POS cargados',
-                'error'
-            );
+const POPEYES_CC_ACCOUNTS = [
+    'Payments - WL Discover',
+    'Payments - PrPd Discover',
+    'Payments - Discover',
+    'Payments - Discover PrPd',
+    'Payments - Master Card',
+    'Payments - Master Card PrPd',
+    'Payments - Credit Cards',
+    'Payments - Visa',
+    'Payments - Visa PrPd',
+    'Payments - PrPd Master Card',
+    'Payments - PrPd Visa',
+    'Payments - WL MasterCard',
+    'Payments - WL Visa',
+    'Payments - WL Paypal',
+    'Payments - PrPD Paypal',
+    'Payments - WL Venmo',
+    'Payments - PrPD Venmo',
+    'Payments - Debit',
+    'Payments - Other Delivery',
+    'Payments - Other',
+    'Payments - Cash App',
+    'Payments - IMT Venmo',
+    'Payments - IMT Paypal'
+];
 
-            return false;
+const POPEYES_WL_TIP_ACCOUNTS = [
+    'Payment Tips - WL Visa',
+    'Payment Tips - WL Master Card',
+    'Payment Tips - WL Discovery',
+    'Payment Tips - WL GiftCard',
+    'Payment Tips - WL Amex',
+    'Delivery Tips Net'
+];
 
-        }
+const POPEYES_KIOSK_ACCOUNTS = [
+    'Payments - Kiosk',
+    'Payments - Kiosk Discover',
+    'Payments - Kiosk MasterCard',
+    'Payments - Kiosk Visa'
+];
 
-        // ==========================
-        // Store Dates
-        // ==========================
+const POPEYES_DAILY_SALES_LINES = [
+    { memo: 'Amex Expected Deposit', acctNo: 102500, field: 'amexExpectedDeposit', type: 'debit' },
+    { memo: 'Ca CRV', acctNo: 240000, field: 'caCrv', type: 'credit' },
+    { memo: 'Cash Expected Deposit', acctNo: 102000, field: 'cashExpected', type: 'debit' },
+    { memo: 'CC Expected Deposit', acctNo: 102500, field: 'totalCC', type: 'debit' },
+    { memo: 'Delivery Fee', acctNo: 670000, field: 'deliveryFee', type: 'credit' },
+    { memo: 'Discounts - 10%', acctNo: 421000, field: 'discount10', type: 'debit' },
+    { memo: 'Discounts - Employee', acctNo: 421000, field: 'discountEmployee', type: 'debit' },
+    { memo: 'Discounts - Guest Recovery', acctNo: 421000, field: 'discountGuestRecovery', type: 'debit' },
+    { memo: 'Discounts - Manager', acctNo: 421000, field: 'discountManager', type: 'debit' },
+    { memo: 'Discounts - Military', acctNo: 421000, field: 'discountMilitary', type: 'debit' },
+    { memo: 'Discounts - Open $', acctNo: 421000, field: 'discountOpenDollar', type: 'debit' },
+    { memo: 'Discounts - Open %', acctNo: 421000, field: 'discountOpenPercent', type: 'debit' },
+    { memo: 'Discounts - Other', acctNo: 421000, field: 'discountsOther', type: 'debit' },
+    { memo: 'Discounts - Police', acctNo: 421000, field: 'discountPolice', type: 'debit' },
+    { memo: 'Discounts - Senior Citizen', acctNo: 421000, field: 'discountSenior', type: 'debit' },
+    { memo: 'Donations', acctNo: 236000, field: 'donations', type: 'credit' },
+    { memo: 'DoorDash', acctNo: 113000, field: 'doorDash', type: 'debit' },
+    { memo: 'DoorDash Shortage', acctNo: 678500, field: 'doorDashShortage', type: 'debit' },
+    { memo: 'EBT Expected ', acctNo: 114000, field: 'ebt', type: 'debit' },
+    { memo: 'EZ Cater', acctNo: 110000, field: 'ezCater', type: 'debit' },
+    { memo: 'Gift Card Redeemed', acctNo: 202900, field: 'giftCardRedeemed', type: 'debit' },
+    { memo: 'Gift Cards Sales', acctNo: 202800, field: 'gcSold', type: 'credit' },
+    { memo: 'GrubHub', acctNo: 115000, field: 'grubHub', type: 'debit' },
+    { memo: 'Kiosk Expected Payment', acctNo: 102500, field: 'kiosk', type: 'debit' },
+    { memo: 'Non-Redeemable Tender', acctNo: 676000, field: 'nonRedeemable', type: 'credit' },
+    { memo: 'O/S DC Discrepancies', acctNo: 676000, field: null, type: 'debit' },
+    { memo: 'Online Catering', acctNo: 110000, field: 'onlineCatering', type: 'debit' },
+    { memo: 'Paid Outs', acctNo: 116200, field: 'paidOut', type: 'debit' },
+    { memo: 'POS Over/Short', acctNo: 676000, field: 'overShort', type: 'debit' },
+    { memo: 'Promotions', acctNo: 444000, field: 'discountsPromo', type: 'debit' },
+    { memo: 'Sales Beverages', acctNo: 401000, field: 'beverages', type: 'credit' },
+    { memo: 'Sales Food', acctNo: 401000, field: 'food', type: 'credit' },
+    { memo: 'Sales Other', acctNo: 408000, field: 'other', type: 'credit' },
+    { memo: 'Sales Tax Payable', acctNo: 241000, field: 'salesTax', type: 'credit' },
+    { memo: 'Uber', acctNo: 116000, field: 'uberEats', type: 'debit' },
+    { memo: 'Uber Shortage', acctNo: 678500, field: 'uberShortage', type: 'debit' },
+    { memo: 'WL DD Tips', acctNo: 670000, field: 'wlTips', type: 'credit' }
+];
 
-        const storeDates =
-            generarStoreDatesPopeyes(
-                salesRows
-            );
+function numeroPopeyes(valor) {
 
-        // ==========================
-        // Sales
-        // ==========================
-
-        const salesData =
-            generarSalesPopeyes(
-                salesRows,
-                storeDates
-            )
-
-        // ==========================
-        // Conciliation
-        // ==========================
-
-        const conciliacionData =
-            generarConciliationPopeyes(
-                salesData
-            );
-
-        // ==========================
-        // Datos para tabla principal
-        // ==========================
-
-        datosExtraidos =
-            conciliacionData;
-
-        popeyesConciliationData =
-            conciliacionData;
-
-        // ==========================
-        // Mostrar sección
-        // ==========================
-
-        const resultsSection =
-            document.getElementById(
-                'resultsSection'
-            );
-
-        if (resultsSection) {
-
-            resultsSection.style.display =
-                'block';
-
-        }
-
-        // ==========================
-        // Render tabla
-        // ==========================
-
-        if (
-            typeof renderTablaSucursales ===
-            'function'
-        ) {
-
-            renderTablaSucursales();
-
-        }
-
-        // ==========================
-        // Activar pestaña principal
-        // ==========================
-
-        if (
-            typeof renderActiveTab ===
-            'function'
-        ) {
-
-            renderActiveTab();
-
-        }
-
-        Swal.fire(
-            'Éxito',
-            `${conciliacionData.length} registros generados`,
-            'success'
-        );
-
-        return true;
-
-    } catch (error) {
-
-        Swal.fire(
-            'Error',
-            error.message,
-            'error'
-        );
-
-        return false;
-
+    if (
+        valor === null ||
+        valor === undefined ||
+        valor === '' ||
+        valor instanceof Date
+    ) {
+        return 0;
     }
 
+    if (typeof valor === 'number') {
+        return valor;
+    }
+
+    const texto =
+        String(valor)
+            .replace(/[$,\s]/g, '')
+            .trim();
+
+    if (!texto) return 0;
+
+    const negativo =
+        texto.startsWith('(') &&
+        texto.endsWith(')');
+
+    const numero =
+        Number(
+            texto.replace(/[()]/g, '')
+        );
+
+    if (Number.isNaN(numero)) {
+        return 0;
+    }
+
+    return negativo ? -numero : numero;
 }
 
-function generarStoreDatesPopeyes(
-    salesRows
-) {
+function redondearPopeyes(valor) {
+    const numero = Number(valor) || 0;
+    if (Math.abs(numero) < 0.000001) return 0;
+    return Number(numero.toFixed(2));
+}
+
+function formatoPorcentajePopeyes(valor) {
+    const numero = Number(valor) || 0;
+    const porcentaje =
+        Math.abs(numero) > 1
+            ? numero
+            : numero * 100;
+
+    if (Math.abs(porcentaje) < 0.000001) {
+        return '0%';
+    }
+
+    return `${porcentaje.toFixed(3).replace(/\.?0+$/, '')}%`;
+}
+
+function fechaClavePopeyes(valor) {
+
+    if (!valor) return '';
+
+    if (typeof normalizarFecha === 'function') {
+        return normalizarFecha(valor);
+    }
+
+    if (typeof valor === 'number') {
+        const epoch = new Date(Date.UTC(1899, 11, 30));
+        const date = new Date(epoch.getTime() + valor * 86400000);
+        return `${String(date.getUTCMonth() + 1).padStart(2, '0')}/${String(date.getUTCDate()).padStart(2, '0')}/${date.getUTCFullYear()}`;
+    }
+
+    const date =
+        valor instanceof Date
+            ? valor
+            : new Date(valor);
+
+    if (isNaN(date)) return '';
+
+    return `${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}/${date.getFullYear()}`;
+}
+
+function obtenerHojaPopeyesPOS() {
+
+    if (!salesWorkbook) return null;
+
+    return (
+        obtenerHojaPorNombre(
+            salesWorkbook,
+            [
+                'Sales  POS',
+                'Sales POS'
+            ]
+        ) ||
+        salesWorkbook.Sheets[
+        detectarHojaOrigen(salesWorkbook)
+        ]
+    );
+}
+
+function obtenerSalesPosRowsPopeyes() {
+
+    const hoja =
+        obtenerHojaPopeyesPOS();
+
+    if (!hoja) {
+        return salesRows || [];
+    }
+
+    return leerFilasExcel(
+        hoja,
+        [
+            'Accounting Date',
+            'Unit Number',
+            'Account'
+        ],
+        ''
+    );
+}
+
+function obtenerStoreDatesDesdeWorkbookPopeyes(salesPosRows) {
+
+    const hoja =
+        obtenerHojaPorNombre(
+            salesWorkbook,
+            ['StoreDates']
+        );
+
+    if (!hoja) return [];
+
+    const matrix =
+        XLSX.utils.sheet_to_json(
+            hoja,
+            {
+                header: 1,
+                defval: ''
+            }
+        );
+
+    const tiendas =
+        matrix
+            .slice(1)
+            .map(row => Number(row[0]) || 0)
+            .filter(Boolean);
+
+    if (!tiendas.length) return [];
+
+    let fechas =
+        matrix
+            .slice(1)
+            .map(row => fechaClavePopeyes(row[2]))
+            .filter(Boolean);
+
+    fechas =
+        [...new Set(fechas)];
+
+    if (!fechas.length) {
+        fechas = [
+            ...new Set(
+                salesPosRows
+                    .map(row =>
+                        fechaClavePopeyes(
+                            row['Accounting Date']
+                        )
+                    )
+                    .filter(Boolean)
+            )
+        ];
+    }
+
+    const nombresPorTienda =
+        new Map();
+
+    salesPosRows.forEach(row => {
+        const store =
+            Number(row['Unit Number']) || 0;
+        if (store && !nombresPorTienda.has(store)) {
+            nombresPorTienda.set(
+                store,
+                row['Unit Name'] || ''
+            );
+        }
+    });
+
+    const storeDates = [];
+
+    tiendas.forEach(store => {
+        fechas.forEach(date => {
+            storeDates.push({
+                store,
+                unitName:
+                    nombresPorTienda.get(store) || '',
+                date,
+                formattedDate: date
+            });
+        });
+    });
+
+    return storeDates;
+}
+
+function generarStoreDatesPopeyes(salesPosRows) {
+
+    const desdeWorkbook =
+        obtenerStoreDatesDesdeWorkbookPopeyes(
+            salesPosRows
+        );
+
+    if (desdeWorkbook.length) {
+        return desdeWorkbook;
+    }
 
     const combinaciones =
         new Map();
 
-    salesRows.forEach(row => {
+    salesPosRows.forEach(row => {
 
         const store =
-            Number(
-                row['Unit Number']
-            );
-
-        const unitName =
-            row['Unit Name'];
+            Number(row['Unit Number']) || 0;
 
         const date =
-            row['Accounting Date'];
+            fechaClavePopeyes(
+                row['Accounting Date']
+            );
 
-        if (
-            !store ||
-            !date
-        ) {
-            return;
-        }
+        if (!store || !date) return;
 
         const key =
             `${store}|${date}`;
 
-        if (
-            !combinaciones.has(key)
-        ) {
-
+        if (!combinaciones.has(key)) {
             combinaciones.set(
                 key,
                 {
                     store,
-                    unitName,
+                    unitName:
+                        row['Unit Name'] || '',
                     date,
-                    formattedDate:
-                        excelDateToJSDate(date)
+                    formattedDate: date
                 }
             );
-
         }
 
     });
 
-    return Array.from(
-        combinaciones.values()
+    return [
+        ...combinaciones.values()
+    ].sort((a, b) =>
+        Number(a.store) - Number(b.store)
     );
-
 }
 
-function normalizarFecha(value) {
-
-    if (!value) return null;
-
-    if (value instanceof Date) {
-
-        return value
-            .toISOString()
-            .split('T')[0];
-
-    }
-
-    const fecha = new Date(value);
-
-    if (isNaN(fecha)) {
-        return null;
-    }
-
-    return fecha
-        .toISOString()
-        .split('T')[0];
-}
-
-
-function sumDebit(
+function sumaCuentaPopeyes(
     rows,
     store,
     date,
-    account
+    accounts,
+    field
 ) {
 
+    const accountList =
+        Array.isArray(accounts)
+            ? accounts
+            : [accounts];
+
     return rows
-        .filter(r =>
-
-            Number(
-                r['Unit Number']
-            ) === Number(store)
-
-            &&
-
-            r['Account'] === account
-
+        .filter(row =>
+            Number(row['Unit Number']) === Number(store) &&
+            fechaClavePopeyes(row['Accounting Date']) === date &&
+            accountList.includes(row.Account)
         )
         .reduce(
-            (sum, r) =>
-
-                sum +
-                Number(
-                    r['Debit Amount'] || 0
-                ),
-
+            (sum, row) =>
+                sum + numeroPopeyes(row[field]),
             0
         );
-
 }
 
-function sumCredit(
-    rows,
-    store,
-    date,
-    account
-) {
-
-    return rows
-        .filter(r =>
-
-            Number(
-                r['Unit Number']
-            ) === Number(store)
-
-            &&
-
-            r['Account'] === account
-
-        )
-        .reduce(
-            (sum, r) =>
-
-                sum +
-                Number(
-                    r['Credit Amount'] || 0
-                ),
-
-            0
-        );
-
+function debitPopeyes(rows, store, date, accounts) {
+    return sumaCuentaPopeyes(
+        rows,
+        store,
+        date,
+        accounts,
+        'Debit Amount'
+    );
 }
 
-function sumAccount(
-    rows,
-    store,
-    date,
-    account,
-    field = 'debit'
-) {
-
-    const amountField =
-        field === 'credit'
-            ? 'Credit Amount'
-            : 'Debit Amount';
-
-    return rows
-        .filter(r =>
-
-            Number(
-                r['Unit Number']
-            ) === Number(store)
-
-            &&
-
-            Number(
-                r['Accounting Date']
-            ) === Number(date)
-
-            &&
-
-            r['Account'] === account
-
-        )
-        .reduce(
-            (sum, r) =>
-
-                sum +
-                Number(
-                    r[amountField] || 0
-                ),
-
-            0
-        );
-
+function creditPopeyes(rows, store, date, accounts) {
+    return sumaCuentaPopeyes(
+        rows,
+        store,
+        date,
+        accounts,
+        'Credit Amount'
+    );
 }
 
 function generarSalesPopeyes(
@@ -325,28 +462,24 @@ function generarSalesPopeyes(
     return storeDates.map(
         ({ store, unitName, date, formattedDate }) => {
 
-            // =====================================
-            // SALES
-            // =====================================
-
-            const food =
-                sumDebit(
+            const sourceFood =
+                debitPopeyes(
                     salesPosRows,
                     store,
                     date,
                     'Net Sales - Food'
                 );
 
-            const beverages =
-                sumDebit(
+            const sourceBeverages =
+                debitPopeyes(
                     salesPosRows,
                     store,
                     date,
                     'Net Sales - Beverages'
                 );
 
-            const other =
-                sumDebit(
+            const sourceOther =
+                debitPopeyes(
                     salesPosRows,
                     store,
                     date,
@@ -354,31 +487,39 @@ function generarSalesPopeyes(
                 );
 
             const serviceFee =
-                sumDebit(
+                debitPopeyes(
                     salesPosRows,
                     store,
                     date,
                     'Service Fees Negative Offset'
                 );
 
-            const deliveryFeeNet =
-                sumDebit(
+            const deliveryFee =
+                debitPopeyes(
                     salesPosRows,
                     store,
                     date,
                     'Delivery Fees Net'
                 );
 
-            const deliveryFee =
-                sumCredit(
+            const deliveryTips =
+                debitPopeyes(
                     salesPosRows,
                     store,
                     date,
-                    'Delivery Fee'
+                    'Delivery Tips '
+                );
+
+            const wlTips =
+                debitPopeyes(
+                    salesPosRows,
+                    store,
+                    date,
+                    POPEYES_WL_TIP_ACCOUNTS
                 );
 
             const salesTax =
-                sumDebit(
+                debitPopeyes(
                     salesPosRows,
                     store,
                     date,
@@ -386,7 +527,7 @@ function generarSalesPopeyes(
                 );
 
             const taxExemptSales =
-                sumDebit(
+                debitPopeyes(
                     salesPosRows,
                     store,
                     date,
@@ -394,27 +535,35 @@ function generarSalesPopeyes(
                 );
 
             const caCrv =
-                sumDebit(
+                debitPopeyes(
                     salesPosRows,
                     store,
                     date,
                     'CA CRV'
                 );
 
-            // =====================================
-            // DISCOUNTS
-            // =====================================
-
             const discountsPromo =
-                sumCredit(
+                debitPopeyes(
                     salesPosRows,
                     store,
                     date,
                     'Discounts - $ Off Promo'
+                ) +
+                (
+                    POPEYES_PROMO_OTHER_STORES.has(
+                        Number(store)
+                    )
+                        ? creditPopeyes(
+                            salesPosRows,
+                            store,
+                            date,
+                            'Promotions - Other'
+                        )
+                        : 0
                 );
 
             const discountEmployee =
-                sumCredit(
+                debitPopeyes(
                     salesPosRows,
                     store,
                     date,
@@ -422,15 +571,15 @@ function generarSalesPopeyes(
                 );
 
             const discountGuestRecovery =
-                sumCredit(
+                debitPopeyes(
                     salesPosRows,
                     store,
                     date,
-                    'Discounts - Guest Recovery'
+                    'Guest Recovery'
                 );
 
             const discountManager =
-                sumCredit(
+                debitPopeyes(
                     salesPosRows,
                     store,
                     date,
@@ -438,7 +587,7 @@ function generarSalesPopeyes(
                 );
 
             const discountMilitary =
-                sumCredit(
+                debitPopeyes(
                     salesPosRows,
                     store,
                     date,
@@ -446,7 +595,7 @@ function generarSalesPopeyes(
                 );
 
             const discountPolice =
-                sumCredit(
+                debitPopeyes(
                     salesPosRows,
                     store,
                     date,
@@ -454,7 +603,7 @@ function generarSalesPopeyes(
                 );
 
             const discountSenior =
-                sumCredit(
+                debitPopeyes(
                     salesPosRows,
                     store,
                     date,
@@ -462,7 +611,7 @@ function generarSalesPopeyes(
                 );
 
             const discountsOther =
-                sumCredit(
+                debitPopeyes(
                     salesPosRows,
                     store,
                     date,
@@ -470,7 +619,7 @@ function generarSalesPopeyes(
                 );
 
             const discountOpenDollar =
-                sumCredit(
+                debitPopeyes(
                     salesPosRows,
                     store,
                     date,
@@ -478,7 +627,7 @@ function generarSalesPopeyes(
                 );
 
             const discountOpenPercent =
-                sumCredit(
+                debitPopeyes(
                     salesPosRows,
                     store,
                     date,
@@ -486,16 +635,14 @@ function generarSalesPopeyes(
                 );
 
             const discount10 =
-                sumCredit(
+                debitPopeyes(
                     salesPosRows,
                     store,
                     date,
                     'Discounts - 10%'
                 );
 
-            const totalDiscounts =
-
-                discountsPromo +
+            const discounts =
                 discountEmployee +
                 discountGuestRecovery +
                 discountManager +
@@ -507,146 +654,39 @@ function generarSalesPopeyes(
                 discountOpenPercent +
                 discount10;
 
-            // =====================================
-            // TIPS
-            // =====================================
-
-            const deliveryTips =
-                sumCredit(
-                    salesPosRows,
-                    store,
-                    date,
-                    'Delivery Tips Net'
-                );
-
-            const totalTips =
-                sumCredit(
-                    salesPosRows,
-                    store,
-                    date,
-                    'Tips & Service Charges'
-                );
-
-            // =====================================
-            // CREDIT CARDS
-            // =====================================
+            const totalDiscounts =
+                discountsPromo +
+                discounts;
 
             const amex =
-                sumCredit(
+                creditPopeyes(
                     salesPosRows,
                     store,
                     date,
-                    'Payments - AMEX'
+                    POPEYES_AMEX_ACCOUNTS
                 );
 
             const amexPrpd =
-                sumCredit(
-                    salesPosRows,
-                    store,
-                    date,
-                    'Payments - PrPd Amex'
-                );
+                0;
 
-            const discover =
-                sumCredit(
+            const amexKiosk =
+                creditPopeyes(
                     salesPosRows,
                     store,
                     date,
-                    'Payments - Discover'
-                );
-
-            const discoverPrpd =
-                sumCredit(
-                    salesPosRows,
-                    store,
-                    date,
-                    'Payments - PrPd Discover'
-                );
-
-            const masterCard =
-                sumCredit(
-                    salesPosRows,
-                    store,
-                    date,
-                    'Payments - Master Card'
-                );
-
-            const prepaidMasterCard =
-                sumCredit(
-                    salesPosRows,
-                    store,
-                    date,
-                    'Payments - PrPd Master Card'
-                );
-
-            const visa =
-                sumCredit(
-                    salesPosRows,
-                    store,
-                    date,
-                    'Payments - Visa'
-                );
-
-            const prepaidVisa =
-                sumCredit(
-                    salesPosRows,
-                    store,
-                    date,
-                    'Payments - PrPd Visa'
-                );
-
-            const debit =
-                sumCredit(
-                    salesPosRows,
-                    store,
-                    date,
-                    'Payments - Debit'
-                );
-
-            const cashApp =
-                sumCredit(
-                    salesPosRows,
-                    store,
-                    date,
-                    'Payments - Cash App'
-                );
-
-            const imtPaypal =
-                sumCredit(
-                    salesPosRows,
-                    store,
-                    date,
-                    'Payments - IMT Paypal'
-                );
-
-            const imtVenmo =
-                sumCredit(
-                    salesPosRows,
-                    store,
-                    date,
-                    'Payments - IMT Venmo'
+                    'Payments - Kiosk Amex'
                 );
 
             const totalCC =
-                amex +
-                amexPrpd +
-                discover +
-                discoverPrpd +
-                masterCard +
-                prepaidMasterCard +
-                visa +
-                prepaidVisa +
-                debit +
-                cashApp +
-                imtPaypal +
-                imtVenmo;
-
-            // =====================================
-            // DELIVERY
-            // =====================================
+                creditPopeyes(
+                    salesPosRows,
+                    store,
+                    date,
+                    POPEYES_CC_ACCOUNTS
+                );
 
             const doorDash =
-                sumCredit(
+                creditPopeyes(
                     salesPosRows,
                     store,
                     date,
@@ -654,7 +694,7 @@ function generarSalesPopeyes(
                 );
 
             const grubHub =
-                sumCredit(
+                creditPopeyes(
                     salesPosRows,
                     store,
                     date,
@@ -662,24 +702,50 @@ function generarSalesPopeyes(
                 );
 
             const uberEats =
-                sumCredit(
+                creditPopeyes(
+                    salesPosRows,
+                    store,
+                    date,
+                    [
+                        'Payments - Postmates',
+                        'Payments - Uber Eats'
+                    ]
+                );
+
+            const postmates =
+                creditPopeyes(
+                    salesPosRows,
+                    store,
+                    date,
+                    'Payments - Door Dash Shortage'
+                );
+
+            const taxUberEats =
+                creditPopeyes(
                     salesPosRows,
                     store,
                     date,
                     'Payments - Uber Eats'
                 );
 
-            const deliveryTotals =
-                doorDash +
-                grubHub +
-                uberEats;
+            const doorDashShortage =
+                creditPopeyes(
+                    salesPosRows,
+                    store,
+                    date,
+                    'Payments - Door Dash Shortage'
+                );
 
-            // =====================================
-            // OTHER PAYMENTS
-            // =====================================
+            const uberShortage =
+                creditPopeyes(
+                    salesPosRows,
+                    store,
+                    date,
+                    'Payments - Uber Shortage'
+                );
 
             const ebt =
-                sumCredit(
+                creditPopeyes(
                     salesPosRows,
                     store,
                     date,
@@ -687,165 +753,124 @@ function generarSalesPopeyes(
                 );
 
             const giftCardRedeemed =
-                sumCredit(
+                creditPopeyes(
                     salesPosRows,
                     store,
                     date,
-                    'Payments - Gift Card'
+                    [
+                        'Payments - GC Redeemed',
+                        'Payments - Gift Card'
+                    ]
                 );
 
             const giftCardSold =
-                sumDebit(
+                debitPopeyes(
                     salesPosRows,
                     store,
                     date,
                     'Revenues - Gift Card Sales'
                 );
 
-            const ezCater =
-                sumCredit(
-                    salesPosRows,
-                    store,
-                    date,
-                    'Payments - EZ Cater'
-                );
-
             const onlineCatering =
-                sumCredit(
+                creditPopeyes(
                     salesPosRows,
                     store,
                     date,
                     'Payments - Online Catering'
                 );
 
-            const postmates =
-                sumCredit(
+            const ezCater =
+                creditPopeyes(
                     salesPosRows,
                     store,
                     date,
-                    'Payments - Postmates'
+                    'Payments - EZ Cater'
                 );
-
-            // =====================================
-            // KIOSK
-            // =====================================
 
             const kiosk =
-                sumCredit(
+                creditPopeyes(
                     salesPosRows,
                     store,
                     date,
-                    'Payments - Kiosk'
+                    POPEYES_KIOSK_ACCOUNTS
                 );
-
-            const kioskDiscover =
-                sumCredit(
-                    salesPosRows,
-                    store,
-                    date,
-                    'Payments - Kiosk Discover'
-                );
-
-            const kioskMasterCard =
-                sumCredit(
-                    salesPosRows,
-                    store,
-                    date,
-                    'Payments - Kiosk MasterCard'
-                );
-
-            const kioskVisa =
-                sumCredit(
-                    salesPosRows,
-                    store,
-                    date,
-                    'Payments - Kiosk Visa'
-                );
-
-            const kioskTotal =
-                kiosk +
-                kioskDiscover +
-                kioskMasterCard +
-                kioskVisa;
-
-            // =====================================
-            // CASH
-            // =====================================
 
             const cashDeposit =
-                sumCredit(
+                creditPopeyes(
                     salesPosRows,
                     store,
                     date,
-                    'Cash Deposit'
+                    [
+                        'AM Deposit',
+                        'Cash Deposit'
+                    ]
                 );
 
-            const cashHandling =
-                sumDebit(
+            const cashHandlingDebit =
+                creditPopeyes(
                     salesPosRows,
                     store,
                     date,
                     'Cash Handling - Over/Short'
                 );
 
-            // =====================================
-            // PAID OUTS
-            // =====================================
-
-            const paidOut =
-                sumDebit(
+            const cashHandlingCredit =
+                debitPopeyes(
                     salesPosRows,
                     store,
                     date,
-                    'Paid Out'
+                    'Cash Handling - Over/Short'
                 );
 
             const paidOutSmallwares =
-                sumDebit(
+                -debitPopeyes(
                     salesPosRows,
                     store,
                     date,
-                    'Paid Out Smallwares'
+                    'Paid Out - Smallwares'
                 );
 
             const paidOutCleaning =
-                sumDebit(
+                -debitPopeyes(
                     salesPosRows,
                     store,
                     date,
-                    'Paid Out Cleaning Supplies'
+                    'Paid Out - Cleaning Supplies'
                 );
 
             const paidOutOffice =
-                sumDebit(
+                -debitPopeyes(
                     salesPosRows,
                     store,
                     date,
-                    'Paid Out Office Supplies'
+                    'Paid Out - Office Supplies'
                 );
 
             const paidOutFood =
-                sumDebit(
+                -debitPopeyes(
                     salesPosRows,
                     store,
                     date,
-                    'Paid Out Food'
+                    'Paid Out - Food'
                 );
 
             const paidOutCashOut =
-                sumDebit(
+                -debitPopeyes(
                     salesPosRows,
                     store,
                     date,
-                    'Paid Out Cash Out'
+                    'Paid Out - Cash Out'
                 );
 
-            // =====================================
-            // OTHER
-            // =====================================
+            const paidOut =
+                paidOutSmallwares +
+                paidOutCleaning +
+                paidOutOffice +
+                paidOutFood +
+                paidOutCashOut;
 
             const donations =
-                sumCredit(
+                debitPopeyes(
                     salesPosRows,
                     store,
                     date,
@@ -853,636 +878,526 @@ function generarSalesPopeyes(
                 );
 
             const nonRedeemable =
-                sumCredit(
+                debitPopeyes(
                     salesPosRows,
                     store,
                     date,
-                    'Non Redeemable Tender'
+                    'Non-Redeemable Tender'
                 );
-
-            const wlTips =
-                sumCredit(
-                    salesPosRows,
-                    store,
-                    date,
-                    'WL DD Tips'
-                );
-
-            // =====================================
-            // RESULT
-            // =====================================
 
             return {
-
                 store,
                 unitName,
                 date: formattedDate,
-
-                food,
-                beverages,
-                other,
-
-                serviceFee,
-
-                deliveryFee,
-                deliveryFeeNet,
-
-                salesTax,
-                taxExemptSales,
-                caCrv,
-
-                discountsPromo,
-                discountEmployee,
-                discountGuestRecovery,
-                discountManager,
-                discountMilitary,
-                discountPolice,
-                discountSenior,
-                discountsOther,
-                discountOpenDollar,
-                discountOpenPercent,
-                discount10,
-                totalDiscounts,
-
-                deliveryTips,
-                totalTips,
-
-                amex,
-                amexPrpd,
-
-                discover,
-                discoverPrpd,
-
-                masterCard,
-                prepaidMasterCard,
-
-                visa,
-                prepaidVisa,
-
-                debit,
-
-                cashApp,
-                imtPaypal,
-                imtVenmo,
-
-                totalCC,
-
-                doorDash,
-                grubHub,
-                uberEats,
-                deliveryTotals,
-
-                ebt,
-
-                giftCardRedeemed,
-                giftCardSold,
-
-                ezCater,
-                onlineCatering,
-                postmates,
-
-                kiosk,
-                kioskDiscover,
-                kioskMasterCard,
-                kioskVisa,
-                kioskTotal,
-
-                cashDeposit,
-                cashHandling,
-
-                paidOut,
-                paidOutSmallwares,
-                paidOutCleaning,
-                paidOutOffice,
-                paidOutFood,
-                paidOutCashOut,
-
-                donations,
-                nonRedeemable,
-                wlTips
-
+                sourceFood: redondearPopeyes(sourceFood),
+                sourceBeverages: redondearPopeyes(sourceBeverages),
+                sourceOther: redondearPopeyes(sourceOther),
+                food: redondearPopeyes(sourceFood),
+                beverages: redondearPopeyes(sourceBeverages),
+                other: redondearPopeyes(sourceOther),
+                serviceFee: redondearPopeyes(serviceFee),
+                salesOther: redondearPopeyes(sourceOther + serviceFee),
+                deliveryFee: redondearPopeyes(deliveryFee),
+                deliveryTips: redondearPopeyes(deliveryTips),
+                wlTips: redondearPopeyes(wlTips),
+                totalTips: redondearPopeyes(wlTips),
+                discounts: redondearPopeyes(discounts),
+                discountsPromo: redondearPopeyes(discountsPromo),
+                discountEmployee: redondearPopeyes(discountEmployee),
+                discountGuestRecovery: redondearPopeyes(discountGuestRecovery),
+                discountManager: redondearPopeyes(discountManager),
+                discountMilitary: redondearPopeyes(discountMilitary),
+                discountPolice: redondearPopeyes(discountPolice),
+                discountSenior: redondearPopeyes(discountSenior),
+                discountsOther: redondearPopeyes(discountsOther),
+                discountOpenDollar: redondearPopeyes(discountOpenDollar),
+                discountOpenPercent: redondearPopeyes(discountOpenPercent),
+                discount10: redondearPopeyes(discount10),
+                totalDiscounts: redondearPopeyes(totalDiscounts),
+                netSales: redondearPopeyes(sourceFood + sourceBeverages),
+                salesTax: redondearPopeyes(salesTax),
+                taxExemptSales: redondearPopeyes(taxExemptSales),
+                caCrv: redondearPopeyes(caCrv),
+                gcSold: redondearPopeyes(giftCardSold),
+                paidOut: redondearPopeyes(paidOut),
+                donations: redondearPopeyes(donations),
+                nonRedeemable: redondearPopeyes(nonRedeemable),
+                amex: redondearPopeyes(amex),
+                amexPrpd: redondearPopeyes(amexPrpd),
+                amexKiosk: redondearPopeyes(amexKiosk),
+                totalCC: redondearPopeyes(totalCC),
+                doorDash: redondearPopeyes(doorDash),
+                grubHub: redondearPopeyes(grubHub),
+                uberEats: redondearPopeyes(uberEats),
+                taxUberEats: redondearPopeyes(taxUberEats),
+                doorDashShortage: redondearPopeyes(doorDashShortage),
+                uberShortage: redondearPopeyes(uberShortage),
+                postmates: redondearPopeyes(postmates),
+                ebt: redondearPopeyes(ebt),
+                kiosk: redondearPopeyes(kiosk),
+                giftCardRedeemed: redondearPopeyes(giftCardRedeemed),
+                onlineCatering: redondearPopeyes(onlineCatering),
+                ezCater: redondearPopeyes(ezCater),
+                paidOutSmallwares: redondearPopeyes(paidOutSmallwares),
+                paidOutCleaning: redondearPopeyes(paidOutCleaning),
+                paidOutOffice: redondearPopeyes(paidOutOffice),
+                paidOutFood: redondearPopeyes(paidOutFood),
+                paidOutCashOut: redondearPopeyes(paidOutCashOut),
+                cashDeposit: redondearPopeyes(cashDeposit),
+                cashHandlingDebit: redondearPopeyes(cashHandlingDebit),
+                cashHandlingCredit: redondearPopeyes(cashHandlingCredit)
             };
-
         }
     );
-
 }
 
-function generarConciliationPopeyes(
-    salesData
-) {
+function generarConciliationPopeyes(salesData) {
 
     return salesData.map(row => {
 
-        // =====================
-        // SALES
-        // =====================
-
-        const salesOther =
-            Number(row.other || 0) +
-            Number(row.serviceFee || 0);
+        const food =
+            row.sourceFood +
+            row.discounts +
+            row.discountsPromo;
 
         const netSales =
-            Number(row.food || 0) +
-            Number(row.beverages || 0);
+            food +
+            row.beverages;
 
-        // =====================
-        // DELIVERY
-        // =====================
-
-        const deliveryTotals =
-            Number(row.doorDash || 0) +
-            Number(row.grubHub || 0) +
-            Number(row.uberEats || 0) +
-            Number(row.postmates || 0);
-
-        // =====================
-        // REVENUE
-        // =====================
+        const delTotals =
+            row.doorDash +
+            row.grubHub +
+            row.uberEats +
+            row.postmates;
 
         const totalRevenue =
-            Number(row.food || 0) +
-            Number(row.beverages || 0) +
-            Number(row.other || 0) +
-            Number(row.deliveryFeeNet || 0) +
-            Number(row.salesTax || 0) +
-            Number(row.caCrv || 0) +
-            Number(row.giftCardSold || 0) +
-            Number(row.donations || 0);
-
-        // =====================
-        // PAYMENTS TOTAL
-        // =====================
-
-        const paymentsTotal =
-
-            Number(row.amex || 0) +
-            Number(row.amexPrpd || 0) +
-
-            Number(row.discover || 0) +
-            Number(row.discoverPrpd || 0) +
-
-            Number(row.masterCard || 0) +
-            Number(row.prepaidMasterCard || 0) +
-
-            Number(row.visa || 0) +
-            Number(row.prepaidVisa || 0) +
-
-            Number(row.debit || 0) +
-
-            Number(row.cashApp || 0) +
-            Number(row.imtPaypal || 0) +
-            Number(row.imtVenmo || 0) +
-
-            Number(row.doorDash || 0) +
-            Number(row.grubHub || 0) +
-            Number(row.uberEats || 0) +
-            Number(row.postmates || 0) +
-
-            Number(row.ebt || 0) +
-
-            Number(row.giftCardRedeemed || 0) +
-
-            Number(row.onlineCatering || 0) +
-            Number(row.ezCater || 0);
-
-        // =====================
-        // O/S
-        // =====================
-
-        const overShort =
-            totalRevenue -
-            paymentsTotal;
-
-        // =====================
-        // CASH EXPECTED
-        // =====================
+            food +
+            row.beverages +
+            row.other +
+            row.deliveryFee +
+            row.wlTips +
+            row.salesTax +
+            row.caCrv +
+            row.gcSold +
+            row.donations +
+            row.nonRedeemable -
+            row.discounts -
+            row.discountsPromo;
 
         const cashExpected =
-            overShort;
+            row.other +
+            row.deliveryFee +
+            netSales +
+            row.salesTax +
+            row.caCrv +
+            row.gcSold +
+            row.donations +
+            row.nonRedeemable +
+            row.wlTips -
+            (
+                row.discounts +
+                row.discountsPromo +
+                row.amex +
+                row.amexPrpd +
+                row.amexKiosk +
+                row.totalCC +
+                row.doorDash +
+                row.grubHub +
+                row.uberEats +
+                row.doorDashShortage +
+                row.uberShortage +
+                row.ebt +
+                row.kiosk +
+                row.giftCardRedeemed +
+                row.onlineCatering +
+                row.ezCater +
+                row.paidOutSmallwares +
+                row.paidOutCleaning +
+                row.paidOutOffice +
+                row.paidOutFood +
+                row.paidOutCashOut
+            );
 
-        // =====================
-        // DIFFERENCE
-        // =====================
+        const paymentsTotal =
+            row.amex +
+            row.amexPrpd +
+            row.amexKiosk +
+            row.totalCC +
+            row.doorDash +
+            row.grubHub +
+            row.uberEats +
+            row.doorDashShortage +
+            row.uberShortage +
+            row.ebt +
+            row.kiosk +
+            row.giftCardRedeemed +
+            row.onlineCatering +
+            row.ezCater +
+            row.paidOutSmallwares +
+            row.paidOutCleaning +
+            row.paidOutOffice +
+            row.paidOutFood +
+            row.paidOutCashOut +
+            cashExpected;
+
+        const overShort =
+            totalRevenue - paymentsTotal;
 
         const difference =
-            Number(
-                (
-                    cashExpected -
-                    Number(row.cashDeposit || 0)
-                ).toFixed(2)
-            );
-
-        // =====================
-        // CASH DEPOSIT CALCULATED
-        // =====================
-
-
-
-        const cashDepositCalculated =
-
+            cashExpected -
             (
-                Number(row.other || 0) +
-                Number(row.deliveryFee || 0) +
-                Number(row.netSales || 0) +
-                Number(row.salesTax || 0) +
-                Number(row.caCrv || 0) +
-                Number(row.gcSold || 0) +
-                Number(row.donations || 0) +
-                Number(row.nonRedeemable || 0) +
-                Number(row.wlTips || 0)
-            )
-
-            -
-
-            (
-                Number(row.discounts || 0) +
-                Number(row.discountsPromo || 0) +
-                Number(row.amex || 0) +
-                Number(row.amexPrpd || 0) +
-                Number(row.totalCC || 0) +
-                Number(row.doorDash || 0) +
-                Number(row.grubHub || 0) +
-                Number(row.uberEats || 0) +
-                Number(row.doorDashShortage || 0) +
-                Number(row.uberShortage || 0) +
-                Number(row.ebt || 0) +
-                Number(row.kiosk || 0) +
-                Number(row.giftCardRedeemed || 0) +
-                Number(row.onlineCatering || 0) +
-                Number(row.ezCater || 0) +
-                Number(row.paidOutSmallwares || 0) +
-                Number(row.paidOutCleaning || 0) +
-                Number(row.paidOutOffice || 0) +
-                Number(row.paidOutFood || 0) +
-                Number(row.paidOutCashOut || 0)
+                row.cashDeposit +
+                row.cashHandlingDebit -
+                row.cashHandlingCredit
             );
-
-        console.log({
-
-            store: row.store,
-
-            positivos:
-
-                Number(row.other || 0) +
-                Number(row.deliveryFee || 0) +
-                Number(row.netSales || 0) +
-                Number(row.salesTax || 0) +
-                Number(row.caCrv || 0) +
-                Number(row.gcSold || 0) +
-                Number(row.donations || 0) +
-                Number(row.nonRedeemable || 0) +
-                Number(row.wlTips || 0),
-
-            negativos:
-
-                Number(row.discounts || 0) +
-                Number(row.discountsPromo || 0) +
-                Number(row.amex || 0) +
-                Number(row.amexPrpd || 0) +
-                Number(row.totalCC || 0) +
-                Number(row.doorDash || 0) +
-                Number(row.grubHub || 0) +
-                Number(row.uberEats || 0) +
-                Number(row.doorDashShortage || 0) +
-                Number(row.uberShortage || 0) +
-                Number(row.ebt || 0) +
-                Number(row.kiosk || 0) +
-                Number(row.giftCardRedeemed || 0) +
-                Number(row.onlineCatering || 0) +
-                Number(row.ezCater || 0) +
-                Number(row.paidOutSmallwares || 0) +
-                Number(row.paidOutCleaning || 0) +
-                Number(row.paidOutOffice || 0) +
-                Number(row.paidOutFood || 0) +
-                Number(row.paidOutCashOut || 0),
-
-            cashDepositCalculated
-
-        });
-
-
 
         return {
-
             ...row,
-
-            // =====================
-            // SALES
-            // =====================
-
-            salesOther,
-            netSales,
-
-            // =====================
-            // DISCOUNTS
-            // =====================
-
-            discounts:
-                row.totalDiscounts || 0,
-
-            discountOffPromo:
-                row.discountsPromo || 0,
-
-            discountsPromo:
-                row.discountsPromo || 0,
-
-            discountEmployee:
-                row.discountEmployee || 0,
-
-            discountGuestRecovery:
-                row.discountGuestRecovery || 0,
-
-            discountManager:
-                row.discountManager || 0,
-
-            discountMilitary:
-                row.discountMilitary || 0,
-
-            discountPolice:
-                row.discountPolice || 0,
-
-            discountSenior:
-                row.discountSenior || 0,
-
-            discountsOther:
-                row.discountsOther || 0,
-
-            discountOpenDollar:
-                row.discountOpenDollar || 0,
-
-            discountOpenPercent:
-                row.discountOpenPercent || 0,
-
-            discount10:
-                row.discount10 || 0,
-
-            totalDiscounts:
-                row.totalDiscounts || 0,
-
-            // =====================
-            // CARDS
-            // =====================
-
-            amex:
-                row.amex || 0,
-
-            amexPrpd:
-                row.amexPrpd || 0,
-
-            ccTotals:
-                row.totalCC || 0,
-
-            totalCC:
-                row.totalCC || 0,
-
-            // =====================
-            // DELIVERY
-            // =====================
-
-            delTotals:
-                deliveryTotals,
-
-            deliveryTotals,
-
-            doorDash:
-                row.doorDash || 0,
-
-            grubHub:
-                row.grubHub || 0,
-
-            uberEats:
-                row.uberEats || 0,
-
-            postmates:
-                row.postmates || 0,
-
-            doorDashShortage:
-                row.doorDashShortage || 0,
-
-            uberShortage:
-                row.uberShortage || 0,
-
-            // =====================
-            // GIFT CARDS
-            // =====================
-
-            gcSold:
-                row.giftCardSold || 0,
-
-            giftCardSold:
-                row.giftCardSold || 0,
-
-            giftCardRedeemed:
-                row.giftCardRedeemed || 0,
-
-            // =====================
-            // CATERING
-            // =====================
-
-            onlineCatering:
-                row.onlineCatering || 0,
-
-            ezCater:
-                row.ezCater || 0,
-
-            // =====================
-            // TIPS
-            // =====================
-
-            wlTips:
-                row.wlTips || 0,
-
-            // =====================
-            // PAYOUTS
-            // =====================
-
-            paidOut:
-                row.paidOut || 0,
-
-            paidOutSmallwares:
-                row.paidOutSmallwares || 0,
-
-            paidOutCleaning:
-                row.paidOutCleaning || 0,
-
-            paidOutCleaningSupplies:
-                row.paidOutCleaning || 0,
-
-            paidOutOffice:
-                row.paidOutOffice || 0,
-
-            paidOutOfficeSupplies:
-                row.paidOutOffice || 0,
-
-            paidOutFood:
-                row.paidOutFood || 0,
-
-            paidOutCashOut:
-                row.paidOutCashOut || 0,
-
-            // =====================
-            // CASH
-            // =====================
-
-            cashDepositCalculated,
-
-            cashDeposit:
-                row.cashDeposit || 0,
-
-            cashHandlingDebit:
-                Number(row.cashHandling || 0) > 0
-                    ? Number(row.cashHandling)
-                    : 0,
-
-            cashHandlingCredit:
-                Number(row.cashHandling || 0) < 0
-                    ? Math.abs(
-                        Number(row.cashHandling)
-                    )
-                    : 0,
-
-            // =====================
-            // DONATIONS
-            // =====================
-
-            donations:
-                row.donations || 0,
-
-            nonRedeemable:
-                row.nonRedeemable || 0,
-
-            // =====================
-            // TOTALS
-            // =====================
-
-            totalRevenue,
-
-            paymentsTotal,
-
-            overShort,
-
-            os:
-                overShort,
-
-            cashExpected,
-
-            difference
-
+            food: redondearPopeyes(food),
+            netSales: redondearPopeyes(netSales),
+            amexExpectedDeposit:
+                redondearPopeyes(
+                    row.amex +
+                    row.amexPrpd +
+                    row.amexKiosk
+                ),
+            delTotals: redondearPopeyes(delTotals),
+            totalRevenue: redondearPopeyes(totalRevenue),
+            paymentsTotal: redondearPopeyes(paymentsTotal),
+            overShort: redondearPopeyes(overShort),
+            os: redondearPopeyes(overShort),
+            cashDepositCalculated: redondearPopeyes(cashExpected),
+            cashExpected: redondearPopeyes(cashExpected),
+            difference: redondearPopeyes(difference)
         };
 
     });
-
 }
 
-function generarConciliacionPopeyes() {
+function generarTaxReviewPopeyes(conciliationData) {
 
-    if (!salesPosRows?.length) {
+    popeyesTaxReviewData =
+        conciliationData.map(row => {
+
+            const taxRate =
+                POPEYES_TAX_RATES[row.store] || 0;
+
+            const taxableSales =
+                row.sourceFood +
+                row.sourceBeverages +
+                row.sourceOther -
+                row.discount10 -
+                row.taxUberEats -
+                row.ebt;
+
+            const taxCalculation =
+                taxableSales * taxRate;
+
+            const salesTaxPayable =
+                row.salesTax;
+
+            const rateCalculation =
+                taxableSales !== 0
+                    ? salesTaxPayable / taxableSales
+                    : 0;
+
+            return {
+                'Store no.': row.store,
+                June: formatoPorcentajePopeyes(taxRate),
+                'Net Sales - Food': row.sourceFood,
+                'Net Sales - Beverages': row.sourceBeverages,
+                'Net Sales - Other': row.sourceOther,
+                'Discounts/Promot': row.discount10,
+                'Payments - Uber Eats': row.taxUberEats,
+                'Payments - EBT': row.ebt,
+                'TAXABLE SALES': redondearPopeyes(taxableSales),
+                'TAX CALCULATION': redondearPopeyes(taxCalculation),
+                'Sales Tax Payable': salesTaxPayable,
+                DIFFERRENCE: redondearPopeyes(taxCalculation - salesTaxPayable),
+                'RATE CALCULATION': formatoPorcentajePopeyes(rateCalculation),
+                DIFFERENCE: formatoPorcentajePopeyes(taxRate - rateCalculation)
+            };
+
+        });
+
+    taxReviewData = popeyesTaxReviewData;
+}
+
+function agregarLineaPopeyes(
+    data,
+    row,
+    memo,
+    deptId,
+    acctNo,
+    debit,
+    credit
+) {
+
+    data.push({
+        journal: 'SJ',
+        date: row.date,
+        description: POPEYES_DESCRIPTION,
+        memo,
+        deptId: deptId || '',
+        acctNo,
+        locationId: row.store,
+        debit: redondearPopeyes(debit),
+        credit: redondearPopeyes(credit)
+    });
+}
+
+function obtenerDeptPopeyes(memo) {
+
+    if (
+        [
+            'Amex Expected Deposit',
+            'Kiosk Expected Payment',
+            'CC Expected Deposit'
+        ].some(texto => memo.includes(texto))
+    ) {
+        return 'CC';
+    }
+
+    if (
+        [
+            'Cash Expected Deposit',
+            'Non-Redeemable Tender',
+            'O/S DC Discrepancies',
+            'POS Over/Short',
+            'Diff Between'
+        ].some(texto => memo.includes(texto))
+    ) {
+        return 'CASH';
+    }
+
+    if (memo.includes('GrubHub')) {
+        return 'GHD';
+    }
+
+    if (memo.includes('Uber')) {
+        return 'UBD';
+    }
+
+    if (memo.includes('DoorDash')) {
+        return 'DDD';
+    }
+
+    return '';
+}
+
+function generarDailySalesPopeyes(conciliationData) {
+
+    const redData = [];
+
+    conciliationData.forEach(row => {
+
+        POPEYES_DAILY_SALES_LINES.forEach(line => {
+
+            const amount =
+                line.field
+                    ? row[line.field] || 0
+                    : 0;
+
+            agregarLineaPopeyes(
+                redData,
+                row,
+                line.memo,
+                obtenerDeptPopeyes(line.memo),
+                line.acctNo,
+                line.type === 'debit'
+                    ? amount
+                    : 0,
+                line.type === 'credit'
+                    ? amount
+                    : 0
+            );
+
+        });
+
+    });
+
+    popeyesDailySalesRedData =
+        redData;
+
+    popeyesDailySales0404Data =
+        redData
+            .filter(row =>
+                row.debit !== 0 ||
+                row.credit !== 0
+            )
+            .map((row, index) => ({
+                lineNo: index + 1,
+                journal: row.journal,
+                date: row.date,
+                description: row.description,
+                memo: row.memo,
+                deptId: row.deptId,
+                acctNo: row.acctNo,
+                locationId: row.locationId,
+                debit: row.debit || '',
+                credit: row.credit || ''
+            }));
+
+    dailySalesREDData =
+        popeyesDailySalesRedData;
+
+    dailySales0314Data =
+        popeyesDailySales0404Data;
+}
+
+function procesarPopeyes() {
+
+    try {
+
+        const salesPosRows =
+            obtenerSalesPosRowsPopeyes();
+
+        if (!salesPosRows.length) {
+            Swal.fire(
+                'Error',
+                'No hay datos Sales POS cargados',
+                'error'
+            );
+            return false;
+        }
+
+        salesRows = salesPosRows;
+
+        let storeDates =
+            generarStoreDatesPopeyes(
+                salesPosRows
+            );
+
+        if (fechaSalesSeleccionada) {
+            const fechaSeleccionada =
+                fechaClavePopeyes(
+                    fechaSalesSeleccionada
+                );
+
+            storeDates =
+                storeDates.filter(row =>
+                    fechaClavePopeyes(row.date) ===
+                    fechaSeleccionada
+                );
+        }
+
+        if (!storeDates.length) {
+            Swal.fire(
+                'Error',
+                'No se encontraron tiendas/fechas para Popeyes',
+                'error'
+            );
+            return false;
+        }
+
+        const salesData =
+            generarSalesPopeyes(
+                salesPosRows,
+                storeDates
+            );
+
+        popeyesConciliationData =
+            generarConciliationPopeyes(
+                salesData
+            );
+
+        datosExtraidos =
+            popeyesConciliationData;
+
+        fechaConciliacionActual =
+            popeyesConciliationData[0]?.date || null;
+
+        generarTaxReviewPopeyes(
+            popeyesConciliationData
+        );
+
+        generarDailySalesPopeyes(
+            popeyesConciliationData
+        );
+
+        const resultsSection =
+            document.getElementById(
+                'resultsSection'
+            );
+
+        if (resultsSection) {
+            resultsSection.style.display = 'block';
+        }
+
+        llenarFiltroTiendas();
+        actualizarResumen();
+        actualizarTotales();
+        renderActiveTab();
+
+        return true;
+
+    } catch (error) {
+
+        console.error(error);
 
         Swal.fire(
             'Error',
-            'No hay datos Sales POS cargados',
+            error.message,
             'error'
         );
 
-        return;
+        return false;
+
     }
+}
 
-    // 1
-    const storeDates =
-        generarStoreDatesPopeyes(
-            salesPosRows
-        );
-
-    // 2
-    const salesData =
-        generarSalesPopeyes(
-            salesPosRows,
-            storeDates
-        );
-
-    // 3
-    popeyesConciliationData =
-        generarConciliationPopeyes(
-            salesData
-        );
-
-    // Mostrar resultados
-    document.getElementById(
-        'resultsSection'
-    ).style.display = 'block';
-
-    renderConciliationPopeyes();
-
+function renderConciliation() {
+    renderArrayToMainTable(
+        popeyesConciliationData,
+        currentRestaurantConfig?.conciliationColumns ||
+        currentRestaurantConfig?.tableColumns ||
+        [],
+        true
+    );
 }
 
 function renderConciliationPopeyes() {
-
-    const data =
-        popeyesConciliationData.map(
-            row => ({
-
-                STORE:
-                    row.store,
-
-                DATE:
-                    row.date,
-
-                FOOD:
-                    Number(
-                        row.food || 0
-                    ).toFixed(2),
-
-                BEVERAGES:
-                    Number(
-                        row.beverages || 0
-                    ).toFixed(2),
-
-                OTHER:
-                    Number(
-                        row.other || 0
-                    ).toFixed(2),
-
-                'SALES OTHER':
-                    Number(
-                        row.salesOther || 0
-                    ).toFixed(2),
-
-                'NET SALES':
-                    Number(
-                        row.netSales || 0
-                    ).toFixed(2),
-
-                'TOTAL REVENUE':
-                    Number(
-                        row.totalRevenue || 0
-                    ).toFixed(2),
-
-                'PAYMENTS TOTAL':
-                    Number(
-                        row.paymentsTotal || 0
-                    ).toFixed(2),
-
-                'OVER SHORT':
-                    Number(
-                        row.overShort || 0
-                    ).toFixed(2),
-
-                DIFFERENCE:
-                    Number(
-                        row.difference || 0
-                    ).toFixed(2)
-
-            })
-        );
-
-    renderArrayToMainTable(
-        data
-    );
-
+    renderConciliation();
 }
 
-function renderArrayToMainTable(data) {
+function renderTaxReview() {
+
+    const codigo =
+        document
+            .getElementById('selectRestaurante')
+            ?.selectedOptions?.[0]
+            ?.dataset?.codigo;
+
+    if (
+        codigo !== 'popeyes' &&
+        renderTaxReviewTacoBell
+    ) {
+        renderTaxReviewTacoBell();
+        return;
+    }
+
+    renderArrayToMainTable(
+        popeyesTaxReviewData
+    );
+}
+
+function renderDailySalesRed() {
+    renderArrayToMainTable(
+        popeyesDailySalesRedData
+    );
+}
+
+function renderDailySales0404() {
+    renderArrayToMainTable(
+        popeyesDailySales0404Data
+    );
+}
+
+function renderArrayToMainTable(
+    data,
+    columnConfig = null,
+    aplicarFiltros = false
+) {
 
     const head =
         document.getElementById(
@@ -1502,54 +1417,86 @@ function renderArrayToMainTable(data) {
     if (!data?.length) return;
 
     const columns =
-        Object.keys(data[0]);
+        columnConfig?.length
+            ? columnConfig
+            : Object.keys(data[0]).map(key => ({
+                key,
+                label: key
+            }));
+
+    const rows =
+        aplicarFiltros
+            ? data.filter(row => {
+
+                const nombre =
+                    String(
+                        row.unitName ||
+                        row.storeName ||
+                        ''
+                    ).toLowerCase();
+
+                const cumpleStore =
+                    !filtroStore ||
+                    String(row.store) === String(filtroStore);
+
+                const cumpleNombre =
+                    !filtroStoreName ||
+                    nombre.includes(filtroStoreName);
+
+                return cumpleStore && cumpleNombre;
+
+            })
+            : data;
 
     const trHead =
         document.createElement('tr');
 
     columns.forEach(col => {
-
         const th =
             document.createElement('th');
-
-        th.textContent = col;
-
+        th.textContent =
+            col.label ?? col.key ?? '';
         trHead.appendChild(th);
-
     });
 
     head.appendChild(trHead);
 
-    data.forEach(row => {
+    rows.forEach(row => {
 
         const tr =
             document.createElement('tr');
 
         columns.forEach(col => {
-
             const td =
                 document.createElement('td');
 
-            td.textContent =
-                row[col] ?? '';
+            const valor =
+                row[col.key];
+
+            if (typeof valor === 'number') {
+
+                td.textContent =
+                    valor.toLocaleString(
+                        'en-US',
+                        {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2
+                        }
+                    );
+
+                td.classList.add('text-right');
+
+            } else {
+
+                td.textContent =
+                    valor ?? '';
+
+            }
 
             tr.appendChild(td);
-
         });
 
         body.appendChild(tr);
 
     });
-
-}
-
-function excelDateToJSDate(excelDate) {
-
-    const fecha = new Date(
-        (excelDate - 25569) * 86400 * 1000
-    );
-
-    return fecha
-        .toISOString()
-        .split('T')[0];
 }

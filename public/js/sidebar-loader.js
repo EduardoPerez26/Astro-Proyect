@@ -4,6 +4,7 @@ window.API_URL
 document.addEventListener('DOMContentLoaded', function() {
     const sidebar = document.getElementById('sidebar');
     const sidebarToggle = document.getElementById('sidebarToggle');
+    const topbarSidebarToggle = document.getElementById('topbarSidebarToggle');
     const logoutBtn = document.getElementById('logoutBtn');
     const mainContent = document.getElementById('mainContent');
 
@@ -26,23 +27,37 @@ document.addEventListener('DOMContentLoaded', function() {
         document.body.classList.add('sidebar-collapsed');
     }
 
+    function toggleSidebar(e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (
+            window.matchMedia &&
+            window.matchMedia('(max-width: 1024px)').matches
+        ) {
+            sidebar.classList.toggle('open');
+            return;
+        }
+            
+        sidebar.classList.toggle('collapsed');
+            
+        // Sincronizar con main content
+        if (mainContent) {
+            mainContent.classList.toggle('sidebar-collapsed');
+        }
+        document.body.classList.toggle('sidebar-collapsed');
+            
+        // Guardar estado
+        localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
+    }
+
     // Toggle sidebar
     if (sidebarToggle && sidebar) {
-        sidebarToggle.addEventListener('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            
-            sidebar.classList.toggle('collapsed');
-            
-            // Sincronizar con main content
-            if (mainContent) {
-                mainContent.classList.toggle('sidebar-collapsed');
-            }
-            document.body.classList.toggle('sidebar-collapsed');
-            
-            // Guardar estado
-            localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
-        });
+        sidebarToggle.addEventListener('click', toggleSidebar);
+    }
+
+    if (topbarSidebarToggle && sidebar) {
+        topbarSidebarToggle.addEventListener('click', toggleSidebar);
     }
 
     // Marcar link activo basado en la URL actual

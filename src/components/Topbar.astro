@@ -2,9 +2,34 @@
 // Componente Topbar - Barra superior con busqueda y perfil
 interface Props {
   placeholder?: string;
+  title?: string;
 }
 
-const { placeholder = "Buscar..." } = Astro.props;
+const { title = "Panel", placeholder = "Buscar..." } = Astro.props;
 ---
 
+<header class="topbar">
+    <div class="topbar-left">
+        <button
+            class="menu-toggle topbar-menu-toggle"
+            id="topbarSidebarToggle"
+            aria-label="Abrir menu"
+        >
+            <i class="fa-solid fa-bars"></i>
+        </button>
 
+        <div class="topbar-page">
+            <span class="topbar-eyebrow">XB Franchise Solutions</span>
+            <h2 class="topbar-title">{title.replace(" - Sistema de Inventario", "")}</h2>
+        </div>
+    </div>
+
+        <div class="header-user">
+            <div class="header-user-info">
+                <div class="header-user-name">Usuario</div>
+                <div class="header-user-role">Rol</div>
+            </div>
+            <div class="avatar">--</div>
+        </div>
+    </div>
+</header>

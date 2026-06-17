@@ -188,9 +188,6 @@ function renderActiveTab() {
 
 }
 
-// ===========================================
-// FUNCIONES POR HOJA
-// ===========================================
 function generarTaxReviewTacoBell() {
 
     taxReviewData = datosExtraidos.map(row => {

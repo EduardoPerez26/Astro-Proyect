@@ -14,7 +14,7 @@ const { title, includeSheetJS = false } = Astro.props;
 <BaseLayout title={title} includeSheetJS={includeSheetJS}>
     <Sidebar />
     <main class="main" id="mainContent">
-        <Topbar />
+        <Topbar title={title} />
         <slot />
     </main>
     <script is:inline src="/js/sidebar-loader.js"></script>

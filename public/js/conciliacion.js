@@ -11,16 +11,20 @@ let datosExtraidos = [];
 let valoresEsperados = {};
 let salesFile = null;
 let ebtFile = null;
+let salesDetailFile = null;
 let currentRestaurantConfig = null;
 let salesWorkbook = null;
 let ebtWorkbook = null;
+let salesDetailWorkbook = null;
 let editandoIndex = -1;
 let workbook = null;
 let fechaConciliacionActual = null;
 let ebtPorTienda = {};
 let salesRows = [];
+let salesDetailRows = [];
 let fechaSeleccionada = null;
 let fechaEBTSeleccionada = '';
+let fechaSalesDetailSeleccionada = '';
 
 let filtroStore = '';
 let filtroStoreName = '';
@@ -147,6 +151,8 @@ function initEventListeners() {
 
                 if (!file) return;
 
+                salesFile = file;
+
                 try {
 
                     const buffer =
@@ -181,32 +187,158 @@ function initEventListeners() {
                         salesWorkbook;
 
                     const sheetName =
-                        salesWorkbook.SheetNames[0];
+                        detectarHojaOrigen(
+                            salesWorkbook
+                        );
 
                     const sheet =
                         salesWorkbook.Sheets[
                         sheetName
                         ];
 
+                    const codigo =
+                        document
+                            .getElementById('selectRestaurante')
+                            ?.selectedOptions[0]
+                            ?.dataset?.codigo;
+
+                    const headersRequeridos =
+                        codigo === 'popeyes'
+                            ? [
+                                'Accounting Date',
+                                'Unit Number',
+                                'Account'
+                            ]
+                            : codigo === 'burger-king'
+                                ? [
+                                    'Accounting Date',
+                                    'Unit Number',
+                                    'Account'
+                                ]
+                            : [
+                                'Store',
+                                'Date'
+                            ];
+
+                    const campoFecha =
+                        (
+                            codigo === 'popeyes' ||
+                            codigo === 'burger-king'
+                        )
+                            ? 'Accounting Date'
+                            : 'Date';
+
                     salesRows =
-                        XLSX.utils.sheet_to_json(
+                        leerFilasExcel(
                             sheet,
-                            {
-                                defval: 0
-                            }
+                            headersRequeridos,
+                            0
                         );
 
 
                     cargarFechasEnFiltro(
                         salesRows,
                         'salesDateFilter',
-                        'Date'
+                        campoFecha
                     );
 
                     generarConciliacionDesdeTemplate();
 
                 } catch (error) {
 
+                    console.error(error);
+
+                    Swal.fire(
+                        'Error',
+                        'No se pudo leer el archivo Sales',
+                        'error'
+                    );
+
+                }
+
+            }
+        );
+
+    }
+
+    // ==========================
+    // SALES DETAIL FILE
+    // ==========================
+
+    const salesDetailInput =
+        document.getElementById(
+            'salesDetailFile'
+        );
+
+    if (salesDetailInput) {
+
+        salesDetailInput.addEventListener(
+            'change',
+            async (e) => {
+
+                const file =
+                    e.target.files[0];
+
+                if (!file) return;
+
+                salesDetailFile = file;
+
+                try {
+
+                    const buffer =
+                        await file.arrayBuffer();
+
+                    salesDetailWorkbook =
+                        XLSX.read(
+                            buffer,
+                            {
+                                type: 'array'
+                            }
+                        );
+
+                    const sheetName =
+                        typeof detectarHojaSalesDetail === 'function'
+                            ? detectarHojaSalesDetail(
+                                salesDetailWorkbook
+                            )
+                            : salesDetailWorkbook.SheetNames[0];
+
+                    const sheet =
+                        salesDetailWorkbook.Sheets[
+                        sheetName
+                        ];
+
+                    salesDetailRows =
+                        leerFilasExcel(
+                            sheet,
+                            ['Store Number', 'Business Date'],
+                            ''
+                        );
+
+                    cargarFechasEnFiltro(
+                        salesDetailRows,
+                        'salesDetailDateFilter',
+                        'Business Date'
+                    );
+
+                    if (
+                        salesWorkbook &&
+                        currentRestaurantConfig
+                    ) {
+
+                        generarConciliacionDesdeTemplate();
+
+                    }
+
+                } catch (error) {
+
+                    console.error(error);
+
+                    Swal.fire(
+                        'Error',
+                        'No se pudo leer el Sales Detail Export',
+                        'error'
+                    );
 
                 }
 
@@ -235,6 +367,8 @@ function initEventListeners() {
 
                 if (!file) return;
 
+                ebtFile = file;
+
                 const buffer =
                     await file.arrayBuffer();
 
@@ -245,13 +379,19 @@ function initEventListeners() {
                     );
 
                 const hoja =
-                    ebtWorkbook.Sheets['Net Sales'];
+                    obtenerHojaPorNombre(
+                        ebtWorkbook,
+                        [
+                            'Net Sales',
+                            'EBT AMOUNTS'
+                        ]
+                    );
 
                 if (!hoja) {
 
                     Swal.fire(
                         'Error',
-                        'No existe la hoja Net Sales',
+                        'No existe la hoja Net Sales o EBT AMOUNTS',
                         'error'
                     );
 
@@ -259,9 +399,10 @@ function initEventListeners() {
                 }
 
                 const rows =
-                    XLSX.utils.sheet_to_json(
+                    leerFilasExcel(
                         hoja,
-                        { defval: '' }
+                        ['Funded Date'],
+                        ''
                     );
 
                 cargarFechasEnFiltro(
@@ -461,17 +602,18 @@ function initEventListeners() {
         );
 
     document
-        .getElementById('ebtDateFilter')
+        .getElementById('salesDetailDateFilter')
         ?.addEventListener(
             'change',
             e => {
 
-                fechaEBTSeleccionada =
+                fechaSalesDetailSeleccionada =
                     e.target.value;
 
-                procesarEBT();
-
-                if (salesWorkbook) {
+                if (
+                    salesWorkbook &&
+                    currentRestaurantConfig
+                ) {
 
                     generarConciliacionDesdeTemplate();
 
@@ -672,13 +814,23 @@ async function onRestauranteChange() {
             'popeyesTabs'
         );
 
+    const burgerKingTabs =
+        document.getElementById(
+            'burgerKingTabs'
+        );
+
     if (tacoTabs)
         tacoTabs.style.display = 'none';
 
     if (popeyesTabs)
         popeyesTabs.style.display = 'none';
 
+    if (burgerKingTabs)
+        burgerKingTabs.style.display = 'none';
+
     if (codigo === 'taco-bell') {
+
+        activeTab = 'dailySales';
 
         if (tacoTabs)
             tacoTabs.style.display = 'flex';
@@ -687,10 +839,32 @@ async function onRestauranteChange() {
 
     if (codigo === 'popeyes') {
 
+        activeTab = 'conciliation';
+
         if (popeyesTabs)
             popeyesTabs.style.display = 'flex';
 
     }
+
+    if (codigo === 'burger-king') {
+
+        activeTab = 'burgerKingConciliation';
+
+        if (burgerKingTabs)
+            burgerKingTabs.style.display = 'flex';
+
+    }
+
+    document
+        .querySelectorAll('#tacoBellTabs .tab-btn, #popeyesTabs .tab-btn, #burgerKingTabs .tab-btn')
+        .forEach(btn => {
+
+            btn.classList.toggle(
+                'active',
+                btn.dataset.tab === activeTab
+            );
+
+        });
 
 
     if (!restauranteId) {
@@ -845,13 +1019,42 @@ function combineTemplateWithUserExcel(
 
 function removerArchivo() {
     archivoActual = null;
+    salesFile = null;
+    ebtFile = null;
+    salesDetailFile = null;
     workbook = null;
+    salesWorkbook = null;
+    ebtWorkbook = null;
+    salesDetailWorkbook = null;
     datosExtraidos = [];
+    salesRows = [];
+    salesDetailRows = [];
+    ebtPorTienda = {};
 
-    document.getElementById('dropZone').style.display = 'block';
+    const dropZone =
+        document.getElementById('dropZone');
+
+    if (dropZone) {
+        dropZone.style.display = 'block';
+    }
+
     document.getElementById('fileLoaded').style.display = 'none';
     document.getElementById('resultsSection').style.display = 'none';
-    document.getElementById('fileInput').value = '';
+
+    [
+        'salesFile',
+        'salesDetailFile',
+        'ebtFile'
+    ].forEach(id => {
+
+        const input =
+            document.getElementById(id);
+
+        if (input) {
+            input.value = '';
+        }
+
+    });
 }
 
 function extraerDatos() {
@@ -1133,6 +1336,9 @@ function generarConciliacionDesdeTemplate() {
 
         case 'popeyes':
             return procesarPopeyes();
+
+        case 'burger-king':
+            return procesarBurgerKing();
 
         default:
 
@@ -1424,6 +1630,92 @@ function formatDate(dateStr) {
     });
 }
 
+function normalizarEncabezado(valor) {
+    return String(valor ?? '')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .toLowerCase();
+}
+
+function leerFilasExcel(
+    sheet,
+    encabezadosRequeridos = [],
+    defval = 0
+) {
+
+    if (!sheet) return [];
+
+    const matrix =
+        XLSX.utils.sheet_to_json(
+            sheet,
+            {
+                header: 1,
+                defval: ''
+            }
+        );
+
+    const requeridos =
+        encabezadosRequeridos.map(
+            normalizarEncabezado
+        );
+
+    let headerIndex = 0;
+
+    if (requeridos.length) {
+
+        const encontrado =
+            matrix.findIndex(row => {
+
+                const headers =
+                    row.map(
+                        normalizarEncabezado
+                    );
+
+                return requeridos.every(
+                    h => headers.includes(h)
+                );
+
+            });
+
+        if (encontrado >= 0) {
+            headerIndex = encontrado;
+        }
+
+    }
+
+    return XLSX.utils.sheet_to_json(
+        sheet,
+        {
+            range: headerIndex,
+            defval
+        }
+    );
+}
+
+function obtenerHojaPorNombre(
+    book,
+    nombres
+) {
+
+    if (!book) return null;
+
+    const normalizados =
+        nombres.map(
+            normalizarEncabezado
+        );
+
+    const sheetName =
+        book.SheetNames.find(name =>
+            normalizados.includes(
+                normalizarEncabezado(name)
+            )
+        );
+
+    return sheetName
+        ? book.Sheets[sheetName]
+        : null;
+}
+
 
 function detectarHojaOrigen(
     book = workbook
@@ -1452,10 +1744,22 @@ function renderTablaSucursales() {
     thead.innerHTML = '';
     tbody.innerHTML = '';
 
+    const codigo =
+        document
+            .getElementById('selectRestaurante')
+            ?.selectedOptions?.[0]
+            ?.dataset?.codigo;
+
+    const columnasConfiguradas =
+        codigo === 'popeyes' &&
+            currentRestaurantConfig?.conciliationColumns?.length
+            ? currentRestaurantConfig.conciliationColumns
+            : currentRestaurantConfig?.tableColumns;
+
     if (
         !currentRestaurantConfig ||
-        !currentRestaurantConfig.tableColumns ||
-        currentRestaurantConfig.tableColumns.length === 0
+        !columnasConfiguradas ||
+        columnasConfiguradas.length === 0
     ) {
         console.error(
             'No hay columnas configuradas',
@@ -1465,7 +1769,7 @@ function renderTablaSucursales() {
     }
 
     const columnas =
-        currentRestaurantConfig.tableColumns ||
+        columnasConfiguradas ||
         Object.keys(currentRestaurantConfig.columns).map(key => ({
             key,
             label: currentRestaurantConfig.columns[key]
@@ -1606,16 +1910,23 @@ function procesarEBT() {
     }
 
     const hoja =
-        ebtWorkbook.Sheets['Net Sales'];
+        obtenerHojaPorNombre(
+            ebtWorkbook,
+            [
+                'Net Sales',
+                'EBT AMOUNTS'
+            ]
+        );
 
     if (!hoja) {
         return;
     }
 
     const rows =
-        XLSX.utils.sheet_to_json(
+        leerFilasExcel(
             hoja,
-            { defval: '' }
+            ['Funded Date'],
+            ''
         );
 
     if (!rows.length) {
@@ -1625,38 +1936,32 @@ function procesarEBT() {
     const fechas =
         rows
             .map(r =>
-                new Date(
+                normalizarFecha(
                     r['Funded Date']
                 )
             )
-            .filter(
-                d => !isNaN(d)
-            );
+            .filter(Boolean);
+
+    if (!fechas.length) {
+        return;
+    }
 
     let fechaTexto;
 
     if (fechaEBTSeleccionada) {
 
         fechaTexto =
-            new Date(
+            normalizarFecha(
                 fechaEBTSeleccionada
-            ).toLocaleDateString(
-                'en-US'
             );
 
     } else {
 
-        const fechaMax =
-            new Date(
-                Math.max(
-                    ...fechas
-                )
-            );
-
         fechaTexto =
-            fechaMax.toLocaleDateString(
-                'en-US'
-            );
+            fechas
+                .sort(
+                    (a, b) => new Date(b) - new Date(a)
+                )[0];
 
     }
 
@@ -1670,10 +1975,8 @@ function procesarEBT() {
     rows.forEach(row => {
 
         const fecha =
-            new Date(
+            normalizarFecha(
                 row['Funded Date']
-            ).toLocaleDateString(
-                'en-US'
             );
 
         if (fecha !== fechaTexto) {
@@ -1684,16 +1987,20 @@ function procesarEBT() {
             row['Site Name'] || '';
 
         const match =
-            siteName.match(
+            String(siteName).match(
                 /#(\d+)/
             );
 
-        if (!match) {
+        const store =
+            Number(
+                row.LOCATION ||
+                row.Location ||
+                match?.[1]
+            );
+
+        if (!store) {
             return;
         }
-
-        const store =
-            Number(match[1]);
 
         const amount =
             Number(
@@ -1753,7 +2060,11 @@ function cargarFechasEnFiltro(
     const fechas = [
         ...new Set(
             rows
-                .map(row => row[campoFecha])
+                .map(row =>
+                    normalizarFecha(
+                        row[campoFecha]
+                    )
+                )
                 .filter(Boolean)
         )
     ];
@@ -1834,24 +2145,6 @@ function cargarFiltroTiendas() {
     });
 
 }
-function cargarFiltroTiendas() {
-
-    console.log('datosExtraidos:', datosExtraidos);
-
-    const select =
-        document.getElementById('filterStoreSelect');
-
-    if (!select) return;
-
-    const tiendas =
-        [...new Set(
-            datosExtraidos.map(row => row.store)
-        )];
-
-    console.log('tiendas encontradas:', tiendas);
-
-}
-
 function llenarFiltroTiendas() {
 
     const select =
@@ -2056,50 +2349,185 @@ async function guardarConciliacionServidor() {
     }
 }
 
+function obtenerNombreHojaUnico(
+    workbookDestino,
+    nombreBase
+) {
+
+    const limite =
+        31;
+
+    const limpiar =
+        String(nombreBase || 'Sheet')
+            .replace(/[\\/?*\[\]:]/g, '-')
+            .slice(0, limite);
+
+    let nombre =
+        limpiar || 'Sheet';
+
+    let contador = 2;
+
+    while (
+        workbookDestino.SheetNames.includes(
+            nombre
+        )
+    ) {
+
+        const sufijo =
+            ` ${contador++}`;
+
+        nombre =
+            limpiar
+                .slice(
+                    0,
+                    limite - sufijo.length
+                ) + sufijo;
+
+    }
+
+    return nombre;
+}
+
+function esHojaGeneradaConciliacion(nombre) {
+
+    const generadas =
+        [
+            'Conciliation',
+            'Tax Review',
+            'Daily Sales RED',
+            'Statistical Delivery',
+            'Daily Sales 03-14',
+            'Daily Sales 03-10',
+            'Daily Sales Taco Bell  RED',
+            'Daily Sales Taco Bell 03-14 202',
+            'Daily Sales Taco Bell 03-10 202',
+            'Daily Sales Popeyes Red',
+            'Daily Sales Popeyes 04-04-2026',
+            'Tax Analysis',
+            'Discrepancies',
+            'Template to CSV'
+        ];
+
+    return generadas.some(
+        item =>
+            normalizarEncabezado(item) ===
+            normalizarEncabezado(nombre)
+    );
+}
+
+function anexarHojasFuente(
+    workbookDestino,
+    workbookFuente,
+    options = {}
+) {
+
+    if (!workbookFuente) return;
+
+    workbookFuente.SheetNames.forEach(
+        (sheetName, index) => {
+
+            if (
+                options.omitirGeneradas &&
+                esHojaGeneradaConciliacion(
+                    sheetName
+                )
+            ) {
+                return;
+            }
+
+            const nombreBase =
+                options.renombrar
+                    ? options.renombrar(
+                        sheetName,
+                        index
+                    )
+                    : sheetName;
+
+            const nombreDestino =
+                obtenerNombreHojaUnico(
+                    workbookDestino,
+                    nombreBase
+                );
+
+            XLSX.utils.book_append_sheet(
+                workbookDestino,
+                workbookFuente.Sheets[sheetName],
+                nombreDestino
+            );
+
+        }
+    );
+}
+
 function generarWorkbookConConciliacion() {
 
     const nuevoWorkbook = XLSX.utils.book_new();
 
-    // Copiar todas las hojas originales
-    workbook.SheetNames.forEach(sheetName => {
+    const codigo =
+        document
+            .getElementById('selectRestaurante')
+            ?.selectedOptions[0]
+            ?.dataset?.codigo;
 
-        const sheet = workbook.Sheets[sheetName];
+    const esTacoBell =
+        codigo === 'taco-bell';
 
-        XLSX.utils.book_append_sheet(
-            nuevoWorkbook,
-            sheet,
-            sheetName
-        );
+    anexarHojasFuente(
+        nuevoWorkbook,
+        salesWorkbook || workbook,
+        {
+            omitirGeneradas: true,
+            renombrar: (sheetName, index) =>
+                esTacoBell && index === 0
+                    ? 'Sales Concepts'
+                    : sheetName
+        }
+    );
 
-    });
+    anexarHojasFuente(
+        nuevoWorkbook,
+        salesDetailWorkbook,
+        {
+            omitirGeneradas: true,
+            renombrar: (sheetName, index) =>
+                esTacoBell && index === 0
+                    ? 'Sales Lone Star'
+                    : sheetName
+        }
+    );
+
+    anexarHojasFuente(
+        nuevoWorkbook,
+        ebtWorkbook,
+        {
+            omitirGeneradas: true,
+            renombrar: (sheetName, index) =>
+                esTacoBell && index === 0
+                    ? 'EBT AMOUNTS'
+                    : sheetName
+        }
+    );
 
     // Crear datos de conciliación usando configuración dinámica
     const columnas =
-        currentRestaurantConfig?.tableColumns || [];
-
-    const datosConciliacion =
-        datosExtraidos.map(row => {
-
-            const obj = {};
-
-            columnas.forEach(col => {
-
-                obj[col.label] =
-                    row[col.key];
-
-            });
-
-            return obj;
-
-        });
+        currentRestaurantConfig?.conciliationColumns ||
+        currentRestaurantConfig?.tableColumns ||
+        [];
 
     // ======================================
     // CONCILIATION
     // ======================================
 
     const wsConciliation =
-        XLSX.utils.json_to_sheet(
-            datosConciliacion
+        XLSX.utils.aoa_to_sheet(
+            [
+                columnas.map(col => col.label),
+                ...datosExtraidos.map(row =>
+                    columnas.map(col =>
+                        row[col.key] ?? ''
+                    )
+                )
+            ]
         );
 
     XLSX.utils.book_append_sheet(
@@ -2108,15 +2536,61 @@ function generarWorkbookConConciliacion() {
         'Conciliation'
     );
 
+    if (codigo === 'burger-king') {
+
+        if (burgerKingTaxAnalysisData?.length) {
+
+            XLSX.utils.book_append_sheet(
+                nuevoWorkbook,
+                XLSX.utils.json_to_sheet(
+                    burgerKingTaxAnalysisData
+                ),
+                'Tax Analysis'
+            );
+
+        }
+
+        if (burgerKingDiscrepanciesData?.length) {
+
+            XLSX.utils.book_append_sheet(
+                nuevoWorkbook,
+                XLSX.utils.json_to_sheet(
+                    burgerKingDiscrepanciesData
+                ),
+                'Discrepancies'
+            );
+
+        }
+
+        if (burgerKingTemplateCsvData?.length) {
+
+            XLSX.utils.book_append_sheet(
+                nuevoWorkbook,
+                XLSX.utils.json_to_sheet(
+                    burgerKingTemplateCsvData
+                ),
+                'Template to CSV'
+            );
+
+        }
+
+        return nuevoWorkbook;
+    }
+
     // ======================================
     // TAX REVIEW
     // ======================================
 
-    if (taxReviewData?.length) {
+    const taxReviewExportData =
+        codigo === 'popeyes'
+            ? popeyesTaxReviewData
+            : taxReviewData;
+
+    if (taxReviewExportData?.length) {
 
         const wsTaxReview =
             XLSX.utils.json_to_sheet(
-                taxReviewData
+                taxReviewExportData
             );
 
         XLSX.utils.book_append_sheet(
@@ -2131,17 +2605,24 @@ function generarWorkbookConConciliacion() {
     // DAILY SALES RED
     // ======================================
 
-    if (dailySalesREDData?.length) {
+    const dailySalesRedExportData =
+        codigo === 'popeyes'
+            ? popeyesDailySalesRedData
+            : dailySalesREDData;
+
+    if (dailySalesRedExportData?.length) {
 
         const wsDailySalesRED =
             XLSX.utils.json_to_sheet(
-                dailySalesREDData
+                dailySalesRedExportData
             );
 
         XLSX.utils.book_append_sheet(
             nuevoWorkbook,
             wsDailySalesRED,
-            'Daily Sales RED'
+            codigo === 'popeyes'
+                ? 'Daily Sales Popeyes Red'
+                : 'Daily Sales RED'
         );
 
     }
@@ -2169,17 +2650,24 @@ function generarWorkbookConConciliacion() {
     // DAILY SALES 03-14
     // ======================================
 
-    if (dailySales0314Data?.length) {
+    const dailySales0314ExportData =
+        codigo === 'popeyes'
+            ? popeyesDailySales0404Data
+            : dailySales0314Data;
+
+    if (dailySales0314ExportData?.length) {
 
         const ws0314 =
             XLSX.utils.json_to_sheet(
-                dailySales0314Data
+                dailySales0314ExportData
             );
 
         XLSX.utils.book_append_sheet(
             nuevoWorkbook,
             ws0314,
-            'Daily Sales 03-14'
+            codigo === 'popeyes'
+                ? 'Daily Sales Popeyes 04-04-2026'
+                : 'Daily Sales 03-14'
         );
 
     }
@@ -2225,6 +2713,34 @@ function renderActiveTab() {
         )
             ?.selectedOptions?.[0]
             ?.dataset?.codigo;
+
+    // =====================
+    // BURGER KING
+    // =====================
+
+    if (codigo === 'burger-king') {
+
+        switch (activeTab) {
+
+            case 'burgerKingConciliation':
+                renderConciliationBurgerKing();
+                break;
+
+            case 'burgerKingTaxAnalysis':
+                renderTaxAnalysisBurgerKing();
+                break;
+
+            case 'burgerKingDiscrepancies':
+                renderDiscrepanciesBurgerKing();
+                break;
+
+            case 'burgerKingTemplateCsv':
+                renderTemplateCsvBurgerKing();
+                break;
+        }
+
+        return;
+    }
 
     // =====================
     // POPEYES
@@ -2339,6 +2855,90 @@ function descargarCSV(data, nombreArchivo) {
 }
 
 function exportarTabActualCSV() {
+
+    const codigo =
+        document
+            .getElementById('selectRestaurante')
+            ?.selectedOptions?.[0]
+            ?.dataset?.codigo;
+
+    if (codigo === 'popeyes') {
+
+        switch (activeTab) {
+
+            case 'conciliation':
+                descargarCSV(
+                    popeyesConciliationData,
+                    'PopeyesConciliation'
+                );
+                break;
+
+            case 'taxReview':
+                descargarCSV(
+                    popeyesTaxReviewData,
+                    'PopeyesTaxReview'
+                );
+                break;
+
+            case 'dailySalesRed':
+                descargarCSV(
+                    popeyesDailySalesRedData,
+                    'DailySalesPopeyesRed'
+                );
+                break;
+
+            case 'dailySales0404':
+                descargarCSV(
+                    popeyesDailySales0404Data,
+                    'DailySalesPopeyes0404'
+                );
+                break;
+
+            default:
+                alert('Selecciona una pestana');
+        }
+
+        return;
+    }
+
+    if (codigo === 'burger-king') {
+
+        switch (activeTab) {
+
+            case 'burgerKingConciliation':
+                descargarCSV(
+                    burgerKingConciliationData,
+                    'BurgerKingConciliation'
+                );
+                break;
+
+            case 'burgerKingTaxAnalysis':
+                descargarCSV(
+                    burgerKingTaxAnalysisData,
+                    'BurgerKingTaxAnalysis'
+                );
+                break;
+
+            case 'burgerKingDiscrepancies':
+                descargarCSV(
+                    burgerKingDiscrepanciesData,
+                    'BurgerKingDiscrepancies'
+                );
+                break;
+
+            case 'burgerKingTemplateCsv':
+                descargarCSV(
+                    burgerKingTemplateCsvData,
+                    'BurgerKingTemplateToCSV'
+                );
+                break;
+
+            default:
+                alert('Selecciona una pestana');
+        }
+
+        return;
+    }
 
     switch (activeTab) {
 
