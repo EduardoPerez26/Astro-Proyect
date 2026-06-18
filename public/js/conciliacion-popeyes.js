@@ -1519,7 +1519,9 @@ function renderArrayToMainTable(
                 Number.isFinite(valorNumericoOS)
             ) {
                 const tieneDiferencia =
-                    Math.abs(valorNumericoOS) > 0.01;
+                    typeof esDiferenciaOSValor === 'function'
+                        ? esDiferenciaOSValor(valorNumericoOS)
+                        : Math.abs(valorNumericoOS) > 0.005;
 
                 td.classList.add(
                     tieneDiferencia
@@ -1528,7 +1530,7 @@ function renderArrayToMainTable(
                 );
 
                 if (tieneDiferencia) {
-                    td.title = 'Diferencia OS detectada';
+                    td.title = 'Diferencia O/S detectada';
                 }
             }
 

@@ -239,5 +239,116 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
             :global(.restaurant-control-row) { grid-template-columns: 1fr; gap: 13px; }
             :global(.save-restaurant-state) { width: 100%; justify-self: stretch; }
         }
+
+        /* Apariencia de control contable */
+        .operations-header {
+            align-items: center;
+            padding: 20px 22px;
+            border: 1px solid #234864;
+            border-radius: 6px;
+            background: #102a43;
+            box-shadow: none;
+        }
+
+        .operations-eyebrow {
+            margin-bottom: 7px;
+            color: #9fc3df;
+            font-size: 9px;
+        }
+
+        .operations-header h1 {
+            font-family: 'Inter', sans-serif;
+            font-size: 25px;
+            font-weight: 700;
+            letter-spacing: -.015em;
+        }
+
+        .operations-header p {
+            margin-top: 7px;
+            color: #c7d8e6;
+            font-size: 11px;
+            line-height: 1.55;
+        }
+
+        .operations-refresh {
+            min-height: 34px;
+            padding: 0 11px;
+            border-radius: 4px;
+            font-size: 10px;
+        }
+
+        .operations-summary {
+            gap: 10px;
+            margin: 14px 0;
+        }
+
+        .operations-summary article {
+            gap: 10px;
+            min-height: 64px;
+            padding: 12px 14px;
+            border-radius: 5px;
+            box-shadow: none;
+        }
+
+        .summary-icon {
+            width: 34px;
+            height: 34px;
+            flex-basis: 34px;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+
+        .operations-summary strong { font-size: 22px; }
+        .operations-summary span:not(.summary-icon) { font-size: 9px; letter-spacing: .05em; }
+
+        .operations-panel {
+            border-color: #cfd9e3;
+            border-radius: 5px;
+            box-shadow: none;
+        }
+
+        .operations-panel-heading {
+            padding: 14px 16px;
+            background: #f5f7fa;
+        }
+
+        .operations-panel-heading h2 { font-size: 14px; }
+        .operations-panel-heading p { margin-top: 3px; font-size: 10px; }
+        .operations-panel-heading > span { font-size: 9px; }
+        .restaurant-control-list { padding: 0 16px; }
+
+        :global(.restaurant-control-row) {
+            gap: 14px;
+            padding: 14px 0;
+        }
+
+        :global(.restaurant-mark) {
+            width: 36px;
+            height: 36px;
+            flex-basis: 36px;
+            border-radius: 4px;
+        }
+
+        :global(.restaurant-identity strong) { font-size: 12px; }
+        :global(.restaurant-identity small) { margin-top: 2px; font-size: 9px; }
+        :global(.restaurant-state-badge) {
+            gap: 5px;
+            padding: 5px 7px;
+            border-radius: 3px;
+            font-size: 9px;
+        }
+
+        :global(.restaurant-state-copy) { font-size: 10px; }
+        :global(.toggle-restaurant-state) {
+            min-width: 112px;
+            min-height: 34px;
+            padding: 0 10px;
+            border-radius: 4px;
+            font-size: 10px;
+        }
+
+        @media (max-width: 760px) {
+            .operations-header { padding: 18px; }
+        }
     </style>
 </DashboardLayout>

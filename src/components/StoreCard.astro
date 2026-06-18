@@ -324,4 +324,83 @@ const {
         .store-card-footer { align-items: flex-start; flex-direction: column; }
         .store-action, .store-action-disabled { width: 100%; justify-content: center; }
     }
+
+    /* Tarjeta de modulo contable */
+    .store-card {
+        min-height: 318px;
+        border-color: #d3dde7;
+        border-radius: 6px;
+        box-shadow: none;
+    }
+
+    .store-card:hover {
+        transform: none;
+        border-color: #9fb2c4;
+        box-shadow: 0 3px 10px rgba(8, 31, 51, .07);
+    }
+
+    .store-card-accent { height: 3px; }
+    .store-card-body {
+        min-height: 315px;
+        padding: 18px;
+    }
+
+    .store-brand-mark {
+        width: 46px;
+        height: 46px;
+        flex-basis: 46px;
+        border-radius: 5px;
+        background: #f5f7fa;
+        box-shadow: none;
+    }
+
+    .store-brand-mark img { width: 30px; height: 30px; }
+    .store-status {
+        gap: 5px;
+        padding: 4px 7px;
+        border-radius: 3px;
+        font-size: 9px;
+        letter-spacing: .055em;
+    }
+
+    .store-card-copy { padding: 18px 0 14px; }
+    .store-card-kicker,
+    .store-requirements-label { font-size: 9px; letter-spacing: .11em; }
+
+    .store-card-copy h2 {
+        margin: 6px 0 6px;
+        font-family: 'Inter', sans-serif;
+        font-size: 21px;
+        font-weight: 700;
+    }
+
+    .store-card-copy p { font-size: 12px; line-height: 1.55; }
+    .store-requirements {
+        padding: 11px;
+        border-radius: 4px;
+        background: #f6f8fa;
+    }
+
+    .store-file-list { gap: 5px; margin-top: 8px; }
+    .store-file-list span {
+        gap: 5px;
+        padding: 4px 6px;
+        border-radius: 3px;
+        font-size: 10px;
+    }
+
+    .store-card-footer { padding-top: 14px; }
+    .store-file-count { font-size: 10px; }
+    .store-action,
+    .store-action-disabled {
+        min-height: 34px;
+        padding: 0 11px;
+        border-radius: 4px;
+        font-size: 10px;
+    }
+
+    .store-card-disabled,
+    .store-card-disabled:hover {
+        box-shadow: none;
+    }
 </style>

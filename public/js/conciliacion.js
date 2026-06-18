@@ -1698,11 +1698,31 @@ function generarConciliacionDesdeTemplate() {
 
 
 
+function obtenerCodigoRestauranteActual() {
+    return document
+        .getElementById('selectRestaurante')
+        ?.selectedOptions?.[0]
+        ?.dataset?.codigo || '';
+}
+
 function esColumnaOS(columna) {
-    const clave = String(columna?.key || '')
+    const codigo = obtenerCodigoRestauranteActual();
+    const claveOriginal = String(columna?.key || '');
+    const etiquetaOriginal = String(columna?.label || '').trim();
+
+    // Taco Bell tiene dos columnas distintas: "O/S" (oS) y "OS" (os).
+    // Solo la primera representa la diferencia que debe auditarse.
+    if (codigo === 'taco-bell') {
+        return (
+            claveOriginal === 'oS' ||
+            etiquetaOriginal.toUpperCase() === 'O/S'
+        );
+    }
+
+    const clave = claveOriginal
         .toLowerCase()
         .replace(/[^a-z]/g, '');
-    const etiqueta = String(columna?.label || '')
+    const etiqueta = etiquetaOriginal
         .toLowerCase()
         .replace(/[^a-z]/g, '');
 
@@ -1716,15 +1736,25 @@ function esColumnaOS(columna) {
 }
 
 function obtenerValoresOS(row) {
-    return ['oS', 'os', 'osSlash', 'overShort']
+    const codigo = obtenerCodigoRestauranteActual();
+    const claves = codigo === 'taco-bell'
+        ? ['oS']
+        : ['oS', 'os', 'osSlash', 'overShort'];
+
+    return claves
         .filter(key => row?.[key] !== undefined)
         .map(key => Number(row[key]))
         .filter(Number.isFinite);
 }
 
+function esDiferenciaOSValor(valor) {
+    const numero = Number(valor);
+    return Number.isFinite(numero) && Math.abs(numero) > 0.005;
+}
+
 function tieneDiferenciaOS(row) {
     return obtenerValoresOS(row)
-        .some(valor => Math.abs(valor) > 0.01);
+        .some(esDiferenciaOSValor);
 }
 
 function actualizarResumen() {
@@ -1792,8 +1822,8 @@ function actualizarResumen() {
 
     if (statusMeta) {
         statusMeta.textContent = hayDiferenciasOS
-            ? `${diferenciasOS} tienda${diferenciasOS === 1 ? '' : 's'} con OS`
-            : 'OS balanceado';
+            ? `${diferenciasOS} tienda${diferenciasOS === 1 ? '' : 's'} con O/S`
+            : 'O/S balanceado';
     }
 
     if (statusIcon) {
@@ -2270,7 +2300,7 @@ function renderTablaSucursales() {
                 Number.isFinite(valorNumericoOS)
             ) {
                 const tieneDiferencia =
-                    Math.abs(valorNumericoOS) > 0.01;
+                    esDiferenciaOSValor(valorNumericoOS);
 
                 td.classList.add(
                     tieneDiferencia
@@ -2279,7 +2309,7 @@ function renderTablaSucursales() {
                 );
 
                 if (tieneDiferencia) {
-                    td.title = 'Diferencia OS detectada';
+                    td.title = 'Diferencia O/S detectada';
                 }
             }
 

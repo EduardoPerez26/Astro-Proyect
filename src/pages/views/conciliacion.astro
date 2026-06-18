@@ -7,10 +7,10 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
         <!-- Header -->
         <div class="page-header">
             <div class="page-header-info">
-                <h1>Conciliacion de Ventas</h1>
+                <h1>Libro de conciliación de ventas</h1>
                 <p>
-                    Taco Bell usa archivos adicionales; Popeyes usa solo el
-                    archivo principal.
+                    Carga fuentes operativas, valida diferencias y prepara el
+                    asiento para revisión contable.
                 </p>
             </div>
         </div>
@@ -253,7 +253,7 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
                     </div>
                     <div class="summary-info">
                         <span class="summary-value summary-status-value" id="osDifferenceStatus">Sin diferencias</span>
-                        <span class="summary-label" id="osDifferenceMeta">OS balanceado</span>
+                        <span class="summary-label" id="osDifferenceMeta">O/S balanceado</span>
                     </div>
                 </div>
                 <div class="summary-card danger">
@@ -441,7 +441,7 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
 
         .section-heading p {
             margin: 3px 0 0;
-            font-size: 13px;
+            font-size: 14px;
             color: var(--gray-500);
         }
 
@@ -1121,7 +1121,7 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
             border-bottom: 2px solid #081f33;
             letter-spacing: .035em;
             text-transform: uppercase;
-            font-size: 10px;
+            font-size: 11px;
         }
 
         .conciliacion-table thead th.os-column-header {
@@ -1248,6 +1248,166 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
             .conciliacion-actions .btn {
                 width: 100%;
             }
+        }
+
+        /* Densidad y jerarquia de sistema contable */
+        .conciliacion-config { margin-bottom: 18px; }
+        .section-heading {
+            gap: 9px;
+            margin-bottom: 8px;
+        }
+
+        .section-heading h2 {
+            color: #102a43;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .section-heading p {
+            margin-top: 2px;
+            font-size: 10px;
+        }
+
+        .step-badge {
+            width: 24px;
+            height: 24px;
+            border-radius: 3px;
+            color: #fff;
+            background: #102a43;
+            font-size: 10px;
+        }
+
+        .mode-badge {
+            min-height: 25px;
+            padding: 4px 8px;
+            border-radius: 3px;
+            font-size: 10px;
+        }
+
+        .config-card {
+            padding: 14px 16px;
+            border-radius: 4px;
+            box-shadow: none;
+        }
+
+        .config-row { gap: 12px; }
+        .form-group { gap: 4px; }
+        .form-group label {
+            color: #52667a;
+            font-size: 9px;
+            font-weight: 800;
+            letter-spacing: .05em;
+            text-transform: uppercase;
+        }
+
+        .form-select,
+        .form-input { padding: 7px 10px; font-size: 12px; }
+
+        .upload-section {
+            margin-bottom: 18px;
+            padding: 14px 16px;
+            border-radius: 4px;
+            background: #fff;
+            box-shadow: none;
+        }
+
+        .multi-upload-container {
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .upload-card {
+            padding: 12px;
+            border-radius: 4px !important;
+            box-shadow: none !important;
+        }
+
+        .upload-card:hover {
+            border-color: #9fb2c4;
+            box-shadow: none;
+        }
+
+        .upload-card-title {
+            min-height: 26px;
+            margin-bottom: 8px;
+            font-size: 12px;
+        }
+
+        .upload-pill {
+            padding: 3px 6px;
+            border-radius: 3px;
+            font-size: 9px;
+        }
+
+        .upload-card input[type="file"] {
+            padding: 8px;
+            border-radius: 3px;
+            font-size: 11px;
+        }
+
+        .upload-date-filter { margin-top: 7px; }
+
+        .results-summary {
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .summary-card {
+            gap: 10px;
+            min-height: 70px;
+            padding: 11px 12px;
+            border-radius: 4px;
+            box-shadow: none;
+        }
+
+        .summary-icon {
+            width: 34px;
+            height: 34px;
+            border-radius: 3px;
+            font-size: 14px;
+        }
+
+        .summary-value { font-size: 21px; }
+        .summary-status-value { font-size: 13px; }
+        .summary-label {
+            margin-top: 3px;
+            font-size: 9px;
+            font-weight: 800;
+            letter-spacing: .04em;
+            text-transform: uppercase;
+        }
+
+        .filters-container {
+            gap: 12px;
+            padding: 12px 14px;
+            border-radius: 4px;
+            box-shadow: none;
+        }
+
+        .sheet-tabs-panel { margin-bottom: 12px; }
+        .conciliacion-table thead th {
+            padding: 8px 10px;
+            color: #fff;
+            background: #102a43;
+            font-size: 10px;
+        }
+
+        .conciliacion-table td { padding: 7px 10px; font-size: 11px; }
+        .notes-section {
+            margin-top: 16px;
+            padding: 14px 16px;
+            border-radius: 4px;
+            box-shadow: none;
+        }
+
+        .conciliacion-actions { gap: 8px; margin-top: 0; }
+
+        @media (max-width: 1180px) {
+            .results-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        }
+
+        @media (max-width: 720px) {
+            .results-summary { grid-template-columns: 1fr; }
         }
     </style>
 </DashboardLayout>

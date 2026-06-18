@@ -1082,6 +1082,13 @@ function renderArrayToMainTable(data) {
 
         th.textContent = col;
 
+        if (
+            typeof esColumnaOS === 'function' &&
+            esColumnaOS({ key: col, label: col })
+        ) {
+            th.classList.add('os-column-header');
+        }
+
         trHead.appendChild(th);
 
     });
@@ -1098,8 +1105,38 @@ function renderArrayToMainTable(data) {
             const td =
                 document.createElement('td');
 
-            td.textContent =
-                row[col] ?? '';
+            const valor = row[col];
+            const columnaOS =
+                typeof esColumnaOS === 'function' &&
+                esColumnaOS({ key: col, label: col });
+            const valorNumericoOS = Number(valor);
+
+            if (typeof valor === 'number') {
+                td.textContent = valor.toLocaleString('en-US', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                });
+                td.classList.add('text-right');
+            } else {
+                td.textContent = valor ?? '';
+            }
+
+            if (columnaOS && Number.isFinite(valorNumericoOS)) {
+                const tieneDiferencia =
+                    typeof esDiferenciaOSValor === 'function'
+                        ? esDiferenciaOSValor(valorNumericoOS)
+                        : Math.abs(valorNumericoOS) > 0.005;
+
+                td.classList.add(
+                    tieneDiferencia
+                        ? 'os-difference'
+                        : 'os-balanced'
+                );
+
+                if (tieneDiferencia) {
+                    td.title = 'Diferencia O/S detectada';
+                }
+            }
 
             tr.appendChild(td);
 
