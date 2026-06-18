@@ -346,13 +346,82 @@ function initEventListeners() {
                     const buffer =
                         await file.arrayBuffer();
 
-                    salesWorkbook =
-                        XLSX.read(
-                            buffer,
-                            {
-                                type: 'array'
-                            }
-                        );
+                    const codigo =
+                        document
+                            .getElementById('selectRestaurante')
+                            ?.selectedOptions[0]
+                            ?.dataset?.codigo;
+
+                    try {
+
+                        salesWorkbook = XLSX.read(buffer, {
+                            type: 'array',
+                            raw: false,
+                            cellDates: true
+                        });
+
+                    } catch (error) {
+
+                        if (codigo === 'burger-king') {
+
+                            console.warn(
+                                'Burger King no se pudo leer como Excel. Intentando leer como texto CSV...',
+                                error
+                            );
+
+                            const texto = await file.text();
+
+                            const separador =
+                                texto.includes('\t')
+                                    ? '\t'
+                                    : texto.includes(';')
+                                        ? ';'
+                                        : ',';
+
+                            const filas = texto
+                                .split(/\r?\n/)
+                                .filter(linea => linea.trim() !== '')
+                                .map(linea =>
+                                    linea
+                                        .split(separador)
+                                        .map(celda =>
+                                            celda
+                                                .replace(/^"|"$/g, '')
+                                                .trim()
+                                        )
+                                );
+
+                            const hoja = XLSX.utils.aoa_to_sheet(filas);
+
+                            salesWorkbook = XLSX.utils.book_new();
+
+                            XLSX.utils.book_append_sheet(
+                                salesWorkbook,
+                                hoja,
+                                'Sales POS'
+                            );
+
+                        } else {
+
+                            console.error(error);
+
+                            Swal.fire(
+                                'Archivo no compatible',
+                                'Este archivo viene protegido o con formato no compatible.',
+                                'error'
+                            );
+
+                            setUploadCardStatus(
+                                'salesFile',
+                                'error',
+                                'Archivo protegido o formato no compatible'
+                            );
+
+                            return;
+
+                        }
+
+                    }
 
 
 
@@ -384,14 +453,9 @@ function initEventListeners() {
                         sheetName
                         ];
 
-                    const codigo =
-                        document
-                            .getElementById('selectRestaurante')
-                            ?.selectedOptions[0]
-                            ?.dataset?.codigo;
 
                     const headersRequeridos =
-                        codigo === 'popeyes'
+                        ['popeyes', 'burger-king'].includes(codigo)
                             ? [
                                 'Accounting Date',
                                 'Unit Number',
@@ -403,7 +467,7 @@ function initEventListeners() {
                             ];
 
                     const campoFecha =
-                        codigo === 'popeyes'
+                        ['popeyes', 'burger-king'].includes(codigo)
                             ? 'Accounting Date'
                             : 'Date';
 
@@ -966,7 +1030,8 @@ function renderRestaurantes() {
         .filter(r =>
             [
                 'taco-bell',
-                'popeyes'
+                'popeyes',
+                'burger-king'
             ].includes(r.codigo)
         )
         .forEach(r => {
@@ -1086,11 +1151,28 @@ async function onRestauranteChange() {
             'popeyesTabs'
         );
 
+    const burgerKingTabs =
+        document.getElementById(
+            'burgerKingTabs'
+        );
+
     if (tacoTabs)
         tacoTabs.style.display = 'none';
 
     if (popeyesTabs)
         popeyesTabs.style.display = 'none';
+
+    if (burgerKingTabs)
+        burgerKingTabs.style.display = 'none';
+
+    if (codigo === 'burger-king') {
+
+        activeTab = 'conciliation';
+
+        if (burgerKingTabs)
+            burgerKingTabs.style.display = 'flex';
+
+    }
 
     if (codigo === 'taco-bell') {
 
@@ -1111,7 +1193,7 @@ async function onRestauranteChange() {
     }
 
     document
-        .querySelectorAll('#tacoBellTabs .tab-btn, #popeyesTabs .tab-btn')
+        .querySelectorAll('#tacoBellTabs .tab-btn, #popeyesTabs .tab-btn, #burgerKingTabs .tab-btn')
         .forEach(btn => {
 
             btn.classList.toggle(
@@ -1593,6 +1675,9 @@ function generarConciliacionDesdeTemplate() {
 
         case 'popeyes':
             return procesarPopeyes();
+
+        case 'burger-king':
+            return generarConciliacionBurgerKing();
 
         default:
 
@@ -2958,6 +3043,42 @@ function renderActiveTab() {
         return;
     }
 
+
+    if (codigo === 'burger-king') {
+
+        switch (activeTab) {
+
+            case 'summary':
+                renderBurgerKingSummary();
+                break;
+
+            case 'conciliation':
+            case 'dailySales':
+                renderBurgerKingConciliation();
+                break;
+
+            case 'taxAnalysis':
+            case 'taxReview':
+                renderBurgerKingTaxAnalysis();
+                break;
+
+            case 'discrepancies':
+                renderBurgerKingDiscrepancies();
+                break;
+
+            case 'templateCsv':
+            case 'template':
+                renderBurgerKingTemplateCsv();
+                break;
+
+            default:
+                renderBurgerKingConciliation();
+                break;
+        }
+
+        return;
+    }
+
     // =====================
     // TACO BELL
     // =====================
@@ -3103,6 +3224,58 @@ function exportarTabActualCSV() {
             .getElementById('selectRestaurante')
             ?.selectedOptions?.[0]
             ?.dataset?.codigo;
+
+    if (codigo === 'burger-king') {
+
+        switch (activeTab) {
+
+            case 'summary':
+                descargarCSV(
+                    burgerKingSummaryData,
+                    'BurgerKingSummary'
+                );
+                break;
+
+            case 'conciliation':
+            case 'dailySales':
+                descargarCSV(
+                    burgerKingConciliationData,
+                    'BurgerKingConciliation'
+                );
+                break;
+
+            case 'taxAnalysis':
+            case 'taxReview':
+                descargarCSV(
+                    burgerKingTaxAnalysisData,
+                    'BurgerKingTaxAnalysis'
+                );
+                break;
+
+            case 'discrepancies':
+                descargarCSV(
+                    burgerKingDiscrepanciesData,
+                    'BurgerKingDiscrepancies'
+                );
+                break;
+
+            case 'templateCsv':
+            case 'template':
+                descargarCSV(
+                    burgerKingTemplateCsvData,
+                    'BurgerKingTemplateToCSV'
+                );
+                break;
+
+            default:
+                descargarCSV(
+                    burgerKingConciliationData,
+                    'BurgerKingConciliation'
+                );
+        }
+
+        return;
+    }
 
     if (codigo === 'popeyes') {
 

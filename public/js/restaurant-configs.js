@@ -115,69 +115,151 @@ window.RestaurantConfigs = {
         tableColumns: [
 
             { key: 'store', label: 'Store' },
-            { key: 'unitNumber', label: 'Unit Number' },
-            { key: 'foodSalesGross', label: 'Food Sales - Gross' },
-            { key: 'beverageSales', label: 'Revenue - Beverage Sales' },
-            { key: 'nonFoodSales', label: 'Non-Food Sales' },
+            { key: 'unitName', label: 'Unit Name' },
+
+            { key: 'foodSales', label: 'Food Sales - Gross' },
+            { key: 'bevSales', label: 'Revenue - Beverage Sales' },
+            { key: 'nonFood', label: 'Non-Food Sales' },
+
             { key: 'coupons', label: 'Coupons' },
+
             { key: 'surcharge', label: 'Surcharge' },
             { key: 'bagCharge', label: 'Bag Charge' },
-            { key: 'totalWlTips', label: 'Total WL Tips' },
-            { key: 'discountPercentOff', label: 'Discount - % Off' },
-            { key: 'discountDollarOff', label: 'Discount - $ Off' },
-            { key: 'discountBogo', label: 'Discount - BOGO' },
-            { key: 'discountCompetitorCpn', label: 'Discount - Competitor Cpn' },
-            { key: 'discountEmployee', label: 'Discount - Employee' },
-            { key: 'discountFreeItem', label: 'Discount - Free Item' },
-            { key: 'discountFriendsFamily', label: 'Discount - Friends/Family' },
-            { key: 'discountGuestRecovery', label: 'Discount - Guest Recovery' },
-            { key: 'discountLoyalty', label: 'Discount - Loyalty' },
-            { key: 'discountManagerMeal', label: 'Discount - Manager Meal' },
-            { key: 'discountMilitary', label: 'Discount - Military' },
-            { key: 'discountOther', label: 'Discount - Other' },
-            { key: 'discountPolice', label: 'Discount - Police' },
-            { key: 'discountSenior', label: 'Discount - Senior' },
-            { key: 'discountVendor', label: 'Discount - Vendor' },
+
+            { key: 'wlTips', label: 'Total WL Tips' },
+
+            { key: 'discPctOff', label: 'Discount - % Off' },
+            { key: 'discDollarOff', label: 'Discount - $ Off' },
+            { key: 'discBogo', label: 'Discount - BOGO' },
+            { key: 'discCompetitor', label: 'Discount - Competitor Cpn' },
+            { key: 'discEmployee', label: 'Discount - Employee' },
+            { key: 'discFreeItem', label: 'Discount - Free Item' },
+            { key: 'discFriends', label: 'Discount - Friends/Family' },
+            { key: 'discGuestRecovery', label: 'Discount - Guest Recovery' },
+            { key: 'discLoyalty', label: 'Discount - Loyalty' },
+            { key: 'discManager', label: 'Discount - Manager Meal' },
+            { key: 'discMilitary', label: 'Discount - Military' },
+            { key: 'discOther', label: 'Discount - Other' },
+            { key: 'discPolice', label: 'Discount - Police' },
+            { key: 'discSenior', label: 'Discount - Senior' },
+            { key: 'discVendor', label: 'Discount - Vendor' },
+
             { key: 'netSales', label: 'Net Sales' },
+
             { key: 'salesTax', label: 'Sales TAX' },
+
             { key: 'gcSold', label: 'GC Sold' },
+
             { key: 'paidOut', label: 'Paid Out' },
+
             { key: 'donations', label: 'Donations' },
-            { key: 'donationDiscount', label: 'Donat Disc' },
+
+            { key: 'donationDiscounts', label: 'Donat Disc' },
+
             { key: 'totalRevenue', label: 'Total Revenue' },
+
             { key: 'amex', label: 'AMEX' },
             { key: 'visa', label: 'Visa' },
-            { key: 'mc', label: 'MC' },
+            { key: 'mastercard', label: 'MC' },
             { key: 'discover', label: 'Discover' },
-            { key: 'ebtFoodStamps', label: 'EBT - Food Stamps' },
-            { key: 'doorDashPay', label: 'Door Dash Pay' },
-            { key: 'grubHubPay', label: 'Grub Hub Pay' },
-            { key: 'uberEatsPay', label: 'Uber Eats Pay' },
-            { key: 'totalWhiteLabelPayments', label: 'Total White Label Payments' },
-            { key: 'bkAppTotal', label: 'BK App Total' },
+
+            { key: 'ebt', label: 'EBT - Food Stamps' },
+
+            { key: 'dd', label: 'Door Dash Pay' },
+            { key: 'gh', label: 'Grub Hub Pay' },
+            { key: 'uber', label: 'Uber Eats Pay' },
+
+            { key: 'wlPayments', label: 'Total White Label Payments' },
+
+            { key: 'bkApp', label: 'BK App Total' },
+
             { key: 'gcRedeem', label: 'GC Redeem' },
-            { key: 'totalCashDeposit', label: 'Total Cash Deposit' },
-            { key: 'instorePayments', label: 'Instore Payments' },
+
+            { key: 'cashDeposit', label: 'Total Cash Deposit' },
+
+            { key: 'instore', label: 'Instore Payments' },
+
             { key: 'paypal', label: 'Paypal' },
             { key: 'venmo', label: 'Venmo' },
+
             { key: 'kiosk', label: 'Kiosk' },
-            { key: 'totalCC', label: 'Total CC' },
+
+            { key: 'ccTotals', label: 'Total CC' },
+
             { key: 'cashExpected', label: 'Cash Expected' },
+
             { key: 'paymentsTotal', label: 'Payments Total' },
+
             { key: 'openChecks', label: 'Open Checks' },
-            { key: 'oS', label: 'O/S' }
+
+            { key: 'oS', label: 'O/S' },
+
+            { key: 'cashDifference', label: 'Difference' }
 
         ],
 
         columns: {
 
             store: 'Store',
+            unitName: 'Unit Name',
 
-            salesTax: 'Tax',
+            foodSales: 'Food Sales - Gross',
+            bevSales: 'Revenue - Beverage Sales',
+            nonFood: 'Non-Food Sales',
 
-            grossSales: 'Gross Sales',
+            coupons: 'Coupons',
 
-            netSales: 'Net Sales'
+            surcharge: 'Surcharge (Delivery Fee)',
+            bagCharge: 'BAG CHARGE',
+
+            wlTips: 'White Label Tips Total',
+
+            salesTax: 'Taxes (POS)',
+
+            donations: 'Donations (posting)',
+            gcSold: 'Gift Card Sold',
+            paidOut: 'Paid Out - Petty Cash',
+
+            donationDiscounts: 'Donation Discounts',
+
+            discPctOff: 'Discount - % Off',
+            discDollarOff: 'Discount - $ Off',
+            discBogo: 'Discount - BOGO',
+            discCompetitor: 'Discount - Competitor Cpn',
+            discEmployee: 'Discount - Employee',
+            discFreeItem: 'Discount - Free Item',
+            discFriends: 'Discount - Friends/Family',
+            discGuestRecovery: 'Discount - Guest Recovery',
+            discLoyalty: 'Discount - Loyalty',
+            discManager: 'Discount - Manager Meal',
+            discMilitary: 'Discount - Military',
+            discOther: 'Discount - Other',
+            discPolice: 'Discount - Police',
+            discSenior: 'Discount - Senior',
+            discVendor: 'Discount - Vendor',
+
+            amex: 'AMEX',
+            visa: 'Visa',
+            mastercard: 'MC',
+            discover: 'Discover',
+
+            ebt: 'EBT',
+
+            dd: 'Door Dash Pay',
+            gh: 'Grub Hub Pay',
+            uber: 'Uber Eats Pay',
+
+            gcRedeem: 'GC Redeem',
+
+            cashDeposit: 'Total Cash Deposit',
+
+            kiosk: 'Total Kiosk Payments',
+            instore: 'Total Instore Payments',
+
+            paypal: 'PayPal',
+            venmo: 'Venmo',
+
+            openChecks: 'Open Checks'
 
         }
 
