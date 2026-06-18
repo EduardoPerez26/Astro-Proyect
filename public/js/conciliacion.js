@@ -3039,9 +3039,13 @@ function serializarValorCSV(valor, columna) {
         }
     }
 
-    const texto = String(valor).replace(/"/g, '""');
+    const texto = String(valor);
 
-    return `"${texto}"`;
+    if (!/[",\r\n]/.test(texto)) {
+        return texto;
+    }
+
+    return `"${texto.replace(/"/g, '""')}"`;
 }
 
 function descargarCSV(data, nombreArchivo) {

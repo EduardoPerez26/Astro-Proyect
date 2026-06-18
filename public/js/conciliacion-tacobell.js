@@ -7,6 +7,56 @@ let dailySales0314Data = [];
 let dailySales0310Data = [];
 let activeTab = 'dailySales';
 
+const TACO_BELL_DEPOSITOS_AL_FINAL = new Set([
+    28841,
+    28843,
+    28844,
+    28845,
+    28846,
+    30256,
+    30491,
+    36224
+]);
+
+function ordenarDepositosTacoBellAlFinal(data) {
+    const lineasRegulares = [];
+    const cashExpected = [];
+    const ebtExpected = [];
+
+    data.forEach(row => {
+        const store = Number(row.locationId);
+        const moverAlFinal =
+            TACO_BELL_DEPOSITOS_AL_FINAL.has(store);
+
+        if (
+            moverAlFinal &&
+            row.memo === 'Cash Expected Deposit'
+        ) {
+            cashExpected.push(row);
+            return;
+        }
+
+        if (
+            moverAlFinal &&
+            row.memo === 'EBT Expected Deposit'
+        ) {
+            ebtExpected.push(row);
+            return;
+        }
+
+        lineasRegulares.push(row);
+    });
+
+    return [
+        ...lineasRegulares,
+        ...cashExpected,
+        ...ebtExpected
+    ].map((row, index) => ({
+        ...row,
+        lineNo: index + 1
+    }));
+}
+
 function numeroSalesDetailTacoBell(row, campo) {
     return Number(row?.[campo] || 0);
 }
@@ -672,6 +722,11 @@ function generarDailySalesRED() {
 
     });
 
+    dailySalesREDData =
+        ordenarDepositosTacoBellAlFinal(
+            dailySalesREDData
+        );
+
 }
 function generarDailySales0314() {
     dailySales0314Data = [];
@@ -782,6 +837,11 @@ function generarDailySales0314() {
                 'CASH'
             );
     });
+
+    dailySales0314Data =
+        ordenarDepositosTacoBellAlFinal(
+            dailySales0314Data
+        );
 }
 
 function obtenerLocationId(store) {

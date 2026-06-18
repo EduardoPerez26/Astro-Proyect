@@ -25,6 +25,8 @@ const output = vm.runInContext(`
   ({
     lineNo: serializarValorCSV(1, 'lineNo'),
     journal: serializarValorCSV('SJ', 'journal'),
+    date: serializarValorCSV('06/16/2026', 'date'),
+    memo: serializarValorCSV('Cash Expected Deposit', 'memo'),
     accountNumber: serializarValorCSV('102500', 'acctNo'),
     location: serializarValorCSV(2902, 'locationId'),
     debit: serializarValorCSV(59.56, 'debit'),
@@ -39,7 +41,9 @@ console.log(JSON.stringify(output, null, 2));
 
 if (
   output.lineNo !== '1' ||
-  output.journal !== '"SJ"' ||
+  output.journal !== 'SJ' ||
+  output.date !== '06/16/2026' ||
+  output.memo !== 'Cash Expected Deposit' ||
   output.accountNumber !== '102500' ||
   output.location !== '2902' ||
   output.debit !== '59.56' ||
