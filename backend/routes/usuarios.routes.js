@@ -365,9 +365,9 @@ router.post('/', verificarToken, esAdmin, async (req, res) => {
 
         // Permisos por defecto segun rol
         const defaultPermisos = {
-            'admin': { dashboard: true, tiendas: true, documentos: true, perfil: true, permisos: true, historial: true, usuarios: true },
-            'supervisor': { dashboard: true, tiendas: true, documentos: true, perfil: true, permisos: false, historial: true, usuarios: false },
-            'usuario': { dashboard: true, tiendas: false, documentos: true, perfil: true, permisos: false, historial: false, usuarios: false }
+            'admin': { tiendas: true, documentos: true, perfil: true, permisos: true, historial: true, usuarios: true, controlRestaurantes: true },
+            'supervisor': { tiendas: true, documentos: true, perfil: true, permisos: false, historial: true, usuarios: false, controlRestaurantes: false },
+            'usuario': { tiendas: true, documentos: true, perfil: true, permisos: false, historial: false, usuarios: false, controlRestaurantes: false }
         };
 
         // Insertar usuario

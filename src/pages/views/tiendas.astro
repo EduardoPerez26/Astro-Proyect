@@ -5,81 +5,499 @@ import StoreCard from '../../components/StoreCard.astro';
 const stores = [
     {
         id: 1,
-        name: "Taco Bell",
-        description: "Conciliacion con Sales, Sales Detail y EBT",
-        icon: "fa-utensils",
-        colorClass: "primary",
-        restaurant: "taco-bell",
-        logoUrl: "https://www.tacobell.com/favicon.ico",
-        badge: "3 archivos",
+        name: 'Taco Bell',
+        description: 'Concilia ventas, medios de pago, depósitos y movimientos EBT en un flujo guiado.',
+        icon: 'fa-utensils',
+        colorClass: 'primary',
+        restaurant: 'taco-bell',
+        logoUrl: 'https://www.tacobell.com/favicon.ico',
+        badge: '3 fuentes de datos',
+        files: ['Sales', 'Sales Detail', 'EBT'],
         enabled: true
     },
     {
         id: 2,
-        name: "Burger King",
-        description: "Configuracion temporalmente fuera de conciliacion",
-        icon: "fa-burger",
-        colorClass: "warning",
-        restaurant: "burger-king",
-        logoUrl: "https://www.bk.com/favicon.ico",
-        badge: "Pausado",
+        name: 'Burger King',
+        description: 'La configuración contable está en revisión antes de habilitar nuevas conciliaciones.',
+        icon: 'fa-burger',
+        colorClass: 'warning',
+        restaurant: 'burger-king',
+        logoUrl: 'https://www.bk.com/favicon.ico',
+        badge: 'Configuración pausada',
+        files: ['Daily Sales', 'POS Detail'],
         enabled: false
     },
     {
         id: 3,
-        name: "Popeyes",
-        description: "Conciliacion con un solo archivo principal",
-        icon: "fa-drumstick-bite",
-        colorClass: "danger",
-        restaurant: "popeyes",
-        logoUrl: "https://www.popeyes.com/favicon.ico",
-        badge: "1 archivo",
+        name: 'Popeyes',
+        description: 'Procesa el archivo operativo principal y prepara las salidas contables del periodo.',
+        icon: 'fa-drumstick-bite',
+        colorClass: 'danger',
+        restaurant: 'popeyes',
+        logoUrl: 'https://www.popeyes.com/favicon.ico',
+        badge: '1 fuente de datos',
+        files: ['Daily Sales'],
         enabled: true
-    },
+    }
 ];
 ---
 
-<DashboardLayout title="Tiendas - Sistema de Inventario">
-    <section class="tab active tiendas-view" id="tiendas">
-        <!-- Page Header -->
-        <div class="page-header tiendas-header">
-            <div class="page-header-left">
-                <h1 class="page-title">Tiendas</h1>
-                <p class="page-subtitle">Elige el restaurante que vas a conciliar. Solo se muestran como activos los flujos listos para usar.</p>
+<DashboardLayout title="Tiendas">
+    <section class="stores-page" aria-labelledby="storesTitle">
+        <div class="stores-hero">
+            <div class="stores-hero-copy">
+                <span class="stores-eyebrow">
+                    <i class="fa-solid fa-layer-group" aria-hidden="true"></i>
+                    Operaciones contables
+                </span>
+                <h1 id="storesTitle">Módulos de conciliación</h1>
+                <p>
+                    Selecciona una cadena para cargar sus fuentes, revisar diferencias
+                    y preparar el archivo contable del día.
+                </p>
+            </div>
+
+            <div class="stores-hero-metrics" aria-label="Resumen de marcas">
+                <div>
+                    <strong>3</strong>
+                    <span>Marcas configuradas</span>
+                </div>
+                <div>
+                    <strong id="availableStoresMetric">2</strong>
+                    <span>Flujos disponibles</span>
+                </div>
+                <div class="stores-operational-status">
+                    <span class="status-pulse"></span>
+                    <span id="storesOperationalLabel">Operación disponible</span>
+                </div>
             </div>
         </div>
 
-        <!-- Store Cards Grid -->
-        <div class="store-grid">
-            {stores.map((store) => (
-                <StoreCard {...store} />
-            ))}
+        <div class="store-grid" id="storeGrid">
+            {stores.map((store) => <StoreCard {...store} />)}
         </div>
+
+        <div class="stores-empty" id="storesEmpty" hidden>
+            <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+            <h2>No encontramos esa marca</h2>
+            <p>Prueba con otro nombre o cambia el filtro de disponibilidad.</p>
+        </div>
+
+        <footer class="stores-footer-note">
+            <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
+            <span>Los formatos y reglas contables se aplican automáticamente según la marca seleccionada.</span>
+        </footer>
     </section>
+
     <script src="/js/config.js" is:inline></script>
+    <script is:inline>
+        document.addEventListener('DOMContentLoaded', () => {
+            const search = document.getElementById('storeSearch');
+            const cards = [...document.querySelectorAll('[data-store-card]')];
+            const filters = [...document.querySelectorAll('[data-store-filter]')];
+            const count = document.getElementById('storesCount');
+            const empty = document.getElementById('storesEmpty');
+            const availableMetric = document.getElementById('availableStoresMetric');
+            const operationalLabel = document.getElementById('storesOperationalLabel');
+            let activeFilter = 'all';
+
+            const STATE_STORAGE_KEY = 'restaurantOperationalStates';
+
+            function normalize(value) {
+                return String(value || '')
+                    .normalize('NFD')
+                    .replace(/[\u0300-\u036f]/g, '')
+                    .toLowerCase()
+                    .replace(/[^a-z0-9]/g, '');
+            }
+
+            function updateOperationalSummary() {
+                const available = cards.filter(card => card.dataset.storeStatus === 'active').length;
+                if (availableMetric) availableMetric.textContent = String(available);
+                if (operationalLabel) {
+                    operationalLabel.textContent = available === cards.length
+                        ? 'Todos los flujos disponibles'
+                        : `${cards.length - available} ${cards.length - available === 1 ? 'flujo no disponible' : 'flujos no disponibles'}`;
+                }
+            }
+
+            function applyOperationalState(card, operationalState) {
+                const state = String(operationalState?.estado || 'disponible').toLowerCase();
+                const available = state === 'disponible';
+                const badge = card.querySelector('[data-store-status-badge]');
+                const label = card.querySelector('[data-store-status-label]');
+                const description = card.querySelector('[data-store-description]');
+                const action = card.querySelector('[data-store-action]');
+                const disabledAction = card.querySelector('[data-store-disabled-action]');
+                const disabledLabel = card.querySelector('[data-store-disabled-label]');
+
+                card.dataset.storeStatus = available ? 'active' : 'paused';
+                card.classList.toggle('store-card-disabled', !available);
+                badge?.classList.toggle('is-active', available);
+                badge?.classList.toggle('is-paused', !available);
+                badge?.classList.remove('is-failure');
+
+                if (label) {
+                    label.textContent = available ? 'Disponible' : 'Deshabilitado';
+                }
+
+                if (description) {
+                    description.textContent = available
+                        ? description.dataset.defaultDescription
+                        : 'El acceso a este flujo fue deshabilitado por un administrador.';
+                }
+
+                if (action) action.hidden = !available;
+                if (disabledAction) disabledAction.hidden = available;
+                if (disabledLabel) {
+                    disabledLabel.textContent = 'Acceso deshabilitado';
+                }
+            }
+
+            function findCardForState(state) {
+                const stateCode = normalize(state.codigo || state.code || state.nombre);
+                return cards.find(card =>
+                    String(card.dataset.storeId) === String(state.id || state.restaurante_id) ||
+                    (stateCode && normalize(card.dataset.storeCode) === stateCode) ||
+                    (stateCode && normalize(card.dataset.storeName).includes(stateCode))
+                );
+            }
+
+            function applyStates(states) {
+                if (!Array.isArray(states)) return;
+                states.forEach(state => {
+                    const card = findCardForState(state);
+                    if (card) applyOperationalState(card, state);
+                });
+                updateOperationalSummary();
+                updateStores();
+            }
+
+            function loadLocalStates() {
+                try {
+                    return JSON.parse(localStorage.getItem(STATE_STORAGE_KEY) || '[]');
+                } catch {
+                    return [];
+                }
+            }
+
+            async function loadOperationalStates() {
+                const token = localStorage.getItem('token');
+                if (!token || localStorage.getItem('modoOffline')) {
+                    applyStates(loadLocalStates());
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`${window.API_URL}/restaurantes`, {
+                        headers: { Authorization: `Bearer ${token}` }
+                    });
+                    if (!response.ok) throw new Error('No se pudo consultar el estado operativo');
+                    const data = await response.json();
+                    const activeRestaurants = data.restaurantes || data || [];
+                    const states = cards.map(card => {
+                        const activeRestaurant = activeRestaurants.find(restaurant =>
+                            String(restaurant.id) === String(card.dataset.storeId) ||
+                            normalize(restaurant.codigo || restaurant.nombre) === normalize(card.dataset.storeCode)
+                        );
+                        return {
+                            id: card.dataset.storeId,
+                            codigo: card.dataset.storeCode,
+                            activo: Boolean(activeRestaurant),
+                            estado: activeRestaurant ? 'disponible' : 'deshabilitado'
+                        };
+                    });
+                    localStorage.setItem(STATE_STORAGE_KEY, JSON.stringify(states));
+                    applyStates(states);
+                } catch (error) {
+                    console.warn('Estado operativo no disponible:', error);
+                    applyStates(loadLocalStates());
+                }
+            }
+
+            function updateStores() {
+                const term = String(search?.value || '').trim().toLowerCase();
+                let visible = 0;
+
+                cards.forEach(card => {
+                    const matchesName = card.dataset.storeName.includes(term);
+                    const matchesStatus = activeFilter === 'all' || card.dataset.storeStatus === activeFilter;
+                    const show = matchesName && matchesStatus;
+                    card.hidden = !show;
+                    if (show) visible += 1;
+                });
+
+                if (count) count.textContent = `${visible} ${visible === 1 ? 'marca' : 'marcas'}`;
+                if (empty) empty.hidden = visible !== 0;
+            }
+
+            search?.addEventListener('input', updateStores);
+
+            filters.forEach(button => {
+                button.addEventListener('click', () => {
+                    activeFilter = button.dataset.storeFilter;
+                    filters.forEach(item => item.classList.toggle('active', item === button));
+                    updateStores();
+                });
+            });
+
+            updateOperationalSummary();
+            loadOperationalStates();
+        });
+    </script>
 
     <style>
-        .tiendas-view {
+        .stores-page {
             width: 100%;
             min-width: 0;
+            padding-bottom: 16px;
         }
 
-        .tiendas-header {
-            padding-bottom: 4px;
+        .stores-hero {
+            position: relative;
+            display: grid;
+            grid-template-columns: minmax(0, 1.5fr) minmax(310px, .8fr);
+            gap: 44px;
+            align-items: end;
+            overflow: hidden;
+            padding: 40px;
+            border-radius: 20px;
+            color: #fff;
+            background:
+                radial-gradient(circle at 88% 10%, rgba(97, 153, 204, .26), transparent 32%),
+                linear-gradient(135deg, #091f35 0%, #102f50 56%, #174a75 100%);
+            box-shadow: 0 28px 60px -42px rgba(5, 25, 45, .9);
+        }
+
+        .stores-hero::after {
+            content: '';
+            position: absolute;
+            right: -80px;
+            bottom: -155px;
+            width: 330px;
+            height: 330px;
+            border: 1px solid rgba(255, 255, 255, .12);
+            border-radius: 50%;
+            box-shadow: 0 0 0 42px rgba(255, 255, 255, .025), 0 0 0 84px rgba(255, 255, 255, .02);
+        }
+
+        .stores-hero-copy,
+        .stores-hero-metrics { position: relative; z-index: 1; }
+
+        .stores-eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 15px;
+            color: #b9d6ef;
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: .12em;
+            text-transform: uppercase;
+        }
+
+        .stores-hero h1 {
+            max-width: 720px;
+            margin: 0;
+            font-family: 'Source Serif 4', Georgia, serif;
+            font-size: clamp(34px, 4vw, 52px);
+            font-weight: 600;
+            line-height: 1.03;
+            letter-spacing: -.025em;
+        }
+
+        .stores-hero p {
+            max-width: 690px;
+            margin: 18px 0 0;
+            color: #cfdeeb;
+            font-size: 14px;
+            line-height: 1.75;
+        }
+
+        .stores-hero-metrics {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, .16);
+            border-radius: 14px;
+            background: rgba(255, 255, 255, .08);
+            backdrop-filter: blur(8px);
+        }
+
+        .stores-hero-metrics > div {
+            min-height: 105px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 18px;
+            background: rgba(5, 25, 45, .22);
+        }
+
+        .stores-hero-metrics strong {
+            font-family: 'Source Serif 4', Georgia, serif;
+            font-size: 32px;
+            line-height: 1;
+        }
+
+        .stores-hero-metrics span {
+            margin-top: 7px;
+            color: #c7d9e8;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: .04em;
+            text-transform: uppercase;
+        }
+
+        .stores-operational-status {
+            grid-column: 1 / -1;
+            min-height: 48px !important;
+            flex-direction: row !important;
+            align-items: center;
+            justify-content: flex-start !important;
+            gap: 9px;
+        }
+
+        .status-pulse {
+            width: 8px;
+            height: 8px;
+            margin: 0 !important;
+            border-radius: 50%;
+            background: #6fe49b;
+            box-shadow: 0 0 0 5px rgba(111, 228, 155, .13);
         }
 
         .store-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-            gap: 18px;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 20px;
             width: 100%;
             min-width: 0;
+            margin-top: 40px;
         }
 
-        @media (min-width: 1280px) {
-            .store-grid {
-                grid-template-columns: repeat(4, minmax(0, 1fr));
-            }
+        .stores-empty {
+            padding: 54px 24px;
+            border: 1px dashed #c9d5e1;
+            border-radius: 16px;
+            color: #718096;
+            background: rgba(255, 255, 255, .7);
+            text-align: center;
+        }
+
+        .stores-empty i { margin-bottom: 14px; color: var(--primary); font-size: 24px; }
+        .stores-empty h2 { margin: 0 0 6px; color: #243b53; font-size: 18px; }
+        .stores-empty p { margin: 0; font-size: 12px; }
+
+        .stores-footer-note {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            margin-top: 20px;
+            padding: 0 4px;
+            color: #718096;
+            font-size: 11px;
+        }
+
+        .stores-footer-note i { color: var(--primary); }
+
+        @media (max-width: 1100px) {
+            .stores-hero { grid-template-columns: 1fr; align-items: start; }
+            .stores-hero-metrics { max-width: 520px; }
+            .store-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        }
+
+        @media (max-width: 780px) {
+            .stores-hero { padding: 30px 24px; border-radius: 16px; }
+            .store-grid { grid-template-columns: 1fr; }
+        }
+
+        @media (max-width: 480px) {
+            .stores-hero h1 { font-size: 32px; }
+            .stores-hero-metrics { grid-template-columns: 1fr 1fr; }
+        }
+
+        /* Apariencia de modulo contable */
+        .stores-hero {
+            grid-template-columns: minmax(0, 1fr) minmax(390px, 500px);
+            gap: 28px;
+            align-items: center;
+            padding: 24px 28px;
+            border: 1px solid #234864;
+            border-radius: 6px;
+            background: #102a43;
+            box-shadow: none;
+        }
+
+        .stores-hero::after { display: none; }
+        .stores-eyebrow {
+            margin-bottom: 8px;
+            color: #9fc3df;
+            font-size: 9px;
+            letter-spacing: .11em;
+        }
+
+        .stores-hero h1 {
+            font-family: 'Inter', sans-serif;
+            font-size: clamp(24px, 2.5vw, 30px);
+            font-weight: 700;
+            line-height: 1.15;
+            letter-spacing: -.02em;
+        }
+
+        .stores-hero p {
+            max-width: 650px;
+            margin-top: 9px;
+            color: #c7d8e6;
+            font-size: 11px;
+            line-height: 1.6;
+        }
+
+        .stores-hero-metrics {
+            border-radius: 4px;
+            background: #163753;
+            backdrop-filter: none;
+        }
+
+        .stores-hero-metrics > div {
+            min-height: 62px;
+            padding: 12px 14px;
+            background: transparent;
+        }
+
+        .stores-hero-metrics strong {
+            font-family: 'Inter', sans-serif;
+            font-size: 22px;
+            font-weight: 700;
+        }
+
+        .stores-hero-metrics span {
+            margin-top: 4px;
+            font-size: 8px;
+            letter-spacing: .06em;
+        }
+
+        .stores-operational-status { min-height: 34px !important; }
+        .status-pulse { width: 6px; height: 6px; box-shadow: none; }
+
+        .store-grid {
+            gap: 14px;
+            margin-top: 24px;
+        }
+
+        .stores-footer-note {
+            margin-top: 14px;
+            padding-top: 12px;
+            border-top: 1px solid #d7e0e9;
+            font-size: 10px;
+        }
+
+        @media (max-width: 1100px) {
+            .stores-hero { grid-template-columns: 1fr; }
+        }
+
+        @media (max-width: 780px) {
+            .stores-hero { padding: 20px; border-radius: 5px; }
         }
     </style>
 </DashboardLayout>

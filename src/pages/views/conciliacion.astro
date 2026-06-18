@@ -247,6 +247,15 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
                         <span class="summary-label">Con Diferencia</span>
                     </div>
                 </div>
+                <div class="summary-card status is-clear" id="osStatusCard">
+                    <div class="summary-icon">
+                        <i class="fa-solid fa-scale-balanced" id="osStatusIcon"></i>
+                    </div>
+                    <div class="summary-info">
+                        <span class="summary-value summary-status-value" id="osDifferenceStatus">Sin diferencias</span>
+                        <span class="summary-label" id="osDifferenceMeta">OS balanceado</span>
+                    </div>
+                </div>
                 <div class="summary-card danger">
                     <div class="summary-icon">
                         <i class="fa-solid fa-dollar-sign"></i>
@@ -602,7 +611,7 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
         /* Results Summary */
         .results-summary {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
+            grid-template-columns: repeat(5, minmax(0, 1fr));
             gap: 16px;
             margin-bottom: 24px;
         }
@@ -648,6 +657,35 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
             color: var(--danger);
         }
 
+        .summary-card.status {
+            transition: border-color .2s ease, background .2s ease;
+        }
+
+        .summary-card.status.is-clear {
+            border-color: rgba(21, 128, 61, .22);
+            background: linear-gradient(180deg, #fff 0%, #f5fcf7 100%);
+        }
+
+        .summary-card.status.is-clear .summary-icon {
+            color: var(--success);
+            background: var(--success-light);
+        }
+
+        .summary-card.status.has-difference {
+            border-color: rgba(185, 28, 28, .28);
+            background: linear-gradient(180deg, #fff 0%, #fff5f5 100%);
+        }
+
+        .summary-card.status.has-difference .summary-icon {
+            color: var(--danger);
+            background: var(--danger-light);
+        }
+
+        .summary-status-value {
+            font-size: 16px;
+            line-height: 1.15;
+        }
+
         .summary-info {
             display: flex;
             flex-direction: column;
@@ -677,6 +715,22 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
 
         .conciliacion-table .text-center {
             text-align: center;
+        }
+
+        .conciliacion-table th.os-column-header {
+            color: #8f1d1d;
+            background: #fff7f7;
+        }
+
+        .conciliacion-table td.os-difference {
+            color: #a51515 !important;
+            background: #fff0f0 !important;
+            box-shadow: inset 3px 0 0 #dc2626;
+            font-weight: 800;
+        }
+
+        .conciliacion-table td.os-balanced {
+            color: #52667a;
         }
 
         .valor-excel {
@@ -833,16 +887,16 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
         }
 
         .upload-card:hover {
-            border-color: rgba(15, 118, 110, 0.32);
+            border-color: rgba(16, 42, 67, 0.32);
             box-shadow: var(--shadow-md);
         }
 
         .upload-card[data-status="loaded"] {
-            border-color: rgba(15, 118, 110, 0.45);
+            border-color: rgba(16, 42, 67, 0.45);
             background: linear-gradient(
                 180deg,
                 var(--white),
-                rgba(204, 251, 241, 0.28)
+                rgba(230, 238, 246, 0.62)
             );
         }
 
@@ -928,7 +982,7 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
         .upload-pill.required {
             background: var(--primary-light);
             color: var(--primary-dark);
-            border-color: rgba(15, 118, 110, 0.18);
+            border-color: rgba(16, 42, 67, 0.18);
         }
 
         .upload-pill.optional {
@@ -1056,13 +1110,24 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
         }
 
         .conciliacion-table thead th {
-            background: var(--white);
+            background: #102a43;
+            color: #eaf2f8;
             position: sticky;
             top: 0;
             white-space: nowrap;
             padding: 14px 16px;
             font-weight: 700;
-            border-bottom: 2px solid var(--gray-200);
+            border-right: 1px solid rgba(255, 255, 255, .09);
+            border-bottom: 2px solid #081f33;
+            letter-spacing: .035em;
+            text-transform: uppercase;
+            font-size: 10px;
+        }
+
+        .conciliacion-table thead th.os-column-header {
+            color: #fff;
+            background: #8f1d1d;
+            border-bottom-color: #671414;
         }
 
         .conciliacion-table {

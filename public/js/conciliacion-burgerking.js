@@ -624,13 +624,56 @@ function generarConciliacionBurgerKing() {
     renderActiveTab();
 }
 
+const BK_TAX_RATES = {
+    3323: 0.09625,
+    5215: 0.10,
+    1932: 0.10,
+    1572: 0.10,
+    3827: 0.10,
+    10835: 0.0775,
+    5270: 0.10,
+    975: 0.10,
+    9790: 0.0875,
+    13538: 0.0925,
+    5052: 0.0875,
+    16481: 0.085,
+    3505: 0.0925,
+    27645: 0.0825,
+    2172: 0.0875,
+    17709: 0.08,
+    5533: 0.0825,
+    6597: 0.0825,
+    11112: 0.0875,
+    3223: 0.0875,
+    4516: 0.0925,
+    5085: 0.0875,
+    2521: 0.0925,
+    3917: 0.0875,
+    5394: 0.0925,
+    7426: 0.1075,
+    8177: 0.0875,
+    1650: 0.0925,
+    4660: 0.085,
+    5996: 0.0875,
+    7928: 0.0975,
+    8326: 0.1075,
+    9474: 0.0825,
+    24290: 0.0825
+};
+
+function obtenerTaxRateBurgerKing(store) {
+    const numeroStore =
+        Number(String(store).replace(/\D/g, ''));
+
+    return BK_TAX_RATES[numeroStore] || 0;
+}
+
 function generarTaxAnalysisBurgerKing() {
     burgerKingTaxAnalysisData =
         datosExtraidos.map(row => {
+
             const taxRate =
-                typeof obtenerTaxRate === 'function'
-                    ? Number(obtenerTaxRate(row.store) || 0)
-                    : 0;
+                obtenerTaxRateBurgerKing(row.store);
 
             const taxableSales =
                 row.foodSales +
@@ -644,15 +687,21 @@ function generarTaxAnalysisBurgerKing() {
                 taxableSales * taxRate;
 
             const taxDifference =
-                taxCalculation - row.salesTax;
+                taxRate === 0
+                    ? 0
+                    : taxCalculation - row.salesTax;
 
             const rateCalculation =
-                taxableSales !== 0
-                    ? (row.salesTax / taxableSales) * 100
-                    : 0;
+                taxRate === 0
+                    ? 0
+                    : taxableSales !== 0
+                        ? row.salesTax / taxableSales
+                        : 0;
 
             const rateDifference =
-                (taxRate * 100) - rateCalculation;
+                taxRate === 0
+                    ? 0
+                    : taxRate - rateCalculation;
 
             return {
                 store: row.store,
@@ -667,8 +716,8 @@ function generarTaxAnalysisBurgerKing() {
                 taxCalculation: redondearBurgerKing(taxCalculation),
                 salesTax: row.salesTax,
                 taxDifference: redondearBurgerKing(taxDifference),
-                rateCalculation: Number(rateCalculation.toFixed(3)),
-                rateDifference: Number(rateDifference.toFixed(3))
+                rateCalculation,
+                rateDifference
             };
         });
 }
@@ -676,30 +725,52 @@ function generarTaxAnalysisBurgerKing() {
 function generarDiscrepanciesBurgerKing() {
     burgerKingDiscrepanciesData =
         datosExtraidos.map(row => {
+
             const tax =
                 burgerKingTaxAnalysisData.find(
                     t => String(t.store) === String(row.store)
                 );
 
+            const overShort =
+                redondearBurgerKing(row.oS || 0);
+
+            const cashDifference =
+                redondearBurgerKing(row.cashDifference || 0);
+
+            const openChecks =
+                redondearBurgerKing(row.openChecks || 0);
+
+            const taxDifference =
+                tax
+                    ? redondearBurgerKing(tax.taxDifference)
+                    : 0;
+
+            const taxRate =
+                tax
+                    ? tax.taxRate
+                    : 0;
+
+            const rateDifference =
+                tax
+                    ? tax.rateDifference
+                    : 0;
+
             const issues = [];
 
-            if (Math.abs(row.oS || 0) > 0.01) {
-                issues.push(`Balance O/S: $${row.oS}`);
+            if (Math.abs(overShort) > 0.01) {
+                issues.push(`Balance (O/S): $${overShort}`);
             }
 
-            if (Math.abs(row.cashDifference || 0) > 0.5) {
-                issues.push(`Cash Difference: $${row.cashDifference}`);
+            if (Math.abs(cashDifference) > 0.5) {
+                issues.push(`Cash Difference: $${cashDifference}`);
             }
 
-            if ((row.openChecks || 0) > 0.005) {
-                issues.push(`Open Checks: $${row.openChecks}`);
+            if (openChecks > 0.005) {
+                issues.push(`Open Checks: $${openChecks}`);
             }
 
-            if (
-                tax &&
-                Math.abs(tax.taxDifference || 0) > 1
-            ) {
-                issues.push(`Tax Diff: $${tax.taxDifference}`);
+            if (Math.abs(taxDifference) > 1) {
+                issues.push(`Tax Diff > $1: $${taxDifference}`);
             }
 
             return {
@@ -707,13 +778,30 @@ function generarDiscrepanciesBurgerKing() {
                 totalRevenue: row.totalRevenue,
                 netSales: row.netSales,
                 salesTax: row.salesTax,
-                overShort: row.oS,
-                cashDifference: row.cashDifference,
-                openChecks: row.openChecks,
-                taxDifference: tax ? tax.taxDifference : 0,
+                overShort,
+                cashDifference,
+                openChecks,
+                taxDifference,
+                taxRate,
+                rateDifference,
                 issues: issues.join('; ') || 'OK'
             };
-        });
+        })
+            .sort((a, b) => {
+                const totalA =
+                    Math.abs(a.overShort) +
+                    Math.abs(a.cashDifference) +
+                    Math.abs(a.openChecks) +
+                    Math.abs(a.taxDifference);
+
+                const totalB =
+                    Math.abs(b.overShort) +
+                    Math.abs(b.cashDifference) +
+                    Math.abs(b.openChecks) +
+                    Math.abs(b.taxDifference);
+
+                return totalB - totalA;
+            });
 }
 
 function generarTemplateCsvBurgerKing() {

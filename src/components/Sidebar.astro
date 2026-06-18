@@ -16,12 +16,6 @@
         <div class="sidebar-section">
             <div class="sidebar-section-title">General</div>
             <ul class="sidebar-menu" id="menuGeneral">
-                <li class="sidebar-menu-item" data-permission="dashboard">
-                    <a class="sidebar-menu-link" href="/views/inicio">
-                        <i class="fa-solid fa-house"></i>
-                        <span>Dashboard</span>
-                    </a>
-                </li>
                 <li class="sidebar-menu-item" data-permission="tiendas">
                     <a class="sidebar-menu-link" href="/views/tiendas">
                         <i class="fa-solid fa-shop"></i>
@@ -53,6 +47,12 @@
                         <span>Usuarios</span>
                     </a>
                 </li>
+                <li class="sidebar-menu-item" data-permission="controlRestaurantes" data-admin-only>
+                    <a class="sidebar-menu-link" href="/views/restaurantes">
+                        <i class="fa-solid fa-screwdriver-wrench"></i>
+                        <span>Control de restaurantes</span>
+                    </a>
+                </li>
             </ul>
         </div>
     </nav>
@@ -64,5 +64,3 @@
         </button>
     </div>
 </aside>
-
-

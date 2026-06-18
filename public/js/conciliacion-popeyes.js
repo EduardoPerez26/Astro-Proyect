@@ -1465,6 +1465,14 @@ function renderArrayToMainTable(
             document.createElement('th');
         th.textContent =
             col.label ?? col.key ?? '';
+
+        if (
+            typeof esColumnaOS === 'function' &&
+            esColumnaOS(col)
+        ) {
+            th.classList.add('os-column-header');
+        }
+
         trHead.appendChild(th);
     });
 
@@ -1481,6 +1489,10 @@ function renderArrayToMainTable(
 
             const valor =
                 row[col.key];
+            const columnaOS =
+                typeof esColumnaOS === 'function' &&
+                esColumnaOS(col);
+            const valorNumericoOS = Number(valor);
 
             if (typeof valor === 'number') {
 
@@ -1500,6 +1512,24 @@ function renderArrayToMainTable(
                 td.textContent =
                     valor ?? '';
 
+            }
+
+            if (
+                columnaOS &&
+                Number.isFinite(valorNumericoOS)
+            ) {
+                const tieneDiferencia =
+                    Math.abs(valorNumericoOS) > 0.01;
+
+                td.classList.add(
+                    tieneDiferencia
+                        ? 'os-difference'
+                        : 'os-balanced'
+                );
+
+                if (tieneDiferencia) {
+                    td.title = 'Diferencia OS detectada';
+                }
             }
 
             tr.appendChild(td);

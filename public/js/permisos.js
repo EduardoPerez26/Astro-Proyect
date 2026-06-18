@@ -9,22 +9,13 @@ let originalPermissions = {};
 // Definicion de todas las secciones del sistema
 const MENU_SECTIONS = [
     {
-        id: 'dashboard',
-        name: 'Dashboard',
-        description: 'Panel principal con estadisticas',
-        icon: 'fa-house',
-        iconClass: 'dashboard',
-        path: '/views/inicio',
-        required: false
-    },
-    {
         id: 'tiendas',
         name: 'Tiendas',
         description: 'Gestion de restaurantes y sucursales',
         icon: 'fa-shop',
         iconClass: 'tiendas',
         path: '/views/tiendas',
-        required: false
+        required: true
     },
     {
         id: 'documentos',
@@ -71,6 +62,16 @@ const MENU_SECTIONS = [
         iconClass: 'usuarios',
         path: '/views/usuarios',
         required: false,
+        adminOnly: true
+    },
+    {
+        id: 'controlRestaurantes',
+        name: 'Control de restaurantes',
+        description: 'Disponibilidad operativa por mantenimiento o fallas',
+        icon: 'fa-screwdriver-wrench',
+        iconClass: 'restaurantes',
+        path: '/views/restaurantes',
+        required: true,
         adminOnly: true
     }
 ];
@@ -125,10 +126,10 @@ async function loadUserData() {
         
         // Permisos de ejemplo
         const defaultPermissions = {
-            1: { dashboard: true, tiendas: true, documentos: true, perfil: true, permisos: true, historial: true, usuarios: true },
-            2: { dashboard: true, tiendas: true, documentos: true, perfil: true, permisos: false, historial: true, usuarios: false },
-            3: { dashboard: true, tiendas: false, documentos: true, perfil: true, permisos: false, historial: false, usuarios: false },
-            4: { dashboard: true, tiendas: false, documentos: false, perfil: true, permisos: false, historial: false, usuarios: false }
+            1: { tiendas: true, documentos: true, perfil: true, permisos: true, historial: true, usuarios: true, controlRestaurantes: true },
+            2: { tiendas: true, documentos: true, perfil: true, permisos: false, historial: true, usuarios: false, controlRestaurantes: false },
+            3: { tiendas: true, documentos: true, perfil: true, permisos: false, historial: false, usuarios: false, controlRestaurantes: false },
+            4: { tiendas: true, documentos: false, perfil: true, permisos: false, historial: false, usuarios: false, controlRestaurantes: false }
         };
         
         currentUser.permisos = defaultPermissions[currentUser.id] || {};
@@ -156,7 +157,11 @@ async function loadUserData() {
                     currentUser.permisos = {};
                 }
             }
-            currentUser.permisos = currentUser.permisos || {};
+            currentUser.permisos = {
+                ...(currentUser.permisos || {}),
+                tiendas: true,
+                controlRestaurantes: currentUser.rol === 'admin'
+            };
             originalPermissions = { ...currentUser.permisos };
             
             renderUserInfo();
@@ -207,9 +212,11 @@ function renderPermissions() {
     const container = document.getElementById('permissionsList');
     
     container.innerHTML = MENU_SECTIONS.map(section => {
-        const isEnabled = currentUser.permisos[section.id] !== false;
         const isRequired = section.required;
         const isAdminSection = section.adminOnly;
+        const isEnabled = isAdminSection
+            ? currentUser.rol === 'admin'
+            : currentUser.permisos[section.id] !== false;
         const isDisabled = isRequired || (isAdminSection && currentUser.rol !== 'admin');
         
         return `
@@ -227,7 +234,7 @@ function renderPermissions() {
                     <input type="checkbox" 
                            id="perm_${section.id}" 
                            data-section="${section.id}"
-                           ${isEnabled || isRequired ? 'checked' : ''} 
+                           ${isEnabled || (isRequired && !isAdminSection) ? 'checked' : ''}
                            ${isDisabled ? 'disabled' : ''}
                            onchange="togglePermission('${section.id}', this.checked)">
                     <span class="toggle-slider"></span>
@@ -275,7 +282,9 @@ async function savePermissions() {
     MENU_SECTIONS.forEach(section => {
         const checkbox = document.getElementById(`perm_${section.id}`);
         if (checkbox) {
-            permissions[section.id] = checkbox.checked;
+            permissions[section.id] = section.adminOnly
+                ? currentUser.rol === 'admin'
+                : checkbox.checked;
         }
     });
     

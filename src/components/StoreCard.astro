@@ -1,5 +1,4 @@
 ---
-// Componente StoreCard - Tarjeta de tienda/restaurante
 interface Props {
   id: number;
   name: string;
@@ -9,6 +8,7 @@ interface Props {
   restaurant: string;
   logoUrl?: string;
   badge?: string;
+  files?: string[];
   enabled?: boolean;
 }
 
@@ -21,182 +21,307 @@ const {
   restaurant,
   logoUrl,
   badge = '',
+  files = [],
   enabled = true
 } = Astro.props;
 ---
 
-<article class:list={["card", "store-card", { "store-card-disabled": !enabled }]}>
-    <div class="card-body">
-        <div class="store-card-header">
-            <div class={`store-icon bg-${colorClass}`}>
+<article
+    class:list={[
+        'store-card',
+        `store-card-${colorClass}`,
+        { 'store-card-disabled': !enabled }
+    ]}
+    data-store-card
+    data-store-id={id}
+    data-store-code={restaurant}
+    data-store-name={`${name} ${restaurant}`.toLowerCase()}
+    data-store-status={enabled ? 'active' : 'paused'}
+    data-default-enabled={String(enabled)}
+>
+    <div class="store-card-accent" aria-hidden="true"></div>
+
+    <div class="store-card-body">
+        <header class="store-card-header">
+            <div class="store-brand-mark">
                 {logoUrl && (
                     <img
                         src={logoUrl}
-                        alt={`Logo de ${name}`}
+                        alt=""
                         loading="lazy"
-                        onerror="this.style.display='none';this.nextElementSibling.style.display='inline-block';"
+                        onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex';"
                     />
                 )}
                 <i
                     class={`fa-solid ${icon} store-logo-fallback`}
-                    style={logoUrl ? "display:none;" : ""}
+                    style={logoUrl ? 'display:none;' : ''}
+                    aria-hidden="true"
                 ></i>
             </div>
-            <div class="store-info">
-                <div class="store-name-row">
-                    <h3>{name}</h3>
-                    {badge && <span class="store-badge">{badge}</span>}
-                </div>
-                <p>{description}</p>
+
+            <span
+                class:list={['store-status', { 'is-active': enabled, 'is-paused': !enabled }]}
+                data-store-status-badge
+            >
+                <span class="store-status-dot"></span>
+                <span data-store-status-label>{enabled ? 'Disponible' : 'En preparación'}</span>
+            </span>
+        </header>
+
+        <div class="store-card-copy">
+            <span class="store-card-kicker">Flujo de conciliación</span>
+            <h2>{name}</h2>
+            <p data-store-description data-default-description={description}>{description}</p>
+        </div>
+
+        <div class="store-requirements">
+            <span class="store-requirements-label">Archivos requeridos</span>
+            <div class="store-file-list">
+                {files.map((file) => (
+                    <span><i class="fa-regular fa-file-excel" aria-hidden="true"></i>{file}</span>
+                ))}
             </div>
         </div>
 
-        {enabled ? (
-            <a class="btn btn-primary btn-block" href={`/views/conciliacion?restaurante=${id}`}>
-                <i class="fa-solid fa-file-excel"></i>
-                Abrir conciliacion
+        <footer class="store-card-footer">
+            <span class="store-file-count">{badge}</span>
+            <a
+                class="store-action"
+                href={`/views/conciliacion?restaurante=${id}`}
+                data-store-action
+                hidden={!enabled}
+            >
+                Iniciar conciliación
+                <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
             </a>
-        ) : (
-            <button class="btn btn-secondary btn-block" type="button" disabled>
-                <i class="fa-solid fa-lock"></i>
-                No disponible
-            </button>
-        )}
+            <span class="store-action-disabled" data-store-disabled-action hidden={enabled}>
+                <i class="fa-solid fa-lock" aria-hidden="true"></i>
+                <span data-store-disabled-label>No disponible</span>
+            </span>
+        </footer>
     </div>
 </article>
 
 <style>
-.store-card {
-    min-width: 0;
-    height: 100%;
-    overflow: hidden;
-    transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
-}
-
-.store-card:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-lg);
-    border-color: rgba(15, 118, 110, .3);
-}
-
-.store-card-disabled {
-    background: var(--gray-50);
-}
-
-.store-card-disabled:hover {
-    transform: none;
-    box-shadow: var(--shadow-sm);
-    border-color: var(--gray-200);
-}
-
-.card-body {
-    height: 100%;
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-}
-
-.store-card-header {
-    display: flex;
-    align-items: flex-start;
-    gap: 16px;
-    margin-bottom: 24px;
-}
-
-.store-icon {
-    width: 64px;
-    height: 64px;
-    flex: 0 0 64px;
-    border-radius: var(--radius);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 24px;
-}
-
-.store-icon img {
-    width: 48px;
-    height: 48px;
-    object-fit: contain;
-}
-
-.store-icon.bg-primary {
-    background: var(--primary-light);
-    color: var(--primary);
-}
-
-.store-icon.bg-warning {
-    background: var(--warning-light);
-    color: var(--warning);
-}
-
-.store-icon.bg-danger {
-    background: var(--danger-light);
-    color: var(--danger);
-}
-
-.store-icon.bg-success {
-    background: var(--success-light);
-    color: var(--success);
-}
-
-.store-info h3 {
-    font-size: 18px;
-    font-weight: 700;
-    color: var(--gray-800);
-    margin: 0;
-}
-
-.store-info p {
-    font-size: 13px;
-    color: var(--gray-500);
-    line-height: 1.5;
-    margin: 8px 0 0;
-}
-
-.store-info {
-    min-width: 0;
-    flex: 1;
-}
-
-.store-name-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-}
-
-.store-badge {
-    flex: 0 0 auto;
-    padding: 4px 7px;
-    border-radius: var(--radius);
-    background: var(--gray-100);
-    border: 1px solid var(--gray-200);
-    color: var(--gray-600);
-    font-size: 10px;
-    font-weight: 800;
-    text-transform: uppercase;
-}
-
-.btn-block {
-    width: 100%;
-    justify-content: center;
-}
-
-.btn:disabled {
-    cursor: not-allowed;
-    opacity: .68;
-}
-
-@media (max-width: 480px) {
-    .store-card-header {
-        align-items: center;
+    .store-card {
+        --brand-color: var(--primary);
+        position: relative;
+        min-width: 0;
+        min-height: 350px;
+        overflow: hidden;
+        border: 1px solid #dbe4ee;
+        border-radius: 16px;
+        background: rgba(255, 255, 255, .98);
+        box-shadow: 0 14px 34px -28px rgba(10, 37, 64, .6);
+        transition: transform .22s ease, box-shadow .22s ease, border-color .22s ease;
     }
 
-    .store-name-row {
-        align-items: flex-start;
+    .store-card:hover {
+        transform: translateY(-4px);
+        border-color: rgba(16, 42, 67, .3);
+        box-shadow: 0 24px 48px -30px rgba(10, 37, 64, .7);
+    }
+
+    .store-card-warning { --brand-color: #c16b21; }
+    .store-card-danger { --brand-color: #c4473a; }
+
+    .store-card-accent {
+        height: 4px;
+        background: var(--brand-color);
+    }
+
+    .store-card-body {
+        min-height: 346px;
+        display: flex;
         flex-direction: column;
+        padding: 24px;
     }
-}
+
+    .store-card-header,
+    .store-card-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+    }
+
+    .store-brand-mark {
+        width: 58px;
+        height: 58px;
+        flex: 0 0 58px;
+        display: grid;
+        place-items: center;
+        border: 1px solid #dce6f0;
+        border-radius: 15px;
+        color: var(--brand-color);
+        background: #f8fafc;
+        box-shadow: inset 0 0 0 5px #fff;
+    }
+
+    .store-brand-mark img {
+        width: 36px;
+        height: 36px;
+        object-fit: contain;
+    }
+
+    .store-logo-fallback {
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+    }
+
+    .store-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 6px 9px;
+        border: 1px solid;
+        border-radius: 999px;
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: .04em;
+        text-transform: uppercase;
+        white-space: nowrap;
+    }
+
+    .store-status-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: currentColor;
+    }
+
+    .store-status.is-active {
+        border-color: #b9dfc7;
+        color: #18713b;
+        background: #eefbf3;
+    }
+
+    .store-status.is-paused {
+        border-color: #e4d4bd;
+        color: #8a5a1d;
+        background: #fff8eb;
+    }
+
+    .store-status.is-failure {
+        border-color: #f1b8b8;
+        color: #a62828;
+        background: #fff1f1;
+    }
+
+    .store-card-copy {
+        padding: 24px 0 20px;
+    }
+
+    .store-card-kicker,
+    .store-requirements-label {
+        color: #718096;
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: .1em;
+        text-transform: uppercase;
+    }
+
+    .store-card-copy h2 {
+        margin: 7px 0 8px;
+        color: #102a43;
+        font-family: 'Source Serif 4', Georgia, serif;
+        font-size: 27px;
+        line-height: 1.1;
+    }
+
+    .store-card-copy p {
+        margin: 0;
+        color: #52667a;
+        font-size: 13px;
+        line-height: 1.65;
+    }
+
+    .store-requirements {
+        padding: 16px;
+        border: 1px solid #e5ebf2;
+        border-radius: 12px;
+        background: #f8fafc;
+    }
+
+    .store-file-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 7px;
+        margin-top: 10px;
+    }
+
+    .store-file-list span {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 5px 8px;
+        border-radius: 7px;
+        color: #334e68;
+        background: #fff;
+        border: 1px solid #dfe7ef;
+        font-size: 11px;
+        font-weight: 600;
+    }
+
+    .store-file-list i { color: var(--brand-color); }
+
+    .store-card-footer {
+        margin-top: auto;
+        padding-top: 20px;
+    }
+
+    .store-file-count {
+        color: #718096;
+        font-size: 11px;
+        font-weight: 700;
+    }
+
+    .store-action,
+    .store-action-disabled {
+        display: inline-flex;
+        align-items: center;
+        gap: 9px;
+        min-height: 42px;
+        padding: 0 15px;
+        border-radius: 9px;
+        font-size: 12px;
+        font-weight: 800;
+    }
+
+    .store-action[hidden],
+    .store-action-disabled[hidden] {
+        display: none;
+    }
+
+    .store-action {
+        color: #fff;
+        background: var(--primary);
+        box-shadow: 0 10px 20px -14px rgba(10, 37, 64, .8);
+    }
+
+    .store-action:hover { background: var(--primary-dark); }
+    .store-action i { transition: transform .2s ease; }
+    .store-action:hover i { transform: translateX(3px); }
+
+    .store-action-disabled {
+        color: #718096;
+        background: #edf2f7;
+    }
+
+    .store-card-disabled {
+        background: #f8fafc;
+    }
+
+    .store-card-disabled:hover {
+        transform: none;
+        border-color: #dbe4ee;
+        box-shadow: 0 14px 34px -28px rgba(10, 37, 64, .6);
+    }
+
+    @media (max-width: 520px) {
+        .store-card-body { padding: 20px; }
+        .store-card-footer { align-items: flex-start; flex-direction: column; }
+        .store-action, .store-action-disabled { width: 100%; justify-content: center; }
+    }
 </style>

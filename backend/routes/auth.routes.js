@@ -69,7 +69,7 @@ router.post('/login', async (req, res) => {
                 tiendas: true,
                 permisos: true,
                 usuarios: true,
-                dashboard: true,
+                controlRestaurantes: true,
                 historial: true,
                 documentos: true
             };
@@ -79,6 +79,9 @@ router.post('/login', async (req, res) => {
             } else {
                 permisosUsuario = usuario.permisos || {};
             }
+
+            permisosUsuario.tiendas = true;
+            permisosUsuario.controlRestaurantes = false;
         }
 
         console.log('Permisos usuario:', permisosUsuario);

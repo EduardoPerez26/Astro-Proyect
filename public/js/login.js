@@ -41,7 +41,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     icon: 'warning',
                     title: 'Completa los campos',
                     text: 'Ingresa tu usuario y contraseña para continuar.',
-                    confirmButtonColor: '#0f766e'
+                    confirmButtonColor: '#102A43'
                 });
                 return;
             }
@@ -71,14 +71,14 @@ document.addEventListener('DOMContentLoaded', function () {
                         timer: 1500,
                         showConfirmButton: false
                     }).then(() => {
-                        window.location.href = '/views/inicio';
+                        window.location.href = '/views/tiendas';
                     });
                 } else {
                     Swal.fire({
                         icon: 'error',
                         title: 'No pudimos iniciar sesión',
                         text: data.message || 'El usuario o la contraseña no son correctos.',
-                        confirmButtonColor: '#0f766e'
+                        confirmButtonColor: '#102A43'
                     });
                 }
             } catch (error) {
@@ -96,7 +96,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     showCancelButton: true,
                     confirmButtonText: 'Reintentar',
                     cancelButtonText: 'Modo sin conexión',
-                    confirmButtonColor: '#0f766e'
+                    confirmButtonColor: '#102A43'
                 }).then((result) => {
                     if (result.isConfirmed) {
                         loginForm.requestSubmit();
@@ -104,15 +104,31 @@ document.addEventListener('DOMContentLoaded', function () {
                     }
 
                     if (username === 'admin' && password === 'admin123') {
+                        localStorage.setItem('token', 'offline-token');
                         localStorage.setItem('isLoggedIn', 'true');
                         localStorage.setItem('modoOffline', 'true');
-                        window.location.href = '/views/inicio';
+                        localStorage.setItem('usuario', JSON.stringify({
+                            id: 1,
+                            nombre: 'Administrador',
+                            username: 'admin',
+                            rol: 'admin',
+                            permisos: {
+                                tiendas: true,
+                                documentos: true,
+                                perfil: true,
+                                permisos: true,
+                                historial: true,
+                                usuarios: true,
+                                controlRestaurantes: true
+                            }
+                        }));
+                        window.location.href = '/views/tiendas';
                     } else {
                         Swal.fire({
                             icon: 'info',
                             title: 'Modo sin conexión',
                             text: 'En modo offline usa: admin / admin123',
-                            confirmButtonColor: '#0f766e'
+                            confirmButtonColor: '#102A43'
                         });
                     }
                 });
@@ -142,7 +158,7 @@ async function verificarSesion(token) {
         });
 
         if (response.ok) {
-            window.location.href = '/views/inicio';
+            window.location.href = '/views/tiendas';
             return;
         }
 

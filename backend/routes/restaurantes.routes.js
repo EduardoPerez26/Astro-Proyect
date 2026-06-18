@@ -117,7 +117,14 @@ router.put('/:id', verificarToken, esAdmin, async (req, res) => {
              color_clase = COALESCE(?, color_clase),
              activo = COALESCE(?, activo)
              WHERE id = ?`,
-            [nombre, descripcion, icono, color_clase, activo, req.params.id]
+            [
+                nombre ?? null,
+                descripcion ?? null,
+                icono ?? null,
+                color_clase ?? null,
+                activo === undefined ? null : Boolean(activo),
+                req.params.id
+            ]
         );
 
         res.json({

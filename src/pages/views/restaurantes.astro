@@ -1,0 +1,243 @@
+---
+import DashboardLayout from '../../layouts/DashboardLayout.astro';
+---
+
+<DashboardLayout title="Control de restaurantes">
+    <section class="operations-admin" aria-labelledby="operationsTitle">
+        <header class="operations-header">
+            <div>
+                <span class="operations-eyebrow">
+                    <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
+                    Acceso exclusivo para administradores
+                </span>
+                <h1 id="operationsTitle">Disponibilidad de restaurantes</h1>
+                <p>
+                    Habilita o deshabilita el acceso a cada flujo usando el estado que ya existe
+                    en la base de datos. No se crean tablas ni configuraciones adicionales.
+                </p>
+            </div>
+            <button class="operations-refresh" id="refreshRestaurants" type="button">
+                <i class="fa-solid fa-rotate" aria-hidden="true"></i>
+                Actualizar estados
+            </button>
+        </header>
+
+        <div class="operations-summary" aria-label="Resumen operativo">
+            <article>
+                <span class="summary-icon is-navy"><i class="fa-solid fa-store"></i></span>
+                <div><strong id="restaurantsTotal">0</strong><span>Restaurantes</span></div>
+            </article>
+            <article>
+                <span class="summary-icon is-green"><i class="fa-solid fa-circle-check"></i></span>
+                <div><strong id="restaurantsAvailable">0</strong><span>Disponibles</span></div>
+            </article>
+            <article>
+                <span class="summary-icon is-amber"><i class="fa-solid fa-triangle-exclamation"></i></span>
+                <div><strong id="restaurantsAffected">0</strong><span>Con restricción</span></div>
+            </article>
+        </div>
+
+        <div class="operations-panel">
+            <div class="operations-panel-heading">
+                <div>
+                    <h2>Estado por restaurante</h2>
+                    <p>Usa el botón de cada fila para permitir o bloquear su conciliación.</p>
+                </div>
+                <span><i class="fa-solid fa-clock"></i> Aplicación inmediata</span>
+            </div>
+
+            <div class="restaurant-control-list" id="restaurantControlList" aria-live="polite">
+                <div class="operations-loading">
+                    <i class="fa-solid fa-circle-notch fa-spin" aria-hidden="true"></i>
+                    Consultando restaurantes...
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script src="/js/config.js" is:inline></script>
+    <script src="/js/restaurantes-control.js" is:inline></script>
+
+    <style>
+        .operations-admin { width: 100%; min-width: 0; padding-bottom: 18px; }
+
+        .operations-header {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 28px;
+            padding: 30px 32px;
+            border-radius: 18px;
+            color: #fff;
+            background: linear-gradient(135deg, #091f35 0%, #102f50 62%, #174a75 100%);
+            box-shadow: 0 24px 54px -40px rgba(5, 25, 45, .9);
+        }
+
+        .operations-eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+            color: #b9d6ef;
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: .11em;
+            text-transform: uppercase;
+        }
+
+        .operations-header h1 {
+            margin: 0;
+            font-family: 'Source Serif 4', Georgia, serif;
+            font-size: clamp(30px, 3vw, 42px);
+            font-weight: 600;
+            letter-spacing: -.025em;
+        }
+
+        .operations-header p {
+            max-width: 720px;
+            margin: 12px 0 0;
+            color: #cfdeeb;
+            font-size: 13px;
+            line-height: 1.7;
+        }
+
+        .operations-refresh {
+            min-height: 42px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 9px;
+            flex: 0 0 auto;
+            padding: 0 15px;
+            border: 1px solid rgba(255, 255, 255, .2);
+            border-radius: 9px;
+            color: #fff;
+            background: rgba(255, 255, 255, .09);
+            font-size: 11px;
+            font-weight: 800;
+        }
+
+        .operations-refresh:hover { background: rgba(255, 255, 255, .15); }
+
+        .operations-summary {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 14px;
+            margin: 20px 0;
+        }
+
+        .operations-summary article {
+            min-width: 0;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 18px;
+            border: 1px solid #dce5ee;
+            border-radius: 13px;
+            background: #fff;
+            box-shadow: 0 12px 28px -26px rgba(10, 37, 64, .7);
+        }
+
+        .summary-icon {
+            width: 42px;
+            height: 42px;
+            flex: 0 0 42px;
+            display: grid;
+            place-items: center;
+            border-radius: 10px;
+        }
+
+        .summary-icon.is-navy { color: #174a75; background: #e9f1f8; }
+        .summary-icon.is-green { color: #18713b; background: #eaf8ef; }
+        .summary-icon.is-amber { color: #966019; background: #fff5df; }
+
+        .operations-summary div { display: flex; flex-direction: column; gap: 3px; }
+        .operations-summary strong { color: #102a43; font-size: 24px; line-height: 1; }
+        .operations-summary span:not(.summary-icon) { color: #718096; font-size: 10px; font-weight: 800; text-transform: uppercase; }
+
+        .operations-panel {
+            overflow: hidden;
+            border: 1px solid #dce5ee;
+            border-radius: 15px;
+            background: #fff;
+            box-shadow: 0 18px 40px -34px rgba(10, 37, 64, .68);
+        }
+
+        .operations-panel-heading {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            padding: 20px 22px;
+            border-bottom: 1px solid #e4ebf2;
+            background: #f8fafc;
+        }
+
+        .operations-panel-heading h2 { margin: 0; color: #102a43; font-size: 16px; }
+        .operations-panel-heading p { margin: 5px 0 0; color: #718096; font-size: 11px; }
+        .operations-panel-heading > span { color: #60758a; font-size: 10px; font-weight: 800; text-transform: uppercase; }
+        .operations-panel-heading > span i { margin-right: 6px; color: #174a75; }
+
+        .restaurant-control-list { padding: 0 22px; }
+
+        :global(.restaurant-control-row) {
+            display: grid;
+            grid-template-columns: minmax(210px, 1fr) auto minmax(220px, 1fr) auto;
+            gap: 18px;
+            align-items: center;
+            padding: 22px 0;
+            border-bottom: 1px solid #e7edf3;
+        }
+
+        :global(.restaurant-control-row:last-child) { border-bottom: 0; }
+        :global(.restaurant-identity) { display: flex; align-items: center; gap: 12px; min-width: 0; }
+        :global(.restaurant-mark) { width: 44px; height: 44px; flex: 0 0 44px; display: grid; place-items: center; border: 1px solid #dce5ee; border-radius: 11px; color: #174a75; background: #f3f7fa; }
+        :global(.restaurant-identity strong) { display: block; overflow: hidden; color: #102a43; font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
+        :global(.restaurant-identity small) { display: block; margin-top: 4px; color: #8293a5; font-size: 10px; text-transform: uppercase; }
+
+        :global(.restaurant-state-badge) { display: inline-flex; align-items: center; gap: 7px; width: max-content; padding: 7px 10px; border: 1px solid; border-radius: 999px; font-size: 10px; font-weight: 800; text-transform: uppercase; }
+        :global(.restaurant-state-badge.is-available) { border-color: #b9dfc7; color: #18713b; background: #eefbf3; }
+        :global(.restaurant-state-badge.is-disabled) { border-color: #efc1c1; color: #a83232; background: #fff1f1; }
+        :global(.restaurant-state-copy) { margin: 0; color: #60758a; font-size: 11px; line-height: 1.5; }
+        :global(.toggle-restaurant-state) { min-width: 126px; min-height: 40px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 0 14px; border-radius: 8px; color: #fff; font-size: 10px; font-weight: 800; }
+        :global(.toggle-restaurant-state.is-disable) { background: #a83232; }
+        :global(.toggle-restaurant-state.is-disable:hover) { background: #872626; }
+        :global(.toggle-restaurant-state.is-enable) { background: #18713b; }
+        :global(.toggle-restaurant-state.is-enable:hover) { background: #105c2e; }
+        :global(.toggle-restaurant-state:disabled) { opacity: .62; cursor: wait; }
+
+        :global(.state-selector) { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; padding: 4px; border-radius: 9px; background: #edf2f7; }
+        :global(.state-option) { min-height: 34px; padding: 0 8px; border-radius: 7px; color: #60758a; font-size: 10px; font-weight: 800; }
+        :global(.state-option:hover) { color: #102a43; background: rgba(255, 255, 255, .7); }
+        :global(.state-option.is-selected) { color: #fff; background: #102a43; box-shadow: 0 7px 14px -11px rgba(10, 37, 64, .9); }
+        :global(.state-option[data-state="mantenimiento"].is-selected) { background: #9a641c; }
+        :global(.state-option[data-state="falla"].is-selected) { background: #a83232; }
+
+        :global(.restaurant-reason) { width: 100%; min-height: 40px; padding: 0 12px; border: 1px solid #d7e0e9; border-radius: 8px; outline: 0; color: #334e68; background: #fbfcfd; font-size: 11px; }
+        :global(.restaurant-reason:focus) { border-color: #174a75; box-shadow: 0 0 0 3px rgba(23, 74, 117, .1); background: #fff; }
+        :global(.restaurant-reason:disabled) { color: #9aa9b7; background: #f1f4f7; cursor: not-allowed; }
+
+        :global(.save-restaurant-state) { min-height: 40px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 0 14px; border-radius: 8px; color: #fff; background: #102a43; font-size: 10px; font-weight: 800; white-space: nowrap; }
+        :global(.save-restaurant-state:hover) { background: #081f33; }
+        :global(.save-restaurant-state:disabled) { opacity: .62; cursor: wait; }
+
+        :global(.operations-loading),
+        :global(.operations-error) { display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 150px; color: #718096; font-size: 12px; }
+        :global(.operations-error) { color: #a83232; }
+
+        @media (max-width: 1120px) {
+            :global(.restaurant-control-row) { grid-template-columns: minmax(180px, .8fr) minmax(300px, 1.2fr); }
+            :global(.save-restaurant-state) { justify-self: end; }
+        }
+
+        @media (max-width: 760px) {
+            .operations-header { align-items: flex-start; flex-direction: column; padding: 26px 22px; }
+            .operations-refresh { width: 100%; }
+            .operations-summary { grid-template-columns: 1fr; }
+            .operations-panel-heading { align-items: flex-start; flex-direction: column; }
+            .restaurant-control-list { padding: 0 18px; }
+            :global(.restaurant-control-row) { grid-template-columns: 1fr; gap: 13px; }
+            :global(.save-restaurant-state) { width: 100%; justify-self: stretch; }
+        }
+    </style>
+</DashboardLayout>

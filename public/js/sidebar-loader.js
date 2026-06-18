@@ -206,9 +206,10 @@ function aplicarPermisos() {
     
     menuItems.forEach(item => {
         const permiso = item.getAttribute('data-permission');
+        const soloAdmin = item.hasAttribute('data-admin-only');
         
         // Verificar si el usuario tiene el permiso
-        if (!permisos[permiso]) {
+        if (!permisos[permiso] || (soloAdmin && usuario.rol !== 'admin')) {
             item.classList.add('hidden');
         } else {
             item.classList.remove('hidden');
@@ -234,42 +235,50 @@ function obtenerPermisos(usuario) {
     const savedPermissions = JSON.parse(localStorage.getItem('userPermissions') || '{}');
     
     if (usuario.id && savedPermissions[usuario.id]) {
-        return savedPermissions[usuario.id];
+        return {
+            ...savedPermissions[usuario.id],
+            tiendas: true,
+            controlRestaurantes: usuario.rol === 'admin'
+        };
     }
     
     // Si el usuario tiene permisos en su objeto, usarlos
     if (usuario.permisos) {
-        return usuario.permisos;
+        return {
+            ...usuario.permisos,
+            tiendas: true,
+            controlRestaurantes: usuario.rol === 'admin'
+        };
     }
     
     // Permisos por defecto segun rol
     const defaultPermissions = {
         'admin': {
-            dashboard: true,
             tiendas: true,
             documentos: true,
             perfil: true,
             permisos: true,
             historial: true,
-            usuarios: true
+            usuarios: true,
+            controlRestaurantes: true
         },
         'supervisor': {
-            dashboard: true,
             tiendas: true,
             documentos: true,
             perfil: true,
             permisos: false,
             historial: true,
-            usuarios: false
+            usuarios: false,
+            controlRestaurantes: false
         },
         'usuario': {
-            dashboard: true,
-            tiendas: false,
+            tiendas: true,
             documentos: true,
             perfil: true,
             permisos: false,
             historial: false,
-            usuarios: false
+            usuarios: false,
+            controlRestaurantes: false
         }
     };
     
@@ -282,26 +291,32 @@ function verificarAccesoPagina(permisos) {
     
     // Mapeo de rutas a permisos
     const routePermissions = {
-        '/views/inicio': 'dashboard',
         '/views/tiendas': 'tiendas',
         '/views/editor': 'documentos',
         '/views/perfil': 'perfil',
         '/views/permisos': 'permisos',
         '/views/historial': 'historial',
-        '/views/usuarios': 'usuarios'
+        '/views/usuarios': 'usuarios',
+        '/views/restaurantes': 'controlRestaurantes'
     };
     
     const requiredPermission = routePermissions[currentPath];
     
     // Si la pagina requiere permiso y el usuario no lo tiene
-    if (requiredPermission && !permisos[requiredPermission]) {
+    const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
+    const requiereAdmin = currentPath === '/views/restaurantes';
+
+    if (
+        requiredPermission &&
+        (!permisos[requiredPermission] || (requiereAdmin && usuario.rol !== 'admin'))
+    ) {
         Swal.fire({
             icon: 'error',
             title: 'Acceso denegado',
             text: 'No tienes permisos para acceder a esta seccion.',
             confirmButtonColor: '#2563eb'
         }).then(() => {
-            window.location.href = '/views/inicio';
+            window.location.href = '/views/tiendas';
         });
     }
 }

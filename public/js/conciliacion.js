@@ -225,14 +225,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Verificar autenticacion
     const token = localStorage.getItem('token');
     if (!token) {
-        window.location.href = '/login';
+        window.location.href = '/';
         return;
     }
 
     // Establecer fecha actual
     document.getElementById('fechaConciliacion').valueAsDate = new Date();
 
-    // Cargar restaurantes
+    // Cargar catalogo de restaurantes activos
     await cargarRestaurantes();
 
     actualizarUploadsPorRestaurante('');
@@ -1698,6 +1698,35 @@ function generarConciliacionDesdeTemplate() {
 
 
 
+function esColumnaOS(columna) {
+    const clave = String(columna?.key || '')
+        .toLowerCase()
+        .replace(/[^a-z]/g, '');
+    const etiqueta = String(columna?.label || '')
+        .toLowerCase()
+        .replace(/[^a-z]/g, '');
+
+    return (
+        clave === 'os' ||
+        clave === 'osslash' ||
+        clave === 'overshort' ||
+        etiqueta === 'os' ||
+        etiqueta === 'overshort'
+    );
+}
+
+function obtenerValoresOS(row) {
+    return ['oS', 'os', 'osSlash', 'overShort']
+        .filter(key => row?.[key] !== undefined)
+        .map(key => Number(row[key]))
+        .filter(Number.isFinite);
+}
+
+function tieneDiferenciaOS(row) {
+    return obtenerValoresOS(row)
+        .some(valor => Math.abs(valor) > 0.01);
+}
+
 function actualizarResumen() {
 
     const total =
@@ -1713,6 +1742,9 @@ function actualizarResumen() {
             (s, x) => s + Math.abs(x.difference || 0),
             0
         );
+
+    const diferenciasOS =
+        datosExtraidos.filter(tieneDiferenciaOS).length;
 
     document.getElementById(
         'totalConceptos'
@@ -1730,6 +1762,45 @@ function actualizarResumen() {
         'totalDiferencia'
     ).textContent =
         formatMoney(montoTotal);
+
+    const statusCard =
+        document.getElementById('osStatusCard');
+    const statusText =
+        document.getElementById('osDifferenceStatus');
+    const statusMeta =
+        document.getElementById('osDifferenceMeta');
+    const statusIcon =
+        document.getElementById('osStatusIcon');
+    const hayDiferenciasOS = diferenciasOS > 0;
+
+    if (statusCard) {
+        statusCard.classList.toggle(
+            'has-difference',
+            hayDiferenciasOS
+        );
+        statusCard.classList.toggle(
+            'is-clear',
+            !hayDiferenciasOS
+        );
+    }
+
+    if (statusText) {
+        statusText.textContent = hayDiferenciasOS
+            ? 'Con diferencias'
+            : 'Sin diferencias';
+    }
+
+    if (statusMeta) {
+        statusMeta.textContent = hayDiferenciasOS
+            ? `${diferenciasOS} tienda${diferenciasOS === 1 ? '' : 's'} con OS`
+            : 'OS balanceado';
+    }
+
+    if (statusIcon) {
+        statusIcon.className = hayDiferenciasOS
+            ? 'fa-solid fa-triangle-exclamation'
+            : 'fa-solid fa-scale-balanced';
+    }
 }
 
 // ============================================
@@ -2125,6 +2196,10 @@ function renderTablaSucursales() {
         const th = document.createElement('th');
         th.textContent = col.label;
 
+        if (esColumnaOS(col)) {
+            th.classList.add('os-column-header');
+        }
+
         headerRow.appendChild(th);
 
     });
@@ -2165,6 +2240,8 @@ function renderTablaSucursales() {
             const td = document.createElement('td');
 
             let valor = row[col.key];
+            const columnaOS = esColumnaOS(col);
+            const valorNumericoOS = Number(valor);
 
             if (typeof valor === 'number') {
 
@@ -2186,6 +2263,24 @@ function renderTablaSucursales() {
 
                 td.textContent = valor ?? '';
 
+            }
+
+            if (
+                columnaOS &&
+                Number.isFinite(valorNumericoOS)
+            ) {
+                const tieneDiferencia =
+                    Math.abs(valorNumericoOS) > 0.01;
+
+                td.classList.add(
+                    tieneDiferencia
+                        ? 'os-difference'
+                        : 'os-balanced'
+                );
+
+                if (tieneDiferencia) {
+                    td.title = 'Diferencia OS detectada';
+                }
             }
 
             tr.appendChild(td);
@@ -2513,6 +2608,36 @@ function llenarFiltroTiendas() {
     });
 }
 
+function construirNombreArchivo(tipoArchivo, extension) {
+    const select = document.getElementById('selectRestaurante');
+    const option = select?.selectedOptions?.[0];
+    const codigo = option?.dataset?.codigo || '';
+    const nombres = {
+        'taco-bell': 'Taco_Bell',
+        'burger-king': 'Burger_King',
+        'popeyes': 'Popeyes'
+    };
+    const restaurante = nombres[codigo] || String(option?.textContent || 'Restaurante')
+        .trim()
+        .replace(/\s+-\s+.*$/, '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-zA-Z0-9]+/g, '_')
+        .replace(/^_+|_+$/g, '');
+    const fecha = new Date();
+    const fechaGuardado = [
+        fecha.getFullYear(),
+        String(fecha.getMonth() + 1).padStart(2, '0'),
+        String(fecha.getDate()).padStart(2, '0')
+    ].join('-');
+    const tipo = String(tipoArchivo || 'Conciliacion')
+        .replace(/Taco\s*Bell|Burger\s*King|Popeyes/gi, '')
+        .replace(/[^a-zA-Z0-9]+/g, '_')
+        .replace(/^_+|_+$/g, '') || 'Conciliacion';
+
+    return `${restaurante}_${fechaGuardado}_${tipo}.${extension}`;
+}
+
 function saveConciliacion() {
 
     if (!workbook) {
@@ -2546,7 +2671,7 @@ function saveConciliacion() {
 
             XLSX.writeFile(
                 workbookFinal,
-                `conciliacion-${Date.now()}.xlsx`
+                construirNombreArchivo('Conciliacion', 'xlsx')
             );
 
             Swal.fire({
@@ -2636,7 +2761,7 @@ async function guardarConciliacionServidor() {
         formData.append(
             'archivo',
             blob,
-            `conciliacion-${Date.now()}.xlsx`
+            construirNombreArchivo('Conciliacion', 'xlsx')
         );
 
         formData.append(
@@ -3172,7 +3297,11 @@ function serializarValorCSV(valor, columna) {
 function descargarCSV(data, nombreArchivo) {
 
     if (!data || !data.length) {
-        alert('No hay datos para exportar');
+        Swal.fire({
+            icon: 'warning',
+            title: 'Sin datos para exportar',
+            text: 'Genera la conciliación antes de descargar el archivo.'
+        });
         return;
     }
 
@@ -3205,7 +3334,7 @@ function descargarCSV(data, nombreArchivo) {
     const link = document.createElement('a');
 
     link.href = url;
-    link.download = `${nombreArchivo}.csv`;
+    link.download = construirNombreArchivo(nombreArchivo, 'csv');
 
     document.body.appendChild(link);
 
@@ -3310,7 +3439,11 @@ function exportarTabActualCSV() {
                 break;
 
             default:
-                alert('Selecciona una pestana');
+                Swal.fire({
+                    icon: 'info',
+                    title: 'Selecciona una pestaña',
+                    text: 'Elige la vista que deseas exportar.'
+                });
         }
 
         return;
@@ -3349,7 +3482,11 @@ function exportarTabActualCSV() {
                 break;
 
             default:
-                alert('Selecciona una pestaña');
+                Swal.fire({
+                    icon: 'info',
+                    title: 'Selecciona una pestaña',
+                    text: 'Elige la vista que deseas exportar.'
+                });
         }
 
         return;
@@ -3393,7 +3530,11 @@ function exportarTabActualCSV() {
             break;
 
         default:
-            alert('Selecciona una pestaña');
+            Swal.fire({
+                icon: 'info',
+                title: 'Selecciona una pestaña',
+                text: 'Elige la vista que deseas exportar.'
+            });
     }
 
 }
