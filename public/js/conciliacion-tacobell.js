@@ -597,7 +597,7 @@ function generarDailySalesRED() {
         // Cash Expected Deposit
         addRow(
             'Cash Expected Deposit',
-            101900,
+            110500,
             row.acctCash,
             0
         );
@@ -692,10 +692,33 @@ function generarDailySales0314() {
         const gcSold = Number(row.gcSold || 0);
         const promo = Number(row.promo || 0);
         const paidOut = Number(row.paidOut || 0);
+        const paidIn = Number(row.paidIn || 0);
         const ebt = Number(row.ebt || 0);
+        const overShort = Number(row.oS || 0);
 
-        function pushLine(acctNo, memo, debit = 0, credit = 0) {
-            dailySales0314Data.push({ journal: 'SJ', lineNo: lineNo++, description: 'POS Data Upload Sabretooth', memo, acctNo, locationId: store, debit, credit });
+        function pushLine(
+            acctNo,
+            memo,
+            debit = 0,
+            credit = 0,
+            deptId = ''
+        ) {
+            debit = Number(debit || 0);
+            credit = Number(credit || 0);
+
+            if (debit === 0 && credit === 0) return;
+
+            dailySales0314Data.push({
+                journal: 'SJ',
+                lineNo: lineNo++,
+                description: 'POS Data Upload Sabretooth',
+                memo,
+                deptId,
+                acctNo,
+                locationId: store,
+                debit,
+                credit
+            });
         }
 
         pushLine(400200, 'Gross Food Sales', 0, grossSales);
@@ -705,18 +728,18 @@ function generarDailySales0314() {
         if (donations) pushLine(212000, 'Donations', 0, donations);
         if (cashExpected)
             pushLine(
-                101900,
+                110500,
                 'Cash Expected Deposit',
                 cashExpected,
                 0
             );
         if (mcVisaDiscover) pushLine(111200, 'Credit Cards Expected Deposit', mcVisaDiscover, 0);
         if (amex) pushLine(111200, 'AMEX Expected Deposit', amex, 0);
-        if (gcRedeem) pushLine(144800, 'Gift Cards REDEEM', gcRedeem, 0);
-        if (gh) pushLine(124000, 'GrubHub', gh, 0);
-        if (uber) pushLine(122000, 'Uber', uber, 0);
-        if (dd) pushLine(123000, 'DoorDash', dd, 0);
-        if (gcSold) pushLine(244800, 'Gift Cards Sold', 0, gcSold);
+        if (gcRedeem) pushLine(144800, 'Gift Cards REEDEM', Math.abs(gcRedeem), 0);
+        if (gh) pushLine(124000, 'GrubHub', gh, 0, 'GHD');
+        if (uber) pushLine(122000, 'Uber', uber, 0, 'UBD');
+        if (dd) pushLine(123000, 'DoorDash', dd, 0, 'DDD');
+        if (gcSold) pushLine(115000, 'Gift Cards SOLD', 0, gcSold);
 
         if (promo)
             pushLine(
@@ -734,7 +757,13 @@ function generarDailySales0314() {
                 0
             );
 
-
+        if (paidIn)
+            pushLine(
+                116200,
+                'Paid In',
+                0,
+                paidIn
+            );
 
         if (ebt)
             pushLine(
@@ -742,6 +771,15 @@ function generarDailySales0314() {
                 'EBT Expected Deposit',
                 ebt,
                 0
+            );
+
+        if (overShort)
+            pushLine(
+                652300,
+                'Diff Between POS and Calc (Over)/Short',
+                overShort > 0 ? overShort : 0,
+                overShort < 0 ? Math.abs(overShort) : 0,
+                'CASH'
             );
     });
 }

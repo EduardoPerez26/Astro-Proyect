@@ -1,0 +1,23 @@
+<xml xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel">
+ <o:shapelayout v:ext="edit">
+  <o:idmap v:ext="edit" data="2"></o:idmap>
+ </o:shapelayout><v:shapetype id="_x0000_t202" coordsize="21600,21600" o:spt="202" path="m,l,21600r21600,l21600,xe">
+  <v:stroke joinstyle="miter"></v:stroke>
+  <v:path gradientshapeok="t" o:connecttype="rect"></v:path>
+ </v:shapetype><v:shape id="_x0000_s2050" type="#_x0000_t202" style="position:absolute;   margin-left:57pt;margin-top:501.75pt;width:255.75pt;height:306pt;z-index:1;   visibility:hidden" fillcolor="infoBackground [80]" strokecolor="none [81]" o:insetmode="auto">
+  <v:fill color2="infoBackground [80]"></v:fill>
+  <v:shadow color="none [81]" obscured="t"></v:shadow>
+  <v:path o:connecttype="none"></v:path>
+  <v:textbox style="mso-direction-alt:auto">
+   <div style="text-align:left"></div>
+  </v:textbox>
+  <x:ClientData ObjectType="Note">
+   <x:MoveWithCells></x:MoveWithCells>
+   <x:SizeWithCells></x:SizeWithCells>
+   <x:Anchor>
+    1, 12, 33, 8, 6, 0, 53, 16</x:Anchor>
+   <x:AutoFill>False</x:AutoFill>
+   <x:Row>34</x:Row>
+   <x:Column>0</x:Column>
+  </x:ClientData>
+ </v:shape></xml>

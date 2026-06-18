@@ -2990,6 +2990,60 @@ function renderActiveTab() {
     }
 }
 
+function normalizarNombreColumnaCSV(columna) {
+    return String(columna || '')
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, '');
+}
+
+function serializarValorCSV(valor, columna) {
+    const nombreColumna =
+        normalizarNombreColumnaCSV(columna);
+    const columnasImporte = new Set([
+        'debit',
+        'credit'
+    ]);
+    const columnasNumericas = new Set([
+        'lineno',
+        'account',
+        'acctno',
+        'locationid',
+        'store',
+        'storenumber'
+    ]);
+
+    if (
+        valor === null ||
+        valor === undefined ||
+        valor === ''
+    ) {
+        return '';
+    }
+
+    if (columnasImporte.has(nombreColumna)) {
+        const numero = Number(valor);
+
+        return Number.isFinite(numero)
+            ? numero.toFixed(2)
+            : '';
+    }
+
+    if (
+        typeof valor === 'number' ||
+        columnasNumericas.has(nombreColumna)
+    ) {
+        const numero = Number(valor);
+
+        if (Number.isFinite(numero)) {
+            return String(numero);
+        }
+    }
+
+    const texto = String(valor).replace(/"/g, '""');
+
+    return `"${texto}"`;
+}
+
 function descargarCSV(data, nombreArchivo) {
 
     if (!data || !data.length) {
@@ -2999,24 +3053,20 @@ function descargarCSV(data, nombreArchivo) {
 
     const columnas = Object.keys(data[0]);
 
-    let csv = columnas.join(',') + '\n';
+    let csv = columnas.join(',') + '\r\n';
 
     data.forEach(row => {
 
         const valores = columnas.map(col => {
 
-            let valor = row[col];
-
-            if (valor === null || valor === undefined)
-                valor = '';
-
-            valor = String(valor).replace(/"/g, '""');
-
-            return `"${valor}"`;
+            return serializarValorCSV(
+                row[col],
+                col
+            );
 
         });
 
-        csv += valores.join(',') + '\n';
+        csv += valores.join(',') + '\r\n';
 
     });
 
