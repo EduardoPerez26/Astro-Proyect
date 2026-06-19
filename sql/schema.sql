@@ -237,7 +237,7 @@ CREATE TABLE IF NOT EXISTS sesiones (
     usuario_id INT NOT NULL,
     
     -- Token de sesion (JWT o similar)
-    token VARCHAR(500) NOT NULL,
+    token VARCHAR(2048) NOT NULL,
     
     -- IP desde donde se conecto
     ip_address VARCHAR(45),

@@ -10,6 +10,46 @@ const bcrypt = require('bcryptjs');
 const { pool } = require('../config/database');
 const { verificarToken, esAdmin } = require('../middleware/auth.middleware');
 
+const VENTANAS_OPERATIVAS = ['tiendas', 'documentos', 'historial'];
+const PERMISOS_ADMIN = {
+    tiendas: true,
+    documentos: true,
+    perfil: true,
+    permisos: true,
+    historial: true,
+    usuarios: true,
+    controlRestaurantes: true,
+    paginaInicio: 'tiendas'
+};
+
+function normalizarPermisosUsuario(permisos, rol) {
+    if (rol === 'admin') {
+        return {
+            ...PERMISOS_ADMIN,
+            paginaInicio: VENTANAS_OPERATIVAS.includes(permisos.paginaInicio)
+                ? permisos.paginaInicio
+                : 'tiendas'
+        };
+    }
+
+    const normalizados = {
+        tiendas: permisos.tiendas === true,
+        documentos: permisos.documentos === true,
+        historial: permisos.historial === true,
+        perfil: true,
+        permisos: false,
+        usuarios: false,
+        controlRestaurantes: false
+    };
+    const disponibles = VENTANAS_OPERATIVAS.filter(codigo => normalizados[codigo]);
+
+    normalizados.paginaInicio = disponibles.includes(permisos.paginaInicio)
+        ? permisos.paginaInicio
+        : disponibles[0] || null;
+
+    return normalizados;
+}
+
 // ============================================
 // GET /api/usuarios
 // ============================================
@@ -29,7 +69,6 @@ router.get('/', verificarToken, esAdmin, async (req, res) => {
                     u.fecha_creacion,
                     d.codigo AS departamento_codigo,
                     d.nombre AS departamento_nombre,
-                    d.modulos AS departamento_modulos,
                     d.activo AS departamento_activo
              FROM usuarios u
              LEFT JOIN departamentos d ON d.id = u.departamento_id
@@ -46,15 +85,7 @@ router.get('/', verificarToken, esAdmin, async (req, res) => {
                     permisos = u.permisos;
                 }
             }
-            let departamentoModulos = {};
-            if (u.departamento_modulos) {
-                if (typeof u.departamento_modulos === 'string') {
-                    try { departamentoModulos = JSON.parse(u.departamento_modulos); } catch { departamentoModulos = {}; }
-                } else {
-                    departamentoModulos = u.departamento_modulos;
-                }
-            }
-            return { ...u, permisos, departamento_modulos: departamentoModulos };
+            return { ...u, permisos };
         });
 
         res.json({
@@ -105,7 +136,6 @@ router.get('/:id', verificarToken, async (req, res) => {
  u.fecha_creacion,
  d.codigo AS departamento_codigo,
  d.nombre AS departamento_nombre,
- d.modulos AS departamento_modulos,
  d.activo AS departamento_activo
              FROM usuarios u
              LEFT JOIN departamentos d ON d.id = u.departamento_id
@@ -129,13 +159,6 @@ router.get('/:id', verificarToken, async (req, res) => {
             }
         } else {
             usuario.permisos = {};
-        }
-        if (usuario.departamento_modulos) {
-            if (typeof usuario.departamento_modulos === 'string') {
-                try { usuario.departamento_modulos = JSON.parse(usuario.departamento_modulos); } catch { usuario.departamento_modulos = {}; }
-            }
-        } else {
-            usuario.departamento_modulos = {};
         }
 
         res.json({
@@ -384,7 +407,9 @@ router.get('/:id/permisos', verificarToken, async (req, res) => {
         // Parsear permisos (guardados como JSON en la BD)
         let permisos = {};
         try {
-            permisos = rows[0].permisos ? JSON.parse(rows[0].permisos) : {};
+            permisos = typeof rows[0].permisos === 'string'
+                ? JSON.parse(rows[0].permisos || '{}')
+                : rows[0].permisos || {};
         } catch {
             permisos = {};
         }
@@ -420,7 +445,7 @@ router.put('/:id/permisos', verificarToken, esAdmin, async (req, res) => {
 
         // Verificar que el usuario existe
         const [usuarios] = await pool.query(
-            'SELECT id FROM usuarios WHERE id = ?',
+            'SELECT id, rol FROM usuarios WHERE id = ?',
             [req.params.id]
         );
 
@@ -431,15 +456,31 @@ router.put('/:id/permisos', verificarToken, esAdmin, async (req, res) => {
             });
         }
 
-        // Guardar permisos como JSON
+        const permisosNormalizados = normalizarPermisosUsuario(
+            permisos,
+            usuarios[0].rol
+        );
+
+        if (
+            usuarios[0].rol !== 'admin' &&
+            !permisosNormalizados.paginaInicio
+        ) {
+            return res.status(400).json({
+                success: false,
+                message: 'El usuario debe tener al menos una ventana habilitada'
+            });
+        }
+
+        // Este es el unico punto donde se asignan ventanas e inicio.
         await pool.query(
             'UPDATE usuarios SET permisos = ? WHERE id = ?',
-            [JSON.stringify(permisos), req.params.id]
+            [JSON.stringify(permisosNormalizados), req.params.id]
         );
 
         res.json({
             success: true,
-            message: 'Permisos actualizados correctamente'
+            message: 'Permisos y ventana inicial actualizados correctamente',
+            permisos: permisosNormalizados
         });
 
     } catch (error) {
@@ -501,9 +542,9 @@ router.post('/', verificarToken, esAdmin, async (req, res) => {
 
         // Permisos por defecto segun rol
         const defaultPermisos = {
-            'admin': { tiendas: true, documentos: true, perfil: true, permisos: true, historial: true, usuarios: true, controlRestaurantes: true },
-            'supervisor': { tiendas: true, documentos: true, perfil: true, permisos: false, historial: true, usuarios: false, controlRestaurantes: false },
-            'usuario': { tiendas: true, documentos: true, perfil: true, permisos: false, historial: false, usuarios: false, controlRestaurantes: false }
+            'admin': { ...PERMISOS_ADMIN },
+            'supervisor': { tiendas: true, documentos: true, perfil: true, permisos: false, historial: true, usuarios: false, controlRestaurantes: false, paginaInicio: 'tiendas' },
+            'usuario': { tiendas: true, documentos: true, perfil: true, permisos: false, historial: false, usuarios: false, controlRestaurantes: false, paginaInicio: 'tiendas' }
         };
 
         // Insertar usuario

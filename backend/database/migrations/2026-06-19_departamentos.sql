@@ -9,6 +9,8 @@ CREATE TABLE IF NOT EXISTS departamentos (
     codigo VARCHAR(60) NOT NULL,
     nombre VARCHAR(120) NOT NULL,
     descripcion VARCHAR(255) NULL,
+    -- Campos conservados por compatibilidad. Las ventanas se gestionan
+    -- exclusivamente en usuarios.permisos desde la pantalla Permisos.
     modulos JSON NOT NULL,
     pagina_inicio VARCHAR(60) NOT NULL DEFAULT 'tiendas',
     activo BOOLEAN NOT NULL DEFAULT TRUE,
@@ -83,7 +85,7 @@ VALUES
         'contabilidad',
         'Contabilidad',
         'Conciliaciones, documentos e historial contable.',
-        JSON_OBJECT('tiendas', TRUE, 'documentos', TRUE, 'historial', TRUE),
+        JSON_OBJECT(),
         'tiendas',
         TRUE
     ),
@@ -91,7 +93,7 @@ VALUES
         'operaciones',
         'Operaciones',
         'Operacion diaria de tiendas y consulta de documentos.',
-        JSON_OBJECT('tiendas', TRUE, 'documentos', TRUE),
+        JSON_OBJECT(),
         'tiendas',
         TRUE
     ),
@@ -99,8 +101,8 @@ VALUES
         'auditoria',
         'Auditoria',
         'Revision de documentos, conciliaciones e historial.',
-        JSON_OBJECT('tiendas', TRUE, 'documentos', TRUE, 'historial', TRUE),
-        'historial',
+        JSON_OBJECT(),
+        'tiendas',
         TRUE
     )
 ON DUPLICATE KEY UPDATE

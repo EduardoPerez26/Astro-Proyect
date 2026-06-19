@@ -15,7 +15,8 @@ const MENU_SECTIONS = [
         icon: 'fa-shop',
         iconClass: 'tiendas',
         path: '/views/tiendas',
-        required: true
+        required: false,
+        initialOption: true
     },
     {
         id: 'documentos',
@@ -23,8 +24,9 @@ const MENU_SECTIONS = [
         description: 'Editor y validador de Excel',
         icon: 'fa-file-excel',
         iconClass: 'documentos',
-        path: '/views/editor',
-        required: false
+        path: '/views/documentos',
+        required: false,
+        initialOption: true
     },
     {
         id: 'perfil',
@@ -52,7 +54,8 @@ const MENU_SECTIONS = [
         icon: 'fa-clock-rotate-left',
         iconClass: 'historial',
         path: '/views/historial',
-        required: false
+        required: false,
+        initialOption: true
     },
     {
         id: 'usuarios',
@@ -126,10 +129,10 @@ async function loadUserData() {
         
         // Permisos de ejemplo
         const defaultPermissions = {
-            1: { tiendas: true, documentos: true, perfil: true, permisos: true, historial: true, usuarios: true, controlRestaurantes: true },
-            2: { tiendas: true, documentos: true, perfil: true, permisos: false, historial: true, usuarios: false, controlRestaurantes: false },
-            3: { tiendas: true, documentos: true, perfil: true, permisos: false, historial: false, usuarios: false, controlRestaurantes: false },
-            4: { tiendas: true, documentos: false, perfil: true, permisos: false, historial: false, usuarios: false, controlRestaurantes: false }
+            1: { tiendas: true, documentos: true, perfil: true, permisos: true, historial: true, usuarios: true, controlRestaurantes: true, paginaInicio: 'tiendas' },
+            2: { tiendas: true, documentos: true, perfil: true, permisos: false, historial: true, usuarios: false, controlRestaurantes: false, paginaInicio: 'tiendas' },
+            3: { tiendas: true, documentos: true, perfil: true, permisos: false, historial: false, usuarios: false, controlRestaurantes: false, paginaInicio: 'tiendas' },
+            4: { tiendas: true, documentos: false, perfil: true, permisos: false, historial: false, usuarios: false, controlRestaurantes: false, paginaInicio: 'tiendas' }
         };
         
         currentUser.permisos = defaultPermissions[currentUser.id] || {};
@@ -157,11 +160,12 @@ async function loadUserData() {
                     currentUser.permisos = {};
                 }
             }
-            currentUser.permisos = {
-                ...(currentUser.permisos || {}),
-                tiendas: true,
-                controlRestaurantes: currentUser.rol === 'admin'
-            };
+            currentUser.permisos = currentUser.permisos || {};
+            if (currentUser.rol === 'admin') {
+                MENU_SECTIONS.forEach(section => {
+                    currentUser.permisos[section.id] = true;
+                });
+            }
             originalPermissions = { ...currentUser.permisos };
             
             renderUserInfo();
@@ -216,7 +220,7 @@ function renderPermissions() {
         const isAdminSection = section.adminOnly;
         const isEnabled = isAdminSection
             ? currentUser.rol === 'admin'
-            : currentUser.permisos[section.id] !== false;
+            : isRequired || currentUser.permisos[section.id] === true;
         const isDisabled = isRequired || (isAdminSection && currentUser.rol !== 'admin');
         
         return `
@@ -242,6 +246,37 @@ function renderPermissions() {
             </div>
         `;
     }).join('');
+
+    renderInitialWindow();
+}
+
+function getEnabledInitialSections() {
+    return MENU_SECTIONS.filter(section =>
+        section.initialOption && currentUser.permisos[section.id] === true
+    );
+}
+
+function renderInitialWindow() {
+    const select = document.getElementById('initialWindow');
+    if (!select || !currentUser) return;
+    const enabled = getEnabledInitialSections();
+    const current = currentUser.permisos.paginaInicio;
+
+    select.innerHTML = enabled.length
+        ? enabled.map(section => `
+            <option value="${section.id}">${section.name}</option>
+        `).join('')
+        : '<option value="">Sin ventanas habilitadas</option>';
+    select.disabled = enabled.length === 0;
+    currentUser.permisos.paginaInicio = enabled.some(section => section.id === current)
+        ? current
+        : enabled[0]?.id || null;
+    select.value = currentUser.permisos.paginaInicio || '';
+}
+
+function changeInitialWindow(value) {
+    if (!currentUser) return;
+    currentUser.permisos.paginaInicio = value || null;
 }
 
 // ============================================
@@ -251,6 +286,7 @@ function renderPermissions() {
 function togglePermission(sectionId, enabled) {
     if (!currentUser) return;
     currentUser.permisos[sectionId] = enabled;
+    renderInitialWindow();
 }
 
 // ============================================
@@ -287,6 +323,23 @@ async function savePermissions() {
                 : checkbox.checked;
         }
     });
+    const initialWindow = document.getElementById('initialWindow')?.value || null;
+    const enabledWindows = MENU_SECTIONS.filter(
+        section => section.initialOption && permissions[section.id]
+    );
+
+    if (!enabledWindows.length && currentUser.rol !== 'admin') {
+        await Swal.fire({
+            icon: 'warning',
+            title: 'Selecciona una ventana',
+            text: 'El usuario debe tener acceso al menos a Tiendas, Documentos o Historial.'
+        });
+        return;
+    }
+
+    permissions.paginaInicio = enabledWindows.some(section => section.id === initialWindow)
+        ? initialWindow
+        : enabledWindows[0]?.id || 'tiendas';
     
     // Modo offline
     if (!token || localStorage.getItem('modoOffline')) {
@@ -320,7 +373,9 @@ async function savePermissions() {
         const data = await response.json();
         
         if (response.ok && data.success) {
-            originalPermissions = { ...permissions };
+            currentUser.permisos = { ...(data.permisos || permissions) };
+            originalPermissions = { ...currentUser.permisos };
+            renderPermissions();
             
             Swal.fire({
                 icon: 'success',

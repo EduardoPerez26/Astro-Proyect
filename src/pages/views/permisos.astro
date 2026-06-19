@@ -31,6 +31,17 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
             <div class="permissions-grid" id="permissionsList">
                 <!-- Se genera dinamicamente -->
             </div>
+
+            <div class="permission-start-panel">
+                <div class="permission-start-icon">
+                    <i class="fa-solid fa-house-laptop"></i>
+                </div>
+                <div class="permission-start-copy">
+                    <strong>Ventana inicial</strong>
+                    <span>Selecciona la pantalla que vera este usuario al iniciar sesion.</span>
+                </div>
+                <select id="initialWindow" class="form-control" onchange="changeInitialWindow(this.value)"></select>
+            </div>
         </div>
 
         <!-- Acciones -->
@@ -45,6 +56,38 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
             </button>
         </div>
     </div>
+    <style>
+        .permission-start-panel {
+            display: grid;
+            grid-template-columns: auto minmax(0, 1fr) minmax(220px, 300px);
+            align-items: center;
+            gap: 14px;
+            margin-top: 20px;
+            padding: 18px;
+            border: 1px solid #cbd8e5;
+            border-left: 4px solid #173f67;
+            border-radius: 8px;
+            background: #f8fafc;
+        }
+
+        .permission-start-icon {
+            display: grid;
+            width: 42px;
+            height: 42px;
+            place-items: center;
+            border-radius: 7px;
+            background: #e4edf6;
+            color: #123a5c;
+        }
+
+        .permission-start-copy strong { display: block; color: #102f4c; }
+        .permission-start-copy span { display: block; margin-top: 3px; color: #65798d; font-size: 12px; }
+
+        @media (max-width: 720px) {
+            .permission-start-panel { grid-template-columns: auto 1fr; }
+            .permission-start-panel select { grid-column: 1 / -1; }
+        }
+    </style>
 <script src="/js/config.js" is:inline></script>
     <script is:inline src="/js/permisos.js"></script>
 </DashboardLayout>

@@ -5,7 +5,6 @@
 let users = [];
 let userToDelete = null;
 let departments = [];
-let departmentModules = [];
 
 // Inicializar
 document.addEventListener('DOMContentLoaded', async function () {
@@ -17,14 +16,9 @@ async function loadDepartments() {
     const token = localStorage.getItem('token');
 
     if (!token || localStorage.getItem('modoOffline')) {
-        departmentModules = [
-            { codigo: 'tiendas', nombre: 'Tiendas y conciliaciones', descripcion: 'Flujos por restaurante.' },
-            { codigo: 'documentos', nombre: 'Documentos', descripcion: 'Consulta y administracion de archivos.' },
-            { codigo: 'historial', nombre: 'Historial', descripcion: 'Movimientos y resultados anteriores.' }
-        ];
         departments = [
-            { id: 1, codigo: 'contabilidad', nombre: 'Contabilidad', modulos: { tiendas: true, documentos: true, historial: true }, pagina_inicio: 'tiendas', activo: true, total_usuarios: 2 },
-            { id: 2, codigo: 'operaciones', nombre: 'Operaciones', modulos: { tiendas: true, documentos: true }, pagina_inicio: 'tiendas', activo: true, total_usuarios: 1 }
+            { id: 1, codigo: 'contabilidad', nombre: 'Contabilidad', activo: true, total_usuarios: 2 },
+            { id: 2, codigo: 'operaciones', nombre: 'Operaciones', activo: true, total_usuarios: 1 }
         ];
         renderDepartments();
         populateDepartmentSelect();
@@ -34,12 +28,11 @@ async function loadDepartments() {
 
     try {
         const headers = { Authorization: `Bearer ${token}` };
-        const [departmentsResponse, modulesResponse] = await Promise.all([
-            fetch(`${window.API_URL}/departamentos`, { headers }),
-            fetch(`${window.API_URL}/departamentos/modulos`, { headers })
-        ]);
+        const departmentsResponse = await fetch(
+            `${window.API_URL}/departamentos`,
+            { headers }
+        );
         const departmentsData = await departmentsResponse.json().catch(() => ({}));
-        const modulesData = await modulesResponse.json().catch(() => ({}));
 
         if (!departmentsResponse.ok) {
             throw new Error(
@@ -49,7 +42,6 @@ async function loadDepartments() {
         }
 
         departments = departmentsData.departamentos || [];
-        departmentModules = modulesResponse.ok ? modulesData.modulos || [] : [];
         renderDepartments();
         populateDepartmentSelect();
         populateDepartmentFilter();
@@ -59,7 +51,7 @@ async function loadDepartments() {
         if (tbody) {
             tbody.innerHTML = `
                 <tr>
-                    <td colspan="7">
+                    <td colspan="5">
                         <div class="empty-state">
                             <i class="fa-solid fa-database"></i>
                             <p>${escapeHtml(error.message)}</p>
@@ -104,7 +96,7 @@ function renderDepartments() {
     if (!departments.length) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="7">
+                <td colspan="5">
                     <div class="empty-state">
                         <i class="fa-solid fa-building-circle-xmark"></i>
                         <p>No hay departamentos registrados</p>
@@ -117,13 +109,6 @@ function renderDepartments() {
 
     tbody.innerHTML = departments.map(department => {
         const active = department.activo === true || department.activo === 1;
-        const moduleNames = Object.keys(department.modulos || {})
-            .filter(code => department.modulos[code])
-            .map(code => departmentModules.find(module => module.codigo === code)?.nombre || code);
-        const startName = departmentModules.find(
-            module => module.codigo === department.pagina_inicio
-        )?.nombre || department.pagina_inicio || 'No definida';
-
         return `
             <tr>
                 <td>
@@ -131,10 +116,6 @@ function renderDepartments() {
                     <div class="user-email">${escapeHtml(department.descripcion || 'Sin descripcion')}</div>
                 </td>
                 <td><code>${escapeHtml(department.codigo)}</code></td>
-                <td>${moduleNames.length
-                    ? moduleNames.map(name => `<span class="module-chip">${escapeHtml(name)}</span>`).join('')
-                    : '<span class="user-email">Sin ventanas asignadas</span>'}</td>
-                <td><span class="department-badge">${escapeHtml(startName)}</span></td>
                 <td>${Number(department.total_usuarios || 0)}</td>
                 <td><span class="status-badge ${active ? 'activo' : 'inactivo'}">${active ? 'Activo' : 'Inactivo'}</span></td>
                 <td>
@@ -580,45 +561,6 @@ function openPermissions(userId) {
 // DEPARTAMENTOS
 // ============================================
 
-function renderDepartmentModuleOptions(selected = {}) {
-    const container = document.getElementById('departmentModules');
-    if (!container) return;
-
-    container.innerHTML = departmentModules.map(module => `
-        <label class="department-module-option">
-            <input
-                type="checkbox"
-                name="departmentModule"
-                value="${escapeHtml(module.codigo)}"
-                ${selected[module.codigo] ? 'checked' : ''}
-            >
-            <span>
-                <strong>${escapeHtml(module.nombre)}</strong>
-                <small>${escapeHtml(module.descripcion || '')}</small>
-            </span>
-        </label>
-    `).join('');
-
-    container.querySelectorAll('input[name="departmentModule"]').forEach(input => {
-        input.addEventListener('change', () => updateDepartmentStartOptions());
-    });
-}
-
-function updateDepartmentStartOptions(selectedValue) {
-    const select = document.getElementById('departmentStartPage');
-    if (!select) return;
-    const current = selectedValue || select.value;
-    const enabledCodes = [...document.querySelectorAll('input[name="departmentModule"]:checked')]
-        .map(input => input.value);
-
-    select.innerHTML = enabledCodes.map(code => {
-        const module = departmentModules.find(item => item.codigo === code);
-        return `<option value="${escapeHtml(code)}">${escapeHtml(module?.nombre || code)}</option>`;
-    }).join('');
-
-    if (enabledCodes.includes(current)) select.value = current;
-}
-
 function openDepartmentModal(departmentId = null) {
     const modal = document.getElementById('departmentModal');
     const form = document.getElementById('departmentForm');
@@ -635,8 +577,6 @@ function openDepartmentModal(departmentId = null) {
         department && !(department.activo === true || department.activo === 1)
             ? 'inactivo'
             : 'activo';
-    renderDepartmentModuleOptions(department?.modulos || {});
-    updateDepartmentStartOptions(department?.pagina_inicio);
     modal.classList.add('active');
 }
 
@@ -650,26 +590,12 @@ async function saveDepartment() {
     const codigo = document.getElementById('departmentCode').value.trim();
     const descripcion = document.getElementById('departmentDescription').value.trim();
     const activo = document.getElementById('departmentStatus').value === 'activo';
-    const pagina_inicio = document.getElementById('departmentStartPage').value;
-    const modulos = Object.fromEntries(
-        [...document.querySelectorAll('input[name="departmentModule"]:checked')]
-            .map(input => [input.value, true])
-    );
 
     if (!nombre || !codigo) {
         await Swal.fire({
             icon: 'warning',
             title: 'Datos requeridos',
             text: 'Escribe el nombre y codigo del departamento.'
-        });
-        return;
-    }
-
-    if (!Object.keys(modulos).length) {
-        await Swal.fire({
-            icon: 'warning',
-            title: 'Selecciona una ventana',
-            text: 'Cada departamento debe tener al menos una ventana disponible.'
         });
         return;
     }
@@ -681,8 +607,6 @@ async function saveDepartment() {
             nombre,
             codigo,
             descripcion,
-            modulos,
-            pagina_inicio,
             activo,
             total_usuarios: 0
         };
@@ -705,7 +629,7 @@ async function saveDepartment() {
                     Authorization: `Bearer ${token}`,
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ nombre, codigo, descripcion, modulos, pagina_inicio, activo })
+                body: JSON.stringify({ nombre, codigo, descripcion, activo })
             }
         );
         const data = await response.json().catch(() => ({}));

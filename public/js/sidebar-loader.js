@@ -289,19 +289,9 @@ function obtenerPermisos(usuario) {
     };
 
     if (usuario.rol === 'admin') {
-        return defaultPermissions.admin;
-    }
-
-    if (usuario.departamento?.modulos) {
         return {
-            tiendas: false,
-            documentos: false,
-            historial: false,
-            perfil: true,
-            permisos: false,
-            usuarios: false,
-            controlRestaurantes: false,
-            ...usuario.departamento.modulos
+            ...defaultPermissions.admin,
+            paginaInicio: usuario.permisos?.paginaInicio || 'tiendas'
         };
     }
 
@@ -311,17 +301,24 @@ function obtenerPermisos(usuario) {
     if (usuario.id && savedPermissions[usuario.id]) {
         return {
             ...savedPermissions[usuario.id],
-            tiendas: true,
-            controlRestaurantes: usuario.rol === 'admin'
+            perfil: true,
+            usuarios: false,
+            permisos: false,
+            controlRestaurantes: false
         };
     }
 
     // Si el usuario tiene permisos en su objeto, usarlos
     if (usuario.permisos) {
         return {
+            tiendas: false,
+            documentos: false,
+            historial: false,
             ...usuario.permisos,
-            tiendas: true,
-            controlRestaurantes: usuario.rol === 'admin'
+            perfil: true,
+            usuarios: false,
+            permisos: false,
+            controlRestaurantes: false
         };
     }
     
@@ -364,11 +361,11 @@ function verificarAccesoPagina(permisos) {
                 documentos: '/views/documentos',
                 historial: '/views/historial'
             };
-            const paginaDepartamento = usuario.departamento?.pagina_inicio;
-            const destinoDepartamento = paginaDepartamento && permisos[paginaDepartamento]
-                ? rutasDepartamento[paginaDepartamento]
+            const paginaConfigurada = permisos.paginaInicio;
+            const destinoConfigurado = paginaConfigurada && permisos[paginaConfigurada]
+                ? rutasDepartamento[paginaConfigurada]
                 : null;
-            const destino = destinoDepartamento || (permisos.tiendas
+            const destino = destinoConfigurado || (permisos.tiendas
                 ? '/views/tiendas'
                 : permisos.documentos
                     ? '/views/documentos'

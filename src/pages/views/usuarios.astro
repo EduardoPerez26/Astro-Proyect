@@ -140,8 +140,8 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
             <div class="department-intro">
                 <div>
                     <span>ESTRUCTURA DE ACCESO</span>
-                    <h2>Departamentos y ventanas disponibles</h2>
-                    <p>Los usuarios no administradores veran en el sidebar solamente los modulos habilitados para su departamento.</p>
+                    <h2>Departamentos de la organizacion</h2>
+                    <p>Clasifica a los usuarios por area. Las ventanas y la pantalla inicial se asignan unicamente desde Permisos.</p>
                 </div>
                 <div class="department-count">
                     <strong id="totalDepartamentos">0</strong>
@@ -155,8 +155,6 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
                         <tr>
                             <th>Departamento</th>
                             <th>Codigo</th>
-                            <th>Ventanas visibles</th>
-                            <th>Ventana inicial</th>
                             <th>Usuarios</th>
                             <th>Estado</th>
                             <th>Acciones</th>
@@ -164,7 +162,7 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
                     </thead>
                     <tbody id="departmentsTableBody">
                         <tr>
-                            <td colspan="7">
+                            <td colspan="5">
                                 <div class="empty-state">
                                     <i class="fa-solid fa-spinner fa-spin"></i>
                                     <p>Cargando departamentos...</p>
@@ -274,15 +272,6 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
                     <div class="form-group">
                         <label class="form-label" for="departmentDescription">Descripcion</label>
                         <textarea id="departmentDescription" class="form-control" rows="3" placeholder="Responsabilidad principal del departamento"></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Ventanas visibles en el sidebar</label>
-                        <div class="department-module-grid" id="departmentModules"></div>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label" for="departmentStartPage">Ventana inicial al iniciar sesion</label>
-                        <select id="departmentStartPage" class="form-control"></select>
-                        <small class="form-text">Solo se muestran las ventanas habilitadas arriba.</small>
                     </div>
                     <div class="form-group">
                         <label class="form-label" for="departmentStatus">Estado</label>
@@ -400,30 +389,8 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
         }
 
         .department-modal { max-width: 720px; }
-        .department-module-grid {
-            display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 10px;
-        }
-
-        .department-module-option {
-            display: grid;
-            grid-template-columns: auto 1fr;
-            gap: 10px;
-            padding: 12px;
-            border: 1px solid #d5e0ea;
-            border-radius: 7px;
-            background: #f8fafc;
-            cursor: pointer;
-        }
-
-        .department-module-option input { margin-top: 3px; }
-        .department-module-option strong { display: block; color: #163a5b; font-size: 13px; }
-        .department-module-option small { display: block; margin-top: 3px; color: #6a7e91; line-height: 1.35; }
-
         @media (max-width: 720px) {
             .department-intro { align-items: flex-start; flex-direction: column; }
-            .department-module-grid { grid-template-columns: 1fr; }
             .admin-view-tabs { display: flex; }
             .admin-view-tab { flex: 1; justify-content: center; }
         }

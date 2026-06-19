@@ -8,10 +8,10 @@ function obtenerRutaInicial(usuario) {
         documentos: '/views/documentos',
         historial: '/views/historial'
     };
-    const paginaDepartamento = usuario?.departamento?.pagina_inicio;
+    const paginaConfigurada = permisos.paginaInicio;
 
-    if (paginaDepartamento && permisos[paginaDepartamento] && rutas[paginaDepartamento]) {
-        return rutas[paginaDepartamento];
+    if (paginaConfigurada && permisos[paginaConfigurada] && rutas[paginaConfigurada]) {
+        return rutas[paginaConfigurada];
     }
 
     if (permisos.tiendas) return '/views/tiendas';

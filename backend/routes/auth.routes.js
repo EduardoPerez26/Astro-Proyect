@@ -35,28 +35,26 @@ function parsearJson(valor) {
 function construirContextoUsuario(usuario) {
     const tieneDepartamento = Boolean(usuario.departamento_id);
     const departamentoActivo = tieneDepartamento && usuario.departamento_activo !== 0;
-    const modulosDepartamento = departamentoActivo
-        ? parsearJson(usuario.departamento_modulos)
-        : {};
     let permisos;
 
     if (usuario.rol === 'admin') {
-        permisos = { ...PERMISOS_ADMIN };
-    } else if (tieneDepartamento) {
+        const permisosGuardados = parsearJson(usuario.permisos);
+        const paginaInicio = ['tiendas', 'documentos', 'historial'].includes(
+            permisosGuardados.paginaInicio
+        ) ? permisosGuardados.paginaInicio : 'tiendas';
+        permisos = { ...PERMISOS_ADMIN, paginaInicio };
+    } else {
         permisos = {
-            perfil: true,
             tiendas: false,
             documentos: false,
             historial: false,
+            perfil: true,
             permisos: false,
             usuarios: false,
             controlRestaurantes: false,
-            ...modulosDepartamento
-        };
-    } else {
-        permisos = {
             ...parsearJson(usuario.permisos),
-            tiendas: true,
+            usuarios: false,
+            permisos: false,
             controlRestaurantes: false
         };
     }
@@ -73,8 +71,6 @@ function construirContextoUsuario(usuario) {
                 id: usuario.departamento_id,
                 codigo: usuario.departamento_codigo,
                 nombre: usuario.departamento_nombre,
-                modulos: modulosDepartamento,
-                pagina_inicio: usuario.departamento_pagina_inicio,
                 activo: departamentoActivo
             }
             : null
@@ -86,8 +82,6 @@ async function obtenerUsuarioConDepartamento(condicion, params) {
         `SELECT u.*,
                 d.codigo AS departamento_codigo,
                 d.nombre AS departamento_nombre,
-                d.modulos AS departamento_modulos,
-                d.pagina_inicio AS departamento_pagina_inicio,
                 d.activo AS departamento_activo
          FROM usuarios u
          LEFT JOIN departamentos d ON d.id = u.departamento_id
@@ -184,7 +178,9 @@ router.post('/login', async (req, res) => {
 
         const token = jwt.sign(
             {
-                ...contextoUsuario
+                id: usuario.id,
+                username: usuario.username,
+                rol: usuario.rol
             },
             process.env.JWT_SECRET,
             {

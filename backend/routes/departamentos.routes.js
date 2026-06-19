@@ -3,45 +3,6 @@ const router = express.Router();
 const { pool } = require('../config/database');
 const { verificarToken, esAdmin } = require('../middleware/auth.middleware');
 
-const MODULOS_DISPONIBLES = [
-    {
-        codigo: 'tiendas',
-        nombre: 'Tiendas y conciliaciones',
-        descripcion: 'Acceso a los flujos operativos por restaurante.'
-    },
-    {
-        codigo: 'documentos',
-        nombre: 'Documentos',
-        descripcion: 'Consulta, descarga y administracion de archivos.'
-    },
-    {
-        codigo: 'historial',
-        nombre: 'Historial',
-        descripcion: 'Consulta de movimientos y resultados anteriores.'
-    }
-];
-
-function parsearModulos(valor) {
-    if (!valor) return {};
-    if (typeof valor === 'object') return valor;
-
-    try {
-        return JSON.parse(valor);
-    } catch {
-        return {};
-    }
-}
-
-function normalizarModulos(modulos = {}) {
-    const permitidos = new Set(MODULOS_DISPONIBLES.map(modulo => modulo.codigo));
-
-    return Object.fromEntries(
-        Object.entries(modulos)
-            .filter(([codigo, activo]) => permitidos.has(codigo) && activo === true)
-            .map(([codigo]) => [codigo, true])
-    );
-}
-
 function normalizarCodigo(valor) {
     return String(valor || '')
         .normalize('NFD')
@@ -65,10 +26,6 @@ function responderErrorInstalacion(error, res) {
     return false;
 }
 
-router.get('/modulos', verificarToken, esAdmin, (req, res) => {
-    res.json({ success: true, modulos: MODULOS_DISPONIBLES });
-});
-
 router.get('/', verificarToken, esAdmin, async (req, res) => {
     try {
         const [departamentos] = await pool.query(
@@ -76,8 +33,6 @@ router.get('/', verificarToken, esAdmin, async (req, res) => {
                     d.codigo,
                     d.nombre,
                     d.descripcion,
-                    d.modulos,
-                    d.pagina_inicio,
                     d.activo,
                     d.fecha_creacion,
                     d.fecha_actualizacion,
@@ -92,7 +47,6 @@ router.get('/', verificarToken, esAdmin, async (req, res) => {
             success: true,
             departamentos: departamentos.map(departamento => ({
                 ...departamento,
-                modulos: parsearModulos(departamento.modulos),
                 total_usuarios: Number(departamento.total_usuarios || 0)
             }))
         });
@@ -105,9 +59,8 @@ router.get('/', verificarToken, esAdmin, async (req, res) => {
 
 router.post('/', verificarToken, esAdmin, async (req, res) => {
     try {
-        const { nombre, codigo, descripcion, modulos, pagina_inicio, activo } = req.body;
+        const { nombre, codigo, descripcion, activo } = req.body;
         const codigoNormalizado = normalizarCodigo(codigo || nombre);
-        const modulosNormalizados = normalizarModulos(modulos);
 
         if (!nombre?.trim() || !codigoNormalizado) {
             return res.status(400).json({
@@ -115,16 +68,6 @@ router.post('/', verificarToken, esAdmin, async (req, res) => {
                 message: 'Nombre y codigo del departamento son requeridos'
             });
         }
-
-        if (!Object.keys(modulosNormalizados).length) {
-            return res.status(400).json({
-                success: false,
-                message: 'Selecciona al menos una ventana para el departamento'
-            });
-        }
-        const paginaInicio = modulosNormalizados[pagina_inicio]
-            ? pagina_inicio
-            : Object.keys(modulosNormalizados)[0];
 
         const [result] = await pool.query(
             `INSERT INTO departamentos
@@ -134,8 +77,8 @@ router.post('/', verificarToken, esAdmin, async (req, res) => {
                 codigoNormalizado,
                 nombre.trim(),
                 descripcion?.trim() || null,
-                JSON.stringify(modulosNormalizados),
-                paginaInicio,
+                JSON.stringify({}),
+                'tiendas',
                 activo !== false
             ]
         );
@@ -159,9 +102,8 @@ router.post('/', verificarToken, esAdmin, async (req, res) => {
 
 router.put('/:id', verificarToken, esAdmin, async (req, res) => {
     try {
-        const { nombre, codigo, descripcion, modulos, pagina_inicio, activo } = req.body;
+        const { nombre, codigo, descripcion, activo } = req.body;
         const codigoNormalizado = normalizarCodigo(codigo || nombre);
-        const modulosNormalizados = normalizarModulos(modulos);
 
         if (!nombre?.trim() || !codigoNormalizado) {
             return res.status(400).json({
@@ -170,31 +112,17 @@ router.put('/:id', verificarToken, esAdmin, async (req, res) => {
             });
         }
 
-        if (!Object.keys(modulosNormalizados).length) {
-            return res.status(400).json({
-                success: false,
-                message: 'Selecciona al menos una ventana para el departamento'
-            });
-        }
-        const paginaInicio = modulosNormalizados[pagina_inicio]
-            ? pagina_inicio
-            : Object.keys(modulosNormalizados)[0];
-
         const [result] = await pool.query(
             `UPDATE departamentos
              SET codigo = ?,
                  nombre = ?,
                  descripcion = ?,
-                 modulos = ?,
-                 pagina_inicio = ?,
                  activo = ?
              WHERE id = ?`,
             [
                 codigoNormalizado,
                 nombre.trim(),
                 descripcion?.trim() || null,
-                JSON.stringify(modulosNormalizados),
-                paginaInicio,
                 activo !== false,
                 req.params.id
             ]
@@ -218,4 +146,3 @@ router.put('/:id', verificarToken, esAdmin, async (req, res) => {
 });
 
 module.exports = router;
-module.exports.MODULOS_DISPONIBLES = MODULOS_DISPONIBLES;
