@@ -810,41 +810,41 @@ function crearVistaComparacionArchivo(referencia, file, analisis, estado) {
 
             <div class="file-comparison-grid">
                 ${tarjetaArchivoComparacion(
-                    'Último archivo usado',
-                    referencia?.nombreOriginal,
-                    resumenAnterior,
-                    referencia ? formatearFechaReferencia(referencia.fecha) : '',
-                    !referencia
-                )}
+        'Último archivo usado',
+        referencia?.nombreOriginal,
+        resumenAnterior,
+        referencia ? formatearFechaReferencia(referencia.fecha) : '',
+        !referencia
+    )}
                 <div class="file-comparison-arrow" aria-hidden="true">
                     <i class="fa-solid fa-arrow-right"></i>
                 </div>
                 ${tarjetaArchivoComparacion(
-                    'Archivo seleccionado',
-                    file.name,
-                    analisis.resumen,
-                    'Seleccionado ahora'
-                )}
+        'Archivo seleccionado',
+        file.name,
+        analisis.resumen,
+        'Seleccionado ahora'
+    )}
             </div>
 
             ${puedeMostrarCambios ? `
                 <div class="file-comparison-changes">
                     <h4>Resumen de diferencias</h4>
                     ${filaCambioComparacion(
-                        'Hojas',
-                        resumenAnterior.totalHojas,
-                        analisis.resumen.totalHojas
-                    )}
+        'Hojas',
+        resumenAnterior.totalHojas,
+        analisis.resumen.totalHojas
+    )}
                     ${filaCambioComparacion(
-                        'Filas',
-                        resumenAnterior.totalFilas,
-                        analisis.resumen.totalFilas
-                    )}
+        'Filas',
+        resumenAnterior.totalFilas,
+        analisis.resumen.totalFilas
+    )}
                     ${filaCambioComparacion(
-                        'Celdas con datos',
-                        resumenAnterior.totalCeldas,
-                        analisis.resumen.totalCeldas
-                    )}
+        'Celdas con datos',
+        resumenAnterior.totalCeldas,
+        analisis.resumen.totalCeldas
+    )}
                 </div>
             ` : referencia ? `
                 <div class="file-comparison-legacy-note">
@@ -3817,8 +3817,8 @@ function crearVistaDiferenciasConciliacion(resultado) {
             </div>
 
             ${filas.length > visibles.length
-                ? `<p class="reconciliation-diff-more">Se muestran 250 de ${filas.length} diferencias.</p>`
-                : ''}
+            ? `<p class="reconciliation-diff-more">Se muestran 250 de ${filas.length} diferencias.</p>`
+            : ''}
         </div>
     `;
 }
@@ -3926,7 +3926,12 @@ async function registrarConciliacionEnBD() {
     const data = await response.json().catch(() => ({}));
 
     if (!response.ok) {
-        throw new Error(data.message || 'No se pudo registrar la conciliación');
+        console.error('ERROR BACKEND REGISTRO:', data);
+        throw new Error(
+            data.message ||
+            data.mensaje ||
+            'No se pudo registrar la conciliación'
+        );
     }
 
     comparacionConciliacionActual = {
@@ -3957,7 +3962,17 @@ async function saveConciliacion() {
         return;
     }
 
-    const comparacionAprobada = await compararConciliacionConBD();
+    const codigo = document
+        .getElementById('selectRestaurante')
+        ?.selectedOptions[0]
+        ?.dataset?.codigo;
+
+    let comparacionAprobada = true;
+
+    if (codigo !== 'burger-king') {
+        comparacionAprobada = await compararConciliacionConBD();
+    }
+
     if (!comparacionAprobada) return;
 
     Swal.fire({
@@ -3982,7 +3997,9 @@ async function saveConciliacion() {
 
             if (localStorage.getItem('modoOffline') !== 'true') {
                 try {
-                    registro = await registrarConciliacionEnBD();
+                    if (codigo !== 'burger-king') {
+                        registro = await registrarConciliacionEnBD();
+                    }
                 } catch (error) {
                     errorRegistro = error;
                     console.error('No se registró la conciliación:', error);
@@ -4066,6 +4083,14 @@ async function guardarConciliacionServidor() {
     }
 
     try {
+
+        const codigo = document
+            .getElementById('selectRestaurante')
+            ?.selectedOptions[0]
+            ?.dataset?.codigo;
+        if (codigo !== 'burger-king') {
+            await registrarConciliacionEnBD();
+        }
 
         const registroConciliacion =
             await registrarConciliacionEnBD();

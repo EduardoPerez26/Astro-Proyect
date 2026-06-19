@@ -1,6 +1,26 @@
 // Login conectado al backend con MySQL
 const API_URL = window.API_URL;
 
+function obtenerRutaInicial(usuario) {
+    const permisos = usuario?.permisos || {};
+    const rutas = {
+        tiendas: '/views/tiendas',
+        documentos: '/views/documentos',
+        historial: '/views/historial'
+    };
+    const paginaDepartamento = usuario?.departamento?.pagina_inicio;
+
+    if (paginaDepartamento && permisos[paginaDepartamento] && rutas[paginaDepartamento]) {
+        return rutas[paginaDepartamento];
+    }
+
+    if (permisos.tiendas) return '/views/tiendas';
+    if (permisos.documentos) return '/views/documentos';
+    if (permisos.historial) return '/views/historial';
+    if (usuario?.rol === 'admin' && permisos.usuarios) return '/views/usuarios';
+    return '/';
+}
+
 document.addEventListener('DOMContentLoaded', function () {
     const loginForm = document.getElementById('loginForm');
     const loginBtn = document.getElementById('loginBtn');
@@ -63,6 +83,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     localStorage.setItem('token', data.token);
                     localStorage.setItem('usuario', JSON.stringify(data.usuario));
                     localStorage.setItem('isLoggedIn', 'true');
+                    const rutaInicial = obtenerRutaInicial(data.usuario);
 
                     Swal.fire({
                         icon: 'success',
@@ -71,13 +92,13 @@ document.addEventListener('DOMContentLoaded', function () {
                         timer: 1500,
                         showConfirmButton: false
                     }).then(() => {
-                        window.location.href = '/views/tiendas';
+                        window.location.href = rutaInicial;
                     });
                 } else {
                     Swal.fire({
                         icon: 'error',
                         title: 'No pudimos iniciar sesión',
-                        text: data.message || 'El usuario o la contraseña no son correctos.',
+                        text: data.message || data.mensaje || 'El usuario o la contraseña no son correctos.',
                         confirmButtonColor: '#102A43'
                     });
                 }
@@ -150,7 +171,7 @@ document.addEventListener('DOMContentLoaded', function () {
 // Verificar si el token guardado sigue siendo válido.
 async function verificarSesion(token) {
     try {
-        const response = await fetch(`${API_URL}/auth/verificar`, {
+        const response = await fetch(`${API_URL}/auth/verify`, {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${token}`
@@ -158,7 +179,13 @@ async function verificarSesion(token) {
         });
 
         if (response.ok) {
-            window.location.href = '/views/tiendas';
+            const data = await response.json();
+            if (data.usuario) {
+                localStorage.setItem('usuario', JSON.stringify(data.usuario));
+            }
+            window.location.href = obtenerRutaInicial(
+                data.usuario || JSON.parse(localStorage.getItem('usuario') || '{}')
+            );
             return;
         }
 

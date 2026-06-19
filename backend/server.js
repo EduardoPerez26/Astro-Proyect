@@ -16,6 +16,7 @@ const restaurantesRoutes = require('./routes/restaurantes.routes');
 const validacionesRoutes = require('./routes/validaciones.routes');
 const conciliacionesRoutes = require('./routes/conciliaciones.routes');
 const dashboardRoutes = require('./routes/dashboard.routes');
+const departamentosRoutes = require('./routes/departamentos.routes');
 
 const app = express();
 
@@ -43,16 +44,19 @@ app.use(cors({
         callback(new Error('Origen no permitido por CORS'));
     },
     credentials: true,
-    methods: ['GET','POST','PUT','DELETE','OPTIONS'],
-    allowedHeaders: ['Content-Type','Authorization']
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 // Para preflight requests
 app.options('*', cors());
 
 // Parsear JSON y urlencoded
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({
+    extended: true,
+    limit: '10mb'
+}));
 
 // Archivos estáticos
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
@@ -85,13 +89,14 @@ app.use('/api/restaurantes', restaurantesRoutes);
 app.use('/api/validaciones', validacionesRoutes);
 app.use('/api/conciliaciones', conciliacionesRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/departamentos', departamentosRoutes);
 
 // ============================================
 // MANEJO DE ERRORES
 // ============================================
 
 // Ruta no encontrada
-app.use((req,res,next) => {
+app.use((req, res, next) => {
     res.status(404).json({
         error: true,
         mensaje: 'Ruta no encontrada',
@@ -102,9 +107,15 @@ app.use((req,res,next) => {
 // Errores generales
 app.use((err, req, res, next) => {
     console.error('Error:', err);
-    res.status(500).json({
+    const status = Number(err.status || err.statusCode) || 500;
+    const esContenidoGrande = status === 413 || err.type === 'entity.too.large';
+
+    res.status(status).json({
         error: true,
-        mensaje: 'Error interno del servidor',
+        mensaje: esContenidoGrande
+            ? 'La conciliación contiene demasiados datos para enviarse al servidor'
+            : 'Error interno del servidor',
+        code: err.code || err.type || 'INTERNAL_SERVER_ERROR',
         detalle: process.env.NODE_ENV === 'development' ? err.message : undefined
     });
 });

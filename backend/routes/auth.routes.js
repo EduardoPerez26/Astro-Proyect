@@ -11,6 +11,94 @@ const jwt = require('jsonwebtoken');
 const { pool } = require('../config/database');
 const { verificarToken } = require('../middleware/auth.middleware');
 
+const PERMISOS_ADMIN = {
+    perfil: true,
+    tiendas: true,
+    permisos: true,
+    usuarios: true,
+    controlRestaurantes: true,
+    historial: true,
+    documentos: true
+};
+
+function parsearJson(valor) {
+    if (!valor) return {};
+    if (typeof valor === 'object') return valor;
+
+    try {
+        return JSON.parse(valor);
+    } catch {
+        return {};
+    }
+}
+
+function construirContextoUsuario(usuario) {
+    const tieneDepartamento = Boolean(usuario.departamento_id);
+    const departamentoActivo = tieneDepartamento && usuario.departamento_activo !== 0;
+    const modulosDepartamento = departamentoActivo
+        ? parsearJson(usuario.departamento_modulos)
+        : {};
+    let permisos;
+
+    if (usuario.rol === 'admin') {
+        permisos = { ...PERMISOS_ADMIN };
+    } else if (tieneDepartamento) {
+        permisos = {
+            perfil: true,
+            tiendas: false,
+            documentos: false,
+            historial: false,
+            permisos: false,
+            usuarios: false,
+            controlRestaurantes: false,
+            ...modulosDepartamento
+        };
+    } else {
+        permisos = {
+            ...parsearJson(usuario.permisos),
+            tiendas: true,
+            controlRestaurantes: false
+        };
+    }
+
+    return {
+        id: usuario.id,
+        username: usuario.username,
+        nombre: usuario.nombre_completo,
+        email: usuario.email,
+        rol: usuario.rol,
+        permisos,
+        departamento: tieneDepartamento
+            ? {
+                id: usuario.departamento_id,
+                codigo: usuario.departamento_codigo,
+                nombre: usuario.departamento_nombre,
+                modulos: modulosDepartamento,
+                pagina_inicio: usuario.departamento_pagina_inicio,
+                activo: departamentoActivo
+            }
+            : null
+    };
+}
+
+async function obtenerUsuarioConDepartamento(condicion, params) {
+    const [usuarios] = await pool.query(
+        `SELECT u.*,
+                d.codigo AS departamento_codigo,
+                d.nombre AS departamento_nombre,
+                d.modulos AS departamento_modulos,
+                d.pagina_inicio AS departamento_pagina_inicio,
+                d.activo AS departamento_activo
+         FROM usuarios u
+         LEFT JOIN departamentos d ON d.id = u.departamento_id
+         WHERE ${condicion}
+         LIMIT 1`,
+        params
+    );
+
+    return usuarios[0] || null;
+}
+
 // ============================================
 // POST /api/auth/login
 // ============================================
@@ -23,7 +111,6 @@ router.post('/login', async (req, res) => {
         console.log('================================');
         console.log('LOGIN INTENT');
         console.log('Username recibido:', username);
-        console.log('Password recibida:', password);
         console.log('================================');
 
         // Validar que se enviaron los datos
@@ -35,14 +122,14 @@ router.post('/login', async (req, res) => {
         }
 
         // Buscar usuario
-        const [usuarios] = await pool.query(
-            'SELECT * FROM usuarios WHERE username = ? AND activo = TRUE',
+        const usuario = await obtenerUsuarioConDepartamento(
+            'u.username = ? AND u.activo = TRUE',
             [username]
         );
 
-        console.log('Usuarios encontrados:', usuarios.length);
+        console.log('Usuario encontrado:', Boolean(usuario));
 
-        if (usuarios.length === 0) {
+        if (!usuario) {
             console.log('ERROR: Usuario no encontrado o inactivo');
 
             return res.status(401).json({
@@ -51,40 +138,20 @@ router.post('/login', async (req, res) => {
             });
         }
 
-        const usuario = usuarios[0];
-
         console.log('ID Usuario:', usuario.id);
         console.log('Username BD:', usuario.username);
         console.log('Activo:', usuario.activo);
 
-        // ============================================
-        // OBTENER PERMISOS
-        // ============================================
-
-        let permisosUsuario = {};
-
-        if (usuario.rol === 'admin') {
-            permisosUsuario = {
-                perfil: true,
-                tiendas: true,
-                permisos: true,
-                usuarios: true,
-                controlRestaurantes: true,
-                historial: true,
-                documentos: true
-            };
-        } else {
-            if (typeof usuario.permisos === 'string') {
-                permisosUsuario = JSON.parse(usuario.permisos || '{}');
-            } else {
-                permisosUsuario = usuario.permisos || {};
-            }
-
-            permisosUsuario.tiendas = true;
-            permisosUsuario.controlRestaurantes = false;
+        if (
+            usuario.rol !== 'admin' &&
+            usuario.departamento_id &&
+            usuario.departamento_activo === 0
+        ) {
+            return res.status(403).json({
+                error: true,
+                mensaje: 'Tu departamento esta inactivo. Contacta al administrador.'
+            });
         }
-
-        console.log('Permisos usuario:', permisosUsuario);
 
         // ============================================
         // VALIDAR PASSWORD
@@ -108,24 +175,8 @@ router.post('/login', async (req, res) => {
 
         console.log('LOGIN EXITOSO');
 
-        // ============================================
-        // OBTENER PERMISOS DEL USUARIO
-        // ============================================
-
-        let permisos = {};
-
-        try {
-            if (usuario.permisos) {
-                permisos = typeof usuario.permisos === 'string'
-                    ? JSON.parse(usuario.permisos)
-                    : usuario.permisos;
-            }
-        } catch (error) {
-            console.error('Error parseando permisos:', error);
-            permisos = {};
-        }
-
-        console.log('Permisos:', permisos);
+        const contextoUsuario = construirContextoUsuario(usuario);
+        console.log('Permisos efectivos:', contextoUsuario.permisos);
 
         // ============================================
         // CREAR TOKEN
@@ -133,12 +184,7 @@ router.post('/login', async (req, res) => {
 
         const token = jwt.sign(
             {
-                id: usuario.id,
-                username: usuario.username,
-                nombre: usuario.nombre_completo,
-                email: usuario.email,
-                rol: usuario.rol,
-                permisos: permisosUsuario
+                ...contextoUsuario
             },
             process.env.JWT_SECRET,
             {
@@ -165,14 +211,7 @@ router.post('/login', async (req, res) => {
             error: false,
             mensaje: 'Login exitoso',
             token,
-            usuario: {
-                id: usuario.id,
-                username: usuario.username,
-                nombre: usuario.nombre_completo,
-                email: usuario.email,
-                rol: usuario.rol,
-                permisos: permisosUsuario
-            }
+            usuario: contextoUsuario
         });
 
     } catch (error) {
@@ -180,7 +219,10 @@ router.post('/login', async (req, res) => {
 
         res.status(500).json({
             error: true,
-            mensaje: 'Error al iniciar sesion'
+            mensaje: ['ER_NO_SUCH_TABLE', 'ER_BAD_FIELD_ERROR'].includes(error.code)
+                ? 'Ejecuta primero la migracion SQL de departamentos'
+                : 'Error al iniciar sesion',
+            code: error.code
         });
     }
 });
@@ -246,11 +288,22 @@ router.post('/register', async (req, res) => {
 // Verifica si el token es valido y devuelve datos del usuario
 router.get('/verify', verificarToken, async (req, res) => {
     try {
-        // El middleware ya verifico el token y puso los datos en req.usuario
+        const usuario = await obtenerUsuarioConDepartamento(
+            'u.id = ? AND u.activo = TRUE',
+            [req.usuario.id]
+        );
+
+        if (!usuario) {
+            return res.status(404).json({
+                error: true,
+                mensaje: 'Usuario no encontrado o inactivo'
+            });
+        }
+
         res.json({
             error: false,
             mensaje: 'Token valido',
-            usuario: req.usuario
+            usuario: construirContextoUsuario(usuario)
         });
     } catch (error) {
         res.status(500).json({

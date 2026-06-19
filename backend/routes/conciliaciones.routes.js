@@ -4,6 +4,7 @@
 
 const express = require('express');
 const router = express.Router();
+const XLSX = require('xlsx');
 const { pool } = require('../config/database');
 const { verificarToken, esAdmin } = require('../middleware/auth.middleware');
 
@@ -76,6 +77,34 @@ function normalizarFechaConciliacionFila(valor, fechaPredeterminada) {
     }
 
     return texto;
+}
+
+function parsearNotasArchivo(valor) {
+    if (!valor) return {};
+    if (typeof valor === 'object' && !Buffer.isBuffer(valor)) return valor;
+
+    try {
+        return JSON.parse(String(valor));
+    } catch {
+        return {};
+    }
+}
+
+function extraerDatosComparacionArchivo(archivoBlob) {
+    if (!archivoBlob) return [];
+
+    const contenido = Buffer.isBuffer(archivoBlob)
+        ? archivoBlob
+        : Buffer.from(archivoBlob);
+    const workbook = XLSX.read(contenido, { type: 'buffer' });
+    const sheet = workbook.Sheets._Comparacion;
+
+    if (!sheet) return [];
+
+    return XLSX.utils.sheet_to_json(sheet, {
+        defval: 0,
+        raw: true
+    });
 }
 
 function crearMapaConciliacion(filas, fechaPredeterminada) {
@@ -466,17 +495,30 @@ router.post('/comparar-existente', verificarToken, async (req, res) => {
         }
 
         const restaurante = restaurantes[0];
-        const [anteriores] = await pool.query(
-            `SELECT id, fecha_conciliacion, datos_extraidos
-             FROM conciliaciones
-             WHERE restaurante_id = ?
-               AND DATE(fecha_conciliacion) = DATE(?)
-             ORDER BY id DESC
-             LIMIT 1`,
-            [restaurante_id, fecha_conciliacion]
+        const fechaBuscada = normalizarFechaConciliacionFila(
+            fecha_conciliacion,
+            fecha_conciliacion
         );
+        const [candidatos] = await pool.query(
+            `SELECT id, notas
+             FROM archivos_excel
+             WHERE restaurante_id = ?
+             ORDER BY id DESC
+             LIMIT 200`,
+            [restaurante_id]
+        );
+        const referencia = candidatos.find(candidato => {
+            const notas = parsearNotasArchivo(candidato.notas);
+            const fechaReferencia = normalizarFechaConciliacionFila(
+                notas.fecha_conciliacion,
+                notas.fecha_conciliacion
+            );
 
-        if (!anteriores.length) {
+            return notas.tipo === 'conciliacion_generada' &&
+                fechaReferencia === fechaBuscada;
+        });
+
+        if (!referencia) {
             return res.json({
                 success: true,
                 existe: false,
@@ -487,11 +529,28 @@ router.post('/comparar-existente', verificarToken, async (req, res) => {
             });
         }
 
-        const conciliacionAnterior = anteriores[0];
-        let datosAnteriores = conciliacionAnterior.datos_extraidos || [];
+        const [archivos] = await pool.query(
+            `SELECT id, archivo_blob
+             FROM archivos_excel
+             WHERE id = ?
+             LIMIT 1`,
+            [referencia.id]
+        );
+        const datosAnteriores = extraerDatosComparacionArchivo(
+            archivos[0]?.archivo_blob
+        );
 
-        if (typeof datosAnteriores === 'string') {
-            datosAnteriores = JSON.parse(datosAnteriores);
+        if (!datosAnteriores.length) {
+            return res.json({
+                success: true,
+                existe: false,
+                referenciaIncompatible: true,
+                archivoAnteriorId: referencia.id,
+                restaurante: restaurante.codigo,
+                tiendasComparadas: datos_extraidos.length,
+                tiendasConDiferencias: 0,
+                diferencias: []
+            });
         }
 
         const resultado = compararDatosConciliacion(
@@ -504,7 +563,7 @@ router.post('/comparar-existente', verificarToken, async (req, res) => {
         res.json({
             success: true,
             existe: true,
-            conciliacionAnteriorId: conciliacionAnterior.id,
+            archivoAnteriorId: referencia.id,
             restaurante: restaurante.codigo,
             ...resultado
         });
@@ -581,11 +640,53 @@ router.post('/', verificarToken, async (req, res) => {
             notas
         } = req.body;
         
-        if (!restaurante_id || !template_id || !fecha_conciliacion || !datos_extraidos) {
+        if (!restaurante_id || !fecha_conciliacion || !datos_extraidos) {
             return res.status(400).json({
                 success: false,
                 message: 'Faltan campos requeridos'
             });
+        }
+
+        let templateId = Number(template_id) || null;
+
+        if (templateId) {
+            const [templateSolicitado] = await pool.query(
+                `SELECT id
+                 FROM templates_conciliacion
+                 WHERE id = ? AND restaurante_id = ?
+                 LIMIT 1`,
+                [templateId, restaurante_id]
+            );
+
+            if (!templateSolicitado.length) templateId = null;
+        }
+
+        if (!templateId) {
+            const [templatesDisponibles] = await pool.query(
+                `SELECT id
+                 FROM templates_conciliacion
+                 WHERE restaurante_id = ?
+                 ORDER BY es_default DESC, id ASC
+                 LIMIT 1`,
+                [restaurante_id]
+            );
+
+            if (templatesDisponibles.length) {
+                templateId = templatesDisponibles[0].id;
+            } else {
+                const [templateCreado] = await pool.query(
+                    `INSERT INTO templates_conciliacion
+                     (restaurante_id, nombre, descripcion, configuracion, es_default)
+                     VALUES (?, ?, ?, ?, TRUE)`,
+                    [
+                        restaurante_id,
+                        'Template automático de conciliación',
+                        'Configuración interna para historial y comparación',
+                        JSON.stringify({ generadoPorSistema: true })
+                    ]
+                );
+                templateId = templateCreado.insertId;
+            }
         }
         
         // Calcular estadisticas
@@ -624,7 +725,7 @@ router.post('/', verificarToken, async (req, res) => {
                      estado = 'borrador'
                  WHERE id = ?`,
                 [
-                    template_id,
+                    templateId,
                     req.usuario.id,
                     fecha_conciliacion,
                     periodo_inicio || null,
@@ -660,7 +761,7 @@ router.post('/', verificarToken, async (req, res) => {
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'borrador')`,
             [
                 restaurante_id,
-                template_id,
+                templateId,
                 req.usuario.id,
                 fecha_conciliacion,
                 periodo_inicio || null,
@@ -690,7 +791,8 @@ router.post('/', verificarToken, async (req, res) => {
         console.error('Error al crear conciliacion:', error);
         res.status(500).json({
             success: false,
-            message: 'Error al crear conciliacion'
+            message: 'Error al crear conciliacion',
+            code: error.code || 'CONCILIACION_DB_ERROR'
         });
     }
 });

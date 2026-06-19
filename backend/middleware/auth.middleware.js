@@ -2,8 +2,6 @@ const jwt = require('jsonwebtoken');
 const { pool } = require('../config/database');
 
 const verificarToken = async (req, res, next) => {
-    console.log('HEADERS:', req.headers);
-    console.log('AUTHORIZATION:', req.headers.authorization);
     const authHeader = req.headers['authorization'];
     if (!authHeader) {
         return res.status(401).json({ error: true, message: 'Token no proporcionado' });
@@ -78,7 +76,14 @@ const checkPermission = (permiso) => {
             }
 
             const [rows] = await pool.query(
-                'SELECT permisos FROM usuarios WHERE id = ? LIMIT 1',
+                `SELECT u.permisos,
+                        u.departamento_id,
+                        d.modulos AS departamento_modulos,
+                        d.activo AS departamento_activo
+                 FROM usuarios u
+                 LEFT JOIN departamentos d ON d.id = u.departamento_id
+                 WHERE u.id = ?
+                 LIMIT 1`,
                 [req.usuario.id]
             );
 
@@ -90,11 +95,16 @@ const checkPermission = (permiso) => {
             }
 
             let permisos = {};
+            const usaDepartamento = Boolean(rows[0].departamento_id);
+            const departamentoActivo = rows[0].departamento_activo !== 0;
+            const permisosFuente = usaDepartamento
+                ? (departamentoActivo ? rows[0].departamento_modulos : {})
+                : rows[0].permisos;
 
-            if (typeof rows[0].permisos === 'string') {
-                permisos = JSON.parse(rows[0].permisos || '{}');
+            if (typeof permisosFuente === 'string') {
+                permisos = JSON.parse(permisosFuente || '{}');
             } else {
-                permisos = rows[0].permisos || {};
+                permisos = permisosFuente || {};
             }
 
             const mapping = {

@@ -17,8 +17,23 @@ const { verificarToken, esAdmin } = require('../middleware/auth.middleware');
 router.get('/', verificarToken, esAdmin, async (req, res) => {
     try {
         const [usuarios] = await pool.query(
-            `SELECT id, username, nombre_completo as nombre, email, rol, activo, permisos, fecha_creacion
-             FROM usuarios ORDER BY nombre_completo`
+            `SELECT u.id,
+                    u.username,
+                    u.nombre_completo AS nombre,
+                    u.email,
+                    u.rol,
+                    u.activo,
+                    IF(u.activo = 1, 'activo', 'inactivo') AS estado,
+                    u.permisos,
+                    u.departamento_id,
+                    u.fecha_creacion,
+                    d.codigo AS departamento_codigo,
+                    d.nombre AS departamento_nombre,
+                    d.modulos AS departamento_modulos,
+                    d.activo AS departamento_activo
+             FROM usuarios u
+             LEFT JOIN departamentos d ON d.id = u.departamento_id
+             ORDER BY u.nombre_completo`
         );
 
         // Parsear permisos - MySQL puede devolver objeto o string dependiendo de la configuracion
@@ -31,7 +46,15 @@ router.get('/', verificarToken, esAdmin, async (req, res) => {
                     permisos = u.permisos;
                 }
             }
-            return { ...u, permisos };
+            let departamentoModulos = {};
+            if (u.departamento_modulos) {
+                if (typeof u.departamento_modulos === 'string') {
+                    try { departamentoModulos = JSON.parse(u.departamento_modulos); } catch { departamentoModulos = {}; }
+                } else {
+                    departamentoModulos = u.departamento_modulos;
+                }
+            }
+            return { ...u, permisos, departamento_modulos: departamentoModulos };
         });
 
         res.json({
@@ -45,7 +68,10 @@ router.get('/', verificarToken, esAdmin, async (req, res) => {
         res.status(500).json({
             error: true,
             success: false,
-            mensaje: 'Error al obtener usuarios'
+            mensaje: ['ER_NO_SUCH_TABLE', 'ER_BAD_FIELD_ERROR'].includes(error.code)
+                ? 'Ejecuta primero la migracion SQL de departamentos'
+                : 'Error al obtener usuarios',
+            code: error.code
         });
     }
 });
@@ -67,16 +93,23 @@ router.get('/:id', verificarToken, async (req, res) => {
 
         const [usuarios] = await pool.query(
             `SELECT
- id,
- username,
- nombre_completo as nombre,
- email,
- rol,
- activo,
- IF(activo=1,'activo','inactivo') as estado,
- permisos,
- fecha_creacion
-             FROM usuarios WHERE id = ?`,
+ u.id,
+ u.username,
+ u.nombre_completo as nombre,
+ u.email,
+ u.rol,
+ u.activo,
+ IF(u.activo=1,'activo','inactivo') as estado,
+ u.permisos,
+ u.departamento_id,
+ u.fecha_creacion,
+ d.codigo AS departamento_codigo,
+ d.nombre AS departamento_nombre,
+ d.modulos AS departamento_modulos,
+ d.activo AS departamento_activo
+             FROM usuarios u
+             LEFT JOIN departamentos d ON d.id = u.departamento_id
+             WHERE u.id = ?`,
             [req.params.id]
         );
 
@@ -96,6 +129,13 @@ router.get('/:id', verificarToken, async (req, res) => {
             }
         } else {
             usuario.permisos = {};
+        }
+        if (usuario.departamento_modulos) {
+            if (typeof usuario.departamento_modulos === 'string') {
+                try { usuario.departamento_modulos = JSON.parse(usuario.departamento_modulos); } catch { usuario.departamento_modulos = {}; }
+            }
+        } else {
+            usuario.departamento_modulos = {};
         }
 
         res.json({
@@ -133,7 +173,8 @@ router.put('/:id', verificarToken, async (req, res) => {
             email,
             rol,
             estado,
-            password
+            password,
+            departamento_id
         } = req.body;
 
         let query = 'UPDATE usuarios SET ';
@@ -158,6 +199,26 @@ router.put('/:id', verificarToken, async (req, res) => {
             if (estado !== undefined) {
                 updates.push('activo = ?');
                 params.push(estado === 'activo');
+            }
+            if (departamento_id !== undefined) {
+                const departamentoId = Number(departamento_id) || null;
+
+                if (departamentoId) {
+                    const [departamentos] = await pool.query(
+                        'SELECT id FROM departamentos WHERE id = ? AND activo = TRUE LIMIT 1',
+                        [departamentoId]
+                    );
+
+                    if (!departamentos.length) {
+                        return res.status(400).json({
+                            error: true,
+                            message: 'El departamento seleccionado no existe o esta inactivo'
+                        });
+                    }
+                }
+
+                updates.push('departamento_id = ?');
+                params.push(departamentoId);
             }
         }
 
@@ -396,7 +457,7 @@ router.put('/:id/permisos', verificarToken, esAdmin, async (req, res) => {
 // Crear nuevo usuario (solo admin)
 router.post('/', verificarToken, esAdmin, async (req, res) => {
     try {
-        const { nombre, email, username, password, rol, estado } = req.body;
+        const { nombre, email, username, password, rol, estado, departamento_id } = req.body;
 
         // Validaciones
         if (!nombre || !email || !username || !password) {
@@ -422,6 +483,21 @@ router.post('/', verificarToken, esAdmin, async (req, res) => {
         // Hash password
         const salt = await bcrypt.genSalt(10);
         const passwordHash = await bcrypt.hash(password, salt);
+        const departamentoId = Number(departamento_id) || null;
+
+        if (departamentoId) {
+            const [departamentos] = await pool.query(
+                'SELECT id FROM departamentos WHERE id = ? AND activo = TRUE LIMIT 1',
+                [departamentoId]
+            );
+
+            if (!departamentos.length) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'El departamento seleccionado no existe o esta inactivo'
+                });
+            }
+        }
 
         // Permisos por defecto segun rol
         const defaultPermisos = {
@@ -432,14 +508,16 @@ router.post('/', verificarToken, esAdmin, async (req, res) => {
 
         // Insertar usuario
         const [result] = await pool.query(
-            `INSERT INTO usuarios (username, password, nombre_completo, email, rol, activo, permisos) 
-             VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            `INSERT INTO usuarios
+             (username, password, nombre_completo, email, rol, departamento_id, activo, permisos)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
             [
                 username,
                 passwordHash,
                 nombre,
                 email,
                 rol || 'usuario',
+                departamentoId,
                 estado !== 'inactivo',
                 JSON.stringify(defaultPermisos[rol] || defaultPermisos['usuario'])
             ]

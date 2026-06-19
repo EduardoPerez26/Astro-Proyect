@@ -269,6 +269,33 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
                 </div>
             </div>
 
+            <section
+                class="reconciliation-compare-panel"
+                id="conciliationComparisonPanel"
+                data-state="pendiente"
+            >
+                <div class="reconciliation-compare-icon">
+                    <i class="fa-solid fa-code-compare" id="conciliationComparisonIcon"></i>
+                </div>
+                <div class="reconciliation-compare-copy">
+                    <span>CONTROL DE CAMBIOS</span>
+                    <strong id="conciliationComparisonTitle">
+                        Comparar con la última conciliación
+                    </strong>
+                    <p id="conciliationComparisonText">
+                        Busca una referencia del mismo restaurante y fecha antes de guardar.
+                    </p>
+                </div>
+                <button
+                    type="button"
+                    class="btn btn-secondary reconciliation-compare-button"
+                    id="btnCompararConciliacion"
+                >
+                    <i class="fa-solid fa-magnifying-glass-chart"></i>
+                    Comparar ahora
+                </button>
+            </section>
+
             <!-- FILTRO POR TIENDA Y POR NUM DE TIENDA -->
             <div class="filters-container">
                 <div class="form-group">
@@ -394,7 +421,7 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
                 <div class="conciliacion-actions">
                     <button class="btn btn-secondary" id="btnExportCsv">
                         <i class="fa-solid fa-file-csv"></i>
-                        Exportar CSV
+                        Exportar CSV Intacct
                     </button>
                     <button class="btn btn-primary" id="btnGuardar">
                         <i class="fa-solid fa-floppy-disk"></i>
@@ -885,6 +912,106 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
             justify-content: flex-end;
             gap: 12px;
             margin-top: 16px;
+        }
+
+        .reconciliation-compare-panel {
+            display: grid;
+            grid-template-columns: auto minmax(0, 1fr) auto;
+            align-items: center;
+            gap: 16px;
+            margin: 20px 0 24px;
+            padding: 18px 20px;
+            border: 1px solid #cbd9e8;
+            border-left: 4px solid #173f67;
+            border-radius: 10px;
+            background: #f8fafc;
+        }
+
+        .reconciliation-compare-icon {
+            display: grid;
+            width: 44px;
+            height: 44px;
+            place-items: center;
+            border-radius: 8px;
+            background: #e7eef6;
+            color: #123554;
+            font-size: 18px;
+        }
+
+        .reconciliation-compare-copy {
+            min-width: 0;
+        }
+
+        .reconciliation-compare-copy > span {
+            display: block;
+            margin-bottom: 3px;
+            color: #5a7189;
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+        }
+
+        .reconciliation-compare-copy > strong {
+            display: block;
+            color: #102f4c;
+            font-size: 16px;
+        }
+
+        .reconciliation-compare-copy > p {
+            margin: 4px 0 0;
+            color: #5e7185;
+            font-size: 13px;
+        }
+
+        .reconciliation-compare-button {
+            white-space: nowrap;
+        }
+
+        .reconciliation-compare-panel[data-state="cargando"] {
+            border-left-color: #2563a6;
+        }
+
+        .reconciliation-compare-panel[data-state="igual"] {
+            border-color: #acd7bd;
+            border-left-color: #16834b;
+            background: #f5fbf7;
+        }
+
+        .reconciliation-compare-panel[data-state="igual"] .reconciliation-compare-icon {
+            background: #dcf4e5;
+            color: #147644;
+        }
+
+        .reconciliation-compare-panel[data-state="cambios"] {
+            border-color: #edb5b5;
+            border-left-color: #b4232f;
+            background: #fff8f8;
+        }
+
+        .reconciliation-compare-panel[data-state="cambios"] .reconciliation-compare-icon {
+            background: #fee2e2;
+            color: #b4232f;
+        }
+
+        .reconciliation-compare-panel[data-state="error"] {
+            border-color: #edb5b5;
+            border-left-color: #b4232f;
+            background: #fff8f8;
+        }
+
+        .reconciliation-compare-panel[data-state="error"] .reconciliation-compare-icon {
+            background: #fee2e2;
+            color: #b4232f;
+        }
+
+        .reconciliation-compare-panel[data-state="primera"] {
+            border-left-color: #a46612;
+            background: #fffaf1;
+        }
+
+        .reconciliation-compare-panel[data-state="primera"] .reconciliation-compare-icon {
+            background: #fdf0d4;
+            color: #925d12;
         }
 
         .form-textarea {
@@ -1818,6 +1945,16 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
 
             .results-summary {
                 grid-template-columns: 1fr;
+            }
+
+            .reconciliation-compare-panel {
+                grid-template-columns: auto minmax(0, 1fr);
+                padding: 14px;
+            }
+
+            .reconciliation-compare-button {
+                grid-column: 1 / -1;
+                width: 100%;
             }
 
             .tabs-container {

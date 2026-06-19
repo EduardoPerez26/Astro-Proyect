@@ -1,7 +1,7 @@
 // Sidebar loader adaptado para Astro con Backend y Control de Permisos
 window.API_URL
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
     const sidebar = document.getElementById('sidebar');
     const sidebarToggle = document.getElementById('sidebarToggle');
     const topbarSidebarToggle = document.getElementById('topbarSidebarToggle');
@@ -11,12 +11,15 @@ document.addEventListener('DOMContentLoaded', function() {
     // Verificar autenticacion
     verificarAutenticacion();
 
+    // Refrescar departamento y permisos desde la base de datos.
+    await actualizarContextoUsuario();
+
     // Cargar info del usuario en el header y sidebar
     cargarInfoUsuario();
-    
+
     // Aplicar permisos al menu
     aplicarPermisos();
-    
+
     // Restaurar estado del sidebar
     const sidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
     if (sidebarCollapsed && sidebar) {
@@ -136,6 +139,26 @@ function verificarAutenticacion() {
     }
 }
 
+async function actualizarContextoUsuario() {
+    const token = localStorage.getItem('token');
+    const apiUrl = window.API_URL;
+
+    if (!token || !apiUrl || localStorage.getItem('modoOffline')) return;
+
+    try {
+        const response = await fetch(`${apiUrl}/auth/verify`, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        const data = await response.json().catch(() => ({}));
+
+        if (response.ok && data.usuario) {
+            localStorage.setItem('usuario', JSON.stringify(data.usuario));
+        }
+    } catch (error) {
+        console.warn('No se pudo actualizar el contexto del usuario:', error);
+    }
+}
+
 // Cargar informacion del usuario en el header y sidebar
 function cargarInfoUsuario() {
     const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
@@ -155,6 +178,10 @@ function cargarInfoUsuario() {
         'supervisor': 'Supervisor',
         'usuario': 'Usuario'
     };
+    const etiquetaRol = roles[usuario.rol] || usuario.rol || 'Rol';
+    const etiquetaContexto = usuario.departamento?.nombre
+        ? `${etiquetaRol} · ${usuario.departamento.nombre}`
+        : etiquetaRol;
 
     // Obtener iniciales
     const iniciales = usuario.nombre 
@@ -166,7 +193,7 @@ function cargarInfoUsuario() {
         headerUserName.textContent = usuario.nombre;
     }
     if (headerUserRole && usuario.rol) {
-        headerUserRole.textContent = roles[usuario.rol] || usuario.rol;
+        headerUserRole.textContent = etiquetaContexto;
     }
     if (avatar) {
         avatar.textContent = iniciales;
@@ -177,7 +204,7 @@ function cargarInfoUsuario() {
         sidebarUserName.textContent = usuario.nombre || 'Usuario';
     }
     if (sidebarUserRole) {
-        sidebarUserRole.textContent = roles[usuario.rol] || usuario.rol || 'Rol';
+        sidebarUserRole.textContent = etiquetaContexto;
     }
     if (sidebarUserAvatar) {
         sidebarUserAvatar.textContent = iniciales;
@@ -231,27 +258,6 @@ function aplicarPermisos() {
 
 // Obtener permisos del usuario
 function obtenerPermisos(usuario) {
-    // Si hay permisos guardados en localStorage, usarlos
-    const savedPermissions = JSON.parse(localStorage.getItem('userPermissions') || '{}');
-    
-    if (usuario.id && savedPermissions[usuario.id]) {
-        return {
-            ...savedPermissions[usuario.id],
-            tiendas: true,
-            controlRestaurantes: usuario.rol === 'admin'
-        };
-    }
-    
-    // Si el usuario tiene permisos en su objeto, usarlos
-    if (usuario.permisos) {
-        return {
-            ...usuario.permisos,
-            tiendas: true,
-            controlRestaurantes: usuario.rol === 'admin'
-        };
-    }
-    
-    // Permisos por defecto segun rol
     const defaultPermissions = {
         'admin': {
             tiendas: true,
@@ -281,6 +287,43 @@ function obtenerPermisos(usuario) {
             controlRestaurantes: false
         }
     };
+
+    if (usuario.rol === 'admin') {
+        return defaultPermissions.admin;
+    }
+
+    if (usuario.departamento?.modulos) {
+        return {
+            tiendas: false,
+            documentos: false,
+            historial: false,
+            perfil: true,
+            permisos: false,
+            usuarios: false,
+            controlRestaurantes: false,
+            ...usuario.departamento.modulos
+        };
+    }
+
+    // Si hay permisos guardados en localStorage, usarlos
+    const savedPermissions = JSON.parse(localStorage.getItem('userPermissions') || '{}');
+
+    if (usuario.id && savedPermissions[usuario.id]) {
+        return {
+            ...savedPermissions[usuario.id],
+            tiendas: true,
+            controlRestaurantes: usuario.rol === 'admin'
+        };
+    }
+
+    // Si el usuario tiene permisos en su objeto, usarlos
+    if (usuario.permisos) {
+        return {
+            ...usuario.permisos,
+            tiendas: true,
+            controlRestaurantes: usuario.rol === 'admin'
+        };
+    }
     
     return defaultPermissions[usuario.rol] || defaultPermissions['usuario'];
 }
@@ -316,7 +359,25 @@ function verificarAccesoPagina(permisos) {
             text: 'No tienes permisos para acceder a esta seccion.',
             confirmButtonColor: '#2563eb'
         }).then(() => {
-            window.location.href = '/views/tiendas';
+            const rutasDepartamento = {
+                tiendas: '/views/tiendas',
+                documentos: '/views/documentos',
+                historial: '/views/historial'
+            };
+            const paginaDepartamento = usuario.departamento?.pagina_inicio;
+            const destinoDepartamento = paginaDepartamento && permisos[paginaDepartamento]
+                ? rutasDepartamento[paginaDepartamento]
+                : null;
+            const destino = destinoDepartamento || (permisos.tiendas
+                ? '/views/tiendas'
+                : permisos.documentos
+                    ? '/views/documentos'
+                    : permisos.historial
+                        ? '/views/historial'
+                        : usuario.rol === 'admin' && permisos.usuarios
+                            ? '/views/usuarios'
+                            : '/');
+            window.location.href = destino;
         });
     }
 }

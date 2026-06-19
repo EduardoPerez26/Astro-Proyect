@@ -4,11 +4,158 @@
 
 let users = [];
 let userToDelete = null;
+let departments = [];
+let departmentModules = [];
 
 // Inicializar
-document.addEventListener('DOMContentLoaded', function () {
-    loadUsers();
+document.addEventListener('DOMContentLoaded', async function () {
+    await loadDepartments();
+    await loadUsers();
 });
+
+async function loadDepartments() {
+    const token = localStorage.getItem('token');
+
+    if (!token || localStorage.getItem('modoOffline')) {
+        departmentModules = [
+            { codigo: 'tiendas', nombre: 'Tiendas y conciliaciones', descripcion: 'Flujos por restaurante.' },
+            { codigo: 'documentos', nombre: 'Documentos', descripcion: 'Consulta y administracion de archivos.' },
+            { codigo: 'historial', nombre: 'Historial', descripcion: 'Movimientos y resultados anteriores.' }
+        ];
+        departments = [
+            { id: 1, codigo: 'contabilidad', nombre: 'Contabilidad', modulos: { tiendas: true, documentos: true, historial: true }, pagina_inicio: 'tiendas', activo: true, total_usuarios: 2 },
+            { id: 2, codigo: 'operaciones', nombre: 'Operaciones', modulos: { tiendas: true, documentos: true }, pagina_inicio: 'tiendas', activo: true, total_usuarios: 1 }
+        ];
+        renderDepartments();
+        populateDepartmentSelect();
+        populateDepartmentFilter();
+        return;
+    }
+
+    try {
+        const headers = { Authorization: `Bearer ${token}` };
+        const [departmentsResponse, modulesResponse] = await Promise.all([
+            fetch(`${window.API_URL}/departamentos`, { headers }),
+            fetch(`${window.API_URL}/departamentos/modulos`, { headers })
+        ]);
+        const departmentsData = await departmentsResponse.json().catch(() => ({}));
+        const modulesData = await modulesResponse.json().catch(() => ({}));
+
+        if (!departmentsResponse.ok) {
+            throw new Error(
+                departmentsData.message ||
+                'No se pudieron cargar los departamentos'
+            );
+        }
+
+        departments = departmentsData.departamentos || [];
+        departmentModules = modulesResponse.ok ? modulesData.modulos || [] : [];
+        renderDepartments();
+        populateDepartmentSelect();
+        populateDepartmentFilter();
+    } catch (error) {
+        console.error('Error cargando departamentos:', error);
+        const tbody = document.getElementById('departmentsTableBody');
+        if (tbody) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="7">
+                        <div class="empty-state">
+                            <i class="fa-solid fa-database"></i>
+                            <p>${escapeHtml(error.message)}</p>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }
+    }
+}
+
+function populateDepartmentSelect() {
+    const select = document.getElementById('userDepartment');
+    if (!select) return;
+    const currentValue = select.value;
+    const activos = departments.filter(department => department.activo === true || department.activo === 1);
+
+    select.innerHTML = '<option value="">Sin departamento</option>' +
+        activos.map(department => `
+            <option value="${department.id}">${escapeHtml(department.nombre)}</option>
+        `).join('');
+    select.value = currentValue;
+}
+
+function populateDepartmentFilter() {
+    const select = document.getElementById('filterDepartment');
+    if (!select) return;
+    const currentValue = select.value;
+
+    select.innerHTML = '<option value="">Todos</option>' + departments.map(department => `
+        <option value="${department.id}">${escapeHtml(department.nombre)}</option>
+    `).join('');
+    select.value = currentValue;
+}
+
+function renderDepartments() {
+    const tbody = document.getElementById('departmentsTableBody');
+    const total = document.getElementById('totalDepartamentos');
+    if (total) total.textContent = departments.length;
+    if (!tbody) return;
+
+    if (!departments.length) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="7">
+                    <div class="empty-state">
+                        <i class="fa-solid fa-building-circle-xmark"></i>
+                        <p>No hay departamentos registrados</p>
+                    </div>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    tbody.innerHTML = departments.map(department => {
+        const active = department.activo === true || department.activo === 1;
+        const moduleNames = Object.keys(department.modulos || {})
+            .filter(code => department.modulos[code])
+            .map(code => departmentModules.find(module => module.codigo === code)?.nombre || code);
+        const startName = departmentModules.find(
+            module => module.codigo === department.pagina_inicio
+        )?.nombre || department.pagina_inicio || 'No definida';
+
+        return `
+            <tr>
+                <td>
+                    <strong>${escapeHtml(department.nombre)}</strong>
+                    <div class="user-email">${escapeHtml(department.descripcion || 'Sin descripcion')}</div>
+                </td>
+                <td><code>${escapeHtml(department.codigo)}</code></td>
+                <td>${moduleNames.length
+                    ? moduleNames.map(name => `<span class="module-chip">${escapeHtml(name)}</span>`).join('')
+                    : '<span class="user-email">Sin ventanas asignadas</span>'}</td>
+                <td><span class="department-badge">${escapeHtml(startName)}</span></td>
+                <td>${Number(department.total_usuarios || 0)}</td>
+                <td><span class="status-badge ${active ? 'activo' : 'inactivo'}">${active ? 'Activo' : 'Inactivo'}</span></td>
+                <td>
+                    <button class="action-btn edit" onclick="openDepartmentModal(${department.id})" title="Editar departamento">
+                        <i class="fa-solid fa-pen"></i>
+                    </button>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+function switchAdminView(view) {
+    const isDepartments = view === 'departamentos';
+    document.getElementById('usuariosPanel').hidden = isDepartments;
+    document.getElementById('departamentosPanel').hidden = !isDepartments;
+    document.getElementById('btnNuevoUsuario').hidden = isDepartments;
+    document.getElementById('btnNuevoDepartamento').hidden = !isDepartments;
+    document.getElementById('tabUsuarios').classList.toggle('active', !isDepartments);
+    document.getElementById('tabDepartamentos').classList.toggle('active', isDepartments);
+}
 
 // ============================================
 // CARGAR USUARIOS
@@ -34,24 +181,24 @@ async function loadUsers() {
         const response = await fetch(`${window.API_URL}/usuarios`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
+        const data = await response.json().catch(() => ({}));
 
         if (response.ok) {
-            const data = await response.json();
             users = data.usuarios || data;
 
             renderUsers(users);
             updateStats();
         } else {
-            throw new Error('Error al cargar usuarios');
+            throw new Error(data.message || data.mensaje || 'Error al cargar usuarios');
         }
     } catch (error) {
         console.error('Error:', error);
         // Mostrar mensaje de error
         tbody.innerHTML = `
             <tr>
-                <td colspan="6" class="empty-state">
+                <td colspan="7" class="empty-state">
                     <i class="fa-solid fa-exclamation-circle"></i>
-                    <p>Error al cargar usuarios. Verifica la conexion al servidor.</p>
+                    <p>${escapeHtml(error.message || 'Error al cargar usuarios.')}</p>
                 </td>
             </tr>
         `;
@@ -86,6 +233,7 @@ function renderUsers(usersToRender) {
         const statusClass = isActive ? 'activo' : 'inactivo';
         const statusLabel = isActive ? 'Activo' : 'Inactivo';
         const lastAccess = user.fecha_creacion ? formatDate(user.fecha_creacion) : 'N/A';
+        const departmentLabel = user.departamento_nombre || 'Sin departamento';
 
         return `
             <tr data-id="${user.id}">
@@ -100,6 +248,7 @@ function renderUsers(usersToRender) {
                 </td>
                 <td>${user.email}</td>
                 <td><span class="status-badge ${roleClass}">${roleLabel}</span></td>
+                <td><span class="department-badge">${escapeHtml(departmentLabel)}</span></td>
                 <td><span class="status-badge ${statusClass}">${statusLabel}</span></td>
                 <td>${lastAccess}</td>
                 <td>
@@ -149,17 +298,21 @@ function filterUsers() {
     const searchTerm = document.getElementById('searchUsers').value.toLowerCase();
     const roleFilter = document.getElementById('filterRole').value;
     const statusFilter = document.getElementById('filterStatus').value;
+    const departmentFilter = document.getElementById('filterDepartment').value;
 
     const filtered = users.filter(user => {
         const matchesSearch =
-            user.nombre.toLowerCase().includes(searchTerm) ||
-            user.email.toLowerCase().includes(searchTerm) ||
-            user.username.toLowerCase().includes(searchTerm);
+            String(user.nombre || '').toLowerCase().includes(searchTerm) ||
+            String(user.email || '').toLowerCase().includes(searchTerm) ||
+            String(user.username || '').toLowerCase().includes(searchTerm) ||
+            String(user.departamento_nombre || '').toLowerCase().includes(searchTerm);
 
         const matchesRole = !roleFilter || user.rol === roleFilter;
         const matchesStatus = !statusFilter || user.estado === statusFilter;
+        const matchesDepartment = !departmentFilter ||
+            String(user.departamento_id || '') === departmentFilter;
 
-        return matchesSearch && matchesRole && matchesStatus;
+        return matchesSearch && matchesRole && matchesStatus && matchesDepartment;
     });
 
     renderUsers(filtered);
@@ -178,6 +331,7 @@ function openUserModal(userId = null) {
 
     form.reset();
     document.getElementById('userId').value = '';
+    populateDepartmentSelect();
 
     if (userId) {
         // Modo edicion
@@ -193,6 +347,7 @@ function openUserModal(userId = null) {
             document.getElementById('userUsername').value = user.username;
             document.getElementById('userRole').value = user.rol;
             document.getElementById('userStatus').value = user.estado;
+            document.getElementById('userDepartment').value = user.departamento_id || '';
         }
     } else {
         // Modo creacion
@@ -220,7 +375,8 @@ async function saveUser() {
         username: document.getElementById('userUsername').value,
         password: document.getElementById('userPassword').value,
         rol: document.getElementById('userRole').value,
-        estado: document.getElementById('userStatus').value
+        estado: document.getElementById('userStatus').value,
+        departamento_id: document.getElementById('userDepartment').value || null
     };
 
     // Validaciones
@@ -421,6 +577,163 @@ function openPermissions(userId) {
 }
 
 // ============================================
+// DEPARTAMENTOS
+// ============================================
+
+function renderDepartmentModuleOptions(selected = {}) {
+    const container = document.getElementById('departmentModules');
+    if (!container) return;
+
+    container.innerHTML = departmentModules.map(module => `
+        <label class="department-module-option">
+            <input
+                type="checkbox"
+                name="departmentModule"
+                value="${escapeHtml(module.codigo)}"
+                ${selected[module.codigo] ? 'checked' : ''}
+            >
+            <span>
+                <strong>${escapeHtml(module.nombre)}</strong>
+                <small>${escapeHtml(module.descripcion || '')}</small>
+            </span>
+        </label>
+    `).join('');
+
+    container.querySelectorAll('input[name="departmentModule"]').forEach(input => {
+        input.addEventListener('change', () => updateDepartmentStartOptions());
+    });
+}
+
+function updateDepartmentStartOptions(selectedValue) {
+    const select = document.getElementById('departmentStartPage');
+    if (!select) return;
+    const current = selectedValue || select.value;
+    const enabledCodes = [...document.querySelectorAll('input[name="departmentModule"]:checked')]
+        .map(input => input.value);
+
+    select.innerHTML = enabledCodes.map(code => {
+        const module = departmentModules.find(item => item.codigo === code);
+        return `<option value="${escapeHtml(code)}">${escapeHtml(module?.nombre || code)}</option>`;
+    }).join('');
+
+    if (enabledCodes.includes(current)) select.value = current;
+}
+
+function openDepartmentModal(departmentId = null) {
+    const modal = document.getElementById('departmentModal');
+    const form = document.getElementById('departmentForm');
+    const department = departments.find(item => item.id === departmentId);
+    form.reset();
+    document.getElementById('departmentId').value = department?.id || '';
+    document.getElementById('departmentModalTitle').textContent = department
+        ? 'Editar departamento'
+        : 'Nuevo departamento';
+    document.getElementById('departmentName').value = department?.nombre || '';
+    document.getElementById('departmentCode').value = department?.codigo || '';
+    document.getElementById('departmentDescription').value = department?.descripcion || '';
+    document.getElementById('departmentStatus').value =
+        department && !(department.activo === true || department.activo === 1)
+            ? 'inactivo'
+            : 'activo';
+    renderDepartmentModuleOptions(department?.modulos || {});
+    updateDepartmentStartOptions(department?.pagina_inicio);
+    modal.classList.add('active');
+}
+
+function closeDepartmentModal() {
+    document.getElementById('departmentModal').classList.remove('active');
+}
+
+async function saveDepartment() {
+    const id = document.getElementById('departmentId').value;
+    const nombre = document.getElementById('departmentName').value.trim();
+    const codigo = document.getElementById('departmentCode').value.trim();
+    const descripcion = document.getElementById('departmentDescription').value.trim();
+    const activo = document.getElementById('departmentStatus').value === 'activo';
+    const pagina_inicio = document.getElementById('departmentStartPage').value;
+    const modulos = Object.fromEntries(
+        [...document.querySelectorAll('input[name="departmentModule"]:checked')]
+            .map(input => [input.value, true])
+    );
+
+    if (!nombre || !codigo) {
+        await Swal.fire({
+            icon: 'warning',
+            title: 'Datos requeridos',
+            text: 'Escribe el nombre y codigo del departamento.'
+        });
+        return;
+    }
+
+    if (!Object.keys(modulos).length) {
+        await Swal.fire({
+            icon: 'warning',
+            title: 'Selecciona una ventana',
+            text: 'Cada departamento debe tener al menos una ventana disponible.'
+        });
+        return;
+    }
+
+    const token = localStorage.getItem('token');
+    if (!token || localStorage.getItem('modoOffline')) {
+        const record = {
+            id: id ? Number(id) : Date.now(),
+            nombre,
+            codigo,
+            descripcion,
+            modulos,
+            pagina_inicio,
+            activo,
+            total_usuarios: 0
+        };
+        const index = departments.findIndex(item => item.id === record.id);
+        if (index >= 0) departments[index] = { ...departments[index], ...record };
+        else departments.push(record);
+        renderDepartments();
+        populateDepartmentSelect();
+        populateDepartmentFilter();
+        closeDepartmentModal();
+        return;
+    }
+
+    try {
+        const response = await fetch(
+            id ? `${window.API_URL}/departamentos/${id}` : `${window.API_URL}/departamentos`,
+            {
+                method: id ? 'PUT' : 'POST',
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ nombre, codigo, descripcion, modulos, pagina_inicio, activo })
+            }
+        );
+        const data = await response.json().catch(() => ({}));
+
+        if (!response.ok || !data.success) {
+            throw new Error(data.message || 'No se pudo guardar el departamento');
+        }
+
+        closeDepartmentModal();
+        await loadDepartments();
+        await loadUsers();
+        await Swal.fire({
+            icon: 'success',
+            title: id ? 'Departamento actualizado' : 'Departamento creado',
+            text: data.message,
+            timer: 1800,
+            showConfirmButton: false
+        });
+    } catch (error) {
+        await Swal.fire({
+            icon: 'error',
+            title: 'No se pudo guardar',
+            text: error.message
+        });
+    }
+}
+
+// ============================================
 // UTILIDADES
 // ============================================
 
@@ -431,6 +744,15 @@ function getInitials(name) {
         return (parts[0][0] + parts[1][0]).toUpperCase();
     }
     return name.substring(0, 2).toUpperCase();
+}
+
+function escapeHtml(value) {
+    return String(value ?? '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
 }
 
 function getRoleLabel(role) {
