@@ -1531,6 +1531,8 @@ function renderArrayToMainTable(
 
                 if (tieneDiferencia) {
                     td.title = 'Diferencia O/S detectada';
+                    tr.classList.add('os-row-difference');
+                    tr.title = 'Esta tienda tiene una diferencia en O/S';
                 }
             }
 

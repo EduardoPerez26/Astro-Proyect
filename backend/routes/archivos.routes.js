@@ -11,23 +11,13 @@ const { verificarToken, checkPermission } = require('../middleware/auth.middlewa
 // MULTER
 // ============================================
 
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        const uploadDir = path.join(__dirname, '../uploads');
-
-        if (!fs.existsSync(uploadDir)) {
-            fs.mkdirSync(uploadDir, { recursive: true });
-        }
-
-        cb(null, uploadDir);
-    },
-
-    filename: function (req, file, cb) {
-        cb(null, `${Date.now()}-${file.originalname}`);
-    }
+// Railway usa un disco efimero. Guardamos los archivos nuevos en el LONGBLOB
+// que ya existe en archivos_excel para conservarlos entre despliegues.
+const storage = multer.memoryStorage();
+const upload = multer({
+    storage,
+    limits: { fileSize: 50 * 1024 * 1024 }
 });
-
-const upload = multer({ storage });
 
 // ============================================
 // GET ARCHIVOS
@@ -42,8 +32,24 @@ router.get(
 
             const [rows] = await pool.query(`
                 SELECT
-                    a.*,
+                    a.id,
+                    a.usuario_id,
+                    a.restaurante_id,
+                    a.nombre_original,
+                    a.nombre_servidor,
+                    a.tamano_bytes,
+                    a.tipo_mime,
+                    a.ruta_archivo,
+                    a.numero_hojas,
+                    a.nombres_hojas,
+                    a.estado,
+                    a.periodo_fecha,
+                    a.notas,
+                    a.fecha_subida,
+                    a.fecha_actualizacion,
+                    (a.archivo_blob IS NOT NULL AND OCTET_LENGTH(a.archivo_blob) > 0) AS tiene_blob,
                     r.nombre AS restaurante_nombre,
+                    r.codigo AS restaurante_codigo,
                     u.username,
                     u.nombre_completo AS usuario_nombre
                 FROM archivos_excel a
@@ -57,9 +63,11 @@ router.get(
             const archivos = rows.map(row => ({
                 ...row,
                 archivoExiste: (
-                    row.ruta_archivo
-                        ? fs.existsSync(row.ruta_archivo)
-                        : false
+                    Boolean(row.tiene_blob) ||
+                    Boolean(
+                        row.ruta_archivo &&
+                        fs.existsSync(row.ruta_archivo)
+                    )
                 )
             }));
 
@@ -99,7 +107,7 @@ router.post(
             console.log('================================');
             console.log('SUBIR ARCHIVO');
             console.log('BODY:', req.body);
-            console.log('FILE PATH:', req.file.path);
+            console.log('FILE SIZE:', req.file.size);
             console.log('================================');
 
             const restauranteCodigo = req.body.restaurante_id;
@@ -120,11 +128,103 @@ router.post(
 
             const {
                 originalname,
-                filename,
                 size,
                 mimetype,
-                path: filePath
+                buffer
             } = req.file;
+            const nombreServidor = `${Date.now()}-${originalname}`;
+            const esReferenciaComparacion =
+                String(req.body.es_referencia_comparacion || '').toLowerCase() === 'true';
+            const esRevisionFuente =
+                String(req.body.es_revision_fuente || '').toLowerCase() === 'true';
+            let resumenContenido = null;
+
+            if (esReferenciaComparacion && req.body.resumen_contenido) {
+                try {
+                    resumenContenido = JSON.parse(req.body.resumen_contenido);
+                } catch {
+                    resumenContenido = null;
+                }
+            }
+
+            const notas = esReferenciaComparacion
+                ? JSON.stringify({
+                    tipo: 'referencia_comparacion',
+                    fuente: req.body.tipo_fuente || 'sales',
+                    hash: String(req.body.hash_contenido || '').slice(0, 64),
+                    nombreOriginal: originalname,
+                    resumen: resumenContenido
+                })
+                : esRevisionFuente
+                ? JSON.stringify({
+                    tipo: 'revision_fuente',
+                    fuente: req.body.tipo_fuente || 'sales',
+                    revision: Number(req.body.revision || 1),
+                    hash: String(req.body.hash_contenido || '').slice(0, 64),
+                    nombreOriginal: originalname
+                })
+                : (req.body.notas || null);
+
+            if (esReferenciaComparacion) {
+                const fuente = req.body.tipo_fuente || 'sales';
+                const [candidatos] = await pool.query(
+                    `SELECT id, notas
+                     FROM archivos_excel
+                     WHERE restaurante_id = ?
+                     ORDER BY id DESC`,
+                    [restauranteId]
+                );
+                const referenciaAnterior = candidatos.find(candidato => {
+                    try {
+                        const meta = JSON.parse(candidato.notas || '{}');
+                        return (
+                            ['referencia_comparacion', 'revision_fuente'].includes(meta.tipo) &&
+                            meta.fuente === fuente
+                        );
+                    } catch {
+                        return false;
+                    }
+                });
+
+                if (referenciaAnterior) {
+                    const nombresHojas = resumenContenido?.hojas
+                        ?.map(hoja => hoja.nombre)
+                        .join(', ') || null;
+
+                    await pool.query(
+                        `UPDATE archivos_excel
+                         SET nombre_original = ?,
+                             nombre_servidor = ?,
+                             tamano_bytes = ?,
+                             tipo_mime = ?,
+                             archivo_blob = ?,
+                             ruta_archivo = NULL,
+                             numero_hojas = ?,
+                             nombres_hojas = ?,
+                             notas = ?,
+                             estado = 'pendiente',
+                             fecha_actualizacion = CURRENT_TIMESTAMP
+                         WHERE id = ?`,
+                        [
+                            originalname,
+                            nombreServidor,
+                            size,
+                            mimetype,
+                            buffer,
+                            resumenContenido?.totalHojas || null,
+                            nombresHojas,
+                            notas,
+                            referenciaAnterior.id
+                        ]
+                    );
+
+                    return res.json({
+                        success: true,
+                        reemplazado: true,
+                        archivo: { id: referenciaAnterior.id }
+                    });
+                }
+            }
 
             const [result] = await pool.query(
                 `
@@ -135,19 +235,23 @@ router.post(
                     nombre_servidor,
                     tamano_bytes,
                     tipo_mime,
+                    archivo_blob,
                     ruta_archivo,
+                    notas,
                     estado
                 )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 `,
                 [
                     req.usuario.id,
                     restauranteId,
                     originalname,
-                    filename,
+                    nombreServidor,
                     size,
                     mimetype,
-                    filePath,
+                    buffer,
+                    null,
+                    notas,
                     'pendiente'
                 ]
             );
@@ -200,32 +304,37 @@ router.get(
 
             const archivo = archivos[0];
 
-            console.log('Current dir:', process.cwd());
-            console.log('__dirname:', __dirname);
+            if (archivo.archivo_blob) {
+                const contenido = Buffer.isBuffer(archivo.archivo_blob)
+                    ? archivo.archivo_blob
+                    : Buffer.from(archivo.archivo_blob);
 
-            console.log(
-                'Contenido uploads:',
-                fs.existsSync('/app/uploads')
-                    ? fs.readdirSync('/app/uploads')
-                    : 'NO EXISTE /app/uploads'
-            );
-
-            if (!fs.existsSync(archivo.ruta_archivo)) {
-
-                console.log('NO EXISTE EL ARCHIVO');
-
-                return res.status(404).json({
-                    error: true,
-                    message: 'Archivo físico no existe'
-                });
+                res.setHeader(
+                    'Content-Type',
+                    archivo.tipo_mime || 'application/octet-stream'
+                );
+                res.setHeader('Content-Length', contenido.length);
+                res.setHeader(
+                    'Content-Disposition',
+                    `attachment; filename*=UTF-8''${encodeURIComponent(archivo.nombre_original)}`
+                );
+                return res.send(contenido);
             }
 
-            console.log('DESCARGA OK');
+            if (
+                archivo.ruta_archivo &&
+                fs.existsSync(archivo.ruta_archivo)
+            ) {
+                return res.download(
+                    archivo.ruta_archivo,
+                    archivo.nombre_original
+                );
+            }
 
-            res.download(
-                archivo.ruta_archivo,
-                archivo.nombre_original
-            );
+            return res.status(410).json({
+                error: true,
+                message: 'El archivo anterior ya no existe en el almacenamiento temporal. Debe volver a cargarse.'
+            });
 
         } catch (error) {
 

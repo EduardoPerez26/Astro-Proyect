@@ -7,6 +7,174 @@ const router = express.Router();
 const { pool } = require('../config/database');
 const { verificarToken, esAdmin } = require('../middleware/auth.middleware');
 
+const CAMPOS_IDENTIDAD_CONCILIACION = new Set([
+    'store',
+    'storeName',
+    'unitName',
+    'unitNumber',
+    'locationId',
+    'date',
+    'accountingDate',
+    'deptId',
+    'acctNo',
+    'journal',
+    'description',
+    'memo'
+]);
+
+const CAMPOS_COMPARACION_POR_RESTAURANTE = {
+    'taco-bell': [
+        'salesTax', 'grossSalesPos', 'discounts', 'promo', 'donations',
+        'netSales', 'gcSold', 'paidOut', 'paidIn', 'totalRevenue',
+        'mastercard', 'visa', 'discover', 'amex', 'debit', 'ebt',
+        'gcRedeem', 'acctCash', 'deposits', 'gh', 'uber', 'dd',
+        'ccTotals', 'paymentsTotal', 'oS', 'os', 'deposit1', 'deposit2',
+        'deposit3', 'cashPlusMinus', 'cashExpected', 'difference'
+    ],
+    popeyes: [
+        'food', 'beverages', 'other', 'serviceFee', 'salesOther',
+        'deliveryFee', 'deliveryTips', 'totalTips', 'discounts',
+        'discountsPromo', 'netSales', 'salesTax', 'taxExemptSales',
+        'caCrv', 'gcSold', 'paidOut', 'donations', 'nonRedeemable',
+        'totalRevenue', 'amex', 'amexPrpd', 'amexKiosk', 'totalCC',
+        'doorDash', 'grubHub', 'uberEats', 'doorDashShortage',
+        'uberShortage', 'postmates', 'ebt', 'kiosk', 'giftCardRedeemed',
+        'onlineCatering', 'ezCater', 'wlTips', 'cashDepositCalculated',
+        'delTotals', 'paymentsTotal', 'overShort', 'totalDiscounts',
+        'cashDeposit', 'cashHandlingDebit', 'cashHandlingCredit',
+        'cashExpected', 'difference'
+    ],
+    'burger-king': [
+        'foodSales', 'bevSales', 'nonFood', 'coupons', 'surcharge',
+        'bagCharge', 'wlTips', 'discounts', 'netSales', 'salesTax',
+        'gcSold', 'paidOut', 'donations', 'donationDiscounts',
+        'totalRevenue', 'amex', 'visa', 'mastercard', 'discover', 'ebt',
+        'dd', 'gh', 'uber', 'wlPayments', 'bkApp', 'gcRedeem',
+        'cashDeposit', 'instore', 'paypal', 'venmo', 'kiosk', 'ccTotals',
+        'cashExpected', 'paymentsTotal', 'openChecks', 'oS',
+        'cashOsCredit', 'cashOsDebit', 'cashDifference'
+    ]
+};
+
+function obtenerTiendaConciliacion(fila = {}) {
+    return String(
+        fila.store ??
+        fila.locationId ??
+        fila.unitNumber ??
+        fila.Store ??
+        ''
+    ).trim();
+}
+
+function normalizarFechaConciliacionFila(valor, fechaPredeterminada) {
+    const texto = String(valor || fechaPredeterminada || '').trim();
+    if (/^\d{4}-\d{2}-\d{2}/.test(texto)) return texto.slice(0, 10);
+
+    const fechaUsa = texto.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+    if (fechaUsa) {
+        return `${fechaUsa[3]}-${fechaUsa[1].padStart(2, '0')}-${fechaUsa[2].padStart(2, '0')}`;
+    }
+
+    return texto;
+}
+
+function crearMapaConciliacion(filas, fechaPredeterminada) {
+    return new Map(filas.map(fila => {
+        const tienda = obtenerTiendaConciliacion(fila);
+        const fecha = normalizarFechaConciliacionFila(
+            fila.date ?? fila.accountingDate,
+            fechaPredeterminada
+        );
+
+        return [`${tienda}::${fecha}`, { fila, tienda, fecha }];
+    }).filter(([, registro]) => registro.tienda));
+}
+
+function obtenerMontoComparable(valor) {
+    if (typeof valor === 'number') {
+        return Number.isFinite(valor) ? valor : null;
+    }
+
+    if (typeof valor !== 'string') return null;
+    const limpio = valor.trim().replaceAll(',', '');
+    if (!/^-?\d+(\.\d+)?$/.test(limpio)) return null;
+    const numero = Number(limpio);
+    return Number.isFinite(numero) ? numero : null;
+}
+
+function compararDatosConciliacion(
+    datosAnteriores,
+    datosNuevos,
+    fecha,
+    codigoRestaurante
+) {
+    const anteriores = Array.isArray(datosAnteriores) ? datosAnteriores : [];
+    const nuevos = Array.isArray(datosNuevos) ? datosNuevos : [];
+    const mapaAnterior = crearMapaConciliacion(anteriores, fecha);
+    const mapaNuevo = crearMapaConciliacion(nuevos, fecha);
+    const claves = [...new Set([
+        ...mapaAnterior.keys(),
+        ...mapaNuevo.keys()
+    ])].filter(Boolean);
+    const diferencias = [];
+
+    claves.forEach(clave => {
+        const registroAnterior = mapaAnterior.get(clave);
+        const registroNuevo = mapaNuevo.get(clave);
+        const anterior = registroAnterior?.fila;
+        const nuevo = registroNuevo?.fila;
+        const tienda = registroNuevo?.tienda || registroAnterior?.tienda || '';
+        const fechaTienda = registroNuevo?.fecha || registroAnterior?.fecha || fecha;
+
+        if (!anterior || !nuevo) {
+            diferencias.push({
+                tienda,
+                fecha: fechaTienda,
+                tipo: anterior ? 'tienda_eliminada' : 'tienda_nueva',
+                cambios: []
+            });
+            return;
+        }
+
+        const campos = CAMPOS_COMPARACION_POR_RESTAURANTE[codigoRestaurante] ||
+            [...new Set([...Object.keys(anterior), ...Object.keys(nuevo)])];
+        const cambios = campos.flatMap(campo => {
+            if (CAMPOS_IDENTIDAD_CONCILIACION.has(campo)) return [];
+
+            const montoAnterior = obtenerMontoComparable(anterior[campo]);
+            const montoNuevo = obtenerMontoComparable(nuevo[campo]);
+            if (montoAnterior === null && montoNuevo === null) return [];
+
+            const valorAnterior = montoAnterior ?? 0;
+            const valorNuevo = montoNuevo ?? 0;
+            const diferencia = valorNuevo - valorAnterior;
+            if (Math.abs(diferencia) < 0.005) return [];
+
+            return [{
+                campo,
+                anterior: valorAnterior,
+                nuevo: valorNuevo,
+                diferencia
+            }];
+        });
+
+        if (cambios.length) {
+            diferencias.push({
+                tienda,
+                fecha: fechaTienda,
+                tipo: 'montos_diferentes',
+                cambios
+            });
+        }
+    });
+
+    return {
+        tiendasComparadas: claves.length,
+        tiendasConDiferencias: diferencias.length,
+        diferencias
+    };
+}
+
 // ============================================
 // GET /api/conciliaciones/templates
 // ============================================
@@ -267,6 +435,89 @@ router.get('/', verificarToken, async (req, res) => {
 });
 
 // ============================================
+// POST /api/conciliaciones/comparar-existente
+// ============================================
+// Compara por restaurante, tienda y fecha usando reglas propias de cada marca.
+router.post('/comparar-existente', verificarToken, async (req, res) => {
+    try {
+        const {
+            restaurante_id,
+            fecha_conciliacion,
+            datos_extraidos
+        } = req.body;
+
+        if (!restaurante_id || !fecha_conciliacion || !Array.isArray(datos_extraidos)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Faltan datos para comparar la conciliación'
+            });
+        }
+
+        const [restaurantes] = await pool.query(
+            'SELECT id, codigo, nombre FROM restaurantes WHERE id = ? LIMIT 1',
+            [restaurante_id]
+        );
+
+        if (!restaurantes.length) {
+            return res.status(404).json({
+                success: false,
+                message: 'Restaurante no encontrado'
+            });
+        }
+
+        const restaurante = restaurantes[0];
+        const [anteriores] = await pool.query(
+            `SELECT id, fecha_conciliacion, datos_extraidos
+             FROM conciliaciones
+             WHERE restaurante_id = ?
+               AND DATE(fecha_conciliacion) = DATE(?)
+             ORDER BY id DESC
+             LIMIT 1`,
+            [restaurante_id, fecha_conciliacion]
+        );
+
+        if (!anteriores.length) {
+            return res.json({
+                success: true,
+                existe: false,
+                restaurante: restaurante.codigo,
+                tiendasComparadas: datos_extraidos.length,
+                tiendasConDiferencias: 0,
+                diferencias: []
+            });
+        }
+
+        const conciliacionAnterior = anteriores[0];
+        let datosAnteriores = conciliacionAnterior.datos_extraidos || [];
+
+        if (typeof datosAnteriores === 'string') {
+            datosAnteriores = JSON.parse(datosAnteriores);
+        }
+
+        const resultado = compararDatosConciliacion(
+            datosAnteriores,
+            datos_extraidos,
+            fecha_conciliacion,
+            restaurante.codigo
+        );
+
+        res.json({
+            success: true,
+            existe: true,
+            conciliacionAnteriorId: conciliacionAnterior.id,
+            restaurante: restaurante.codigo,
+            ...resultado
+        });
+    } catch (error) {
+        console.error('Error comparando conciliación existente:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error al comparar la conciliación existente'
+        });
+    }
+});
+
+// ============================================
 // GET /api/conciliaciones/:id
 // ============================================
 router.get('/:id', verificarToken, async (req, res) => {
@@ -343,6 +594,64 @@ router.post('/', verificarToken, async (req, res) => {
         const conceptos_ok = datos.filter(d => Math.abs(d.diferencia || 0) < 0.01).length;
         const conceptos_diferencia = total_conceptos - conceptos_ok;
         const monto_total_diferencia = datos.reduce((sum, d) => sum + Math.abs(d.diferencia || 0), 0);
+
+        const [existentes] = await pool.query(
+            `SELECT id
+             FROM conciliaciones
+             WHERE restaurante_id = ?
+               AND DATE(fecha_conciliacion) = DATE(?)
+             ORDER BY id DESC
+             LIMIT 1`,
+            [restaurante_id, fecha_conciliacion]
+        );
+
+        if (existentes.length) {
+            const conciliacionId = existentes[0].id;
+
+            await pool.query(
+                `UPDATE conciliaciones
+                 SET template_id = ?,
+                     usuario_id = ?,
+                     fecha_conciliacion = ?,
+                     periodo_inicio = ?,
+                     periodo_fin = ?,
+                     datos_extraidos = ?,
+                     total_conceptos = ?,
+                     conceptos_ok = ?,
+                     conceptos_diferencia = ?,
+                     monto_total_diferencia = ?,
+                     notas = ?,
+                     estado = 'borrador'
+                 WHERE id = ?`,
+                [
+                    template_id,
+                    req.usuario.id,
+                    fecha_conciliacion,
+                    periodo_inicio || null,
+                    periodo_fin || null,
+                    JSON.stringify(datos_extraidos),
+                    total_conceptos,
+                    conceptos_ok,
+                    conceptos_diferencia,
+                    monto_total_diferencia,
+                    notas || null,
+                    conciliacionId
+                ]
+            );
+
+            return res.json({
+                success: true,
+                message: 'Conciliación actualizada',
+                id: conciliacionId,
+                actualizada: true,
+                stats: {
+                    total_conceptos,
+                    conceptos_ok,
+                    conceptos_diferencia,
+                    monto_total_diferencia
+                }
+            });
+        }
         
         const [result] = await pool.query(
             `INSERT INTO conciliaciones 

@@ -224,6 +224,22 @@ function generarConciliacionTacoBell() {
 
     // Filtrar solo la fecha seleccionada
     const fechaFiltro = fechaSalesSeleccionada && fechaSalesSeleccionada.trim() !== '' ? fechaSalesSeleccionada : fechaMasReciente;
+    fechaConciliacionActual = fechaFiltro;
+
+    const textoFechaFiltro = String(fechaFiltro);
+    const fechaIso = /^\d{4}-\d{2}-\d{2}$/.test(textoFechaFiltro)
+        ? textoFechaFiltro
+        : (() => {
+            const partes = textoFechaFiltro.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+            return partes
+                ? `${partes[3]}-${partes[1].padStart(2, '0')}-${partes[2].padStart(2, '0')}`
+                : '';
+        })();
+
+    if (fechaInput && fechaIso) {
+        fechaInput.value = fechaIso;
+    }
+
     const rowsFiltradas = rows.filter(row => {
         const fecha = obtenerFechaFila(row);
         if (!fecha) return false;
@@ -1135,6 +1151,8 @@ function renderArrayToMainTable(data) {
 
                 if (tieneDiferencia) {
                     td.title = 'Diferencia O/S detectada';
+                    tr.classList.add('os-row-difference');
+                    tr.title = 'Esta tienda tiene una diferencia en O/S';
                 }
             }
 

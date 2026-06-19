@@ -404,6 +404,58 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
             </div>
         </div>
 
+        <dialog
+            id="fileComparisonDialog"
+            class="file-comparison-dialog"
+            aria-labelledby="fileComparisonTitle"
+        >
+            <section class="file-comparison-window">
+                <header class="file-comparison-window-header">
+                    <div>
+                        <span>CONTROL DE CONCILIACIONES</span>
+                        <h2 id="fileComparisonTitle">Comparación contable</h2>
+                        <p>Revisa los montos guardados y los nuevos antes de continuar.</p>
+                    </div>
+                    <button
+                        type="button"
+                        id="fileComparisonClose"
+                        class="file-comparison-close"
+                        aria-label="Cerrar comparación"
+                    >
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </header>
+
+                <div
+                    id="fileComparisonContent"
+                    class="file-comparison-window-content"
+                ></div>
+
+                <footer class="file-comparison-window-footer">
+                    <p>
+                        <i class="fa-solid fa-circle-info"></i>
+                        La conciliación no continuará hasta que confirmes el archivo.
+                    </p>
+                    <div>
+                        <button
+                            type="button"
+                            id="fileComparisonCancel"
+                            class="btn btn-secondary"
+                        >
+                            Elegir otro archivo
+                        </button>
+                        <button
+                            type="button"
+                            id="fileComparisonConfirm"
+                            class="btn btn-primary"
+                        >
+                            Usar este archivo
+                        </button>
+                    </div>
+                </footer>
+            </section>
+        </dialog>
+
         <!-- Scripts -->
         <script
             is:inline
@@ -717,19 +769,40 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
             text-align: center;
         }
 
-        .conciliacion-table th.os-column-header {
+        .conciliacion-table :global(th.os-column-header) {
             color: #8f1d1d;
             background: #fff7f7;
         }
 
-        .conciliacion-table td.os-difference {
+        .conciliacion-table :global(td.os-difference) {
             color: #a51515 !important;
             background: #fff0f0 !important;
             box-shadow: inset 3px 0 0 #dc2626;
             font-weight: 800;
         }
 
-        .conciliacion-table td.os-balanced {
+        .conciliacion-table :global(tbody tr.os-row-difference > td) {
+            background: #fff7f7 !important;
+            border-top-color: #fecaca;
+            border-bottom-color: #fecaca;
+        }
+
+        .conciliacion-table :global(tbody tr.os-row-difference > td:first-child) {
+            box-shadow: inset 4px 0 0 #dc2626;
+            font-weight: 800;
+        }
+
+        .conciliacion-table :global(tbody tr.os-row-difference > td.os-difference) {
+            color: #991b1b !important;
+            background: #fee2e2 !important;
+            box-shadow: inset 3px 0 0 #dc2626;
+        }
+
+        .conciliacion-table :global(tbody tr.os-row-difference:hover > td) {
+            background: #feecec !important;
+        }
+
+        .conciliacion-table :global(td.os-balanced) {
             color: #52667a;
         }
 
@@ -1024,6 +1097,525 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
 
         .upload-card[data-status="error"] .upload-status {
             color: var(--danger);
+        }
+
+        .comparison-status {
+            display: grid;
+            grid-template-columns: 28px minmax(0, 1fr);
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+            padding: 10px 12px;
+            border: 1px solid #cbd8e5;
+            border-radius: 4px;
+            background: #f6f9fc;
+            color: #17324d;
+        }
+
+        .comparison-status > i {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            color: #174a73;
+        }
+
+        .comparison-status > span {
+            display: flex;
+            min-width: 0;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .comparison-status strong {
+            font-size: 12px;
+            line-height: 1.25;
+        }
+
+        .comparison-status small {
+            color: #60758a;
+            font-size: 11px;
+            line-height: 1.35;
+        }
+
+        .upload-card[data-comparison="igual"] .comparison-status {
+            border-color: #a7d7bd;
+            background: #f0f9f4;
+            color: #166534;
+        }
+
+        .upload-card[data-comparison="igual"] .comparison-status > i {
+            color: #15803d;
+        }
+
+        .upload-card[data-comparison="actualizado"] .comparison-status,
+        .upload-card[data-comparison="primero"] .comparison-status {
+            border-color: #adc9df;
+            background: #eef5fb;
+        }
+
+        .upload-card[data-comparison="aviso"] .comparison-status {
+            border-color: #f1cf8a;
+            background: #fff8e8;
+            color: #854d0e;
+        }
+
+        .upload-card[data-comparison="aviso"] .comparison-status > i {
+            color: #b45309;
+        }
+
+        .file-comparison-dialog {
+            width: min(920px, calc(100vw - 40px));
+            max-width: none;
+            max-height: calc(100vh - 40px);
+            padding: 0;
+            overflow: hidden;
+            border: 1px solid #9db2c5;
+            border-radius: 8px;
+            background: #eef3f8;
+            box-shadow: 0 24px 70px rgba(9, 30, 49, .28);
+        }
+
+        .file-comparison-dialog::backdrop {
+            background: rgba(8, 27, 44, .72);
+            backdrop-filter: blur(3px);
+        }
+
+        .file-comparison-window {
+            display: grid;
+            max-height: calc(100vh - 40px);
+            grid-template-rows: auto minmax(0, 1fr) auto;
+        }
+
+        .file-comparison-window-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 20px;
+            padding: 20px 22px;
+            border-bottom: 1px solid #294f6f;
+            background: #102f4a;
+            color: #fff;
+        }
+
+        .file-comparison-window-header span {
+            color: #9ec8e8;
+            font-size: 10px;
+            font-weight: 900;
+            letter-spacing: .12em;
+        }
+
+        .file-comparison-window-header h2 {
+            margin: 3px 0 2px;
+            color: #fff;
+            font-family: inherit;
+            font-size: 21px;
+        }
+
+        .file-comparison-window-header p {
+            margin: 0;
+            color: #c9dbea;
+            font-size: 12px;
+        }
+
+        .file-comparison-close {
+            width: 34px;
+            height: 34px;
+            flex: 0 0 auto;
+            border: 1px solid rgba(255, 255, 255, .25);
+            border-radius: 4px;
+            background: rgba(255, 255, 255, .08);
+            color: #fff;
+            cursor: pointer;
+        }
+
+        .file-comparison-close:hover {
+            background: rgba(255, 255, 255, .16);
+        }
+
+        .file-comparison-window-content {
+            padding: 20px 22px;
+            overflow-y: auto;
+        }
+
+        .file-comparison-window-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 18px;
+            padding: 14px 22px;
+            border-top: 1px solid #c5d2de;
+            background: #fff;
+        }
+
+        .file-comparison-window-footer > p {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            margin: 0;
+            color: #60758a;
+            font-size: 11px;
+        }
+
+        .file-comparison-window-footer > div {
+            display: flex;
+            gap: 8px;
+        }
+
+        :global(.file-comparison-view) {
+            color: #243b53;
+            text-align: left;
+        }
+
+        :global(.file-comparison-result) {
+            display: grid;
+            grid-template-columns: max-content minmax(0, 1fr);
+            align-items: center;
+            gap: 4px 12px;
+            margin-bottom: 16px;
+            padding: 12px 14px;
+            border: 1px solid #b8d4e8;
+            border-left: 4px solid #25608a;
+            border-radius: 5px;
+            background: #f1f7fb;
+        }
+
+        :global(.file-comparison-result span) {
+            grid-row: 1 / span 2;
+            padding: 5px 8px;
+            border-radius: 3px;
+            background: #123b5d;
+            color: #fff;
+            font-size: 10px;
+            font-weight: 900;
+            letter-spacing: .08em;
+        }
+
+        :global(.file-comparison-result strong) {
+            color: #102a43;
+            font-size: 15px;
+        }
+
+        :global(.file-comparison-result p) {
+            margin: 0;
+            color: #52667a;
+            font-size: 12px;
+        }
+
+        :global(.file-comparison-view[data-result="igual"] .file-comparison-result) {
+            border-color: #a8d5ba;
+            border-left-color: #15803d;
+            background: #f0f9f4;
+        }
+
+        :global(.file-comparison-view[data-result="igual"] .file-comparison-result span) {
+            background: #166534;
+        }
+
+        :global(.file-comparison-view[data-result="actualizado"] .file-comparison-result) {
+            border-color: #efc68a;
+            border-left-color: #b45309;
+            background: #fff8e8;
+        }
+
+        :global(.file-comparison-view[data-result="actualizado"] .file-comparison-result span) {
+            background: #92400e;
+        }
+
+        :global(.file-comparison-grid) {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 34px minmax(0, 1fr);
+            align-items: stretch;
+            gap: 10px;
+        }
+
+        :global(.file-comparison-arrow) {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #54738e;
+        }
+
+        :global(.file-compare-card) {
+            display: flex;
+            min-width: 0;
+            min-height: 150px;
+            flex-direction: column;
+            gap: 10px;
+            padding: 14px;
+            border: 1px solid #ccd8e4;
+            border-radius: 5px;
+            background: #fff;
+        }
+
+        :global(.file-compare-card.is-empty) {
+            align-items: center;
+            justify-content: center;
+            color: #61788d;
+            text-align: center;
+        }
+
+        :global(.file-compare-card.is-empty > i) {
+            color: #8aa1b5;
+            font-size: 24px;
+        }
+
+        :global(.file-compare-eyebrow) {
+            color: #60758a;
+            font-size: 10px;
+            font-weight: 900;
+            letter-spacing: .07em;
+            text-transform: uppercase;
+        }
+
+        :global(.file-compare-name) {
+            display: flex;
+            min-width: 0;
+            align-items: center;
+            gap: 8px;
+        }
+
+        :global(.file-compare-name i) {
+            color: #15803d;
+        }
+
+        :global(.file-compare-name strong) {
+            overflow: hidden;
+            color: #102a43;
+            font-size: 13px;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        :global(.file-compare-card dl) {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px;
+            margin: auto 0 0;
+        }
+
+        :global(.file-compare-card dl div) {
+            padding: 8px;
+            border: 1px solid #e0e8f0;
+            border-radius: 3px;
+            background: #f7f9fb;
+        }
+
+        :global(.file-compare-card dt) {
+            color: #6b7f92;
+            font-size: 9px;
+            font-weight: 800;
+            text-transform: uppercase;
+        }
+
+        :global(.file-compare-card dd) {
+            margin: 2px 0 0;
+            color: #102a43;
+            font-family: "SF Mono", Consolas, monospace;
+            font-size: 14px;
+            font-weight: 800;
+        }
+
+        :global(.file-compare-card small) {
+            color: #70869a;
+            font-size: 10px;
+        }
+
+        :global(.file-comparison-changes) {
+            margin-top: 14px;
+            padding: 12px 14px;
+            border: 1px solid #d6e0ea;
+            border-radius: 5px;
+            background: #f8fafc;
+        }
+
+        :global(.file-comparison-changes h4) {
+            margin: 0 0 8px;
+            color: #102a43;
+            font-size: 12px;
+        }
+
+        :global(.file-compare-change) {
+            display: grid;
+            grid-template-columns: minmax(110px, 1fr) minmax(130px, auto) 78px;
+            align-items: center;
+            gap: 10px;
+            padding: 7px 0;
+            border-top: 1px solid #e2e8f0;
+            font-size: 11px;
+        }
+
+        :global(.file-compare-change strong) {
+            color: #243b53;
+            font-family: "SF Mono", Consolas, monospace;
+            text-align: right;
+        }
+
+        :global(.file-compare-change em) {
+            color: #166534;
+            font-style: normal;
+            font-weight: 800;
+            text-align: right;
+        }
+
+        :global(.file-compare-change.is-changed em) {
+            color: #b45309;
+        }
+
+        :global(.file-comparison-legacy-note) {
+            display: flex;
+            gap: 8px;
+            margin-top: 14px;
+            padding: 10px 12px;
+            border: 1px solid #d6e0ea;
+            border-radius: 4px;
+            background: #f8fafc;
+            color: #52667a;
+            font-size: 11px;
+            line-height: 1.45;
+        }
+
+        :global(.reconciliation-comparison-summary) {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+
+        :global(.reconciliation-comparison-summary > div) {
+            display: flex;
+            min-height: 68px;
+            flex-direction: column;
+            justify-content: center;
+            padding: 10px 12px;
+            border: 1px solid #ccd8e4;
+            border-radius: 4px;
+            background: #fff;
+        }
+
+        :global(.reconciliation-comparison-summary strong) {
+            color: #102a43;
+            font-family: "SF Mono", Consolas, monospace;
+            font-size: 20px;
+        }
+
+        :global(.reconciliation-comparison-summary span) {
+            margin-top: 2px;
+            color: #60758a;
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: .04em;
+            text-transform: uppercase;
+        }
+
+        :global(.reconciliation-diff-wrapper) {
+            max-height: 360px;
+            overflow: auto;
+            border: 1px solid #bdcbd8;
+            border-radius: 4px;
+            background: #fff;
+        }
+
+        :global(.reconciliation-diff-table) {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11px;
+        }
+
+        :global(.reconciliation-diff-table th) {
+            position: sticky;
+            top: 0;
+            z-index: 1;
+            padding: 9px 10px;
+            border-bottom: 1px solid #294f6f;
+            background: #163b59;
+            color: #fff;
+            font-size: 10px;
+            letter-spacing: .04em;
+            text-align: left;
+            text-transform: uppercase;
+        }
+
+        :global(.reconciliation-diff-table td) {
+            padding: 8px 10px;
+            border-bottom: 1px solid #e1e8ef;
+            color: #334e68;
+        }
+
+        :global(.reconciliation-diff-table td:nth-child(n + 3)) {
+            font-family: "SF Mono", Consolas, monospace;
+            text-align: right;
+        }
+
+        :global(.reconciliation-diff-table td:last-child) {
+            color: #b42318;
+            background: #fff6f5;
+            font-weight: 800;
+        }
+
+        :global(.reconciliation-diff-more) {
+            margin: 8px 0 0;
+            color: #60758a;
+            font-size: 10px;
+            text-align: right;
+        }
+
+        @media (max-width: 680px) {
+            .file-comparison-dialog {
+                width: calc(100vw - 18px);
+                max-height: calc(100vh - 18px);
+            }
+
+            .file-comparison-window {
+                max-height: calc(100vh - 18px);
+            }
+
+            .file-comparison-window-header,
+            .file-comparison-window-content,
+            .file-comparison-window-footer {
+                padding-right: 14px;
+                padding-left: 14px;
+            }
+
+            .file-comparison-window-footer {
+                align-items: stretch;
+                flex-direction: column;
+            }
+
+            .file-comparison-window-footer > div {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+            }
+
+            :global(.file-comparison-result) {
+                grid-template-columns: 1fr;
+            }
+
+            :global(.file-comparison-result span) {
+                grid-row: auto;
+                justify-self: start;
+            }
+
+            :global(.file-comparison-grid) {
+                grid-template-columns: 1fr;
+            }
+
+            :global(.reconciliation-comparison-summary) {
+                grid-template-columns: 1fr;
+            }
+
+            :global(.file-comparison-arrow) {
+                transform: rotate(90deg);
+            }
+
+            :global(.file-compare-change) {
+                grid-template-columns: 1fr auto;
+            }
+
+            :global(.file-compare-change em) {
+                grid-column: 2;
+            }
         }
 
         .table-container {

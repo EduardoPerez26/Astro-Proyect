@@ -78,6 +78,59 @@ async function cargarDocumentos() {
 // MOSTRAR DOCUMENTOS EN TABLA
 // ============================================
 
+function obtenerInfoRevisionFuente(documento = '') {
+    const doc = typeof documento === 'object'
+        ? documento
+        : { nombre_original: documento };
+    const etiquetas = {
+        sales: 'Archivo principal',
+        salesDetail: 'Sales Detail',
+        ebt: 'EBT'
+    };
+
+    try {
+        const notas = typeof doc.notas === 'string'
+            ? JSON.parse(doc.notas)
+            : doc.notas;
+
+        if (notas?.tipo === 'referencia_comparacion') {
+            return {
+                tipo: notas.fuente,
+                version: null,
+                nombreOriginal: notas.nombreOriginal || doc.nombre_original,
+                etiqueta: etiquetas[notas.fuente] || notas.fuente,
+                esReferenciaActual: true
+            };
+        }
+
+        if (notas?.tipo === 'revision_fuente') {
+            return {
+                tipo: notas.fuente,
+                version: Number(notas.revision),
+                nombreOriginal: notas.nombreOriginal || doc.nombre_original,
+                etiqueta: etiquetas[notas.fuente] || notas.fuente,
+                esReferenciaActual: false
+            };
+        }
+    } catch {
+        // Continúa con el formato anterior basado en el nombre.
+    }
+
+    const match = String(doc.nombre_original || '').match(
+        /^XB-REV-([a-zA-Z]+)-V(\d+)-([a-f0-9]{16})--(.+)$/i
+    );
+
+    if (!match) return null;
+
+    return {
+        tipo: match[1],
+        version: Number(match[2]),
+        nombreOriginal: match[4],
+        etiqueta: etiquetas[match[1]] || match[1],
+        esReferenciaActual: false
+    };
+}
+
 function mostrarDocumentos() {
     const tbody = document.getElementById('documentosBody');
     const emptyState = document.getElementById('emptyState');
@@ -102,7 +155,20 @@ function mostrarDocumentos() {
     table.style.display = 'table';
     emptyState.style.display = 'none';
 
-    tbody.innerHTML = paginados.map(doc => `
+    tbody.innerHTML = paginados.map(doc => {
+        const revision = obtenerInfoRevisionFuente(doc);
+        const nombreVisible = revision?.nombreOriginal || doc.nombre_original;
+        let metaVisible = revision
+            ? `${revision.etiqueta} · Revisión V${String(revision.version).padStart(3, '0')}`
+            : `${doc.numero_hojas || 1} hoja(s)`;
+
+        if (revision) {
+            metaVisible = revision.esReferenciaActual
+                ? `${revision.etiqueta} · Referencia de comparación`
+                : `${revision.etiqueta} · Referencia anterior`;
+        }
+
+        return `
         <tr>
             <td>${doc.id}</td>
             <td>
@@ -111,8 +177,8 @@ function mostrarDocumentos() {
                         <i class="fa-solid fa-file-excel"></i>
                     </div>
                     <div class="file-info">
-                        <span class="file-name">${doc.nombre_original}</span>
-                        <span class="file-meta">${doc.numero_hojas || 1} hoja(s)</span>
+                        <span class="file-name">${nombreVisible}</span>
+                        <span class="file-meta">${metaVisible}</span>
                     </div>
                 </div>
             </td>
@@ -140,7 +206,8 @@ function mostrarDocumentos() {
                 </div>
             </td>
         </tr>
-    `).join('');
+    `;
+    }).join('');
 
     // Actualizar paginacion
     actualizarPaginacion(totalPaginas);
@@ -163,7 +230,7 @@ function configurarFiltros() {
                 paginaActual = 1;
                 mostrarDocumentos();
             });
-            if (el.type === 'text') {
+            if (el === searchInput) {
                 el.addEventListener('input', () => {
                     paginaActual = 1;
                     mostrarDocumentos();
@@ -174,21 +241,43 @@ function configurarFiltros() {
 }
 
 function aplicarFiltros(docs) {
-    const search = document.getElementById('searchInput')?.value.toLowerCase() || '';
+    const normalizar = value => String(value || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .trim();
+    const search = normalizar(document.getElementById('searchInput')?.value);
     const restaurante = document.getElementById('filterRestaurante')?.value || '';
     const estado = document.getElementById('filterEstado')?.value || '';
     const fechaDesde = document.getElementById('filterFechaDesde')?.value || '';
     const fechaHasta = document.getElementById('filterFechaHasta')?.value || '';
 
     return docs.filter(doc => {
+        const revision = obtenerInfoRevisionFuente(doc);
+        const nombreVisible = revision?.nombreOriginal || doc.nombre_original;
+        const textoBusqueda = normalizar([
+            nombreVisible,
+            doc.restaurante_nombre,
+            doc.restaurante_codigo,
+            doc.usuario_nombre
+        ].filter(Boolean).join(' '));
+
         // Filtro de busqueda
-        if (search && !doc.nombre_original.toLowerCase().includes(search)) {
+        if (search && !textoBusqueda.includes(search)) {
             return false;
         }
 
         // Filtro de restaurante
-        if (restaurante && doc.restaurante_id !== restaurante && doc.restaurante?.toLowerCase() !== restaurante) {
-            return false;
+        if (restaurante) {
+            const codigoDocumento = normalizar(
+                doc.restaurante_codigo ||
+                doc.restaurante ||
+                doc.restaurante_nombre
+            ).replace(/[^a-z0-9]/g, '');
+            const codigoFiltro = normalizar(restaurante)
+                .replace(/[^a-z0-9]/g, '');
+
+            if (codigoDocumento !== codigoFiltro) return false;
         }
 
         // Filtro de estado
@@ -199,13 +288,15 @@ function aplicarFiltros(docs) {
         // Filtro de fecha desde
         if (fechaDesde) {
             const fechaDoc = new Date(doc.fecha_subida);
-            if (fechaDoc < new Date(fechaDesde)) return false;
+            const inicio = new Date(`${fechaDesde}T00:00:00`);
+            if (!Number.isNaN(fechaDoc.getTime()) && fechaDoc < inicio) return false;
         }
 
         // Filtro de fecha hasta
         if (fechaHasta) {
             const fechaDoc = new Date(doc.fecha_subida);
-            if (fechaDoc > new Date(fechaHasta + 'T23:59:59')) return false;
+            const fin = new Date(`${fechaHasta}T23:59:59.999`);
+            if (!Number.isNaN(fechaDoc.getTime()) && fechaDoc > fin) return false;
         }
 
         return true;
@@ -269,8 +360,10 @@ function verDetalles(id) {
 
     const modalBody = document.getElementById('modalBody');
     const modalTitulo = document.getElementById('modalTitulo');
+    const revision = obtenerInfoRevisionFuente(doc);
+    const nombreVisible = revision?.nombreOriginal || doc.nombre_original;
 
-    modalTitulo.textContent = doc.nombre_original;
+    modalTitulo.textContent = nombreVisible;
 
     modalBody.innerHTML = `
         <div class="detail-row">
@@ -279,8 +372,14 @@ function verDetalles(id) {
         </div>
         <div class="detail-row">
             <span class="detail-label">Archivo:</span>
-            <span class="detail-value">${doc.nombre_original}</span>
+            <span class="detail-value">${nombreVisible}</span>
         </div>
+        ${revision ? `
+        <div class="detail-row">
+            <span class="detail-label">Uso:</span>
+            <span class="detail-value">${revision.esReferenciaActual ? 'Referencia de comparación' : 'Referencia anterior'} · ${revision.etiqueta}</span>
+        </div>
+        ` : ''}
         <div class="detail-row">
             <span class="detail-label">Restaurante:</span>
             <span class="detail-value">${doc.restaurante_nombre || doc.restaurante || '-'}</span>
@@ -305,7 +404,7 @@ function verDetalles(id) {
             <span class="detail-label">Fecha subida:</span>
             <span class="detail-value">${formatearFecha(doc.fecha_subida, true)}</span>
         </div>
-        ${doc.notas ? `
+        ${doc.notas && !revision ? `
         <div class="detail-row">
             <span class="detail-label">Notas:</span>
             <span class="detail-value">${doc.notas}</span>
@@ -336,22 +435,24 @@ async function descargarArchivo(id) {
 
     try {
 
-        console.log('TOKEN:', token);
-        console.log('URL:', `${window.API_URL}/archivos/${id}/descargar`);
         const response = await fetch(`${window.API_URL}/archivos/${id}/descargar`, {
             headers: {
                 'Authorization': `Bearer ${token}`
             }
         });
 
-        if (!response.ok) throw new Error('Error al descargar');
+        if (!response.ok) {
+            const data = await response.json().catch(() => ({}));
+            throw new Error(data.message || 'Error al descargar');
+        }
 
         const blob = await response.blob();
         const doc = documentos.find(d => d.id === id);
+        const revision = obtenerInfoRevisionFuente(doc);
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = doc?.nombre_original || 'archivo.xlsx';
+        a.download = revision?.nombreOriginal || doc?.nombre_original || 'archivo.xlsx';
         document.body.appendChild(a);
         a.click();
         window.URL.revokeObjectURL(url);
@@ -361,8 +462,8 @@ async function descargarArchivo(id) {
         console.error('Error descargando:', error);
         Swal.fire({
             icon: 'error',
-            title: 'Error',
-            text: 'No se pudo descargar el archivo'
+            title: 'No se pudo descargar',
+            text: error.message || 'No se pudo descargar el archivo'
         });
     }
 }

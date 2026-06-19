@@ -344,10 +344,14 @@ async function confirmDelete() {
 
     const token = localStorage.getItem('token');
 
-    // Modo offline
     if (!token || localStorage.getItem('modoOffline')) {
-        users = users.filter(u => u.id !== userToDelete);
+
+        users = users.filter(
+            u => u.id !== userToDelete
+        );
+
         renderUsers(users);
+
         closeDeleteModal();
 
         Swal.fire({
@@ -356,19 +360,28 @@ async function confirmDelete() {
             timer: 2000,
             showConfirmButton: false
         });
+
         return;
     }
 
     try {
-        const response = await fetch(`${window.API_URL}/usuarios/${id}`, {
-            method: 'DELETE',
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
+
+        const response = await fetch(
+            `${window.API_URL}/usuarios/${userToDelete}`,
+            {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            }
+        );
 
         const data = await response.json();
 
         if (response.ok && data.success) {
+
             closeDeleteModal();
+
             loadUsers();
 
             Swal.fire({
@@ -377,15 +390,25 @@ async function confirmDelete() {
                 timer: 2000,
                 showConfirmButton: false
             });
+
         } else {
-            throw new Error(data.message || 'Error al eliminar');
+
+            throw new Error(
+                data.message || 'Error al eliminar'
+            );
+
         }
+
     } catch (error) {
+
         Swal.fire({
             icon: 'error',
             title: 'Error',
-            text: error.message || 'No se pudo eliminar el usuario.'
+            text:
+                error.message ||
+                'No se pudo eliminar el usuario.'
         });
+
     }
 }
 

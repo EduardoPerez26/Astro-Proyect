@@ -30,6 +30,997 @@ let filtroStore = '';
 let filtroStoreName = '';
 
 let fechaSalesSeleccionada = null;
+let codigoRestauranteCargado = '';
+const revisionActualPorTipo = {};
+const comparacionActualPorTipo = {};
+let comparacionConciliacionActual = {
+    clave: '',
+    resultado: null,
+    aprobada: true
+};
+
+function etiquetaTipoRevision(tipo) {
+    return {
+        sales: 'Archivo principal',
+        salesDetail: 'Sales Detail',
+        ebt: 'EBT'
+    }[tipo] || tipo;
+}
+
+function inputIdPorTipoRevision(tipo) {
+    return {
+        sales: 'salesFile',
+        salesDetail: 'salesDetailFile',
+        ebt: 'ebtFile'
+    }[tipo] || 'salesFile';
+}
+
+function analizarNombreRevision(nombre = '') {
+    const match = String(nombre).match(
+        /^XB-REV-([a-zA-Z]+)-V(\d+)-([a-f0-9]{16})--(.+)$/i
+    );
+
+    if (!match) return null;
+
+    return {
+        tipo: match[1],
+        version: Number(match[2]),
+        hash: match[3].toLowerCase(),
+        nombreOriginal: match[4]
+    };
+}
+
+function analizarRevisionArchivo(archivo) {
+    try {
+        const notas = typeof archivo?.notas === 'string'
+            ? JSON.parse(archivo.notas)
+            : archivo?.notas;
+
+        if (notas?.tipo === 'revision_fuente') {
+            return {
+                tipo: notas.fuente,
+                version: Number(notas.revision),
+                hash: String(notas.hash || '').toLowerCase(),
+                nombreOriginal: notas.nombreOriginal || archivo.nombre_original
+            };
+        }
+    } catch {
+        // Compatibilidad con las revisiones antiguas guardadas en el nombre.
+    }
+
+    return analizarNombreRevision(archivo?.nombre_original);
+}
+
+async function hashTextoRevision(texto) {
+    const bytes = new TextEncoder().encode(texto);
+
+    if (window.crypto?.subtle) {
+        const digest = await window.crypto.subtle.digest('SHA-256', bytes);
+        return [...new Uint8Array(digest)]
+            .map(byte => byte.toString(16).padStart(2, '0'))
+            .join('');
+    }
+
+    let hashA = 2166136261;
+    let hashB = 2246822519;
+    bytes.forEach(byte => {
+        hashA = Math.imul(hashA ^ byte, 16777619);
+        hashB = Math.imul(hashB ^ byte, 3266489917);
+    });
+
+    return [hashA, hashB, hashA ^ hashB, hashA + hashB]
+        .map(value => (value >>> 0).toString(16).padStart(8, '0'))
+        .join('');
+}
+
+async function calcularHuellaRevision(file) {
+    const buffer = await file.arrayBuffer();
+
+    try {
+        const book = XLSX.read(buffer, {
+            type: 'array',
+            raw: false,
+            cellDates: false
+        });
+        const contenido = book.SheetNames.map(nombreHoja => {
+            const filas = XLSX.utils.sheet_to_json(
+                book.Sheets[nombreHoja],
+                { header: 1, raw: false, defval: '' }
+            );
+            return [nombreHoja, filas];
+        });
+
+        return hashTextoRevision(JSON.stringify(contenido));
+    } catch {
+        const bytes = new Uint8Array(buffer);
+        let binario = '';
+        const bloque = 8192;
+
+        for (let index = 0; index < bytes.length; index += bloque) {
+            binario += String.fromCharCode(...bytes.subarray(index, index + bloque));
+        }
+
+        return hashTextoRevision(binario);
+    }
+}
+
+async function cargarRevisionesServidor(tipo, restauranteId, token) {
+    const response = await fetch(`${window.API_URL}/archivos`, {
+        headers: { Authorization: `Bearer ${token}` }
+    });
+
+    if (!response.ok) {
+        throw new Error('No se pudo consultar el historial de revisiones');
+    }
+
+    const data = await response.json();
+    const archivos = Array.isArray(data) ? data : (data.archivos || []);
+
+    return archivos
+        .map(archivo => ({
+            archivo,
+            revision: analizarRevisionArchivo(archivo)
+        }))
+        .filter(item =>
+            item.revision?.tipo === tipo &&
+            String(item.archivo.restaurante_id) === String(restauranteId)
+        )
+        .sort((a, b) =>
+            b.revision.version - a.revision.version ||
+            Number(b.archivo.id) - Number(a.archivo.id)
+        );
+}
+
+async function guardarRevisionServidor(file, tipo, version, hash, codigo, token) {
+    const formData = new FormData();
+
+    formData.append('archivo', file, file.name);
+    formData.append('restaurante_id', codigo);
+    formData.append('procesar_datos', 'false');
+    formData.append('es_revision_fuente', 'true');
+    formData.append('tipo_fuente', tipo);
+    formData.append('revision', String(version));
+    formData.append('hash_contenido', hash);
+
+    const response = await fetch(`${window.API_URL}/archivos/subir`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData
+    });
+
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+        throw new Error(data.message || 'No se pudo guardar la revisión');
+    }
+
+    return data.archivo?.id;
+}
+
+function cargarRevisionesLocales(codigo, tipo) {
+    try {
+        const todas = JSON.parse(localStorage.getItem('sourceFileRevisions') || '{}');
+        return todas[`${codigo}:${tipo}`] || [];
+    } catch {
+        return [];
+    }
+}
+
+function guardarRevisionLocal(codigo, tipo, revision) {
+    const todas = JSON.parse(localStorage.getItem('sourceFileRevisions') || '{}');
+    const key = `${codigo}:${tipo}`;
+    todas[key] = [...(todas[key] || []), revision].slice(-20);
+    localStorage.setItem('sourceFileRevisions', JSON.stringify(todas));
+}
+
+function textoRevisionActual(tipo) {
+    const version = revisionActualPorTipo[tipo];
+    return version ? ` · Revisión V${String(version).padStart(3, '0')}` : '';
+}
+
+async function validarRevisionAntesDeProcesar(file, tipo) {
+    const inputId = inputIdPorTipoRevision(tipo);
+    const select = document.getElementById('selectRestaurante');
+    const restauranteId = select?.value;
+    const codigo = select?.selectedOptions?.[0]?.dataset?.codigo;
+
+    if (!restauranteId || !codigo) {
+        await Swal.fire({
+            icon: 'warning',
+            title: 'Selecciona el restaurante',
+            text: 'Debes elegir el restaurante antes de cargar y comparar el archivo.'
+        });
+        return false;
+    }
+
+    setUploadCardStatus(inputId, 'checking', 'Comparando con la última revisión...');
+
+    try {
+        const hash = await calcularHuellaRevision(file);
+        const token = localStorage.getItem('token');
+        const offline = localStorage.getItem('modoOffline') === 'true';
+        let revisiones = [];
+
+        if (offline || !token) {
+            revisiones = cargarRevisionesLocales(codigo, tipo)
+                .map(revision => ({ revision }))
+                .sort((a, b) => b.revision.version - a.revision.version);
+        } else {
+            revisiones = await cargarRevisionesServidor(tipo, restauranteId, token);
+        }
+
+        const ultima = revisiones[0]?.revision || null;
+        const sinCambios =
+            String(ultima?.hash || '').slice(0, 16) === hash.slice(0, 16);
+
+        if (sinCambios) {
+            revisionActualPorTipo[tipo] = ultima.version;
+            const result = await Swal.fire({
+                icon: 'info',
+                title: 'El archivo no cambió',
+                html: `<strong>${etiquetaTipoRevision(tipo)}</strong><br>Coincide con la revisión V${String(ultima.version).padStart(3, '0')}.`,
+                showCancelButton: true,
+                confirmButtonText: 'Procesar de todos modos',
+                cancelButtonText: 'Cancelar'
+            });
+
+            if (!result.isConfirmed) setUploadCardStatus(inputId);
+            return result.isConfirmed;
+        }
+
+        const nuevaVersion = (ultima?.version || 0) + 1;
+        const result = await Swal.fire({
+            icon: ultima ? 'warning' : 'info',
+            title: ultima ? 'Cambio detectado' : 'Primera revisión',
+            html: ultima
+                ? `El contenido de <strong>${etiquetaTipoRevision(tipo)}</strong> cambió respecto a V${String(ultima.version).padStart(3, '0')}.<br>Se guardará como <strong>V${String(nuevaVersion).padStart(3, '0')}</strong> antes de procesarlo.`
+                : `No existe una revisión anterior de <strong>${etiquetaTipoRevision(tipo)}</strong>.<br>Se guardará como <strong>V001</strong>.`,
+            showCancelButton: true,
+            confirmButtonText: 'Guardar y procesar',
+            cancelButtonText: 'Cancelar'
+        });
+
+        if (!result.isConfirmed) {
+            setUploadCardStatus(inputId);
+            return false;
+        }
+
+        setUploadCardStatus(inputId, 'checking', `Guardando revisión V${String(nuevaVersion).padStart(3, '0')}...`);
+
+        if (offline || !token) {
+            guardarRevisionLocal(codigo, tipo, {
+                version: nuevaVersion,
+                hash: hash.slice(0, 16),
+                nombreOriginal: file.name,
+                fecha: new Date().toISOString()
+            });
+        } else {
+            await guardarRevisionServidor(
+                file,
+                tipo,
+                nuevaVersion,
+                hash,
+                codigo,
+                token
+            );
+        }
+
+        revisionActualPorTipo[tipo] = nuevaVersion;
+        return true;
+    } catch (error) {
+        console.error('Error verificando revisión:', error);
+        setUploadCardStatus(inputId, 'error', 'No se pudo verificar la revisión');
+        await Swal.fire({
+            icon: 'error',
+            title: 'No se procesó el archivo',
+            text: `${error.message}. La comparación debe completarse antes de generar el template.`
+        });
+        return false;
+    }
+}
+
+function analizarReferenciaComparacion(archivo) {
+    try {
+        const notas = typeof archivo?.notas === 'string'
+            ? JSON.parse(archivo.notas)
+            : archivo?.notas;
+
+        if (notas?.tipo === 'referencia_comparacion') {
+            return {
+                tipo: notas.fuente,
+                hash: String(notas.hash || '').toLowerCase(),
+                nombreOriginal: notas.nombreOriginal || archivo.nombre_original,
+                resumen: notas.resumen || null,
+                fecha: archivo.fecha_actualizacion || archivo.fecha_subida || null
+            };
+        }
+
+        // La ultima revision del sistema anterior puede servir como referencia inicial.
+        if (notas?.tipo === 'revision_fuente') {
+            return {
+                tipo: notas.fuente,
+                hash: String(notas.hash || '').toLowerCase(),
+                nombreOriginal: notas.nombreOriginal || archivo.nombre_original,
+                resumen: null,
+                fecha: archivo.fecha_actualizacion || archivo.fecha_subida || null
+            };
+        }
+    } catch {
+        // Continua con el formato historico basado en el nombre.
+    }
+
+    const anterior = analizarNombreRevision(archivo?.nombre_original);
+    return anterior
+        ? {
+            tipo: anterior.tipo,
+            hash: anterior.hash,
+            nombreOriginal: anterior.nombreOriginal,
+            resumen: null,
+            fecha: archivo.fecha_actualizacion || archivo.fecha_subida || null
+        }
+        : null;
+}
+
+function resumirWorkbookParaComparacion(book) {
+    const hojas = book.SheetNames.map(nombre => {
+        const filas = XLSX.utils.sheet_to_json(
+            book.Sheets[nombre],
+            { header: 1, raw: false, defval: '' }
+        );
+        const columnas = filas.reduce(
+            (maximo, fila) => Math.max(maximo, fila.length),
+            0
+        );
+        const celdasConDatos = filas.reduce(
+            (total, fila) => total + fila.filter(valor => valor !== '').length,
+            0
+        );
+
+        return {
+            nombre,
+            filas: filas.length,
+            columnas,
+            celdasConDatos
+        };
+    });
+
+    return {
+        totalHojas: hojas.length,
+        totalFilas: hojas.reduce((total, hoja) => total + hoja.filas, 0),
+        totalCeldas: hojas.reduce((total, hoja) => total + hoja.celdasConDatos, 0),
+        hojas
+    };
+}
+
+async function analizarContenidoParaComparacion(file) {
+    const buffer = await file.arrayBuffer();
+
+    try {
+        const book = XLSX.read(buffer, {
+            type: 'array',
+            raw: false,
+            cellDates: false
+        });
+        const contenido = book.SheetNames.map(nombreHoja => {
+            const filas = XLSX.utils.sheet_to_json(
+                book.Sheets[nombreHoja],
+                { header: 1, raw: false, defval: '' }
+            );
+            return [nombreHoja, filas];
+        });
+
+        return {
+            hash: await hashTextoRevision(JSON.stringify(contenido)),
+            resumen: resumirWorkbookParaComparacion(book)
+        };
+    } catch {
+        const bytes = new Uint8Array(buffer);
+        let binario = '';
+
+        for (let index = 0; index < bytes.length; index += 8192) {
+            binario += String.fromCharCode(...bytes.subarray(index, index + 8192));
+        }
+
+        return {
+            hash: await hashTextoRevision(binario),
+            resumen: { totalHojas: 0, totalFilas: 0, totalCeldas: 0, hojas: [] }
+        };
+    }
+}
+
+async function cargarReferenciaComparacionServidor(tipo, restauranteId, token) {
+    const response = await fetch(`${window.API_URL}/archivos`, {
+        headers: { Authorization: `Bearer ${token}` }
+    });
+
+    if (!response.ok) {
+        throw new Error('No se pudo consultar el archivo anterior');
+    }
+
+    const data = await response.json();
+    const archivos = Array.isArray(data) ? data : (data.archivos || []);
+
+    return archivos
+        .filter(archivo => String(archivo.restaurante_id) === String(restauranteId))
+        .map(archivo => ({
+            archivo,
+            referencia: analizarReferenciaComparacion(archivo)
+        }))
+        .filter(item => item.referencia?.tipo === tipo)
+        .sort((a, b) => Number(b.archivo.id) - Number(a.archivo.id))[0]
+        ?.referencia || null;
+}
+
+async function guardarReferenciaComparacionServidor(file, tipo, analisis, codigo, token) {
+    const formData = new FormData();
+    formData.append('archivo', file, file.name);
+    formData.append('restaurante_id', codigo);
+    formData.append('procesar_datos', 'false');
+    formData.append('es_referencia_comparacion', 'true');
+    formData.append('tipo_fuente', tipo);
+    formData.append('hash_contenido', analisis.hash);
+    formData.append('resumen_contenido', JSON.stringify(analisis.resumen));
+
+    const response = await fetch(`${window.API_URL}/archivos/subir`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData
+    });
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+        throw new Error(data.message || 'No se pudo actualizar el archivo anterior');
+    }
+
+    return data.archivo?.id;
+}
+
+function cargarReferenciaComparacionLocal(codigo, tipo) {
+    try {
+        const referencias = JSON.parse(
+            localStorage.getItem('sourceFileComparisons') || '{}'
+        );
+        const actual = referencias[`${codigo}:${tipo}`];
+        if (actual) return actual;
+
+        const anteriores = JSON.parse(
+            localStorage.getItem('sourceFileRevisions') || '{}'
+        );
+        const historial = anteriores[`${codigo}:${tipo}`] || [];
+        return historial[historial.length - 1] || null;
+    } catch {
+        return null;
+    }
+}
+
+function guardarReferenciaComparacionLocal(codigo, tipo, referencia) {
+    const todas = JSON.parse(
+        localStorage.getItem('sourceFileComparisons') || '{}'
+    );
+    todas[`${codigo}:${tipo}`] = referencia;
+    localStorage.setItem('sourceFileComparisons', JSON.stringify(todas));
+}
+
+async function obtenerReferenciaComparacion(codigo, tipo, restauranteId, token, offline) {
+    const referenciaLocal = cargarReferenciaComparacionLocal(codigo, tipo);
+
+    if (offline || !token) return referenciaLocal;
+
+    try {
+        const referenciaServidor = await cargarReferenciaComparacionServidor(
+            tipo,
+            restauranteId,
+            token
+        );
+
+        if (referenciaServidor) {
+            guardarReferenciaComparacionLocal(codigo, tipo, referenciaServidor);
+            return referenciaServidor;
+        }
+
+        return referenciaLocal;
+    } catch (error) {
+        if (referenciaLocal) {
+            console.warn('Usando referencia local porque el servidor no respondió:', error);
+            return referenciaLocal;
+        }
+
+        throw error;
+    }
+}
+
+async function guardarReferenciaConfirmada(
+    file,
+    tipo,
+    analisis,
+    codigo,
+    token,
+    offline
+) {
+    guardarReferenciaComparacionLocal(codigo, tipo, {
+        hash: analisis.hash,
+        nombreOriginal: file.name,
+        resumen: analisis.resumen,
+        fecha: new Date().toISOString()
+    });
+
+    if (offline || !token) return true;
+
+    try {
+        await guardarReferenciaComparacionServidor(
+            file,
+            tipo,
+            analisis,
+            codigo,
+            token
+        );
+        return true;
+    } catch (error) {
+        console.error('No se pudo sincronizar la referencia con el servidor:', error);
+        return false;
+    }
+}
+
+function textoComparacionActual(tipo) {
+    return {
+        igual: ' · Sin cambios',
+        actualizado: ' · Archivo actualizado',
+        primero: ' · Primera carga'
+    }[comparacionActualPorTipo[tipo]?.estado] || '';
+}
+
+function detalleResumenComparacion(resumen) {
+    if (!resumen?.totalHojas) return 'Contenido verificado';
+    const hojas = resumen.totalHojas === 1 ? '1 hoja' : `${resumen.totalHojas} hojas`;
+    return `${hojas} · ${resumen.totalFilas.toLocaleString('es-MX')} filas`;
+}
+
+function setComparisonCardStatus(inputId, estado = '', titulo = '', detalle = '') {
+    const input = document.getElementById(inputId);
+    const card = input?.closest('.upload-card');
+    if (!card) return;
+
+    let panel = card.querySelector('.comparison-status');
+
+    if (!estado) {
+        panel?.remove();
+        delete card.dataset.comparison;
+        return;
+    }
+
+    if (!panel) {
+        panel = document.createElement('div');
+        panel.className = 'comparison-status';
+        panel.setAttribute('aria-live', 'polite');
+        card.appendChild(panel);
+    }
+
+    const iconos = {
+        comprobando: 'fa-spinner fa-spin',
+        igual: 'fa-circle-check',
+        actualizado: 'fa-arrows-rotate',
+        primero: 'fa-file-circle-plus',
+        aviso: 'fa-triangle-exclamation'
+    };
+
+    card.dataset.comparison = estado;
+    panel.replaceChildren();
+
+    const icono = document.createElement('i');
+    icono.className = `fa-solid ${iconos[estado] || 'fa-circle-info'}`;
+    const texto = document.createElement('span');
+    const encabezado = document.createElement('strong');
+    encabezado.textContent = titulo;
+    const descripcion = document.createElement('small');
+    descripcion.textContent = detalle;
+
+    texto.append(encabezado, descripcion);
+    panel.append(icono, texto);
+}
+
+async function validarArchivoAntesDeProcesar(file, tipo) {
+    const inputId = inputIdPorTipoRevision(tipo);
+    const select = document.getElementById('selectRestaurante');
+    const restauranteId = select?.value;
+    const codigo = select?.selectedOptions?.[0]?.dataset?.codigo;
+
+    if (!restauranteId || !codigo) {
+        await Swal.fire({
+            icon: 'warning',
+            title: 'Selecciona el restaurante',
+            text: 'Debes elegir el restaurante antes de cargar el archivo.'
+        });
+        return false;
+    }
+
+    setUploadCardStatus(inputId, 'checking', 'Leyendo archivo...');
+    setComparisonCardStatus(
+        inputId,
+        'comprobando',
+        'Comprobando cambios',
+        'Comparando con el último archivo cargado'
+    );
+
+    try {
+        const analisis = await analizarContenidoParaComparacion(file);
+        const token = localStorage.getItem('token');
+        const offline = localStorage.getItem('modoOffline') === 'true';
+        const referencia = offline || !token
+            ? cargarReferenciaComparacionLocal(codigo, tipo)
+            : await cargarReferenciaComparacionServidor(tipo, restauranteId, token);
+        const sinCambios = Boolean(referencia?.hash) &&
+            String(referencia.hash).slice(0, 16) === analisis.hash.slice(0, 16);
+
+        if (sinCambios) {
+            comparacionActualPorTipo[tipo] = {
+                estado: 'igual',
+                resumen: analisis.resumen
+            };
+            setComparisonCardStatus(
+                inputId,
+                'igual',
+                'Sin cambios',
+                `Coincide con el archivo anterior · ${detalleResumenComparacion(analisis.resumen)}`
+            );
+            return true;
+        }
+
+        setUploadCardStatus(inputId, 'checking', 'Actualizando referencia...');
+
+        if (offline || !token) {
+            guardarReferenciaComparacionLocal(codigo, tipo, {
+                hash: analisis.hash,
+                nombreOriginal: file.name,
+                resumen: analisis.resumen,
+                fecha: new Date().toISOString()
+            });
+        } else {
+            await guardarReferenciaComparacionServidor(
+                file,
+                tipo,
+                analisis,
+                codigo,
+                token
+            );
+        }
+
+        const estado = referencia ? 'actualizado' : 'primero';
+        comparacionActualPorTipo[tipo] = {
+            estado,
+            resumen: analisis.resumen
+        };
+        setComparisonCardStatus(
+            inputId,
+            estado,
+            referencia ? 'Archivo actualizado' : 'Primera carga',
+            referencia
+                ? `Se detectaron cambios · ${detalleResumenComparacion(analisis.resumen)}`
+                : `Se creó la referencia inicial · ${detalleResumenComparacion(analisis.resumen)}`
+        );
+        return true;
+    } catch (error) {
+        console.error('Error comparando archivo:', error);
+        setComparisonCardStatus(
+            inputId,
+            'aviso',
+            'Comparación no disponible',
+            'El archivo se procesará, pero no se pudo comparar con el anterior'
+        );
+        return true;
+    }
+}
+
+function escaparHtmlComparacion(valor = '') {
+    return String(valor)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+}
+
+function formatearFechaReferencia(fecha) {
+    if (!fecha) return 'Fecha no disponible';
+    const valor = new Date(fecha);
+    if (Number.isNaN(valor.getTime())) return 'Fecha no disponible';
+
+    return valor.toLocaleString('es-MX', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
+
+function tarjetaArchivoComparacion(titulo, nombre, resumen, fecha, vacia = false) {
+    if (vacia) {
+        return `
+            <article class="file-compare-card is-empty">
+                <span class="file-compare-eyebrow">${escaparHtmlComparacion(titulo)}</span>
+                <i class="fa-solid fa-folder-open"></i>
+                <strong>No hay archivo anterior</strong>
+                <small>Este archivo será la referencia inicial.</small>
+            </article>
+        `;
+    }
+
+    return `
+        <article class="file-compare-card">
+            <span class="file-compare-eyebrow">${escaparHtmlComparacion(titulo)}</span>
+            <div class="file-compare-name">
+                <i class="fa-solid fa-file-excel"></i>
+                <strong>${escaparHtmlComparacion(nombre || 'Archivo Excel')}</strong>
+            </div>
+            <dl>
+                <div><dt>Hojas</dt><dd>${Number(resumen?.totalHojas || 0).toLocaleString('es-MX')}</dd></div>
+                <div><dt>Filas</dt><dd>${Number(resumen?.totalFilas || 0).toLocaleString('es-MX')}</dd></div>
+                <div><dt>Celdas</dt><dd>${Number(resumen?.totalCeldas || 0).toLocaleString('es-MX')}</dd></div>
+            </dl>
+            <small>${escaparHtmlComparacion(fecha || '')}</small>
+        </article>
+    `;
+}
+
+function filaCambioComparacion(etiqueta, anterior, nuevo) {
+    const previo = Number(anterior || 0);
+    const actual = Number(nuevo || 0);
+    const diferencia = actual - previo;
+    const cambio = diferencia === 0
+        ? 'Sin cambio'
+        : `${diferencia > 0 ? '+' : ''}${diferencia.toLocaleString('es-MX')}`;
+    const clase = diferencia === 0 ? 'is-same' : 'is-changed';
+
+    return `
+        <div class="file-compare-change ${clase}">
+            <span>${escaparHtmlComparacion(etiqueta)}</span>
+            <strong>${previo.toLocaleString('es-MX')} → ${actual.toLocaleString('es-MX')}</strong>
+            <em>${cambio}</em>
+        </div>
+    `;
+}
+
+function crearVistaComparacionArchivo(referencia, file, analisis, estado) {
+    const configuracion = {
+        primero: {
+            etiqueta: 'PRIMERA CARGA',
+            titulo: 'No existe un archivo anterior',
+            texto: 'Revisa el archivo seleccionado y confirma que deseas usarlo.'
+        },
+        igual: {
+            etiqueta: 'SIN CAMBIOS',
+            titulo: 'El contenido es el mismo',
+            texto: 'No se guardará otra copia. Puedes continuar con este archivo.'
+        },
+        actualizado: {
+            etiqueta: 'ARCHIVO DIFERENTE',
+            titulo: 'Se encontraron cambios',
+            texto: 'Revisa las diferencias y confirma si deseas reemplazar la referencia anterior.'
+        }
+    }[estado];
+    const resumenAnterior = referencia?.resumen;
+    const puedeMostrarCambios = Boolean(referencia && resumenAnterior);
+
+    return `
+        <div class="file-comparison-view" data-result="${estado}">
+            <div class="file-comparison-result">
+                <span>${configuracion.etiqueta}</span>
+                <strong>${configuracion.titulo}</strong>
+                <p>${configuracion.texto}</p>
+            </div>
+
+            <div class="file-comparison-grid">
+                ${tarjetaArchivoComparacion(
+                    'Último archivo usado',
+                    referencia?.nombreOriginal,
+                    resumenAnterior,
+                    referencia ? formatearFechaReferencia(referencia.fecha) : '',
+                    !referencia
+                )}
+                <div class="file-comparison-arrow" aria-hidden="true">
+                    <i class="fa-solid fa-arrow-right"></i>
+                </div>
+                ${tarjetaArchivoComparacion(
+                    'Archivo seleccionado',
+                    file.name,
+                    analisis.resumen,
+                    'Seleccionado ahora'
+                )}
+            </div>
+
+            ${puedeMostrarCambios ? `
+                <div class="file-comparison-changes">
+                    <h4>Resumen de diferencias</h4>
+                    ${filaCambioComparacion(
+                        'Hojas',
+                        resumenAnterior.totalHojas,
+                        analisis.resumen.totalHojas
+                    )}
+                    ${filaCambioComparacion(
+                        'Filas',
+                        resumenAnterior.totalFilas,
+                        analisis.resumen.totalFilas
+                    )}
+                    ${filaCambioComparacion(
+                        'Celdas con datos',
+                        resumenAnterior.totalCeldas,
+                        analisis.resumen.totalCeldas
+                    )}
+                </div>
+            ` : referencia ? `
+                <div class="file-comparison-legacy-note">
+                    <i class="fa-solid fa-circle-info"></i>
+                    <span>El archivo anterior pertenece al sistema previo. Se comparó todo su contenido, pero no tiene un resumen de filas y hojas.</span>
+                </div>
+            ` : ''}
+        </div>
+    `;
+}
+
+function abrirVentanaComparacion(
+    html,
+    textoConfirmar,
+    titulo = 'Comparación de conciliaciones',
+    subtitulo = 'Revisa las diferencias antes de continuar.'
+) {
+    const dialog = document.getElementById('fileComparisonDialog');
+    const content = document.getElementById('fileComparisonContent');
+    const confirmButton = document.getElementById('fileComparisonConfirm');
+    const cancelButton = document.getElementById('fileComparisonCancel');
+    const closeButton = document.getElementById('fileComparisonClose');
+    const titleElement = document.getElementById('fileComparisonTitle');
+    const subtitleElement = dialog?.querySelector('.file-comparison-window-header p');
+
+    if (!dialog || !content || !confirmButton || !cancelButton || !closeButton) {
+        return Promise.resolve(false);
+    }
+
+    content.innerHTML = html;
+    confirmButton.textContent = textoConfirmar;
+    if (titleElement) titleElement.textContent = titulo;
+    if (subtitleElement) subtitleElement.textContent = subtitulo;
+
+    return new Promise(resolve => {
+        let resuelta = false;
+
+        const finalizar = confirmada => {
+            if (resuelta) return;
+            resuelta = true;
+            confirmButton.removeEventListener('click', confirmar);
+            cancelButton.removeEventListener('click', cancelar);
+            closeButton.removeEventListener('click', cancelar);
+            dialog.removeEventListener('cancel', cancelarConEscape);
+            if (dialog.open) dialog.close();
+            resolve(confirmada);
+        };
+        const confirmar = () => finalizar(true);
+        const cancelar = () => finalizar(false);
+        const cancelarConEscape = event => {
+            event.preventDefault();
+            finalizar(false);
+        };
+
+        confirmButton.addEventListener('click', confirmar);
+        cancelButton.addEventListener('click', cancelar);
+        closeButton.addEventListener('click', cancelar);
+        dialog.addEventListener('cancel', cancelarConEscape);
+        dialog.showModal();
+    });
+}
+
+async function revisarArchivoConVistaPrevia(file, tipo) {
+    const inputId = inputIdPorTipoRevision(tipo);
+    const select = document.getElementById('selectRestaurante');
+    const restauranteId = select?.value;
+    const codigo = select?.selectedOptions?.[0]?.dataset?.codigo;
+
+    if (!restauranteId || !codigo) {
+        await Swal.fire({
+            icon: 'warning',
+            title: 'Selecciona el restaurante',
+            text: 'Debes elegir el restaurante antes de cargar el archivo.'
+        });
+        return false;
+    }
+
+    setUploadCardStatus(inputId, 'checking', 'Preparando comparación...');
+    setComparisonCardStatus(
+        inputId,
+        'comprobando',
+        'Revisando archivo',
+        'Leyendo hojas, filas y contenido'
+    );
+
+    try {
+        const analisis = await analizarContenidoParaComparacion(file);
+        const token = localStorage.getItem('token');
+        const offline = localStorage.getItem('modoOffline') === 'true';
+        const referencia = offline || !token
+            ? cargarReferenciaComparacionLocal(codigo, tipo)
+            : await cargarReferenciaComparacionServidor(tipo, restauranteId, token);
+        const sinCambios = Boolean(referencia?.hash) &&
+            String(referencia.hash).slice(0, 16) === analisis.hash.slice(0, 16);
+        const estado = !referencia
+            ? 'primero'
+            : sinCambios
+                ? 'igual'
+                : 'actualizado';
+
+        const decision = await abrirVentanaComparacion(
+            crearVistaComparacionArchivo(referencia, file, analisis, estado),
+            estado === 'actualizado'
+                ? 'Usar archivo nuevo'
+                : 'Usar este archivo'
+        );
+
+        if (!decision) {
+            delete comparacionActualPorTipo[tipo];
+            setUploadCardStatus(inputId);
+            return false;
+        }
+
+        if (estado !== 'igual') {
+            setUploadCardStatus(inputId, 'checking', 'Guardando archivo de referencia...');
+
+            if (offline || !token) {
+                guardarReferenciaComparacionLocal(codigo, tipo, {
+                    hash: analisis.hash,
+                    nombreOriginal: file.name,
+                    resumen: analisis.resumen,
+                    fecha: new Date().toISOString()
+                });
+            } else {
+                await guardarReferenciaComparacionServidor(
+                    file,
+                    tipo,
+                    analisis,
+                    codigo,
+                    token
+                );
+            }
+        }
+
+        comparacionActualPorTipo[tipo] = {
+            estado,
+            resumen: analisis.resumen
+        };
+        setComparisonCardStatus(
+            inputId,
+            estado,
+            estado === 'igual'
+                ? 'Archivo verificado'
+                : estado === 'actualizado'
+                    ? 'Archivo nuevo aprobado'
+                    : 'Archivo inicial aprobado',
+            estado === 'igual'
+                ? 'Es igual al último archivo usado'
+                : `${detalleResumenComparacion(analisis.resumen)} · Listo para procesar`
+        );
+        return true;
+    } catch (error) {
+        console.error('Error comparando archivo:', error);
+        const decision = await Swal.fire({
+            icon: 'warning',
+            title: 'No se pudo comparar',
+            text: 'Puedes elegir otro archivo o continuar sin compararlo.',
+            showCancelButton: true,
+            confirmButtonText: 'Usar sin comparar',
+            cancelButtonText: 'Elegir otro archivo'
+        });
+
+        if (!decision.isConfirmed) {
+            setUploadCardStatus(inputId);
+            return false;
+        }
+
+        setComparisonCardStatus(
+            inputId,
+            'aviso',
+            'Usado sin comparación',
+            'No fue posible consultar el archivo anterior'
+        );
+        return true;
+    }
+}
 
 function resetSelectFecha(selectId, texto = 'Todas las fechas') {
     const select = document.getElementById(selectId);
@@ -61,6 +1052,10 @@ function setUploadCardStatus(inputId, type = '', message = '') {
     card.dataset.status = type;
     status.textContent = message;
 
+    if (!type) {
+        setComparisonCardStatus(inputId);
+    }
+
     if (removeButton) {
         removeButton.hidden = !type;
     }
@@ -83,6 +1078,8 @@ function limpiarResultadosCargados() {
 
 function eliminarArchivoIndividual(tipo) {
     if (tipo === 'sales') {
+        delete revisionActualPorTipo.sales;
+        delete comparacionActualPorTipo.sales;
         salesFile = null;
         salesWorkbook = null;
         salesRows = [];
@@ -105,6 +1102,8 @@ function eliminarArchivoIndividual(tipo) {
     }
 
     if (tipo === 'salesDetail') {
+        delete revisionActualPorTipo.salesDetail;
+        delete comparacionActualPorTipo.salesDetail;
         salesDetailFile = null;
         salesDetailWorkbook = null;
         salesDetailRows = [];
@@ -124,6 +1123,8 @@ function eliminarArchivoIndividual(tipo) {
     }
 
     if (tipo === 'ebt') {
+        delete revisionActualPorTipo.ebt;
+        delete comparacionActualPorTipo.ebt;
         ebtFile = null;
         ebtWorkbook = null;
         ebtPorTienda = {};
@@ -151,6 +1152,10 @@ function eliminarArchivoIndividual(tipo) {
 }
 
 function limpiarArchivosExtraTacoBell() {
+    delete revisionActualPorTipo.salesDetail;
+    delete revisionActualPorTipo.ebt;
+    delete comparacionActualPorTipo.salesDetail;
+    delete comparacionActualPorTipo.ebt;
     salesDetailFile = null;
     salesDetailWorkbook = null;
     salesDetailRows = [];
@@ -488,7 +1493,7 @@ function initEventListeners() {
                     setUploadCardStatus(
                         'salesFile',
                         'loaded',
-                        `${file.name} cargado (${salesRows.length} filas)`
+                        `${file.name} cargado (${salesRows.length} filas)${textoComparacionActual('sales')}`
                     );
 
                     generarConciliacionDesdeTemplate();
@@ -612,7 +1617,7 @@ function initEventListeners() {
                     setUploadCardStatus(
                         'salesDetailFile',
                         'loaded',
-                        `${file.name} cargado (${salesDetailRows.length} filas, ${tiendasNuevas} tiendas nuevas)`
+                        `${file.name} cargado (${salesDetailRows.length} filas, ${tiendasNuevas} tiendas nuevas)${textoComparacionActual('salesDetail')}`
                     );
 
                     if (
@@ -714,7 +1719,7 @@ function initEventListeners() {
                 setUploadCardStatus(
                     'ebtFile',
                     'loaded',
-                    `${file.name} cargado (${rows.length} filas)`
+                    `${file.name} cargado (${rows.length} filas)${textoComparacionActual('ebt')}`
                 );
 
                 procesarEBT();
@@ -1134,6 +2139,15 @@ async function onRestauranteChange() {
         select.selectedOptions[0]
             ?.dataset?.codigo;
 
+    if (
+        codigoRestauranteCargado &&
+        codigo !== codigoRestauranteCargado
+    ) {
+        removerArchivo();
+    }
+
+    codigoRestauranteCargado = codigo || '';
+
     currentRestaurantConfig =
         window.RestaurantConfigs?.[
         codigo
@@ -1355,6 +2369,10 @@ function combineTemplateWithUserExcel(
 }
 
 function removerArchivo() {
+    Object.keys(revisionActualPorTipo)
+        .forEach(tipo => delete revisionActualPorTipo[tipo]);
+    Object.keys(comparacionActualPorTipo)
+        .forEach(tipo => delete comparacionActualPorTipo[tipo]);
     archivoActual = null;
     salesFile = null;
     ebtFile = null;
@@ -1364,6 +2382,12 @@ function removerArchivo() {
     ebtWorkbook = null;
     salesDetailWorkbook = null;
     datosExtraidos = [];
+    fechaConciliacionActual = null;
+    comparacionConciliacionActual = {
+        clave: '',
+        resultado: null,
+        aprobada: true
+    };
     salesRows = [];
     salesDetailRows = [];
     ebtPorTienda = {};
@@ -2310,6 +3334,8 @@ function renderTablaSucursales() {
 
                 if (tieneDiferencia) {
                     td.title = 'Diferencia O/S detectada';
+                    tr.classList.add('os-row-difference');
+                    tr.title = 'Esta tienda tiene una diferencia en O/S';
                 }
             }
 
@@ -2668,7 +3694,250 @@ function construirNombreArchivo(tipoArchivo, extension) {
     return `${restaurante}_${fechaGuardado}_${tipo}.${extension}`;
 }
 
-function saveConciliacion() {
+function obtenerFechaConciliacionBD() {
+    const valor =
+        fechaConciliacionActual ||
+        datosExtraidos[0]?.date ||
+        document.getElementById('fechaConciliacion')?.value ||
+        '';
+    const texto = String(valor).trim();
+
+    if (/^\d{4}-\d{2}-\d{2}/.test(texto)) return texto.slice(0, 10);
+
+    const fechaUsa = texto.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+    if (fechaUsa) {
+        return `${fechaUsa[3]}-${fechaUsa[1].padStart(2, '0')}-${fechaUsa[2].padStart(2, '0')}`;
+    }
+
+    const fecha = new Date(valor);
+    if (Number.isNaN(fecha.getTime())) return '';
+
+    return `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, '0')}-${String(fecha.getDate()).padStart(2, '0')}`;
+}
+
+function etiquetaCampoConciliacion(campo) {
+    const columnas = [
+        ...(currentRestaurantConfig?.conciliationColumns || []),
+        ...(currentRestaurantConfig?.tableColumns || [])
+    ];
+    const configurada = columnas.find(columna => columna.key === campo)?.label;
+    if (configurada?.trim()) return configurada;
+
+    return String(campo)
+        .replace(/([a-z])([A-Z])/g, '$1 $2')
+        .replaceAll('_', ' ')
+        .replace(/^./, letra => letra.toUpperCase());
+}
+
+function crearVistaDiferenciasConciliacion(resultado) {
+    const codigo = obtenerCodigoRestauranteActual();
+    const nombreRestaurante = {
+        'taco-bell': 'Taco Bell',
+        popeyes: 'Popeyes',
+        'burger-king': 'Burger King'
+    }[codigo] || codigo;
+    const filas = resultado.diferencias.flatMap(diferencia => {
+        if (diferencia.tipo === 'tienda_nueva') {
+            return [{
+                tienda: diferencia.tienda,
+                concepto: 'Tienda nueva en el archivo',
+                anterior: '—',
+                nuevo: 'Incluida',
+                diferencia: 'Nueva'
+            }];
+        }
+
+        if (diferencia.tipo === 'tienda_eliminada') {
+            return [{
+                tienda: diferencia.tienda,
+                concepto: 'Tienda no incluida en el archivo nuevo',
+                anterior: 'Incluida',
+                nuevo: '—',
+                diferencia: 'Retirada'
+            }];
+        }
+
+        return diferencia.cambios.map(cambio => ({
+            tienda: diferencia.tienda,
+            concepto: etiquetaCampoConciliacion(cambio.campo),
+            anterior: Number(cambio.anterior).toLocaleString('en-US', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }),
+            nuevo: Number(cambio.nuevo).toLocaleString('en-US', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }),
+            diferencia: Number(cambio.diferencia).toLocaleString('en-US', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+                signDisplay: 'always'
+            })
+        }));
+    });
+    const visibles = filas.slice(0, 250);
+
+    return `
+        <div class="file-comparison-view reconciliation-comparison" data-result="actualizado">
+            <div class="file-comparison-result">
+                <span>DIFERENCIAS</span>
+                <strong>${escaparHtmlComparacion(nombreRestaurante)} · ${escaparHtmlComparacion(obtenerFechaConciliacionBD())}</strong>
+                <p>Ya existe una conciliación para esta fecha y algunos montos cambiaron.</p>
+            </div>
+
+            <div class="reconciliation-comparison-summary">
+                <div><strong>${resultado.tiendasComparadas}</strong><span>Tiendas comparadas</span></div>
+                <div><strong>${resultado.tiendasConDiferencias}</strong><span>Tiendas con cambios</span></div>
+                <div><strong>${filas.length}</strong><span>Montos diferentes</span></div>
+            </div>
+
+            <div class="reconciliation-diff-wrapper">
+                <table class="reconciliation-diff-table">
+                    <thead>
+                        <tr>
+                            <th>Tienda</th>
+                            <th>Concepto</th>
+                            <th>Anterior</th>
+                            <th>Nuevo</th>
+                            <th>Diferencia</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${visibles.map(fila => `
+                            <tr>
+                                <td>${escaparHtmlComparacion(fila.tienda)}</td>
+                                <td>${escaparHtmlComparacion(fila.concepto)}</td>
+                                <td>${escaparHtmlComparacion(fila.anterior)}</td>
+                                <td>${escaparHtmlComparacion(fila.nuevo)}</td>
+                                <td>${escaparHtmlComparacion(fila.diferencia)}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+
+            ${filas.length > visibles.length
+                ? `<p class="reconciliation-diff-more">Se muestran 250 de ${filas.length} diferencias.</p>`
+                : ''}
+        </div>
+    `;
+}
+
+async function compararConciliacionConBD() {
+    const token = localStorage.getItem('token');
+    const offline = localStorage.getItem('modoOffline') === 'true';
+    const restauranteId = document.getElementById('selectRestaurante')?.value;
+    const fecha = obtenerFechaConciliacionBD();
+
+    if (offline) return true;
+    if (!token || !restauranteId || !fecha || !datosExtraidos.length) return false;
+
+    try {
+        const huella = await hashTextoRevision(JSON.stringify(datosExtraidos));
+        const clave = `${restauranteId}:${fecha}:${huella.slice(0, 16)}`;
+
+        if (
+            comparacionConciliacionActual.clave === clave &&
+            comparacionConciliacionActual.resultado
+        ) {
+            if (!comparacionConciliacionActual.resultado.tiendasConDiferencias) {
+                return true;
+            }
+            if (comparacionConciliacionActual.aprobada) return true;
+        } else {
+            const response = await fetch(
+                `${window.API_URL}/conciliaciones/comparar-existente`,
+                {
+                    method: 'POST',
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        restaurante_id: restauranteId,
+                        fecha_conciliacion: fecha,
+                        datos_extraidos: datosExtraidos
+                    })
+                }
+            );
+            const resultado = await response.json().catch(() => ({}));
+
+            if (!response.ok) {
+                throw new Error(resultado.message || 'No se pudo comparar la conciliación');
+            }
+
+            comparacionConciliacionActual = {
+                clave,
+                resultado,
+                aprobada: !resultado.tiendasConDiferencias
+            };
+
+            if (!resultado.existe || !resultado.tiendasConDiferencias) {
+                return true;
+            }
+        }
+
+        const resultado = comparacionConciliacionActual.resultado;
+        const decision = await abrirVentanaComparacion(
+            crearVistaDiferenciasConciliacion(resultado),
+            'Continuar con datos nuevos',
+            'Cambios contra la conciliación guardada',
+            'Comparación por tienda y fecha con las reglas de esta marca.'
+        );
+        comparacionConciliacionActual.aprobada = decision;
+        return decision;
+    } catch (error) {
+        console.error('Error comparando conciliación:', error);
+        await Swal.fire({
+            icon: 'error',
+            title: 'No se pudo validar la conciliación',
+            text: `${error.message}. No se guardó ningún cambio.`
+        });
+        return false;
+    }
+}
+
+async function registrarConciliacionEnBD() {
+    const token = localStorage.getItem('token');
+    const restauranteId = document.getElementById('selectRestaurante')?.value;
+    const templateId = document.getElementById('selectTemplate')?.value;
+    const fecha = obtenerFechaConciliacionBD();
+
+    if (!token || !restauranteId || !templateId || !fecha) {
+        throw new Error('Faltan restaurante, template o fecha para registrar la conciliación');
+    }
+
+    const response = await fetch(`${window.API_URL}/conciliaciones`, {
+        method: 'POST',
+        headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            restaurante_id: restauranteId,
+            template_id: templateId,
+            fecha_conciliacion: fecha,
+            periodo_inicio: fecha,
+            periodo_fin: fecha,
+            datos_extraidos: datosExtraidos,
+            notas: 'Generada desde el módulo de conciliación'
+        })
+    });
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+        throw new Error(data.message || 'No se pudo registrar la conciliación');
+    }
+
+    comparacionConciliacionActual = {
+        clave: '',
+        resultado: null,
+        aprobada: true
+    };
+    return data;
+}
+
+async function saveConciliacion() {
 
     if (!workbook) {
         Swal.fire({
@@ -2679,12 +3948,24 @@ function saveConciliacion() {
         return;
     }
 
+    if (!datosExtraidos.length) {
+        await Swal.fire({
+            icon: 'warning',
+            title: 'Sin conciliación',
+            text: 'Primero genera la conciliación'
+        });
+        return;
+    }
+
+    const comparacionAprobada = await compararConciliacionConBD();
+    if (!comparacionAprobada) return;
+
     Swal.fire({
         title: 'Guardar conciliación',
         text: '¿Dónde deseas guardar el archivo?',
         icon: 'question',
         showCancelButton: true,
-        showDenyButton: !localStorage.getItem('modoOffline'),
+        showDenyButton: localStorage.getItem('modoOffline') !== 'true',
         confirmButtonText:
             '<i class="fa-solid fa-download"></i> Descargar',
         denyButtonText:
@@ -2692,9 +3973,21 @@ function saveConciliacion() {
         cancelButtonText: 'Cancelar',
         confirmButtonColor: '#2563eb',
         denyButtonColor: '#10b981'
-    }).then((result) => {
+    }).then(async (result) => {
 
         if (result.isConfirmed) {
+
+            let registro = null;
+            let errorRegistro = null;
+
+            if (localStorage.getItem('modoOffline') !== 'true') {
+                try {
+                    registro = await registrarConciliacionEnBD();
+                } catch (error) {
+                    errorRegistro = error;
+                    console.error('No se registró la conciliación:', error);
+                }
+            }
 
             const workbookFinal =
                 generarWorkbookConConciliacion();
@@ -2704,16 +3997,23 @@ function saveConciliacion() {
                 construirNombreArchivo('Conciliacion', 'xlsx')
             );
 
-            Swal.fire({
-                icon: 'success',
-                title: 'Archivo descargado',
-                timer: 1500,
-                showConfirmButton: false
-            });
+            Swal.fire(errorRegistro
+                ? {
+                    icon: 'warning',
+                    title: 'Archivo descargado',
+                    text: `${errorRegistro.message}. La comparación quedará pendiente hasta registrarlo en el servidor.`
+                }
+                : {
+                    icon: 'success',
+                    title: 'Archivo descargado y conciliación registrada',
+                    text: registro?.id ? `Registro contable ID: ${registro.id}` : '',
+                    timer: 1800,
+                    showConfirmButton: false
+                });
 
         } else if (result.isDenied) {
 
-            guardarConciliacionServidor();
+            await guardarConciliacionServidor();
 
         }
     });
@@ -2766,6 +4066,9 @@ async function guardarConciliacionServidor() {
     }
 
     try {
+
+        const registroConciliacion =
+            await registrarConciliacionEnBD();
 
 
         const workbookFinal =
@@ -2829,7 +4132,8 @@ async function guardarConciliacionServidor() {
             html: `
                 <p>La conciliación se guardó correctamente.</p>
                 <p style="margin-top:10px;">
-                    ID: ${data.archivo.id}
+                    Archivo ID: ${data.archivo.id}<br>
+                    Registro contable ID: ${registroConciliacion.id}
                 </p>
             `
         });
@@ -2981,29 +4285,31 @@ function generarWorkbookConConciliacion() {
         }
     );
 
-    anexarHojasFuente(
-        nuevoWorkbook,
-        salesDetailWorkbook,
-        {
-            omitirGeneradas: true,
-            renombrar: (sheetName, index) =>
-                esTacoBell && index === 0
-                    ? 'Sales Lone Star'
-                    : sheetName
-        }
-    );
+    if (esTacoBell) {
+        anexarHojasFuente(
+            nuevoWorkbook,
+            salesDetailWorkbook,
+            {
+                omitirGeneradas: true,
+                renombrar: (sheetName, index) =>
+                    index === 0
+                        ? 'Sales Lone Star'
+                        : sheetName
+            }
+        );
 
-    anexarHojasFuente(
-        nuevoWorkbook,
-        ebtWorkbook,
-        {
-            omitirGeneradas: true,
-            renombrar: (sheetName, index) =>
-                esTacoBell && index === 0
-                    ? 'EBT AMOUNTS'
-                    : sheetName
-        }
-    );
+        anexarHojasFuente(
+            nuevoWorkbook,
+            ebtWorkbook,
+            {
+                omitirGeneradas: true,
+                renombrar: (sheetName, index) =>
+                    index === 0
+                        ? 'EBT AMOUNTS'
+                        : sheetName
+            }
+        );
+    }
 
     // Crear datos de conciliación usando configuración dinámica
     const columnas =
@@ -3033,118 +4339,32 @@ function generarWorkbookConConciliacion() {
         'Conciliation'
     );
 
-    // ======================================
-    // TAX REVIEW
-    // ======================================
-
-    const taxReviewExportData =
-        codigo === 'popeyes'
-            ? popeyesTaxReviewData
-            : taxReviewData;
-
-    if (taxReviewExportData?.length) {
-
-        const wsTaxReview =
-            XLSX.utils.json_to_sheet(
-                taxReviewExportData
-            );
+    const agregarHojaDatos = (data, nombre) => {
+        if (!Array.isArray(data) || !data.length) return;
 
         XLSX.utils.book_append_sheet(
             nuevoWorkbook,
-            wsTaxReview,
-            'Tax Review'
+            XLSX.utils.json_to_sheet(data),
+            obtenerNombreHojaUnico(nuevoWorkbook, nombre)
         );
+    };
 
-    }
-
-    // ======================================
-    // DAILY SALES RED
-    // ======================================
-
-    const dailySalesRedExportData =
-        codigo === 'popeyes'
-            ? popeyesDailySalesRedData
-            : dailySalesREDData;
-
-    if (dailySalesRedExportData?.length) {
-
-        const wsDailySalesRED =
-            XLSX.utils.json_to_sheet(
-                dailySalesRedExportData
-            );
-
-        XLSX.utils.book_append_sheet(
-            nuevoWorkbook,
-            wsDailySalesRED,
-            codigo === 'popeyes'
-                ? 'Daily Sales Popeyes Red'
-                : 'Daily Sales RED'
-        );
-
-    }
-
-    // ======================================
-    // STATISTICAL DELIVERY
-    // ======================================
-
-    if (statisticalDeliveryData?.length) {
-
-        const wsStatisticalDelivery =
-            XLSX.utils.json_to_sheet(
-                statisticalDeliveryData
-            );
-
-        XLSX.utils.book_append_sheet(
-            nuevoWorkbook,
-            wsStatisticalDelivery,
-            'Statistical Delivery'
-        );
-
-    }
-
-    // ======================================
-    // DAILY SALES 03-14
-    // ======================================
-
-    const dailySales0314ExportData =
-        codigo === 'popeyes'
-            ? popeyesDailySales0404Data
-            : dailySales0314Data;
-
-    if (dailySales0314ExportData?.length) {
-
-        const ws0314 =
-            XLSX.utils.json_to_sheet(
-                dailySales0314ExportData
-            );
-
-        XLSX.utils.book_append_sheet(
-            nuevoWorkbook,
-            ws0314,
-            codigo === 'popeyes'
-                ? 'Daily Sales Popeyes 04-04-2026'
-                : 'Daily Sales 03-14'
-        );
-
-    }
-
-    // ======================================
-    // DAILY SALES 03-10
-    // ======================================
-
-    if (dailySales0310Data?.length) {
-
-        const ws0310 =
-            XLSX.utils.json_to_sheet(
-                dailySales0310Data
-            );
-
-        XLSX.utils.book_append_sheet(
-            nuevoWorkbook,
-            ws0310,
-            'Daily Sales 03-10'
-        );
-
+    // Cada restaurante exporta exclusivamente sus propias hojas generadas.
+    if (codigo === 'taco-bell') {
+        agregarHojaDatos(taxReviewData, 'Tax Review');
+        agregarHojaDatos(prepararDatosIntacct(dailySalesREDData), 'Daily Sales RED');
+        agregarHojaDatos(prepararDatosIntacct(statisticalDeliveryData), 'Statistical Delivery');
+        agregarHojaDatos(prepararDatosIntacct(dailySales0314Data), 'Daily Sales 03-14');
+        agregarHojaDatos(prepararDatosIntacct(dailySales0310Data), 'Daily Sales 03-10');
+    } else if (codigo === 'popeyes') {
+        agregarHojaDatos(popeyesTaxReviewData, 'Tax Review');
+        agregarHojaDatos(prepararDatosIntacct(popeyesDailySalesRedData), 'Daily Sales Popeyes Red');
+        agregarHojaDatos(prepararDatosIntacct(popeyesDailySales0404Data), 'Daily Sales Popeyes 04-04-2026');
+    } else if (codigo === 'burger-king') {
+        agregarHojaDatos(burgerKingSummaryData, 'Summary');
+        agregarHojaDatos(burgerKingTaxAnalysisData, 'Tax Analysis');
+        agregarHojaDatos(burgerKingDiscrepanciesData, 'Discrepancies');
+        agregarHojaDatos(prepararDatosIntacct(burgerKingTemplateCsvData), 'Template to CSV');
     }
 
     return nuevoWorkbook;
@@ -3266,6 +4486,118 @@ function renderActiveTab() {
     }
 }
 
+const COLUMNAS_INTACCT = [
+    'LINE_NO',
+    'JOURNAL',
+    'DATE',
+    'DESCRIPTION',
+    'MEMO',
+    'DEPT_ID',
+    'ACCT_NO',
+    'LOCATION_ID',
+    'DEBIT',
+    'CREDIT'
+];
+
+function normalizarFechaIntacct(valor) {
+    if (valor === null || valor === undefined || valor === '') return '';
+
+    if (typeof valor === 'number' && Number.isFinite(valor)) {
+        const fecha = new Date(Date.UTC(1899, 11, 30) + valor * 86400000);
+        return `${String(fecha.getUTCMonth() + 1).padStart(2, '0')}/${String(fecha.getUTCDate()).padStart(2, '0')}/${fecha.getUTCFullYear()}`;
+    }
+
+    const texto = String(valor).trim();
+    const fechaUsa = texto.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+    if (fechaUsa) {
+        return `${fechaUsa[1].padStart(2, '0')}/${fechaUsa[2].padStart(2, '0')}/${fechaUsa[3]}`;
+    }
+
+    const fechaIso = texto.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+    if (fechaIso) {
+        return `${fechaIso[2].padStart(2, '0')}/${fechaIso[3].padStart(2, '0')}/${fechaIso[1]}`;
+    }
+
+    const fecha = new Date(valor);
+    if (Number.isNaN(fecha.getTime())) return '';
+
+    return `${String(fecha.getMonth() + 1).padStart(2, '0')}/${String(fecha.getDate()).padStart(2, '0')}/${fecha.getFullYear()}`;
+}
+
+function obtenerPrimerValor(row, claves, predeterminado = '') {
+    for (const clave of claves) {
+        if (row?.[clave] !== undefined && row?.[clave] !== null && row?.[clave] !== '') {
+            return row[clave];
+        }
+    }
+
+    return predeterminado;
+}
+
+function descripcionIntacctPredeterminada(row) {
+    const memo = String(obtenerPrimerValor(row, ['memo', 'MEMO'], ''));
+    if (/statistical delivery/i.test(memo)) return 'Statistical Delivery Sales';
+
+    return obtenerCodigoRestauranteActual() === 'taco-bell'
+        ? 'POS Data Upload Sabretooth'
+        : 'POS Data Upload DC Central';
+}
+
+function prepararDatosIntacct(data) {
+    if (!Array.isArray(data)) return [];
+
+    const fechaPredeterminada = normalizarFechaIntacct(
+        fechaConciliacionActual || obtenerFechaConciliacionBD()
+    );
+
+    return data
+        .map(row => {
+            const debit = Number(obtenerPrimerValor(row, ['debit', 'DEBIT'], 0)) || 0;
+            const credit = Number(obtenerPrimerValor(row, ['credit', 'CREDIT'], 0)) || 0;
+
+            return {
+                row,
+                debit,
+                credit
+            };
+        })
+        .filter(item => Math.abs(item.debit) >= 0.005 || Math.abs(item.credit) >= 0.005)
+        .map((item, index) => {
+            const { row, debit, credit } = item;
+
+            return {
+                LINE_NO: index + 1,
+                JOURNAL: String(obtenerPrimerValor(row, ['journal', 'JOURNAL'], 'SJ')).trim() || 'SJ',
+                DATE: normalizarFechaIntacct(
+                    obtenerPrimerValor(row, ['date', 'DATE'], fechaPredeterminada)
+                ) || fechaPredeterminada,
+                DESCRIPTION: String(
+                    obtenerPrimerValor(
+                        row,
+                        ['description', 'DESCRIPTION'],
+                        descripcionIntacctPredeterminada(row)
+                    )
+                ).trim(),
+                MEMO: String(obtenerPrimerValor(row, ['memo', 'MEMO'], '')).trim(),
+                DEPT_ID: String(
+                    obtenerPrimerValor(
+                        row,
+                        ['deptId', 'departmentId', 'description2', 'DEPT_ID'],
+                        ''
+                    )
+                ).trim(),
+                ACCT_NO: obtenerPrimerValor(row, ['acctNo', 'account', 'ACCT_NO'], ''),
+                LOCATION_ID: obtenerPrimerValor(
+                    row,
+                    ['locationId', 'store', 'LOCATION_ID'],
+                    ''
+                ),
+                DEBIT: Math.abs(debit) >= 0.005 ? debit : '',
+                CREDIT: Math.abs(credit) >= 0.005 ? credit : ''
+            };
+        });
+}
+
 function normalizarNombreColumnaCSV(columna) {
     return String(columna || '')
         .toLowerCase()
@@ -3376,6 +4708,21 @@ function descargarCSV(data, nombreArchivo) {
 
 }
 
+function descargarCSVIntacct(data, nombreArchivo) {
+    const datosIntacct = prepararDatosIntacct(data);
+
+    if (datosIntacct.length && Object.keys(datosIntacct[0]).join('|') !== COLUMNAS_INTACCT.join('|')) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Estructura Intacct inválida',
+            text: 'No se descargó el archivo porque sus columnas no coinciden con el template.'
+        });
+        return;
+    }
+
+    descargarCSV(datosIntacct, nombreArchivo);
+}
+
 function exportarTabActualCSV() {
 
     const codigo =
@@ -3420,7 +4767,7 @@ function exportarTabActualCSV() {
 
             case 'templateCsv':
             case 'template':
-                descargarCSV(
+                descargarCSVIntacct(
                     burgerKingTemplateCsvData,
                     'BurgerKingTemplateToCSV'
                 );
@@ -3455,14 +4802,14 @@ function exportarTabActualCSV() {
                 break;
 
             case 'dailySalesRed':
-                descargarCSV(
+                descargarCSVIntacct(
                     popeyesDailySalesRedData,
                     'DailySalesPopeyesRed'
                 );
                 break;
 
             case 'dailySales0404':
-                descargarCSV(
+                descargarCSVIntacct(
                     popeyesDailySales0404Data,
                     'DailySalesPopeyes0404'
                 );
@@ -3532,28 +4879,28 @@ function exportarTabActualCSV() {
             break;
 
         case 'dailySalesRed':
-            descargarCSV(
+            descargarCSVIntacct(
                 dailySalesREDData,
                 'DailySalesRED'
             );
             break;
 
         case 'statisticalDelivery':
-            descargarCSV(
+            descargarCSVIntacct(
                 statisticalDeliveryData,
                 'StatisticalDelivery'
             );
             break;
 
         case 'dailySales0314':
-            descargarCSV(
+            descargarCSVIntacct(
                 dailySales0314Data,
                 'DailySales0314'
             );
             break;
 
         case 'dailySales0310':
-            descargarCSV(
+            descargarCSVIntacct(
                 dailySales0310Data,
                 'DailySales0310'
             );

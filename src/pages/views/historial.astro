@@ -57,10 +57,13 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
         </div>
 
         <!-- Filtros -->
-        <div class="filters-bar">
-            <div class="filter-group" style="flex: 1; min-width: 200px;">
-                <i class="fa-solid fa-search" style="color: var(--gray-400);"></i>
-                <input type="text" id="searchInput" placeholder="Buscar por archivo o usuario..." style="padding-left: 32px; flex: 1;">
+        <div class="filters-bar history-filters">
+            <div class="filter-group search-filter">
+                <label for="searchInput">Buscar validación</label>
+                <div class="search-field">
+                    <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+                    <input type="search" id="searchInput" placeholder="Archivo o usuario..." autocomplete="off">
+                </div>
             </div>
             
             <div class="filter-group">
@@ -89,7 +92,7 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
                 <input type="date" id="filterFecha">
             </div>
             
-            <button class="btn btn-secondary btn-sm" onclick="limpiarFiltros()">
+            <button type="button" class="btn btn-secondary btn-sm clear-filters" onclick="limpiarFiltros()">
                 <i class="fa-solid fa-times"></i>
                 Limpiar
             </button>
@@ -170,4 +173,82 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
     <script src="/js/config.js" is:inline></script>
 
     <script is:inline src="/js/historial.js"></script>
+
+    <style>
+        .history-filters {
+            display: grid;
+            grid-template-columns: minmax(280px, 1.7fr) repeat(3, minmax(150px, .75fr)) auto;
+            gap: 12px;
+            align-items: end;
+            margin-bottom: 18px;
+            padding: 14px;
+            border: 1px solid #cfd9e3;
+            border-radius: 5px;
+            background: #fff;
+            box-shadow: none;
+        }
+
+        .history-filters .filter-group {
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .history-filters label {
+            color: #52667a;
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: .045em;
+            text-transform: uppercase;
+        }
+
+        .search-field { position: relative; width: 100%; }
+        .search-field i {
+            position: absolute;
+            top: 50%;
+            left: 12px;
+            z-index: 1;
+            transform: translateY(-50%);
+            color: #718096;
+            font-size: 13px;
+            pointer-events: none;
+        }
+
+        .search-field input,
+        .history-filters select,
+        .history-filters input[type="date"] {
+            width: 100%;
+            height: 40px;
+            min-height: 40px;
+            border: 1px solid #cbd6e1;
+            border-radius: 4px;
+            color: #243b53;
+            background: #fff;
+            font-size: 13px;
+        }
+
+        .search-field input { padding: 0 12px 0 36px; }
+        .history-filters select,
+        .history-filters input[type="date"] { padding: 0 10px; }
+
+        .search-field input:focus,
+        .history-filters select:focus,
+        .history-filters input[type="date"]:focus {
+            outline: 0;
+            border-color: #174a75;
+            box-shadow: 0 0 0 3px rgba(23, 74, 117, .11);
+        }
+
+        .clear-filters { height: 40px; white-space: nowrap; }
+
+        @media (max-width: 1050px) {
+            .history-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        }
+
+        @media (max-width: 650px) {
+            .history-filters { grid-template-columns: 1fr; }
+            .clear-filters { width: 100%; }
+        }
+    </style>
 </DashboardLayout>

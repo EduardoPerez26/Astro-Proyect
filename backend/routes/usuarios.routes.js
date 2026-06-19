@@ -203,34 +203,94 @@ router.put('/:id', verificarToken, async (req, res) => {
 // ============================================
 // DELETE /api/usuarios/:id
 // ============================================
-// Desactiva un usuario (solo admin)
+// Elimina fisicamente un usuario (solo admin).
+// Los registros contables se reasignan al administrador que ejecuta la accion
+// para conservar la trazabilidad y respetar las llaves foraneas RESTRICT.
 router.delete('/:id', verificarToken, esAdmin, async (req, res) => {
+    const connection = await pool.getConnection();
+
     try {
-        // No permitir eliminarse a si mismo
-        if (req.usuario.id === parseInt(req.params.id)) {
+        const usuarioId = parseInt(req.params.id);
+
+        if (req.usuario.id === usuarioId) {
             return res.status(400).json({
                 error: true,
-                mensaje: 'No puedes desactivar tu propia cuenta'
+                message: 'No puedes eliminar tu propia cuenta'
             });
         }
 
-        await pool.query(
-            'UPDATE usuarios SET activo = FALSE WHERE id = ?',
-            [req.params.id]
+        const [usuarios] = await connection.query(
+            'SELECT id, nombre_completo FROM usuarios WHERE id = ? LIMIT 1',
+            [usuarioId]
         );
+
+        if (!usuarios.length) {
+            return res.status(404).json({
+                error: true,
+                message: 'Usuario no encontrado'
+            });
+        }
+
+        await connection.beginTransaction();
+
+        const tablasConHistorial = [
+            'archivos_excel',
+            'historial_validaciones',
+            'conciliaciones',
+            'valores_esperados'
+        ];
+        let registrosReasignados = 0;
+
+        for (const tabla of tablasConHistorial) {
+            try {
+                const [resultado] = await connection.query(
+                    `UPDATE \`${tabla}\` SET usuario_id = ? WHERE usuario_id = ?`,
+                    [req.usuario.id, usuarioId]
+                );
+                registrosReasignados += resultado.affectedRows || 0;
+            } catch (error) {
+                // Algunas instalaciones no tienen todos los modulos creados.
+                if (error.code !== 'ER_NO_SUCH_TABLE') throw error;
+            }
+        }
+
+        // Las sesiones no deben transferirse a otro usuario.
+        await connection.query(
+            'DELETE FROM sesiones WHERE usuario_id = ?',
+            [usuarioId]
+        );
+
+        const [result] = await connection.query(
+            'DELETE FROM usuarios WHERE id = ?',
+            [usuarioId]
+        );
+
+        if (result.affectedRows === 0) {
+            throw new Error('El usuario no pudo eliminarse');
+        }
+
+        await connection.commit();
 
         res.json({
             success: true,
             error: false,
-            message: 'Usuario eliminado correctamente'
+            message: 'Usuario eliminado definitivamente',
+            registrosReasignados
         });
 
     } catch (error) {
-        console.error('Error al desactivar usuario:', error);
+        await connection.rollback();
+        console.error('Error al eliminar usuario:', error);
+
         res.status(500).json({
             error: true,
-            mensaje: 'Error al desactivar usuario'
+            success: false,
+            message: error.code === 'ER_ROW_IS_REFERENCED_2'
+                ? 'No se pudo eliminar porque existen registros relacionados no contemplados.'
+                : error.message
         });
+    } finally {
+        connection.release();
     }
 });
 

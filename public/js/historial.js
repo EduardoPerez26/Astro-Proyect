@@ -193,7 +193,7 @@ function configurarFiltros() {
                 paginaActual = 1;
                 mostrarValidaciones();
             });
-            if (el.type === 'text') {
+            if (el === searchInput) {
                 el.addEventListener('input', () => {
                     paginaActual = 1;
                     mostrarValidaciones();
@@ -204,15 +204,20 @@ function configurarFiltros() {
 }
 
 function aplicarFiltros(vals) {
-    const search = document.getElementById('searchInput')?.value.toLowerCase() || '';
+    const normalizar = value => String(value || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .trim();
+    const search = normalizar(document.getElementById('searchInput')?.value);
     const resultado = document.getElementById('filterResultado')?.value || '';
     const tipo = document.getElementById('filterTipo')?.value || '';
     const fecha = document.getElementById('filterFecha')?.value || '';
 
     return vals.filter(val => {
         if (search) {
-            const archivo = (val.archivo_nombre || '').toLowerCase();
-            const usuario = (val.usuario_nombre || '').toLowerCase();
+            const archivo = normalizar(val.archivo_nombre);
+            const usuario = normalizar(val.usuario_nombre);
             if (!archivo.includes(search) && !usuario.includes(search)) {
                 return false;
             }
@@ -227,7 +232,12 @@ function aplicarFiltros(vals) {
         }
 
         if (fecha) {
-            const fechaVal = new Date(val.fecha_validacion).toISOString().split('T')[0];
+            const fechaDate = new Date(val.fecha_validacion);
+            const fechaVal = [
+                fechaDate.getFullYear(),
+                String(fechaDate.getMonth() + 1).padStart(2, '0'),
+                String(fechaDate.getDate()).padStart(2, '0')
+            ].join('-');
             if (fechaVal !== fecha) return false;
         }
 
