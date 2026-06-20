@@ -197,10 +197,11 @@ router.put('/:id/estado', verificarToken, esAdmin, async (req, res) => {
     }
 });
 
-router.delete('/:id', verificarToken, esAdmin, async (req, res) => {
-    const connection = await pool.getConnection();
+async function eliminarDepartamento(req, res) {
+    let connection;
 
     try {
+        connection = await pool.getConnection();
         const [departamentos] = await connection.query(
             'SELECT id, nombre FROM departamentos WHERE id = ? LIMIT 1',
             [req.params.id]
@@ -248,7 +249,7 @@ router.delete('/:id', verificarToken, esAdmin, async (req, res) => {
             usuariosLiberados
         });
     } catch (error) {
-        await connection.rollback();
+        if (connection) await connection.rollback();
         console.error('Error al eliminar departamento:', error);
         if (responderErrorInstalacion(error, res)) return;
         res.status(500).json({
@@ -256,8 +257,11 @@ router.delete('/:id', verificarToken, esAdmin, async (req, res) => {
             message: error.message || 'Error al eliminar departamento'
         });
     } finally {
-        connection.release();
+        if (connection) connection.release();
     }
-});
+}
+
+router.delete('/:id', verificarToken, esAdmin, eliminarDepartamento);
+router.post('/:id/eliminar', verificarToken, esAdmin, eliminarDepartamento);
 
 module.exports = router;

@@ -1,512 +1,363 @@
-// ============================================
-// HISTORIAL DE VALIDACIONES
-// ============================================
+let comparaciones = [];
+let comparacionesFiltradas = [];
 
-window.API_URL
-
-let validaciones = [];
-let validacionesFiltradas = [];
-let paginaActual = 1;
-const porPagina = 15;
-const ITEMS_POR_PAGINA = 15;
-
-// ============================================
-// INICIALIZACION
-// ============================================
-
-document.addEventListener('DOMContentLoaded', () => {
-    cargarValidaciones();
-    configurarFiltros();
+document.addEventListener('DOMContentLoaded', async () => {
+    configurarFiltrosComparaciones();
+    await Promise.all([
+        cargarRestaurantesHistorial(),
+        cargarComparaciones()
+    ]);
 });
 
-// ============================================
-// CARGAR VALIDACIONES
-// ============================================
+function configurarFiltrosComparaciones() {
+    ['searchInput', 'filterRestaurante', 'filterEstado', 'filterDesde', 'filterHasta']
+        .forEach(id => {
+            const element = document.getElementById(id);
+            if (!element) return;
+            element.addEventListener(id === 'searchInput' ? 'input' : 'change', aplicarFiltrosComparaciones);
+        });
+}
 
-async function cargarValidaciones() {
-    const tbody = document.getElementById('validacionesBody');
-    const emptyState = document.getElementById('emptyState');
-    const loadingState = document.getElementById('loadingState');
-    const table = document.getElementById('validacionesTable');
-
-    loadingState.style.display = 'block';
-    table.style.display = 'none';
-    emptyState.style.display = 'none';
-
+async function cargarRestaurantesHistorial() {
     const token = localStorage.getItem('token');
-    const modoOffline = localStorage.getItem('modoOffline');
-
-    if (modoOffline) {
-        validaciones = generarDatosEjemplo();
-        actualizarEstadisticas();
-        mostrarValidaciones();
-        loadingState.style.display = 'none';
-        return;
-    }
+    const select = document.getElementById('filterRestaurante');
+    if (!token || !select) return;
 
     try {
-        const response = await fetch(`${window.API_URL}/validaciones`, {
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
+        const response = await fetch(`${window.API_URL}/restaurantes`, {
+            headers: { Authorization: `Bearer ${token}` }
         });
+        const data = await response.json().catch(() => ({}));
+        const restaurantes = data.restaurantes || (Array.isArray(data) ? data : []);
+        if (!response.ok) return;
 
-        if (!response.ok) {
-            throw new Error('Error al cargar validaciones');
-        }
-
-        const data = await response.json();
-        validaciones = data.validaciones || [];
-        validaciones = validaciones.map(v => ({
-            ...v,
-            archivo_id: Number(v.archivo_id || 0),
-            usuario_id: Number(v.usuario_id || 0),
-            total_errores: Number(v.total_errores || 0),
-            duracion_segundos: Number(v.duracion_segundos || 0)
-        }));
-        actualizarEstadisticas();
-        mostrarValidaciones();
-
+        select.insertAdjacentHTML('beforeend', restaurantes.map(restaurante =>
+            `<option value="${restaurante.id}">${escapeHistoryHtml(restaurante.nombre)}</option>`
+        ).join(''));
     } catch (error) {
-        console.error('Error cargando validaciones:', error);
-        validaciones = generarDatosEjemplo();
-        actualizarEstadisticas();
-        mostrarValidaciones();
-    } finally {
-        loadingState.style.display = 'none';
+        console.warn('No se pudieron cargar los restaurantes del filtro:', error);
     }
 }
 
-// ============================================
-// ESTADISTICAS
-// ============================================
+async function cargarComparaciones() {
+    const token = localStorage.getItem('token');
+    const loading = document.getElementById('historyLoading');
+    const errorBox = document.getElementById('historyError');
 
-function actualizarEstadisticas() {
-    const exitosas = validaciones.filter(v => v.resultado === 'exitoso').length;
-    const conErrores = validaciones.filter(v => v.resultado === 'con_errores').length;
-    const fallidas = validaciones.filter(v => v.resultado === 'fallido').length;
-
-    const tiempos = validaciones
-        .filter(v => v.duracion_segundos !== null && v.duracion_segundos !== undefined)
-        .map(v => Number(v.duracion_segundos));
-
-    const tiempoPromedio =
-        tiempos.length > 0
-            ? (
-                tiempos.reduce((a, b) => a + b, 0) /
-                tiempos.length
-            ).toFixed(1)
-            : 0;
-
-    document.getElementById('statExitosas').textContent = exitosas;
-    document.getElementById('statConErrores').textContent = conErrores;
-    document.getElementById('statFallidas').textContent = fallidas;
-    document.getElementById('statTiempoPromedio').textContent = tiempoPromedio + 's';
-}
-
-// ============================================
-// MOSTRAR VALIDACIONES
-// ============================================
-
-function mostrarValidaciones() {
-    const tbody = document.getElementById('validacionesBody');
-    const emptyState = document.getElementById('emptyState');
-    const table = document.getElementById('validacionesTable');
-
-    validacionesFiltradas = aplicarFiltros(validaciones);
-
-    const total = validacionesFiltradas.length;
-    const totalPaginas = Math.ceil(total / porPagina);
-    const inicio = (paginaActual - 1) * porPagina;
-    const fin = inicio + porPagina;
-    const paginadas = validacionesFiltradas.slice(inicio, fin);
-
-    if (paginadas.length === 0) {
-        table.style.display = 'none';
-        emptyState.style.display = 'block';
+    if (!token) {
+        window.location.href = '/';
         return;
     }
 
-    table.style.display = 'table';
-    emptyState.style.display = 'none';
+    if (loading) loading.hidden = false;
+    if (errorBox) errorBox.hidden = true;
 
-    tbody.innerHTML = paginadas.map(val => `
-        <tr>
-            <td>${val.id}</td>
-            <td>
-                <div class="file-cell">
-                    <div class="file-icon">
-                        <i class="fa-solid fa-file-excel"></i>
-                    </div>
-                    <span>${val.archivo_nombre || 'Archivo #' + val.archivo_id}</span>
-                </div>
-            </td>
-            <td><span class="status-badge procesando">${formatearTipo(val.tipo_validacion)}</span></td>
-            <td><span class="status-badge ${val.resultado === 'exitoso' ? 'validado' : val.resultado === 'con_errores' ? 'pendiente' : 'error'}">${formatearResultado(val.resultado)}</span></td>
-            <td>
-                <span class="status-badge ${val.total_errores > 0 ? 'error' : 'validado'}">
-                    ${val.total_errores || 0} errores
-                </span>
-            </td>
-            <td>
-    ${val.duracion_segundos !== null &&
-            val.duracion_segundos !== undefined
-            ? Number(val.duracion_segundos).toFixed(2) + 's'
-            : '-'
+    try {
+        const response = await fetch(`${window.API_URL}/comparaciones`, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        const data = await response.json().catch(() => ({}));
+
+        if (!response.ok || !data.success) {
+            throw new Error(data.message || data.mensaje || 'No se pudo cargar el historial');
         }
-</td>
-            <td>
-                <div class="user-cell">
-                    <div class="user-avatar">${(val.usuario_nombre || 'U').charAt(0).toUpperCase()}</div>
-                    <span>${val.usuario_nombre || 'Usuario #' + val.usuario_id}</span>
+
+        comparaciones = data.comparaciones || [];
+        renderEstadisticasComparaciones(data.estadisticas || {});
+        aplicarFiltrosComparaciones();
+    } catch (error) {
+        console.error('Error cargando comparaciones:', error);
+        comparaciones = [];
+        renderGruposComparaciones([]);
+        if (errorBox) {
+            errorBox.hidden = false;
+            errorBox.querySelector('p').textContent = error.message;
+        }
+    } finally {
+        if (loading) loading.hidden = true;
+    }
+}
+
+function aplicarFiltrosComparaciones() {
+    const search = document.getElementById('searchInput')?.value.trim().toLowerCase() || '';
+    const restaurante = document.getElementById('filterRestaurante')?.value || '';
+    const estado = document.getElementById('filterEstado')?.value || '';
+    const desde = document.getElementById('filterDesde')?.value || '';
+    const hasta = document.getElementById('filterHasta')?.value || '';
+
+    comparacionesFiltradas = comparaciones.filter(item => {
+        const texto = [
+            item.restaurante_nombre,
+            item.restaurante_codigo,
+            item.usuario_nombre,
+            item.archivo_referencia_nombre,
+            item.fecha_operacion
+        ].join(' ').toLowerCase();
+        const fechaComparacion = normalizarFechaHistorial(item.fecha_comparacion);
+
+        return (!search || texto.includes(search)) &&
+            (!restaurante || String(item.restaurante_id) === restaurante) &&
+            (!estado || item.estado === estado) &&
+            (!desde || fechaComparacion >= desde) &&
+            (!hasta || fechaComparacion <= hasta);
+    });
+
+    renderGruposComparaciones(comparacionesFiltradas);
+}
+
+function renderEstadisticasComparaciones(stats) {
+    setHistoryText('statTotal', stats.total || 0);
+    setHistoryText('statCambios', stats.con_cambios || 0);
+    setHistoryText('statSinCambios', stats.sin_cambios || 0);
+    setHistoryText('statTiendas', stats.tiendas_con_diferencias || 0);
+}
+
+function renderGruposComparaciones(items) {
+    const container = document.getElementById('comparisonHistoryGroups');
+    const empty = document.getElementById('historyEmpty');
+    if (!container || !empty) return;
+
+    empty.hidden = items.length > 0;
+    if (!items.length) {
+        container.innerHTML = '';
+        return;
+    }
+
+    const grupos = items.reduce((mapa, item) => {
+        const fecha = normalizarFechaHistorial(item.fecha_comparacion);
+        if (!mapa.has(fecha)) mapa.set(fecha, []);
+        mapa.get(fecha).push(item);
+        return mapa;
+    }, new Map());
+
+    container.innerHTML = [...grupos.entries()].map(([fecha, registros]) => `
+        <section class="comparison-date-group">
+            <header class="comparison-date-header">
+                <div class="comparison-date-icon"><i class="fa-solid fa-calendar-day"></i></div>
+                <div>
+                    <span>FECHA DE COMPARACION</span>
+                    <h2>${formatearDiaHistorial(fecha)}</h2>
                 </div>
-            </td>
-            <td>${formatearFecha(val.fecha_validacion)}</td>
-            <td>
-                <div class="action-buttons">
-                    <button class="action-btn view" onclick="verErrores(${val.id})" 
-                            ${val.total_errores === 0 ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : ''} 
-                            title="${val.total_errores > 0 ? 'Ver errores' : 'Sin errores'}">
-                        <i class="fa-solid fa-eye"></i>
-                    </button>
-                </div>
-            </td>
-        </tr>
+                <strong>${registros.length} ${registros.length === 1 ? 'comparacion' : 'comparaciones'}</strong>
+            </header>
+            <div class="comparison-date-list">
+                ${registros.map(renderComparacionItem).join('')}
+            </div>
+        </section>
     `).join('');
-
-    actualizarPaginacion(totalPaginas);
 }
 
-// ============================================
-// FILTROS
-// ============================================
-
-function configurarFiltros() {
-    const searchInput = document.getElementById('searchInput');
-    const filterResultado = document.getElementById('filterResultado');
-    const filterTipo = document.getElementById('filterTipo');
-    const filterFecha = document.getElementById('filterFecha');
-
-    [searchInput, filterResultado, filterTipo, filterFecha].forEach(el => {
-        if (el) {
-            el.addEventListener('change', () => {
-                paginaActual = 1;
-                mostrarValidaciones();
-            });
-            if (el === searchInput) {
-                el.addEventListener('input', () => {
-                    paginaActual = 1;
-                    mostrarValidaciones();
-                });
-            }
-        }
-    });
+function renderComparacionItem(item) {
+    const estado = getEstadoComparacion(item.estado);
+    return `
+        <article class="comparison-history-item ${estado.clase}">
+            <div class="comparison-brand-icon"><i class="fa-solid ${getRestaurantIcon(item.restaurante_codigo)}"></i></div>
+            <div class="comparison-main">
+                <div class="comparison-title-line">
+                    <h3>${escapeHistoryHtml(item.restaurante_nombre)}</h3>
+                    <span class="comparison-status ${estado.clase}">${estado.texto}</span>
+                </div>
+                <p>Periodo operativo: <strong>${formatearFechaCorta(item.fecha_operacion)}</strong></p>
+                <small>${escapeHistoryHtml(item.usuario_nombre || 'Usuario eliminado')} / ${formatearHoraHistorial(item.fecha_comparacion)}</small>
+            </div>
+            <div class="comparison-metrics">
+                <div><strong>${item.tiendas_comparadas}</strong><span>Tiendas revisadas</span></div>
+                <div><strong>${item.tiendas_con_diferencias}</strong><span>Tiendas con cambios</span></div>
+                <div><strong>${item.total_diferencias}</strong><span>Diferencias</span></div>
+                <div><strong>${formatHistoryMoney(item.monto_diferencia_absoluta)}</strong><span>Variacion absoluta</span></div>
+            </div>
+            <button class="comparison-detail-button" type="button" onclick="verComparacion(${item.id})">
+                <i class="fa-solid fa-arrow-right"></i>
+                Ver detalle
+            </button>
+        </article>
+    `;
 }
 
-function aplicarFiltros(vals) {
-    const normalizar = value => String(value || '')
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .toLowerCase()
-        .trim();
-    const search = normalizar(document.getElementById('searchInput')?.value);
-    const resultado = document.getElementById('filterResultado')?.value || '';
-    const tipo = document.getElementById('filterTipo')?.value || '';
-    const fecha = document.getElementById('filterFecha')?.value || '';
+async function verComparacion(id) {
+    const token = localStorage.getItem('token');
+    const modal = document.getElementById('comparisonDetailModal');
+    const body = document.getElementById('comparisonDetailBody');
+    if (!token || !modal || !body) return;
 
-    return vals.filter(val => {
-        if (search) {
-            const archivo = normalizar(val.archivo_nombre);
-            const usuario = normalizar(val.usuario_nombre);
-            if (!archivo.includes(search) && !usuario.includes(search)) {
-                return false;
-            }
+    modal.classList.add('active');
+    body.innerHTML = '<div class="comparison-detail-loading"><i class="fa-solid fa-spinner fa-spin"></i><p>Cargando diferencias...</p></div>';
+
+    try {
+        const response = await fetch(`${window.API_URL}/comparaciones/${id}`, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok || !data.success) {
+            throw new Error(data.message || 'No se pudo cargar el detalle');
         }
 
-        if (resultado && val.resultado !== resultado) {
-            return false;
-        }
+        renderDetalleComparacion(data.comparacion, data.diferencias || []);
+    } catch (error) {
+        body.innerHTML = `<div class="comparison-detail-empty"><i class="fa-solid fa-triangle-exclamation"></i><p>${escapeHistoryHtml(error.message)}</p></div>`;
+    }
+}
 
-        if (tipo && val.tipo_validacion !== tipo) {
-            return false;
-        }
+function renderDetalleComparacion(comparacion, diferencias) {
+    const body = document.getElementById('comparisonDetailBody');
+    const title = document.getElementById('comparisonDetailTitle');
+    const subtitle = document.getElementById('comparisonDetailSubtitle');
+    const estado = getEstadoComparacion(comparacion.estado);
+    if (!body) return;
 
-        if (fecha) {
-            const fechaDate = new Date(val.fecha_validacion);
-            const fechaVal = [
-                fechaDate.getFullYear(),
-                String(fechaDate.getMonth() + 1).padStart(2, '0'),
-                String(fechaDate.getDate()).padStart(2, '0')
-            ].join('-');
-            if (fechaVal !== fecha) return false;
-        }
+    if (title) title.textContent = `${comparacion.restaurante_nombre} / ${formatearFechaCorta(comparacion.fecha_operacion)}`;
+    if (subtitle) subtitle.textContent = `${formatearFechaCompleta(comparacion.fecha_comparacion)} / ${comparacion.usuario_nombre || 'Usuario eliminado'}`;
 
-        return true;
-    });
+    const resumen = `
+        <div class="comparison-detail-summary">
+            <div><span>Resultado</span><strong class="comparison-status ${estado.clase}">${estado.texto}</strong></div>
+            <div><span>Tiendas comparadas</span><strong>${comparacion.tiendas_comparadas || 0}</strong></div>
+            <div><span>Tiendas con cambios</span><strong>${comparacion.tiendas_con_diferencias || 0}</strong></div>
+            <div><span>Diferencias</span><strong>${comparacion.total_diferencias || 0}</strong></div>
+        </div>
+    `;
+
+    if (!diferencias.length) {
+        body.innerHTML = `${resumen}<div class="comparison-detail-empty"><i class="fa-solid fa-circle-check"></i><p>No se detectaron diferencias de montos en esta comparacion.</p></div>`;
+        return;
+    }
+
+    body.innerHTML = `${resumen}
+        <div class="comparison-detail-table-wrap">
+            <table class="comparison-detail-table">
+                <thead><tr><th>Tienda</th><th>Concepto</th><th>Anterior</th><th>Nuevo</th><th>Diferencia</th></tr></thead>
+                <tbody>${diferencias.map(item => `
+                    <tr>
+                        <td>${escapeHistoryHtml(item.tienda)}</td>
+                        <td>${escapeHistoryHtml(etiquetaDiferencia(item))}</td>
+                        <td>${item.valor_anterior === null ? '—' : formatHistoryMoney(item.valor_anterior)}</td>
+                        <td>${item.valor_nuevo === null ? '—' : formatHistoryMoney(item.valor_nuevo)}</td>
+                        <td class="${Number(item.diferencia) < 0 ? 'negative' : 'positive'}">${item.diferencia === null ? '—' : formatHistorySignedMoney(item.diferencia)}</td>
+                    </tr>
+                `).join('')}</tbody>
+            </table>
+        </div>`;
+}
+
+function cerrarDetalleComparacion() {
+    document.getElementById('comparisonDetailModal')?.classList.remove('active');
 }
 
 function limpiarFiltros() {
-    document.getElementById('searchInput').value = '';
-    document.getElementById('filterResultado').value = '';
-    document.getElementById('filterTipo').value = '';
-    document.getElementById('filterFecha').value = '';
-    paginaActual = 1;
-    mostrarValidaciones();
+    ['searchInput', 'filterRestaurante', 'filterEstado', 'filterDesde', 'filterHasta']
+        .forEach(id => {
+            const element = document.getElementById(id);
+            if (element) element.value = '';
+        });
+    aplicarFiltrosComparaciones();
 }
-
-// ============================================
-// PAGINACION
-// ============================================
-
-function actualizarPaginacion(totalPaginas) {
-    const pagination = document.getElementById('pagination');
-    const btnPrev = document.getElementById('btnPrev');
-    const btnNext = document.getElementById('btnNext');
-    const currentPageEl = document.getElementById('currentPage');
-    const showingFrom = document.getElementById('showingFrom');
-    const showingTo = document.getElementById('showingTo');
-    const totalItems = document.getElementById('totalItems');
-
-    if (!pagination) return;
-
-    const total = validacionesFiltradas.length;
-    const desde = total > 0 ? ((paginaActual - 1) * ITEMS_POR_PAGINA) + 1 : 0;
-    const hasta = Math.min(paginaActual * ITEMS_POR_PAGINA, total);
-
-    if (showingFrom) showingFrom.textContent = desde;
-    if (showingTo) showingTo.textContent = hasta;
-    if (totalItems) totalItems.textContent = total;
-    if (currentPageEl) currentPageEl.textContent = paginaActual;
-
-    if (btnPrev) btnPrev.disabled = paginaActual <= 1;
-    if (btnNext) btnNext.disabled = paginaActual >= totalPaginas;
-
-    pagination.style.display = total > 0 ? 'flex' : 'none';
-}
-
-function cambiarPagina(direccion) {
-    paginaActual += direccion;
-    mostrarValidaciones();
-}
-
-// ============================================
-// VER ERRORES
-// ============================================
-
-function verErrores(id) {
-    const val = validaciones.find(v => v.id === id);
-    if (!val || !val.detalle_errores) return;
-
-    const modalBody = document.getElementById('modalBody');
-    let errores = [];
-
-    try {
-        errores = typeof val.detalle_errores === 'string'
-            ? JSON.parse(val.detalle_errores)
-            : val.detalle_errores;
-    } catch {
-        errores = [{ mensaje: val.detalle_errores }];
-    }
-
-    if (!Array.isArray(errores)) {
-        errores = [errores];
-    }
-
-    modalBody.innerHTML = `
-        <div style="margin-bottom: 16px;">
-            <strong>Archivo:</strong> ${val.archivo_nombre || 'Archivo #' + val.archivo_id}<br>
-            <strong>Tipo:</strong> ${formatearTipo(val.tipo_validacion)}<br>
-            <strong>Total errores:</strong> ${val.total_errores}
-        </div>
-        <ul class="error-list">
-            ${errores.map(err => `
-                <li class="error-item">
-                    <i class="fa-solid fa-times-circle"></i>
-                    <div class="error-text">
-                        ${err.mensaje || err.message || err}
-                        ${err.ubicacion || err.celda ? `<div class="error-location">Ubicacion: ${err.ubicacion || err.celda}</div>` : ''}
-                    </div>
-                </li>
-            `).join('')}
-        </ul>
-    `;
-
-    document.getElementById('modalErrores').classList.add('active');
-}
-
-function cerrarModal() {
-    document.getElementById('modalErrores').classList.remove('active');
-}
-
-// ============================================
-// EXPORTAR
-// ============================================
 
 function exportarHistorial() {
-    const filtradas = aplicarFiltros(validaciones);
-
-    if (filtradas.length === 0) {
-        Swal.fire({
-            icon: 'warning',
-            title: 'Sin datos',
-            text: 'No hay validaciones para exportar'
-        });
+    if (!comparacionesFiltradas.length) {
+        Swal.fire({ icon: 'warning', title: 'Sin comparaciones', text: 'No hay datos para exportar.' });
         return;
     }
 
-    // Crear CSV
-    const headers = ['ID', 'Archivo', 'Tipo', 'Resultado', 'Errores', 'Duracion', 'Usuario', 'Fecha'];
-    const rows = filtradas.map(v => [
-        v.id,
-        v.archivo_nombre || 'Archivo #' + v.archivo_id,
-        v.tipo_validacion,
-        v.resultado,
-        v.total_errores,
-        v.duracion_segundos || '',
-        v.usuario_nombre || 'Usuario #' + v.usuario_id,
-        new Date(v.fecha_validacion).toLocaleString()
+    const rows = comparacionesFiltradas.map(item => [
+        item.id,
+        item.fecha_comparacion,
+        item.restaurante_nombre,
+        item.fecha_operacion,
+        getEstadoComparacion(item.estado).texto,
+        item.tiendas_comparadas,
+        item.tiendas_con_diferencias,
+        item.total_diferencias,
+        item.monto_diferencia_absoluta,
+        item.usuario_nombre || ''
     ]);
-
-    let csv = headers.join(',') + '\n';
-    rows.forEach(row => {
-        csv += row.map(cell => `"${cell}"`).join(',') + '\n';
-    });
-
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `historial-validaciones-${new Date().toISOString().split('T')[0]}.csv`;
-    document.body.appendChild(a);
-    a.click();
-    window.URL.revokeObjectURL(url);
-    a.remove();
-
-    Swal.fire({
-        icon: 'success',
-        title: 'Exportado',
-        text: 'El historial se ha exportado correctamente',
-        timer: 2000,
-        showConfirmButton: false
-    });
+    const headers = ['ID', 'Fecha comparacion', 'Restaurante', 'Fecha operativa', 'Resultado', 'Tiendas comparadas', 'Tiendas con cambios', 'Diferencias', 'Variacion absoluta', 'Usuario'];
+    const csv = [headers, ...rows]
+        .map(row => row.map(value => `"${String(value ?? '').replaceAll('"', '""')}"`).join(','))
+        .join('\r\n');
+    const blob = new Blob(['\uFEFF', csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = `historial-comparaciones-${new Date().toISOString().slice(0, 10)}.csv`;
+    anchor.click();
+    URL.revokeObjectURL(url);
 }
 
-// ============================================
-// UTILIDADES
-// ============================================
-
-function formatearTipo(tipo) {
-    const tipos = {
-        'formato': 'Formato',
-        'datos': 'Datos',
-        'formulas': 'Formulas',
-        'completa': 'Completa'
-    };
-    return tipos[tipo] || tipo;
+function getEstadoComparacion(estado) {
+    return {
+        primera_carga: { texto: 'Primera carga', clase: 'first' },
+        sin_cambios: { texto: 'Sin cambios', clase: 'equal' },
+        con_cambios: { texto: 'Con diferencias', clase: 'changed' },
+        referencia_incompatible: { texto: 'Referencia incompatible', clase: 'warning' }
+    }[estado] || { texto: estado || 'Registrada', clase: 'neutral' };
 }
 
-function formatearResultado(resultado) {
-    const resultados = {
-        'exitoso': 'Exitoso',
-        'con_errores': 'Con errores',
-        'fallido': 'Fallido'
-    };
-    return resultados[resultado] || resultado;
+function getRestaurantIcon(codigo) {
+    return {
+        'taco-bell': 'fa-bell',
+        popeyes: 'fa-drumstick-bite',
+        'burger-king': 'fa-burger'
+    }[codigo] || 'fa-store';
 }
 
-function formatearFecha(fecha) {
-    if (!fecha) return '-';
-    return new Date(fecha).toLocaleString('es-ES', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-    });
+function etiquetaDiferencia(item) {
+    if (item.tipo === 'tienda_nueva') return 'Tienda agregada al archivo';
+    if (item.tipo === 'tienda_eliminada') return 'Tienda retirada del archivo';
+    return String(item.campo || 'Monto')
+        .replace(/([a-z])([A-Z])/g, '$1 $2')
+        .replaceAll('_', ' ')
+        .replace(/^./, letra => letra.toUpperCase());
 }
 
-function generarDatosEjemplo() {
-    return [
-        {
-            id: 1,
-            archivo_id: 1,
-            archivo_nombre: 'Daily Sales Taco Bell 05-26 2026.xlsx',
-            usuario_id: 1,
-            usuario_nombre: 'Administrador',
-            tipo_validacion: 'completa',
-            resultado: 'exitoso',
-            total_errores: 0,
-            detalle_errores: null,
-            duracion_segundos: 2.45,
-            fecha_validacion: '2026-05-26T10:35:00'
-        },
-        {
-            id: 2,
-            archivo_id: 2,
-            archivo_nombre: 'Conciliation BK May 2026.xlsx',
-            usuario_id: 2,
-            usuario_nombre: 'Usuario1',
-            tipo_validacion: 'formato',
-            resultado: 'con_errores',
-            total_errores: 3,
-            detalle_errores: [
-                { mensaje: 'Columna "NET SALES" no encontrada', ubicacion: 'Hoja: Sales' },
-                { mensaje: 'Formato de fecha invalido', ubicacion: 'Celda B5' },
-                { mensaje: 'Valor negativo no permitido', ubicacion: 'Celda G12' }
-            ],
-            duracion_segundos: 1.82,
-            fecha_validacion: '2026-05-25T14:20:00'
-        },
-        {
-            id: 3,
-            archivo_id: 3,
-            archivo_nombre: 'Popeyes Weekly Report.xlsx',
-            usuario_id: 3,
-            usuario_nombre: 'Supervisor',
-            tipo_validacion: 'datos',
-            resultado: 'fallido',
-            total_errores: 15,
-            detalle_errores: [
-                { mensaje: 'Archivo corrupto o formato no soportado' }
-            ],
-            duracion_segundos: 0.35,
-            fecha_validacion: '2026-05-24T09:05:00'
-        },
-        {
-            id: 4,
-            archivo_id: 4,
-            archivo_nombre: 'KFC Monthly Sales.xlsx',
-            usuario_id: 1,
-            usuario_nombre: 'Administrador',
-            tipo_validacion: 'formulas',
-            resultado: 'exitoso',
-            total_errores: 0,
-            detalle_errores: null,
-            duracion_segundos: 3.21,
-            fecha_validacion: '2026-05-20T16:50:00'
-        },
-        {
-            id: 5,
-            archivo_id: 1,
-            archivo_nombre: 'Daily Sales Taco Bell 05-26 2026.xlsx',
-            usuario_id: 1,
-            usuario_nombre: 'Administrador',
-            tipo_validacion: 'datos',
-            resultado: 'con_errores',
-            total_errores: 2,
-            detalle_errores: [
-                { mensaje: 'Tienda 28841: Total no coincide con suma de conceptos', ubicacion: 'Fila 5' },
-                { mensaje: 'Tienda 29423: Valor de impuesto incorrecto', ubicacion: 'Fila 12' }
-            ],
-            duracion_segundos: 4.15,
-            fecha_validacion: '2026-05-26T10:32:00'
-        }
-    ];
+function normalizarFechaHistorial(value) {
+    if (!value) return '';
+    if (/^\d{4}-\d{2}-\d{2}/.test(String(value))) return String(value).slice(0, 10);
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return '';
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 }
 
-// Cerrar modal con Escape
-document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-        cerrarModal();
-    }
-});
+function formatearDiaHistorial(value) {
+    const date = new Date(`${value}T12:00:00`);
+    return date.toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+}
+
+function formatearHoraHistorial(value) {
+    return new Date(value).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+}
+
+function formatearFechaCompleta(value) {
+    return new Date(value).toLocaleString('es-MX', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+
+function formatearFechaCorta(value) {
+    if (!value) return 'Sin fecha';
+    return new Date(`${String(value).slice(0, 10)}T12:00:00`).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
+function formatHistoryMoney(value) {
+    return Number(value || 0).toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+}
+
+function formatHistorySignedMoney(value) {
+    return Number(value || 0).toLocaleString('en-US', { style: 'currency', currency: 'USD', signDisplay: 'always' });
+}
+
+function setHistoryText(id, value) {
+    const element = document.getElementById(id);
+    if (element) element.textContent = Number(value || 0).toLocaleString('en-US');
+}
+
+function escapeHistoryHtml(value) {
+    return String(value ?? '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+}
+
+window.verComparacion = verComparacion;
+window.cerrarDetalleComparacion = cerrarDetalleComparacion;
+window.limpiarFiltros = limpiarFiltros;
+window.exportarHistorial = exportarHistorial;

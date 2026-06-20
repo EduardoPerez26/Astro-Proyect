@@ -7,6 +7,10 @@ const router = express.Router();
 const XLSX = require('xlsx');
 const { pool } = require('../config/database');
 const { verificarToken, esAdmin } = require('../middleware/auth.middleware');
+const {
+    registrarComparacion,
+    vincularComparacion
+} = require('../services/comparaciones.service');
 
 const CAMPOS_IDENTIDAD_CONCILIACION = new Set([
     'store',
@@ -519,13 +523,27 @@ router.post('/comparar-existente', verificarToken, async (req, res) => {
         });
 
         if (!referencia) {
+            const resultado = {
+                tiendasComparadas: datos_extraidos.length,
+                tiendasConDiferencias: 0,
+                diferencias: []
+            };
+            const comparacionId = await registrarComparacion({
+                restauranteId: restaurante_id,
+                usuarioId: req.usuario.id,
+                fechaOperacion: fechaBuscada,
+                estado: 'primera_carga',
+                datosNuevos: datos_extraidos,
+                resultado
+            });
+
             return res.json({
                 success: true,
                 existe: false,
                 restaurante: restaurante.codigo,
-                tiendasComparadas: datos_extraidos.length,
-                tiendasConDiferencias: 0,
-                diferencias: []
+                comparacionId,
+                historialDisponible: Boolean(comparacionId),
+                ...resultado
             });
         }
 
@@ -541,15 +559,30 @@ router.post('/comparar-existente', verificarToken, async (req, res) => {
         );
 
         if (!datosAnteriores.length) {
+            const resultado = {
+                tiendasComparadas: datos_extraidos.length,
+                tiendasConDiferencias: 0,
+                diferencias: []
+            };
+            const comparacionId = await registrarComparacion({
+                restauranteId: restaurante_id,
+                usuarioId: req.usuario.id,
+                archivoReferenciaId: referencia.id,
+                fechaOperacion: fechaBuscada,
+                estado: 'referencia_incompatible',
+                datosNuevos: datos_extraidos,
+                resultado
+            });
+
             return res.json({
                 success: true,
                 existe: false,
                 referenciaIncompatible: true,
                 archivoAnteriorId: referencia.id,
                 restaurante: restaurante.codigo,
-                tiendasComparadas: datos_extraidos.length,
-                tiendasConDiferencias: 0,
-                diferencias: []
+                comparacionId,
+                historialDisponible: Boolean(comparacionId),
+                ...resultado
             });
         }
 
@@ -559,12 +592,25 @@ router.post('/comparar-existente', verificarToken, async (req, res) => {
             fecha_conciliacion,
             restaurante.codigo
         );
+        const comparacionId = await registrarComparacion({
+            restauranteId: restaurante_id,
+            usuarioId: req.usuario.id,
+            archivoReferenciaId: referencia.id,
+            fechaOperacion: fechaBuscada,
+            estado: resultado.tiendasConDiferencias
+                ? 'con_cambios'
+                : 'sin_cambios',
+            datosNuevos: datos_extraidos,
+            resultado
+        });
 
         res.json({
             success: true,
             existe: true,
             archivoAnteriorId: referencia.id,
             restaurante: restaurante.codigo,
+            comparacionId,
+            historialDisponible: Boolean(comparacionId),
             ...resultado
         });
     } catch (error) {
@@ -637,7 +683,8 @@ router.post('/', verificarToken, async (req, res) => {
             periodo_inicio,
             periodo_fin,
             datos_extraidos,
-            notas
+            notas,
+            comparacion_id
         } = req.body;
         
         if (!restaurante_id || !fecha_conciliacion || !datos_extraidos) {
@@ -740,6 +787,12 @@ router.post('/', verificarToken, async (req, res) => {
                 ]
             );
 
+            await vincularComparacion(
+                Number(comparacion_id) || null,
+                conciliacionId,
+                req.usuario.id
+            );
+
             return res.json({
                 success: true,
                 message: 'Conciliación actualizada',
@@ -773,6 +826,12 @@ router.post('/', verificarToken, async (req, res) => {
                 monto_total_diferencia,
                 notas || null
             ]
+        );
+
+        await vincularComparacion(
+            Number(comparacion_id) || null,
+            result.insertId,
+            req.usuario.id
         );
         
         res.status(201).json({

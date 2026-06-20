@@ -3920,6 +3920,7 @@ async function registrarConciliacionEnBD() {
             periodo_inicio: fecha,
             periodo_fin: fecha,
             datos_extraidos: datosExtraidos,
+            comparacion_id: comparacionConciliacionActual.resultado?.comparacionId || null,
             notas: 'Generada desde el módulo de conciliación'
         })
     });
@@ -3962,16 +3963,7 @@ async function saveConciliacion() {
         return;
     }
 
-    const codigo = document
-        .getElementById('selectRestaurante')
-        ?.selectedOptions[0]
-        ?.dataset?.codigo;
-
-    let comparacionAprobada = true;
-
-    if (codigo !== 'burger-king') {
-        comparacionAprobada = await compararConciliacionConBD();
-    }
+    const comparacionAprobada = await compararConciliacionConBD();
 
     if (!comparacionAprobada) return;
 
@@ -3997,9 +3989,7 @@ async function saveConciliacion() {
 
             if (localStorage.getItem('modoOffline') !== 'true') {
                 try {
-                    if (codigo !== 'burger-king') {
-                        registro = await registrarConciliacionEnBD();
-                    }
+                    registro = await registrarConciliacionEnBD();
                 } catch (error) {
                     errorRegistro = error;
                     console.error('No se registró la conciliación:', error);
@@ -4083,14 +4073,6 @@ async function guardarConciliacionServidor() {
     }
 
     try {
-
-        const codigo = document
-            .getElementById('selectRestaurante')
-            ?.selectedOptions[0]
-            ?.dataset?.codigo;
-        if (codigo !== 'burger-king') {
-            await registrarConciliacionEnBD();
-        }
 
         const registroConciliacion =
             await registrarConciliacionEnBD();

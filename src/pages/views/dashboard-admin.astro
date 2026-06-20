@@ -81,7 +81,7 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
         </section>
     </div>
 
-    <style>
+    <style is:inline>
         .admin-dashboard-page { color: #102f4c; }
         .admin-dashboard-header {
             display: flex; align-items: center; justify-content: space-between; gap: 24px;
@@ -116,13 +116,37 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
         .admin-panel-header span { color: #6b7f92; font-size: 10px; font-weight: 800; letter-spacing: .09em; }
         .admin-panel-header h2 { margin: 3px 0 0; font-size: 17px; color: #102f4c; }
         .admin-panel-header > i { color: #315d82; }
-        .admin-table-wrap { overflow-x: auto; }
+        .admin-table-wrap { width: 100%; overflow-x: auto; }
+        .movements-panel .admin-table-wrap {
+            max-height: 475px;
+            overflow: auto;
+            scrollbar-width: thin;
+            scrollbar-color: #9fb1c2 #edf2f6;
+        }
+        .movements-panel .admin-table-wrap::-webkit-scrollbar { width: 8px; height: 8px; }
+        .movements-panel .admin-table-wrap::-webkit-scrollbar-track { background: #edf2f6; }
+        .movements-panel .admin-table-wrap::-webkit-scrollbar-thumb { background: #9fb1c2; border-radius: 999px; }
         .admin-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        .movements-panel .admin-table { table-layout: fixed; }
+        .movements-panel .admin-table th:nth-child(1) { width: 21%; }
+        .movements-panel .admin-table th:nth-child(2) { width: 17%; }
+        .movements-panel .admin-table th:nth-child(3) { width: auto; }
+        .movements-panel .admin-table th:nth-child(4) { width: 12%; }
+        .movements-panel .admin-table th:nth-child(5) { width: 16%; }
         .admin-table th { padding: 11px 13px; color: #5b6f82; background: #fbfcfd; border-bottom: 1px solid #dce5ed; text-align: left; font-size: 10px; text-transform: uppercase; letter-spacing: .05em; }
+        .movements-panel .admin-table th {
+            position: sticky;
+            z-index: 2;
+            top: 0;
+            box-shadow: 0 1px 0 #dce5ed;
+        }
         .admin-table td { padding: 12px 13px; border-bottom: 1px solid #e7edf3; color: #334f68; vertical-align: middle; }
         .admin-table tbody tr:last-child td { border-bottom: 0; }
         .admin-movement { display: flex; align-items: center; gap: 9px; font-weight: 700; color: #173f67; white-space: nowrap; }
         .admin-movement-icon { display: grid; width: 30px; height: 30px; place-items: center; border-radius: 6px; background: #e8eef5; }
+        .admin-user-cell strong, .admin-user-cell small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .admin-detail-cell { display: block; overflow: hidden; color: #49647c; text-overflow: ellipsis; white-space: nowrap; }
+        .admin-date-cell { color: #516a80; white-space: nowrap; }
         .admin-state { display: inline-flex; padding: 4px 7px; border-radius: 999px; font-size: 10px; font-weight: 800; background: #edf2f7; color: #53697d; }
         .admin-state.is-success { color: #147644; background: #e0f4e8; }
         .admin-state.is-warning { color: #8a5a13; background: #fff0d3; }
@@ -131,8 +155,9 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
         .admin-session-list { max-height: 475px; overflow-y: auto; }
         .admin-session-item { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 10px; padding: 13px 15px; border-bottom: 1px solid #e6edf3; }
         .admin-session-avatar { display: grid; width: 34px; height: 34px; place-items: center; border-radius: 50%; background: #123b5e; color: #fff; font-size: 11px; font-weight: 800; }
-        .admin-session-copy strong { display: block; color: #173a59; font-size: 12px; }
-        .admin-session-copy span, .admin-session-copy small { display: block; margin-top: 2px; color: #718496; font-size: 10px; }
+        .admin-session-copy { min-width: 0; }
+        .admin-session-copy strong { display: block; overflow: hidden; color: #173a59; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+        .admin-session-copy span, .admin-session-copy small { display: block; overflow: hidden; margin-top: 2px; color: #718496; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
         .admin-session-dot { width: 8px; height: 8px; margin-top: 6px; border-radius: 50%; background: #9aabb9; }
         .admin-session-dot.active { background: #1aa15d; box-shadow: 0 0 0 4px #e0f5e8; }
         .admin-loading { padding: 30px !important; color: #718496 !important; text-align: center !important; }
@@ -141,15 +166,32 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
         @media (max-width: 1180px) {
             .admin-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); }
             .admin-dashboard-grid { grid-template-columns: 1fr; }
+            .admin-session-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); max-height: 390px; }
+            .admin-session-item:nth-child(odd) { border-right: 1px solid #e6edf3; }
+        }
+        @media (max-width: 900px) {
+            .movements-panel .admin-table-wrap { max-height: 560px; }
+            .movements-panel .admin-table { table-layout: auto; }
+            .movements-panel .admin-table thead { display: none; }
+            .movements-panel .admin-table tbody { display: grid; gap: 10px; padding: 12px; background: #f3f6f9; }
+            .movements-panel .admin-table tr { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px 14px; padding: 13px; border: 1px solid #d6e0e9; border-radius: 8px; background: #fff; }
+            .movements-panel .admin-table td { display: block; min-width: 0; padding: 0; border: 0; }
+            .movements-panel .admin-table td::before { display: block; margin-bottom: 4px; color: #74879a; content: attr(data-label); font-size: 9px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+            .movements-panel .admin-table td[data-label="Detalle"] { grid-column: 1 / -1; }
+            .movements-panel .admin-table td.admin-loading { grid-column: 1 / -1; }
+            .admin-detail-cell { white-space: normal; overflow-wrap: anywhere; }
         }
         @media (max-width: 720px) {
             .admin-dashboard-header { align-items: flex-start; flex-direction: column; padding: 20px; }
             .admin-dashboard-header-actions { width: 100%; justify-content: space-between; }
             .admin-metrics { grid-template-columns: 1fr; }
+            .admin-session-list { grid-template-columns: 1fr; }
+            .admin-session-item:nth-child(odd) { border-right: 0; }
+            .movements-panel .admin-table tr { grid-template-columns: 1fr; }
+            .movements-panel .admin-table td[data-label="Detalle"] { grid-column: auto; }
         }
     </style>
 
     <script src="/js/config.js" is:inline></script>
     <script src="/js/dashboard-admin.js" is:inline></script>
 </DashboardLayout>
-

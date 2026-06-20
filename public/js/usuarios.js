@@ -119,6 +119,7 @@ function renderDepartments() {
                 <td>${Number(department.total_usuarios || 0)}</td>
                 <td><span class="status-badge ${active ? 'activo' : 'inactivo'}">${active ? 'Activo' : 'Inactivo'}</span></td>
                 <td>
+                    <div class="department-actions">
                     <button class="action-btn edit" onclick="openDepartmentModal(${department.id})" title="Editar departamento">
                         <i class="fa-solid fa-pen"></i>
                     </button>
@@ -136,6 +137,7 @@ function renderDepartments() {
                     >
                         <i class="fa-solid fa-trash"></i>
                     </button>
+                    </div>
                 </td>
             </tr>
         `;
@@ -770,17 +772,64 @@ async function deleteDepartment(departmentId) {
     }
 
     try {
-        const response = await fetch(
+        let response = await fetch(
             `${window.API_URL}/departamentos/${departmentId}`,
             {
                 method: 'DELETE',
                 headers: { Authorization: `Bearer ${token}` }
             }
         );
-        const data = await response.json().catch(() => ({}));
+        let data = await response.json().catch(() => ({}));
+
+        if (response.status === 404) {
+            response = await fetch(
+                `${window.API_URL}/departamentos/${departmentId}/eliminar`,
+                {
+                    method: 'POST',
+                    headers: { Authorization: `Bearer ${token}` }
+                }
+            );
+            data = await response.json().catch(() => ({}));
+        }
+
+        if (response.status === 404) {
+            const legacyResponse = await fetch(
+                `${window.API_URL}/departamentos/${departmentId}`,
+                {
+                    method: 'PUT',
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        nombre: department.nombre,
+                        codigo: department.codigo,
+                        descripcion: department.descripcion || '',
+                        activo: false
+                    })
+                }
+            );
+            const legacyData = await legacyResponse.json().catch(() => ({}));
+
+            if (!legacyResponse.ok || !legacyData.success) {
+                throw new Error(
+                    legacyData.message || legacyData.mensaje ||
+                    'El backend publicado todavia no permite eliminar departamentos'
+                );
+            }
+
+            await loadDepartments();
+            await loadUsers();
+            await Swal.fire({
+                icon: 'warning',
+                title: 'Departamento desactivado',
+                text: 'Railway todavia usa una version anterior del backend. El departamento se desactivo; al publicar el backend actualizado podra eliminarse definitivamente.'
+            });
+            return;
+        }
 
         if (!response.ok || !data.success) {
-            throw new Error(data.message || 'No se pudo eliminar el departamento');
+            throw new Error(data.message || data.mensaje || 'No se pudo eliminar el departamento');
         }
 
         await loadDepartments();

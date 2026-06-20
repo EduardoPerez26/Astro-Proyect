@@ -17,6 +17,7 @@ const validacionesRoutes = require('./routes/validaciones.routes');
 const conciliacionesRoutes = require('./routes/conciliaciones.routes');
 const dashboardRoutes = require('./routes/dashboard.routes');
 const departamentosRoutes = require('./routes/departamentos.routes');
+const comparacionesRoutes = require('./routes/comparaciones.routes');
 
 const app = express();
 
@@ -90,6 +91,7 @@ app.use('/api/validaciones', validacionesRoutes);
 app.use('/api/conciliaciones', conciliacionesRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/departamentos', departamentosRoutes);
+app.use('/api/comparaciones', comparacionesRoutes);
 
 // ============================================
 // MANEJO DE ERRORES
