@@ -554,7 +554,7 @@ async function confirmDelete() {
 // ============================================
 
 function openPermissions(userId) {
-    window.location.href = `/views/permisos?userId=${userId}`;
+    window.location.href = `/views/permisos/?userId=${userId}`;
 }
 
 // ============================================
