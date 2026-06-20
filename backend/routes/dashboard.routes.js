@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { pool } = require('../config/database');
-const { verificarToken } = require('../middleware/auth.middleware');
+const { verificarToken, esAdmin } = require('../middleware/auth.middleware');
 
 const PERIODOS = {
     '30d': 30,
@@ -187,6 +187,175 @@ router.get('/resumen', verificarToken, async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'No se pudo cargar el resumen del dashboard'
+        });
+    }
+});
+
+router.get('/admin', verificarToken, esAdmin, async (req, res) => {
+    try {
+        const [
+            [usuariosRows],
+            [sesionesRows],
+            [archivosRows],
+            [validacionesRows],
+            [departamentosRows],
+            [sesionesRecientes],
+            [movimientos],
+            [actividadUsuarios]
+        ] = await Promise.all([
+            pool.query(
+                `SELECT COUNT(*) AS total,
+                        COALESCE(SUM(activo = TRUE), 0) AS activos,
+                        COALESCE(SUM(rol = 'admin'), 0) AS administradores
+                 FROM usuarios`
+            ),
+            pool.query(
+                `SELECT COALESCE(SUM(activa = TRUE AND fecha_expiracion > NOW()), 0) AS activas,
+                        COALESCE(SUM(DATE(fecha_creacion) = CURDATE()), 0) AS inicios_hoy,
+                        COALESCE(SUM(fecha_creacion >= DATE_SUB(NOW(), INTERVAL 7 DAY)), 0) AS inicios_7_dias
+                 FROM sesiones`
+            ),
+            pool.query(
+                `SELECT COUNT(*) AS total,
+                        COALESCE(SUM(DATE(fecha_subida) = CURDATE()), 0) AS hoy,
+                        COALESCE(SUM(fecha_subida >= DATE_SUB(NOW(), INTERVAL 7 DAY)), 0) AS ultimos_7_dias
+                 FROM archivos_excel`
+            ),
+            pool.query(
+                `SELECT COUNT(*) AS total,
+                        COALESCE(SUM(DATE(fecha_validacion) = CURDATE()), 0) AS hoy,
+                        COALESCE(SUM(resultado IN ('con_errores', 'fallido')), 0) AS con_incidencias
+                 FROM historial_validaciones`
+            ),
+            pool.query(
+                `SELECT COUNT(*) AS total,
+                        COALESCE(SUM(activo = TRUE), 0) AS activos
+                 FROM departamentos`
+            ),
+            pool.query(
+                `SELECT s.id,
+                        s.ip_address,
+                        s.user_agent,
+                        s.fecha_creacion,
+                        s.fecha_expiracion,
+                        (s.activa = TRUE AND s.fecha_expiracion > NOW()) AS activa,
+                        u.id AS usuario_id,
+                        u.nombre_completo AS usuario_nombre,
+                        u.username,
+                        u.rol,
+                        d.nombre AS departamento_nombre
+                 FROM sesiones s
+                 JOIN usuarios u ON u.id = s.usuario_id
+                 LEFT JOIN departamentos d ON d.id = u.departamento_id
+                 ORDER BY s.fecha_creacion DESC, s.id DESC
+                 LIMIT 20`
+            ),
+            pool.query(
+                `SELECT movimientos.*
+                 FROM (
+                    SELECT CONCAT('sesion-', s.id) AS id,
+                           'sesion' AS tipo,
+                           'Inicio de sesion' AS accion,
+                           u.nombre_completo AS usuario_nombre,
+                           u.username,
+                           s.fecha_creacion AS fecha,
+                           CONCAT_WS(' | ', s.ip_address, LEFT(s.user_agent, 90)) AS detalle,
+                           IF(s.activa = TRUE AND s.fecha_expiracion > NOW(), 'activo', 'cerrado') AS estado
+                    FROM sesiones s
+                    JOIN usuarios u ON u.id = s.usuario_id
+
+                    UNION ALL
+
+                    SELECT CONCAT('archivo-', a.id) AS id,
+                           'archivo' AS tipo,
+                           'Archivo guardado' AS accion,
+                           u.nombre_completo AS usuario_nombre,
+                           u.username,
+                           a.fecha_subida AS fecha,
+                           CONCAT_WS(' | ', a.nombre_original, r.nombre) AS detalle,
+                           a.estado AS estado
+                    FROM archivos_excel a
+                    LEFT JOIN usuarios u ON u.id = a.usuario_id
+                    LEFT JOIN restaurantes r ON r.id = a.restaurante_id
+
+                    UNION ALL
+
+                    SELECT CONCAT('validacion-', hv.id) AS id,
+                           'validacion' AS tipo,
+                           'Validacion ejecutada' AS accion,
+                           u.nombre_completo AS usuario_nombre,
+                           u.username,
+                           hv.fecha_validacion AS fecha,
+                           CONCAT(hv.tipo_validacion, ' | ', hv.total_errores, ' error(es)') AS detalle,
+                           hv.resultado AS estado
+                    FROM historial_validaciones hv
+                    LEFT JOIN usuarios u ON u.id = hv.usuario_id
+                 ) movimientos
+                 ORDER BY movimientos.fecha DESC
+                 LIMIT 30`
+            ),
+            pool.query(
+                `SELECT u.id,
+                        u.nombre_completo AS nombre,
+                        u.username,
+                        u.rol,
+                        u.activo,
+                        d.nombre AS departamento_nombre,
+                        COUNT(DISTINCT s.id) AS total_sesiones,
+                        COUNT(DISTINCT a.id) AS total_archivos,
+                        MAX(s.fecha_creacion) AS ultimo_acceso
+                 FROM usuarios u
+                 LEFT JOIN departamentos d ON d.id = u.departamento_id
+                 LEFT JOIN sesiones s ON s.usuario_id = u.id
+                 LEFT JOIN archivos_excel a ON a.usuario_id = u.id
+                 GROUP BY u.id, u.nombre_completo, u.username, u.rol, u.activo, d.nombre
+                 ORDER BY ultimo_acceso DESC, u.nombre_completo ASC
+                 LIMIT 12`
+            )
+        ]);
+
+        const usuarios = usuariosRows[0] || {};
+        const sesiones = sesionesRows[0] || {};
+        const archivos = archivosRows[0] || {};
+        const validaciones = validacionesRows[0] || {};
+        const departamentos = departamentosRows[0] || {};
+
+        res.json({
+            success: true,
+            generado_en: new Date().toISOString(),
+            resumen: {
+                usuarios_total: numero(usuarios.total),
+                usuarios_activos: numero(usuarios.activos),
+                administradores: numero(usuarios.administradores),
+                sesiones_activas: numero(sesiones.activas),
+                inicios_hoy: numero(sesiones.inicios_hoy),
+                inicios_7_dias: numero(sesiones.inicios_7_dias),
+                archivos_total: numero(archivos.total),
+                archivos_hoy: numero(archivos.hoy),
+                archivos_7_dias: numero(archivos.ultimos_7_dias),
+                validaciones_total: numero(validaciones.total),
+                validaciones_hoy: numero(validaciones.hoy),
+                validaciones_con_incidencias: numero(validaciones.con_incidencias),
+                departamentos_total: numero(departamentos.total),
+                departamentos_activos: numero(departamentos.activos)
+            },
+            sesiones_recientes: sesionesRecientes.map(row => ({
+                ...row,
+                activa: Boolean(row.activa)
+            })),
+            movimientos,
+            actividad_usuarios: actividadUsuarios.map(row => ({
+                ...row,
+                total_sesiones: numero(row.total_sesiones),
+                total_archivos: numero(row.total_archivos)
+            }))
+        });
+    } catch (error) {
+        console.error('Error cargando dashboard administrativo:', error);
+        res.status(500).json({
+            success: false,
+            message: 'No se pudo cargar el dashboard administrativo',
+            code: error.code
         });
     }
 });

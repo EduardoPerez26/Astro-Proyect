@@ -9,6 +9,17 @@ let originalPermissions = {};
 // Definicion de todas las secciones del sistema
 const MENU_SECTIONS = [
     {
+        id: 'dashboardAdmin',
+        name: 'Dashboard administrativo',
+        description: 'Sesiones, movimientos y actividad general del sistema',
+        icon: 'fa-chart-line',
+        iconClass: 'dashboard',
+        path: '/views/dashboard-admin',
+        required: true,
+        adminOnly: true,
+        initialOption: true
+    },
+    {
         id: 'tiendas',
         name: 'Tiendas',
         description: 'Gestion de restaurantes y sucursales',
@@ -129,7 +140,7 @@ async function loadUserData() {
         
         // Permisos de ejemplo
         const defaultPermissions = {
-            1: { tiendas: true, documentos: true, perfil: true, permisos: true, historial: true, usuarios: true, controlRestaurantes: true, paginaInicio: 'tiendas' },
+            1: { dashboardAdmin: true, tiendas: true, documentos: true, perfil: true, permisos: true, historial: true, usuarios: true, controlRestaurantes: true, paginaInicio: 'dashboardAdmin' },
             2: { tiendas: true, documentos: true, perfil: true, permisos: false, historial: true, usuarios: false, controlRestaurantes: false, paginaInicio: 'tiendas' },
             3: { tiendas: true, documentos: true, perfil: true, permisos: false, historial: false, usuarios: false, controlRestaurantes: false, paginaInicio: 'tiendas' },
             4: { tiendas: true, documentos: false, perfil: true, permisos: false, historial: false, usuarios: false, controlRestaurantes: false, paginaInicio: 'tiendas' }

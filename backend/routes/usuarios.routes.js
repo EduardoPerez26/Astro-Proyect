@@ -11,7 +11,9 @@ const { pool } = require('../config/database');
 const { verificarToken, esAdmin } = require('../middleware/auth.middleware');
 
 const VENTANAS_OPERATIVAS = ['tiendas', 'documentos', 'historial'];
+const VENTANAS_ADMIN = ['dashboardAdmin', ...VENTANAS_OPERATIVAS];
 const PERMISOS_ADMIN = {
+    dashboardAdmin: true,
     tiendas: true,
     documentos: true,
     perfil: true,
@@ -19,16 +21,16 @@ const PERMISOS_ADMIN = {
     historial: true,
     usuarios: true,
     controlRestaurantes: true,
-    paginaInicio: 'tiendas'
+    paginaInicio: 'dashboardAdmin'
 };
 
 function normalizarPermisosUsuario(permisos, rol) {
     if (rol === 'admin') {
         return {
             ...PERMISOS_ADMIN,
-            paginaInicio: VENTANAS_OPERATIVAS.includes(permisos.paginaInicio)
+            paginaInicio: VENTANAS_ADMIN.includes(permisos.paginaInicio)
                 ? permisos.paginaInicio
-                : 'tiendas'
+                : 'dashboardAdmin'
         };
     }
 

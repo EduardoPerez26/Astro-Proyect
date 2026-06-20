@@ -260,6 +260,7 @@ function aplicarPermisos() {
 function obtenerPermisos(usuario) {
     const defaultPermissions = {
         'admin': {
+            dashboardAdmin: true,
             tiendas: true,
             documentos: true,
             perfil: true,
@@ -291,7 +292,7 @@ function obtenerPermisos(usuario) {
     if (usuario.rol === 'admin') {
         return {
             ...defaultPermissions.admin,
-            paginaInicio: usuario.permisos?.paginaInicio || 'tiendas'
+            paginaInicio: usuario.permisos?.paginaInicio || 'dashboardAdmin'
         };
     }
 
@@ -327,11 +328,13 @@ function obtenerPermisos(usuario) {
 
 // Verificar si el usuario tiene acceso a la pagina actual
 function verificarAccesoPagina(permisos) {
-    const currentPath = window.location.pathname;
+    const currentPath = window.location.pathname.replace(/\/+$/, '') || '/';
     
     // Mapeo de rutas a permisos
     const routePermissions = {
         '/views/tiendas': 'tiendas',
+        '/views/dashboard-admin': 'dashboardAdmin',
+        '/views/documentos': 'documentos',
         '/views/editor': 'documentos',
         '/views/perfil': 'perfil',
         '/views/permisos': 'permisos',
@@ -344,7 +347,12 @@ function verificarAccesoPagina(permisos) {
     
     // Si la pagina requiere permiso y el usuario no lo tiene
     const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
-    const requiereAdmin = currentPath === '/views/restaurantes';
+    const requiereAdmin = [
+        '/views/restaurantes',
+        '/views/dashboard-admin',
+        '/views/usuarios',
+        '/views/permisos'
+    ].includes(currentPath);
 
     if (
         requiredPermission &&
@@ -357,6 +365,7 @@ function verificarAccesoPagina(permisos) {
             confirmButtonColor: '#2563eb'
         }).then(() => {
             const rutasDepartamento = {
+                dashboardAdmin: '/views/dashboard-admin',
                 tiendas: '/views/tiendas',
                 documentos: '/views/documentos',
                 historial: '/views/historial'
@@ -371,8 +380,8 @@ function verificarAccesoPagina(permisos) {
                     ? '/views/documentos'
                     : permisos.historial
                         ? '/views/historial'
-                        : usuario.rol === 'admin' && permisos.usuarios
-                            ? '/views/usuarios'
+                        : usuario.rol === 'admin' && permisos.dashboardAdmin
+                            ? '/views/dashboard-admin'
                             : '/');
             window.location.href = destino;
         });

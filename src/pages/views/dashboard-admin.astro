@@ -1,0 +1,155 @@
+---
+import DashboardLayout from '../../layouts/DashboardLayout.astro';
+---
+
+<DashboardLayout title="Panel administrativo">
+    <div class="page-container admin-dashboard-page">
+        <header class="admin-dashboard-header">
+            <div>
+                <span class="admin-dashboard-eyebrow">CONTROL GENERAL DEL SISTEMA</span>
+                <h1>Dashboard administrativo</h1>
+                <p>Supervisa accesos, actividad de usuarios, archivos y movimientos recientes.</p>
+            </div>
+            <div class="admin-dashboard-header-actions">
+                <span id="adminDashboardUpdated">Sin actualizar</span>
+                <button class="btn btn-primary" id="refreshAdminDashboard">
+                    <i class="fa-solid fa-rotate"></i>
+                    Actualizar
+                </button>
+            </div>
+        </header>
+
+        <section class="admin-metrics" aria-label="Resumen administrativo">
+            <article class="admin-metric-card">
+                <span class="admin-metric-icon users"><i class="fa-solid fa-users"></i></span>
+                <div><strong id="adminUsersTotal">0</strong><span>Usuarios activos</span><small id="adminUsersMeta">0 registrados</small></div>
+            </article>
+            <article class="admin-metric-card">
+                <span class="admin-metric-icon sessions"><i class="fa-solid fa-right-to-bracket"></i></span>
+                <div><strong id="adminActiveSessions">0</strong><span>Sesiones activas</span><small id="adminLoginsToday">0 inicios hoy</small></div>
+            </article>
+            <article class="admin-metric-card">
+                <span class="admin-metric-icon files"><i class="fa-solid fa-file-arrow-up"></i></span>
+                <div><strong id="adminFilesToday">0</strong><span>Archivos hoy</span><small id="adminFilesMeta">0 en los ultimos 7 dias</small></div>
+            </article>
+            <article class="admin-metric-card">
+                <span class="admin-metric-icon validations"><i class="fa-solid fa-shield-halved"></i></span>
+                <div><strong id="adminValidationsToday">0</strong><span>Validaciones hoy</span><small id="adminValidationMeta">0 con incidencias</small></div>
+            </article>
+            <article class="admin-metric-card">
+                <span class="admin-metric-icon departments"><i class="fa-solid fa-building"></i></span>
+                <div><strong id="adminDepartmentsActive">0</strong><span>Departamentos activos</span><small id="adminDepartmentsMeta">0 registrados</small></div>
+            </article>
+        </section>
+
+        <div class="admin-dashboard-grid">
+            <section class="admin-dashboard-panel movements-panel">
+                <header class="admin-panel-header">
+                    <div><span>TRAZABILIDAD</span><h2>Movimientos recientes</h2></div>
+                    <i class="fa-solid fa-wave-square"></i>
+                </header>
+                <div class="admin-table-wrap">
+                    <table class="admin-table">
+                        <thead><tr><th>Movimiento</th><th>Usuario</th><th>Detalle</th><th>Estado</th><th>Fecha</th></tr></thead>
+                        <tbody id="adminMovementsBody"><tr><td colspan="5" class="admin-loading">Cargando movimientos...</td></tr></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="admin-dashboard-panel sessions-panel">
+                <header class="admin-panel-header">
+                    <div><span>SEGURIDAD</span><h2>Inicios de sesion</h2></div>
+                    <i class="fa-solid fa-fingerprint"></i>
+                </header>
+                <div class="admin-session-list" id="adminSessionsList">
+                    <div class="admin-loading">Cargando sesiones...</div>
+                </div>
+            </section>
+        </div>
+
+        <section class="admin-dashboard-panel user-activity-panel">
+            <header class="admin-panel-header">
+                <div><span>USO DEL SISTEMA</span><h2>Actividad por usuario</h2></div>
+                <i class="fa-solid fa-chart-column"></i>
+            </header>
+            <div class="admin-table-wrap">
+                <table class="admin-table">
+                    <thead><tr><th>Usuario</th><th>Departamento</th><th>Rol</th><th>Sesiones</th><th>Archivos</th><th>Ultimo acceso</th></tr></thead>
+                    <tbody id="adminUserActivityBody"><tr><td colspan="6" class="admin-loading">Cargando actividad...</td></tr></tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+
+    <style>
+        .admin-dashboard-page { color: #102f4c; }
+        .admin-dashboard-header {
+            display: flex; align-items: center; justify-content: space-between; gap: 24px;
+            margin-bottom: 20px; padding: 24px 26px; border-radius: 10px;
+            color: #fff; background: linear-gradient(120deg, #0b2943, #174d78);
+            box-shadow: 0 10px 24px rgba(16, 47, 76, .16);
+        }
+        .admin-dashboard-eyebrow { font-size: 11px; font-weight: 800; letter-spacing: .1em; color: #a9d5f4; }
+        .admin-dashboard-header h1 { margin: 6px 0; font-family: 'Source Serif 4', serif; font-size: 30px; }
+        .admin-dashboard-header p { margin: 0; color: #d7e8f5; }
+        .admin-dashboard-header-actions { display: flex; align-items: center; gap: 12px; }
+        .admin-dashboard-header-actions > span { font-size: 12px; color: #c8dceb; white-space: nowrap; }
+
+        .admin-metrics { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; margin-bottom: 18px; }
+        .admin-metric-card {
+            display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 12px; align-items: center;
+            min-height: 116px; padding: 17px; border: 1px solid #d4dee8; border-radius: 8px; background: #fff;
+        }
+        .admin-metric-icon { display: grid; width: 42px; height: 42px; place-items: center; border-radius: 7px; }
+        .admin-metric-icon.users { color: #174f7d; background: #e4eef7; }
+        .admin-metric-icon.sessions { color: #147644; background: #e1f4e8; }
+        .admin-metric-icon.files { color: #805315; background: #fff0d4; }
+        .admin-metric-icon.validations { color: #8d2935; background: #fbe6e8; }
+        .admin-metric-icon.departments { color: #5d4197; background: #eee8fa; }
+        .admin-metric-card strong { display: block; font-size: 25px; color: #102f4c; }
+        .admin-metric-card span:not(.admin-metric-icon) { display: block; margin-top: 1px; font-weight: 700; font-size: 12px; }
+        .admin-metric-card small { display: block; margin-top: 5px; color: #728497; font-size: 10px; }
+
+        .admin-dashboard-grid { display: grid; grid-template-columns: minmax(0, 1.75fr) minmax(300px, .75fr); gap: 16px; margin-bottom: 16px; }
+        .admin-dashboard-panel { overflow: hidden; border: 1px solid #d4dee8; border-radius: 8px; background: #fff; }
+        .admin-panel-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 18px; border-bottom: 1px solid #dde5ed; background: #f7f9fb; }
+        .admin-panel-header span { color: #6b7f92; font-size: 10px; font-weight: 800; letter-spacing: .09em; }
+        .admin-panel-header h2 { margin: 3px 0 0; font-size: 17px; color: #102f4c; }
+        .admin-panel-header > i { color: #315d82; }
+        .admin-table-wrap { overflow-x: auto; }
+        .admin-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        .admin-table th { padding: 11px 13px; color: #5b6f82; background: #fbfcfd; border-bottom: 1px solid #dce5ed; text-align: left; font-size: 10px; text-transform: uppercase; letter-spacing: .05em; }
+        .admin-table td { padding: 12px 13px; border-bottom: 1px solid #e7edf3; color: #334f68; vertical-align: middle; }
+        .admin-table tbody tr:last-child td { border-bottom: 0; }
+        .admin-movement { display: flex; align-items: center; gap: 9px; font-weight: 700; color: #173f67; white-space: nowrap; }
+        .admin-movement-icon { display: grid; width: 30px; height: 30px; place-items: center; border-radius: 6px; background: #e8eef5; }
+        .admin-state { display: inline-flex; padding: 4px 7px; border-radius: 999px; font-size: 10px; font-weight: 800; background: #edf2f7; color: #53697d; }
+        .admin-state.is-success { color: #147644; background: #e0f4e8; }
+        .admin-state.is-warning { color: #8a5a13; background: #fff0d3; }
+        .admin-state.is-error { color: #a32632; background: #fbe4e6; }
+
+        .admin-session-list { max-height: 475px; overflow-y: auto; }
+        .admin-session-item { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 10px; padding: 13px 15px; border-bottom: 1px solid #e6edf3; }
+        .admin-session-avatar { display: grid; width: 34px; height: 34px; place-items: center; border-radius: 50%; background: #123b5e; color: #fff; font-size: 11px; font-weight: 800; }
+        .admin-session-copy strong { display: block; color: #173a59; font-size: 12px; }
+        .admin-session-copy span, .admin-session-copy small { display: block; margin-top: 2px; color: #718496; font-size: 10px; }
+        .admin-session-dot { width: 8px; height: 8px; margin-top: 6px; border-radius: 50%; background: #9aabb9; }
+        .admin-session-dot.active { background: #1aa15d; box-shadow: 0 0 0 4px #e0f5e8; }
+        .admin-loading { padding: 30px !important; color: #718496 !important; text-align: center !important; }
+        .user-activity-panel { margin-bottom: 20px; }
+
+        @media (max-width: 1180px) {
+            .admin-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+            .admin-dashboard-grid { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 720px) {
+            .admin-dashboard-header { align-items: flex-start; flex-direction: column; padding: 20px; }
+            .admin-dashboard-header-actions { width: 100%; justify-content: space-between; }
+            .admin-metrics { grid-template-columns: 1fr; }
+        }
+    </style>
+
+    <script src="/js/config.js" is:inline></script>
+    <script src="/js/dashboard-admin.js" is:inline></script>
+</DashboardLayout>
+

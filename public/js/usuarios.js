@@ -122,6 +122,20 @@ function renderDepartments() {
                     <button class="action-btn edit" onclick="openDepartmentModal(${department.id})" title="Editar departamento">
                         <i class="fa-solid fa-pen"></i>
                     </button>
+                    <button
+                        class="action-btn department-state ${active ? 'is-disable' : 'is-enable'}"
+                        onclick="toggleDepartmentStatus(${department.id}, ${!active})"
+                        title="${active ? 'Desactivar' : 'Activar'} departamento"
+                    >
+                        <i class="fa-solid ${active ? 'fa-ban' : 'fa-power-off'}"></i>
+                    </button>
+                    <button
+                        class="action-btn delete"
+                        onclick="deleteDepartment(${department.id})"
+                        title="Eliminar departamento"
+                    >
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
                 </td>
             </tr>
         `;
@@ -652,6 +666,138 @@ async function saveDepartment() {
         await Swal.fire({
             icon: 'error',
             title: 'No se pudo guardar',
+            text: error.message
+        });
+    }
+}
+
+async function toggleDepartmentStatus(departmentId, activar) {
+    const department = departments.find(item => item.id === departmentId);
+    if (!department) return;
+
+    const confirmation = await Swal.fire({
+        icon: activar ? 'question' : 'warning',
+        title: activar ? 'Activar departamento' : 'Desactivar departamento',
+        text: activar
+            ? `Se habilitara nuevamente ${department.nombre}.`
+            : `Los usuarios de ${department.nombre} perderan su sesion activa hasta que el departamento vuelva a habilitarse.`,
+        showCancelButton: true,
+        confirmButtonText: activar ? 'Si, activar' : 'Si, desactivar',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: activar ? '#16834b' : '#a46612'
+    });
+
+    if (!confirmation.isConfirmed) return;
+
+    const token = localStorage.getItem('token');
+    if (!token || localStorage.getItem('modoOffline')) {
+        department.activo = activar;
+        renderDepartments();
+        populateDepartmentSelect();
+        return;
+    }
+
+    try {
+        const response = await fetch(
+            `${window.API_URL}/departamentos/${departmentId}/estado`,
+            {
+                method: 'PUT',
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ activo: activar })
+            }
+        );
+        const data = await response.json().catch(() => ({}));
+
+        if (!response.ok || !data.success) {
+            throw new Error(data.message || 'No se pudo cambiar el estado');
+        }
+
+        await loadDepartments();
+        await loadUsers();
+        await Swal.fire({
+            icon: 'success',
+            title: activar ? 'Departamento activado' : 'Departamento desactivado',
+            text: data.message,
+            timer: 1800,
+            showConfirmButton: false
+        });
+    } catch (error) {
+        await Swal.fire({
+            icon: 'error',
+            title: 'No se pudo cambiar el estado',
+            text: error.message
+        });
+    }
+}
+
+async function deleteDepartment(departmentId) {
+    const department = departments.find(item => item.id === departmentId);
+    if (!department) return;
+    const totalUsers = Number(department.total_usuarios || 0);
+    const confirmation = await Swal.fire({
+        icon: 'warning',
+        title: 'Eliminar departamento',
+        html: `
+            <p>Se eliminara definitivamente <strong>${escapeHtml(department.nombre)}</strong>.</p>
+            <p style="margin-top:8px;color:#64748b;">
+                ${totalUsers
+                    ? `${totalUsers} usuario(s) quedaran sin departamento, pero conservaran su cuenta y permisos.`
+                    : 'Este departamento no tiene usuarios asignados.'}
+            </p>
+        `,
+        showCancelButton: true,
+        confirmButtonText: 'Eliminar definitivamente',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#b4232f'
+    });
+
+    if (!confirmation.isConfirmed) return;
+
+    const token = localStorage.getItem('token');
+    if (!token || localStorage.getItem('modoOffline')) {
+        departments = departments.filter(item => item.id !== departmentId);
+        users = users.map(user => String(user.departamento_id) === String(departmentId)
+            ? { ...user, departamento_id: null, departamento_nombre: null }
+            : user);
+        renderDepartments();
+        renderUsers(users);
+        populateDepartmentSelect();
+        populateDepartmentFilter();
+        return;
+    }
+
+    try {
+        const response = await fetch(
+            `${window.API_URL}/departamentos/${departmentId}`,
+            {
+                method: 'DELETE',
+                headers: { Authorization: `Bearer ${token}` }
+            }
+        );
+        const data = await response.json().catch(() => ({}));
+
+        if (!response.ok || !data.success) {
+            throw new Error(data.message || 'No se pudo eliminar el departamento');
+        }
+
+        await loadDepartments();
+        await loadUsers();
+        await Swal.fire({
+            icon: 'success',
+            title: 'Departamento eliminado',
+            text: data.usuariosLiberados
+                ? `${data.usuariosLiberados} usuario(s) quedaron sin departamento.`
+                : data.message,
+            timer: 2000,
+            showConfirmButton: false
+        });
+    } catch (error) {
+        await Swal.fire({
+            icon: 'error',
+            title: 'No se pudo eliminar',
             text: error.message
         });
     }

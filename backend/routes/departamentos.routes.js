@@ -145,4 +145,119 @@ router.put('/:id', verificarToken, esAdmin, async (req, res) => {
     }
 });
 
+router.put('/:id/estado', verificarToken, esAdmin, async (req, res) => {
+    try {
+        const { activo } = req.body;
+
+        if (typeof activo !== 'boolean') {
+            return res.status(400).json({
+                success: false,
+                message: 'El estado del departamento no es valido'
+            });
+        }
+
+        const [result] = await pool.query(
+            'UPDATE departamentos SET activo = ? WHERE id = ?',
+            [activo, req.params.id]
+        );
+
+        if (!result.affectedRows) {
+            return res.status(404).json({
+                success: false,
+                message: 'Departamento no encontrado'
+            });
+        }
+
+        let sesionesCerradas = 0;
+        if (!activo) {
+            const [sesiones] = await pool.query(
+                `UPDATE sesiones s
+                 JOIN usuarios u ON u.id = s.usuario_id
+                 SET s.activa = FALSE
+                 WHERE u.departamento_id = ? AND s.activa = TRUE`,
+                [req.params.id]
+            );
+            sesionesCerradas = sesiones.affectedRows || 0;
+        }
+
+        res.json({
+            success: true,
+            message: activo
+                ? 'Departamento activado correctamente'
+                : 'Departamento desactivado correctamente',
+            sesionesCerradas
+        });
+    } catch (error) {
+        console.error('Error al cambiar estado del departamento:', error);
+        if (responderErrorInstalacion(error, res)) return;
+        res.status(500).json({
+            success: false,
+            message: 'Error al cambiar el estado del departamento'
+        });
+    }
+});
+
+router.delete('/:id', verificarToken, esAdmin, async (req, res) => {
+    const connection = await pool.getConnection();
+
+    try {
+        const [departamentos] = await connection.query(
+            'SELECT id, nombre FROM departamentos WHERE id = ? LIMIT 1',
+            [req.params.id]
+        );
+
+        if (!departamentos.length) {
+            return res.status(404).json({
+                success: false,
+                message: 'Departamento no encontrado'
+            });
+        }
+
+        await connection.beginTransaction();
+
+        const [usuarios] = await connection.query(
+            'SELECT COUNT(*) AS total FROM usuarios WHERE departamento_id = ?',
+            [req.params.id]
+        );
+        const usuariosLiberados = Number(usuarios[0]?.total || 0);
+
+        await connection.query(
+            `UPDATE sesiones s
+             JOIN usuarios u ON u.id = s.usuario_id
+             SET s.activa = FALSE
+             WHERE u.departamento_id = ? AND s.activa = TRUE`,
+            [req.params.id]
+        );
+        await connection.query(
+            'UPDATE usuarios SET departamento_id = NULL WHERE departamento_id = ?',
+            [req.params.id]
+        );
+        const [result] = await connection.query(
+            'DELETE FROM departamentos WHERE id = ?',
+            [req.params.id]
+        );
+
+        if (!result.affectedRows) {
+            throw new Error('El departamento no pudo eliminarse');
+        }
+
+        await connection.commit();
+        res.json({
+            success: true,
+            message: 'Departamento eliminado definitivamente',
+            usuariosLiberados
+        });
+    } catch (error) {
+        await connection.rollback();
+        console.error('Error al eliminar departamento:', error);
+        if (responderErrorInstalacion(error, res)) return;
+        res.status(500).json({
+            success: false,
+            message: error.message || 'Error al eliminar departamento'
+        });
+    } finally {
+        connection.release();
+    }
+});
+
 module.exports = router;

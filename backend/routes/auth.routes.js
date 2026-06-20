@@ -12,6 +12,7 @@ const { pool } = require('../config/database');
 const { verificarToken } = require('../middleware/auth.middleware');
 
 const PERMISOS_ADMIN = {
+    dashboardAdmin: true,
     perfil: true,
     tiendas: true,
     permisos: true,
@@ -39,9 +40,9 @@ function construirContextoUsuario(usuario) {
 
     if (usuario.rol === 'admin') {
         const permisosGuardados = parsearJson(usuario.permisos);
-        const paginaInicio = ['tiendas', 'documentos', 'historial'].includes(
+        const paginaInicio = ['dashboardAdmin', 'tiendas', 'documentos', 'historial'].includes(
             permisosGuardados.paginaInicio
-        ) ? permisosGuardados.paginaInicio : 'tiendas';
+        ) ? permisosGuardados.paginaInicio : 'dashboardAdmin';
         permisos = { ...PERMISOS_ADMIN, paginaInicio };
     } else {
         permisos = {

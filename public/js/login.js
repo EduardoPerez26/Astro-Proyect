@@ -4,6 +4,7 @@ const API_URL = window.API_URL;
 function obtenerRutaInicial(usuario) {
     const permisos = usuario?.permisos || {};
     const rutas = {
+        dashboardAdmin: '/views/dashboard-admin',
         tiendas: '/views/tiendas',
         documentos: '/views/documentos',
         historial: '/views/historial'
@@ -17,7 +18,7 @@ function obtenerRutaInicial(usuario) {
     if (permisos.tiendas) return '/views/tiendas';
     if (permisos.documentos) return '/views/documentos';
     if (permisos.historial) return '/views/historial';
-    if (usuario?.rol === 'admin' && permisos.usuarios) return '/views/usuarios';
+    if (usuario?.rol === 'admin' && permisos.dashboardAdmin) return '/views/dashboard-admin';
     return '/';
 }
 
@@ -134,16 +135,18 @@ document.addEventListener('DOMContentLoaded', function () {
                             username: 'admin',
                             rol: 'admin',
                             permisos: {
+                                dashboardAdmin: true,
                                 tiendas: true,
                                 documentos: true,
                                 perfil: true,
                                 permisos: true,
                                 historial: true,
                                 usuarios: true,
-                                controlRestaurantes: true
+                                controlRestaurantes: true,
+                                paginaInicio: 'dashboardAdmin'
                             }
                         }));
-                        window.location.href = '/views/tiendas';
+                        window.location.href = '/views/dashboard-admin';
                     } else {
                         Swal.fire({
                             icon: 'info',

@@ -389,6 +389,12 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
         }
 
         .department-modal { max-width: 720px; }
+
+        .action-btn.department-state.is-disable { color: #a46612; }
+        .action-btn.department-state.is-disable:hover { background: #fff1d6; color: #7c4a08; }
+        .action-btn.department-state.is-enable { color: #16834b; }
+        .action-btn.department-state.is-enable:hover { background: #e2f5e9; color: #0f683a; }
+
         @media (max-width: 720px) {
             .department-intro { align-items: flex-start; flex-direction: column; }
             .admin-view-tabs { display: flex; }
