@@ -122,9 +122,13 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
 
     <!-- Modal de detalles -->
     <div id="modalDetalles" class="modal-overlay">
-        <div class="modal modal-lg">
-            <div class="modal-header">
-                <h3 id="modalTitulo">Detalles del documento</h3>
+        <div class="modal modal-lg document-detail-modal">
+            <div class="modal-header document-detail-modal-header">
+                <div>
+                    <span>EXPEDIENTE DIGITAL</span>
+                    <h3 id="modalTitulo">Detalle del documento</h3>
+                    <p>Información y trazabilidad del archivo seleccionado</p>
+                </div>
                 <button class="modal-close" onclick="cerrarModal()">
                     <i class="fa-solid fa-times"></i>
                 </button>
@@ -134,7 +138,7 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
             </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" onclick="cerrarModal()">Cerrar</button>
-                <button class="btn btn-primary" id="btnDescargar">
+                <button class="btn btn-primary" id="btnDescargar" onclick="descargarDocumentoSeleccionado()">
                     <i class="fa-solid fa-download"></i>
                     Descargar
                 </button>
@@ -145,7 +149,7 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
     <script src="/js/config.js" is:inline></script>
     <script is:inline src="/js/documentos.js"></script>
 
-    <style>
+    <style is:inline>
         .documents-filters {
             display: grid;
             grid-template-columns: minmax(260px, 1.6fr) repeat(4, minmax(130px, .72fr)) auto;
@@ -220,6 +224,40 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
             white-space: nowrap;
         }
 
+        .document-detail-modal { max-width: 780px !important; border-radius: 10px; }
+        .document-detail-modal-header { align-items: flex-start; padding: 20px 23px; color: #fff; border-bottom: 0; background: linear-gradient(115deg, #0b2943, #174d78); }
+        .document-detail-modal-header > div > span { color: #a9d5f4; font-size: 9px; font-weight: 800; letter-spacing: .1em; }
+        .document-detail-modal-header h3 { margin: 4px 0 2px; color: #fff; font-family: 'Source Serif 4', serif; font-size: 22px; }
+        .document-detail-modal-header p { margin: 0; color: #cbdfea; font-size: 11px; }
+        .document-detail-modal-header .modal-close { color: #fff; border: 1px solid rgba(255,255,255,.28); background: rgba(255,255,255,.07); }
+        .document-detail-modal .modal-body { padding: 18px; background: #f3f6f9; }
+        .document-detail-modal .modal-footer { padding: 13px 18px; background: #fff; }
+        .document-detail-overview { display: grid; grid-template-columns: auto minmax(0,1fr) auto; align-items: center; gap: 13px; margin-bottom: 13px; padding: 15px; border: 1px solid #d2dee8; border-radius: 7px; background: #fff; }
+        .document-detail-file-icon { display: grid; width: 46px; height: 46px; place-items: center; border-radius: 7px; color: #12835a; background: #e2f5ec; font-size: 20px; }
+        .document-detail-file-copy { min-width: 0; }
+        .document-detail-file-copy > span { color: #718598; font-size: 9px; font-weight: 800; letter-spacing: .07em; }
+        .document-detail-file-copy h4 { overflow: hidden; margin: 4px 0 2px; color: #163b5c; font-size: 15px; text-overflow: ellipsis; white-space: nowrap; }
+        .document-detail-file-copy p { margin: 0; color: #738598; font-size: 10px; }
+        .document-detail-status { align-self: flex-start; }
+        .document-detail-grid { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 9px; margin-bottom: 13px; }
+        .document-detail-grid article { display: flex; align-items: center; gap: 9px; min-width: 0; padding: 11px; border: 1px solid #d4dfe8; border-radius: 6px; background: #fff; }
+        .document-detail-card-icon { display: grid; width: 30px; height: 30px; flex: 0 0 auto; place-items: center; border-radius: 5px; color: #315f84; background: #e8eff5; font-size: 12px; }
+        .document-detail-grid article > div { min-width: 0; }
+        .document-detail-grid small { display: block; color: #718598; font-size: 8px; font-weight: 800; text-transform: uppercase; }
+        .document-detail-grid strong { display: block; overflow: hidden; margin-top: 3px; color: #1f415e; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+        .document-detail-section { overflow: hidden; border: 1px solid #d4dfe8; border-radius: 7px; background: #fff; }
+        .document-detail-section > header { padding: 11px 14px; border-bottom: 1px solid #e0e7ed; background: #f8fafb; }
+        .document-detail-section > header span { color: #728598; font-size: 8px; font-weight: 800; letter-spacing: .07em; }
+        .document-detail-section > header h4 { margin: 2px 0 0; color: #193c5b; font-size: 13px; }
+        .document-detail-list { margin: 0; }
+        .document-detail-list > div { display: grid; grid-template-columns: minmax(140px,.35fr) minmax(0,1fr); gap: 15px; padding: 10px 14px; border-bottom: 1px solid #e7edf2; }
+        .document-detail-list > div:last-child { border-bottom: 0; }
+        .document-detail-list dt { color: #667b8e; font-size: 10px; font-weight: 700; }
+        .document-detail-list dd { margin: 0; color: #24445f; font-size: 10px; text-align: right; overflow-wrap: anywhere; }
+        .document-detail-note { display: flex; gap: 10px; margin-top: 12px; padding: 11px 13px; border: 1px solid #e3d4af; border-radius: 6px; color: #765318; background: #fff9eb; }
+        .document-detail-note span { font-size: 8px; font-weight: 800; letter-spacing: .07em; }
+        .document-detail-note p { margin: 3px 0 0; font-size: 10px; }
+
         @media (max-width: 1250px) {
             .documents-filters { grid-template-columns: repeat(3, minmax(0, 1fr)); }
             .search-filter { grid-column: span 2; }
@@ -229,6 +267,9 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
             .documents-filters { grid-template-columns: 1fr; }
             .search-filter { grid-column: auto; }
             .clear-filters { width: 100%; }
+            .document-detail-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+            .document-detail-overview { grid-template-columns: auto minmax(0,1fr); }
+            .document-detail-status { grid-column: 1 / -1; justify-self: start; }
         }
     </style>
 </DashboardLayout>

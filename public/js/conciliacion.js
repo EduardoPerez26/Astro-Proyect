@@ -860,7 +860,8 @@ function abrirVentanaComparacion(
     html,
     textoConfirmar,
     titulo = 'Comparación de conciliaciones',
-    subtitulo = 'Revisa las diferencias antes de continuar.'
+    subtitulo = 'Revisa las diferencias antes de continuar.',
+    opciones = {}
 ) {
     const dialog = document.getElementById('fileComparisonDialog');
     const content = document.getElementById('fileComparisonContent');
@@ -869,6 +870,7 @@ function abrirVentanaComparacion(
     const closeButton = document.getElementById('fileComparisonClose');
     const titleElement = document.getElementById('fileComparisonTitle');
     const subtitleElement = dialog?.querySelector('.file-comparison-window-header p');
+    const helpElement = document.getElementById('fileComparisonHelpText');
 
     if (!dialog || !content || !confirmButton || !cancelButton || !closeButton) {
         return Promise.resolve(false);
@@ -876,8 +878,14 @@ function abrirVentanaComparacion(
 
     content.innerHTML = html;
     confirmButton.textContent = textoConfirmar;
+    cancelButton.hidden = Boolean(opciones.ocultarCancelar);
+    dialog.dataset.size = opciones.compacto ? 'compacto' : 'amplio';
     if (titleElement) titleElement.textContent = titulo;
     if (subtitleElement) subtitleElement.textContent = subtitulo;
+    if (helpElement) {
+        helpElement.textContent = opciones.textoAyuda ||
+            'La conciliación no continuará hasta que confirmes el archivo.';
+    }
 
     return new Promise(resolve => {
         let resuelta = false;
@@ -889,6 +897,8 @@ function abrirVentanaComparacion(
             cancelButton.removeEventListener('click', cancelar);
             closeButton.removeEventListener('click', cancelar);
             dialog.removeEventListener('cancel', cancelarConEscape);
+            cancelButton.hidden = false;
+            delete dialog.dataset.size;
             if (dialog.open) dialog.close();
             resolve(confirmada);
         };
@@ -1309,6 +1319,8 @@ function initEventListeners() {
 
                 fechaSeleccionada =
                     fechaInput.value;
+
+                invalidarComparacionConciliacion();
 
                 if (
                     salesWorkbook &&
@@ -1996,6 +2008,10 @@ function initEventListeners() {
             exportarTabActualCSV
         );
 
+    document
+        .getElementById('btnCompararConciliacion')
+        ?.addEventListener('click', ejecutarComparacionManual);
+
 }
 
 // ============================================
@@ -2383,11 +2399,7 @@ function removerArchivo() {
     salesDetailWorkbook = null;
     datosExtraidos = [];
     fechaConciliacionActual = null;
-    comparacionConciliacionActual = {
-        clave: '',
-        resultado: null,
-        aprobada: true
-    };
+    invalidarComparacionConciliacion();
     salesRows = [];
     salesDetailRows = [];
     ebtPorTienda = {};
@@ -2883,6 +2895,7 @@ function guardarValorEsperado() {
     const nuevoValor = parseFloat(document.getElementById('editValorEsperado').value) || 0;
     datosExtraidos[editandoIndex].valorEsperado = nuevoValor;
     datosExtraidos[editandoIndex].diferencia = datosExtraidos[editandoIndex].valorExcel - nuevoValor;
+    invalidarComparacionConciliacion();
 
     // Actualizar en memoria de valores esperados
     const concepto = datosExtraidos[editandoIndex].concepto;
@@ -3791,6 +3804,14 @@ function crearVistaDiferenciasConciliacion(resultado) {
                 <div><strong>${filas.length}</strong><span>Montos diferentes</span></div>
             </div>
 
+            <div class="reconciliation-reading-guide">
+                <div><span>ANTERIOR</span><p>Monto de la conciliación guardada.</p></div>
+                <i class="fa-solid fa-arrow-right"></i>
+                <div><span>NUEVO</span><p>Monto del archivo que acabas de procesar.</p></div>
+                <i class="fa-solid fa-equals"></i>
+                <div><span>DIFERENCIA</span><p>Cambio que será registrado si continúas.</p></div>
+            </div>
+
             <div class="reconciliation-diff-wrapper">
                 <table class="reconciliation-diff-table">
                     <thead>
@@ -3823,71 +3844,245 @@ function crearVistaDiferenciasConciliacion(resultado) {
     `;
 }
 
-async function compararConciliacionConBD() {
+function invalidarComparacionConciliacion() {
+    comparacionConciliacionActual = {
+        clave: '',
+        resultado: null,
+        aprobada: true
+    };
+    actualizarPanelComparacion(
+        'pendiente',
+        'Compara antes de guardar',
+        'El sistema revisará el mismo restaurante, tienda y fecha contra la última conciliación guardada.'
+    );
+}
+
+function actualizarPanelComparacion(estado, titulo, detalle) {
+    const panel = document.getElementById('conciliationComparisonPanel');
+    const icon = document.getElementById('conciliationComparisonIcon');
+    const title = document.getElementById('conciliationComparisonTitle');
+    const text = document.getElementById('conciliationComparisonText');
+    const button = document.getElementById('btnCompararConciliacion');
+    const iconos = {
+        pendiente: 'fa-code-compare',
+        cargando: 'fa-spinner fa-spin',
+        igual: 'fa-circle-check',
+        cambios: 'fa-triangle-exclamation',
+        primera: 'fa-file-circle-plus',
+        error: 'fa-circle-xmark'
+    };
+
+    if (panel) panel.dataset.state = estado;
+    if (icon) icon.className = `fa-solid ${iconos[estado] || iconos.pendiente}`;
+    if (title) title.textContent = titulo;
+    if (text) text.textContent = detalle;
+    if (button && estado !== 'cargando') {
+        button.innerHTML = estado === 'pendiente'
+            ? '<i class="fa-solid fa-magnifying-glass-chart"></i> Comparar ahora'
+            : '<i class="fa-solid fa-eye"></i> Ver resultado';
+    }
+}
+
+function crearVistaResumenComparacionConciliacion(resultado) {
+    const codigo = obtenerCodigoRestauranteActual();
+    const restaurante = {
+        'taco-bell': 'Taco Bell',
+        popeyes: 'Popeyes',
+        'burger-king': 'Burger King'
+    }[codigo] || codigo;
+    const esIncompatible = Boolean(resultado.referenciaIncompatible);
+    const esPrimera = !resultado.existe;
+    const configuracion = esIncompatible
+        ? {
+            estado: 'actualizado',
+            etiqueta: 'REFERENCIA NO COMPATIBLE',
+            titulo: 'El archivo anterior no contiene datos comparables',
+            texto: 'La conciliación actual se conservará como una nueva referencia para futuras comparaciones.',
+            icono: 'fa-triangle-exclamation'
+        }
+        : esPrimera
+            ? {
+                estado: 'actualizado',
+                etiqueta: 'PRIMERA COMPARACION',
+                titulo: 'No existe una conciliación anterior para esta fecha',
+                texto: 'No hay montos anteriores contra los cuales comparar. Puedes continuar normalmente.',
+                icono: 'fa-file-circle-plus'
+            }
+            : {
+                estado: 'igual',
+                etiqueta: 'SIN DIFERENCIAS',
+                titulo: 'Los montos coinciden con la conciliación guardada',
+                texto: 'Se revisaron todas las tiendas y conceptos configurados para este restaurante.',
+                icono: 'fa-circle-check'
+            };
+
+    return `
+        <div class="file-comparison-view reconciliation-comparison" data-result="${configuracion.estado}">
+            <div class="file-comparison-result">
+                <span>${configuracion.etiqueta}</span>
+                <strong><i class="fa-solid ${configuracion.icono}"></i> ${configuracion.titulo}</strong>
+                <p>${configuracion.texto}</p>
+            </div>
+            <div class="reconciliation-comparison-context">
+                <div><span>Restaurante</span><strong>${escaparHtmlComparacion(restaurante)}</strong></div>
+                <i class="fa-solid fa-arrow-right"></i>
+                <div><span>Fecha operativa</span><strong>${escaparHtmlComparacion(obtenerFechaConciliacionBD())}</strong></div>
+            </div>
+            <div class="reconciliation-comparison-summary">
+                <div><strong>${Number(resultado.tiendasComparadas || datosExtraidos.length)}</strong><span>Tiendas revisadas</span></div>
+                <div><strong>${Number(resultado.tiendasConDiferencias || 0)}</strong><span>Tiendas con cambios</span></div>
+                <div><strong>0</strong><span>Montos diferentes</span></div>
+            </div>
+            <div class="reconciliation-comparison-next-step">
+                <i class="fa-solid fa-circle-info"></i>
+                <div>
+                    <strong>${esPrimera ? '¿Qué sigue?' : 'Resultado verificado'}</strong>
+                    <p>${esPrimera
+                        ? 'Guarda esta conciliación para usarla como referencia cuando vuelvas a procesar la misma fecha.'
+                        : 'Puedes cerrar esta ventana y continuar; la consulta ya quedó registrada en el historial.'}</p>
+                </div>
+            </div>
+        </div>`;
+}
+
+async function consultarComparacionConciliacion() {
     const token = localStorage.getItem('token');
-    const offline = localStorage.getItem('modoOffline') === 'true';
     const restauranteId = document.getElementById('selectRestaurante')?.value;
     const fecha = obtenerFechaConciliacionBD();
 
-    if (offline) return true;
-    if (!token || !restauranteId || !fecha || !datosExtraidos.length) return false;
+    if (!token) throw new Error('La sesión no está disponible');
+    if (!restauranteId) throw new Error('Selecciona un restaurante');
+    if (!fecha) throw new Error('Selecciona la fecha de la conciliación');
+    if (!datosExtraidos.length) throw new Error('Primero genera la conciliación para obtener los montos');
+
+    const huella = await hashTextoRevision(JSON.stringify(datosExtraidos));
+    const clave = `${restauranteId}:${fecha}:${huella.slice(0, 16)}`;
+    if (
+        comparacionConciliacionActual.clave === clave &&
+        comparacionConciliacionActual.resultado
+    ) {
+        return comparacionConciliacionActual.resultado;
+    }
+
+    const response = await fetch(
+        `${window.API_URL}/conciliaciones/comparar-existente`,
+        {
+            method: 'POST',
+            headers: {
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                restaurante_id: restauranteId,
+                fecha_conciliacion: fecha,
+                datos_extraidos: datosExtraidos
+            })
+        }
+    );
+    const resultado = await response.json().catch(() => ({}));
+    if (!response.ok) {
+        throw new Error(resultado.message || resultado.mensaje || 'No se pudo comparar la conciliación');
+    }
+
+    comparacionConciliacionActual = {
+        clave,
+        resultado,
+        aprobada: !resultado.tiendasConDiferencias
+    };
+    return resultado;
+}
+
+async function ejecutarComparacionManual() {
+    const button = document.getElementById('btnCompararConciliacion');
+    if (localStorage.getItem('modoOffline') === 'true') {
+        await Swal.fire({
+            icon: 'info',
+            title: 'Comparación disponible en línea',
+            text: 'El sistema necesita consultar la última conciliación guardada en el servidor.'
+        });
+        return;
+    }
 
     try {
-        const huella = await hashTextoRevision(JSON.stringify(datosExtraidos));
-        const clave = `${restauranteId}:${fecha}:${huella.slice(0, 16)}`;
+        if (button) {
+            button.disabled = true;
+            button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Comparando';
+        }
+        actualizarPanelComparacion(
+            'cargando',
+            'Comparando tienda por tienda',
+            'Buscando la conciliación guardada para el mismo restaurante y fecha...'
+        );
+        const resultado = await consultarComparacionConciliacion();
+        const tieneCambios = Number(resultado.tiendasConDiferencias || 0) > 0;
 
-        if (
-            comparacionConciliacionActual.clave === clave &&
-            comparacionConciliacionActual.resultado
-        ) {
-            if (!comparacionConciliacionActual.resultado.tiendasConDiferencias) {
-                return true;
-            }
-            if (comparacionConciliacionActual.aprobada) return true;
-        } else {
-            const response = await fetch(
-                `${window.API_URL}/conciliaciones/comparar-existente`,
-                {
-                    method: 'POST',
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        restaurante_id: restauranteId,
-                        fecha_conciliacion: fecha,
-                        datos_extraidos: datosExtraidos
-                    })
-                }
+        if (tieneCambios) {
+            actualizarPanelComparacion(
+                'cambios',
+                'Se encontraron diferencias',
+                `${resultado.tiendasConDiferencias} tienda(s) tienen montos distintos. Abre el resultado para revisarlos.`
             );
-            const resultado = await response.json().catch(() => ({}));
-
-            if (!response.ok) {
-                throw new Error(resultado.message || 'No se pudo comparar la conciliación');
-            }
-
-            comparacionConciliacionActual = {
-                clave,
-                resultado,
-                aprobada: !resultado.tiendasConDiferencias
-            };
-
-            if (!resultado.existe || !resultado.tiendasConDiferencias) {
-                return true;
-            }
+        } else if (resultado.referenciaIncompatible) {
+            actualizarPanelComparacion(
+                'error',
+                'La referencia anterior no es compatible',
+                'El archivo guardado no contiene la hoja interna necesaria para comparar montos.'
+            );
+        } else if (!resultado.existe) {
+            actualizarPanelComparacion(
+                'primera',
+                'Esta es la primera conciliación de la fecha',
+                'No existe una referencia anterior; el resultado quedará disponible para la próxima revisión.'
+            );
+        } else {
+            actualizarPanelComparacion(
+                'igual',
+                'No se encontraron diferencias',
+                `${resultado.tiendasComparadas} tienda(s) coinciden con la conciliación guardada.`
+            );
         }
 
-        const resultado = comparacionConciliacionActual.resultado;
+        await abrirVentanaComparacion(
+            tieneCambios
+                ? crearVistaDiferenciasConciliacion(resultado)
+                : crearVistaResumenComparacionConciliacion(resultado),
+            'Cerrar resultado',
+            'Resultado de la comparación',
+            'Comparación por restaurante, tienda y fecha operativa.',
+            {
+                ocultarCancelar: true,
+                compacto: !tieneCambios,
+                textoAyuda: 'Esta consulta no modifica ni reemplaza ningún archivo.'
+            }
+        );
+    } catch (error) {
+        console.error('Error en comparación manual:', error);
+        actualizarPanelComparacion('error', 'No se pudo comparar', error.message);
+        await Swal.fire({ icon: 'warning', title: 'Comparación no disponible', text: error.message });
+    } finally {
+        if (button) button.disabled = false;
+    }
+}
+
+async function compararConciliacionConBD() {
+    if (localStorage.getItem('modoOffline') === 'true') return true;
+
+    try {
+        const resultado = await consultarComparacionConciliacion();
+        if (!resultado.tiendasConDiferencias) return true;
+        if (comparacionConciliacionActual.aprobada) return true;
+
         const decision = await abrirVentanaComparacion(
             crearVistaDiferenciasConciliacion(resultado),
             'Continuar con datos nuevos',
-            'Cambios contra la conciliación guardada',
-            'Comparación por tienda y fecha con las reglas de esta marca.'
+            'Confirma los cambios detectados',
+            'Revisa las tiendas y montos diferentes antes de guardar.'
         );
         comparacionConciliacionActual.aprobada = decision;
         return decision;
     } catch (error) {
         console.error('Error comparando conciliación:', error);
+        actualizarPanelComparacion('error', 'No se pudo comparar', error.message);
         await Swal.fire({
             icon: 'error',
             title: 'No se pudo validar la conciliación',

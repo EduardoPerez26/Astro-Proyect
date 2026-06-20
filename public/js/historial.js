@@ -149,6 +149,12 @@ function renderGruposComparaciones(items) {
 
 function renderComparacionItem(item) {
     const estado = getEstadoComparacion(item.estado);
+    const deleteButton = puedeEliminarComparaciones()
+        ? `<button class="comparison-delete-button" type="button" onclick="eliminarComparacion(${item.id})" title="Eliminar comparación">
+                <i class="fa-solid fa-trash"></i>
+                Eliminar
+           </button>`
+        : '';
     return `
         <article class="comparison-history-item ${estado.clase}">
             <div class="comparison-brand-icon"><i class="fa-solid ${getRestaurantIcon(item.restaurante_codigo)}"></i></div>
@@ -166,12 +172,60 @@ function renderComparacionItem(item) {
                 <div><strong>${item.total_diferencias}</strong><span>Diferencias</span></div>
                 <div><strong>${formatHistoryMoney(item.monto_diferencia_absoluta)}</strong><span>Variacion absoluta</span></div>
             </div>
-            <button class="comparison-detail-button" type="button" onclick="verComparacion(${item.id})">
-                <i class="fa-solid fa-arrow-right"></i>
-                Ver detalle
-            </button>
+            <div class="comparison-item-actions">
+                <button class="comparison-detail-button" type="button" onclick="verComparacion(${item.id})">
+                    <i class="fa-solid fa-arrow-right"></i>
+                    Ver detalle
+                </button>
+                ${deleteButton}
+            </div>
         </article>
     `;
+}
+
+function puedeEliminarComparaciones() {
+    try {
+        return JSON.parse(localStorage.getItem('usuario') || '{}').rol === 'admin';
+    } catch {
+        return false;
+    }
+}
+
+async function eliminarComparacion(id) {
+    const comparison = comparaciones.find(item => Number(item.id) === Number(id));
+    if (!comparison) return;
+
+    const confirmation = await Swal.fire({
+        icon: 'warning',
+        title: 'Eliminar comparación',
+        html: `Se eliminará el registro de <strong>${escapeHistoryHtml(comparison.restaurante_nombre)}</strong> y todas sus diferencias.<br><small>Esta acción no elimina el archivo ni la conciliación.</small>`,
+        showCancelButton: true,
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#b4232f'
+    });
+    if (!confirmation.isConfirmed) return;
+
+    try {
+        const response = await fetch(`${window.API_URL}/comparaciones/${id}`, {
+            method: 'DELETE',
+            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok || !data.success) {
+            throw new Error(data.message || data.mensaje || 'No se pudo eliminar la comparación');
+        }
+
+        await cargarComparaciones();
+        await Swal.fire({
+            icon: 'success',
+            title: 'Comparación eliminada',
+            timer: 1500,
+            showConfirmButton: false
+        });
+    } catch (error) {
+        await Swal.fire({ icon: 'error', title: 'No se pudo eliminar', text: error.message });
+    }
 }
 
 async function verComparacion(id) {
@@ -358,6 +412,7 @@ function escapeHistoryHtml(value) {
 }
 
 window.verComparacion = verComparacion;
+window.eliminarComparacion = eliminarComparacion;
 window.cerrarDetalleComparacion = cerrarDetalleComparacion;
 window.limpiarFiltros = limpiarFiltros;
 window.exportarHistorial = exportarHistorial;

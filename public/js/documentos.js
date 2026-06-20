@@ -362,54 +362,47 @@ function verDetalles(id) {
     const modalTitulo = document.getElementById('modalTitulo');
     const revision = obtenerInfoRevisionFuente(doc);
     const nombreVisible = revision?.nombreOriginal || doc.nombre_original;
+    const nombreSeguro = escapeDocumentoHtml(nombreVisible);
+    const restaurante = escapeDocumentoHtml(doc.restaurante_nombre || doc.restaurante || 'Sin restaurante');
+    const usuario = escapeDocumentoHtml(doc.usuario_nombre || doc.subido_por || 'Sin usuario');
+    const hojas = escapeDocumentoHtml(doc.nombres_hojas || 'No especificadas');
+    const estado = escapeDocumentoHtml(formatearEstado(doc.estado));
+    const uso = revision
+        ? `${revision.esReferenciaActual ? 'Referencia de comparación' : 'Referencia anterior'} / ${revision.etiqueta}`
+        : 'Archivo operativo';
 
-    modalTitulo.textContent = nombreVisible;
-
+    modalTitulo.textContent = 'Detalle del documento';
     modalBody.innerHTML = `
-        <div class="detail-row">
-            <span class="detail-label">ID:</span>
-            <span class="detail-value">${doc.id}</span>
-        </div>
-        <div class="detail-row">
-            <span class="detail-label">Archivo:</span>
-            <span class="detail-value">${nombreVisible}</span>
-        </div>
-        ${revision ? `
-        <div class="detail-row">
-            <span class="detail-label">Uso:</span>
-            <span class="detail-value">${revision.esReferenciaActual ? 'Referencia de comparación' : 'Referencia anterior'} · ${revision.etiqueta}</span>
-        </div>
-        ` : ''}
-        <div class="detail-row">
-            <span class="detail-label">Restaurante:</span>
-            <span class="detail-value">${doc.restaurante_nombre || doc.restaurante || '-'}</span>
-        </div>
-        <div class="detail-row">
-            <span class="detail-label">Tamano:</span>
-            <span class="detail-value">${formatearTamano(doc.tamano_bytes)}</span>
-        </div>
-        <div class="detail-row">
-            <span class="detail-label">Hojas:</span>
-            <span class="detail-value">${doc.nombres_hojas || '-'}</span>
-        </div>
-        <div class="detail-row">
-            <span class="detail-label">Estado:</span>
-            <span class="detail-value"><span class="badge badge-${doc.estado}">${formatearEstado(doc.estado)}</span></span>
-        </div>
-        <div class="detail-row">
-            <span class="detail-label">Subido por:</span>
-            <span class="detail-value">${doc.usuario_nombre || doc.subido_por || '-'}</span>
-        </div>
-        <div class="detail-row">
-            <span class="detail-label">Fecha subida:</span>
-            <span class="detail-value">${formatearFecha(doc.fecha_subida, true)}</span>
-        </div>
+        <section class="document-detail-overview">
+            <div class="document-detail-file-icon"><i class="fa-solid fa-file-excel"></i></div>
+            <div class="document-detail-file-copy">
+                <span>ARCHIVO REGISTRADO</span>
+                <h4 title="${nombreSeguro}">${nombreSeguro}</h4>
+                <p>${restaurante} / Registro #${Number(doc.id)}</p>
+            </div>
+            <span class="document-detail-status badge badge-${escapeDocumentoHtml(doc.estado)}">${estado}</span>
+        </section>
+
+        <section class="document-detail-grid">
+            <article><span class="document-detail-card-icon"><i class="fa-solid fa-store"></i></span><div><small>Restaurante</small><strong>${restaurante}</strong></div></article>
+            <article><span class="document-detail-card-icon"><i class="fa-solid fa-user"></i></span><div><small>Subido por</small><strong>${usuario}</strong></div></article>
+            <article><span class="document-detail-card-icon"><i class="fa-solid fa-calendar-day"></i></span><div><small>Fecha de carga</small><strong>${escapeDocumentoHtml(formatearFecha(doc.fecha_subida, true))}</strong></div></article>
+            <article><span class="document-detail-card-icon"><i class="fa-solid fa-weight-hanging"></i></span><div><small>Tamaño</small><strong>${escapeDocumentoHtml(formatearTamano(doc.tamano_bytes))}</strong></div></article>
+        </section>
+
+        <section class="document-detail-section">
+            <header><span>INFORMACION TECNICA</span><h4>Datos del archivo</h4></header>
+            <dl class="document-detail-list">
+                <div><dt>Identificador</dt><dd>#${Number(doc.id)}</dd></div>
+                <div><dt>Uso en el sistema</dt><dd>${escapeDocumentoHtml(uso)}</dd></div>
+                <div><dt>Hojas incluidas</dt><dd>${hojas}</dd></div>
+            </dl>
+        </section>
         ${doc.notas && !revision ? `
-        <div class="detail-row">
-            <span class="detail-label">Notas:</span>
-            <span class="detail-value">${doc.notas}</span>
-        </div>
-        ` : ''}
+        <section class="document-detail-note">
+            <i class="fa-solid fa-note-sticky"></i>
+            <div><span>NOTAS</span><p>${escapeDocumentoHtml(doc.notas)}</p></div>
+        </section>` : ''}
     `;
 
     document.getElementById('modalDetalles').classList.add('active');
@@ -418,6 +411,19 @@ function verDetalles(id) {
 function cerrarModal() {
     document.getElementById('modalDetalles').classList.remove('active');
     documentoSeleccionado = null;
+}
+
+function descargarDocumentoSeleccionado() {
+    if (documentoSeleccionado?.id) descargarArchivo(documentoSeleccionado.id);
+}
+
+function escapeDocumentoHtml(value) {
+    return String(value ?? '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
 }
 
 async function descargarArchivo(id) {

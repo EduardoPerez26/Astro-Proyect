@@ -43,6 +43,7 @@ async function registrarComparacion({
     restauranteId,
     usuarioId,
     archivoReferenciaId = null,
+    conciliacionReferenciaId = null,
     fechaOperacion,
     estado,
     datosNuevos,
@@ -53,31 +54,53 @@ async function registrarComparacion({
         (total, detalle) => total + Math.abs(detalle.diferencia || 0),
         0
     );
+    const huellaDatos = obtenerHuella(datosNuevos);
     let connection;
 
     try {
         connection = await pool.getConnection();
         await connection.beginTransaction();
+        const [existentes] = await connection.query(
+            `SELECT id
+             FROM comparaciones_archivos
+             WHERE restaurante_id = ?
+               AND fecha_operacion = ?
+               AND estado = ?
+               AND huella_datos = ?
+             ORDER BY id DESC
+             LIMIT 1
+             FOR UPDATE`,
+            [restauranteId, fechaOperacion, estado, huellaDatos]
+        );
+
+        if (existentes.length) {
+            await connection.commit();
+            return existentes[0].id;
+        }
+
         const [registro] = await connection.query(
             `INSERT INTO comparaciones_archivos
-             (restaurante_id, usuario_id, archivo_referencia_id,
+             (restaurante_id, usuario_id, archivo_referencia_id, conciliacion_id,
               fecha_operacion, estado, tiendas_comparadas,
               tiendas_con_diferencias, total_diferencias,
               monto_diferencia_absoluta, huella_datos, resumen)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
                 restauranteId,
                 usuarioId || null,
                 archivoReferenciaId || null,
+                conciliacionReferenciaId || null,
                 fechaOperacion,
                 estado,
                 Number(resultado?.tiendasComparadas || 0),
                 Number(resultado?.tiendasConDiferencias || 0),
                 detalles.length,
                 montoAbsoluto,
-                obtenerHuella(datosNuevos),
+                huellaDatos,
                 JSON.stringify({
-                    existeReferencia: Boolean(archivoReferenciaId),
+                    existeReferencia: Boolean(
+                        archivoReferenciaId || conciliacionReferenciaId
+                    ),
                     estado
                 })
             ]

@@ -94,6 +94,18 @@ function parsearNotasArchivo(valor) {
     }
 }
 
+function parsearDatosConciliacion(valor) {
+    if (Array.isArray(valor)) return valor;
+    if (!valor) return [];
+
+    try {
+        const datos = JSON.parse(String(valor));
+        return Array.isArray(datos) ? datos : [];
+    } catch {
+        return [];
+    }
+}
+
 function extraerDatosComparacionArchivo(archivoBlob) {
     if (!archivoBlob) return [];
 
@@ -503,6 +515,51 @@ router.post('/comparar-existente', verificarToken, async (req, res) => {
             fecha_conciliacion,
             fecha_conciliacion
         );
+        const [conciliacionesGuardadas] = await pool.query(
+            `SELECT id, datos_extraidos
+             FROM conciliaciones
+             WHERE restaurante_id = ?
+               AND DATE(fecha_conciliacion) = DATE(?)
+             ORDER BY id DESC
+             LIMIT 1`,
+            [restaurante_id, fechaBuscada]
+        );
+        const conciliacionReferencia = conciliacionesGuardadas[0];
+        const datosConciliacionAnterior = parsearDatosConciliacion(
+            conciliacionReferencia?.datos_extraidos
+        );
+
+        if (datosConciliacionAnterior.length) {
+            const resultado = compararDatosConciliacion(
+                datosConciliacionAnterior,
+                datos_extraidos,
+                fechaBuscada,
+                restaurante.codigo
+            );
+            const comparacionId = await registrarComparacion({
+                restauranteId: restaurante_id,
+                usuarioId: req.usuario.id,
+                conciliacionReferenciaId: conciliacionReferencia.id,
+                fechaOperacion: fechaBuscada,
+                estado: resultado.tiendasConDiferencias
+                    ? 'con_cambios'
+                    : 'sin_cambios',
+                datosNuevos: datos_extraidos,
+                resultado
+            });
+
+            return res.json({
+                success: true,
+                existe: true,
+                fuenteReferencia: 'conciliacion',
+                conciliacionAnteriorId: conciliacionReferencia.id,
+                restaurante: restaurante.codigo,
+                comparacionId,
+                historialDisponible: Boolean(comparacionId),
+                ...resultado
+            });
+        }
+
         const [candidatos] = await pool.query(
             `SELECT id, notas
              FROM archivos_excel

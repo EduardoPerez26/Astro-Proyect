@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { pool } = require('../config/database');
-const { verificarToken } = require('../middleware/auth.middleware');
+const { verificarToken, esAdmin } = require('../middleware/auth.middleware');
 
 function errorHistorial(error, res) {
     if (['ER_NO_SUCH_TABLE', 'ER_BAD_FIELD_ERROR'].includes(error.code)) {
@@ -164,6 +164,30 @@ router.get('/:id', verificarToken, async (req, res) => {
         });
     } catch (error) {
         console.error('Error consultando comparacion:', error);
+        return errorHistorial(error, res);
+    }
+});
+
+router.delete('/:id', verificarToken, esAdmin, async (req, res) => {
+    try {
+        const [resultado] = await pool.query(
+            'DELETE FROM comparaciones_archivos WHERE id = ?',
+            [req.params.id]
+        );
+
+        if (!resultado.affectedRows) {
+            return res.status(404).json({
+                success: false,
+                message: 'Comparacion no encontrada'
+            });
+        }
+
+        res.json({
+            success: true,
+            message: 'Comparacion eliminada correctamente'
+        });
+    } catch (error) {
+        console.error('Error eliminando comparacion:', error);
         return errorHistorial(error, res);
     }
 });
