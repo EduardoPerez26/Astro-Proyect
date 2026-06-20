@@ -19,6 +19,8 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     // Aplicar permisos al menu
     aplicarPermisos();
+    
+    
 
     // Restaurar estado del sidebar
     const sidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
