@@ -175,6 +175,30 @@ function redondearBurgerKing(valor) {
     return Number(numero.toFixed(2));
 }
 
+function formatearPorcentajeBurgerKing(valor) {
+    const numero = Number(valor) || 0;
+
+    if (Math.abs(numero) < 0.0000001) {
+        return '0.000%';
+    }
+
+    return `${(numero * 100).toFixed(3)}%`;
+}
+
+function renderBurgerKingTaxAnalysis() {
+    console.log('Renderizando Tax Review Burger King con porcentajes');
+
+    const data =
+        (burgerKingTaxAnalysisData || []).map(row => ({
+            ...row,
+            taxRate: formatearPorcentajeBurgerKing(row.taxRate),
+            rateCalculation: formatearPorcentajeBurgerKing(row.rateCalculation),
+            rateDifference: formatearPorcentajeBurgerKing(row.rateDifference)
+        }));
+
+    renderArrayToMainTable(data);
+}
+
 function fechaClaveBurgerKing(valor) {
     if (!valor) return '';
 
@@ -648,7 +672,7 @@ const BK_TAX_RATES = {
     4516: 0.0925,
     5085: 0.0875,
     2521: 0.0925,
-    3917: 0.0875,
+    3917: 0.08875,
     5394: 0.0925,
     7426: 0.1075,
     8177: 0.0875,
@@ -897,10 +921,20 @@ function generarSummaryBurgerKing() {
     ];
 }
 
-function renderBurgerKingSummary() {
-    renderArrayToMainTable(
-        burgerKingSummaryData || []
-    );
+function renderBurgerKingTaxAnalysis() {
+    const data =
+        (burgerKingTaxAnalysisData || []).map(row => ({
+            ...row,
+            taxRate: formatearPorcentajeBurgerKing(row.taxRate),
+            rateCalculation: formatearPorcentajeBurgerKing(row.rateCalculation),
+            rateDifference: formatearPorcentajeBurgerKing(row.rateDifference)
+        }));
+
+    renderArrayToMainTable(data);
+}
+
+function renderBurgerKingConciliation() {
+    renderTablaSucursales();
 }
 
 function renderBurgerKingConciliation() {
@@ -908,9 +942,14 @@ function renderBurgerKingConciliation() {
 }
 
 function renderBurgerKingTaxAnalysis() {
-    renderArrayToMainTable(
-        burgerKingTaxAnalysisData || []
-    );
+    const data = (burgerKingTaxAnalysisData || []).map(row => ({
+        ...row,
+        taxRate: formatearPorcentajeBurgerKing(row.taxRate),
+        rateCalculation: formatearPorcentajeBurgerKing(row.rateCalculation),
+        rateDifference: formatearPorcentajeBurgerKing(row.rateDifference)
+    }));
+
+    renderArrayToMainTable(data);
 }
 
 function renderBurgerKingDiscrepancies() {
