@@ -402,6 +402,148 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
 
             <section
                 class="bk-tax-store-panel"
+                id="popeyesTaxStorePanel"
+                style="display:none;"
+            >
+                <div class="bk-tax-store-panel-copy">
+                    <span>POPEYES</span>
+                    <strong>Tax Rate por tienda</strong>
+                    <small>El Tax Review usa rates locales; CDTFA se actualiza manualmente.</small>
+                </div>
+                <button class="btn btn-secondary" type="button" id="pyTaxOpenModal">
+                    <i class="fa-solid fa-store"></i>
+                    Administrar tiendas
+                </button>
+            </section>
+
+            <dialog
+                id="popeyesTaxStoreDialog"
+                class="bk-tax-store-dialog"
+                aria-labelledby="pyTaxStoreDialogTitle"
+            >
+                <section class="bk-tax-store-window">
+                    <header class="bk-tax-store-header">
+                        <div>
+                            <span>POPEYES</span>
+                            <h3 id="pyTaxStoreDialogTitle">Tiendas y tax rate</h3>
+                            <p>
+                                Administra el listado local de tiendas que usa la conciliacion.
+                                CDTFA se actualiza solo cuando presionas el boton de actualizar.
+                            </p>
+                        </div>
+                        <div class="bk-tax-store-meta">
+                            <strong id="pyTaxStoreCount">0 tiendas configuradas</strong>
+                            <small id="pyTaxStoreStatus" data-type="info">
+                                Listo para trabajar con rates locales.
+                            </small>
+                        </div>
+                        <button
+                            type="button"
+                            id="pyTaxCloseModal"
+                            class="bk-tax-modal-close"
+                            aria-label="Cerrar catálogo de tiendas Popeyes"
+                        >
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </header>
+
+                    <div class="bk-tax-store-form">
+                        <div class="bk-tax-form-head">
+                            <strong>Datos de tienda</strong>
+                            <small id="pyTaxFormMode">Nueva tienda</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="pyTaxStoreNumber">Tienda</label>
+                            <input id="pyTaxStoreNumber" class="form-input" type="text" placeholder="2902" />
+                        </div>
+
+                        <div class="form-group">
+                            <label for="pyTaxStoreAddress">Direccion</label>
+                            <input id="pyTaxStoreAddress" class="form-input" type="text" placeholder="Direccion" />
+                        </div>
+
+                        <div class="form-group">
+                            <label for="pyTaxStoreCity">Ciudad</label>
+                            <input id="pyTaxStoreCity" class="form-input" type="text" placeholder="Ciudad" />
+                        </div>
+
+                        <div class="form-group">
+                            <label for="pyTaxStoreZip">Zip</label>
+                            <input id="pyTaxStoreZip" class="form-input" type="text" placeholder="95823" />
+                        </div>
+
+                        <div class="form-group bk-tax-coordinates">
+                            <label for="pyTaxStoreCoordinates">Coordenadas</label>
+                            <input id="pyTaxStoreCoordinates" class="form-input" type="text" placeholder="38.494835, -121.427995" />
+                        </div>
+
+                        <div class="form-group">
+                            <label for="pyTaxStoreRate">Tax Rate</label>
+                            <input id="pyTaxStoreRate" class="form-input" type="text" placeholder="7.75% o 0.0775" />
+                        </div>
+
+                        <div class="form-group">
+                            <label for="pyTaxStoreJurisdiction">Jurisdiccion</label>
+                            <input id="pyTaxStoreJurisdiction" class="form-input" type="text" placeholder="Opcional" />
+                        </div>
+
+                        <div class="bk-tax-form-actions">
+                            <button class="btn btn-primary bk-tax-form-action" type="button" id="pyTaxSaveStore">
+                                <i class="fa-solid fa-floppy-disk"></i>
+                                Guardar tienda
+                            </button>
+
+                            <button class="btn btn-secondary bk-tax-form-action" type="button" id="pyTaxClearStore">
+                                Cancelar
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="bk-tax-store-toolbar">
+                        <button class="btn btn-primary bk-tax-add-store" type="button" id="pyTaxAddStore">
+                            <i class="fa-solid fa-plus"></i>
+                            Agregar tienda
+                        </button>
+
+                        <button class="btn btn-secondary" type="button" id="pyTaxRefreshRates">
+                            <i class="fa-solid fa-arrows-rotate"></i>
+                            Actualizar rates CDTFA
+                        </button>
+
+                        <button class="btn btn-danger" type="button" id="pyTaxResetStores">
+                            Restaurar catalogo
+                        </button>
+                    </div>
+
+                    <div class="bk-tax-store-table">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Tienda</th>
+                                    <th>Ubicacion</th>
+                                    <th>Zip</th>
+                                    <th>Coordenadas</th>
+                                    <th>Override</th>
+                                    <th>Tax Rate</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="pyTaxStoreBody"></tbody>
+                        </table>
+                    </div>
+
+                    <footer class="bk-tax-store-footer">
+                        <small>Los cambios se guardan en este navegador con localStorage.</small>
+                        <button class="btn btn-primary" type="button" id="pyTaxCloseFooter">
+                            Listo
+                        </button>
+                    </footer>
+                </section>
+            </dialog>
+
+            <section
+                class="bk-tax-store-panel"
                 id="tacoBellTaxStorePanel"
                 style="display:none;"
             >
@@ -425,10 +567,10 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
                     <header class="bk-tax-store-header">
                         <div>
                             <span>TACO BELL</span>
-                            <h3 id="tbTaxStoreDialogTitle">Catálogo de Tax Rate por tienda</h3>
+                            <h3 id="tbTaxStoreDialogTitle">Tiendas y tax rate</h3>
                             <p>
-                                Agrega, edita o quita tiendas. El Tax Review usa el rate local
-                                guardado aquí; CDTFA se consulta manualmente para tiendas CA.
+                                Administra el listado local de tiendas que usa la conciliacion.
+                                CDTFA se actualiza solo cuando presionas el boton de actualizar.
                             </p>
                         </div>
                         <div class="bk-tax-store-meta">
@@ -448,23 +590,28 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
                     </header>
 
                     <div class="bk-tax-store-form">
+                        <div class="bk-tax-form-head">
+                            <strong>Datos de tienda</strong>
+                            <small id="tbTaxFormMode">Nueva tienda</small>
+                        </div>
+
                         <div class="form-group">
-                            <label for="tbTaxStoreNumber">Store</label>
+                            <label for="tbTaxStoreNumber">Tienda</label>
                             <input id="tbTaxStoreNumber" class="form-input" type="text" placeholder="28841" />
                         </div>
 
                         <div class="form-group">
-                            <label for="tbTaxStoreAddress">Address</label>
-                            <input id="tbTaxStoreAddress" class="form-input" type="text" placeholder="Dirección" />
+                            <label for="tbTaxStoreAddress">Direccion</label>
+                            <input id="tbTaxStoreAddress" class="form-input" type="text" placeholder="Direccion" />
                         </div>
 
                         <div class="form-group">
-                            <label for="tbTaxStoreCity">City</label>
+                            <label for="tbTaxStoreCity">Ciudad</label>
                             <input id="tbTaxStoreCity" class="form-input" type="text" placeholder="Ciudad" />
                         </div>
 
                         <div class="form-group">
-                            <label for="tbTaxStoreState">State</label>
+                            <label for="tbTaxStoreState">Estado</label>
                             <input id="tbTaxStoreState" class="form-input" type="text" placeholder="CA" />
                         </div>
 
@@ -474,7 +621,7 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
                         </div>
 
                         <div class="form-group bk-tax-coordinates">
-                            <label for="tbTaxStoreCoordinates">Latitude, Longitude</label>
+                            <label for="tbTaxStoreCoordinates">Coordenadas</label>
                             <input id="tbTaxStoreCoordinates" class="form-input" type="text" placeholder="38.363685, -121.968236" />
                         </div>
 
@@ -484,19 +631,26 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
                         </div>
 
                         <div class="form-group">
-                            <label for="tbTaxStoreJurisdiction">Jurisdiction override</label>
+                            <label for="tbTaxStoreJurisdiction">Jurisdiccion</label>
                             <input id="tbTaxStoreJurisdiction" class="form-input" type="text" placeholder="Opcional" />
+                        </div>
+
+                        <div class="bk-tax-form-actions">
+                            <button class="btn btn-primary bk-tax-form-action" type="button" id="tbTaxSaveStore">
+                                <i class="fa-solid fa-floppy-disk"></i>
+                                Guardar tienda
+                            </button>
+
+                            <button class="btn btn-secondary bk-tax-form-action" type="button" id="tbTaxClearStore">
+                                Cancelar
+                            </button>
                         </div>
                     </div>
 
                     <div class="bk-tax-store-toolbar">
-                        <button class="btn btn-primary" type="button" id="tbTaxSaveStore">
-                            <i class="fa-solid fa-floppy-disk"></i>
-                            Guardar tienda
-                        </button>
-
-                        <button class="btn btn-secondary" type="button" id="tbTaxClearStore">
-                            Limpiar
+                        <button class="btn btn-primary bk-tax-add-store" type="button" id="tbTaxAddStore">
+                            <i class="fa-solid fa-plus"></i>
+                            Agregar tienda
                         </button>
 
                         <button class="btn btn-secondary" type="button" id="tbTaxRefreshRates">
@@ -505,7 +659,7 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
                         </button>
 
                         <button class="btn btn-danger" type="button" id="tbTaxResetStores">
-                            Restaurar catálogo
+                            Restaurar catalogo
                         </button>
                     </div>
 
@@ -513,14 +667,14 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
                         <table class="data-table">
                             <thead>
                                 <tr>
-                                    <th>Store</th>
-                                    <th>Location</th>
-                                    <th>State</th>
+                                    <th>Tienda</th>
+                                    <th>Ubicacion</th>
+                                    <th>Estado</th>
                                     <th>Zip</th>
-                                    <th>Coordinates</th>
+                                    <th>Coordenadas</th>
                                     <th>Override</th>
                                     <th>Tax Rate</th>
-                                    <th>Actions</th>
+                                    <th>Acciones</th>
                                 </tr>
                             </thead>
                             <tbody id="tbTaxStoreBody"></tbody>
@@ -561,10 +715,10 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
                     <header class="bk-tax-store-header">
                         <div>
                             <span>BURGER KING</span>
-                            <h3 id="bkTaxStoreDialogTitle">Catálogo de Tax Rate por tienda</h3>
+                            <h3 id="bkTaxStoreDialogTitle">Tiendas y tax rate</h3>
                             <p>
-                                Agrega, edita o quita tiendas. El Tax Analysis usa el tax rate local
-                                guardado aquí; CDTFA solo se consulta cuando presionas actualizar.
+                                Administra el listado local de tiendas que usa la conciliacion.
+                                CDTFA se actualiza solo cuando presionas el boton de actualizar.
                             </p>
                         </div>
                         <div class="bk-tax-store-meta">
@@ -584,8 +738,13 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
                     </header>
 
                     <div class="bk-tax-store-form">
+                        <div class="bk-tax-form-head">
+                            <strong>Datos de tienda</strong>
+                            <small id="bkTaxFormMode">Nueva tienda</small>
+                        </div>
+
                         <div class="form-group">
-                            <label for="bkTaxStoreNumber">Store</label>
+                            <label for="bkTaxStoreNumber">Tienda</label>
                             <input
                                 id="bkTaxStoreNumber"
                                 class="form-input"
@@ -595,17 +754,17 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
                         </div>
 
                         <div class="form-group">
-                            <label for="bkTaxStoreAddress">Address</label>
+                            <label for="bkTaxStoreAddress">Direccion</label>
                             <input
                                 id="bkTaxStoreAddress"
                                 class="form-input"
                                 type="text"
-                                placeholder="Dirección"
+                                placeholder="Direccion"
                             />
                         </div>
 
                         <div class="form-group">
-                            <label for="bkTaxStoreCity">City</label>
+                            <label for="bkTaxStoreCity">Ciudad</label>
                             <input
                                 id="bkTaxStoreCity"
                                 class="form-input"
@@ -625,7 +784,7 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
                         </div>
 
                         <div class="form-group bk-tax-coordinates">
-                            <label for="bkTaxStoreCoordinates">Latitude, Longitude</label>
+                            <label for="bkTaxStoreCoordinates">Coordenadas</label>
                             <input
                                 id="bkTaxStoreCoordinates"
                                 class="form-input"
@@ -645,7 +804,7 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
                         </div>
 
                         <div class="form-group">
-                            <label for="bkTaxStoreJurisdiction">Jurisdiction override</label>
+                            <label for="bkTaxStoreJurisdiction">Jurisdiccion</label>
                             <input
                                 id="bkTaxStoreJurisdiction"
                                 class="form-input"
@@ -653,16 +812,23 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
                                 placeholder="Opcional"
                             />
                         </div>
+
+                        <div class="bk-tax-form-actions">
+                            <button class="btn btn-primary bk-tax-form-action" type="button" id="bkTaxSaveStore">
+                                <i class="fa-solid fa-floppy-disk"></i>
+                                Guardar tienda
+                            </button>
+
+                            <button class="btn btn-secondary bk-tax-form-action" type="button" id="bkTaxClearStore">
+                                Cancelar
+                            </button>
+                        </div>
                     </div>
 
                     <div class="bk-tax-store-toolbar">
-                        <button class="btn btn-primary" type="button" id="bkTaxSaveStore">
-                            <i class="fa-solid fa-floppy-disk"></i>
-                            Guardar tienda
-                        </button>
-
-                        <button class="btn btn-secondary" type="button" id="bkTaxClearStore">
-                            Limpiar
+                        <button class="btn btn-primary bk-tax-add-store" type="button" id="bkTaxAddStore">
+                            <i class="fa-solid fa-plus"></i>
+                            Agregar tienda
                         </button>
 
                         <button class="btn btn-secondary" type="button" id="bkTaxRefreshRates">
@@ -671,7 +837,7 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
                         </button>
 
                         <button class="btn btn-danger" type="button" id="bkTaxResetStores">
-                            Restaurar catálogo
+                            Restaurar catalogo
                         </button>
                     </div>
 
@@ -679,13 +845,13 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
                         <table class="data-table">
                             <thead>
                                 <tr>
-                                    <th>Store</th>
-                                    <th>Location</th>
+                                    <th>Tienda</th>
+                                    <th>Ubicacion</th>
                                     <th>Zip</th>
-                                    <th>Coordinates</th>
+                                    <th>Coordenadas</th>
                                     <th>Override</th>
                                     <th>Tax Rate</th>
-                                    <th>Actions</th>
+                                    <th>Acciones</th>
                                 </tr>
                             </thead>
                             <tbody id="bkTaxStoreBody"></tbody>
@@ -794,10 +960,187 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
 
         <script is:inline src="/js/taco-bell-tax-stores.js"></script>
         <script is:inline src="/js/conciliacion-tacobell.js"></script>
+        <script is:inline src="/js/popeyes-tax-stores.js"></script>
         <script is:inline src="/js/conciliacion-popeyes.js"></script>
         <script is:inline src="/js/conciliacion-burgerking.js"></script>
 
         <script is:inline src="/js/conciliacion.js"></script>
+        <script is:inline>
+            (() => {
+                if (window.__taxStoreModalDelegateReady) return;
+                window.__taxStoreModalDelegateReady = true;
+
+                const configs = [
+                    {
+                        dialogId: 'popeyesTaxStoreDialog',
+                        addId: 'pyTaxAddStore',
+                        saveId: 'pyTaxSaveStore',
+                        clearId: 'pyTaxClearStore',
+                        numberId: 'pyTaxStoreNumber',
+                        formModeId: 'pyTaxFormMode',
+                        editSelector: '[data-py-tax-edit]',
+                        editDataset: 'pyTaxEdit',
+                        clearFn: 'limpiarFormularioTiendaTaxPopeyes',
+                        loadFn: 'cargarFormularioTiendaTaxPopeyes',
+                        readFn: 'leerFormularioTiendaTaxPopeyes',
+                        upsertFn: 'upsertTiendaTaxPopeyes',
+                        renderFn: 'renderTiendasTaxPopeyes',
+                        statusFn: 'mostrarEstadoTaxPopeyes',
+                        recalcFn: 'recalcularTaxReviewPopeyesSiAplica'
+                    },
+                    {
+                        dialogId: 'tacoBellTaxStoreDialog',
+                        addId: 'tbTaxAddStore',
+                        saveId: 'tbTaxSaveStore',
+                        clearId: 'tbTaxClearStore',
+                        numberId: 'tbTaxStoreNumber',
+                        formModeId: 'tbTaxFormMode',
+                        editSelector: '[data-tb-tax-edit]',
+                        editDataset: 'tbTaxEdit',
+                        clearFn: 'limpiarFormularioTiendaTaxTacoBell',
+                        loadFn: 'cargarFormularioTiendaTaxTacoBell',
+                        readFn: 'leerFormularioTiendaTaxTacoBell',
+                        upsertFn: 'upsertTiendaTaxTacoBell',
+                        renderFn: 'renderTiendasTaxTacoBell',
+                        statusFn: 'mostrarEstadoTaxTacoBell',
+                        recalcFn: 'recalcularTaxReviewTacoBellSiAplica'
+                    },
+                    {
+                        dialogId: 'burgerKingTaxStoreDialog',
+                        addId: 'bkTaxAddStore',
+                        saveId: 'bkTaxSaveStore',
+                        clearId: 'bkTaxClearStore',
+                        numberId: 'bkTaxStoreNumber',
+                        formModeId: 'bkTaxFormMode',
+                        editSelector: '[data-bk-tax-edit]',
+                        editDataset: 'bkTaxEdit',
+                        clearFn: 'limpiarFormularioTiendaTaxBurgerKing',
+                        loadFn: 'cargarFormularioTiendaTaxBurgerKing',
+                        readFn: 'leerFormularioTiendaTaxBurgerKing',
+                        upsertFn: 'upsertTiendaTaxBurgerKing',
+                        renderFn: 'renderTiendasTaxBurgerKing',
+                        statusFn: 'mostrarEstadoTaxBurgerKing'
+                    }
+                ];
+
+                const callTaxFn = (name, ...args) => {
+                    const fn = window[name];
+                    return typeof fn === 'function' ? fn(...args) : undefined;
+                };
+
+                const setTaxFormOpen = (config, isOpen) => {
+                    const dialog = document.getElementById(config.dialogId);
+                    const form = dialog?.querySelector('.bk-tax-store-form');
+
+                    dialog?.classList.toggle('is-form-open', isOpen);
+
+                    if (form) {
+                        form.style.display = isOpen ? 'grid' : '';
+                    }
+
+                    if (isOpen) {
+                        requestAnimationFrame(() => {
+                            document.getElementById(config.numberId)?.focus();
+                        });
+                    }
+                };
+
+                const setTaxFormMode = (config, text) => {
+                    const mode = document.getElementById(config.formModeId);
+
+                    if (mode) {
+                        mode.textContent = text;
+                    }
+                };
+
+                document.addEventListener('click', event => {
+                    const target =
+                        event.target instanceof Element
+                            ? event.target
+                            : null;
+
+                    if (!target) return;
+
+                    for (const config of configs) {
+                        const addButton = target.closest(`#${config.addId}`);
+                        const saveButton = target.closest(`#${config.saveId}`);
+                        const clearButton = target.closest(`#${config.clearId}`);
+                        const editButton = target.closest(config.editSelector);
+
+                        if (!addButton && !saveButton && !clearButton && !editButton) {
+                            continue;
+                        }
+
+                        event.preventDefault();
+                        event.stopPropagation();
+                        event.stopImmediatePropagation();
+
+                        if (addButton) {
+                            callTaxFn(config.clearFn);
+                            setTaxFormMode(config, 'Nueva tienda');
+                            setTaxFormOpen(config, true);
+                            callTaxFn(
+                                config.statusFn,
+                                'Captura los datos de la tienda nueva.'
+                            );
+                            return;
+                        }
+
+                        if (editButton) {
+                            const store = editButton.dataset[config.editDataset];
+                            callTaxFn(
+                                config.loadFn,
+                                store
+                            );
+                            setTaxFormMode(config, `Editando tienda ${store}`);
+                            setTaxFormOpen(config, true);
+                            callTaxFn(
+                                config.statusFn,
+                                'Editando tienda seleccionada.'
+                            );
+                            return;
+                        }
+
+                        if (clearButton) {
+                            callTaxFn(config.clearFn);
+                            setTaxFormMode(config, 'Nueva tienda');
+                            setTaxFormOpen(config, false);
+                            callTaxFn(config.statusFn, 'Edicion cancelada.');
+                            return;
+                        }
+
+                        if (saveButton) {
+                            try {
+                                const storeData = callTaxFn(config.readFn);
+                                callTaxFn(config.upsertFn, storeData);
+                                callTaxFn(config.renderFn);
+                                callTaxFn(config.recalcFn);
+                                callTaxFn(
+                                    config.statusFn,
+                                    'Tienda guardada correctamente.',
+                                    'success'
+                                );
+                                callTaxFn(config.clearFn);
+                                setTaxFormMode(config, 'Nueva tienda');
+                                setTaxFormOpen(config, false);
+                            } catch (error) {
+                                callTaxFn(config.statusFn, error.message, 'error');
+
+                                if (window.Swal) {
+                                    Swal.fire(
+                                        'Revisa la tienda',
+                                        error.message,
+                                        'warning'
+                                    );
+                                }
+                            }
+
+                            return;
+                        }
+                    }
+                }, true);
+            })();
+        </script>
     </div>
 
     <style>
@@ -2644,73 +2987,99 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
         }
 
         .bk-tax-store-dialog {
-            width: min(1180px, calc(100vw - 32px));
-            max-height: 88vh;
+            position: fixed;
+            inset: auto;
+            top: 50%;
+            left: 50%;
+            width: min(1080px, calc(100vw - 96px));
+            height: min(82vh, 720px);
+            max-height: min(82vh, 720px);
+            margin: 0;
             padding: 0;
-            border: 0;
-            border-radius: var(--radius-xl);
+            border: 1px solid #c9d6e2;
+            border-radius: 10px;
             background: var(--white);
-            box-shadow: var(--shadow-xl, 0 24px 60px rgba(15, 23, 42, .22));
+            box-shadow: 0 22px 55px rgba(16, 42, 67, .28);
+            transform: translate(-50%, -50%);
+            overflow: hidden;
         }
 
         .bk-tax-store-dialog::backdrop {
-            background: rgba(15, 23, 42, .52);
-            backdrop-filter: blur(2px);
+            background: rgba(16, 42, 67, .58);
+            backdrop-filter: blur(1px);
         }
 
         .bk-tax-store-window {
-            padding: 18px;
+            display: grid;
+            grid-template-columns: 1fr;
+            grid-template-rows: auto auto auto minmax(0, 1fr) auto;
+            height: 100%;
+            max-height: inherit;
+            background: #fff;
         }
 
         .bk-tax-store-header {
             position: relative;
-            display: flex;
-            justify-content: space-between;
-            gap: 16px;
-            margin-bottom: 16px;
-            padding-right: 42px;
+            display: grid;
+            grid-column: 1 / -1;
+            grid-template-columns: minmax(0, 1fr) auto;
+            gap: 18px;
+            padding: 18px 58px 16px 20px;
+            border-bottom: 1px solid #d9e3ec;
+            background: #fff;
         }
 
         .bk-tax-store-header span {
             display: inline-flex;
-            margin-bottom: 4px;
-            color: var(--primary);
-            font-size: 11px;
-            font-weight: 800;
-            letter-spacing: .08em;
+            margin-bottom: 5px;
+            color: #2a648e;
+            font-size: 10px;
+            font-weight: 900;
+            letter-spacing: .12em;
         }
 
         .bk-tax-store-header h3 {
             margin: 0;
-            font-size: 17px;
-            color: var(--gray-900);
+            color: #102a43;
+            font-size: 18px;
+            font-weight: 800;
         }
 
         .bk-tax-store-header p {
-            margin: 4px 0 0;
-            color: var(--gray-500);
-            font-size: 13px;
+            max-width: 680px;
+            margin: 5px 0 0;
+            color: #5f7488;
+            font-size: 12px;
+            line-height: 1.45;
         }
 
         .bk-tax-modal-close {
             position: absolute;
-            top: 0;
-            right: 0;
-            width: 34px;
-            height: 34px;
-            border: 1px solid var(--gray-200);
-            border-radius: 999px;
+            top: 14px;
+            right: 16px;
+            display: grid;
+            width: 32px;
+            height: 32px;
+            place-items: center;
+            border: 1px solid #d5e0ea;
+            border-radius: 6px;
             background: var(--white);
-            color: var(--gray-500);
+            color: #5e7285;
             cursor: pointer;
         }
 
+        .bk-tax-modal-close:hover {
+            border-color: #b8c9d8;
+            background: #f2f6f9;
+        }
+
         .bk-tax-store-meta {
-            min-width: 220px;
+            min-width: 245px;
+            align-self: stretch;
             padding: 10px 12px;
-            border: 1px solid var(--gray-200);
-            border-radius: var(--radius);
-            background: var(--gray-50, #f8fafc);
+            border: 1px solid #d8e2eb;
+            border-radius: 6px;
+            background: #f8fbfd;
         }
 
         .bk-tax-store-meta strong,
@@ -2719,58 +3088,220 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
         }
 
         .bk-tax-store-meta strong {
-            color: var(--gray-800);
+            color: #173f64;
             font-size: 13px;
         }
 
         .bk-tax-store-meta small {
             margin-top: 4px;
-            color: var(--gray-500);
-            font-size: 12px;
+            color: #60758a;
+            font-size: 11px;
+            line-height: 1.35;
         }
 
         #bkTaxStoreStatus[data-type="success"] { color: var(--success); }
         #bkTaxStoreStatus[data-type="warning"] { color: var(--warning); }
         #bkTaxStoreStatus[data-type="error"] { color: var(--danger); }
+        #tbTaxStoreStatus[data-type="success"] { color: var(--success); }
+        #tbTaxStoreStatus[data-type="warning"] { color: var(--warning); }
+        #tbTaxStoreStatus[data-type="error"] { color: var(--danger); }
+        #pyTaxStoreStatus[data-type="success"] { color: var(--success); }
+        #pyTaxStoreStatus[data-type="warning"] { color: var(--warning); }
+        #pyTaxStoreStatus[data-type="error"] { color: var(--danger); }
 
         .bk-tax-store-form {
-            display: grid;
-            grid-template-columns: .65fr 1.35fr .9fr .55fr .65fr 1.2fr .8fr 1fr;
+            display: none;
+            grid-column: 1;
+            grid-row: 3;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
             gap: 12px;
-            align-items: end;
+            align-content: start;
+            align-items: start;
+            padding: 14px 18px 16px;
+            border-bottom: 1px solid #dce6ee;
+            background: linear-gradient(180deg, #f8fbfd 0%, #f3f7fa 100%);
         }
 
-        .bk-tax-store-toolbar,
-        .bk-tax-store-footer {
+        .bk-tax-store-dialog.is-form-open .bk-tax-store-form {
+            display: grid;
+        }
+
+        .bk-tax-store-form .form-group {
+            min-width: 0;
+        }
+
+        .bk-tax-form-head {
+            grid-column: 1 / -1;
             display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            min-height: 26px;
+            padding-bottom: 2px;
+        }
+
+        .bk-tax-form-head strong {
+            color: #102a43;
+            font-size: 13px;
+            font-weight: 900;
+        }
+
+        .bk-tax-form-head small {
+            color: #60758a;
+            font-size: 11px;
+            font-weight: 800;
+        }
+
+        .bk-tax-store-form .form-group:nth-child(3) {
+            grid-column: span 2;
+        }
+
+        .bk-tax-store-form .bk-tax-coordinates {
+            grid-column: span 2;
+        }
+
+        .bk-tax-store-form .form-group label {
+            margin-bottom: 3px;
+            color: #536b80;
+            font-size: 9px;
+            font-weight: 900;
+            letter-spacing: .07em;
+        }
+
+        .bk-tax-store-form .form-input {
+            width: 100%;
+            min-height: 36px;
+            padding: 7px 10px;
+            border: 1px solid #cfdce8;
+            border-radius: 6px;
+            background: #ffffff;
+            color: #193c5b;
+            font-size: 13px;
+            box-shadow: inset 0 1px 0 rgba(16, 42, 67, .03);
+        }
+
+        .bk-tax-store-form .form-input:focus {
+            border-color: #2f6f9f;
+            outline: 2px solid rgba(47, 111, 159, .12);
+            outline-offset: 0;
+        }
+
+        .bk-tax-store-form .form-input::placeholder {
+            color: #91a2b3;
+        }
+
+        .bk-tax-form-actions {
+            grid-column: 1 / -1;
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            padding-top: 2px;
+        }
+
+        .bk-tax-form-actions .btn {
+            min-height: 34px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 800;
+        }
+
+        .bk-tax-store-toolbar {
+            display: flex;
+            grid-column: 1;
+            grid-row: 2;
+            flex-direction: row;
             flex-wrap: wrap;
             gap: 8px;
-            margin: 14px 0;
             align-items: center;
+            justify-content: flex-start;
+            padding: 11px 18px;
+            border-bottom: 1px solid #dce6ee;
+            background: #fff;
+        }
+
+        .bk-tax-store-dialog:not(.is-form-open) .bk-tax-form-action {
+            display: none;
+        }
+
+        .bk-tax-store-dialog.is-form-open .bk-tax-add-store {
+            display: none;
+        }
+
+        .bk-tax-store-toolbar .btn,
+        .bk-tax-store-footer .btn {
+            min-height: 32px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 800;
         }
 
         .bk-tax-store-footer {
+            grid-column: 1 / -1;
+            grid-row: 5;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
             justify-content: space-between;
-            margin: 14px 0 0;
-            color: var(--gray-500);
+            padding: 12px 18px;
+            border-top: 1px solid #dce6ee;
+            color: #64788b;
+            background: #fff;
         }
 
         .bk-tax-store-table {
-            max-height: 380px;
+            grid-column: 1;
+            grid-row: 4;
+            min-height: 260px;
+            max-height: none;
             overflow: auto;
-            border: 1px solid var(--gray-200);
-            border-radius: var(--radius);
+            border: 0;
+            background: #fff;
+            scrollbar-width: thin;
+            scrollbar-color: #95a9ba #edf3f7;
         }
+
+        .bk-tax-store-table::-webkit-scrollbar { width: 9px; height: 9px; }
+        .bk-tax-store-table::-webkit-scrollbar-track { background: #edf3f7; }
+        .bk-tax-store-table::-webkit-scrollbar-thumb { background: #95a9ba; border-radius: 999px; }
 
         .bk-tax-store-table table {
             width: 100%;
             border-collapse: collapse;
+            font-size: 12px;
+        }
+
+        .bk-tax-store-table .data-table th {
+            position: sticky;
+            top: 0;
+            z-index: 1;
+            padding: 10px 11px;
+            border-bottom: 1px solid #0b2943;
+            color: #fff;
+            background: #102f4c;
+            font-size: 10px;
+            letter-spacing: .04em;
+        }
+
+        .bk-tax-store-table .data-table td {
+            padding: 9px 11px;
+            border-bottom: 1px solid #e1e9f0;
+            color: #36536d;
+            vertical-align: middle;
+        }
+
+        .bk-tax-store-table .data-table tbody tr:nth-child(even) {
+            background: #f8fafc;
+        }
+
+        .bk-tax-store-table .data-table tbody tr:hover {
+            background: #eef5fb;
         }
 
         .bk-tax-store-table td small {
             display: block;
-            margin-top: 2px;
-            color: var(--gray-500);
+            margin-top: 1px;
+            color: #647b91;
             font-size: 11px;
         }
 
@@ -2780,6 +3311,14 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
             white-space: nowrap;
         }
 
+        .bk-tax-store-actions .btn {
+            min-height: 30px;
+            padding: 6px 10px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 800;
+        }
+
         .bk-tax-empty {
             padding: 18px;
             color: var(--gray-500);
@@ -2787,14 +3326,44 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
         }
 
         @media (max-width: 1180px) {
+            .bk-tax-store-window {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto auto auto minmax(0, 1fr) auto;
+            }
+
             .bk-tax-store-form {
-                grid-template-columns: repeat(2, minmax(0, 1fr));
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+                grid-column: 1;
+                grid-row: auto;
+                border-bottom: 1px solid #dce6ee;
+                padding: 14px;
+            }
+
+            .bk-tax-store-form .bk-tax-coordinates {
+                grid-column: span 2;
+            }
+
+            .bk-tax-store-toolbar {
+                grid-column: 1;
+                grid-row: auto;
+                flex-direction: row;
+                flex-wrap: wrap;
+                padding: 12px 14px;
+                border-bottom: 1px solid #dce6ee;
+                background: #fff;
             }
 
             .bk-tax-store-header,
             .bk-tax-store-panel {
-                flex-direction: column;
                 align-items: stretch;
+            }
+
+            .bk-tax-store-header {
+                grid-template-columns: 1fr;
+            }
+
+            .bk-tax-store-panel {
+                flex-direction: column;
             }
 
             .bk-tax-store-meta {
@@ -2805,6 +3374,45 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
         @media (max-width: 720px) {
             .bk-tax-store-form {
                 grid-template-columns: 1fr;
+            }
+
+            .bk-tax-store-form .form-group:nth-child(3),
+            .bk-tax-store-form .bk-tax-coordinates {
+                grid-column: auto;
+            }
+
+            .bk-tax-form-head,
+            .bk-tax-form-actions {
+                align-items: stretch;
+                flex-direction: column;
+            }
+
+            .bk-tax-form-actions .btn {
+                width: 100%;
+            }
+
+            .bk-tax-store-dialog {
+                width: calc(100vw - 16px);
+                max-height: calc(100vh - 16px);
+            }
+
+            .bk-tax-store-header,
+            .bk-tax-store-form,
+            .bk-tax-store-toolbar,
+            .bk-tax-store-footer {
+                padding-right: 14px;
+                padding-left: 14px;
+            }
+
+            .bk-tax-store-footer,
+            .bk-tax-store-toolbar {
+                align-items: stretch;
+                flex-direction: column;
+            }
+
+            .bk-tax-store-footer .btn,
+            .bk-tax-store-toolbar .btn {
+                width: 100%;
             }
         }
 

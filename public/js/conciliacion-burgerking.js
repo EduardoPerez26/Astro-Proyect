@@ -2569,6 +2569,7 @@ function abrirModalTaxBurgerKing() {
     const dialog = document.getElementById('burgerKingTaxStoreDialog');
     if (!dialog) return;
 
+    dialog.classList.remove('is-form-open');
     renderTiendasTaxBurgerKing();
     mostrarEstadoTaxBurgerKing('Catálogo listo. La conciliación usará estos rates locales.');
 
@@ -2583,6 +2584,7 @@ function cerrarModalTaxBurgerKing() {
     const dialog = document.getElementById('burgerKingTaxStoreDialog');
     if (!dialog) return;
 
+    dialog.classList.remove('is-form-open');
     if (typeof dialog.close === 'function') {
         dialog.close();
     } else {
@@ -2607,6 +2609,17 @@ function inicializarPanelTaxRatesBurgerKing() {
         ?.addEventListener('click', cerrarModalTaxBurgerKing);
 
     document
+        .getElementById('bkTaxAddStore')
+        ?.addEventListener('click', () => {
+            const dialog = document.getElementById('burgerKingTaxStoreDialog');
+
+            limpiarFormularioTiendaTaxBurgerKing();
+            dialog?.classList.add('is-form-open');
+            mostrarEstadoTaxBurgerKing('Captura los datos de la tienda nueva.');
+            document.getElementById('bkTaxStoreNumber')?.focus();
+        });
+
+    document
         .getElementById('bkTaxSaveStore')
         ?.addEventListener('click', () => {
             try {
@@ -2617,6 +2630,9 @@ function inicializarPanelTaxRatesBurgerKing() {
                 renderTiendasTaxBurgerKing();
                 mostrarEstadoTaxBurgerKing('Tienda guardada correctamente.', 'success');
                 limpiarFormularioTiendaTaxBurgerKing();
+                document
+                    .getElementById('burgerKingTaxStoreDialog')
+                    ?.classList.remove('is-form-open');
             } catch (error) {
                 mostrarEstadoTaxBurgerKing(error.message, 'error');
 
@@ -2628,7 +2644,13 @@ function inicializarPanelTaxRatesBurgerKing() {
 
     document
         .getElementById('bkTaxClearStore')
-        ?.addEventListener('click', limpiarFormularioTiendaTaxBurgerKing);
+        ?.addEventListener('click', () => {
+            limpiarFormularioTiendaTaxBurgerKing();
+            document
+                .getElementById('burgerKingTaxStoreDialog')
+                ?.classList.remove('is-form-open');
+            mostrarEstadoTaxBurgerKing('Edicion cancelada.');
+        });
 
     document
         .getElementById('bkTaxRefreshRates')
@@ -2653,6 +2675,9 @@ function inicializarPanelTaxRatesBurgerKing() {
             localStorage.removeItem(BK_TAX_STORE_STORAGE_KEY);
             renderTiendasTaxBurgerKing();
             limpiarFormularioTiendaTaxBurgerKing();
+            document
+                .getElementById('burgerKingTaxStoreDialog')
+                ?.classList.remove('is-form-open');
             mostrarEstadoTaxBurgerKing('Catálogo inicial restaurado.', 'success');
         });
 
@@ -2666,7 +2691,11 @@ function inicializarPanelTaxRatesBurgerKing() {
                 cargarFormularioTiendaTaxBurgerKing(
                     editButton.dataset.bkTaxEdit
                 );
+                document
+                    .getElementById('burgerKingTaxStoreDialog')
+                    ?.classList.add('is-form-open');
                 mostrarEstadoTaxBurgerKing('Editando tienda seleccionada.');
+                document.getElementById('bkTaxStoreNumber')?.focus();
             }
 
             if (deleteButton) {

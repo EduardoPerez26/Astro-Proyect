@@ -1220,7 +1220,7 @@ function actualizarUploadsPorRestaurante(codigo) {
             codigo === 'taco-bell'
                 ? 'Taco Bell: 3 archivos + Tax Rate'
                 : codigo === 'popeyes'
-                    ? 'Popeyes: 1 archivo'
+                    ? 'Popeyes: 1 archivo + Tax Rate'
                     : codigo === 'burger-king'
                         ? 'Burger King: 1 archivo + Tax Rate'
                         : 'Selecciona restaurante';
@@ -2203,6 +2203,10 @@ async function onRestauranteChange() {
 
     if (typeof actualizarPanelTaxTacoBell === 'function') {
         actualizarPanelTaxTacoBell(codigo);
+    }
+
+    if (typeof actualizarPanelTaxPopeyes === 'function') {
+        actualizarPanelTaxPopeyes(codigo);
     }
 
     if (codigo === 'burger-king') {
@@ -5127,6 +5131,5 @@ function exportarTabActualCSV() {
     }
 
 }
-
 
 

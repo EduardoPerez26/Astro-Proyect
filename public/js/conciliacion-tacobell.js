@@ -1623,6 +1623,7 @@ function abrirModalTaxTacoBell() {
     const dialog = document.getElementById('tacoBellTaxStoreDialog');
     if (!dialog) return;
 
+    dialog.classList.remove('is-form-open');
     renderTiendasTaxTacoBell();
     mostrarEstadoTaxTacoBell('Catalogo listo. Taco Bell usara estos rates locales.');
 
@@ -1637,6 +1638,7 @@ function cerrarModalTaxTacoBell() {
     const dialog = document.getElementById('tacoBellTaxStoreDialog');
     if (!dialog) return;
 
+    dialog.classList.remove('is-form-open');
     if (typeof dialog.close === 'function') {
         dialog.close();
     } else {
@@ -1661,6 +1663,17 @@ function inicializarPanelTaxRatesTacoBell() {
         ?.addEventListener('click', cerrarModalTaxTacoBell);
 
     document
+        .getElementById('tbTaxAddStore')
+        ?.addEventListener('click', () => {
+            const dialog = document.getElementById('tacoBellTaxStoreDialog');
+
+            limpiarFormularioTiendaTaxTacoBell();
+            dialog?.classList.add('is-form-open');
+            mostrarEstadoTaxTacoBell('Captura los datos de la tienda nueva.');
+            document.getElementById('tbTaxStoreNumber')?.focus();
+        });
+
+    document
         .getElementById('tbTaxSaveStore')
         ?.addEventListener('click', () => {
             try {
@@ -1672,6 +1685,9 @@ function inicializarPanelTaxRatesTacoBell() {
                 recalcularTaxReviewTacoBellSiAplica();
                 mostrarEstadoTaxTacoBell('Tienda guardada correctamente.', 'success');
                 limpiarFormularioTiendaTaxTacoBell();
+                document
+                    .getElementById('tacoBellTaxStoreDialog')
+                    ?.classList.remove('is-form-open');
             } catch (error) {
                 mostrarEstadoTaxTacoBell(error.message, 'error');
 
@@ -1683,7 +1699,13 @@ function inicializarPanelTaxRatesTacoBell() {
 
     document
         .getElementById('tbTaxClearStore')
-        ?.addEventListener('click', limpiarFormularioTiendaTaxTacoBell);
+        ?.addEventListener('click', () => {
+            limpiarFormularioTiendaTaxTacoBell();
+            document
+                .getElementById('tacoBellTaxStoreDialog')
+                ?.classList.remove('is-form-open');
+            mostrarEstadoTaxTacoBell('Edicion cancelada.');
+        });
 
     document
         .getElementById('tbTaxRefreshRates')
@@ -1709,6 +1731,9 @@ function inicializarPanelTaxRatesTacoBell() {
             renderTiendasTaxTacoBell();
             recalcularTaxReviewTacoBellSiAplica();
             limpiarFormularioTiendaTaxTacoBell();
+            document
+                .getElementById('tacoBellTaxStoreDialog')
+                ?.classList.remove('is-form-open');
             mostrarEstadoTaxTacoBell('Catalogo inicial restaurado.', 'success');
         });
 
@@ -1722,7 +1747,11 @@ function inicializarPanelTaxRatesTacoBell() {
                 cargarFormularioTiendaTaxTacoBell(
                     editButton.dataset.tbTaxEdit
                 );
+                document
+                    .getElementById('tacoBellTaxStoreDialog')
+                    ?.classList.add('is-form-open');
                 mostrarEstadoTaxTacoBell('Editando tienda seleccionada.');
+                document.getElementById('tbTaxStoreNumber')?.focus();
             }
 
             if (deleteButton) {

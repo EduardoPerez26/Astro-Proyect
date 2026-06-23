@@ -153,13 +153,43 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
         .admin-state.is-error { color: #a32632; background: #fbe4e6; }
 
         .admin-session-list { max-height: 475px; overflow-y: auto; }
-        .admin-session-item { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 10px; padding: 13px 15px; border-bottom: 1px solid #e6edf3; }
+        .admin-session-item { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 13px 15px; border-bottom: 1px solid #e6edf3; }
         .admin-session-avatar { display: grid; width: 34px; height: 34px; place-items: center; border-radius: 50%; background: #123b5e; color: #fff; font-size: 11px; font-weight: 800; }
         .admin-session-copy { min-width: 0; }
         .admin-session-copy strong { display: block; overflow: hidden; color: #173a59; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
         .admin-session-copy span, .admin-session-copy small { display: block; overflow: hidden; margin-top: 2px; color: #718496; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+        .admin-session-actions { display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
         .admin-session-dot { width: 8px; height: 8px; margin-top: 6px; border-radius: 50%; background: #9aabb9; }
         .admin-session-dot.active { background: #1aa15d; box-shadow: 0 0 0 4px #e0f5e8; }
+        .admin-session-logout {
+            display: inline-grid;
+            width: 30px;
+            height: 30px;
+            place-items: center;
+            border: 1px solid #d7e1ea;
+            border-radius: 6px;
+            color: #9f1f2d;
+            background: #fff;
+            cursor: pointer;
+        }
+        .admin-session-logout:hover {
+            border-color: #f1c4ca;
+            background: #fff4f5;
+        }
+        .admin-session-logout:disabled {
+            cursor: wait;
+            opacity: .75;
+        }
+        .admin-current-session {
+            padding: 4px 6px;
+            border-radius: 999px;
+            color: #147644;
+            background: #e0f4e8;
+            font-size: 9px;
+            font-weight: 800;
+            letter-spacing: .04em;
+            text-transform: uppercase;
+        }
         .admin-loading { padding: 30px !important; color: #718496 !important; text-align: center !important; }
         .user-activity-panel { margin-bottom: 20px; }
 

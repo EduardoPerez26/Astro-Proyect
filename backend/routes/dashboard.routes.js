@@ -193,6 +193,9 @@ router.get('/resumen', verificarToken, async (req, res) => {
 
 router.get('/admin', verificarToken, esAdmin, async (req, res) => {
     try {
+        const tokenActual =
+            req.headers.authorization?.split(' ')[1] || '';
+
         const [
             [usuariosRows],
             [sesionesRows],
@@ -239,6 +242,7 @@ router.get('/admin', verificarToken, esAdmin, async (req, res) => {
                         s.fecha_creacion,
                         s.fecha_expiracion,
                         (s.activa = TRUE AND s.fecha_expiracion > NOW()) AS activa,
+                        (s.token = ?) AS sesion_actual,
                         u.id AS usuario_id,
                         u.nombre_completo AS usuario_nombre,
                         u.username,
@@ -248,7 +252,8 @@ router.get('/admin', verificarToken, esAdmin, async (req, res) => {
                  JOIN usuarios u ON u.id = s.usuario_id
                  LEFT JOIN departamentos d ON d.id = u.departamento_id
                  ORDER BY s.fecha_creacion DESC, s.id DESC
-                 LIMIT 20`
+                 LIMIT 20`,
+                [tokenActual]
             ),
             pool.query(
                 `SELECT movimientos.*
@@ -341,7 +346,8 @@ router.get('/admin', verificarToken, esAdmin, async (req, res) => {
             },
             sesiones_recientes: sesionesRecientes.map(row => ({
                 ...row,
-                activa: Boolean(row.activa)
+                activa: Boolean(row.activa),
+                sesion_actual: Boolean(row.sesion_actual)
             })),
             movimientos,
             actividad_usuarios: actividadUsuarios.map(row => ({
@@ -356,6 +362,72 @@ router.get('/admin', verificarToken, esAdmin, async (req, res) => {
             success: false,
             message: 'No se pudo cargar el dashboard administrativo',
             code: error.code
+        });
+    }
+});
+
+router.patch('/admin/sessions/:sessionId/logout', verificarToken, esAdmin, async (req, res) => {
+    try {
+        const sessionId = Number(req.params.sessionId);
+        const tokenActual =
+            req.headers.authorization?.split(' ')[1] || '';
+
+        if (!Number.isInteger(sessionId) || sessionId <= 0) {
+            return res.status(400).json({
+                success: false,
+                message: 'Sesion no valida'
+            });
+        }
+
+        const [sesiones] = await pool.query(
+            `SELECT s.id, s.token, s.activa, u.nombre_completo AS usuario_nombre
+             FROM sesiones s
+             JOIN usuarios u ON u.id = s.usuario_id
+             WHERE s.id = ?
+             LIMIT 1`,
+            [sessionId]
+        );
+
+        const sesion = sesiones[0];
+
+        if (!sesion) {
+            return res.status(404).json({
+                success: false,
+                message: 'Sesion no encontrada'
+            });
+        }
+
+        if (sesion.token === tokenActual) {
+            return res.status(400).json({
+                success: false,
+                message: 'No puedes cerrar la sesion actual desde este panel'
+            });
+        }
+
+        if (!sesion.activa) {
+            return res.json({
+                success: true,
+                message: 'La sesion ya estaba cerrada'
+            });
+        }
+
+        await pool.query(
+            `UPDATE sesiones
+             SET activa = FALSE,
+                 fecha_expiracion = NOW()
+             WHERE id = ?`,
+            [sessionId]
+        );
+
+        res.json({
+            success: true,
+            message: `Sesion cerrada para ${sesion.usuario_nombre}`
+        });
+    } catch (error) {
+        console.error('Error cerrando sesion desde dashboard admin:', error);
+        res.status(500).json({
+            success: false,
+            message: 'No se pudo cerrar la sesion'
         });
     }
 });

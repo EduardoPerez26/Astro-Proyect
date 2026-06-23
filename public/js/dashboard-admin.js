@@ -1,6 +1,8 @@
 document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('refreshAdminDashboard')
         ?.addEventListener('click', loadAdminDashboard);
+    document.getElementById('adminSessionsList')
+        ?.addEventListener('click', onAdminSessionListClick);
     loadAdminDashboard();
 });
 
@@ -197,9 +199,87 @@ function renderAdminSessions(sessions, compatibilityMode = false) {
                 <span>${escapeAdminHtml(session.departamento_nombre || 'Sin departamento')} · ${escapeAdminHtml(session.rol)}</span>
                 <small>${escapeAdminHtml(session.ip_address || 'IP no disponible')} · ${formatAdminDate(session.fecha_creacion)}</small>
             </div>
-            <span class="admin-session-dot ${session.activa ? 'active' : ''}" title="${session.activa ? 'Activa' : 'Cerrada'}"></span>
+            <div class="admin-session-actions">
+                <span class="admin-session-dot ${session.activa ? 'active' : ''}" title="${session.activa ? 'Activa' : 'Cerrada'}"></span>
+                ${session.activa && !session.sesion_actual ? `
+                    <button
+                        class="admin-session-logout"
+                        type="button"
+                        data-session-logout="${session.id}"
+                        data-session-user="${escapeAdminHtml(session.usuario_nombre || session.username)}"
+                        title="Cerrar sesion"
+                    >
+                        <i class="fa-solid fa-right-from-bracket"></i>
+                    </button>
+                ` : ''}
+                ${session.sesion_actual ? '<small class="admin-current-session">Actual</small>' : ''}
+            </div>
         </article>
     `).join('');
+}
+
+async function onAdminSessionListClick(event) {
+    const button = event.target.closest('[data-session-logout]');
+    if (!button) return;
+
+    const sessionId = button.dataset.sessionLogout;
+    const userName = button.dataset.sessionUser || 'este usuario';
+
+    const confirmacion = await Swal.fire({
+        icon: 'warning',
+        title: 'Cerrar sesion activa',
+        text: `Se cerrara la sesion abierta de ${userName}.`,
+        showCancelButton: true,
+        confirmButtonText: 'Cerrar sesion',
+        cancelButtonText: 'Cancelar'
+    });
+
+    if (!confirmacion.isConfirmed) return;
+
+    await closeAdminSession(sessionId, button);
+}
+
+async function closeAdminSession(sessionId, button) {
+    const token = localStorage.getItem('token');
+
+    if (!token) {
+        window.location.href = '/';
+        return;
+    }
+
+    button.disabled = true;
+    button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+
+    try {
+        const response = await fetch(`${window.API_URL}/dashboard/admin/sessions/${sessionId}/logout`, {
+            method: 'PATCH',
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        const data = await response.json().catch(() => ({}));
+
+        if (!response.ok || !data.success) {
+            throw new Error(data.message || data.mensaje || 'No se pudo cerrar la sesion');
+        }
+
+        await Swal.fire({
+            icon: 'success',
+            title: 'Sesion cerrada',
+            text: data.message || 'La sesion fue cerrada correctamente.',
+            timer: 1700,
+            showConfirmButton: false
+        });
+
+        await loadAdminDashboard();
+    } catch (error) {
+        console.error('Error cerrando sesion:', error);
+        await Swal.fire({
+            icon: 'error',
+            title: 'No se pudo cerrar',
+            text: error.message
+        });
+        button.disabled = false;
+        button.innerHTML = '<i class="fa-solid fa-right-from-bracket"></i>';
+    }
 }
 
 function renderAdminUserActivity(users) {
