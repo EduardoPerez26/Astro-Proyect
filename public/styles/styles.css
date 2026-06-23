@@ -1314,14 +1314,18 @@ th:focus {
     color: #fff !important;
 }
 
-.swal2-confirm:hover { background: #081f33 !important; }
+.swal2-confirm:hover {
+    background: #081f33 !important;
+}
 
 .swal2-deny {
     background: #355b7c !important;
     color: #fff !important;
 }
 
-.swal2-deny:hover { background: #274965 !important; }
+.swal2-deny:hover {
+    background: #274965 !important;
+}
 
 .swal2-cancel {
     border: 1px solid #d5dee8 !important;
@@ -1329,13 +1333,17 @@ th:focus {
     color: #334e68 !important;
 }
 
-.swal2-cancel:hover { background: #e3eaf1 !important; }
+.swal2-cancel:hover {
+    background: #e3eaf1 !important;
+}
 
 .swal2-loader {
     border-color: #102a43 transparent #102a43 transparent !important;
 }
 
-.swal2-timer-progress-bar { background: #174a75 !important; }
+.swal2-timer-progress-bar {
+    background: #174a75 !important;
+}
 
 .swal2-popup.swal2-toast {
     width: min(340px, calc(100vw - 28px)) !important;
@@ -1378,14 +1386,34 @@ th:focus {
     font-size: 25px !important;
 }
 
-.swal2-close:hover { color: #102a43 !important; }
+.swal2-close:hover {
+    color: #102a43 !important;
+}
 
 @media (max-width: 520px) {
-    .swal2-container { padding: 14px !important; }
-    .swal2-popup:not(.swal2-toast) .swal2-title { padding: 0 20px !important; font-size: 22px !important; }
-    .swal2-popup:not(.swal2-toast) .swal2-html-container { margin-right: 20px !important; margin-left: 20px !important; }
-    .swal2-popup:not(.swal2-toast) .swal2-actions { width: calc(100% - 40px) !important; margin-right: 20px !important; margin-left: 20px !important; }
-    .swal2-popup:not(.swal2-toast) .swal2-actions button { flex: 1 1 100%; }
+    .swal2-container {
+        padding: 14px !important;
+    }
+
+    .swal2-popup:not(.swal2-toast) .swal2-title {
+        padding: 0 20px !important;
+        font-size: 22px !important;
+    }
+
+    .swal2-popup:not(.swal2-toast) .swal2-html-container {
+        margin-right: 20px !important;
+        margin-left: 20px !important;
+    }
+
+    .swal2-popup:not(.swal2-toast) .swal2-actions {
+        width: calc(100% - 40px) !important;
+        margin-right: 20px !important;
+        margin-left: 20px !important;
+    }
+
+    .swal2-popup:not(.swal2-toast) .swal2-actions button {
+        flex: 1 1 100%;
+    }
 }
 
 /* =============================================
@@ -1685,7 +1713,7 @@ th:focus {
     position: relative;
 }
 
-.login-input-wrap > i {
+.login-input-wrap>i {
     position: absolute;
     top: 50%;
     left: 17px;
@@ -1713,7 +1741,7 @@ th:focus {
     color: #99a7b5;
 }
 
-.login-input-wrap:focus-within > i {
+.login-input-wrap:focus-within>i {
     color: var(--primary);
 }
 
@@ -2427,8 +2455,14 @@ input[type=file] {
     background: #0a2238;
 }
 
-.sidebar-nav { padding: 18px 12px; }
-.sidebar-section { margin-bottom: 22px; }
+.sidebar-nav {
+    padding: 18px 12px;
+}
+
+.sidebar-section {
+    margin-bottom: 22px;
+}
+
 .sidebar-section-title {
     margin-bottom: 7px;
     color: #7f9ab2;
@@ -2437,7 +2471,10 @@ input[type=file] {
     letter-spacing: .1em;
 }
 
-.sidebar-menu { gap: 2px; }
+.sidebar-menu {
+    gap: 2px;
+}
+
 .sidebar-menu-link,
 .nav-btn {
     min-height: 40px;
@@ -2455,7 +2492,7 @@ input[type=file] {
 }
 
 .main .page-container,
-.main > .tab {
+.main>.tab {
     max-width: none;
 }
 
@@ -2572,8 +2609,13 @@ input[type=file] {
     font-size: 13px;
 }
 
-.main table tbody tr:nth-child(even) td { background: #f7f9fb; }
-.main table tbody tr:hover td { background: #eaf1f7; }
+.main table tbody tr:nth-child(even) td {
+    background: #f7f9fb;
+}
+
+.main table tbody tr:hover td {
+    background: #eaf1f7;
+}
 
 .main .tabs-container {
     padding: 3px;
@@ -2591,8 +2633,17 @@ input[type=file] {
 }
 
 @media (max-width: 780px) {
-    .main { padding-right: 16px; padding-left: 16px; }
-    .topbar { margin-right: -16px; margin-left: -16px; padding-right: 16px; padding-left: 16px; }
+    .main {
+        padding-right: 16px;
+        padding-left: 16px;
+    }
+
+    .topbar {
+        margin-right: -16px;
+        margin-left: -16px;
+        padding-right: 16px;
+        padding-left: 16px;
+    }
 }
 
 @media (max-width: 768px) {
@@ -3608,7 +3659,7 @@ input[type=file] {
 /* =============================================
    UX REFRESH GLOBAL
 ============================================= */
-.main > .tab,
+.main>.tab,
 .page-container {
     padding: 0;
     max-width: 1600px;
@@ -3864,4 +3915,28 @@ td {
     }
 }
 
+#burgerKingTaxStoreDialog .bk-tax-swal-container,
+#burgerKingTaxStoreDialog .swal2-container {
+    z-index: 2147483647 !important;
+}
 
+#burgerKingTaxStoreDialog .bk-tax-swal-container {
+    position: fixed !important;
+    inset: 0 !important;
+}
+
+#burgerKingTaxStoreDialog .bk-tax-swal-popup {
+    z-index: 2147483647 !important;
+}
+
+#burgerKingTaxStoreDialog .swal2-container,
+#burgerKingTaxStoreDialog .bk-tax-swal-container {
+    z-index: 2147483647 !important;
+    position: fixed !important;
+    inset: 0 !important;
+}
+
+#burgerKingTaxStoreDialog .swal2-popup,
+#burgerKingTaxStoreDialog .bk-tax-swal-popup {
+    z-index: 2147483647 !important;
+}

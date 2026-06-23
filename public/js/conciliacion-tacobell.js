@@ -1122,15 +1122,120 @@ function upsertTiendaTaxTacoBell(tienda) {
     return guardarTiendasTaxTacoBell(tiendas);
 }
 
-function eliminarTiendaTaxTacoBell(store) {
+function asegurarSweetAlertSobreModalTacoBell() {
+    const styleId = 'tacobell-tax-swal-style';
+
+    if (document.getElementById(styleId)) return;
+
+    const style = document.createElement('style');
+    style.id = styleId;
+    style.textContent = `
+        #tacoBellTaxStoreDialog .swal2-container,
+        #tacoBellTaxStoreDialog .tb-tax-swal-container,
+        .tb-tax-swal-container {
+            z-index: 2147483647 !important;
+            position: fixed !important;
+            inset: 0 !important;
+        }
+
+        #tacoBellTaxStoreDialog .swal2-popup,
+        #tacoBellTaxStoreDialog .tb-tax-swal-popup,
+        .tb-tax-swal-popup {
+            z-index: 2147483647 !important;
+        }
+    `;
+
+    document.head.appendChild(style);
+}
+
+function swalTacoBellModal(opciones) {
+    const dialog = document.getElementById('tacoBellTaxStoreDialog');
+
+    if (!window.Swal) {
+        return null;
+    }
+
+    asegurarSweetAlertSobreModalTacoBell();
+
+    return Swal.fire({
+        target: dialog && dialog.open ? dialog : document.body,
+        heightAuto: false,
+        scrollbarPadding: false,
+        customClass: {
+            container: 'tb-tax-swal-container',
+            popup: 'tb-tax-swal-popup'
+        },
+        ...opciones
+    });
+}
+
+async function eliminarTiendaTaxTacoBell(store) {
     const numeroStore = normalizarStoreNumberTacoBell(store);
+    const tiendas = cargarTiendasTaxTacoBell();
+    const tienda = tiendas.find(item => item.store === numeroStore);
 
-    if (!numeroStore) return cargarTiendasTaxTacoBell();
+    if (!numeroStore || !tienda) {
+        mostrarEstadoTaxTacoBell('No se encontró la tienda seleccionada.', 'warning');
+        return false;
+    }
 
-    return guardarTiendasTaxTacoBell(
-        cargarTiendasTaxTacoBell()
-            .filter(item => item.store !== numeroStore)
+    let confirmado = false;
+
+    if (window.Swal) {
+        const resultado = await swalTacoBellModal({
+            icon: 'warning',
+            title: 'Eliminar tienda',
+            html: `
+                <p>¿Seguro que quieres eliminar la tienda <strong>${tienda.store}</strong>?</p>
+                <p><strong>${tienda.city || ''}</strong> ${tienda.address || ''}</p>
+                <p>Esta acción solo elimina la tienda del catálogo local de este navegador.</p>
+            `,
+            showCancelButton: true,
+            confirmButtonText: 'Sí, eliminar',
+            cancelButtonText: 'Cancelar',
+            confirmButtonColor: '#c01818',
+            cancelButtonColor: '#6c757d',
+            reverseButtons: true,
+            focusCancel: true
+        });
+
+        confirmado = resultado.isConfirmed;
+    } else {
+        confirmado = confirm(
+            `¿Seguro que quieres eliminar la tienda ${tienda.store}?
+
+` +
+            `${tienda.city || ''} ${tienda.address || ''}
+
+` +
+            `Esta acción solo elimina la tienda del catálogo local de este navegador.`
+        );
+    }
+
+    if (!confirmado) {
+        mostrarEstadoTaxTacoBell('Eliminación cancelada.');
+        return false;
+    }
+
+    guardarTiendasTaxTacoBell(
+        tiendas.filter(item => item.store !== numeroStore)
     );
+
+    const cache = cargarCacheTaxRateTacoBell();
+
+    Object.keys(cache).forEach(clave => {
+        if (clave.startsWith(`${numeroStore}|`)) {
+            delete cache[clave];
+        }
+    });
+
+    guardarCacheTaxRateTacoBell(cache);
+
+    renderTiendasTaxTacoBell();
+    recalcularTaxReviewTacoBellSiAplica();
+    mostrarEstadoTaxTacoBell(`Tienda ${numeroStore} eliminada.`, 'success');
+
+    return true;
 }
 
 function cargarCacheTaxRateTacoBell() {
@@ -1557,18 +1662,51 @@ function recalcularTaxReviewTacoBellSiAplica() {
 
 async function refrescarTaxRatesTacoBell() {
     const tiendasBase = cargarTiendasTaxTacoBell();
-    const storesProcesadas = Array.isArray(datosExtraidos) && datosExtraidos.length
-        ? new Set(datosExtraidos.map(row => normalizarStoreNumberTacoBell(row.store)))
-        : null;
-
-    const tiendas = (storesProcesadas
-        ? tiendasBase.filter(tienda => storesProcesadas.has(tienda.store))
-        : tiendasBase
-    ).filter(tienda => String(tienda.state || '').toUpperCase() === 'CA');
+    const tiendas = tiendasBase.filter(
+        tienda => String(tienda.state || '').toUpperCase() === 'CA'
+    );
 
     if (!tiendas.length) {
         mostrarEstadoTaxTacoBell('No hay tiendas CA para actualizar con CDTFA.', 'warning');
         return;
+    }
+
+    let confirmado = false;
+
+    if (window.Swal) {
+        const resultado = await swalTacoBellModal({
+            icon: 'question',
+            title: 'Actualizar rates CDTFA',
+            text: `Se actualizarán ${tiendas.length} tiendas CA configuradas, incluyendo las tiendas nuevas agregadas manualmente. Las tiendas fuera de CA quedan con rate local/manual.`,
+            showCancelButton: true,
+            confirmButtonText: 'Actualizar',
+            cancelButtonText: 'Cancelar',
+            confirmButtonColor: '#0b2d4d',
+            cancelButtonColor: '#6c757d',
+            reverseButtons: true,
+            focusCancel: true
+        });
+
+        confirmado = resultado.isConfirmed;
+    } else {
+        confirmado = confirm(
+            `Se actualizarán ${tiendas.length} tiendas CA configuradas.
+
+¿Deseas continuar?`
+        );
+    }
+
+    if (!confirmado) {
+        mostrarEstadoTaxTacoBell('Actualización cancelada.');
+        return;
+    }
+
+    const botonActualizar = document.getElementById('tbTaxRefreshRates');
+
+    if (botonActualizar) {
+        botonActualizar.disabled = true;
+        botonActualizar.dataset.originalText = botonActualizar.textContent;
+        botonActualizar.textContent = 'Actualizando...';
     }
 
     mostrarEstadoTaxTacoBell(
@@ -1577,46 +1715,75 @@ async function refrescarTaxRatesTacoBell() {
 
     let ok = 0;
     let fallos = 0;
+    let sinCoordenadas = 0;
 
-    for (let i = 0; i < tiendas.length; i += 1) {
-        const tienda = tiendas[i];
-        const result = await consultarTaxRateCDTFATacoBell(tienda);
+    try {
+        for (let i = 0; i < tiendas.length; i += 1) {
+            const tienda = tiendas[i];
+            const tieneCoordenadas =
+                Number.isFinite(Number(tienda.latitude)) &&
+                Number.isFinite(Number(tienda.longitude));
 
-        if (result.success) {
-            guardarCacheTiendaTaxRateTacoBell(
-                tienda.store,
-                tienda.latitude,
-                tienda.longitude,
-                result
-            );
+            if (!tieneCoordenadas) {
+                sinCoordenadas += 1;
+                fallos += 1;
 
-            upsertTiendaTaxTacoBell({
-                ...tienda,
-                taxRate: result.rate
-            });
+                console.warn(
+                    `Tienda Taco Bell ${tienda.store} sin coordenadas válidas. No se puede consultar CDTFA.`
+                );
 
-            ok += 1;
-        } else {
-            fallos += 1;
-            console.warn(
-                `No se pudo actualizar CDTFA para tienda Taco Bell ${tienda.store}:`,
-                result.error
+                mostrarEstadoTaxTacoBell(
+                    `Actualizando ${i + 1}/${tiendas.length} desde CDTFA... OK: ${ok}, sin coordenadas: ${sinCoordenadas}, fallas: ${fallos}`,
+                    'warning'
+                );
+
+                continue;
+            }
+
+            const result = await consultarTaxRateCDTFATacoBell(tienda);
+
+            if (result.success) {
+                guardarCacheTiendaTaxRateTacoBell(
+                    tienda.store,
+                    tienda.latitude,
+                    tienda.longitude,
+                    result
+                );
+
+                upsertTiendaTaxTacoBell({
+                    ...tienda,
+                    taxRate: result.rate
+                });
+
+                ok += 1;
+            } else {
+                fallos += 1;
+                console.warn(
+                    `No se pudo actualizar CDTFA para tienda Taco Bell ${tienda.store}:`,
+                    result.error
+                );
+            }
+
+            mostrarEstadoTaxTacoBell(
+                `Actualizando ${i + 1}/${tiendas.length} desde CDTFA... OK: ${ok}, sin coordenadas: ${sinCoordenadas}, fallas: ${fallos}`,
+                fallos ? 'warning' : 'info'
             );
         }
 
+        renderTiendasTaxTacoBell();
+        recalcularTaxReviewTacoBellSiAplica();
+
         mostrarEstadoTaxTacoBell(
-            `Actualizando ${i + 1}/${tiendas.length} desde CDTFA... OK: ${ok}, fallas: ${fallos}`,
-            fallos ? 'warning' : 'info'
+            `Actualización terminada. CDTFA OK: ${ok}. Sin coordenadas: ${sinCoordenadas}. Fallas: ${fallos}.`,
+            fallos ? 'warning' : 'success'
         );
+    } finally {
+        if (botonActualizar) {
+            botonActualizar.disabled = false;
+            botonActualizar.textContent =
+                botonActualizar.dataset.originalText || 'Actualizar rates CDTFA';
+        }
     }
-
-    renderTiendasTaxTacoBell();
-    recalcularTaxReviewTacoBellSiAplica();
-
-    mostrarEstadoTaxTacoBell(
-        `Actualizacion terminada. CDTFA OK: ${ok}. Fallas: ${fallos}.`,
-        fallos ? 'warning' : 'success'
-    );
 }
 
 function abrirModalTaxTacoBell() {
@@ -1692,7 +1859,12 @@ function inicializarPanelTaxRatesTacoBell() {
                 mostrarEstadoTaxTacoBell(error.message, 'error');
 
                 if (window.Swal) {
-                    Swal.fire('Revisa la tienda', error.message, 'warning');
+                    swalTacoBellModal({
+                        icon: 'warning',
+                        title: 'Revisa la tienda',
+                        text: error.message,
+                        confirmButtonText: 'Entendido'
+                    });
                 }
             }
         });
@@ -1716,13 +1888,17 @@ function inicializarPanelTaxRatesTacoBell() {
     document
         .getElementById('tbTaxResetStores')
         ?.addEventListener('click', async () => {
-            const confirmar = !window.Swal || (await Swal.fire({
+            const confirmar = !window.Swal || (await swalTacoBellModal({
                 icon: 'warning',
                 title: 'Restaurar tiendas Taco Bell',
-                text: 'Se borraran los cambios guardados localmente y volvera el catalogo inicial.',
+                text: 'Se borrarán los cambios guardados localmente y volverá el catálogo inicial.',
                 showCancelButton: true,
                 confirmButtonText: 'Restaurar',
-                cancelButtonText: 'Cancelar'
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#c01818',
+                cancelButtonColor: '#6c757d',
+                reverseButtons: true,
+                focusCancel: true
             })).isConfirmed;
 
             if (!confirmar) return;
@@ -1739,7 +1915,7 @@ function inicializarPanelTaxRatesTacoBell() {
 
     document
         .getElementById('tbTaxStoreBody')
-        ?.addEventListener('click', event => {
+        ?.addEventListener('click', async event => {
             const editButton = event.target.closest('[data-tb-tax-edit]');
             const deleteButton = event.target.closest('[data-tb-tax-delete]');
 
@@ -1752,14 +1928,14 @@ function inicializarPanelTaxRatesTacoBell() {
                     ?.classList.add('is-form-open');
                 mostrarEstadoTaxTacoBell('Editando tienda seleccionada.');
                 document.getElementById('tbTaxStoreNumber')?.focus();
+                return;
             }
 
             if (deleteButton) {
+                event.preventDefault();
+
                 const store = deleteButton.dataset.tbTaxDelete;
-                eliminarTiendaTaxTacoBell(store);
-                renderTiendasTaxTacoBell();
-                recalcularTaxReviewTacoBellSiAplica();
-                mostrarEstadoTaxTacoBell(`Tienda ${store} eliminada.`, 'success');
+                await eliminarTiendaTaxTacoBell(store);
             }
         });
 

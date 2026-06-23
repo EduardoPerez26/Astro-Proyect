@@ -208,10 +208,10 @@ function formatoPorcentajePopeyes(valor) {
             : numero * 100;
 
     if (Math.abs(porcentaje) < 0.000001) {
-        return '0%';
+        return '0.000%';
     }
 
-    return `${porcentaje.toFixed(3).replace(/\.?0+$/, '')}%`;
+    return `${porcentaje.toFixed(3)}%`;
 }
 
 const POPEYES_TAX_RATE_DIRECT_API_BASE_URL = 'https://services.maps.cdtfa.ca.gov/api/taxrate';
@@ -347,15 +347,120 @@ function upsertTiendaTaxPopeyes(tienda) {
     return guardarTiendasTaxPopeyes(tiendas);
 }
 
-function eliminarTiendaTaxPopeyes(store) {
+function asegurarSweetAlertSobreModalPopeyes() {
+    const styleId = 'popeyes-tax-swal-style';
+
+    if (document.getElementById(styleId)) return;
+
+    const style = document.createElement('style');
+    style.id = styleId;
+    style.textContent = `
+        #popeyesTaxStoreDialog .swal2-container,
+        #popeyesTaxStoreDialog .py-tax-swal-container,
+        .py-tax-swal-container {
+            z-index: 2147483647 !important;
+            position: fixed !important;
+            inset: 0 !important;
+        }
+
+        #popeyesTaxStoreDialog .swal2-popup,
+        #popeyesTaxStoreDialog .py-tax-swal-popup,
+        .py-tax-swal-popup {
+            z-index: 2147483647 !important;
+        }
+    `;
+
+    document.head.appendChild(style);
+}
+
+function swalPopeyesModal(opciones) {
+    const dialog = document.getElementById('popeyesTaxStoreDialog');
+
+    if (!window.Swal) {
+        return null;
+    }
+
+    asegurarSweetAlertSobreModalPopeyes();
+
+    return Swal.fire({
+        target: dialog && dialog.open ? dialog : document.body,
+        heightAuto: false,
+        scrollbarPadding: false,
+        customClass: {
+            container: 'py-tax-swal-container',
+            popup: 'py-tax-swal-popup'
+        },
+        ...opciones
+    });
+}
+
+async function eliminarTiendaTaxPopeyes(store) {
     const numeroStore = normalizarStoreNumberPopeyes(store);
+    const tiendas = cargarTiendasTaxPopeyes();
+    const tienda = tiendas.find(item => item.store === numeroStore);
 
-    if (!numeroStore) return cargarTiendasTaxPopeyes();
+    if (!numeroStore || !tienda) {
+        mostrarEstadoTaxPopeyes('No se encontró la tienda seleccionada.', 'warning');
+        return false;
+    }
 
-    return guardarTiendasTaxPopeyes(
-        cargarTiendasTaxPopeyes()
-            .filter(item => item.store !== numeroStore)
+    let confirmado = false;
+
+    if (window.Swal) {
+        const resultado = await swalPopeyesModal({
+            icon: 'warning',
+            title: 'Eliminar tienda',
+            html: `
+                <p>¿Seguro que quieres eliminar la tienda <strong>${tienda.store}</strong>?</p>
+                <p><strong>${tienda.city || ''}</strong> ${tienda.address || ''}</p>
+                <p>Esta acción solo elimina la tienda del catálogo local de este navegador.</p>
+            `,
+            showCancelButton: true,
+            confirmButtonText: 'Sí, eliminar',
+            cancelButtonText: 'Cancelar',
+            confirmButtonColor: '#c01818',
+            cancelButtonColor: '#6c757d',
+            reverseButtons: true,
+            focusCancel: true
+        });
+
+        confirmado = resultado.isConfirmed;
+    } else {
+        confirmado = confirm(
+            `¿Seguro que quieres eliminar la tienda ${tienda.store}?
+
+` +
+            `${tienda.city || ''} ${tienda.address || ''}
+
+` +
+            `Esta acción solo elimina la tienda del catálogo local de este navegador.`
+        );
+    }
+
+    if (!confirmado) {
+        mostrarEstadoTaxPopeyes('Eliminación cancelada.');
+        return false;
+    }
+
+    guardarTiendasTaxPopeyes(
+        tiendas.filter(item => item.store !== numeroStore)
     );
+
+    const cache = cargarCacheTaxRatePopeyes();
+
+    Object.keys(cache).forEach(clave => {
+        if (clave.startsWith(`${numeroStore}|`)) {
+            delete cache[clave];
+        }
+    });
+
+    guardarCacheTaxRatePopeyes(cache);
+
+    renderTiendasTaxPopeyes();
+    recalcularTaxReviewPopeyesSiAplica();
+    mostrarEstadoTaxPopeyes(`Tienda ${numeroStore} eliminada.`, 'success');
+
+    return true;
 }
 
 function cargarCacheTaxRatePopeyes() {
@@ -765,18 +870,49 @@ function recalcularTaxReviewPopeyesSiAplica() {
 }
 
 async function refrescarTaxRatesPopeyes() {
-    const tiendasBase = cargarTiendasTaxPopeyes();
-    const storesProcesadas = Array.isArray(popeyesConciliationData) && popeyesConciliationData.length
-        ? new Set(popeyesConciliationData.map(row => normalizarStoreNumberPopeyes(row.store)))
-        : null;
-
-    const tiendas = storesProcesadas
-        ? tiendasBase.filter(tienda => storesProcesadas.has(tienda.store))
-        : tiendasBase;
+    const tiendas = cargarTiendasTaxPopeyes();
 
     if (!tiendas.length) {
         mostrarEstadoTaxPopeyes('No hay tiendas para actualizar.', 'warning');
         return;
+    }
+
+    let confirmado = false;
+
+    if (window.Swal) {
+        const resultado = await swalPopeyesModal({
+            icon: 'question',
+            title: 'Actualizar rates CDTFA',
+            text: `Se actualizarán ${tiendas.length} tiendas configuradas, incluyendo las tiendas nuevas agregadas manualmente.`,
+            showCancelButton: true,
+            confirmButtonText: 'Actualizar',
+            cancelButtonText: 'Cancelar',
+            confirmButtonColor: '#0b2d4d',
+            cancelButtonColor: '#6c757d',
+            reverseButtons: true,
+            focusCancel: true
+        });
+
+        confirmado = resultado.isConfirmed;
+    } else {
+        confirmado = confirm(
+            `Se actualizarán ${tiendas.length} tiendas configuradas.
+
+¿Deseas continuar?`
+        );
+    }
+
+    if (!confirmado) {
+        mostrarEstadoTaxPopeyes('Actualización cancelada.');
+        return;
+    }
+
+    const botonActualizar = document.getElementById('pyTaxRefreshRates');
+
+    if (botonActualizar) {
+        botonActualizar.disabled = true;
+        botonActualizar.dataset.originalText = botonActualizar.textContent;
+        botonActualizar.textContent = 'Actualizando...';
     }
 
     mostrarEstadoTaxPopeyes(
@@ -785,46 +921,75 @@ async function refrescarTaxRatesPopeyes() {
 
     let ok = 0;
     let fallos = 0;
+    let sinCoordenadas = 0;
 
-    for (let i = 0; i < tiendas.length; i += 1) {
-        const tienda = tiendas[i];
-        const result = await consultarTaxRateCDTFAPopeyes(tienda);
+    try {
+        for (let i = 0; i < tiendas.length; i += 1) {
+            const tienda = tiendas[i];
+            const tieneCoordenadas =
+                Number.isFinite(Number(tienda.latitude)) &&
+                Number.isFinite(Number(tienda.longitude));
 
-        if (result.success) {
-            guardarCacheTiendaTaxRatePopeyes(
-                tienda.store,
-                tienda.latitude,
-                tienda.longitude,
-                result
-            );
+            if (!tieneCoordenadas) {
+                sinCoordenadas += 1;
+                fallos += 1;
 
-            upsertTiendaTaxPopeyes({
-                ...tienda,
-                taxRate: result.rate
-            });
+                console.warn(
+                    `Tienda Popeyes ${tienda.store} sin coordenadas válidas. No se puede consultar CDTFA.`
+                );
 
-            ok += 1;
-        } else {
-            fallos += 1;
-            console.warn(
-                `No se pudo actualizar CDTFA para Popeyes ${tienda.store}:`,
-                result.error
+                mostrarEstadoTaxPopeyes(
+                    `Actualizando ${i + 1}/${tiendas.length} desde CDTFA... OK: ${ok}, sin coordenadas: ${sinCoordenadas}, fallas: ${fallos}`,
+                    'warning'
+                );
+
+                continue;
+            }
+
+            const result = await consultarTaxRateCDTFAPopeyes(tienda);
+
+            if (result.success) {
+                guardarCacheTiendaTaxRatePopeyes(
+                    tienda.store,
+                    tienda.latitude,
+                    tienda.longitude,
+                    result
+                );
+
+                upsertTiendaTaxPopeyes({
+                    ...tienda,
+                    taxRate: result.rate
+                });
+
+                ok += 1;
+            } else {
+                fallos += 1;
+                console.warn(
+                    `No se pudo actualizar CDTFA para Popeyes ${tienda.store}:`,
+                    result.error
+                );
+            }
+
+            mostrarEstadoTaxPopeyes(
+                `Actualizando ${i + 1}/${tiendas.length} desde CDTFA... OK: ${ok}, sin coordenadas: ${sinCoordenadas}, fallas: ${fallos}`,
+                fallos ? 'warning' : 'info'
             );
         }
 
+        renderTiendasTaxPopeyes();
+        recalcularTaxReviewPopeyesSiAplica();
+
         mostrarEstadoTaxPopeyes(
-            `Actualizando ${i + 1}/${tiendas.length} desde CDTFA... OK: ${ok}, fallas: ${fallos}`,
-            fallos ? 'warning' : 'info'
+            `Actualización terminada. CDTFA OK: ${ok}. Sin coordenadas: ${sinCoordenadas}. Fallas: ${fallos}.`,
+            fallos ? 'warning' : 'success'
         );
+    } finally {
+        if (botonActualizar) {
+            botonActualizar.disabled = false;
+            botonActualizar.textContent =
+                botonActualizar.dataset.originalText || 'Actualizar rates CDTFA';
+        }
     }
-
-    renderTiendasTaxPopeyes();
-    recalcularTaxReviewPopeyesSiAplica();
-
-    mostrarEstadoTaxPopeyes(
-        `Actualizacion terminada. CDTFA OK: ${ok}. Fallas: ${fallos}.`,
-        fallos ? 'warning' : 'success'
-    );
 }
 
 function abrirModalTaxPopeyes() {
@@ -900,7 +1065,12 @@ function inicializarPanelTaxRatesPopeyes() {
                 mostrarEstadoTaxPopeyes(error.message, 'error');
 
                 if (window.Swal) {
-                    Swal.fire('Revisa la tienda', error.message, 'warning');
+                    swalPopeyesModal({
+                        icon: 'warning',
+                        title: 'Revisa la tienda',
+                        text: error.message,
+                        confirmButtonText: 'Entendido'
+                    });
                 }
             }
         });
@@ -924,13 +1094,17 @@ function inicializarPanelTaxRatesPopeyes() {
     document
         .getElementById('pyTaxResetStores')
         ?.addEventListener('click', async () => {
-            const confirmar = !window.Swal || (await Swal.fire({
+            const confirmar = !window.Swal || (await swalPopeyesModal({
                 icon: 'warning',
                 title: 'Restaurar tiendas Popeyes',
-                text: 'Se borraran los cambios guardados localmente y volvera el catalogo inicial.',
+                text: 'Se borrarán los cambios guardados localmente y volverá el catálogo inicial.',
                 showCancelButton: true,
                 confirmButtonText: 'Restaurar',
-                cancelButtonText: 'Cancelar'
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#c01818',
+                cancelButtonColor: '#6c757d',
+                reverseButtons: true,
+                focusCancel: true
             })).isConfirmed;
 
             if (!confirmar) return;
@@ -947,7 +1121,7 @@ function inicializarPanelTaxRatesPopeyes() {
 
     document
         .getElementById('pyTaxStoreBody')
-        ?.addEventListener('click', event => {
+        ?.addEventListener('click', async event => {
             const editButton = event.target.closest('[data-py-tax-edit]');
             const deleteButton = event.target.closest('[data-py-tax-delete]');
 
@@ -960,14 +1134,14 @@ function inicializarPanelTaxRatesPopeyes() {
                     ?.classList.add('is-form-open');
                 mostrarEstadoTaxPopeyes('Editando tienda seleccionada.');
                 document.getElementById('pyTaxStoreNumber')?.focus();
+                return;
             }
 
             if (deleteButton) {
+                event.preventDefault();
+
                 const store = deleteButton.dataset.pyTaxDelete;
-                eliminarTiendaTaxPopeyes(store);
-                renderTiendasTaxPopeyes();
-                recalcularTaxReviewPopeyesSiAplica();
-                mostrarEstadoTaxPopeyes(`Tienda ${store} eliminada.`, 'success');
+                await eliminarTiendaTaxPopeyes(store);
             }
         });
 

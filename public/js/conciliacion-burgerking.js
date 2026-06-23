@@ -2017,15 +2017,86 @@ function upsertTiendaTaxBurgerKing(tienda) {
     return guardarTiendasTaxBurgerKing(tiendas);
 }
 
-function eliminarTiendaTaxBurgerKing(store) {
-    const numeroStore = normalizarStoreNumberBurgerKing(store);
+function swalBurgerKingModal(opciones) {
+    const dialog = document.getElementById('burgerKingTaxStoreDialog');
 
-    if (!numeroStore) return cargarTiendasTaxBurgerKing();
+    if (!window.Swal) {
+        return null;
+    }
 
-    const tiendas = cargarTiendasTaxBurgerKing()
-        .filter(item => item.store !== numeroStore);
+    return Swal.fire({
+        target: dialog && dialog.open ? dialog : document.body,
+        heightAuto: false,
+        scrollbarPadding: false,
+        customClass: {
+            container: 'bk-tax-swal-container',
+            popup: 'bk-tax-swal-popup'
+        },
+        ...opciones
+    });
+}
 
-    return guardarTiendasTaxBurgerKing(tiendas);
+async function eliminarTiendaTaxBurgerKing(store) {
+    const storeNumber = normalizarStoreNumberBurgerKing(store);
+    const tiendas = cargarTiendasTaxBurgerKing();
+    const tienda = tiendas.find(item => item.store === storeNumber);
+
+    if (!tienda) {
+        mostrarEstadoTaxBurgerKing('No se encontró la tienda seleccionada.', 'warning');
+        return false;
+    }
+
+    let confirmado = false;
+
+    if (window.Swal) {
+        const resultado = await swalBurgerKingModal({
+            icon: 'warning',
+            title: 'Eliminar tienda',
+            html: `
+                <p>¿Seguro que quieres eliminar la tienda <strong>${tienda.store}</strong>?</p>
+                <p><strong>${tienda.city || ''}</strong> ${tienda.address || ''}</p>
+                <p>Esta acción solo elimina la tienda del catálogo local de este navegador.</p>
+            `,
+            showCancelButton: true,
+            confirmButtonText: 'Sí, eliminar',
+            cancelButtonText: 'Cancelar',
+            confirmButtonColor: '#c01818',
+            cancelButtonColor: '#6c757d',
+            reverseButtons: true,
+            focusCancel: true
+        });
+
+        confirmado = resultado.isConfirmed;
+    } else {
+        confirmado = confirm(
+            `¿Seguro que quieres eliminar la tienda ${tienda.store}?\n\n` +
+            `${tienda.city || ''} ${tienda.address || ''}\n\n` +
+            `Esta acción solo elimina la tienda del catálogo local de este navegador.`
+        );
+    }
+
+    if (!confirmado) {
+        mostrarEstadoTaxBurgerKing('Eliminación cancelada.');
+        return false;
+    }
+
+    const tiendasActualizadas = tiendas.filter(item => item.store !== storeNumber);
+    guardarTiendasTaxBurgerKing(tiendasActualizadas);
+
+    const cache = cargarCacheTaxRateBurgerKing();
+
+    Object.keys(cache).forEach(clave => {
+        if (clave.startsWith(`${storeNumber}|`)) {
+            delete cache[clave];
+        }
+    });
+
+    guardarCacheTaxRateBurgerKing(cache);
+
+    renderTiendasTaxBurgerKing();
+    mostrarEstadoTaxBurgerKing(`Tienda ${storeNumber} eliminada.`, 'success');
+
+    return true;
 }
 
 function cargarCacheTaxRateBurgerKing() {
@@ -2462,11 +2533,10 @@ function renderTiendasTaxBurgerKing() {
                 <small>${tienda.address || ''}</small>
             </td>
             <td>${tienda.zip || '-'}</td>
-            <td>${
-                tienda.latitude !== null && tienda.longitude !== null
-                    ? `${tienda.latitude.toFixed(6)}, ${tienda.longitude.toFixed(6)}`
-                    : '-'
-            }</td>
+            <td>${tienda.latitude !== null && tienda.longitude !== null
+            ? `${tienda.latitude.toFixed(6)}, ${tienda.longitude.toFixed(6)}`
+            : '-'
+        }</td>
             <td>${tienda.preferredJurisdiction || '-'}</td>
             <td>${estadoTaxRateDesdeCacheBurgerKing(tienda)}</td>
             <td class="bk-tax-store-actions">
@@ -2491,19 +2561,66 @@ function renderTiendasTaxBurgerKing() {
     }
 }
 
-async function refrescarTaxRatesBurgerKing() {
-    const tiendasBase = cargarTiendasTaxBurgerKing();
-    const storesProcesadas = Array.isArray(datosExtraidos) && datosExtraidos.length
-        ? new Set(datosExtraidos.map(row => normalizarStoreNumberBurgerKing(row.store)))
-        : null;
+function swalBurgerKingModal(opciones) {
+    const dialog = document.getElementById('burgerKingTaxStoreDialog');
 
-    const tiendas = storesProcesadas
-        ? tiendasBase.filter(tienda => storesProcesadas.has(tienda.store))
-        : tiendasBase;
+    if (!window.Swal) {
+        return null;
+    }
+
+    return Swal.fire({
+        target: dialog && dialog.open ? dialog : document.body,
+        heightAuto: false,
+        scrollbarPadding: false,
+        customClass: {
+            container: 'bk-tax-swal-container',
+            popup: 'bk-tax-swal-popup'
+        },
+        ...opciones
+    });
+}
+
+async function refrescarTaxRatesBurgerKing() {
+    const tiendas = cargarTiendasTaxBurgerKing();
 
     if (!tiendas.length) {
         mostrarEstadoTaxBurgerKing('No hay tiendas para actualizar.', 'warning');
         return;
+    }
+
+    let confirmado = false;
+
+    if (window.Swal) {
+        const resultado = await swalBurgerKingModal({
+            icon: 'question',
+            title: 'Actualizar rates CDTFA',
+            text: `Se actualizarán ${tiendas.length} tiendas configuradas, incluyendo las tiendas nuevas agregadas manualmente.`,
+            showCancelButton: true,
+            confirmButtonText: 'Actualizar',
+            cancelButtonText: 'Cancelar',
+            confirmButtonColor: '#0b2d4d',
+            cancelButtonColor: '#6c757d',
+            reverseButtons: true,
+            focusCancel: true
+        });
+
+        confirmado = resultado.isConfirmed;
+    } else {
+        confirmado = confirm(
+            `Se actualizarán ${tiendas.length} tiendas configuradas.\n\n¿Deseas continuar?`
+        );
+    }
+
+    if (!confirmado) {
+        mostrarEstadoTaxBurgerKing('Actualización cancelada.');
+        return;
+    }
+    const botonActualizar = document.getElementById('bkTaxRefreshRates');
+
+    if (botonActualizar) {
+        botonActualizar.disabled = true;
+        botonActualizar.dataset.originalText = botonActualizar.textContent;
+        botonActualizar.textContent = 'Actualizando...';
     }
 
     mostrarEstadoTaxBurgerKing(
@@ -2512,9 +2629,31 @@ async function refrescarTaxRatesBurgerKing() {
 
     let ok = 0;
     let fallos = 0;
+    let sinCoordenadas = 0;
 
     for (let i = 0; i < tiendas.length; i += 1) {
         const tienda = tiendas[i];
+
+        const tieneCoordenadas =
+            Number.isFinite(Number(tienda.latitude)) &&
+            Number.isFinite(Number(tienda.longitude));
+
+        if (!tieneCoordenadas) {
+            sinCoordenadas += 1;
+            fallos += 1;
+
+            console.warn(
+                `Tienda ${tienda.store} sin coordenadas válidas. No se puede consultar CDTFA.`
+            );
+
+            mostrarEstadoTaxBurgerKing(
+                `Actualizando ${i + 1}/${tiendas.length} desde CDTFA... OK: ${ok}, sin coordenadas: ${sinCoordenadas}, fallas: ${fallos}`,
+                'warning'
+            );
+
+            continue;
+        }
+
         const result = await consultarTaxRateCDTFABurgerKing(tienda);
 
         if (result.success) {
@@ -2533,6 +2672,7 @@ async function refrescarTaxRatesBurgerKing() {
             ok += 1;
         } else {
             fallos += 1;
+
             console.warn(
                 `No se pudo actualizar CDTFA para tienda ${tienda.store}:`,
                 result.error
@@ -2540,16 +2680,23 @@ async function refrescarTaxRatesBurgerKing() {
         }
 
         mostrarEstadoTaxBurgerKing(
-            `Actualizando ${i + 1}/${tiendas.length} desde CDTFA... OK: ${ok}, fallas: ${fallos}`,
+            `Actualizando ${i + 1}/${tiendas.length} desde CDTFA... OK: ${ok}, sin coordenadas: ${sinCoordenadas}, fallas: ${fallos}`,
             fallos ? 'warning' : 'info'
         );
     }
 
     renderTiendasTaxBurgerKing();
+
     mostrarEstadoTaxBurgerKing(
-        `Actualización terminada. CDTFA OK: ${ok}. Fallas: ${fallos}.`,
+        `Actualización terminada. CDTFA OK: ${ok}. Sin coordenadas: ${sinCoordenadas}. Fallas: ${fallos}.`,
         fallos ? 'warning' : 'success'
     );
+
+    if (botonActualizar) {
+        botonActualizar.disabled = false;
+        botonActualizar.textContent =
+            botonActualizar.dataset.originalText || 'Actualizar rates CDTFA';
+    }
 
     if (Array.isArray(datosExtraidos) && datosExtraidos.length) {
         await generarTaxAnalysisBurgerKing();
@@ -2656,13 +2803,17 @@ function inicializarPanelTaxRatesBurgerKing() {
     document
         .getElementById('bkTaxResetStores')
         ?.addEventListener('click', async () => {
-            const confirmar = !window.Swal || (await Swal.fire({
+            const confirmar = !window.Swal || (await swalBurgerKingModal({
                 icon: 'warning',
                 title: 'Restaurar tiendas Burger King',
                 text: 'Se borrarán los cambios guardados localmente y volverá el catálogo inicial.',
                 showCancelButton: true,
                 confirmButtonText: 'Restaurar',
-                cancelButtonText: 'Cancelar'
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#c01818',
+                cancelButtonColor: '#6c757d',
+                reverseButtons: true,
+                focusCancel: true
             })).isConfirmed;
 
             if (!confirmar) return;
@@ -2678,7 +2829,7 @@ function inicializarPanelTaxRatesBurgerKing() {
 
     document
         .getElementById('bkTaxStoreBody')
-        ?.addEventListener('click', event => {
+        ?.addEventListener('click', async event => {
             const editButton = event.target.closest('[data-bk-tax-edit]');
             const deleteButton = event.target.closest('[data-bk-tax-delete]');
 
@@ -2694,10 +2845,12 @@ function inicializarPanelTaxRatesBurgerKing() {
             }
 
             if (deleteButton) {
+                event.preventDefault();
+
                 const store = deleteButton.dataset.bkTaxDelete;
-                eliminarTiendaTaxBurgerKing(store);
-                renderTiendasTaxBurgerKing();
-                mostrarEstadoTaxBurgerKing(`Tienda ${store} eliminada.`, 'success');
+                await eliminarTiendaTaxBurgerKing(store);
+
+                return;
             }
         });
 
