@@ -25,6 +25,16 @@ const { title = "Panel", placeholder = "Buscar..." } = Astro.props;
     </div>
 
         <div class="header-user">
+            <button
+                type="button"
+                class="lang-toggle"
+                data-lang-toggle
+                aria-label="Switch to English"
+                title="Switch to English"
+            >
+                <i class="fa-solid fa-language" aria-hidden="true"></i>
+                <span data-lang-label>EN</span>
+            </button>
             <div class="header-user-info">
                 <div class="header-user-name">Usuario</div>
                 <div class="header-user-role">Rol</div>

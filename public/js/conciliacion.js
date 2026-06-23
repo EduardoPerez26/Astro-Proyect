@@ -1218,10 +1218,12 @@ function actualizarUploadsPorRestaurante(codigo) {
     if (badge) {
         const texto =
             codigo === 'taco-bell'
-                ? 'Taco Bell: 3 archivos'
+                ? 'Taco Bell: 3 archivos + Tax Rate'
                 : codigo === 'popeyes'
                     ? 'Popeyes: 1 archivo'
-                    : 'Selecciona restaurante';
+                    : codigo === 'burger-king'
+                        ? 'Burger King: 1 archivo + Tax Rate'
+                        : 'Selecciona restaurante';
 
         badge.textContent = texto;
         badge.dataset.mode = codigo || 'empty';
@@ -2194,6 +2196,14 @@ async function onRestauranteChange() {
 
     if (burgerKingTabs)
         burgerKingTabs.style.display = 'none';
+
+    if (typeof actualizarPanelTaxBurgerKing === 'function') {
+        actualizarPanelTaxBurgerKing(codigo);
+    }
+
+    if (typeof actualizarPanelTaxTacoBell === 'function') {
+        actualizarPanelTaxTacoBell(codigo);
+    }
 
     if (codigo === 'burger-king') {
 
@@ -5117,7 +5127,6 @@ function exportarTabActualCSV() {
     }
 
 }
-
 
 
 

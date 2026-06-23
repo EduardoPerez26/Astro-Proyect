@@ -18,6 +18,7 @@ const conciliacionesRoutes = require('./routes/conciliaciones.routes');
 const dashboardRoutes = require('./routes/dashboard.routes');
 const departamentosRoutes = require('./routes/departamentos.routes');
 const comparacionesRoutes = require('./routes/comparaciones.routes');
+const taxRatesRoutes = require('./routes/taxRates.routes');
 
 const app = express();
 
@@ -92,6 +93,7 @@ app.use('/api/conciliaciones', conciliacionesRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/departamentos', departamentosRoutes);
 app.use('/api/comparaciones', comparacionesRoutes);
+app.use('/api/tax-rates', taxRatesRoutes);
 
 // ============================================
 // MANEJO DE ERRORES

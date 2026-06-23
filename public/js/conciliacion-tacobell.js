@@ -964,45 +964,783 @@ function generarDailySales0310() {
 
 }
 
-function obtenerTaxRate(store) {
+const TB_TAX_RATE_DIRECT_API_BASE_URL = 'https://services.maps.cdtfa.ca.gov/api/taxrate';
+const TB_TAX_STORE_STORAGE_KEY = 'tacoBellTaxStores.v1';
+const TB_TAX_RATE_CACHE_STORAGE_KEY = 'tacoBellTaxRateCache.v1';
+const TB_TAX_RATE_CACHE_DAYS = 30;
+const TB_TAX_RATE_TIMEOUT_MS = 8000;
 
-    const TAX_RATES = {
+const TB_STORE_JURISDICTION_OVERRIDES = {
+    13538: 'HERCULES',
+    1549: 'FRESNO',
+    2152: 'UNINCORPORATED AREA-ALAMEDA'
+};
 
-        28841: 0.08125,
-        28842: 0.08375,
-        28843: 0.09125,
-        28844: 0.08000,
-        28845: 0.08125,
-        28846: 0.08375,
+const TB_TAX_RATE_FALLBACK = {
+    28841: 0.08125,
+    28842: 0.08375,
+    28843: 0.09125,
+    28844: 0.08,
+    28845: 0.08125,
+    28846: 0.08375,
+    30256: 0.08125,
+    36224: 0.08125,
+    37014: 0.0825,
+    37732: 0.08375,
+    30491: 0.0875,
+    29423: 0.0825,
+    32680: 0.0825,
+    34793: 0.08975,
+    36225: 0.08125,
+    36930: 0.07975,
+    37171: 0.0875,
+    32952: 0.079
+};
 
-        30256: 0.08125,
-        36224: 0.08125,
+function normalizarStoreNumberTacoBell(store) {
+    const numero = Number(String(store ?? '').replace(/\D/g, ''));
+    return Number.isFinite(numero) ? numero : 0;
+}
 
-        37014: 0.08250,
+function normalizarTaxRateDecimalTacoBell(valor) {
+    if (valor === null || valor === undefined || valor === '') return 0;
 
-        37732: 0.08375,
+    const numero = Number(
+        String(valor).replace('%', '').replace(',', '.').trim()
+    );
 
-        30491: 0.08750,
+    if (!Number.isFinite(numero)) return 0;
 
-        29423: 0.08250,
+    return numero > 1 ? numero / 100 : numero;
+}
 
-        32680: 0.08250,
+function parsearCoordenadasTacoBell(valor) {
+    if (!valor) return { latitude: null, longitude: null };
 
-        34793: 0.08975,
+    const partes = String(valor).split(',').map(parte => parte.trim());
+    if (partes.length !== 2) return { latitude: null, longitude: null };
 
-        36225: 0.08125,
+    const latitude = Number(partes[0]);
+    const longitude = Number(partes[1]);
 
-        36930: 0.07975,
+    return {
+        latitude: Number.isFinite(latitude) ? latitude : null,
+        longitude: Number.isFinite(longitude) ? longitude : null
+    };
+}
 
-        37171: 0.08750,
+function formatearPorcentajeTacoBell(valor) {
+    return `${(Number(valor || 0) * 100).toFixed(3)}%`;
+}
 
-        32952: 0.07900
+function normalizarTiendaTaxTacoBell(tienda) {
+    const store = normalizarStoreNumberTacoBell(tienda.store);
 
+    return {
+        store,
+        address: String(tienda.address || '').trim(),
+        city: String(tienda.city || '').trim(),
+        state: String(tienda.state || '').trim().toUpperCase(),
+        zip: String(tienda.zip || '').trim(),
+        latitude: Number.isFinite(Number(tienda.latitude))
+            ? Number(tienda.latitude)
+            : null,
+        longitude: Number.isFinite(Number(tienda.longitude))
+            ? Number(tienda.longitude)
+            : null,
+        preferredJurisdiction: String(
+            tienda.preferredJurisdiction ||
+            TB_STORE_JURISDICTION_OVERRIDES[store] ||
+            ''
+        ).trim(),
+        taxRate: normalizarTaxRateDecimalTacoBell(
+            tienda.taxRate ?? TB_TAX_RATE_FALLBACK[store] ?? 0
+        )
+    };
+}
+
+function cargarTiendasTaxTacoBell() {
+    try {
+        const guardadas = JSON.parse(
+            localStorage.getItem(TB_TAX_STORE_STORAGE_KEY) || 'null'
+        );
+
+        if (Array.isArray(guardadas)) {
+            return guardadas
+                .map(normalizarTiendaTaxTacoBell)
+                .filter(tienda => tienda.store);
+        }
+    } catch (error) {
+        console.warn('No se pudo leer el catalogo local de tiendas TB:', error);
+    }
+
+    return (window.TACO_BELL_DEFAULT_TAX_STORES || [])
+        .map(normalizarTiendaTaxTacoBell)
+        .filter(tienda => tienda.store);
+}
+
+function guardarTiendasTaxTacoBell(tiendas) {
+    const limpias = tiendas
+        .map(normalizarTiendaTaxTacoBell)
+        .filter(tienda => tienda.store)
+        .sort((a, b) => a.store - b.store);
+
+    localStorage.setItem(
+        TB_TAX_STORE_STORAGE_KEY,
+        JSON.stringify(limpias)
+    );
+
+    return limpias;
+}
+
+function buscarTiendaTaxTacoBell(store) {
+    const numeroStore = normalizarStoreNumberTacoBell(store);
+
+    return cargarTiendasTaxTacoBell()
+        .find(tienda => tienda.store === numeroStore) || null;
+}
+
+function upsertTiendaTaxTacoBell(tienda) {
+    const normalizada = normalizarTiendaTaxTacoBell(tienda);
+
+    if (!normalizada.store) {
+        throw new Error('La tienda debe tener un numero valido');
+    }
+
+    const tieneCoordenadas =
+        Number.isFinite(normalizada.latitude) &&
+        Number.isFinite(normalizada.longitude);
+
+    if (!tieneCoordenadas && !normalizada.taxRate) {
+        throw new Error('Agrega coordenadas validas o captura un tax rate manual.');
+    }
+
+    const tiendas = cargarTiendasTaxTacoBell()
+        .filter(item => item.store !== normalizada.store);
+
+    tiendas.push(normalizada);
+    return guardarTiendasTaxTacoBell(tiendas);
+}
+
+function eliminarTiendaTaxTacoBell(store) {
+    const numeroStore = normalizarStoreNumberTacoBell(store);
+
+    if (!numeroStore) return cargarTiendasTaxTacoBell();
+
+    return guardarTiendasTaxTacoBell(
+        cargarTiendasTaxTacoBell()
+            .filter(item => item.store !== numeroStore)
+    );
+}
+
+function cargarCacheTaxRateTacoBell() {
+    try {
+        return JSON.parse(
+            localStorage.getItem(TB_TAX_RATE_CACHE_STORAGE_KEY) || '{}'
+        );
+    } catch {
+        return {};
+    }
+}
+
+function guardarCacheTaxRateTacoBell(cache) {
+    localStorage.setItem(
+        TB_TAX_RATE_CACHE_STORAGE_KEY,
+        JSON.stringify(cache)
+    );
+}
+
+function crearClaveCacheTaxRateTacoBell(store, latitude, longitude) {
+    return [
+        normalizarStoreNumberTacoBell(store),
+        Number(latitude || 0).toFixed(6),
+        Number(longitude || 0).toFixed(6)
+    ].join('|');
+}
+
+function obtenerCacheTaxRateTacoBell(store, latitude, longitude) {
+    const cache = cargarCacheTaxRateTacoBell();
+    const item = cache[crearClaveCacheTaxRateTacoBell(store, latitude, longitude)];
+
+    if (!item?.rate || !item?.timestamp) return null;
+
+    const edadDias =
+        (Date.now() - new Date(item.timestamp).getTime()) / 86400000;
+
+    if (edadDias > TB_TAX_RATE_CACHE_DAYS) return null;
+
+    return item;
+}
+
+function guardarCacheTiendaTaxRateTacoBell(store, latitude, longitude, data) {
+    const cache = cargarCacheTaxRateTacoBell();
+
+    cache[crearClaveCacheTaxRateTacoBell(store, latitude, longitude)] = {
+        ...data,
+        rate: normalizarTaxRateDecimalTacoBell(data.rate),
+        timestamp: new Date().toISOString()
     };
 
-    return TAX_RATES[store] || 0;
-
+    guardarCacheTaxRateTacoBell(cache);
 }
+
+function elegirResultadoCDTFATacoBell(apiData, store, preferredJurisdiction = '') {
+    const resultados = Array.isArray(apiData?.taxRateInfo)
+        ? apiData.taxRateInfo
+        : [];
+
+    if (!resultados.length) return null;
+
+    const storeNumber = normalizarStoreNumberTacoBell(store);
+    const preferida = String(
+        preferredJurisdiction ||
+        TB_STORE_JURISDICTION_OVERRIDES[storeNumber] ||
+        ''
+    ).trim().toUpperCase();
+
+    if (preferida && resultados.length > 1) {
+        const match = resultados.find(item =>
+            String(item.jurisdiction || '').trim().toUpperCase() === preferida
+        );
+
+        if (match) return match;
+    }
+
+    return resultados[0];
+}
+
+function obtenerApiUrlTaxRatesTacoBell(location) {
+    const baseUrl = String(window.API_URL || '').replace(/\/$/, '');
+    if (!baseUrl) return '';
+
+    const params = new URLSearchParams({
+        latitude: String(location.latitude),
+        longitude: String(location.longitude),
+        store: String(location.store || '')
+    });
+
+    if (location.preferredJurisdiction) {
+        params.set('jurisdiction', location.preferredJurisdiction);
+    }
+
+    return `${baseUrl}/tax-rates/by-coordinates?${params.toString()}`;
+}
+
+function normalizarRespuestaBackendTaxRateTacoBell(data) {
+    if (!data?.success) {
+        return {
+            success: false,
+            error: data?.error || 'No se pudo consultar CDTFA'
+        };
+    }
+
+    return {
+        success: true,
+        rate: normalizarTaxRateDecimalTacoBell(
+            data.rate_decimal ?? data.rate
+        ),
+        jurisdiction: data.jurisdiction || '',
+        city: data.city || '',
+        county: data.county || '',
+        tac: data.tac || '',
+        matchCount: data.match_count ?? data.matchCount ?? 0,
+        bufferDistance: data.buffer_distance ?? data.bufferDistance ?? null,
+        apiResponse: data.api_response || data.apiResponse || data
+    };
+}
+
+async function consultarTaxRateCDTFATacoBell(location) {
+    const latitude = Number(location?.latitude);
+    const longitude = Number(location?.longitude);
+    const state = String(location?.state || '').trim().toUpperCase();
+
+    if (state && state !== 'CA') {
+        return {
+            success: false,
+            skipped: true,
+            error: 'CDTFA solo aplica para tiendas CA'
+        };
+    }
+
+    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+        return {
+            success: false,
+            error: 'La tienda no tiene coordenadas validas'
+        };
+    }
+
+    const controller = new AbortController();
+    const timeout = setTimeout(
+        () => controller.abort(),
+        TB_TAX_RATE_TIMEOUT_MS
+    );
+
+    try {
+        const backendUrl = obtenerApiUrlTaxRatesTacoBell({
+            ...location,
+            latitude,
+            longitude
+        });
+
+        if (backendUrl) {
+            try {
+                const response = await fetch(backendUrl, {
+                    method: 'GET',
+                    signal: controller.signal
+                });
+                const data = await response.json().catch(() => ({}));
+
+                if (response.ok && data?.success) {
+                    return normalizarRespuestaBackendTaxRateTacoBell(data);
+                }
+
+                console.warn(
+                    'Backend CDTFA no disponible para Taco Bell, intentando consulta directa:',
+                    data?.error || response.status
+                );
+            } catch (error) {
+                if (error?.name === 'AbortError') throw error;
+                console.warn(
+                    'No se pudo consultar CDTFA via backend para Taco Bell:',
+                    error
+                );
+            }
+        }
+
+        const url =
+            `${TB_TAX_RATE_DIRECT_API_BASE_URL}/GetRateByLngLat?Latitude=${encodeURIComponent(latitude)}&Longitude=${encodeURIComponent(longitude)}`;
+
+        const response = await fetch(url, {
+            method: 'GET',
+            signal: controller.signal
+        });
+
+        const data = await response.json().catch(() => ({}));
+
+        if (!response.ok) {
+            return {
+                success: false,
+                error: data?.errors?.[0]?.message || `CDTFA ${response.status}`
+            };
+        }
+
+        const rateInfo = elegirResultadoCDTFATacoBell(
+            data,
+            location.store,
+            location.preferredJurisdiction
+        );
+
+        if (!rateInfo) {
+            return {
+                success: false,
+                error: 'CDTFA no encontro tax rate para la ubicacion',
+                apiResponse: data
+            };
+        }
+
+        return {
+            success: true,
+            rate: normalizarTaxRateDecimalTacoBell(rateInfo.rate),
+            jurisdiction: rateInfo.jurisdiction || '',
+            city: rateInfo.city || '',
+            county: rateInfo.county || '',
+            tac: rateInfo.tac || '',
+            matchCount: Array.isArray(data.taxRateInfo) ? data.taxRateInfo.length : 0,
+            bufferDistance: data?.geocodeInfo?.bufferDistance ?? null,
+            apiResponse: data
+        };
+    } catch (error) {
+        return {
+            success: false,
+            error: error?.name === 'AbortError'
+                ? 'Tiempo de espera agotado consultando CDTFA'
+                : 'No se pudo consultar CDTFA'
+        };
+    } finally {
+        clearTimeout(timeout);
+    }
+}
+
+function obtenerTaxRateLocalTacoBell(store) {
+    const numeroStore = normalizarStoreNumberTacoBell(store);
+    if (!numeroStore) return 0;
+
+    const tienda = buscarTiendaTaxTacoBell(numeroStore);
+
+    if (
+        tienda &&
+        Number.isFinite(tienda.latitude) &&
+        Number.isFinite(tienda.longitude)
+    ) {
+        const cache = obtenerCacheTaxRateTacoBell(
+            numeroStore,
+            tienda.latitude,
+            tienda.longitude
+        );
+
+        if (cache?.rate) return Number(cache.rate);
+    }
+
+    return normalizarTaxRateDecimalTacoBell(
+        tienda?.taxRate || TB_TAX_RATE_FALLBACK[numeroStore] || 0
+    );
+}
+
+function obtenerTaxRate(store) {
+    return obtenerTaxRateLocalTacoBell(store);
+}
+
+function estadoTaxRateDesdeCacheTacoBell(tienda) {
+    const cache = obtenerCacheTaxRateTacoBell(
+        tienda.store,
+        tienda.latitude,
+        tienda.longitude
+    );
+
+    if (cache?.rate) {
+        return `${formatearPorcentajeTacoBell(cache.rate)} · CDTFA`;
+    }
+
+    if (tienda.taxRate) {
+        return `${formatearPorcentajeTacoBell(tienda.taxRate)} · local`;
+    }
+
+    return 'Pendiente';
+}
+
+function actualizarPanelTaxTacoBell(codigo = '') {
+    const panel = document.getElementById('tacoBellTaxStorePanel');
+    if (!panel) return;
+
+    const codigoActual = codigo ||
+        document
+            .getElementById('selectRestaurante')
+            ?.selectedOptions?.[0]
+            ?.dataset?.codigo ||
+        '';
+
+    panel.style.display = codigoActual === 'taco-bell' ? '' : 'none';
+
+    if (codigoActual === 'taco-bell') {
+        renderTiendasTaxTacoBell();
+    }
+}
+
+function limpiarFormularioTiendaTaxTacoBell() {
+    [
+        'tbTaxStoreNumber',
+        'tbTaxStoreAddress',
+        'tbTaxStoreCity',
+        'tbTaxStoreState',
+        'tbTaxStoreZip',
+        'tbTaxStoreCoordinates',
+        'tbTaxStoreRate',
+        'tbTaxStoreJurisdiction'
+    ].forEach(id => {
+        const input = document.getElementById(id);
+        if (input) input.value = '';
+    });
+}
+
+function cargarFormularioTiendaTaxTacoBell(store) {
+    const tienda = buscarTiendaTaxTacoBell(store);
+    if (!tienda) return;
+
+    const valores = {
+        tbTaxStoreNumber: tienda.store,
+        tbTaxStoreAddress: tienda.address,
+        tbTaxStoreCity: tienda.city,
+        tbTaxStoreState: tienda.state,
+        tbTaxStoreZip: tienda.zip,
+        tbTaxStoreCoordinates:
+            tienda.latitude !== null && tienda.longitude !== null
+                ? `${tienda.latitude}, ${tienda.longitude}`
+                : '',
+        tbTaxStoreRate: tienda.taxRate
+            ? formatearPorcentajeTacoBell(tienda.taxRate)
+            : '',
+        tbTaxStoreJurisdiction: tienda.preferredJurisdiction
+    };
+
+    Object.entries(valores).forEach(([id, valor]) => {
+        const input = document.getElementById(id);
+        if (input) input.value = valor ?? '';
+    });
+}
+
+function leerFormularioTiendaTaxTacoBell() {
+    const coords = parsearCoordenadasTacoBell(
+        document.getElementById('tbTaxStoreCoordinates')?.value
+    );
+
+    return {
+        store: document.getElementById('tbTaxStoreNumber')?.value,
+        address: document.getElementById('tbTaxStoreAddress')?.value,
+        city: document.getElementById('tbTaxStoreCity')?.value,
+        state: document.getElementById('tbTaxStoreState')?.value,
+        zip: document.getElementById('tbTaxStoreZip')?.value,
+        latitude: coords.latitude,
+        longitude: coords.longitude,
+        taxRate: document.getElementById('tbTaxStoreRate')?.value,
+        preferredJurisdiction:
+            document.getElementById('tbTaxStoreJurisdiction')?.value
+    };
+}
+
+function mostrarEstadoTaxTacoBell(texto, tipo = 'info') {
+    const status = document.getElementById('tbTaxStoreStatus');
+    if (!status) return;
+
+    status.textContent = texto;
+    status.dataset.type = tipo;
+}
+
+function renderTiendasTaxTacoBell() {
+    const tbody = document.getElementById('tbTaxStoreBody');
+    const count = document.getElementById('tbTaxStoreCount');
+
+    if (!tbody) return;
+
+    const tiendas = cargarTiendasTaxTacoBell();
+
+    if (count) {
+        count.textContent = `${tiendas.length} tiendas configuradas`;
+    }
+
+    tbody.innerHTML = tiendas.map(tienda => `
+        <tr>
+            <td>${tienda.store}</td>
+            <td>
+                <strong>${tienda.city || '-'}</strong>
+                <small>${tienda.address || ''}</small>
+            </td>
+            <td>${tienda.state || '-'}</td>
+            <td>${tienda.zip || '-'}</td>
+            <td>${
+                tienda.latitude !== null && tienda.longitude !== null
+                    ? `${tienda.latitude.toFixed(6)}, ${tienda.longitude.toFixed(6)}`
+                    : '-'
+            }</td>
+            <td>${tienda.preferredJurisdiction || '-'}</td>
+            <td>${estadoTaxRateDesdeCacheTacoBell(tienda)}</td>
+            <td class="bk-tax-store-actions">
+                <button type="button" class="btn btn-secondary btn-sm" data-tb-tax-edit="${tienda.store}">
+                    Editar
+                </button>
+                <button type="button" class="btn btn-danger btn-sm" data-tb-tax-delete="${tienda.store}">
+                    Quitar
+                </button>
+            </td>
+        </tr>
+    `).join('');
+
+    if (!tiendas.length) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="8" class="bk-tax-empty">
+                    No hay tiendas configuradas.
+                </td>
+            </tr>
+        `;
+    }
+}
+
+function recalcularTaxReviewTacoBellSiAplica() {
+    if (!Array.isArray(datosExtraidos) || !datosExtraidos.length) return;
+
+    generarTaxReviewTacoBell();
+
+    if (activeTab === 'taxReview') {
+        renderTacoBellTaxReview();
+    }
+}
+
+async function refrescarTaxRatesTacoBell() {
+    const tiendasBase = cargarTiendasTaxTacoBell();
+    const storesProcesadas = Array.isArray(datosExtraidos) && datosExtraidos.length
+        ? new Set(datosExtraidos.map(row => normalizarStoreNumberTacoBell(row.store)))
+        : null;
+
+    const tiendas = (storesProcesadas
+        ? tiendasBase.filter(tienda => storesProcesadas.has(tienda.store))
+        : tiendasBase
+    ).filter(tienda => String(tienda.state || '').toUpperCase() === 'CA');
+
+    if (!tiendas.length) {
+        mostrarEstadoTaxTacoBell('No hay tiendas CA para actualizar con CDTFA.', 'warning');
+        return;
+    }
+
+    mostrarEstadoTaxTacoBell(
+        `Actualizando 0/${tiendas.length} desde CDTFA. Las tiendas no CA quedan manuales.`
+    );
+
+    let ok = 0;
+    let fallos = 0;
+
+    for (let i = 0; i < tiendas.length; i += 1) {
+        const tienda = tiendas[i];
+        const result = await consultarTaxRateCDTFATacoBell(tienda);
+
+        if (result.success) {
+            guardarCacheTiendaTaxRateTacoBell(
+                tienda.store,
+                tienda.latitude,
+                tienda.longitude,
+                result
+            );
+
+            upsertTiendaTaxTacoBell({
+                ...tienda,
+                taxRate: result.rate
+            });
+
+            ok += 1;
+        } else {
+            fallos += 1;
+            console.warn(
+                `No se pudo actualizar CDTFA para tienda Taco Bell ${tienda.store}:`,
+                result.error
+            );
+        }
+
+        mostrarEstadoTaxTacoBell(
+            `Actualizando ${i + 1}/${tiendas.length} desde CDTFA... OK: ${ok}, fallas: ${fallos}`,
+            fallos ? 'warning' : 'info'
+        );
+    }
+
+    renderTiendasTaxTacoBell();
+    recalcularTaxReviewTacoBellSiAplica();
+
+    mostrarEstadoTaxTacoBell(
+        `Actualizacion terminada. CDTFA OK: ${ok}. Fallas: ${fallos}.`,
+        fallos ? 'warning' : 'success'
+    );
+}
+
+function abrirModalTaxTacoBell() {
+    const dialog = document.getElementById('tacoBellTaxStoreDialog');
+    if (!dialog) return;
+
+    renderTiendasTaxTacoBell();
+    mostrarEstadoTaxTacoBell('Catalogo listo. Taco Bell usara estos rates locales.');
+
+    if (typeof dialog.showModal === 'function') {
+        dialog.showModal();
+    } else {
+        dialog.setAttribute('open', 'open');
+    }
+}
+
+function cerrarModalTaxTacoBell() {
+    const dialog = document.getElementById('tacoBellTaxStoreDialog');
+    if (!dialog) return;
+
+    if (typeof dialog.close === 'function') {
+        dialog.close();
+    } else {
+        dialog.removeAttribute('open');
+    }
+}
+
+function inicializarPanelTaxRatesTacoBell() {
+    if (window.__tacoBellTaxPanelReady) return;
+    window.__tacoBellTaxPanelReady = true;
+
+    document
+        .getElementById('tbTaxOpenModal')
+        ?.addEventListener('click', abrirModalTaxTacoBell);
+
+    document
+        .getElementById('tbTaxCloseModal')
+        ?.addEventListener('click', cerrarModalTaxTacoBell);
+
+    document
+        .getElementById('tbTaxCloseFooter')
+        ?.addEventListener('click', cerrarModalTaxTacoBell);
+
+    document
+        .getElementById('tbTaxSaveStore')
+        ?.addEventListener('click', () => {
+            try {
+                upsertTiendaTaxTacoBell(
+                    leerFormularioTiendaTaxTacoBell()
+                );
+
+                renderTiendasTaxTacoBell();
+                recalcularTaxReviewTacoBellSiAplica();
+                mostrarEstadoTaxTacoBell('Tienda guardada correctamente.', 'success');
+                limpiarFormularioTiendaTaxTacoBell();
+            } catch (error) {
+                mostrarEstadoTaxTacoBell(error.message, 'error');
+
+                if (window.Swal) {
+                    Swal.fire('Revisa la tienda', error.message, 'warning');
+                }
+            }
+        });
+
+    document
+        .getElementById('tbTaxClearStore')
+        ?.addEventListener('click', limpiarFormularioTiendaTaxTacoBell);
+
+    document
+        .getElementById('tbTaxRefreshRates')
+        ?.addEventListener('click', () => {
+            refrescarTaxRatesTacoBell();
+        });
+
+    document
+        .getElementById('tbTaxResetStores')
+        ?.addEventListener('click', async () => {
+            const confirmar = !window.Swal || (await Swal.fire({
+                icon: 'warning',
+                title: 'Restaurar tiendas Taco Bell',
+                text: 'Se borraran los cambios guardados localmente y volvera el catalogo inicial.',
+                showCancelButton: true,
+                confirmButtonText: 'Restaurar',
+                cancelButtonText: 'Cancelar'
+            })).isConfirmed;
+
+            if (!confirmar) return;
+
+            localStorage.removeItem(TB_TAX_STORE_STORAGE_KEY);
+            renderTiendasTaxTacoBell();
+            recalcularTaxReviewTacoBellSiAplica();
+            limpiarFormularioTiendaTaxTacoBell();
+            mostrarEstadoTaxTacoBell('Catalogo inicial restaurado.', 'success');
+        });
+
+    document
+        .getElementById('tbTaxStoreBody')
+        ?.addEventListener('click', event => {
+            const editButton = event.target.closest('[data-tb-tax-edit]');
+            const deleteButton = event.target.closest('[data-tb-tax-delete]');
+
+            if (editButton) {
+                cargarFormularioTiendaTaxTacoBell(
+                    editButton.dataset.tbTaxEdit
+                );
+                mostrarEstadoTaxTacoBell('Editando tienda seleccionada.');
+            }
+
+            if (deleteButton) {
+                const store = deleteButton.dataset.tbTaxDelete;
+                eliminarTiendaTaxTacoBell(store);
+                renderTiendasTaxTacoBell();
+                recalcularTaxReviewTacoBellSiAplica();
+                mostrarEstadoTaxTacoBell(`Tienda ${store} eliminada.`, 'success');
+            }
+        });
+
+    actualizarPanelTaxTacoBell();
+}
+
+document.addEventListener(
+    'DOMContentLoaded',
+    inicializarPanelTaxRatesTacoBell
+);
 
 function renderTacoBellTaxReview() {
 

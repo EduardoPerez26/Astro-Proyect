@@ -400,6 +400,307 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
                 </div>
             </div>
 
+            <section
+                class="bk-tax-store-panel"
+                id="tacoBellTaxStorePanel"
+                style="display:none;"
+            >
+                <div class="bk-tax-store-panel-copy">
+                    <span>TACO BELL</span>
+                    <strong>Tax Rate por tienda</strong>
+                    <small>CDTFA actualiza tiendas CA; otras tiendas usan rate manual/local.</small>
+                </div>
+                <button class="btn btn-secondary" type="button" id="tbTaxOpenModal">
+                    <i class="fa-solid fa-store"></i>
+                    Administrar tiendas
+                </button>
+            </section>
+
+            <dialog
+                id="tacoBellTaxStoreDialog"
+                class="bk-tax-store-dialog"
+                aria-labelledby="tbTaxStoreDialogTitle"
+            >
+                <section class="bk-tax-store-window">
+                    <header class="bk-tax-store-header">
+                        <div>
+                            <span>TACO BELL</span>
+                            <h3 id="tbTaxStoreDialogTitle">Catálogo de Tax Rate por tienda</h3>
+                            <p>
+                                Agrega, edita o quita tiendas. El Tax Review usa el rate local
+                                guardado aquí; CDTFA se consulta manualmente para tiendas CA.
+                            </p>
+                        </div>
+                        <div class="bk-tax-store-meta">
+                            <strong id="tbTaxStoreCount">0 tiendas configuradas</strong>
+                            <small id="tbTaxStoreStatus" data-type="info">
+                                Listo para trabajar con rates locales.
+                            </small>
+                        </div>
+                        <button
+                            type="button"
+                            id="tbTaxCloseModal"
+                            class="bk-tax-modal-close"
+                            aria-label="Cerrar catálogo de tiendas Taco Bell"
+                        >
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </header>
+
+                    <div class="bk-tax-store-form">
+                        <div class="form-group">
+                            <label for="tbTaxStoreNumber">Store</label>
+                            <input id="tbTaxStoreNumber" class="form-input" type="text" placeholder="28841" />
+                        </div>
+
+                        <div class="form-group">
+                            <label for="tbTaxStoreAddress">Address</label>
+                            <input id="tbTaxStoreAddress" class="form-input" type="text" placeholder="Dirección" />
+                        </div>
+
+                        <div class="form-group">
+                            <label for="tbTaxStoreCity">City</label>
+                            <input id="tbTaxStoreCity" class="form-input" type="text" placeholder="Ciudad" />
+                        </div>
+
+                        <div class="form-group">
+                            <label for="tbTaxStoreState">State</label>
+                            <input id="tbTaxStoreState" class="form-input" type="text" placeholder="CA" />
+                        </div>
+
+                        <div class="form-group">
+                            <label for="tbTaxStoreZip">Zip</label>
+                            <input id="tbTaxStoreZip" class="form-input" type="text" placeholder="95688" />
+                        </div>
+
+                        <div class="form-group bk-tax-coordinates">
+                            <label for="tbTaxStoreCoordinates">Latitude, Longitude</label>
+                            <input id="tbTaxStoreCoordinates" class="form-input" type="text" placeholder="38.363685, -121.968236" />
+                        </div>
+
+                        <div class="form-group">
+                            <label for="tbTaxStoreRate">Tax Rate</label>
+                            <input id="tbTaxStoreRate" class="form-input" type="text" placeholder="8.125% o 0.08125" />
+                        </div>
+
+                        <div class="form-group">
+                            <label for="tbTaxStoreJurisdiction">Jurisdiction override</label>
+                            <input id="tbTaxStoreJurisdiction" class="form-input" type="text" placeholder="Opcional" />
+                        </div>
+                    </div>
+
+                    <div class="bk-tax-store-toolbar">
+                        <button class="btn btn-primary" type="button" id="tbTaxSaveStore">
+                            <i class="fa-solid fa-floppy-disk"></i>
+                            Guardar tienda
+                        </button>
+
+                        <button class="btn btn-secondary" type="button" id="tbTaxClearStore">
+                            Limpiar
+                        </button>
+
+                        <button class="btn btn-secondary" type="button" id="tbTaxRefreshRates">
+                            <i class="fa-solid fa-arrows-rotate"></i>
+                            Actualizar rates CDTFA
+                        </button>
+
+                        <button class="btn btn-danger" type="button" id="tbTaxResetStores">
+                            Restaurar catálogo
+                        </button>
+                    </div>
+
+                    <div class="bk-tax-store-table">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Store</th>
+                                    <th>Location</th>
+                                    <th>State</th>
+                                    <th>Zip</th>
+                                    <th>Coordinates</th>
+                                    <th>Override</th>
+                                    <th>Tax Rate</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbTaxStoreBody"></tbody>
+                        </table>
+                    </div>
+
+                    <footer class="bk-tax-store-footer">
+                        <small>Los cambios se guardan en este navegador con localStorage.</small>
+                        <button class="btn btn-primary" type="button" id="tbTaxCloseFooter">
+                            Listo
+                        </button>
+                    </footer>
+                </section>
+            </dialog>
+
+            <section
+                class="bk-tax-store-panel"
+                id="burgerKingTaxStorePanel"
+                style="display:none;"
+            >
+                <div class="bk-tax-store-panel-copy">
+                    <span>BURGER KING</span>
+                    <strong>Tax Rate por tienda</strong>
+                    <small>La conciliación usa rates locales. CDTFA solo se actualiza manualmente.</small>
+                </div>
+                <button class="btn btn-secondary" type="button" id="bkTaxOpenModal">
+                    <i class="fa-solid fa-store"></i>
+                    Administrar tiendas
+                </button>
+            </section>
+
+            <dialog
+                id="burgerKingTaxStoreDialog"
+                class="bk-tax-store-dialog"
+                aria-labelledby="bkTaxStoreDialogTitle"
+            >
+                <section class="bk-tax-store-window">
+                    <header class="bk-tax-store-header">
+                        <div>
+                            <span>BURGER KING</span>
+                            <h3 id="bkTaxStoreDialogTitle">Catálogo de Tax Rate por tienda</h3>
+                            <p>
+                                Agrega, edita o quita tiendas. El Tax Analysis usa el tax rate local
+                                guardado aquí; CDTFA solo se consulta cuando presionas actualizar.
+                            </p>
+                        </div>
+                        <div class="bk-tax-store-meta">
+                            <strong id="bkTaxStoreCount">0 tiendas configuradas</strong>
+                            <small id="bkTaxStoreStatus" data-type="info">
+                                Listo para trabajar con rates locales.
+                            </small>
+                        </div>
+                        <button
+                            type="button"
+                            id="bkTaxCloseModal"
+                            class="bk-tax-modal-close"
+                            aria-label="Cerrar catálogo de tiendas"
+                        >
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </header>
+
+                    <div class="bk-tax-store-form">
+                        <div class="form-group">
+                            <label for="bkTaxStoreNumber">Store</label>
+                            <input
+                                id="bkTaxStoreNumber"
+                                class="form-input"
+                                type="text"
+                                placeholder="3917"
+                            />
+                        </div>
+
+                        <div class="form-group">
+                            <label for="bkTaxStoreAddress">Address</label>
+                            <input
+                                id="bkTaxStoreAddress"
+                                class="form-input"
+                                type="text"
+                                placeholder="Dirección"
+                            />
+                        </div>
+
+                        <div class="form-group">
+                            <label for="bkTaxStoreCity">City</label>
+                            <input
+                                id="bkTaxStoreCity"
+                                class="form-input"
+                                type="text"
+                                placeholder="Ciudad"
+                            />
+                        </div>
+
+                        <div class="form-group">
+                            <label for="bkTaxStoreZip">Zip</label>
+                            <input
+                                id="bkTaxStoreZip"
+                                class="form-input"
+                                type="text"
+                                placeholder="94585"
+                            />
+                        </div>
+
+                        <div class="form-group bk-tax-coordinates">
+                            <label for="bkTaxStoreCoordinates">Latitude, Longitude</label>
+                            <input
+                                id="bkTaxStoreCoordinates"
+                                class="form-input"
+                                type="text"
+                                placeholder="38.243043, -122.019143"
+                            />
+                        </div>
+
+                        <div class="form-group">
+                            <label for="bkTaxStoreRate">Tax Rate</label>
+                            <input
+                                id="bkTaxStoreRate"
+                                class="form-input"
+                                type="text"
+                                placeholder="8.875% o 0.08875"
+                            />
+                        </div>
+
+                        <div class="form-group">
+                            <label for="bkTaxStoreJurisdiction">Jurisdiction override</label>
+                            <input
+                                id="bkTaxStoreJurisdiction"
+                                class="form-input"
+                                type="text"
+                                placeholder="Opcional"
+                            />
+                        </div>
+                    </div>
+
+                    <div class="bk-tax-store-toolbar">
+                        <button class="btn btn-primary" type="button" id="bkTaxSaveStore">
+                            <i class="fa-solid fa-floppy-disk"></i>
+                            Guardar tienda
+                        </button>
+
+                        <button class="btn btn-secondary" type="button" id="bkTaxClearStore">
+                            Limpiar
+                        </button>
+
+                        <button class="btn btn-secondary" type="button" id="bkTaxRefreshRates">
+                            <i class="fa-solid fa-arrows-rotate"></i>
+                            Actualizar rates CDTFA
+                        </button>
+
+                        <button class="btn btn-danger" type="button" id="bkTaxResetStores">
+                            Restaurar catálogo
+                        </button>
+                    </div>
+
+                    <div class="bk-tax-store-table">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Store</th>
+                                    <th>Location</th>
+                                    <th>Zip</th>
+                                    <th>Coordinates</th>
+                                    <th>Override</th>
+                                    <th>Tax Rate</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="bkTaxStoreBody"></tbody>
+                        </table>
+                    </div>
+
+                    <footer class="bk-tax-store-footer">
+                        <small>Los cambios se guardan en este navegador con localStorage.</small>
+                        <button class="btn btn-primary" type="button" id="bkTaxCloseFooter">
+                            Listo
+                        </button>
+                    </footer>
+                </section>
+            </dialog>
+
             <!-- Tabla -->
             <div class="table-container">
                 <div class="table-header">
@@ -491,6 +792,7 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
         <script src="/js/config.js" is:inline></script>
         <script is:inline src="/js/restaurant-configs.js"></script>
 
+        <script is:inline src="/js/taco-bell-tax-stores.js"></script>
         <script is:inline src="/js/conciliacion-tacobell.js"></script>
         <script is:inline src="/js/conciliacion-popeyes.js"></script>
         <script is:inline src="/js/conciliacion-burgerking.js"></script>
@@ -2302,6 +2604,210 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
         }
 
         .sheet-tabs-panel { margin-bottom: 12px; }
+
+        .bk-tax-store-panel {
+            margin: 0 0 12px;
+            padding: 12px 14px;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-lg);
+            background: var(--white);
+            box-shadow: var(--shadow-sm);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+        }
+
+        .bk-tax-store-panel-copy span {
+            display: block;
+            margin-bottom: 2px;
+            color: var(--primary);
+            font-size: 10px;
+            font-weight: 900;
+            letter-spacing: .08em;
+        }
+
+        .bk-tax-store-panel-copy strong,
+        .bk-tax-store-panel-copy small {
+            display: block;
+        }
+
+        .bk-tax-store-panel-copy strong {
+            color: var(--gray-900);
+            font-size: 14px;
+        }
+
+        .bk-tax-store-panel-copy small {
+            margin-top: 2px;
+            color: var(--gray-500);
+            font-size: 12px;
+        }
+
+        .bk-tax-store-dialog {
+            width: min(1180px, calc(100vw - 32px));
+            max-height: 88vh;
+            padding: 0;
+            border: 0;
+            border-radius: var(--radius-xl);
+            background: var(--white);
+            box-shadow: var(--shadow-xl, 0 24px 60px rgba(15, 23, 42, .22));
+        }
+
+        .bk-tax-store-dialog::backdrop {
+            background: rgba(15, 23, 42, .52);
+            backdrop-filter: blur(2px);
+        }
+
+        .bk-tax-store-window {
+            padding: 18px;
+        }
+
+        .bk-tax-store-header {
+            position: relative;
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 16px;
+            padding-right: 42px;
+        }
+
+        .bk-tax-store-header span {
+            display: inline-flex;
+            margin-bottom: 4px;
+            color: var(--primary);
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: .08em;
+        }
+
+        .bk-tax-store-header h3 {
+            margin: 0;
+            font-size: 17px;
+            color: var(--gray-900);
+        }
+
+        .bk-tax-store-header p {
+            margin: 4px 0 0;
+            color: var(--gray-500);
+            font-size: 13px;
+        }
+
+        .bk-tax-modal-close {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 34px;
+            height: 34px;
+            border: 1px solid var(--gray-200);
+            border-radius: 999px;
+            background: var(--white);
+            color: var(--gray-500);
+            cursor: pointer;
+        }
+
+        .bk-tax-store-meta {
+            min-width: 220px;
+            padding: 10px 12px;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius);
+            background: var(--gray-50, #f8fafc);
+        }
+
+        .bk-tax-store-meta strong,
+        .bk-tax-store-meta small {
+            display: block;
+        }
+
+        .bk-tax-store-meta strong {
+            color: var(--gray-800);
+            font-size: 13px;
+        }
+
+        .bk-tax-store-meta small {
+            margin-top: 4px;
+            color: var(--gray-500);
+            font-size: 12px;
+        }
+
+        #bkTaxStoreStatus[data-type="success"] { color: var(--success); }
+        #bkTaxStoreStatus[data-type="warning"] { color: var(--warning); }
+        #bkTaxStoreStatus[data-type="error"] { color: var(--danger); }
+
+        .bk-tax-store-form {
+            display: grid;
+            grid-template-columns: .65fr 1.35fr .9fr .55fr .65fr 1.2fr .8fr 1fr;
+            gap: 12px;
+            align-items: end;
+        }
+
+        .bk-tax-store-toolbar,
+        .bk-tax-store-footer {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 14px 0;
+            align-items: center;
+        }
+
+        .bk-tax-store-footer {
+            justify-content: space-between;
+            margin: 14px 0 0;
+            color: var(--gray-500);
+        }
+
+        .bk-tax-store-table {
+            max-height: 380px;
+            overflow: auto;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius);
+        }
+
+        .bk-tax-store-table table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .bk-tax-store-table td small {
+            display: block;
+            margin-top: 2px;
+            color: var(--gray-500);
+            font-size: 11px;
+        }
+
+        .bk-tax-store-actions {
+            display: flex;
+            gap: 6px;
+            white-space: nowrap;
+        }
+
+        .bk-tax-empty {
+            padding: 18px;
+            color: var(--gray-500);
+            text-align: center;
+        }
+
+        @media (max-width: 1180px) {
+            .bk-tax-store-form {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .bk-tax-store-header,
+            .bk-tax-store-panel {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .bk-tax-store-meta {
+                min-width: 0;
+            }
+        }
+
+        @media (max-width: 720px) {
+            .bk-tax-store-form {
+                grid-template-columns: 1fr;
+            }
+        }
+
         .conciliacion-table thead th {
             padding: 8px 10px;
             color: #fff;
