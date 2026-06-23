@@ -1,18 +1,11 @@
-// ============================================
-// RUTAS DE RESTAURANTES
-// ============================================
-// CRUD de restaurantes/tiendas
-// ============================================
+
 
 const express = require('express');
 const router = express.Router();
 const { pool } = require('../config/database');
 const { verificarToken, esAdmin, checkPermission } = require('../middleware/auth.middleware');
 
-// ============================================
-// GET /api/restaurantes
-// ============================================
-// Lista todos los restaurantes activos
+
 router.get('/', verificarToken, checkPermission('view_restaurantes'), async (req, res) => {
     try {
         const [restaurantes] = await pool.query(
@@ -33,10 +26,6 @@ router.get('/', verificarToken, checkPermission('view_restaurantes'), async (req
     }
 });
 
-// ============================================
-// GET /api/restaurantes/:id
-// ============================================
-// Obtiene un restaurante por ID
 router.get('/:id', verificarToken, checkPermission('view_restaurantes'), async (req, res) => {
     try {
         const [restaurantes] = await pool.query(
@@ -65,10 +54,6 @@ router.get('/:id', verificarToken, checkPermission('view_restaurantes'), async (
     }
 });
 
-// ============================================
-// POST /api/restaurantes
-// ============================================
-// Crea un nuevo restaurante (solo admin)
 router.post('/', verificarToken, esAdmin, async (req, res) => {
     try {
         const { codigo, nombre, descripcion, icono, color_clase } = req.body;
@@ -101,10 +86,6 @@ router.post('/', verificarToken, esAdmin, async (req, res) => {
     }
 });
 
-// ============================================
-// PUT /api/restaurantes/:id
-// ============================================
-// Actualiza un restaurante (solo admin)
 router.put('/:id', verificarToken, esAdmin, async (req, res) => {
     try {
         const { nombre, descripcion, icono, color_clase, activo } = req.body;

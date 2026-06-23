@@ -14,8 +14,6 @@ function normalizeRate(rate) {
 
     if (Number.isNaN(num)) return null;
 
-    // Si viene como 8.875, lo convierte a 0.08875
-    // Si ya viene como 0.08875, lo deja igual
     return num > 1 ? num / 100 : num;
 }
 

@@ -1,9 +1,3 @@
-// ============================================
-// RUTAS DE AUTENTICACION
-// ============================================
-// Maneja login, registro y verificacion de token.
-// ============================================
-
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
@@ -94,11 +88,6 @@ async function obtenerUsuarioConDepartamento(condicion, params) {
     return usuarios[0] || null;
 }
 
-// ============================================
-// POST /api/auth/login
-// ============================================
-// Inicia sesion y devuelve un token JWT
-// Inicia sesion y devuelve un token JWT
 router.post('/login', async (req, res) => {
     try {
         const { username, password } = req.body;
@@ -148,10 +137,6 @@ router.post('/login', async (req, res) => {
             });
         }
 
-        // ============================================
-        // VALIDAR PASSWORD
-        // ============================================
-
         const passwordValido = await bcrypt.compare(
             password,
             usuario.password
@@ -173,9 +158,6 @@ router.post('/login', async (req, res) => {
         const contextoUsuario = construirContextoUsuario(usuario);
         console.log('Permisos efectivos:', contextoUsuario.permisos);
 
-        // ============================================
-        // CREAR TOKEN
-        // ============================================
 
         const token = jwt.sign(
             {
@@ -189,9 +171,6 @@ router.post('/login', async (req, res) => {
             }
         );
 
-        // ============================================
-        // GUARDAR SESION
-        // ============================================
 
         await pool.query(
             `INSERT INTO sesiones
@@ -200,9 +179,7 @@ router.post('/login', async (req, res) => {
             [usuario.id, token, req.ip, req.headers['user-agent']]
         );
 
-        // ============================================
-        // RESPUESTA
-        // ============================================
+
 
         res.json({
             error: false,
@@ -224,10 +201,6 @@ router.post('/login', async (req, res) => {
     }
 });
 
-// ============================================
-// POST /api/auth/register
-// ============================================
-// Registra un nuevo usuario
 router.post('/register', async (req, res) => {
     try {
         const { username, password, nombre_completo, email, rol } = req.body;
@@ -279,10 +252,6 @@ router.post('/register', async (req, res) => {
     }
 });
 
-// ============================================
-// GET /api/auth/verify
-// ============================================
-// Verifica si el token es valido y devuelve datos del usuario
 router.get('/verify', verificarToken, async (req, res) => {
     try {
         const usuario = await obtenerUsuarioConDepartamento(
@@ -310,10 +279,6 @@ router.get('/verify', verificarToken, async (req, res) => {
     }
 });
 
-// ============================================
-// GET /api/auth/profile
-// ============================================
-// Retorna los datos del usuario desde la base de datos
 router.get('/profile', verificarToken, async (req, res) => {
     try {
         const [usuarios] = await pool.query(
@@ -343,10 +308,6 @@ router.get('/profile', verificarToken, async (req, res) => {
     }
 });
 
-// ============================================
-// POST /api/auth/logout
-// ============================================
-// Cierra la sesion (invalida el token en la BD)
 router.post('/logout', verificarToken, async (req, res) => {
     try {
         const token = req.headers['authorization'].split(' ')[1];

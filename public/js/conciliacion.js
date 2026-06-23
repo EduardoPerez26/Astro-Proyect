@@ -1,9 +1,6 @@
-// ============================================
-// SISTEMA DE CONCILIACION
-// ============================================
+
 
 window.API_URL
-// Estado global
 let restaurantes = [];
 let templates = [];
 let templateActual = null;
@@ -85,7 +82,6 @@ function analizarRevisionArchivo(archivo) {
             };
         }
     } catch {
-        // Compatibilidad con las revisiones antiguas guardadas en el nombre.
     }
 
     return analizarNombreRevision(archivo?.nombre_original);
@@ -334,7 +330,6 @@ function analizarReferenciaComparacion(archivo) {
             };
         }
 
-        // La ultima revision del sistema anterior puede servir como referencia inicial.
         if (notas?.tipo === 'revision_fuente') {
             return {
                 tipo: notas.fuente,
@@ -345,7 +340,6 @@ function analizarReferenciaComparacion(archivo) {
             };
         }
     } catch {
-        // Continua con el formato historico basado en el nombre.
     }
 
     const anterior = analizarNombreRevision(archivo?.nombre_original);
@@ -1234,27 +1228,20 @@ function actualizarUploadsPorRestaurante(codigo) {
     }
 }
 
-// ============================================
-// INICIALIZACION
-// ============================================
 
 document.addEventListener('DOMContentLoaded', async () => {
-    // Verificar autenticacion
     const token = localStorage.getItem('token');
     if (!token) {
         window.location.href = '/';
         return;
     }
 
-    // Establecer fecha actual
     document.getElementById('fechaConciliacion').valueAsDate = new Date();
 
-    // Cargar catalogo de restaurantes activos
     await cargarRestaurantes();
 
     actualizarUploadsPorRestaurante('');
 
-    // Verificar si viene un restaurante en la URL
     const urlParams = new URLSearchParams(window.location.search);
     const restauranteId = urlParams.get('restaurante');
     if (restauranteId) {
@@ -1262,15 +1249,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         await onRestauranteChange();
     }
 
-    // Event listeners
     initEventListeners();
 });
 
 function initEventListeners() {
-
-    // ==========================
-    // Restaurante
-    // ==========================
 
     const restauranteSelect =
         document.getElementById(
@@ -1286,10 +1268,6 @@ function initEventListeners() {
 
     }
 
-    // ==========================
-    // Template
-    // ==========================
-
     const templateSelect =
         document.getElementById(
             'selectTemplate'
@@ -1303,10 +1281,6 @@ function initEventListeners() {
         );
 
     }
-
-    // ==========================
-    // Fecha
-    // ==========================
 
     const fechaInput =
         document.getElementById(
@@ -1337,10 +1311,6 @@ function initEventListeners() {
         );
 
     }
-
-    // ==========================
-    // SALES FILE
-    // ==========================
 
     const salesInput =
         document.getElementById(
@@ -1535,10 +1505,6 @@ function initEventListeners() {
 
     }
 
-    // ==========================
-    // SALES DETAIL FILE
-    // ==========================
-
     const salesDetailInput =
         document.getElementById(
             'salesDetailFile'
@@ -1665,11 +1631,6 @@ function initEventListeners() {
         );
 
     }
-
-    // ==========================
-    // EBT FILE
-    // ==========================
-
     const ebtInput =
         document.getElementById(
             'ebtFile'
@@ -1749,11 +1710,6 @@ function initEventListeners() {
 
     }
 
-
-    // ==========================
-    // Drag & Drop
-    // ==========================
-
     const dropZone =
         document.getElementById(
             'dropZone'
@@ -1817,10 +1773,6 @@ function initEventListeners() {
         );
 
     }
-
-    // ==========================
-    // Botones
-    // ==========================
 
     document
         .getElementById(
@@ -2016,9 +1968,6 @@ function initEventListeners() {
 
 }
 
-// ============================================
-// CARGA DE DATOS
-// ============================================
 
 async function cargarRestaurantes() {
     try {
@@ -2139,9 +2088,6 @@ async function cargarValoresEsperados() {
     }
 }
 
-// ============================================
-// EVENT HANDLERS
-// ============================================
 
 async function onRestauranteChange() {
 
@@ -2298,9 +2244,6 @@ function onFechaChange() {
     cargarValoresEsperados();
 }
 
-// ============================================
-// PROCESAMIENTO DE ARCHIVO
-// ============================================
 
 async function procesarArchivo(file) {
 
@@ -2368,7 +2311,6 @@ function combineTemplateWithUserExcel(
         }
     );
 
-    // Agregar Conciliation del template
     if (
         templateWorkbook.Sheets[
         'Conciliation'
@@ -2450,11 +2392,6 @@ function extraerDatos() {
     if (!workbook || !templateActual) return;
 
     datosExtraidos = [];
-
-    // ============================================
-    // DETECTAR DAILY SALES AUTOMATICAMENTE
-    // ============================================
-    // Si existe la hoja Conciliation, usarla
     if (currentRestaurantConfig) {
 
         console.log(
@@ -2681,7 +2618,6 @@ function normalizarFecha(fecha) {
         ).padStart(2, '0')}/${d.getUTCFullYear()}`;
     }
 
-    // Texto o Date normal
     const d =
         fecha instanceof Date
             ? fecha
@@ -2740,12 +2676,6 @@ function generarConciliacionDesdeTemplate() {
     }
 
 }
-// ============================================
-// RENDERIZADO
-// ============================================
-
-
-
 
 
 function obtenerCodigoRestauranteActual() {
@@ -2760,8 +2690,6 @@ function esColumnaOS(columna) {
     const claveOriginal = String(columna?.key || '');
     const etiquetaOriginal = String(columna?.label || '').trim();
 
-    // Taco Bell tiene dos columnas distintas: "O/S" (oS) y "OS" (os).
-    // Solo la primera representa la diferencia que debe auditarse.
     if (codigo === 'taco-bell') {
         return (
             claveOriginal === 'oS' ||
@@ -2883,9 +2811,6 @@ function actualizarResumen() {
     }
 }
 
-// ============================================
-// MODAL EDITAR VALOR
-// ============================================
 
 function abrirModalEditar(index) {
     editandoIndex = index;
@@ -2919,14 +2844,6 @@ function guardarValorEsperado() {
     renderTablaSucursales();
     actualizarResumen();
 }
-
-// ============================================
-// GUARDAR CONCILIACION
-// ============================================
-
-// ============================================
-// HISTORIAL
-// ============================================
 
 async function abrirHistorial() {
     document.getElementById('modalHistorial').classList.add('active');
@@ -3027,10 +2944,6 @@ async function verConciliacion(id) {
     }
 }
 
-// ============================================
-// EXPORTAR PDF
-// ============================================
-
 function exportarPDF() {
     // Implementacion basica con window.print
     const restaurante = document.getElementById('selectRestaurante').selectedOptions[0]?.text || '';
@@ -3092,9 +3005,6 @@ function exportarPDF() {
     printWindow.print();
 }
 
-// ============================================
-// UTILIDADES
-// ============================================
 
 function formatMoney(value) {
     return new Intl.NumberFormat('en-US', {
@@ -3266,10 +3176,6 @@ function renderTablaSucursales() {
             label: currentRestaurantConfig.columns[key]
         }));
 
-    // ==========================
-    // HEADERS
-    // ==========================
-
     const headerRow = document.createElement('tr');
 
     columnas.forEach(col => {
@@ -3287,9 +3193,7 @@ function renderTablaSucursales() {
 
     thead.appendChild(headerRow);
 
-    // ==========================
-    // BODY
-    // ==========================
+
 
     const filasFiltradas = datosExtraidos.filter(row => {
 
@@ -4527,15 +4431,11 @@ function generarWorkbookConConciliacion() {
         );
     }
 
-    // Crear datos de conciliación usando configuración dinámica
     const columnas =
         currentRestaurantConfig?.conciliationColumns ||
         currentRestaurantConfig?.tableColumns ||
         [];
 
-    // ======================================
-    // CONCILIATION
-    // ======================================
 
     const wsConciliation =
         XLSX.utils.aoa_to_sheet(

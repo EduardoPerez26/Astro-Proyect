@@ -1,8 +1,3 @@
-// ============================================
-// RUTAS DE USUARIOS
-// ============================================
-// CRUD de usuarios (solo admin puede gestionar)
-// ============================================
 
 const express = require('express');
 const router = express.Router();
@@ -52,10 +47,6 @@ function normalizarPermisosUsuario(permisos, rol) {
     return normalizados;
 }
 
-// ============================================
-// GET /api/usuarios
-// ============================================
-// Lista todos los usuarios (solo admin)
 router.get('/', verificarToken, esAdmin, async (req, res) => {
     try {
         const [usuarios] = await pool.query(
@@ -77,7 +68,6 @@ router.get('/', verificarToken, esAdmin, async (req, res) => {
              ORDER BY u.nombre_completo`
         );
 
-        // Parsear permisos - MySQL puede devolver objeto o string dependiendo de la configuracion
         const usuariosFormateados = usuarios.map(u => {
             let permisos = {};
             if (u.permisos) {
@@ -109,10 +99,6 @@ router.get('/', verificarToken, esAdmin, async (req, res) => {
     }
 });
 
-// ============================================
-// GET /api/usuarios/:id
-// ============================================
-// Obtiene un usuario por ID
 router.get('/:id', verificarToken, async (req, res) => {
     try {
         // Solo admin puede ver otros usuarios
@@ -154,7 +140,6 @@ router.get('/:id', verificarToken, async (req, res) => {
         }
 
         const usuario = usuarios[0];
-        // Parsear permisos - MySQL puede devolver objeto o string
         if (usuario.permisos) {
             if (typeof usuario.permisos === 'string') {
                 try { usuario.permisos = JSON.parse(usuario.permisos); } catch { usuario.permisos = {}; }
@@ -179,10 +164,6 @@ router.get('/:id', verificarToken, async (req, res) => {
     }
 });
 
-// ============================================
-// PUT /api/usuarios/:id
-// ============================================
-// Actualiza un usuario
 router.put('/:id', verificarToken, async (req, res) => {
     try {
         // Solo admin puede editar otros usuarios
@@ -286,12 +267,6 @@ router.put('/:id', verificarToken, async (req, res) => {
     }
 });
 
-// ============================================
-// DELETE /api/usuarios/:id
-// ============================================
-// Elimina fisicamente un usuario (solo admin).
-// Los registros contables se reasignan al administrador que ejecuta la accion
-// para conservar la trazabilidad y respetar las llaves foraneas RESTRICT.
 router.delete('/:id', verificarToken, esAdmin, async (req, res) => {
     const connection = await pool.getConnection();
 
@@ -335,12 +310,10 @@ router.delete('/:id', verificarToken, esAdmin, async (req, res) => {
                 );
                 registrosReasignados += resultado.affectedRows || 0;
             } catch (error) {
-                // Algunas instalaciones no tienen todos los modulos creados.
                 if (error.code !== 'ER_NO_SUCH_TABLE') throw error;
             }
         }
 
-        // Las sesiones no deben transferirse a otro usuario.
         await connection.query(
             'DELETE FROM sesiones WHERE usuario_id = ?',
             [usuarioId]
@@ -380,10 +353,6 @@ router.delete('/:id', verificarToken, esAdmin, async (req, res) => {
     }
 });
 
-// ============================================
-// GET /api/usuarios/:id/permisos
-// ============================================
-// Obtiene los permisos de un usuario
 router.get('/:id/permisos', verificarToken, async (req, res) => {
     try {
         // Solo admin puede ver permisos de otros usuarios
@@ -406,7 +375,6 @@ router.get('/:id/permisos', verificarToken, async (req, res) => {
             });
         }
 
-        // Parsear permisos (guardados como JSON en la BD)
         let permisos = {};
         try {
             permisos = typeof rows[0].permisos === 'string'
@@ -430,10 +398,6 @@ router.get('/:id/permisos', verificarToken, async (req, res) => {
     }
 });
 
-// ============================================
-// PUT /api/usuarios/:id/permisos
-// ============================================
-// Actualiza los permisos de un usuario (solo admin)
 router.put('/:id/permisos', verificarToken, esAdmin, async (req, res) => {
     try {
         const { permisos } = req.body;
@@ -473,7 +437,6 @@ router.put('/:id/permisos', verificarToken, esAdmin, async (req, res) => {
             });
         }
 
-        // Este es el unico punto donde se asignan ventanas e inicio.
         await pool.query(
             'UPDATE usuarios SET permisos = ? WHERE id = ?',
             [JSON.stringify(permisosNormalizados), req.params.id]
@@ -494,10 +457,6 @@ router.put('/:id/permisos', verificarToken, esAdmin, async (req, res) => {
     }
 });
 
-// ============================================
-// POST /api/usuarios
-// ============================================
-// Crear nuevo usuario (solo admin)
 router.post('/', verificarToken, esAdmin, async (req, res) => {
     try {
         const { nombre, email, username, password, rol, estado, departamento_id } = req.body;

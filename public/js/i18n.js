@@ -81,7 +81,7 @@
         'Abrir menu': 'Open menu',
 
         // ----- Login -----
-        'Iniciar sesión | Conciliación+': 'Sign in | Conciliación+',
+        'Iniciar sesión | Conciliación+': 'Sign in | Conciliation+',
         'Acerca del sistema': 'About the system',
         'Control financiero': 'Financial control',
         'Centraliza tus archivos, valida diferencias y mantén cada conciliación lista para revisión.': 'Centralize your files, validate differences and keep every reconciliation ready for review.',
@@ -414,8 +414,6 @@
         'Continuar a Tiendas': 'Continue to Stores'
     };
 
-    // Reemplazo por SUBCADENA para textos dinamicos (concatenaciones con variables).
-    // Se aplica solo cuando no hubo coincidencia exacta. Frases distintivas/seguras.
     var PHRASES = [
         ['Sistema de Conciliación', 'Reconciliation System'],
         ['Administrador', 'Administrator'],
@@ -430,7 +428,6 @@
         ['Mostrando', 'Showing'],
         ['usuarios', 'users']
     ];
-    // Ordenar por longitud descendente para evitar reemplazos parciales.
     PHRASES.sort(function (a, b) { return b[0].length - a[0].length; });
 
     var SKIP_TAGS = { SCRIPT: 1, STYLE: 1, NOSCRIPT: 1, TEXTAREA: 1 };
@@ -447,7 +444,6 @@
         return s.replace(/\s+/g, ' ').trim();
     }
 
-    // Traduce un string. Devuelve el original si no hay traduccion.
     function translate(text) {
         if (!text) return text;
         var key = normalize(text);
@@ -457,7 +453,7 @@
             var trail = text.match(/\s*$/)[0];
             return lead + DICT[key] + trail;
         }
-        // Reemplazo por subcadena para textos dinamicos.
+
         var out = text;
         var changed = false;
         for (var i = 0; i < PHRASES.length; i++) {
@@ -480,13 +476,13 @@
 
     function walk(node) {
         if (!node) return;
-        if (node.nodeType === 3) { // texto
+        if (node.nodeType === 3) { 
             if (isInsideSkipped(node)) return;
             var nv = translate(node.nodeValue);
             if (nv !== node.nodeValue) node.nodeValue = nv;
             return;
         }
-        if (node.nodeType !== 1) return; // solo elementos
+        if (node.nodeType !== 1) return; 
         if (SKIP_TAGS[node.tagName] || node.hasAttribute('data-no-i18n')) return;
 
         for (var i = 0; i < ATTRS.length; i++) {
@@ -561,7 +557,7 @@
 
     function setLanguage(lang) {
         try { localStorage.setItem(STORAGE_KEY, lang); } catch (e) {}
-        // Recargar para volver al contenido base (es) o aplicar traduccion (en) de forma limpia.
+
         window.location.reload();
     }
 
@@ -590,7 +586,6 @@
         wireToggles();
     }
 
-    // API publica
     window.appI18n = {
         getLang: getLang,
         setLanguage: setLanguage,

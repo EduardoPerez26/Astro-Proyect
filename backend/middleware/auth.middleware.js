@@ -49,19 +49,9 @@ const esSupervisorOAdmin = (req, res, next) => {
     next();
 };
 
-// Middleware para verificar permisos por nombre.
-// Uso: checkPermission('ver_reportes') => devuelve middleware
 const checkPermission = (permiso) => {
     return async (req, res, next) => {
         try {
-
-
-            console.log('================================');
-            console.log('CHECK PERMISSION');
-            console.log('Permiso solicitado:', permiso);
-            console.log('Usuario req.usuario:', req.usuario);
-            console.log('Rol:', req.usuario?.rol);
-            console.log('================================');
 
             if (!req.usuario) {
                 return res.status(401).json({
@@ -70,7 +60,6 @@ const checkPermission = (permiso) => {
                 });
             }
 
-            // Admin tiene acceso total
             if (req.usuario.rol === 'admin') {
                 return next();
             }

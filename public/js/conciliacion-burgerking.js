@@ -255,7 +255,6 @@ function obtenerRowsBurgerKing() {
         defval: ''
     });
 
-    // Si todo viene en una sola columna, separar por coma o punto y coma
     if (
         matrix.length &&
         matrix[0].length === 1 &&
@@ -705,8 +704,6 @@ const BK_STORE_JURISDICTION_OVERRIDES = {
     2152: 'UNINCORPORATED AREA-ALAMEDA'
 };
 
-// Catálogo inicial convertido desde Locations.xlsx.
-// El usuario puede modificarlo desde el modal de Burger King; los cambios se guardan en localStorage.
 const BK_DEFAULT_TAX_STORES = [
     {
         "store": 14218,
@@ -2318,8 +2315,6 @@ async function obtenerTaxRateCDTFA(store, latitude, longitude, opciones = {}) {
         if (cache?.rate) return Number(cache.rate);
     }
 
-    // La conciliación no debe disparar consultas masivas a CDTFA.
-    // Solo se consulta la API cuando se usa el botón manual de actualizar rates.
     if (!opciones.forceRefresh) {
         return fallbackRate;
     }
@@ -2955,4 +2950,3 @@ function renderBurgerKingTemplateCsv() {
     );
 }
 
-// La consulta CDTFA ahora se maneja con el catálogo local y fetch directo definido arriba.

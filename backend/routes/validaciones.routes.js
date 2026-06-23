@@ -1,16 +1,11 @@
-// ============================================
-// RUTAS DE VALIDACIONES
-// ============================================
+
 
 const express = require('express');
 const router = express.Router();
 const { pool } = require('../config/database');
 const { verificarToken } = require('../middleware/auth.middleware');
 
-// ============================================
-// GET /api/validaciones
-// ============================================
-// Obtiene el historial de validaciones
+
 router.get('/', verificarToken, async (req, res) => {
     try {
         const { limite = 100, pagina = 1, resultado, tipo, fecha } = req.query;
@@ -79,10 +74,7 @@ router.get('/', verificarToken, async (req, res) => {
     }
 });
 
-// ============================================
-// GET /api/validaciones/:id
-// ============================================
-// Obtiene una validacion especifica
+
 router.get('/:id', verificarToken, async (req, res) => {
     try {
         const [validaciones] = await pool.query(`
@@ -117,14 +109,7 @@ router.get('/:id', verificarToken, async (req, res) => {
     }
 });
 
-// ============================================
-// POST /api/validaciones
-// ============================================
-// Registra una nueva validacion
-// ============================================
-// POST /api/validaciones
-// ============================================
-// Registra una nueva validacion
+
 router.post('/', verificarToken, async (req, res) => {
     try {
 
@@ -232,10 +217,6 @@ router.post('/', verificarToken, async (req, res) => {
     }
 });
 
-// ============================================
-// GET /api/validaciones/estadisticas
-// ============================================
-// Obtiene estadisticas de validaciones
 router.get('/stats/resumen', verificarToken, async (req, res) => {
     try {
         const [stats] = await pool.query(`

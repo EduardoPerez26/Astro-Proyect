@@ -1,6 +1,4 @@
-// ============================================
-// CONFIGURACION DE BASE DE DATOS - MySQL
-// ============================================
+
 const mysql = require('mysql2/promise');
 
 const pool = mysql.createPool({

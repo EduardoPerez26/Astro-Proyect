@@ -1,6 +1,3 @@
-// ============================================
-// RUTAS DE CONCILIACIONES
-// ============================================
 
 const express = require('express');
 const router = express.Router();
@@ -220,10 +217,6 @@ function compararDatosConciliacion(
     };
 }
 
-// ============================================
-// GET /api/conciliaciones/templates
-// ============================================
-// Lista templates de un restaurante
 router.get('/templates', verificarToken, async (req, res) => {
     try {
         const { restaurante_id } = req.query;
@@ -267,9 +260,6 @@ router.get('/templates', verificarToken, async (req, res) => {
     }
 });
 
-// ============================================
-// GET /api/conciliaciones/templates/:id
-// ============================================
 router.get('/templates/:id', verificarToken, async (req, res) => {
     try {
         const [templates] = await pool.query(
@@ -306,10 +296,6 @@ router.get('/templates/:id', verificarToken, async (req, res) => {
     }
 });
 
-// ============================================
-// POST /api/conciliaciones/templates
-// ============================================
-// Crear nuevo template (solo admin)
 router.post('/templates', verificarToken, esAdmin, async (req, res) => {
     try {
         const { restaurante_id, nombre, descripcion, configuracion, es_default } = req.body;
@@ -321,7 +307,6 @@ router.post('/templates', verificarToken, esAdmin, async (req, res) => {
             });
         }
         
-        // Si es default, quitar default de otros templates del mismo restaurante
         if (es_default) {
             await pool.query(
                 'UPDATE templates_conciliacion SET es_default = FALSE WHERE restaurante_id = ?',
@@ -356,9 +341,6 @@ router.post('/templates', verificarToken, esAdmin, async (req, res) => {
     }
 });
 
-// ============================================
-// PUT /api/conciliaciones/templates/:id
-// ============================================
 router.put('/templates/:id', verificarToken, esAdmin, async (req, res) => {
     try {
         const { nombre, descripcion, configuracion, es_default, activo } = req.body;
@@ -415,10 +397,7 @@ router.put('/templates/:id', verificarToken, esAdmin, async (req, res) => {
     }
 });
 
-// ============================================
-// GET /api/conciliaciones
-// ============================================
-// Lista conciliaciones
+
 router.get('/', verificarToken, async (req, res) => {
     try {
         const { restaurante_id, estado, fecha_inicio, fecha_fin } = req.query;
@@ -479,10 +458,6 @@ router.get('/', verificarToken, async (req, res) => {
     }
 });
 
-// ============================================
-// POST /api/conciliaciones/comparar-existente
-// ============================================
-// Compara por restaurante, tienda y fecha usando reglas propias de cada marca.
 router.post('/comparar-existente', verificarToken, async (req, res) => {
     try {
         const {
@@ -679,9 +654,6 @@ router.post('/comparar-existente', verificarToken, async (req, res) => {
     }
 });
 
-// ============================================
-// GET /api/conciliaciones/:id
-// ============================================
 router.get('/:id', verificarToken, async (req, res) => {
     try {
         const [conciliaciones] = await pool.query(
@@ -727,10 +699,6 @@ router.get('/:id', verificarToken, async (req, res) => {
     }
 });
 
-// ============================================
-// POST /api/conciliaciones
-// ============================================
-// Crear nueva conciliacion
 router.post('/', verificarToken, async (req, res) => {
     try {
         const {
@@ -793,7 +761,6 @@ router.post('/', verificarToken, async (req, res) => {
             }
         }
         
-        // Calcular estadisticas
         const datos = Array.isArray(datos_extraidos) ? datos_extraidos : [];
         const total_conceptos = datos.length;
         const conceptos_ok = datos.filter(d => Math.abs(d.diferencia || 0) < 0.01).length;
@@ -913,9 +880,6 @@ router.post('/', verificarToken, async (req, res) => {
     }
 });
 
-// ============================================
-// PUT /api/conciliaciones/:id
-// ============================================
 router.put('/:id', verificarToken, async (req, res) => {
     try {
         const { datos_extraidos, estado, notas } = req.body;
@@ -974,9 +938,6 @@ router.put('/:id', verificarToken, async (req, res) => {
     }
 });
 
-// ============================================
-// GET /api/conciliaciones/valores-esperados
-// ============================================
 router.get('/valores-esperados/:restaurante_id/:fecha', verificarToken, async (req, res) => {
     try {
         const { restaurante_id, fecha } = req.params;
@@ -988,7 +949,6 @@ router.get('/valores-esperados/:restaurante_id/:fecha', verificarToken, async (r
             [restaurante_id, fecha]
         );
         
-        // Convertir a objeto para facil acceso
         const valoresMap = {};
         valores.forEach(v => {
             valoresMap[v.concepto] = {
@@ -1011,9 +971,7 @@ router.get('/valores-esperados/:restaurante_id/:fecha', verificarToken, async (r
     }
 });
 
-// ============================================
-// POST /api/conciliaciones/valores-esperados
-// ============================================
+
 router.post('/valores-esperados', verificarToken, async (req, res) => {
     try {
         const { restaurante_id, fecha, valores } = req.body;

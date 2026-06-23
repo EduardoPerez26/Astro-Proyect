@@ -5,9 +5,7 @@ const {
     fetchTaxRateByCoordinates,
 } = require('../services/cdtfaTaxrate.service');
 
-// Si tienes middleware de token, actívalo.
-// Ajusta la ruta si tu archivo se llama diferente.
-// const { verificarToken } = require('../middleware/auth.middleware');
+
 
 router.get('/by-coordinates', async (req, res) => {
     try {

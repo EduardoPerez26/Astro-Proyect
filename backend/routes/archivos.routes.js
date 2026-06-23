@@ -7,21 +7,11 @@ const fs = require('fs');
 const { pool } = require('../config/database');
 const { verificarToken, checkPermission } = require('../middleware/auth.middleware');
 
-// ============================================
-// MULTER
-// ============================================
-
-// Railway usa un disco efimero. Guardamos los archivos nuevos en el LONGBLOB
-// que ya existe en archivos_excel para conservarlos entre despliegues.
 const storage = multer.memoryStorage();
 const upload = multer({
     storage,
     limits: { fileSize: 50 * 1024 * 1024 }
 });
-
-// ============================================
-// GET ARCHIVOS
-// ============================================
 
 router.get(
     '/',
@@ -85,10 +75,6 @@ router.get(
     }
 );
 
-// ============================================
-// SUBIR ARCHIVO
-// ============================================
-
 router.post(
     '/subir',
     verificarToken,
@@ -103,12 +89,6 @@ router.post(
                     message: 'No se recibió ningún archivo'
                 });
             }
-
-            console.log('================================');
-            console.log('SUBIR ARCHIVO');
-            console.log('BODY:', req.body);
-            console.log('FILE SIZE:', req.file.size);
-            console.log('================================');
 
             const restauranteCodigo = req.body.restaurante_id;
 
@@ -275,10 +255,6 @@ router.post(
     }
 );
 
-// ============================================
-// DESCARGAR
-// ============================================
-
 router.get(
     '/:id/descargar',
     verificarToken,
@@ -348,10 +324,6 @@ router.get(
     }
 );
 
-// ============================================
-// ELIMINAR
-// ============================================
-
 router.delete(
     '/:id',
     verificarToken,
@@ -379,7 +351,6 @@ router.delete(
             console.log('Ruta:', archivo.ruta_archivo);
             console.log('================================');
 
-            // Eliminar archivo físico si existe
             if (
                 archivo.ruta_archivo &&
                 fs.existsSync(archivo.ruta_archivo)
@@ -397,7 +368,6 @@ router.delete(
                 );
             }
 
-            // Eliminar registro de la BD
             await pool.query(
                 'DELETE FROM archivos_excel WHERE id = ?',
                 [req.params.id]
