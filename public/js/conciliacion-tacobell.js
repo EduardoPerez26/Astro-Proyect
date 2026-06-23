@@ -1036,54 +1036,6 @@ function generarExpectedDepositsTacoBell() {
     }));
 }
 
-function colorearExpectedDepositsTacoBell() {
-    const head = document.getElementById('conciliacionTableHead');
-    const body = document.getElementById('conciliacionBody');
-
-    if (!head || !body) return;
-
-    const headers = Array.from(head.querySelectorAll('th'))
-        .map(th => String(th.textContent || '').trim().toLowerCase());
-
-    const memoIndex = headers.findIndex(header => header === 'memo');
-    const deptIndex = headers.findIndex(header => header === 'deptid');
-
-    if (memoIndex === -1 && deptIndex === -1) return;
-
-    Array.from(body.querySelectorAll('tr')).forEach(tr => {
-        const cells = Array.from(tr.children);
-
-        const memo = memoIndex >= 0
-            ? String(cells[memoIndex]?.textContent || '').toLowerCase()
-            : '';
-
-        const deptId = deptIndex >= 0
-            ? String(cells[deptIndex]?.textContent || '').toUpperCase()
-            : '';
-
-        let color = '';
-
-        if (
-            memo.includes('cash expected') ||
-            deptId === 'CASH'
-        ) {
-            color = '#b9f0fd4b';
-        }
-
-        if (
-            memo.includes('ebt expected') ||
-            deptId === 'EBT'
-        ) {
-            color = '#99c2c767';
-        }
-
-        if (color) {
-            cells.forEach(td => {
-                td.style.setProperty('background-color', color, 'important');
-            });
-        }
-    });
-}
 
 function renderExpectedDepositsTacoBell() {
     generarExpectedDepositsTacoBell();
@@ -1091,8 +1043,6 @@ function renderExpectedDepositsTacoBell() {
     renderArrayToMainTable(
         tacoBellExpectedDepositsData
     );
-
-    colorearExpectedDepositsTacoBell();
 }
 
 function activarPestanaExpectedDepositsVisual(button) {
@@ -2380,10 +2330,8 @@ function inicializarTabEbtCashExpected() {
         boton.classList.add('active');
         boton.dataset.tab = 'expectedDeposits';
 
-        
         generarExpectedDepositsTacoBell();
         renderExpectedDepositsTacoBell();
-        colorearExpectedDepositsTacoBell();
     }, true);
 }
 
