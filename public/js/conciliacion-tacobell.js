@@ -1,10 +1,11 @@
 // conciliacion-tacobell.js
-
 let taxReviewData = [];
 let statisticalDeliveryData = [];
 let dailySalesREDData = [];
 let dailySales0314Data = [];
 let dailySales0310Data = [];
+let tacoBellExpectedDepositsData = [];
+let ebtCashExpectedData = [];
 let activeTab = 'dailySales';
 
 const TACO_BELL_DEPOSITOS_AL_FINAL = new Set([
@@ -348,12 +349,19 @@ function generarConciliacionTacoBell() {
     generarDailySalesRED();
     generarDailySales0314();
     generarDailySales0310();
+
+    generarExpectedDepositsTacoBell();
+    asegurarPestanaExpectedDepositsTacoBell();
     renderTablaSucursales();
+
     llenarFiltroTiendas();
     actualizarResumen();
     actualizarTotales();
     renderActiveTab();
 }
+
+
+
 
 function renderActiveTab() {
 
@@ -383,8 +391,12 @@ function renderActiveTab() {
             renderDailySales0310();
             break;
 
+        case 'ebtCashExpected':
+        case 'expectedDeposits':
+        case 'cashExpected':
+            renderExpectedDepositsTacoBell();
+            break;
     }
-
 }
 
 function generarTaxReviewTacoBell() {
@@ -962,6 +974,195 @@ function generarDailySales0310() {
 
     });
 
+}
+
+
+function generarExpectedDepositsTacoBell() {
+    tacoBellExpectedDepositsData = [];
+
+    const cashRows = [];
+    const ebtRows = [];
+
+    (datosExtraidos || []).forEach(row => {
+        const store = Number(row.store || row.Store || row.locationId || 0);
+
+        // Solo mostrar estas tiendas:
+        // 28841, 28843, 28844, 28845, 28846, 30256, 30491, 36224
+        if (!TACO_BELL_DEPOSITOS_AL_FINAL.has(store)) {
+            return;
+        }
+
+        const date = fechaConciliacionActual || row.date || row.Date || '';
+        const cashExpected = Number(row.cashExpected || row.acctCash || 0);
+        const ebt = Number(row.ebt || 0);
+
+        if (Math.abs(cashExpected) >= 0.005) {
+            cashRows.push({
+                journal: 'SJ',
+                date,
+                lineNo: 0,
+                description: 'POS Data Upload Sabretooth',
+                memo: 'Cash Expected Deposit',
+                deptId: 'CASH',
+                acctNo: 110500,
+                locationId: store,
+                debit: Number(cashExpected.toFixed(2)),
+                credit: 0
+            });
+        }
+
+        if (Math.abs(ebt) >= 0.005) {
+            ebtRows.push({
+                journal: 'SJ',
+                date,
+                lineNo: 0,
+                description: 'POS Data Upload Sabretooth',
+                memo: 'EBT Expected Deposit',
+                deptId: 'EBT',
+                acctNo: 111200,
+                locationId: store,
+                debit: Number(ebt.toFixed(2)),
+                credit: 0
+            });
+        }
+    });
+
+    tacoBellExpectedDepositsData = [
+        ...cashRows,
+        ...ebtRows
+    ].map((row, index) => ({
+        ...row,
+        lineNo: index + 1
+    }));
+}
+
+function colorearExpectedDepositsTacoBell() {
+    const head = document.getElementById('conciliacionTableHead');
+    const body = document.getElementById('conciliacionBody');
+
+    if (!head || !body) return;
+
+    const headers = Array.from(head.querySelectorAll('th'))
+        .map(th => String(th.textContent || '').trim().toLowerCase());
+
+    const memoIndex = headers.findIndex(header => header === 'memo');
+    const deptIndex = headers.findIndex(header => header === 'deptid');
+
+    if (memoIndex === -1 && deptIndex === -1) return;
+
+    Array.from(body.querySelectorAll('tr')).forEach(tr => {
+        const cells = Array.from(tr.children);
+
+        const memo = memoIndex >= 0
+            ? String(cells[memoIndex]?.textContent || '').toLowerCase()
+            : '';
+
+        const deptId = deptIndex >= 0
+            ? String(cells[deptIndex]?.textContent || '').toUpperCase()
+            : '';
+
+        let color = '';
+
+        if (
+            memo.includes('cash expected') ||
+            deptId === 'CASH'
+        ) {
+            color = '#b9f0fd4b';
+        }
+
+        if (
+            memo.includes('ebt expected') ||
+            deptId === 'EBT'
+        ) {
+            color = '#99c2c767';
+        }
+
+        if (color) {
+            cells.forEach(td => {
+                td.style.setProperty('background-color', color, 'important');
+            });
+        }
+    });
+}
+
+function renderExpectedDepositsTacoBell() {
+    generarExpectedDepositsTacoBell();
+
+    renderArrayToMainTable(
+        tacoBellExpectedDepositsData
+    );
+
+    colorearExpectedDepositsTacoBell();
+}
+
+function activarPestanaExpectedDepositsVisual(button) {
+    document
+        .querySelectorAll('[data-tab], .tab-btn, .tab-button, .tabs button, .results-tabs button')
+        .forEach(tab => tab.classList.remove('active'));
+
+    button?.classList.add('active');
+}
+
+function conectarBotonExpectedDeposits(button) {
+    if (!button || button.dataset.expectedDepositsReady === 'true') return;
+
+    button.dataset.expectedDepositsReady = 'true';
+    button.dataset.tab = 'expectedDeposits';
+    button.removeAttribute('onclick');
+    button.type = 'button';
+
+    button.addEventListener('click', event => {
+        event.preventDefault();
+
+        activeTab = 'expectedDeposits';
+        activarPestanaExpectedDepositsVisual(button);
+
+        if (typeof renderActiveTab === 'function') {
+            renderActiveTab();
+        }
+    });
+}
+
+function asegurarPestanaExpectedDepositsTacoBell() {
+    const existente = document.querySelector('[data-tab="expectedDeposits"]');
+
+    if (existente) {
+        conectarBotonExpectedDeposits(existente);
+        return;
+    }
+
+    const referencia =
+        document.querySelector('[data-tab="dailySales0314"]') ||
+        document.querySelector('[data-tab="dailySalesRed"]') ||
+        document.querySelector('[data-tab="taxReview"]') ||
+        document.querySelector('.tab-btn, .tab-button, .tabs button, .results-tabs button');
+
+    let contenedor =
+        referencia?.parentElement ||
+        document.getElementById('resultsTabs') ||
+        document.querySelector('.tabs, .tab-buttons, .results-tabs, .nav-tabs');
+
+    if (!contenedor) {
+        const tableHead = document.getElementById('conciliacionTableHead');
+        const table = tableHead?.closest('table');
+
+        if (!table?.parentElement) return;
+
+        contenedor = document.createElement('div');
+        contenedor.className = 'tabs results-tabs';
+        contenedor.style.marginBottom = '12px';
+        table.parentElement.insertBefore(contenedor, table);
+    }
+
+    const button = referencia
+        ? referencia.cloneNode(false)
+        : document.createElement('button');
+
+    button.textContent = 'EBT / Cash Expected';
+    button.classList.remove('active');
+    conectarBotonExpectedDeposits(button);
+
+    contenedor.appendChild(button);
 }
 
 const TB_TAX_RATE_DIRECT_API_BASE_URL = 'https://services.maps.cdtfa.ca.gov/api/taxrate';
@@ -1621,11 +1822,10 @@ function renderTiendasTaxTacoBell() {
             </td>
             <td>${tienda.state || '-'}</td>
             <td>${tienda.zip || '-'}</td>
-            <td>${
-                tienda.latitude !== null && tienda.longitude !== null
-                    ? `${tienda.latitude.toFixed(6)}, ${tienda.longitude.toFixed(6)}`
-                    : '-'
-            }</td>
+            <td>${tienda.latitude !== null && tienda.longitude !== null
+            ? `${tienda.latitude.toFixed(6)}, ${tienda.longitude.toFixed(6)}`
+            : '-'
+        }</td>
             <td>${tienda.preferredJurisdiction || '-'}</td>
             <td>${estadoTaxRateDesdeCacheTacoBell(tienda)}</td>
             <td class="bk-tax-store-actions">
@@ -2059,10 +2259,40 @@ function renderArrayToMainTable(data) {
         const tr =
             document.createElement('tr');
 
+        const memoRow = String(row.memo || row.MEMO || '').toLowerCase();
+        const deptIdRow = String(row.deptId || row.DEPTID || '').toUpperCase();
+
+        const esPestanaExpected =
+            activeTab === 'expectedDeposits' ||
+            activeTab === 'ebtCashExpected' ||
+            activeTab === 'cashExpected';
+
+        let colorFila = '';
+
+        if (esPestanaExpected) {
+            if (
+                memoRow.includes('cash expected') ||
+                deptIdRow === 'CASH'
+            ) {
+                colorFila = '#f8c7a8'; // naranja claro
+            }
+
+            if (
+                memoRow.includes('ebt expected') ||
+                deptIdRow === 'EBT'
+            ) {
+                colorFila = '#ffed9c'; // amarillo claro
+            }
+        }
+
         columns.forEach(col => {
 
             const td =
                 document.createElement('td');
+
+            if (colorFila) {
+                td.style.backgroundColor = colorFila;
+            }
 
             const valor = row[col];
             const columnaOS =
@@ -2108,3 +2338,56 @@ function renderArrayToMainTable(data) {
     });
 
 }
+
+function inicializarTabEbtCashExpected() {
+    if (window.__ebtCashExpectedTabReady) return;
+    window.__ebtCashExpectedTabReady = true;
+
+    document.addEventListener('click', event => {
+        const boton = event.target.closest('button, [data-tab]');
+
+        if (!boton) return;
+
+        const texto = String(boton.textContent || '').toLowerCase().trim();
+
+        const tab =
+            boton.dataset?.tab ||
+            boton.getAttribute('data-tab') ||
+            boton.getAttribute('data-target') ||
+            '';
+
+        const esTabEbtCash =
+            tab === 'ebtCashExpected' ||
+            tab === 'expectedDeposits' ||
+            tab === 'cashExpected' ||
+            (
+                texto.includes('ebt') &&
+                texto.includes('cash')
+            );
+
+        if (!esTabEbtCash) return;
+
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+
+        activeTab = 'expectedDeposits';
+
+        document
+            .querySelectorAll('.tab-btn, .tab-button, [data-tab], .tabs button, .results-tabs button')
+            .forEach(item => item.classList.remove('active'));
+
+        boton.classList.add('active');
+        boton.dataset.tab = 'expectedDeposits';
+
+        
+        generarExpectedDepositsTacoBell();
+        renderExpectedDepositsTacoBell();
+        colorearExpectedDepositsTacoBell();
+    }, true);
+}
+
+document.addEventListener(
+    'DOMContentLoaded',
+    inicializarTabEbtCashExpected
+);

@@ -3940,3 +3940,19 @@ td {
 #burgerKingTaxStoreDialog .bk-tax-swal-popup {
     z-index: 2147483647 !important;
 }
+
+.expected-deposit-cash-row td {
+    background-color: #f8c7a8 !important;
+}
+
+.expected-deposit-ebt-row td {
+    background-color: #ffed9c !important;
+}
+
+.expected-deposit-cash-row:hover td {
+    background-color: #f3b58f !important;
+}
+
+.expected-deposit-ebt-row:hover td {
+    background-color: #ffe57a !important;
+}
