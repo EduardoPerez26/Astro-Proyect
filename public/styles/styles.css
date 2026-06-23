@@ -340,6 +340,38 @@ body.sidebar-collapsed .main {
     background: var(--gray-100);
 }
 
+.lang-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--gray-200);
+    background: var(--white);
+    color: var(--primary);
+    font-weight: 600;
+    font-size: 13px;
+    line-height: 1;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.lang-toggle:hover {
+    background: var(--primary-light);
+    border-color: var(--primary);
+}
+
+.lang-toggle i {
+    font-size: 15px;
+}
+
+.lang-toggle--login {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    z-index: 5;
+}
+
 .header-user-info {
     text-align: right;
 }
@@ -1578,6 +1610,7 @@ th:focus {
     justify-content: center;
     padding: 50px clamp(42px, 5vw, 64px) 26px;
     background: #fff;
+    position: relative;
 }
 
 .login-form-wrap {

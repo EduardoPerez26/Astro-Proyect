@@ -103,6 +103,14 @@
         'Modo sin conexión': 'Offline mode',
         'Modo offline': 'Offline mode',
         'En modo offline usa: admin / admin123': 'In offline mode use: admin / admin123',
+        'Ocultar contraseña': 'Hide password',
+        'El usuario o la contraseña no son correctos.': 'The username or password is incorrect.',
+        'Usuario o contraseña incorrectos': 'Incorrect username or password',
+        'Usuario o contrasena incorrectos': 'Incorrect username or password',
+        'No pudimos validar tus credenciales en este momento.': 'We could not validate your credentials at this time.',
+        'Verifica que el servidor esté disponible e inténtalo nuevamente.': 'Make sure the server is available and try again.',
+        'El usuario está desactivado': 'The user is deactivated',
+        'El usuario está bloqueado': 'The user is blocked',
 
         // ----- Tiendas -----
         'Operaciones contables': 'Accounting operations',
