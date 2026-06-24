@@ -4237,8 +4237,187 @@ async function saveConciliacion() {
         }
     });
 }
-async function guardarConciliacionServidor() {
 
+function obtenerExtensionArchivo(nombre = '') {
+    const partes = String(nombre).split('.');
+    return partes.length > 1
+        ? partes.pop().toLowerCase()
+        : 'xlsx';
+}
+
+async function subirArchivoConciliacionServidor({
+    token,
+    restaurante,
+    archivo,
+    nombreArchivo,
+    procesarDatos = 'false',
+    tipoDocumento,
+    fecha,
+    notas = null,
+    reemplazarSiExiste = true
+}) {
+    const formData = new FormData();
+
+    formData.append('archivo', archivo, nombreArchivo);
+    formData.append('restaurante_id', restaurante);
+    formData.append('procesar_datos', String(procesarDatos));
+
+    formData.append('tipo_documento', tipoDocumento);
+    formData.append('fecha_conciliacion', fecha);
+    formData.append('periodo_fecha', fecha);
+    formData.append('reemplazar_si_existe', reemplazarSiExiste ? 'true' : 'false');
+
+    if (notas) {
+        formData.append(
+            'notas',
+            typeof notas === 'string'
+                ? notas
+                : JSON.stringify(notas)
+        );
+    }
+
+    const response = await fetch(`${window.API_URL}/archivos/subir`, {
+        method: 'POST',
+        headers: {
+            Authorization: `Bearer ${token}`
+        },
+        body: formData
+    });
+
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+        throw new Error(data.message || 'Error al guardar archivo');
+    }
+
+    return data;
+}
+function leerNotasConciliacion(doc) {
+    try {
+        return typeof doc.notas === 'string'
+            ? JSON.parse(doc.notas)
+            : doc.notas || {};
+    } catch {
+        return {};
+    }
+}
+
+async function buscarArchivoMismaFechaServidor({
+    token,
+    restaurante,
+    tipoDocumento,
+    fecha,
+    nombreArchivo = ''
+}) {
+    const response = await fetch(`${window.API_URL}/archivos`, {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+
+    if (!response.ok) return null;
+
+    const data = await response.json().catch(() => []);
+    const archivos = Array.isArray(data) ? data : (data.archivos || []);
+
+    return archivos.find(doc => {
+        const notas = leerNotasConciliacion(doc);
+
+        const mismoRestaurante =
+            doc.restaurante_codigo === restaurante ||
+            doc.codigo === restaurante ||
+            String(doc.restaurante || '').toLowerCase().includes(
+                String(restaurante || '').replace('-', ' ').toLowerCase()
+            );
+
+        const mismoTipo =
+            notas.tipoDocumento === tipoDocumento ||
+            (
+                tipoDocumento === 'conciliacion' &&
+                String(doc.nombre_original || '').includes('_Conciliacion.')
+            ) ||
+            (
+                tipoDocumento === 'ebt' &&
+                String(doc.nombre_original || '').includes('_EBT.')
+            );
+
+        const mismaFecha =
+            notas.fecha === fecha ||
+            String(doc.periodo_fecha || '').slice(0, 10) === fecha ||
+            String(doc.nombre_original || '').includes(fecha);
+
+        const mismoNombre =
+            nombreArchivo &&
+            String(doc.nombre_original || '') === String(nombreArchivo);
+
+        return mismoRestaurante && (mismoNombre || (mismoTipo && mismaFecha));
+    }) || null;
+}
+
+async function confirmarReemplazoArchivo({
+    token,
+    restaurante,
+    tipoDocumento,
+    fecha,
+    nombreArchivo
+}) {
+    const existente = await buscarArchivoMismaFechaServidor({
+        token,
+        restaurante,
+        tipoDocumento,
+        fecha,
+        nombreArchivo
+    });
+
+    if (!existente) {
+        return true;
+    }
+
+    const tipoTexto =
+        tipoDocumento === 'ebt'
+            ? 'EBT'
+            : 'Conciliación';
+
+    const result = await Swal.fire({
+        icon: 'warning',
+        title: `${tipoTexto} ya existe`,
+        html: `
+            <p>Ya existe un archivo guardado con la misma fecha.</p>
+
+            <div style="text-align:left;margin:14px 0;padding:12px;border-radius:8px;background:#fff7ed;border:1px solid #fed7aa;">
+                <strong>Restaurante:</strong> ${restaurante}<br>
+                <strong>Fecha:</strong> ${fecha}<br>
+                <strong>Tipo:</strong> ${tipoTexto}<br>
+                <strong>Archivo actual:</strong> ${existente.nombre_original || '-'}<br>
+                <strong>Archivo nuevo:</strong> ${nombreArchivo || '-'}
+            </div>
+
+            <p style="color:#b45309;">
+                Si continúas, el archivo anterior será reemplazado.
+            </p>
+
+            <p>Para confirmar escribe <strong>REEMPLAZAR</strong>.</p>
+        `,
+        input: 'text',
+        inputPlaceholder: 'REEMPLAZAR',
+        showCancelButton: true,
+        confirmButtonText: 'Reemplazar archivo',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#dc2626',
+        preConfirm: value => {
+            if (String(value || '').trim().toUpperCase() !== 'REEMPLAZAR') {
+                Swal.showValidationMessage('Debes escribir REEMPLAZAR para continuar');
+                return false;
+            }
+
+            return true;
+        }
+    });
+
+    return result.isConfirmed;
+}
+
+async function guardarConciliacionServidor() {
     const token = localStorage.getItem('token');
 
     const restaurante =
@@ -4252,7 +4431,6 @@ async function guardarConciliacionServidor() {
             icon: 'error',
             title: 'Sesión expirada'
         });
-
         return;
     }
 
@@ -4262,8 +4440,59 @@ async function guardarConciliacionServidor() {
             title: 'Restaurante requerido',
             text: 'Selecciona un restaurante'
         });
-
         return;
+    }
+
+    if (!datosExtraidos.length) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Sin conciliación',
+            text: 'Primero genera la conciliación'
+        });
+        return;
+    }
+
+    const fecha = obtenerFechaConciliacionBD();
+
+    if (!fecha) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Fecha requerida',
+            text: 'Selecciona la fecha de la conciliación antes de guardar.'
+        });
+        return;
+    }
+
+    const nombreConciliacion =
+        construirNombreArchivo('Conciliacion', 'xlsx');
+
+    const extensionEbt = ebtFile
+        ? obtenerExtensionArchivo(ebtFile.name)
+        : 'xlsx';
+
+    const nombreEbt =
+        construirNombreArchivo('EBT', extensionEbt);
+
+    const puedeGuardarConciliacion = await confirmarReemplazoArchivo({
+        token,
+        restaurante,
+        tipoDocumento: 'conciliacion',
+        fecha,
+        nombreArchivo: nombreConciliacion
+    });
+
+    if (!puedeGuardarConciliacion) return;
+
+    if (ebtFile) {
+        const puedeGuardarEbt = await confirmarReemplazoArchivo({
+            token,
+            restaurante,
+            tipoDocumento: 'ebt',
+            fecha,
+            nombreArchivo: nombreEbt
+        });
+
+        if (!puedeGuardarEbt) return;
     }
 
     Swal.fire({
@@ -4273,22 +4502,9 @@ async function guardarConciliacionServidor() {
         didOpen: () => Swal.showLoading()
     });
 
-    if (!datosExtraidos.length) {
-
-        Swal.fire({
-            icon: 'warning',
-            title: 'Sin conciliación',
-            text: 'Primero genera la conciliación'
-        });
-
-        return;
-    }
-
     try {
-
         const registroConciliacion =
             await registrarConciliacionEnBD();
-
 
         const workbookFinal =
             generarWorkbookConConciliacion();
@@ -4308,41 +4524,45 @@ async function guardarConciliacionServidor() {
             }
         );
 
-        const formData = new FormData();
+        const data = await subirArchivoConciliacionServidor({
+            token,
+            restaurante,
+            archivo: blob,
+            nombreArchivo: nombreConciliacion,
+            procesarDatos: 'true',
+            tipoDocumento: 'conciliacion',
+            fecha,
+            notas: {
+                tipo: 'archivo_conciliacion',
+                tipoDocumento: 'conciliacion',
+                conciliacionId: registroConciliacion.id,
+                fecha
+            },
+            reemplazarSiExiste: true
+        });
 
-        formData.append(
-            'archivo',
-            blob,
-            construirNombreArchivo('Conciliacion', 'xlsx')
-        );
+        let dataEbt = null;
 
-        formData.append(
-            'restaurante_id',
-            restaurante
-        );
-
-        formData.append(
-            'procesar_datos',
-            'true'
-        );
-
-        const response = await fetch(
-            `${window.API_URL}/archivos/subir`,
-            {
-                method: 'POST',
-                headers: {
-                    Authorization: `Bearer ${token}`
+        if (ebtFile) {
+            dataEbt = await subirArchivoConciliacionServidor({
+                token,
+                restaurante,
+                archivo: ebtFile,
+                nombreArchivo: nombreEbt,
+                procesarDatos: 'false',
+                tipoDocumento: 'ebt',
+                fecha,
+                notas: {
+                    tipo: 'archivo_conciliacion',
+                    tipoDocumento: 'ebt',
+                    fuente: 'ebt',
+                    conciliacionId: registroConciliacion.id,
+                    conciliacionArchivoId: data.archivo?.id || null,
+                    fecha,
+                    nombreOriginal: ebtFile.name
                 },
-                body: formData
-            }
-        );
-
-        const data = await response.json();
-
-        if (!response.ok) {
-            throw new Error(
-                data.message || 'Error al guardar'
-            );
+                reemplazarSiExiste: true
+            });
         }
 
         Swal.fire({
@@ -4351,14 +4571,14 @@ async function guardarConciliacionServidor() {
             html: `
                 <p>La conciliación se guardó correctamente.</p>
                 <p style="margin-top:10px;">
-                    Archivo ID: ${data.archivo.id}<br>
+                    Archivo conciliación ID: ${data.archivo?.id || '-'}<br>
+                    ${dataEbt ? `Archivo EBT ID: ${dataEbt.archivo?.id || '-'}<br>` : ''}
                     Registro contable ID: ${registroConciliacion.id}
                 </p>
             `
         });
 
     } catch (error) {
-
         console.error(error);
 
         Swal.fire({

@@ -136,14 +136,14 @@ router.post(
                     resumen: resumenContenido
                 })
                 : esRevisionFuente
-                ? JSON.stringify({
-                    tipo: 'revision_fuente',
-                    fuente: req.body.tipo_fuente || 'sales',
-                    revision: Number(req.body.revision || 1),
-                    hash: String(req.body.hash_contenido || '').slice(0, 64),
-                    nombreOriginal: originalname
-                })
-                : (req.body.notas || null);
+                    ? JSON.stringify({
+                        tipo: 'revision_fuente',
+                        fuente: req.body.tipo_fuente || 'sales',
+                        revision: Number(req.body.revision || 1),
+                        hash: String(req.body.hash_contenido || '').slice(0, 64),
+                        nombreOriginal: originalname
+                    })
+                    : (req.body.notas || null);
 
             if (esReferenciaComparacion) {
                 const fuente = req.body.tipo_fuente || 'sales';
@@ -206,21 +206,138 @@ router.post(
                 }
             }
 
+            function normalizarFechaArchivo(valor) {
+                if (!valor) return '';
+
+                if (valor instanceof Date && !Number.isNaN(valor.getTime())) {
+                    return valor.toISOString().slice(0, 10);
+                }
+
+                const texto = String(valor).trim();
+
+                // Ya viene como YYYY-MM-DD
+                if (/^\d{4}-\d{2}-\d{2}/.test(texto)) {
+                    return texto.slice(0, 10);
+                }
+
+                // Viene como MM/DD/YYYY
+                const matchUsa = texto.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+                if (matchUsa) {
+                    return `${matchUsa[3]}-${matchUsa[1].padStart(2, '0')}-${matchUsa[2].padStart(2, '0')}`;
+                }
+
+                const fecha = new Date(texto);
+
+                if (!Number.isNaN(fecha.getTime())) {
+                    return fecha.toISOString().slice(0, 10);
+                }
+
+                return texto;
+            }
+
+            const reemplazarSiExiste =
+                String(req.body.reemplazar_si_existe || '').toLowerCase() === 'true';
+
+            const limpiarCampo = value => {
+                const texto = String(value || '').trim();
+
+                if (
+                    !texto ||
+                    texto === 'undefined' ||
+                    texto === 'null'
+                ) {
+                    return '';
+                }
+
+                return texto;
+            };
+
+            const tipoDocumento =
+                limpiarCampo(req.body.tipo_documento);
+
+            const fechaDocumento =
+                limpiarCampo(
+                    req.body.fecha_conciliacion ||
+                    req.body.periodo_fecha
+                );
+
+
+            const esArchivoGeneradoConciliacion =
+                /_(Conciliacion|EBT)\./i.test(String(originalname || ''));
+
+            if (reemplazarSiExiste || esArchivoGeneradoConciliacion) {
+                const [existentesPorNombre] = await pool.query(
+                    `
+        SELECT id, nombre_original
+        FROM archivos_excel
+        WHERE restaurante_id = ?
+          AND LOWER(TRIM(nombre_original)) = LOWER(TRIM(?))
+        ORDER BY id DESC
+        LIMIT 1
+        `,
+                    [
+                        restauranteId,
+                        originalname
+                    ]
+                );
+
+                if (existentesPorNombre.length) {
+                    const archivoExistente = existentesPorNombre[0];
+
+                    await pool.query(
+                        `
+            UPDATE archivos_excel
+            SET nombre_original = ?,
+                nombre_servidor = ?,
+                tamano_bytes = ?,
+                tipo_mime = ?,
+                archivo_blob = ?,
+                ruta_archivo = NULL,
+                periodo_fecha = ?,
+                notas = ?,
+                estado = 'pendiente',
+                fecha_actualizacion = CURRENT_TIMESTAMP
+            WHERE id = ?
+            `,
+                        [
+                            originalname,
+                            nombreServidor,
+                            size,
+                            mimetype,
+                            buffer,
+                            fechaDocumento || null,
+                            notas,
+                            archivoExistente.id
+                        ]
+                    );
+
+                    return res.json({
+                        success: true,
+                        reemplazado: true,
+                        archivo: {
+                            id: archivoExistente.id
+                        }
+                    });
+                }
+            }
+
+
             const [result] = await pool.query(
                 `
                 INSERT INTO archivos_excel (
-                    usuario_id,
-                    restaurante_id,
-                    nombre_original,
-                    nombre_servidor,
-                    tamano_bytes,
-                    tipo_mime,
-                    archivo_blob,
-                    ruta_archivo,
-                    notas,
-                    estado
+                usuario_id,
+                restaurante_id,
+                nombre_original,
+                nombre_servidor,
+                tamano_bytes,
+                tipo_mime,
+                archivo_blob,
+                ruta_archivo,
+                periodo_fecha,
+                notas,
+                estado
                 )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 `,
                 [
                     req.usuario.id,
@@ -231,6 +348,7 @@ router.post(
                     mimetype,
                     buffer,
                     null,
+                    fechaDocumento || null,
                     notas,
                     'pendiente'
                 ]
