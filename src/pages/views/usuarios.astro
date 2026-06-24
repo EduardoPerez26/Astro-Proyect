@@ -1,5 +1,7 @@
 ---
 import DashboardLayout from '../../layouts/DashboardLayout.astro';
+import { BUILD_ID } from '../../buildId.js';
+const v = BUILD_ID;
 ---
 
 <DashboardLayout title="Usuarios">
@@ -419,6 +421,6 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
         }
     </style>
 
-<script src="/js/config.js" is:inline></script>
-    <script is:inline src="/js/usuarios.js"></script>
+    <script src={`/js/config.js?v=${v}`} is:inline></script>
+    <script is:inline src={`/js/usuarios.js?v=${v}`}></script>
 </DashboardLayout>

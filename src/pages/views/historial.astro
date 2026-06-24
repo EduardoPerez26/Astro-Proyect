@@ -1,5 +1,7 @@
 ---
 import DashboardLayout from '../../layouts/DashboardLayout.astro';
+import { BUILD_ID } from '../../buildId.js';
+const v = BUILD_ID;
 ---
 
 <DashboardLayout title="Historial de comparaciones">
@@ -52,8 +54,8 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
         </section>
     </div>
 
-    <script src="/js/config.js" is:inline></script>
-    <script src="/js/historial.js" is:inline></script>
+    <script src={`/js/config.js?v=${v}`} is:inline></script>
+    <script src={`/js/historial.js?v=${v}`} is:inline></script>
 
     <style is:inline>
         .comparison-history-page { color: #102f4c; }

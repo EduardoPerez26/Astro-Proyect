@@ -1,5 +1,7 @@
 ---
 import DashboardLayout from '../../layouts/DashboardLayout.astro';
+import { BUILD_ID } from '../../buildId.js';
+const v = BUILD_ID;
 ---
 
 <DashboardLayout title="Control de restaurantes">
@@ -55,8 +57,8 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
         </div>
     </section>
 
-    <script src="/js/config.js" is:inline></script>
-    <script src="/js/restaurantes-control.js" is:inline></script>
+    <script src={`/js/config.js?v=${v}`} is:inline></script>
+    <script src={`/js/restaurantes-control.js?v=${v}`} is:inline></script>
 
     <style>
         .operations-admin { width: 100%; min-width: 0; padding-bottom: 18px; }

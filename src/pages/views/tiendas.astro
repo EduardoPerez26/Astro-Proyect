@@ -1,6 +1,8 @@
 ---
 import DashboardLayout from '../../layouts/DashboardLayout.astro';
 import StoreCard from '../../components/StoreCard.astro';
+import { BUILD_ID } from '../../buildId.js';
+const v = BUILD_ID;
 
 const stores = [
     {
@@ -89,7 +91,7 @@ const stores = [
         </footer>
     </section>
 
-    <script src="/js/config.js" is:inline></script>
+    <script src={`/js/config.js?v=${v}`} is:inline></script>
     <script is:inline>
         document.addEventListener('DOMContentLoaded', () => {
             const search = document.getElementById('storeSearch');

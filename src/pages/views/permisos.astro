@@ -1,5 +1,7 @@
 ---
 import DashboardLayout from '../../layouts/DashboardLayout.astro';
+import { BUILD_ID } from '../../buildId.js';
+const v = BUILD_ID;
 ---
 
 <DashboardLayout title="Permisos">
@@ -88,6 +90,6 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
             .permission-start-panel select { grid-column: 1 / -1; }
         }
     </style>
-<script src="/js/config.js" is:inline></script>
-    <script is:inline src="/js/permisos.js"></script>
+    <script src={`/js/config.js?v=${v}`} is:inline></script>
+    <script is:inline src={`/js/permisos.js?v=${v}`}></script>
 </DashboardLayout>

@@ -1,0 +1,46 @@
+# ============================================================
+# Control de caché para GoDaddy (Apache)
+# Evita que los usuarios vean versiones antiguas tras un despliegue.
+# ============================================================
+
+<IfModule mod_headers.c>
+  # HTML: nunca se cachea. Siempre se descarga la versión más reciente,
+  # que a su vez referencia los .js y .css con el parámetro ?v= actualizado.
+  <FilesMatch "\.html$">
+    Header set Cache-Control "no-cache, no-store, must-revalidate"
+    Header set Pragma "no-cache"
+    Header set Expires "0"
+  </FilesMatch>
+
+  # JS y CSS: revalidar siempre contra el servidor (por si el navegador
+  # ignora el parámetro de versión). Si el archivo no cambió, el servidor
+  # responde 304 (rápido); si cambió, descarga la versión nueva.
+  <FilesMatch "\.(js|css)$">
+    Header set Cache-Control "no-cache, must-revalidate"
+  </FilesMatch>
+
+  # Imágenes, fuentes e íconos: se pueden cachear por más tiempo.
+  <FilesMatch "\.(svg|png|jpg|jpeg|gif|webp|ico|woff2?|ttf|eot)$">
+    Header set Cache-Control "public, max-age=2592000"
+  </FilesMatch>
+</IfModule>
+
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresDefault                          "access plus 0 seconds"
+  ExpiresByType text/html                 "access plus 0 seconds"
+  ExpiresByType text/css                  "access plus 0 seconds"
+  ExpiresByType application/javascript    "access plus 0 seconds"
+  ExpiresByType text/javascript           "access plus 0 seconds"
+  ExpiresByType image/svg+xml             "access plus 1 month"
+  ExpiresByType image/png                 "access plus 1 month"
+  ExpiresByType image/jpeg                "access plus 1 month"
+  ExpiresByType image/gif                 "access plus 1 month"
+  ExpiresByType image/webp                "access plus 1 month"
+  ExpiresByType image/x-icon              "access plus 1 month"
+  ExpiresByType font/woff2                "access plus 1 month"
+  ExpiresByType font/woff                 "access plus 1 month"
+</IfModule>
+
+# Activar ETag para una revalidación eficiente.
+FileETag MTime Size

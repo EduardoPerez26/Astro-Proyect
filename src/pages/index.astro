@@ -1,7 +1,9 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
+import { BUILD_ID } from "../buildId.js";
 
 const currentYear = new Date().getFullYear();
+const v = BUILD_ID;
 ---
 
 <BaseLayout title="Iniciar sesión | Conciliación+">
@@ -119,6 +121,6 @@ const currentYear = new Date().getFullYear();
         </div>
     </main>
 
-    <script src="/js/config.js" is:inline></script>
-    <script src="/js/login.js" is:inline></script>
+    <script src={`/js/config.js?v=${v}`} is:inline></script>
+    <script src={`/js/login.js?v=${v}`} is:inline></script>
 </BaseLayout>

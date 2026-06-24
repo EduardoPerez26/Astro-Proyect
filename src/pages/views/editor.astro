@@ -1,5 +1,7 @@
 ---
 import DashboardLayout from '../../layouts/DashboardLayout.astro';
+import { BUILD_ID } from '../../buildId.js';
+const v = BUILD_ID;
 ---
 
 <DashboardLayout title="Editor Excel - Sistema de Inventario" includeSheetJS={true}>
@@ -124,15 +126,15 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
             </div>
         </div>
     </section>
-    <script src="/js/config.js" is:inline></script>
+    <script src={`/js/config.js?v=${v}`} is:inline></script>
 
-    <script is:inline src="/js/validators/taco-bell.js"></script>
-    <script is:inline src="/js/validators/burger-king.js"></script>
-    <script is:inline src="/js/validators/popeyes.js"></script>
-    <script is:inline src="/js/validators/kfc.js"></script>
-    <script is:inline src="/js/template-processor.js"></script>
-    <script is:inline src="/js/validator.js"></script>
-    <script is:inline src="/js/scripts.js"></script>
+    <script is:inline src={`/js/validators/taco-bell.js?v=${v}`}></script>
+    <script is:inline src={`/js/validators/burger-king.js?v=${v}`}></script>
+    <script is:inline src={`/js/validators/popeyes.js?v=${v}`}></script>
+    <script is:inline src={`/js/validators/kfc.js?v=${v}`}></script>
+    <script is:inline src={`/js/template-processor.js?v=${v}`}></script>
+    <script is:inline src={`/js/validator.js?v=${v}`}></script>
+    <script is:inline src={`/js/scripts.js?v=${v}`}></script>
     
     <script is:inline>
         // Mostrar/ocultar controles de template
