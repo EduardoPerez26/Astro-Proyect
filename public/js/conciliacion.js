@@ -3595,15 +3595,57 @@ function llenarFiltroTiendas() {
     });
 }
 
+function obtenerFechaParaNombreArchivo() {
+    const valor =
+        document.getElementById('fechaConciliacion')?.value ||
+        fechaSeleccionada ||
+        fechaConciliacionActual ||
+        datosExtraidos[0]?.date ||
+        '';
+
+    const texto = String(valor).trim();
+
+    // Si ya viene como YYYY-MM-DD
+    if (/^\d{4}-\d{2}-\d{2}/.test(texto)) {
+        return texto.slice(0, 10);
+    }
+
+    // Si viene como MM/DD/YYYY
+    const fechaUsa = texto.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+    if (fechaUsa) {
+        return `${fechaUsa[3]}-${fechaUsa[1].padStart(2, '0')}-${fechaUsa[2].padStart(2, '0')}`;
+    }
+
+    // Si viene como objeto Date o texto convertible a fecha
+    const fecha = new Date(valor);
+    if (!Number.isNaN(fecha.getTime())) {
+        return [
+            fecha.getFullYear(),
+            String(fecha.getMonth() + 1).padStart(2, '0'),
+            String(fecha.getDate()).padStart(2, '0')
+        ].join('-');
+    }
+
+    // Respaldo si no encuentra fecha válida
+    const hoy = new Date();
+    return [
+        hoy.getFullYear(),
+        String(hoy.getMonth() + 1).padStart(2, '0'),
+        String(hoy.getDate()).padStart(2, '0')
+    ].join('-');
+}
+
 function construirNombreArchivo(tipoArchivo, extension) {
     const select = document.getElementById('selectRestaurante');
     const option = select?.selectedOptions?.[0];
     const codigo = option?.dataset?.codigo || '';
+
     const nombres = {
-        'taco-bell': 'Taco_Bell',
-        'burger-king': 'Burger_King',
-        'popeyes': 'Popeyes'
+        'taco-bell': 'Daily_Sales_Taco_Bell',
+        'burger-king': 'Daily_Sales_Burger_King',
+        'popeyes': 'Daily_Sales_Popeyes'
     };
+
     const restaurante = nombres[codigo] || String(option?.textContent || 'Restaurante')
         .trim()
         .replace(/\s+-\s+.*$/, '')
@@ -3611,12 +3653,9 @@ function construirNombreArchivo(tipoArchivo, extension) {
         .replace(/[\u0300-\u036f]/g, '')
         .replace(/[^a-zA-Z0-9]+/g, '_')
         .replace(/^_+|_+$/g, '');
-    const fecha = new Date();
-    const fechaGuardado = [
-        fecha.getFullYear(),
-        String(fecha.getMonth() + 1).padStart(2, '0'),
-        String(fecha.getDate()).padStart(2, '0')
-    ].join('-');
+
+    const fechaGuardado = obtenerFechaParaNombreArchivo();
+
     const tipo = String(tipoArchivo || 'Conciliacion')
         .replace(/Taco\s*Bell|Burger\s*King|Popeyes/gi, '')
         .replace(/[^a-zA-Z0-9]+/g, '_')
@@ -3856,8 +3895,8 @@ function crearVistaResumenComparacionConciliacion(resultado) {
                 <div>
                     <strong>${esPrimera ? '¿Qué sigue?' : 'Resultado verificado'}</strong>
                     <p>${esPrimera
-                        ? 'Guarda esta conciliación para usarla como referencia cuando vuelvas a procesar la misma fecha.'
-                        : 'Puedes cerrar esta ventana y continuar; la consulta ya quedó registrada en el historial.'}</p>
+            ? 'Guarda esta conciliación para usarla como referencia cuando vuelvas a procesar la misma fecha.'
+            : 'Puedes cerrar esta ventana y continuar; la consulta ya quedó registrada en el historial.'}</p>
                 </div>
             </div>
         </div>`;
