@@ -185,18 +185,51 @@ function formatearPorcentajeBurgerKing(valor) {
     return `${(numero * 100).toFixed(3)}%`;
 }
 
+function prepararTaxAnalysisBurgerKingSalida(data = burgerKingTaxAnalysisData) {
+    return (data || []).map(row => ({
+        ...row,
+
+        // Tax Rate en porcentaje
+        taxRate: formatearPorcentajeBurgerKing(row.taxRate),
+
+        // Tax Difference como porcentaje.
+        // Usamos rateDifference porque taxDifference original es diferencia en dinero.
+        taxDifference: formatearPorcentajeBurgerKing(
+            row.rateDifference ?? 0
+        ),
+
+        rateCalculation: formatearPorcentajeBurgerKing(
+            row.rateCalculation
+        ),
+
+        rateDifference: formatearPorcentajeBurgerKing(
+            row.rateDifference
+        )
+    }));
+}
+
+function prepararDiscrepanciesBurgerKingSalida(data = burgerKingDiscrepanciesData) {
+    return (data || []).map(row => ({
+        ...row,
+
+        // En Discrepancies también se muestra como porcentaje
+
+        taxRate: formatearPorcentajeBurgerKing(
+            row.taxRate
+        ),
+
+        rateDifference: formatearPorcentajeBurgerKing(
+            row.rateDifference
+        )
+    }));
+}
+
 function renderBurgerKingTaxAnalysis() {
-    console.log('Renderizando Tax Review Burger King con porcentajes');
+    console.log('Renderizando Tax Analysis Burger King con porcentajes');
 
-    const data =
-        (burgerKingTaxAnalysisData || []).map(row => ({
-            ...row,
-            taxRate: formatearPorcentajeBurgerKing(row.taxRate),
-            rateCalculation: formatearPorcentajeBurgerKing(row.rateCalculation),
-            rateDifference: formatearPorcentajeBurgerKing(row.rateDifference)
-        }));
-
-    renderArrayToMainTable(data);
+    renderArrayToMainTable(
+        prepararTaxAnalysisBurgerKingSalida()
+    );
 }
 
 function fechaClaveBurgerKing(valor) {
@@ -3093,7 +3126,7 @@ function renderBurgerKingConciliation() {
 
 function renderBurgerKingDiscrepancies() {
     renderArrayToMainTable(
-        burgerKingDiscrepanciesData || []
+        prepararDiscrepanciesBurgerKingSalida()
     );
 }
 

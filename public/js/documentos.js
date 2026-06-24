@@ -194,9 +194,13 @@ function mostrarDocumentos() {
             <td>${formatearFecha(doc.fecha_subida)}</td>
             <td>
                 <div class="action-buttons">
-                    <button class="action-btn view" onclick="verDetalles(${doc.id})" title="Ver detalles">
-                        <i class="fa-solid fa-eye"></i>
-                    </button>
+                    <button class="action-btn view" onclick="previsualizarConciliacion(${doc.id})" title="Ver conciliación">
+    <i class="fa-solid fa-eye"></i>
+</button>
+
+<button class="action-btn view" onclick="verDetalles(${doc.id})" title="Ver detalles">
+    <i class="fa-solid fa-circle-info"></i>
+</button>
                     <button class="action-btn download" onclick="descargarArchivo(${doc.id})" title="Descargar">
                         <i class="fa-solid fa-download"></i>
                     </button>
@@ -612,6 +616,194 @@ function generarDatosEjemplo() {
             fecha_subida: '2026-05-20T16:45:00'
         }
     ];
+}
+
+let previewWorkbookActual = null;
+
+async function previsualizarConciliacion(id) {
+    const token = localStorage.getItem('token');
+    const modoOffline = localStorage.getItem('modoOffline');
+
+    if (modoOffline) {
+        Swal.fire({
+            icon: 'info',
+            title: 'Modo offline',
+            text: 'La vista previa no está disponible en modo offline'
+        });
+        return;
+    }
+
+    const doc = documentos.find(d => d.id === id);
+    if (!doc) return;
+
+    documentoSeleccionado = doc;
+
+    if (typeof XLSX === 'undefined') {
+        Swal.fire({
+            icon: 'error',
+            title: 'No se puede abrir el Excel',
+            text: 'No se cargó la librería XLSX. Revisa que xlsx.full.min.js esté agregado en documentos.astro.'
+        });
+        return;
+    }
+
+    try {
+        Swal.fire({
+            title: 'Abriendo conciliación...',
+            text: 'Leyendo el archivo Excel',
+            allowOutsideClick: false,
+            didOpen: () => Swal.showLoading()
+        });
+
+        const response = await fetch(`${window.API_URL}/archivos/${id}/descargar`, {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
+
+        if (!response.ok) {
+            const data = await response.json().catch(() => ({}));
+            throw new Error(data.message || 'No se pudo abrir el archivo');
+        }
+
+        const buffer = await response.arrayBuffer();
+
+        previewWorkbookActual = XLSX.read(buffer, {
+            type: 'array',
+            cellDates: false,
+            raw: false
+        });
+
+        Swal.close();
+
+        abrirPreviewExcel(doc, previewWorkbookActual);
+
+    } catch (error) {
+        console.error('Error abriendo vista previa:', error);
+
+        Swal.fire({
+            icon: 'error',
+            title: 'No se pudo abrir la conciliación',
+            text: error.message || 'Error al leer el archivo'
+        });
+    }
+}
+
+function abrirPreviewExcel(doc, workbook) {
+    const modal = document.getElementById('modalPreviewExcel');
+    const titulo = document.getElementById('previewTitulo');
+    const tabs = document.getElementById('previewSheetTabs');
+
+    if (!modal || !titulo || !tabs) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Falta el modal de vista previa',
+            text: 'Revisa que modalPreviewExcel exista en documentos.astro.'
+        });
+        return;
+    }
+
+    const revision = obtenerInfoRevisionFuente(doc);
+    const nombreVisible = revision?.nombreOriginal || doc.nombre_original || 'Conciliación';
+
+    titulo.textContent = nombreVisible;
+    tabs.innerHTML = '';
+
+    workbook.SheetNames.forEach((sheetName, index) => {
+        const button = document.createElement('button');
+
+        button.type = 'button';
+        button.className = `preview-sheet-tab ${index === 0 ? 'active' : ''}`;
+        button.textContent = sheetName;
+        button.title = sheetName;
+
+        button.addEventListener('click', () => {
+            document.querySelectorAll('.preview-sheet-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            button.classList.add('active');
+            renderPreviewSheet(sheetName);
+        });
+
+        tabs.appendChild(button);
+    });
+
+    renderPreviewSheet(workbook.SheetNames[0]);
+
+    modal.classList.add('active');
+}
+
+function renderPreviewSheet(sheetName) {
+    if (!previewWorkbookActual) return;
+
+    const sheet = previewWorkbookActual.Sheets[sheetName];
+    if (!sheet) return;
+
+    document.querySelectorAll('.preview-sheet-tab').forEach(btn => {
+        btn.classList.toggle('active', btn.textContent.trim() === sheetName);
+    });
+
+    const rows = XLSX.utils.sheet_to_json(sheet, {
+        header: 1,
+        raw: false,
+        defval: ''
+    });
+
+    const head = document.getElementById('previewExcelHead');
+    const body = document.getElementById('previewExcelBody');
+
+    if (!head || !body) return;
+
+    if (!rows.length) {
+        head.innerHTML = '';
+        body.innerHTML = `
+            <tr>
+                <td>Esta hoja no tiene datos para mostrar.</td>
+            </tr>
+        `;
+        return;
+    }
+
+    const maxColumns = Math.max(...rows.map(row => row.length));
+    const encabezados = rows[0] || [];
+
+    head.innerHTML = `
+        <tr>
+            ${Array.from({ length: maxColumns }, (_, index) => {
+        const valor = encabezados[index] || `Columna ${index + 1}`;
+        return `<th>${escapeDocumentoHtml(valor)}</th>`;
+    }).join('')}
+        </tr>
+    `;
+
+    body.innerHTML = rows.slice(1, 500).map(row => `
+        <tr>
+            ${Array.from({ length: maxColumns }, (_, index) => `
+                <td>${escapeDocumentoHtml(row[index] ?? '')}</td>
+            `).join('')}
+        </tr>
+    `).join('');
+
+    if (rows.length > 501) {
+        body.innerHTML += `
+            <tr>
+                <td colspan="${maxColumns}">
+                    Mostrando las primeras 500 filas de ${rows.length.toLocaleString('es-MX')}.
+                </td>
+            </tr>
+        `;
+    }
+}
+
+function cerrarPreviewExcel() {
+    document.getElementById('modalPreviewExcel')?.classList.remove('active');
+
+    document.getElementById('previewSheetTabs').innerHTML = '';
+    document.getElementById('previewExcelHead').innerHTML = '';
+    document.getElementById('previewExcelBody').innerHTML = '';
+
+    previewWorkbookActual = null;
 }
 
 // Cerrar modal con Escape

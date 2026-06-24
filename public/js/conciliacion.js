@@ -3453,65 +3453,125 @@ function obtenerEBTPorStore(
 
 
 document
-    .getElementById(
-        'salesDateFilter'
-    )
-    .addEventListener(
-        'change',
-        e => {
+    .getElementById('salesDateFilter')
+    ?.addEventListener('change', e => {
+        fechaSalesSeleccionada = e.target.value;
+        fechaConciliacionActual = e.target.value;
 
-            fechaSalesSeleccionada =
-                e.target.value;
+        invalidarComparacionConciliacion();
 
-            generarConciliacionDesdeTemplate();
-        }
-    );
+        generarConciliacionDesdeTemplate();
+
+        // Mantiene visible la fecha después de recalcular
+        setTimeout(() => {
+            const select = document.getElementById('salesDateFilter');
+            if (select && fechaSalesSeleccionada) {
+                select.value = fechaSalesSeleccionada;
+            }
+        }, 0);
+    });
+
+function obtenerFechaSeleccionadaFiltro(selectId) {
+    if (selectId === 'salesDateFilter') {
+        return fechaSalesSeleccionada || '';
+    }
+
+    if (selectId === 'salesDetailDateFilter') {
+        return fechaSalesDetailSeleccionada || '';
+    }
+
+    if (selectId === 'ebtDateFilter') {
+        return fechaEBTSeleccionada || '';
+    }
+
+    return '';
+}
+
+function guardarFechaSeleccionadaFiltro(selectId, fecha) {
+    if (selectId === 'salesDateFilter') {
+        fechaSalesSeleccionada = fecha;
+    }
+
+    if (selectId === 'salesDetailDateFilter') {
+        fechaSalesDetailSeleccionada = fecha;
+    }
+
+    if (selectId === 'ebtDateFilter') {
+        fechaEBTSeleccionada = fecha;
+    }
+}
 
 function cargarFechasEnFiltro(
     rows,
     selectId,
     campoFecha = 'Date'
 ) {
-
-    const select =
-        document.getElementById(selectId);
+    const select = document.getElementById(selectId);
 
     if (!select) return;
+
+    const fechaAnterior =
+        select.value ||
+        obtenerFechaSeleccionadaFiltro(selectId) ||
+        '';
+
+    const fechaAnteriorNormalizada =
+        fechaAnterior && typeof normalizarFecha === 'function'
+            ? normalizarFecha(fechaAnterior)
+            : fechaAnterior;
 
     const fechas = [
         ...new Set(
             rows
                 .map(row =>
-                    normalizarFecha(
-                        row[campoFecha]
-                    )
+                    typeof normalizarFecha === 'function'
+                        ? normalizarFecha(row[campoFecha])
+                        : row[campoFecha]
                 )
                 .filter(Boolean)
         )
     ];
 
     fechas.sort((a, b) => {
-
         const fechaA = new Date(a);
         const fechaB = new Date(b);
-
         return fechaB - fechaA;
-
     });
 
-    select.innerHTML =
-        '<option value="">Selecciona fecha</option>';
+    select.innerHTML = '';
+
+    const optionDefault = document.createElement('option');
+    optionDefault.value = '';
+    optionDefault.textContent = 'Selecciona fecha';
+    select.appendChild(optionDefault);
+
+    let fechaEncontrada = '';
 
     fechas.forEach(fecha => {
+        const option = document.createElement('option');
+        option.value = fecha;
+        option.textContent = fecha;
 
-        select.innerHTML += `
-            <option value="${fecha}">
-                ${fecha}
-            </option>
-        `;
+        const fechaNormalizada =
+            typeof normalizarFecha === 'function'
+                ? normalizarFecha(fecha)
+                : fecha;
 
+        if (
+            fechaAnteriorNormalizada &&
+            fechaNormalizada === fechaAnteriorNormalizada
+        ) {
+            option.selected = true;
+            fechaEncontrada = fecha;
+        }
+
+        select.appendChild(option);
     });
 
+    if (fechaEncontrada) {
+        select.value = fechaEncontrada;
+        guardarFechaSeleccionadaFiltro(selectId, fechaEncontrada);
+    }
 }
 
 function obtenerFechaFila(row) {
@@ -4517,9 +4577,21 @@ function generarWorkbookConConciliacion() {
         agregarHojaDatos(prepararDatosIntacct(popeyesDailySales0404Data), 'Daily Sales Popeyes 04-04-2026');
     } else if (codigo === 'burger-king') {
         agregarHojaDatos(burgerKingSummaryData, 'Summary');
-        agregarHojaDatos(burgerKingTaxAnalysisData, 'Tax Analysis');
-        agregarHojaDatos(burgerKingDiscrepanciesData, 'Discrepancies');
-        agregarHojaDatos(prepararDatosIntacct(burgerKingTemplateCsvData), 'Template to CSV');
+
+        agregarHojaDatos(
+            prepararTaxAnalysisBurgerKingSalida(),
+            'Tax Analysis'
+        );
+
+        agregarHojaDatos(
+            prepararDiscrepanciesBurgerKingSalida(),
+            'Discrepancies'
+        );
+
+        agregarHojaDatos(
+            prepararDatosIntacct(burgerKingTemplateCsvData),
+            'Template to CSV'
+        );
     }
 
     return nuevoWorkbook;

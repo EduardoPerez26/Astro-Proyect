@@ -1,5 +1,5 @@
 ---
-import DashboardLayout from '../../layouts/DashboardLayout.astro';
+import DashboardLayout from "../../layouts/DashboardLayout.astro";
 ---
 
 <DashboardLayout title="Documentos">
@@ -17,11 +17,17 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
             <div class="filter-group search-filter">
                 <label for="searchInput">Buscar archivo</label>
                 <div class="search-field">
-                    <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
-                    <input type="search" id="searchInput" placeholder="Nombre o restaurante..." autocomplete="off">
+                    <i class="fa-solid fa-magnifying-glass" aria-hidden="true"
+                    ></i>
+                    <input
+                        type="search"
+                        id="searchInput"
+                        placeholder="Nombre o restaurante..."
+                        autocomplete="off"
+                    />
                 </div>
             </div>
-            
+
             <div class="filter-group">
                 <label>Restaurante:</label>
                 <select id="filterRestaurante">
@@ -32,7 +38,7 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
                     <option value="kfc">KFC</option>
                 </select>
             </div>
-            
+
             <div class="filter-group">
                 <label>Estado:</label>
                 <select id="filterEstado">
@@ -43,18 +49,22 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
                     <option value="procesado">Procesado</option>
                 </select>
             </div>
-            
+
             <div class="filter-group">
                 <label>Desde:</label>
-                <input type="date" id="filterFechaDesde">
+                <input type="date" id="filterFechaDesde" />
             </div>
-            
+
             <div class="filter-group">
                 <label>Hasta:</label>
-                <input type="date" id="filterFechaHasta">
+                <input type="date" id="filterFechaHasta" />
             </div>
-            
-            <button type="button" class="btn btn-secondary btn-sm clear-filters" onclick="limpiarFiltros()">
+
+            <button
+                type="button"
+                class="btn btn-secondary btn-sm clear-filters"
+                onclick="limpiarFiltros()"
+            >
                 <i class="fa-solid fa-times"></i>
                 Limpiar
             </button>
@@ -65,13 +75,16 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
             <div class="table-header">
                 <h3>Lista de documentos</h3>
                 <div class="table-actions">
-                    <button class="btn btn-secondary btn-sm" onclick="exportarCSV()">
+                    <button
+                        class="btn btn-secondary btn-sm"
+                        onclick="exportarCSV()"
+                    >
                         <i class="fa-solid fa-download"></i>
                         Exportar
                     </button>
                 </div>
             </div>
-            
+
             <table class="data-table" id="documentosTable">
                 <thead>
                     <tr>
@@ -89,30 +102,43 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
                     <!-- Se llena con JavaScript -->
                 </tbody>
             </table>
-            
+
             <div id="emptyState" class="empty-state" style="display: none;">
                 <i class="fa-solid fa-folder-open"></i>
                 <h4>No hay documentos</h4>
-                <p>No se encontraron documentos con los filtros seleccionados</p>
+                <p>
+                    No se encontraron documentos con los filtros seleccionados
+                </p>
             </div>
-            
+
             <div id="loadingState" class="empty-state">
                 <i class="fa-solid fa-spinner fa-spin"></i>
                 <h4>Cargando...</h4>
                 <p>Obteniendo documentos del servidor</p>
             </div>
-            
+
             <!-- Paginacion -->
             <div class="pagination" id="pagination" style="display: none;">
                 <div class="pagination-info">
-                    Mostrando <span id="showingFrom">1</span> - <span id="showingTo">10</span> de <span id="totalItems">0</span> documentos
+                    Mostrando <span id="showingFrom">1</span> - <span
+                        id="showingTo">10</span
+                    > de <span id="totalItems">0</span> documentos
                 </div>
                 <div class="pagination-buttons">
-                    <button class="pagination-btn" id="btnPrev" onclick="cambiarPagina(-1)">
+                    <button
+                        class="pagination-btn"
+                        id="btnPrev"
+                        onclick="cambiarPagina(-1)"
+                    >
                         <i class="fa-solid fa-chevron-left"></i>
                     </button>
-                    <span class="pagination-btn active" id="currentPage">1</span>
-                    <button class="pagination-btn" id="btnNext" onclick="cambiarPagina(1)">
+                    <span class="pagination-btn active" id="currentPage">1</span
+                    >
+                    <button
+                        class="pagination-btn"
+                        id="btnNext"
+                        onclick="cambiarPagina(1)"
+                    >
                         <i class="fa-solid fa-chevron-right"></i>
                     </button>
                 </div>
@@ -120,7 +146,6 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
         </div>
     </div>
 
-    <!-- Modal de detalles -->
     <div id="modalDetalles" class="modal-overlay">
         <div class="modal modal-lg document-detail-modal">
             <div class="modal-header document-detail-modal-header">
@@ -133,12 +158,56 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
                     <i class="fa-solid fa-times"></i>
                 </button>
             </div>
-            <div class="modal-body" id="modalBody">
-                <!-- Contenido dinamico -->
-            </div>
+            <div class="modal-body" id="modalBody"></div>
             <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="cerrarModal()">Cerrar</button>
-                <button class="btn btn-primary" id="btnDescargar" onclick="descargarDocumentoSeleccionado()">
+                <button class="btn btn-secondary" onclick="cerrarModal()"
+                    >Cerrar</button
+                >
+                <button
+                    class="btn btn-primary"
+                    id="btnDescargar"
+                    onclick="descargarDocumentoSeleccionado()"
+                >
+                    <i class="fa-solid fa-download"></i>
+                    Descargar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de vista previa de Excel -->
+    <div id="modalPreviewExcel" class="modal-overlay">
+        <div class="modal modal-xl document-preview-modal">
+            <div class="modal-header document-detail-modal-header">
+                <div>
+                    <span>VISTA PREVIA</span>
+                    <h3 id="previewTitulo">Vista de conciliación</h3>
+                    <p>Consulta el archivo sin descargarlo</p>
+                </div>
+                <button class="modal-close" onclick="cerrarPreviewExcel()">
+                    <i class="fa-solid fa-times"></i>
+                </button>
+            </div>
+
+            <div class="modal-body preview-excel-body">
+                <div id="previewSheetTabs" class="preview-sheet-tabs"></div>
+
+                <div class="preview-table-wrapper">
+                    <table class="data-table preview-excel-table">
+                        <thead id="previewExcelHead"></thead>
+                        <tbody id="previewExcelBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="cerrarPreviewExcel()"
+                    >Cerrar</button
+                >
+                <button
+                    class="btn btn-primary"
+                    onclick="descargarDocumentoSeleccionado()"
+                >
                     <i class="fa-solid fa-download"></i>
                     Descargar
                 </button>
@@ -147,12 +216,17 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
     </div>
 
     <script src="/js/config.js" is:inline></script>
+
+   <script is:inline src="/js/vendor/xlsx.full.min.js"></script>
+
     <script is:inline src="/js/documentos.js"></script>
 
     <style is:inline>
         .documents-filters {
             display: grid;
-            grid-template-columns: minmax(260px, 1.6fr) repeat(4, minmax(130px, .72fr)) auto;
+            grid-template-columns:
+                minmax(260px, 1.6fr) repeat(4, minmax(130px, 0.72fr))
+                auto;
             gap: 12px;
             align-items: end;
             margin-bottom: 18px;
@@ -174,7 +248,7 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
             color: #52667a;
             font-size: 11px;
             font-weight: 800;
-            letter-spacing: .045em;
+            letter-spacing: 0.045em;
             text-transform: uppercase;
         }
 
@@ -207,16 +281,20 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
             font-size: 13px;
         }
 
-        .search-field input { padding: 0 12px 0 36px; }
+        .search-field input {
+            padding: 0 12px 0 36px;
+        }
         .documents-filters select,
-        .documents-filters input[type="date"] { padding: 0 10px; }
+        .documents-filters input[type="date"] {
+            padding: 0 10px;
+        }
 
         .search-field input:focus,
         .documents-filters select:focus,
         .documents-filters input[type="date"]:focus {
             outline: 0;
             border-color: #174a75;
-            box-shadow: 0 0 0 3px rgba(23, 74, 117, .11);
+            box-shadow: 0 0 0 3px rgba(23, 74, 117, 0.11);
         }
 
         .clear-filters {
@@ -224,52 +302,429 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
             white-space: nowrap;
         }
 
-        .document-detail-modal { max-width: 780px !important; border-radius: 10px; }
-        .document-detail-modal-header { align-items: flex-start; padding: 20px 23px; color: #fff; border-bottom: 0; background: linear-gradient(115deg, #0b2943, #174d78); }
-        .document-detail-modal-header > div > span { color: #a9d5f4; font-size: 9px; font-weight: 800; letter-spacing: .1em; }
-        .document-detail-modal-header h3 { margin: 4px 0 2px; color: #fff; font-family: 'Source Serif 4', serif; font-size: 22px; }
-        .document-detail-modal-header p { margin: 0; color: #cbdfea; font-size: 11px; }
-        .document-detail-modal-header .modal-close { color: #fff; border: 1px solid rgba(255,255,255,.28); background: rgba(255,255,255,.07); }
-        .document-detail-modal .modal-body { padding: 18px; background: #f3f6f9; }
-        .document-detail-modal .modal-footer { padding: 13px 18px; background: #fff; }
-        .document-detail-overview { display: grid; grid-template-columns: auto minmax(0,1fr) auto; align-items: center; gap: 13px; margin-bottom: 13px; padding: 15px; border: 1px solid #d2dee8; border-radius: 7px; background: #fff; }
-        .document-detail-file-icon { display: grid; width: 46px; height: 46px; place-items: center; border-radius: 7px; color: #12835a; background: #e2f5ec; font-size: 20px; }
-        .document-detail-file-copy { min-width: 0; }
-        .document-detail-file-copy > span { color: #718598; font-size: 9px; font-weight: 800; letter-spacing: .07em; }
-        .document-detail-file-copy h4 { overflow: hidden; margin: 4px 0 2px; color: #163b5c; font-size: 15px; text-overflow: ellipsis; white-space: nowrap; }
-        .document-detail-file-copy p { margin: 0; color: #738598; font-size: 10px; }
-        .document-detail-status { align-self: flex-start; }
-        .document-detail-grid { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 9px; margin-bottom: 13px; }
-        .document-detail-grid article { display: flex; align-items: center; gap: 9px; min-width: 0; padding: 11px; border: 1px solid #d4dfe8; border-radius: 6px; background: #fff; }
-        .document-detail-card-icon { display: grid; width: 30px; height: 30px; flex: 0 0 auto; place-items: center; border-radius: 5px; color: #315f84; background: #e8eff5; font-size: 12px; }
-        .document-detail-grid article > div { min-width: 0; }
-        .document-detail-grid small { display: block; color: #718598; font-size: 8px; font-weight: 800; text-transform: uppercase; }
-        .document-detail-grid strong { display: block; overflow: hidden; margin-top: 3px; color: #1f415e; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
-        .document-detail-section { overflow: hidden; border: 1px solid #d4dfe8; border-radius: 7px; background: #fff; }
-        .document-detail-section > header { padding: 11px 14px; border-bottom: 1px solid #e0e7ed; background: #f8fafb; }
-        .document-detail-section > header span { color: #728598; font-size: 8px; font-weight: 800; letter-spacing: .07em; }
-        .document-detail-section > header h4 { margin: 2px 0 0; color: #193c5b; font-size: 13px; }
-        .document-detail-list { margin: 0; }
-        .document-detail-list > div { display: grid; grid-template-columns: minmax(140px,.35fr) minmax(0,1fr); gap: 15px; padding: 10px 14px; border-bottom: 1px solid #e7edf2; }
-        .document-detail-list > div:last-child { border-bottom: 0; }
-        .document-detail-list dt { color: #667b8e; font-size: 10px; font-weight: 700; }
-        .document-detail-list dd { margin: 0; color: #24445f; font-size: 10px; text-align: right; overflow-wrap: anywhere; }
-        .document-detail-note { display: flex; gap: 10px; margin-top: 12px; padding: 11px 13px; border: 1px solid #e3d4af; border-radius: 6px; color: #765318; background: #fff9eb; }
-        .document-detail-note span { font-size: 8px; font-weight: 800; letter-spacing: .07em; }
-        .document-detail-note p { margin: 3px 0 0; font-size: 10px; }
+        .document-detail-modal {
+            max-width: 780px !important;
+            border-radius: 10px;
+        }
+        .document-detail-modal-header {
+            align-items: flex-start;
+            padding: 20px 23px;
+            color: #fff;
+            border-bottom: 0;
+            background: linear-gradient(115deg, #0b2943, #174d78);
+        }
+        .document-detail-modal-header > div > span {
+            color: #a9d5f4;
+            font-size: 9px;
+            font-weight: 800;
+            letter-spacing: 0.1em;
+        }
+        .document-detail-modal-header h3 {
+            margin: 4px 0 2px;
+            color: #fff;
+            font-family: "Source Serif 4", serif;
+            font-size: 22px;
+        }
+        .document-detail-modal-header p {
+            margin: 0;
+            color: #cbdfea;
+            font-size: 11px;
+        }
+        .document-detail-modal-header .modal-close {
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.28);
+            background: rgba(255, 255, 255, 0.07);
+        }
+        .document-detail-modal .modal-body {
+            padding: 18px;
+            background: #f3f6f9;
+        }
+        .document-detail-modal .modal-footer {
+            padding: 13px 18px;
+            background: #fff;
+        }
+        .document-detail-overview {
+            display: grid;
+            grid-template-columns: auto minmax(0, 1fr) auto;
+            align-items: center;
+            gap: 13px;
+            margin-bottom: 13px;
+            padding: 15px;
+            border: 1px solid #d2dee8;
+            border-radius: 7px;
+            background: #fff;
+        }
+        .document-detail-file-icon {
+            display: grid;
+            width: 46px;
+            height: 46px;
+            place-items: center;
+            border-radius: 7px;
+            color: #12835a;
+            background: #e2f5ec;
+            font-size: 20px;
+        }
+        .document-detail-file-copy {
+            min-width: 0;
+        }
+        .document-detail-file-copy > span {
+            color: #718598;
+            font-size: 9px;
+            font-weight: 800;
+            letter-spacing: 0.07em;
+        }
+        .document-detail-file-copy h4 {
+            overflow: hidden;
+            margin: 4px 0 2px;
+            color: #163b5c;
+            font-size: 15px;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .document-detail-file-copy p {
+            margin: 0;
+            color: #738598;
+            font-size: 10px;
+        }
+        .document-detail-status {
+            align-self: flex-start;
+        }
+        .document-detail-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 9px;
+            margin-bottom: 13px;
+        }
+        .document-detail-grid article {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            min-width: 0;
+            padding: 11px;
+            border: 1px solid #d4dfe8;
+            border-radius: 6px;
+            background: #fff;
+        }
+        .document-detail-card-icon {
+            display: grid;
+            width: 30px;
+            height: 30px;
+            flex: 0 0 auto;
+            place-items: center;
+            border-radius: 5px;
+            color: #315f84;
+            background: #e8eff5;
+            font-size: 12px;
+        }
+        .document-detail-grid article > div {
+            min-width: 0;
+        }
+        .document-detail-grid small {
+            display: block;
+            color: #718598;
+            font-size: 8px;
+            font-weight: 800;
+            text-transform: uppercase;
+        }
+        .document-detail-grid strong {
+            display: block;
+            overflow: hidden;
+            margin-top: 3px;
+            color: #1f415e;
+            font-size: 10px;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .document-detail-section {
+            overflow: hidden;
+            border: 1px solid #d4dfe8;
+            border-radius: 7px;
+            background: #fff;
+        }
+        .document-detail-section > header {
+            padding: 11px 14px;
+            border-bottom: 1px solid #e0e7ed;
+            background: #f8fafb;
+        }
+        .document-detail-section > header span {
+            color: #728598;
+            font-size: 8px;
+            font-weight: 800;
+            letter-spacing: 0.07em;
+        }
+        .document-detail-section > header h4 {
+            margin: 2px 0 0;
+            color: #193c5b;
+            font-size: 13px;
+        }
+        .document-detail-list {
+            margin: 0;
+        }
+        .document-detail-list > div {
+            display: grid;
+            grid-template-columns: minmax(140px, 0.35fr) minmax(0, 1fr);
+            gap: 15px;
+            padding: 10px 14px;
+            border-bottom: 1px solid #e7edf2;
+        }
+        .document-detail-list > div:last-child {
+            border-bottom: 0;
+        }
+        .document-detail-list dt {
+            color: #667b8e;
+            font-size: 10px;
+            font-weight: 700;
+        }
+        .document-detail-list dd {
+            margin: 0;
+            color: #24445f;
+            font-size: 10px;
+            text-align: right;
+            overflow-wrap: anywhere;
+        }
+        .document-detail-note {
+            display: flex;
+            gap: 10px;
+            margin-top: 12px;
+            padding: 11px 13px;
+            border: 1px solid #e3d4af;
+            border-radius: 6px;
+            color: #765318;
+            background: #fff9eb;
+        }
+        .document-detail-note span {
+            font-size: 8px;
+            font-weight: 800;
+            letter-spacing: 0.07em;
+        }
+        .document-detail-note p {
+            margin: 3px 0 0;
+            font-size: 10px;
+        }
 
         @media (max-width: 1250px) {
-            .documents-filters { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-            .search-filter { grid-column: span 2; }
+            .documents-filters {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+            }
+            .search-filter {
+                grid-column: span 2;
+            }
         }
 
         @media (max-width: 760px) {
-            .documents-filters { grid-template-columns: 1fr; }
-            .search-filter { grid-column: auto; }
-            .clear-filters { width: 100%; }
-            .document-detail-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
-            .document-detail-overview { grid-template-columns: auto minmax(0,1fr); }
-            .document-detail-status { grid-column: 1 / -1; justify-self: start; }
+            .documents-filters {
+                grid-template-columns: 1fr;
+            }
+            .search-filter {
+                grid-column: auto;
+            }
+            .clear-filters {
+                width: 100%;
+            }
+            .document-detail-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+            .document-detail-overview {
+                grid-template-columns: auto minmax(0, 1fr);
+            }
+            .document-detail-status {
+                grid-column: 1 / -1;
+                justify-self: start;
+            }
+        }
+
+        /* ================================
+   VISTA PREVIA EXCEL
+================================ */
+
+        .document-preview-modal {
+            width: min(1180px, 96vw) !important;
+            max-width: 96vw !important;
+            height: 88vh !important;
+            max-height: 88vh !important;
+            display: flex !important;
+            flex-direction: column !important;
+            overflow: hidden !important;
+        }
+
+        .document-preview-modal .modal-header {
+            flex: 0 0 auto;
+        }
+
+        .document-preview-modal .modal-body {
+            flex: 1 1 auto;
+            overflow: hidden !important;
+            padding: 16px !important;
+            background: #f3f6f9 !important;
+        }
+
+        .document-preview-modal .modal-footer {
+            flex: 0 0 auto;
+            background: #fff;
+        }
+
+        /* Pestañas de hojas */
+        .preview-sheet-tabs {
+            display: flex !important;
+            flex-wrap: nowrap !important;
+            gap: 8px !important;
+            margin-bottom: 12px !important;
+            padding-bottom: 8px !important;
+            overflow-x: auto !important;
+            border-bottom: 1px solid #d7e1ea !important;
+        }
+
+        .preview-sheet-tab {
+            flex: 0 0 auto !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            min-height: 34px !important;
+            padding: 8px 13px !important;
+            border: 1px solid #cbd6e1 !important;
+            border-radius: 999px !important;
+            background: #fff !important;
+            color: #183b59 !important;
+            font-size: 12px !important;
+            font-weight: 700 !important;
+            white-space: nowrap !important;
+            cursor: pointer !important;
+        }
+
+        .preview-sheet-tab:hover {
+            border-color: #174a75 !important;
+        }
+
+        .preview-sheet-tab.active {
+            color: #fff !important;
+            border-color: #174a75 !important;
+            background: #174a75 !important;
+        }
+
+        /* Tabla */
+        .preview-table-wrapper {
+            width: 100% !important;
+            height: calc(88vh - 210px) !important;
+            overflow: auto !important;
+            border: 1px solid #d4dfe8 !important;
+            border-radius: 7px !important;
+            background: #fff !important;
+        }
+
+        .preview-excel-table {
+            width: max-content !important;
+            min-width: 100% !important;
+            border-collapse: separate !important;
+            border-spacing: 0 !important;
+            background: #fff !important;
+        }
+
+        .preview-excel-table th,
+        .preview-excel-table td {
+            min-width: 130px !important;
+            max-width: 280px !important;
+            padding: 9px 12px !important;
+            border-right: 1px solid #dfe7ee !important;
+            border-bottom: 1px solid #dfe7ee !important;
+            font-size: 12px !important;
+            line-height: 1.35 !important;
+            white-space: nowrap !important;
+            text-align: left !important;
+        }
+
+        .preview-excel-table th {
+            position: sticky !important;
+            top: 0 !important;
+            z-index: 3 !important;
+            color: #fff !important;
+            background: #0b2943 !important;
+            font-weight: 800 !important;
+            text-transform: uppercase !important;
+        }
+
+        .preview-excel-table td {
+            color: #294763 !important;
+            background: #fff !important;
+        }
+
+        .preview-excel-table tbody tr:nth-child(even) td {
+            background: #f7fafc !important;
+        }
+
+        /* ================================
+   SCROLL HORIZONTAL Y VERTICAL EXCEL
+================================ */
+
+        .document-preview-modal {
+            width: min(1180px, 96vw) !important;
+            max-width: 96vw !important;
+            height: 88vh !important;
+            max-height: 88vh !important;
+            display: flex !important;
+            flex-direction: column !important;
+            overflow: hidden !important;
+        }
+
+        .document-preview-modal .modal-body,
+        .preview-excel-body {
+            flex: 1 1 auto !important;
+            min-height: 0 !important;
+            display: flex !important;
+            flex-direction: column !important;
+            overflow: hidden !important;
+            padding: 16px !important;
+        }
+
+        .preview-sheet-tabs {
+            flex: 0 0 auto !important;
+            display: flex !important;
+            flex-wrap: nowrap !important;
+            gap: 8px !important;
+            margin-bottom: 12px !important;
+            padding-bottom: 8px !important;
+            overflow-x: auto !important;
+        }
+
+        /* Este es el contenedor que debe tener el scroll */
+        .preview-table-wrapper {
+            flex: 1 1 auto !important;
+            min-height: 0 !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            overflow-x: auto !important;
+            overflow-y: auto !important;
+            border: 1px solid #d4dfe8 !important;
+            border-radius: 7px !important;
+            background: #fff !important;
+            padding-bottom: 8px !important;
+        }
+
+        /* La tabla debe poder crecer hacia la derecha */
+        .preview-excel-table {
+            width: max-content !important;
+            min-width: 100% !important;
+            border-collapse: separate !important;
+            border-spacing: 0 !important;
+        }
+
+        .preview-excel-table th,
+        .preview-excel-table td {
+            min-width: 140px !important;
+            max-width: 300px !important;
+            padding: 9px 12px !important;
+            border-right: 1px solid #dfe7ee !important;
+            border-bottom: 1px solid #dfe7ee !important;
+            font-size: 12px !important;
+            white-space: nowrap !important;
+            text-align: left !important;
+        }
+
+        .preview-excel-table th {
+            position: sticky !important;
+            top: 0 !important;
+            z-index: 5 !important;
+            color: #fff !important;
+            background: #0b2943 !important;
         }
     </style>
 </DashboardLayout>
