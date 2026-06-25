@@ -72,6 +72,7 @@ document.addEventListener('DOMContentLoaded', function () {
             try {
                 const response = await fetch(`${API_URL}/auth/login`, {
                     method: 'POST',
+                    credentials: 'include',
                     headers: {
                         'Content-Type': 'application/json'
                     },
@@ -176,6 +177,7 @@ async function verificarSesion(token) {
     try {
         const response = await fetch(`${API_URL}/auth/verify`, {
             method: 'GET',
+            credentials: 'include',
             headers: {
                 'Authorization': `Bearer ${token}`
             }
@@ -196,6 +198,6 @@ async function verificarSesion(token) {
         localStorage.removeItem('usuario');
         localStorage.removeItem('isLoggedIn');
     } catch (error) {
-        console.log('No se pudo verificar la sesión:', error);
+        console.warn('No se pudo verificar la sesión:', error);
     }
 }

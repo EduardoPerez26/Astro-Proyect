@@ -28,7 +28,11 @@ const app = express();
 
 const allowedOrigins = [
     'https://astro-proyect-akfs.vercel.app',
-    'https://astro-proyect-tau.vercel.app'
+    'https://astro-proyect-tau.vercel.app',
+    ...(process.env.FRONTEND_ORIGINS || '')
+        .split(',')
+        .map(origin => origin.trim())
+        .filter(Boolean)
 ];
 
 // CORS

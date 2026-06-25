@@ -19,7 +19,6 @@ let fechaConciliacionActual = null;
 let ebtPorTienda = {};
 let salesRows = [];
 let salesDetailRows = [];
-let fechaSeleccionada = null;
 let fechaEBTSeleccionada = '';
 let fechaSalesDetailSeleccionada = '';
 
@@ -1236,8 +1235,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
-    document.getElementById('fechaConciliacion').valueAsDate = new Date();
-
     await cargarRestaurantes();
 
     actualizarUploadsPorRestaurante('');
@@ -1278,36 +1275,6 @@ function initEventListeners() {
         templateSelect.addEventListener(
             'change',
             onTemplateChange
-        );
-
-    }
-
-    const fechaInput =
-        document.getElementById(
-            'fechaConciliacion'
-        );
-
-    if (fechaInput) {
-
-        fechaInput.addEventListener(
-            'change',
-            () => {
-
-                fechaSeleccionada =
-                    fechaInput.value;
-
-                invalidarComparacionConciliacion();
-
-                if (
-                    salesWorkbook &&
-                    currentRestaurantConfig
-                ) {
-
-                    generarConciliacionDesdeTemplate();
-
-                }
-
-            }
         );
 
     }
@@ -2064,7 +2031,7 @@ function renderTemplates() {
 
 async function cargarValoresEsperados() {
     const restauranteId = document.getElementById('selectRestaurante').value;
-    const fecha = document.getElementById('fechaConciliacion').value;
+    const fecha = obtenerFechaConciliacionBD();
 
     if (!restauranteId || !fecha) return;
 
@@ -2239,11 +2206,6 @@ function onTemplateChange() {
     }
 
 }
-
-function onFechaChange() {
-    cargarValoresEsperados();
-}
-
 
 async function procesarArchivo(file) {
 
@@ -2924,7 +2886,9 @@ async function verConciliacion(id) {
             document.getElementById('selectRestaurante').value = c.restaurante_id;
             await cargarTemplates(c.restaurante_id);
             document.getElementById('selectTemplate').value = c.template_id;
-            document.getElementById('fechaConciliacion').value = c.fecha_conciliacion.split('T')[0];
+            fechaConciliacionActual = c.fecha_conciliacion
+                ? String(c.fecha_conciliacion).split('T')[0]
+                : null;
             document.getElementById('notasConciliacion').value = c.notas || '';
 
             templateActual = templates.find(t => t.id == c.template_id);
@@ -2947,7 +2911,7 @@ async function verConciliacion(id) {
 function exportarPDF() {
     // Implementacion basica con window.print
     const restaurante = document.getElementById('selectRestaurante').selectedOptions[0]?.text || '';
-    const fecha = document.getElementById('fechaConciliacion').value;
+    const fecha = obtenerFechaConciliacionBD() || obtenerFechaParaNombreArchivo();
 
     const printContent = `
         <html>
@@ -3454,11 +3418,13 @@ function obtenerEBTPorStore(
 
 document
     .getElementById('salesDateFilter')
-    ?.addEventListener('change', e => {
+    ?.addEventListener('change', async e => {
         fechaSalesSeleccionada = e.target.value;
         fechaConciliacionActual = e.target.value;
 
         invalidarComparacionConciliacion();
+
+        await cargarValoresEsperados();
 
         generarConciliacionDesdeTemplate();
 
@@ -3657,8 +3623,6 @@ function llenarFiltroTiendas() {
 
 function obtenerFechaParaNombreArchivo() {
     const valor =
-        document.getElementById('fechaConciliacion')?.value ||
-        fechaSeleccionada ||
         fechaConciliacionActual ||
         datosExtraidos[0]?.date ||
         '';
@@ -3728,7 +3692,6 @@ function obtenerFechaConciliacionBD() {
     const valor =
         fechaConciliacionActual ||
         datosExtraidos[0]?.date ||
-        document.getElementById('fechaConciliacion')?.value ||
         '';
     const texto = String(valor).trim();
 
@@ -4254,7 +4217,8 @@ async function subirArchivoConciliacionServidor({
     tipoDocumento,
     fecha,
     notas = null,
-    reemplazarSiExiste = true
+    reemplazarSiExiste = false,
+    archivoReemplazarId = null
 }) {
     const formData = new FormData();
 
@@ -4266,6 +4230,11 @@ async function subirArchivoConciliacionServidor({
     formData.append('fecha_conciliacion', fecha);
     formData.append('periodo_fecha', fecha);
     formData.append('reemplazar_si_existe', reemplazarSiExiste ? 'true' : 'false');
+
+    if (archivoReemplazarId) {
+        formData.append('archivo_reemplazar_id', String(archivoReemplazarId));
+        formData.append('confirmacion_reemplazo', 'REEMPLAZAR');
+    }
 
     if (notas) {
         formData.append(
@@ -4287,7 +4256,10 @@ async function subirArchivoConciliacionServidor({
     const data = await response.json().catch(() => ({}));
 
     if (!response.ok) {
-        throw new Error(data.message || 'Error al guardar archivo');
+        const error = new Error(data.message || 'Error al guardar archivo');
+        error.status = response.status;
+        error.data = data;
+        throw error;
     }
 
     return data;
@@ -4370,7 +4342,10 @@ async function confirmarReemplazoArchivo({
     });
 
     if (!existente) {
-        return true;
+        return {
+            ok: true,
+            archivoReemplazarId: null
+        };
     }
 
     const tipoTexto =
@@ -4378,32 +4353,72 @@ async function confirmarReemplazoArchivo({
             ? 'EBT'
             : 'Conciliación';
 
+    const restauranteSeguro = escaparHtmlComparacion(restaurante);
+    const tipoSeguro = escaparHtmlComparacion(tipoTexto);
+    const archivoActualSeguro =
+        escaparHtmlComparacion(existente.nombre_original || '-');
+    const archivoNuevoSeguro =
+        escaparHtmlComparacion(nombreArchivo || '-');
+
     const result = await Swal.fire({
-        icon: 'warning',
         title: `${tipoTexto} ya existe`,
         html: `
-            <p>Ya existe un archivo guardado con la misma fecha.</p>
+            <section class="replacement-file-card">
+                <header class="replacement-file-hero">
+                    <div>
+                        <span class="replacement-file-eyebrow">Archivo existente</span>
+                        <h3>Ya existe un archivo guardado</h3>
+                        <p>Revisa la informacion antes de reemplazarlo.</p>
+                    </div>
+                </header>
 
-            <div style="text-align:left;margin:14px 0;padding:12px;border-radius:8px;background:#fff7ed;border:1px solid #fed7aa;">
-                <strong>Restaurante:</strong> ${restaurante}<br>
-                <strong>Fecha:</strong> ${fecha}<br>
-                <strong>Tipo:</strong> ${tipoTexto}<br>
-                <strong>Archivo actual:</strong> ${existente.nombre_original || '-'}<br>
-                <strong>Archivo nuevo:</strong> ${nombreArchivo || '-'}
-            </div>
+                <div class="replacement-file-summary">
+                    <div class="replacement-file-summary-row">
+                        <span>Restaurante</span>
+                        <strong>${restauranteSeguro}</strong>
+                    </div>
+                    <div class="replacement-file-summary-row">
+                        <span>Tipo</span>
+                        <strong>${tipoSeguro}</strong>
+                    </div>
+                </div>
 
-            <p style="color:#b45309;">
-                Si continúas, el archivo anterior será reemplazado.
-            </p>
+                <div class="replacement-file-compare">
+                    <article>
+                        <span>Archivo actual</span>
+                        <strong title="${archivoActualSeguro}">${archivoActualSeguro}</strong>
+                    </article>
+                    <article>
+                        <span>Archivo nuevo</span>
+                        <strong title="${archivoNuevoSeguro}">${archivoNuevoSeguro}</strong>
+                    </article>
+                </div>
 
-            <p>Para confirmar escribe <strong>REEMPLAZAR</strong>.</p>
+                <div class="replacement-file-warning">
+                    <strong>Si continuas, el archivo actual sera reemplazado.</strong>
+                </div>
+
+                <p class="replacement-file-confirm">
+                    Escribe <strong>REEMPLAZAR</strong> para confirmar.
+                </p>
+            </section>
         `,
         input: 'text',
         inputPlaceholder: 'REEMPLAZAR',
         showCancelButton: true,
         confirmButtonText: 'Reemplazar archivo',
         cancelButtonText: 'Cancelar',
-        confirmButtonColor: '#dc2626',
+        buttonsStyling: false,
+        customClass: {
+            popup: 'replacement-file-dialog',
+            title: 'replacement-file-title',
+            htmlContainer: 'replacement-file-html',
+            input: 'replacement-file-input',
+            actions: 'replacement-file-actions',
+            confirmButton: 'replacement-file-confirm-button',
+            cancelButton: 'replacement-file-cancel-button',
+            validationMessage: 'replacement-file-validation'
+        },
         preConfirm: value => {
             if (String(value || '').trim().toUpperCase() !== 'REEMPLAZAR') {
                 Swal.showValidationMessage('Debes escribir REEMPLAZAR para continuar');
@@ -4414,7 +4429,12 @@ async function confirmarReemplazoArchivo({
         }
     });
 
-    return result.isConfirmed;
+    return {
+        ok: result.isConfirmed,
+        archivoReemplazarId: result.isConfirmed
+            ? existente.id
+            : null
+    };
 }
 
 async function guardarConciliacionServidor() {
@@ -4473,7 +4493,7 @@ async function guardarConciliacionServidor() {
     const nombreEbt =
         construirNombreArchivo('EBT', extensionEbt);
 
-    const puedeGuardarConciliacion = await confirmarReemplazoArchivo({
+    const decisionConciliacion = await confirmarReemplazoArchivo({
         token,
         restaurante,
         tipoDocumento: 'conciliacion',
@@ -4481,10 +4501,15 @@ async function guardarConciliacionServidor() {
         nombreArchivo: nombreConciliacion
     });
 
-    if (!puedeGuardarConciliacion) return;
+    if (!decisionConciliacion.ok) return;
+
+    let decisionEbt = {
+        ok: true,
+        archivoReemplazarId: null
+    };
 
     if (ebtFile) {
-        const puedeGuardarEbt = await confirmarReemplazoArchivo({
+        decisionEbt = await confirmarReemplazoArchivo({
             token,
             restaurante,
             tipoDocumento: 'ebt',
@@ -4492,7 +4517,7 @@ async function guardarConciliacionServidor() {
             nombreArchivo: nombreEbt
         });
 
-        if (!puedeGuardarEbt) return;
+        if (!decisionEbt.ok) return;
     }
 
     Swal.fire({
@@ -4538,7 +4563,8 @@ async function guardarConciliacionServidor() {
                 conciliacionId: registroConciliacion.id,
                 fecha
             },
-            reemplazarSiExiste: true
+            reemplazarSiExiste: Boolean(decisionConciliacion.archivoReemplazarId),
+            archivoReemplazarId: decisionConciliacion.archivoReemplazarId
         });
 
         let dataEbt = null;
@@ -4561,7 +4587,8 @@ async function guardarConciliacionServidor() {
                     fecha,
                     nombreOriginal: ebtFile.name
                 },
-                reemplazarSiExiste: true
+                reemplazarSiExiste: Boolean(decisionEbt.archivoReemplazarId),
+                archivoReemplazarId: decisionEbt.archivoReemplazarId
             });
         }
 
@@ -5103,7 +5130,91 @@ function serializarValorCSV(valor, columna) {
     return `"${texto.replace(/"/g, '""')}"`;
 }
 
-function descargarCSV(data, nombreArchivo) {
+function validarEstructuraCSVExportable(data, opciones = {}) {
+    if (!data || !data.length) {
+        return { ok: true };
+    }
+
+    const primeraFila = data[0];
+
+    if (
+        !primeraFila ||
+        typeof primeraFila !== 'object' ||
+        Array.isArray(primeraFila)
+    ) {
+        return {
+            ok: false,
+            title: 'CSV no valido',
+            text: 'Los datos no tienen una estructura de columnas valida para exportar.'
+        };
+    }
+
+    const columnas = Object.keys(primeraFila);
+
+    if (!columnas.length) {
+        return {
+            ok: false,
+            title: 'CSV no valido',
+            text: 'No se encontraron columnas para exportar.'
+        };
+    }
+
+    if (
+        opciones.intacct &&
+        columnas.join('|') !== COLUMNAS_INTACCT.join('|')
+    ) {
+        return {
+            ok: false,
+            title: 'Estructura Intacct invalida',
+            text: 'No se descargo el archivo porque sus columnas no coinciden con el template.'
+        };
+    }
+
+    const filaInvalida = data.findIndex(row =>
+        !row ||
+        typeof row !== 'object' ||
+        Array.isArray(row)
+    );
+
+    if (filaInvalida >= 0) {
+        return {
+            ok: false,
+            title: 'CSV no valido',
+            text: `La fila ${filaInvalida + 1} no tiene una estructura valida.`
+        };
+    }
+
+    return { ok: true };
+}
+
+async function validarAntesDeExportarCSV(data, opciones = {}) {
+    const estructura =
+        validarEstructuraCSVExportable(data, opciones);
+
+    if (!estructura.ok) {
+        await Swal.fire({
+            icon: 'error',
+            title: estructura.title,
+            text: estructura.text
+        });
+        return false;
+    }
+
+    const puedeValidarConciliacion =
+        !opciones.omitirComparacion &&
+        localStorage.getItem('modoOffline') !== 'true' &&
+        typeof compararConciliacionConBD === 'function' &&
+        Array.isArray(datosExtraidos) &&
+        datosExtraidos.length > 0;
+
+    if (!puedeValidarConciliacion) {
+        return true;
+    }
+
+    return await compararConciliacionConBD();
+}
+
+async function descargarCSV(data, nombreArchivo, opciones = {}) {
 
     if (!data || !data.length) {
         Swal.fire({
@@ -5111,6 +5222,13 @@ function descargarCSV(data, nombreArchivo) {
             title: 'Sin datos para exportar',
             text: 'Genera la conciliación antes de descargar el archivo.'
         });
+        return;
+    }
+
+    if (
+        !opciones.omitirValidacion &&
+        !(await validarAntesDeExportarCSV(data, opciones))
+    ) {
         return;
     }
 
@@ -5155,7 +5273,7 @@ function descargarCSV(data, nombreArchivo) {
 
 }
 
-function descargarCSVIntacct(data, nombreArchivo) {
+async function descargarCSVIntacct(data, nombreArchivo) {
     const datosIntacct = prepararDatosIntacct(data);
 
     if (datosIntacct.length && Object.keys(datosIntacct[0]).join('|') !== COLUMNAS_INTACCT.join('|')) {
@@ -5167,10 +5285,20 @@ function descargarCSVIntacct(data, nombreArchivo) {
         return;
     }
 
-    descargarCSV(datosIntacct, nombreArchivo);
+    if (
+        !(await validarAntesDeExportarCSV(datosIntacct, {
+            intacct: true
+        }))
+    ) {
+        return;
+    }
+
+    await descargarCSV(datosIntacct, nombreArchivo, {
+        omitirValidacion: true
+    });
 }
 
-function exportarTabActualCSV() {
+async function exportarTabActualCSV() {
 
     const codigo =
         document
@@ -5183,7 +5311,7 @@ function exportarTabActualCSV() {
         switch (activeTab) {
 
             case 'summary':
-                descargarCSV(
+                await descargarCSV(
                     burgerKingSummaryData,
                     'BurgerKingSummary'
                 );
@@ -5191,7 +5319,7 @@ function exportarTabActualCSV() {
 
             case 'conciliation':
             case 'dailySales':
-                descargarCSV(
+                await descargarCSV(
                     burgerKingConciliationData,
                     'BurgerKingConciliation'
                 );
@@ -5199,14 +5327,14 @@ function exportarTabActualCSV() {
 
             case 'taxAnalysis':
             case 'taxReview':
-                descargarCSV(
+                await descargarCSV(
                     burgerKingTaxAnalysisData,
                     'BurgerKingTaxAnalysis'
                 );
                 break;
 
             case 'discrepancies':
-                descargarCSV(
+                await descargarCSV(
                     burgerKingDiscrepanciesData,
                     'BurgerKingDiscrepancies'
                 );
@@ -5214,14 +5342,14 @@ function exportarTabActualCSV() {
 
             case 'templateCsv':
             case 'template':
-                descargarCSVIntacct(
+                await descargarCSVIntacct(
                     burgerKingTemplateCsvData,
                     'BurgerKingTemplateToCSV'
                 );
                 break;
 
             default:
-                descargarCSV(
+                await descargarCSV(
                     burgerKingConciliationData,
                     'BurgerKingConciliation'
                 );
@@ -5235,28 +5363,28 @@ function exportarTabActualCSV() {
         switch (activeTab) {
 
             case 'conciliation':
-                descargarCSV(
+                await descargarCSV(
                     popeyesConciliationData,
                     'PopeyesConciliation'
                 );
                 break;
 
             case 'taxReview':
-                descargarCSV(
+                await descargarCSV(
                     popeyesTaxReviewData,
                     'PopeyesTaxReview'
                 );
                 break;
 
             case 'dailySalesRed':
-                descargarCSVIntacct(
+                await descargarCSVIntacct(
                     popeyesDailySalesRedData,
                     'DailySalesPopeyesRed'
                 );
                 break;
 
             case 'dailySales0404':
-                descargarCSVIntacct(
+                await descargarCSVIntacct(
                     popeyesDailySales0404Data,
                     'DailySalesPopeyes0404'
                 );
@@ -5278,28 +5406,28 @@ function exportarTabActualCSV() {
         switch (activeTab) {
 
             case 'burgerKingConciliation':
-                descargarCSV(
+                await descargarCSV(
                     burgerKingConciliationData,
                     'BurgerKingConciliation'
                 );
                 break;
 
             case 'burgerKingTaxAnalysis':
-                descargarCSV(
+                await descargarCSV(
                     burgerKingTaxAnalysisData,
                     'BurgerKingTaxAnalysis'
                 );
                 break;
 
             case 'burgerKingDiscrepancies':
-                descargarCSV(
+                await descargarCSV(
                     burgerKingDiscrepanciesData,
                     'BurgerKingDiscrepancies'
                 );
                 break;
 
             case 'burgerKingTemplateCsv':
-                descargarCSV(
+                await descargarCSV(
                     burgerKingTemplateCsvData,
                     'BurgerKingTemplateToCSV'
                 );
@@ -5319,35 +5447,35 @@ function exportarTabActualCSV() {
     switch (activeTab) {
 
         case 'taxReview':
-            descargarCSV(
+            await descargarCSV(
                 taxReviewData,
                 'TaxReview'
             );
             break;
 
         case 'dailySalesRed':
-            descargarCSVIntacct(
+            await descargarCSVIntacct(
                 dailySalesREDData,
                 'DailySalesRED'
             );
             break;
 
         case 'statisticalDelivery':
-            descargarCSVIntacct(
+            await descargarCSVIntacct(
                 statisticalDeliveryData,
                 'StatisticalDelivery'
             );
             break;
 
         case 'dailySales0314':
-            descargarCSVIntacct(
+            await descargarCSVIntacct(
                 dailySales0314Data,
                 'DailySales0314'
             );
             break;
 
         case 'dailySales0310':
-            descargarCSVIntacct(
+            await descargarCSVIntacct(
                 dailySales0310Data,
                 'DailySales0310'
             );
@@ -5362,5 +5490,3 @@ function exportarTabActualCSV() {
     }
 
 }
-
-

@@ -15,13 +15,13 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
             </div>
         </div>
 
-        <!-- Selector de Restaurante y Fecha -->
+        <!-- Selector de Restaurante y Template -->
         <div class="conciliacion-config">
             <div class="section-heading">
                 <span class="step-badge">1</span>
                 <div>
                     <h2>Seleccion</h2>
-                    <p>Define restaurante, template y fecha de trabajo.</p>
+                    <p>Define restaurante y template.</p>
                 </div>
             </div>
             <div class="config-card">
@@ -44,13 +44,6 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
                             <option value=""
                                 >Selecciona primero un restaurante</option
                             >
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Fecha</label>
-
-                        <select id="fechaConciliacion" class="form-select">
-                            <option value=""> Selecciona una fecha </option>
                         </select>
                     </div>
                 </div>
@@ -1219,7 +1212,7 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
 
         .config-row {
             display: grid;
-            grid-template-columns: 2fr 2fr 1fr;
+            grid-template-columns: 1fr 1fr;
             gap: 20px;
             align-items: end;
         }
@@ -2991,15 +2984,15 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
             inset: auto;
             top: 50%;
             left: 50%;
-            width: min(1080px, calc(100vw - 96px));
-            height: min(82vh, 720px);
-            max-height: min(82vh, 720px);
+            width: min(1120px, calc(100vw - 72px));
+            height: min(84vh, 760px);
+            max-height: min(84vh, 760px);
             margin: 0;
             padding: 0;
-            border: 1px solid #c9d6e2;
-            border-radius: 10px;
-            background: var(--white);
-            box-shadow: 0 22px 55px rgba(16, 42, 67, .28);
+            border: 1px solid rgba(16, 42, 67, .22);
+            border-radius: 12px;
+            background: #eef3f7;
+            box-shadow: 0 34px 80px -32px rgba(8, 31, 51, .78);
             transform: translate(-50%, -50%);
             overflow: hidden;
         }
@@ -3015,7 +3008,7 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
             grid-template-rows: auto auto auto minmax(0, 1fr) auto;
             height: 100%;
             max-height: inherit;
-            background: #fff;
+            background: #eef3f7;
         }
 
         .bk-tax-store-header {
@@ -3024,15 +3017,17 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
             grid-column: 1 / -1;
             grid-template-columns: minmax(0, 1fr) auto;
             gap: 18px;
-            padding: 18px 58px 16px 20px;
-            border-bottom: 1px solid #d9e3ec;
-            background: #fff;
+            padding: 20px 64px 20px 22px;
+            border-bottom: 0;
+            background:
+                linear-gradient(120deg, rgba(47, 111, 159, .22), transparent 45%),
+                #102a43;
         }
 
         .bk-tax-store-header span {
             display: inline-flex;
-            margin-bottom: 5px;
-            color: #2a648e;
+            margin-bottom: 6px;
+            color: #b9d7ee;
             font-size: 10px;
             font-weight: 900;
             letter-spacing: .12em;
@@ -3040,16 +3035,17 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
 
         .bk-tax-store-header h3 {
             margin: 0;
-            color: #102a43;
-            font-size: 18px;
-            font-weight: 800;
+            color: #fff;
+            font-size: 20px;
+            font-weight: 900;
+            letter-spacing: 0;
         }
 
         .bk-tax-store-header p {
-            max-width: 680px;
-            margin: 5px 0 0;
-            color: #5f7488;
-            font-size: 12px;
+            max-width: 760px;
+            margin: 6px 0 0;
+            color: #d7e7f4;
+            font-size: 13px;
             line-height: 1.45;
         }
 
@@ -3058,28 +3054,29 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
             top: 14px;
             right: 16px;
             display: grid;
-            width: 32px;
-            height: 32px;
+            width: 34px;
+            height: 34px;
             place-items: center;
-            border: 1px solid #d5e0ea;
-            border-radius: 6px;
-            background: var(--white);
-            color: #5e7285;
+            border: 1px solid rgba(255, 255, 255, .28);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, .12);
+            color: #fff;
             cursor: pointer;
         }
 
         .bk-tax-modal-close:hover {
-            border-color: #b8c9d8;
-            background: #f2f6f9;
+            border-color: rgba(255, 255, 255, .48);
+            background: rgba(255, 255, 255, .2);
         }
 
         .bk-tax-store-meta {
             min-width: 245px;
             align-self: stretch;
-            padding: 10px 12px;
-            border: 1px solid #d8e2eb;
-            border-radius: 6px;
-            background: #f8fbfd;
+            padding: 12px 14px;
+            border: 1px solid rgba(255, 255, 255, .25);
+            border-radius: 9px;
+            background: rgba(255, 255, 255, .1);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, .1);
         }
 
         .bk-tax-store-meta strong,
@@ -3088,13 +3085,14 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
         }
 
         .bk-tax-store-meta strong {
-            color: #173f64;
-            font-size: 13px;
+            color: #fff;
+            font-size: 14px;
+            font-weight: 900;
         }
 
         .bk-tax-store-meta small {
             margin-top: 4px;
-            color: #60758a;
+            color: #c9dced;
             font-size: 11px;
             line-height: 1.35;
         }
@@ -3117,9 +3115,12 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
             gap: 12px;
             align-content: start;
             align-items: start;
-            padding: 14px 18px 16px;
-            border-bottom: 1px solid #dce6ee;
-            background: linear-gradient(180deg, #f8fbfd 0%, #f3f7fa 100%);
+            margin: 12px 14px 0;
+            padding: 14px;
+            border: 1px solid #d8e3ec;
+            border-radius: 10px;
+            background: #fff;
+            box-shadow: 0 14px 30px -28px rgba(16, 42, 67, .52);
         }
 
         .bk-tax-store-dialog.is-form-open .bk-tax-store-form {
@@ -3137,12 +3138,13 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
             justify-content: space-between;
             gap: 12px;
             min-height: 26px;
-            padding-bottom: 2px;
+            padding: 0 0 8px;
+            border-bottom: 1px solid #edf2f7;
         }
 
         .bk-tax-form-head strong {
             color: #102a43;
-            font-size: 13px;
+            font-size: 14px;
             font-weight: 900;
         }
 
@@ -3161,17 +3163,17 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
         }
 
         .bk-tax-store-form .form-group label {
-            margin-bottom: 3px;
+            margin-bottom: 5px;
             color: #536b80;
-            font-size: 9px;
+            font-size: 10px;
             font-weight: 900;
             letter-spacing: .07em;
         }
 
         .bk-tax-store-form .form-input {
             width: 100%;
-            min-height: 36px;
-            padding: 7px 10px;
+            min-height: 38px;
+            padding: 8px 10px;
             border: 1px solid #cfdce8;
             border-radius: 6px;
             background: #ffffff;
@@ -3195,7 +3197,7 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
             display: flex;
             justify-content: flex-end;
             gap: 8px;
-            padding-top: 2px;
+            padding-top: 4px;
         }
 
         .bk-tax-form-actions .btn {
@@ -3211,12 +3213,13 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
             grid-row: 2;
             flex-direction: row;
             flex-wrap: wrap;
-            gap: 8px;
+            gap: 9px;
             align-items: center;
             justify-content: flex-start;
-            padding: 11px 18px;
-            border-bottom: 1px solid #dce6ee;
+            padding: 12px 14px;
+            border-bottom: 1px solid #d7e3ed;
             background: #fff;
+            box-shadow: 0 10px 24px -26px rgba(16, 42, 67, .7);
         }
 
         .bk-tax-store-dialog:not(.is-form-open) .bk-tax-form-action {
@@ -3229,8 +3232,8 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
 
         .bk-tax-store-toolbar .btn,
         .bk-tax-store-footer .btn {
-            min-height: 32px;
-            border-radius: 4px;
+            min-height: 34px;
+            border-radius: 7px;
             font-size: 12px;
             font-weight: 800;
         }
@@ -3243,8 +3246,8 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
             gap: 10px;
             align-items: center;
             justify-content: space-between;
-            padding: 12px 18px;
-            border-top: 1px solid #dce6ee;
+            padding: 11px 14px;
+            border-top: 1px solid #d7e3ed;
             color: #64788b;
             background: #fff;
         }
@@ -3252,11 +3255,14 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
         .bk-tax-store-table {
             grid-column: 1;
             grid-row: 4;
-            min-height: 260px;
+            min-height: 0;
             max-height: none;
+            margin: 12px 14px;
             overflow: auto;
-            border: 0;
+            border: 1px solid #d8e3ec;
+            border-radius: 10px;
             background: #fff;
+            box-shadow: 0 16px 34px -32px rgba(16, 42, 67, .62);
             scrollbar-width: thin;
             scrollbar-color: #95a9ba #edf3f7;
         }
@@ -3275,7 +3281,7 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
             position: sticky;
             top: 0;
             z-index: 1;
-            padding: 10px 11px;
+            padding: 11px 12px;
             border-bottom: 1px solid #0b2943;
             color: #fff;
             background: #102f4c;
@@ -3284,7 +3290,7 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
         }
 
         .bk-tax-store-table .data-table td {
-            padding: 9px 11px;
+            padding: 11px 12px;
             border-bottom: 1px solid #e1e9f0;
             color: #36536d;
             vertical-align: middle;
@@ -3312,9 +3318,9 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
         }
 
         .bk-tax-store-actions .btn {
-            min-height: 30px;
-            padding: 6px 10px;
-            border-radius: 4px;
+            min-height: 32px;
+            padding: 7px 11px;
+            border-radius: 7px;
             font-size: 11px;
             font-weight: 800;
         }
@@ -3335,7 +3341,7 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
                 grid-template-columns: repeat(3, minmax(0, 1fr));
                 grid-column: 1;
                 grid-row: auto;
-                border-bottom: 1px solid #dce6ee;
+                margin: 12px 14px 0;
                 padding: 14px;
             }
 
@@ -3349,7 +3355,7 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
                 flex-direction: row;
                 flex-wrap: wrap;
                 padding: 12px 14px;
-                border-bottom: 1px solid #dce6ee;
+                border-bottom: 1px solid #d7e3ed;
                 background: #fff;
             }
 
@@ -3393,15 +3399,24 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
 
             .bk-tax-store-dialog {
                 width: calc(100vw - 16px);
+                height: calc(100vh - 16px);
                 max-height: calc(100vh - 16px);
             }
 
-            .bk-tax-store-header,
-            .bk-tax-store-form,
+            .bk-tax-store-header {
+                padding: 18px 54px 18px 16px;
+            }
+
             .bk-tax-store-toolbar,
             .bk-tax-store-footer {
                 padding-right: 14px;
                 padding-left: 14px;
+            }
+
+            .bk-tax-store-form,
+            .bk-tax-store-table {
+                margin-right: 10px;
+                margin-left: 10px;
             }
 
             .bk-tax-store-footer,

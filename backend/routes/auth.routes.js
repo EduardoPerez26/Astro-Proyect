@@ -3,7 +3,7 @@ const router = express.Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { pool } = require('../config/database');
-const { verificarToken } = require('../middleware/auth.middleware');
+const { verificarToken, esAdmin } = require('../middleware/auth.middleware');
 
 const PERMISOS_ADMIN = {
     dashboardAdmin: true,
@@ -73,29 +73,88 @@ function construirContextoUsuario(usuario) {
 }
 
 async function obtenerUsuarioConDepartamento(condicion, params) {
-    const [usuarios] = await pool.query(
-        `SELECT u.*,
-                d.codigo AS departamento_codigo,
-                d.nombre AS departamento_nombre,
-                d.activo AS departamento_activo
-         FROM usuarios u
-         LEFT JOIN departamentos d ON d.id = u.departamento_id
-         WHERE ${condicion}
-         LIMIT 1`,
-        params
-    );
+    let usuarios;
+
+    try {
+        [usuarios] = await pool.query(
+            `SELECT u.*,
+                    d.codigo AS departamento_codigo,
+                    d.nombre AS departamento_nombre,
+                    d.activo AS departamento_activo
+             FROM usuarios u
+             LEFT JOIN departamentos d ON d.id = u.departamento_id
+             WHERE ${condicion}
+             LIMIT 1`,
+            params
+        );
+    } catch (error) {
+        if (!['ER_NO_SUCH_TABLE', 'ER_BAD_FIELD_ERROR'].includes(error.code)) {
+            throw error;
+        }
+
+        [usuarios] = await pool.query(
+            `SELECT u.*,
+                    NULL AS departamento_codigo,
+                    NULL AS departamento_nombre,
+                    NULL AS departamento_activo
+             FROM usuarios u
+             WHERE ${condicion}
+             LIMIT 1`,
+            params
+        );
+    }
 
     return usuarios[0] || null;
+}
+
+function esErrorEsquema(error) {
+    return ['ER_NO_SUCH_TABLE', 'ER_BAD_FIELD_ERROR'].includes(error.code);
+}
+
+function esErrorEsquemaSesiones(error) {
+    return esErrorEsquema(error) && /sesiones/i.test(String(error.sqlMessage || error.message || error.sql || ''));
+}
+
+async function registrarSesion(usuarioId, token, req) {
+    try {
+        await pool.query(
+            `INSERT INTO sesiones
+            (usuario_id, token, ip_address, user_agent, fecha_expiracion)
+            VALUES (?, ?, ?, ?, DATE_ADD(NOW(), INTERVAL 24 HOUR))`,
+            [usuarioId, token, req.ip, req.headers['user-agent']]
+        );
+
+        return true;
+    } catch (error) {
+        if (!esErrorEsquemaSesiones(error)) {
+            throw error;
+        }
+
+        console.warn(
+            'No se pudo registrar la sesion porque falta actualizar la tabla sesiones. El login continuara con JWT.',
+            error.code
+        );
+        return false;
+    }
+}
+
+function opcionesCookieAuth(req) {
+    const esProduccion = process.env.NODE_ENV === 'production';
+    const origen = String(req.headers.origin || '');
+    const esLocal = /^http:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origen);
+
+    return {
+        httpOnly: true,
+        secure: esProduccion && !esLocal,
+        sameSite: esProduccion && !esLocal ? 'none' : 'lax',
+        maxAge: Number(process.env.JWT_COOKIE_MAX_AGE_MS || 24 * 60 * 60 * 1000),
+        path: '/'
+    };
 }
 
 router.post('/login', async (req, res) => {
     try {
         const { username, password } = req.body;
-
-        console.log('================================');
-        console.log('LOGIN INTENT');
-        console.log('Username recibido:', username);
-        console.log('================================');
 
         // Validar que se enviaron los datos
         if (!username || !password) {
@@ -111,20 +170,12 @@ router.post('/login', async (req, res) => {
             [username]
         );
 
-        console.log('Usuario encontrado:', Boolean(usuario));
-
         if (!usuario) {
-            console.log('ERROR: Usuario no encontrado o inactivo');
-
             return res.status(401).json({
                 error: true,
                 mensaje: 'Usuario o contrasena incorrectos'
             });
         }
-
-        console.log('ID Usuario:', usuario.id);
-        console.log('Username BD:', usuario.username);
-        console.log('Activo:', usuario.activo);
 
         if (
             usuario.rol !== 'admin' &&
@@ -142,22 +193,14 @@ router.post('/login', async (req, res) => {
             usuario.password
         );
 
-        console.log('Password válida:', passwordValido);
-
         if (!passwordValido) {
-            console.log('ERROR: Contraseña incorrecta');
-
             return res.status(401).json({
                 error: true,
                 mensaje: 'Usuario o contrasena incorrectos'
             });
         }
 
-        console.log('LOGIN EXITOSO');
-
         const contextoUsuario = construirContextoUsuario(usuario);
-        console.log('Permisos efectivos:', contextoUsuario.permisos);
-
 
         const token = jwt.sign(
             {
@@ -172,14 +215,9 @@ router.post('/login', async (req, res) => {
         );
 
 
-        await pool.query(
-            `INSERT INTO sesiones
-            (usuario_id, token, ip_address, user_agent, fecha_expiracion)
-            VALUES (?, ?, ?, ?, DATE_ADD(NOW(), INTERVAL 24 HOUR))`,
-            [usuario.id, token, req.ip, req.headers['user-agent']]
-        );
+        await registrarSesion(usuario.id, token, req);
 
-
+        res.cookie('auth_token', token, opcionesCookieAuth(req));
 
         res.json({
             error: false,
@@ -193,7 +231,7 @@ router.post('/login', async (req, res) => {
 
         res.status(500).json({
             error: true,
-            mensaje: ['ER_NO_SUCH_TABLE', 'ER_BAD_FIELD_ERROR'].includes(error.code)
+            mensaje: esErrorEsquema(error)
                 ? 'Ejecuta primero la migracion SQL de departamentos'
                 : 'Error al iniciar sesion',
             code: error.code
@@ -201,7 +239,7 @@ router.post('/login', async (req, res) => {
     }
 });
 
-router.post('/register', async (req, res) => {
+router.post('/register', verificarToken, esAdmin, async (req, res) => {
     try {
         const { username, password, nombre_completo, email, rol } = req.body;
 
@@ -310,13 +348,15 @@ router.get('/profile', verificarToken, async (req, res) => {
 
 router.post('/logout', verificarToken, async (req, res) => {
     try {
-        const token = req.headers['authorization'].split(' ')[1];
+        const token = req.authToken;
 
         // Marcar la sesion como inactiva
         await pool.query(
             'UPDATE sesiones SET activa = FALSE WHERE token = ?',
             [token]
         );
+
+        res.clearCookie('auth_token', opcionesCookieAuth(req));
 
         res.json({
             error: false,

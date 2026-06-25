@@ -47,7 +47,11 @@ function setValidator(restaurantId) {
 }
 
 function normalizeConcept(value) {
-    return String(value || '').trim().replace(/\s+/g, ' ').toLowerCase();
+    return String(value || '')
+        .trim()
+        .replace(/\s+/g, ' ')
+        .replace(/\s*-\s*/g, ' - ')
+        .toLowerCase();
 }
 
 function updateValidationStatus(message, statusClass = '') {
@@ -429,14 +433,3 @@ function setCurrentArchivoId(id) {
 
     console.log('[VALIDADOR] archivo_id:', currentArchivoId);
 }
-
-function normalizeConcept(concept) {
-    return String(concept || '')
-        .trim()
-        .replace(/\s+/g, ' ')
-        .replace(/\s*-\s*/g, ' - ')
-        .toUpperCase();
-}
-
-
-

@@ -238,6 +238,14 @@ router.post(
             const reemplazarSiExiste =
                 String(req.body.reemplazar_si_existe || '').toLowerCase() === 'true';
 
+            const archivoReemplazarId =
+                Number(req.body.archivo_reemplazar_id || 0);
+
+            const confirmacionReemplazo =
+                String(req.body.confirmacion_reemplazo || '')
+                    .trim()
+                    .toUpperCase();
+
             const limpiarCampo = value => {
                 const texto = String(value || '').trim();
 
@@ -261,61 +269,154 @@ router.post(
                     req.body.periodo_fecha
                 );
 
-
             const esArchivoGeneradoConciliacion =
                 /_(Conciliacion|EBT)\./i.test(String(originalname || ''));
 
-            if (reemplazarSiExiste || esArchivoGeneradoConciliacion) {
-                const [existentesPorNombre] = await pool.query(
+            const fechaDocumentoNormalizada =
+                normalizarFechaArchivo(fechaDocumento);
+
+            const parsearNotasArchivo = valor => {
+                try {
+                    return typeof valor === 'string'
+                        ? JSON.parse(valor)
+                        : valor || {};
+                } catch {
+                    return {};
+                }
+            };
+
+            const actualizarArchivoExistente = async id => {
+                await pool.query(
                     `
-        SELECT id, nombre_original
-        FROM archivos_excel
-        WHERE restaurante_id = ?
-          AND LOWER(TRIM(nombre_original)) = LOWER(TRIM(?))
-        ORDER BY id DESC
-        LIMIT 1
-        `,
+                    UPDATE archivos_excel
+                    SET nombre_original = ?,
+                        nombre_servidor = ?,
+                        tamano_bytes = ?,
+                        tipo_mime = ?,
+                        archivo_blob = ?,
+                        ruta_archivo = NULL,
+                        periodo_fecha = ?,
+                        notas = ?,
+                        estado = 'pendiente',
+                        fecha_actualizacion = CURRENT_TIMESTAMP
+                    WHERE id = ?
+                    `,
                     [
-                        restauranteId,
-                        originalname
+                        originalname,
+                        nombreServidor,
+                        size,
+                        mimetype,
+                        buffer,
+                        fechaDocumentoNormalizada || null,
+                        notas,
+                        id
                     ]
                 );
 
-                if (existentesPorNombre.length) {
-                    const archivoExistente = existentesPorNombre[0];
+                return res.json({
+                    success: true,
+                    reemplazado: true,
+                    archivo: {
+                        id
+                    }
+                });
+            };
 
-                    await pool.query(
-                        `
-            UPDATE archivos_excel
-            SET nombre_original = ?,
-                nombre_servidor = ?,
-                tamano_bytes = ?,
-                tipo_mime = ?,
-                archivo_blob = ?,
-                ruta_archivo = NULL,
-                periodo_fecha = ?,
-                notas = ?,
-                estado = 'pendiente',
-                fecha_actualizacion = CURRENT_TIMESTAMP
-            WHERE id = ?
-            `,
-                        [
-                            originalname,
-                            nombreServidor,
-                            size,
-                            mimetype,
-                            buffer,
-                            fechaDocumento || null,
-                            notas,
-                            archivoExistente.id
-                        ]
+            if (archivoReemplazarId) {
+                if (
+                    !reemplazarSiExiste ||
+                    confirmacionReemplazo !== 'REEMPLAZAR'
+                ) {
+                    return res.status(400).json({
+                        error: true,
+                        code: 'CONFIRMACION_REEMPLAZO_REQUERIDA',
+                        message: 'La confirmacion de reemplazo no es valida.'
+                    });
+                }
+
+                const [archivoConfirmado] = await pool.query(
+                    `SELECT id
+                     FROM archivos_excel
+                     WHERE id = ?
+                       AND restaurante_id = ?
+                     LIMIT 1`,
+                    [archivoReemplazarId, restauranteId]
+                );
+
+                if (!archivoConfirmado.length) {
+                    return res.status(409).json({
+                        error: true,
+                        code: 'ARCHIVO_REEMPLAZO_NO_DISPONIBLE',
+                        message: 'El archivo que confirmaste reemplazar ya no esta disponible. Actualiza la pagina e intenta de nuevo.'
+                    });
+                }
+
+                return await actualizarArchivoExistente(archivoReemplazarId);
+            }
+
+            const validarDuplicadosGenerados =
+                Boolean(
+                    tipoDocumento ||
+                    fechaDocumentoNormalizada ||
+                    esArchivoGeneradoConciliacion ||
+                    reemplazarSiExiste
+                );
+
+            if (validarDuplicadosGenerados) {
+                const [candidatos] = await pool.query(
+                    `SELECT id, nombre_original, periodo_fecha, notas
+                     FROM archivos_excel
+                     WHERE restaurante_id = ?
+                     ORDER BY id DESC
+                     LIMIT 500`,
+                    [restauranteId]
+                );
+
+                const duplicado = candidatos.find(candidato => {
+                    const nombreActual = String(candidato.nombre_original || '');
+                    const mismoNombre =
+                        nombreActual.trim().toLowerCase() ===
+                        String(originalname || '').trim().toLowerCase();
+
+                    const meta = parsearNotasArchivo(candidato.notas);
+                    const fechaCandidato = normalizarFechaArchivo(
+                        meta.fecha ||
+                        meta.fecha_conciliacion ||
+                        candidato.periodo_fecha
                     );
 
-                    return res.json({
-                        success: true,
-                        reemplazado: true,
+                    const mismoTipo =
+                        tipoDocumento &&
+                        (
+                            meta.tipoDocumento === tipoDocumento ||
+                            (
+                                tipoDocumento === 'conciliacion' &&
+                                /_Conciliacion\./i.test(nombreActual)
+                            ) ||
+                            (
+                                tipoDocumento === 'ebt' &&
+                                /_EBT\./i.test(nombreActual)
+                            )
+                        );
+
+                    const mismaFecha =
+                        fechaDocumentoNormalizada &&
+                        (
+                            fechaCandidato === fechaDocumentoNormalizada ||
+                            nombreActual.includes(fechaDocumentoNormalizada)
+                        );
+
+                    return mismoNombre || (mismoTipo && mismaFecha);
+                });
+
+                if (duplicado) {
+                    return res.status(409).json({
+                        error: true,
+                        code: 'ARCHIVO_DUPLICADO',
+                        message: 'Ya existe un archivo para este restaurante y documento. Confirma el reemplazo antes de subirlo.',
                         archivo: {
-                            id: archivoExistente.id
+                            id: duplicado.id,
+                            nombre_original: duplicado.nombre_original
                         }
                     });
                 }
@@ -348,7 +449,7 @@ router.post(
                     mimetype,
                     buffer,
                     null,
-                    fechaDocumento || null,
+                    fechaDocumentoNormalizada || null,
                     notas,
                     'pendiente'
                 ]

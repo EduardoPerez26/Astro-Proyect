@@ -1,15 +1,32 @@
 const jwt = require('jsonwebtoken');
 const { pool } = require('../config/database');
 
-const verificarToken = async (req, res, next) => {
-    const authHeader = req.headers['authorization'];
-    if (!authHeader) {
-        return res.status(401).json({ error: true, message: 'Token no proporcionado' });
+function obtenerCookie(req, nombre) {
+    const header = req.headers.cookie || '';
+    const cookies = header.split(';').map(cookie => cookie.trim());
+    const prefijo = `${nombre}=`;
+    const encontrada = cookies.find(cookie => cookie.startsWith(prefijo));
+
+    return encontrada
+        ? decodeURIComponent(encontrada.slice(prefijo.length))
+        : '';
+}
+
+function obtenerTokenAutenticacion(req) {
+    const authHeader = req.headers.authorization || '';
+
+    if (authHeader.startsWith('Bearer ')) {
+        return authHeader.slice(7).trim();
     }
 
-    const token = authHeader.split(' ')[1];
+    return obtenerCookie(req, 'auth_token');
+}
+
+const verificarToken = async (req, res, next) => {
+    const token = obtenerTokenAutenticacion(req);
+
     if (!token) {
-        return res.status(401).json({ error: true, message: 'Token no valido' });
+        return res.status(401).json({ error: true, message: 'Token no proporcionado' });
     }
 
     if (!process.env.JWT_SECRET) {
@@ -29,6 +46,7 @@ const verificarToken = async (req, res, next) => {
         }
 
         req.usuario = decoded;
+        req.authToken = token;
         next();
     } catch (error) {
         return res.status(403).json({ error: true, message: 'Token invalido o expirado' });
@@ -133,6 +151,7 @@ module.exports = {
     verificarToken,
     esAdmin,
     esSupervisorOAdmin,
-    checkPermission
+    checkPermission,
+    obtenerTokenAutenticacion
 };
 

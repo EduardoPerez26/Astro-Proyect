@@ -1540,8 +1540,13 @@ async function consultarTaxRateCDTFATacoBell(location) {
 
         if (backendUrl) {
             try {
+                const token = localStorage.getItem('token');
                 const response = await fetch(backendUrl, {
                     method: 'GET',
+                    credentials: 'include',
+                    headers: token
+                        ? { Authorization: `Bearer ${token}` }
+                        : {},
                     signal: controller.signal
                 });
                 const data = await response.json().catch(() => ({}));

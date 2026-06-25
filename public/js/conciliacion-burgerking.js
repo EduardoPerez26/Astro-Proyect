@@ -2276,8 +2276,13 @@ async function consultarTaxRateCDTFABurgerKing(location) {
 
         if (backendUrl) {
             try {
+                const token = localStorage.getItem('token');
                 const response = await fetch(backendUrl, {
                     method: 'GET',
+                    credentials: 'include',
+                    headers: token
+                        ? { Authorization: `Bearer ${token}` }
+                        : {},
                     signal: controller.signal
                 });
                 const data = await response.json().catch(() => ({}));
@@ -2592,25 +2597,6 @@ function renderTiendasTaxBurgerKing() {
             </tr>
         `;
     }
-}
-
-function swalBurgerKingModal(opciones) {
-    const dialog = document.getElementById('burgerKingTaxStoreDialog');
-
-    if (!window.Swal) {
-        return null;
-    }
-
-    return Swal.fire({
-        target: dialog && dialog.open ? dialog : document.body,
-        heightAuto: false,
-        scrollbarPadding: false,
-        customClass: {
-            container: 'bk-tax-swal-container',
-            popup: 'bk-tax-swal-popup'
-        },
-        ...opciones
-    });
 }
 
 async function refrescarTaxRatesBurgerKing() {
@@ -3135,4 +3121,3 @@ function renderBurgerKingTemplateCsv() {
         burgerKingTemplateCsvData || []
     );
 }
-

@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const { verificarToken, checkPermission } = require('../middleware/auth.middleware');
 
 const {
     fetchTaxRateByCoordinates,
@@ -7,7 +8,7 @@ const {
 
 
 
-router.get('/by-coordinates', async (req, res) => {
+router.get('/by-coordinates', verificarToken, checkPermission('view_archivos'), async (req, res) => {
     try {
         const { latitude, longitude, store, jurisdiction } = req.query;
 

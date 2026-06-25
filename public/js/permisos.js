@@ -51,7 +51,7 @@ const MENU_SECTIONS = [
     {
         id: 'permisos',
         name: 'Permisos',
-        description: 'Configuracion de accesos (solo admin)',
+        description: 'Configuracion de accesos',
         icon: 'fa-key',
         iconClass: 'permisos',
         path: '/views/permisos',
@@ -71,7 +71,7 @@ const MENU_SECTIONS = [
     {
         id: 'usuarios',
         name: 'Usuarios',
-        description: 'Administracion de usuarios (solo admin)',
+        description: 'Administracion de usuarios',
         icon: 'fa-users',
         iconClass: 'usuarios',
         path: '/views/usuarios',
@@ -233,6 +233,10 @@ function renderPermissions() {
             ? currentUser.rol === 'admin'
             : isRequired || currentUser.permisos[section.id] === true;
         const isDisabled = isRequired || (isAdminSection && currentUser.rol !== 'admin');
+        const tags = [
+            isRequired ? 'Requerido' : '',
+            isAdminSection ? 'Solo Admin' : ''
+        ].filter(Boolean);
         
         return `
             <div class="permission-card">
@@ -242,7 +246,12 @@ function renderPermissions() {
                     </div>
                     <div class="permission-details">
                         <h4>${section.name}</h4>
-                        <p>${section.description}${isRequired ? ' (Requerido)' : ''}${isAdminSection ? ' (Solo Admin)' : ''}</p>
+                        <p>${section.description}</p>
+                        ${tags.length ? `
+                            <div class="permission-tags">
+                                ${tags.map(tag => `<span>${tag}</span>`).join('')}
+                            </div>
+                        ` : ''}
                     </div>
                 </div>
                 <label class="toggle-switch">

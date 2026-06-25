@@ -11,16 +11,14 @@ document.addEventListener('DOMContentLoaded', async function() {
     // Verificar autenticacion
     verificarAutenticacion();
 
-    // Refrescar departamento y permisos desde la base de datos.
-    await actualizarContextoUsuario();
-
-    // Cargar info del usuario en el header y sidebar
+    // Aplicar primero el contexto local para evitar que el menu completo parpadee.
     cargarInfoUsuario();
+    aplicarPermisos({ verificarPagina: false });
 
-    // Aplicar permisos al menu
-    aplicarPermisos();
-    
-    
+    // Refrescar departamento y permisos desde la base de datos y volver a filtrar.
+    await actualizarContextoUsuario();
+    cargarInfoUsuario();
+    aplicarPermisos({ verificarPagina: true });
 
     // Restaurar estado del sidebar
     const sidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
@@ -106,13 +104,14 @@ async function cerrarSesion() {
     if (!result.isConfirmed) return;
     
     // Intentar cerrar sesion en el servidor
-    if (token && !localStorage.getItem('modoOffline')) {
+    if (window.API_URL && !localStorage.getItem('modoOffline')) {
         try {
             await fetch(`${window.API_URL}/auth/logout`, {
                 method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
+                credentials: 'include',
+                headers: token
+                    ? { 'Authorization': `Bearer ${token}` }
+                    : {}
             });
         } catch (error) {
             // Silenciar error de logout
@@ -145,11 +144,14 @@ async function actualizarContextoUsuario() {
     const token = localStorage.getItem('token');
     const apiUrl = window.API_URL;
 
-    if (!token || !apiUrl || localStorage.getItem('modoOffline')) return;
+    if (!apiUrl || localStorage.getItem('modoOffline')) return;
 
     try {
         const response = await fetch(`${apiUrl}/auth/verify`, {
-            headers: { Authorization: `Bearer ${token}` }
+            credentials: 'include',
+            headers: token
+                ? { Authorization: `Bearer ${token}` }
+                : {}
         });
         const data = await response.json().catch(() => ({}));
 
@@ -226,7 +228,7 @@ function cargarInfoUsuario() {
 }
 
 // Aplicar permisos al menu del sidebar
-function aplicarPermisos() {
+function aplicarPermisos(opciones = {}) {
     const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
     const permisos = obtenerPermisos(usuario);
     
@@ -248,14 +250,21 @@ function aplicarPermisos() {
     // Ocultar secciones vacias
     const sections = document.querySelectorAll('.sidebar-section');
     sections.forEach(section => {
+        section.style.display = '';
         const visibleItems = section.querySelectorAll('.sidebar-menu-item:not(.hidden)');
         if (visibleItems.length === 0) {
             section.style.display = 'none';
         }
     });
+
+    document
+        .getElementById('sidebar')
+        ?.classList.remove('sidebar-permissions-pending');
     
     // Verificar acceso a la pagina actual
-    verificarAccesoPagina(permisos);
+    if (opciones.verificarPagina !== false) {
+        verificarAccesoPagina(permisos);
+    }
 }
 
 // Obtener permisos del usuario

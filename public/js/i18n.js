@@ -13,6 +13,7 @@
         'General': 'General',
         'Tiendas': 'Stores',
         'Documentos': 'Documents',
+        'Perfil': 'Profile',
         'Historial': 'History',
         'Administracion': 'Administration',
         'Dashboard': 'Dashboard',
@@ -75,6 +76,69 @@
         'Mostrando': 'Showing',
         'documentos': 'documents',
         'Got it': 'Got it',
+        'Modo Offline': 'Offline Mode',
+        'Sin nombre': 'No name',
+        'Sin usuario': 'No user',
+        'Usuario eliminado': 'Deleted user',
+        'Sin restaurante': 'No restaurant',
+        'No especificadas': 'Not specified',
+        'Archivo operativo': 'Operating file',
+        'Archivo existente': 'Existing file',
+        'Ya existe un archivo para esta fecha': 'A file already exists for this date',
+        'Revisa la informacion antes de reemplazarlo.': 'Review the information before replacing it.',
+        'Ya hay un archivo guardado para esta fecha operativa.': 'A file is already saved for this operating date.',
+        'Archivo actual': 'Current file',
+        'Archivo nuevo': 'New file',
+        'Reemplazar archivo': 'Replace file',
+        'Si continuas, el archivo actual sera reemplazado.': 'If you continue, the current file will be replaced.',
+        'El archivo anterior sera sustituido por el nuevo en el servidor.': 'The previous file will be replaced by the new one on the server.',
+        'Escribe': 'Type',
+        'para confirmar.': 'to confirm.',
+        'Debes escribir REEMPLAZAR para continuar': 'You must type REEMPLAZAR to continue',
+        'Referencia de comparacion': 'Comparison reference',
+        'Referencia de comparación': 'Comparison reference',
+        'Referencia anterior': 'Previous reference',
+        'ARCHIVO REGISTRADO': 'REGISTERED FILE',
+        'INFORMACION TECNICA': 'TECHNICAL INFORMATION',
+        'INFORMACIÓN TECNICA': 'TECHNICAL INFORMATION',
+        'Datos del archivo': 'File data',
+        'Identificador': 'Identifier',
+        'Uso en el sistema': 'System use',
+        'Hojas incluidas': 'Included sheets',
+        'NOTAS': 'NOTES',
+        'Fecha de carga': 'Upload date',
+        'Tamaño': 'Size',
+        'Tamano': 'Size',
+        'Abriendo conciliación...': 'Opening reconciliation...',
+        'Abriendo conciliacion...': 'Opening reconciliation...',
+        'Leyendo el archivo Excel': 'Reading the Excel file',
+        'No se pudo abrir la conciliación': 'Could not open the reconciliation',
+        'No se pudo abrir la conciliacion': 'Could not open the reconciliation',
+        'Falta el modal de vista previa': 'Preview modal is missing',
+        'La vista previa no está disponible en modo offline': 'Preview is not available in offline mode',
+        'No se puede abrir el Excel': 'Excel cannot be opened',
+        'No hay movimientos registrados.': 'No movements recorded.',
+        'No hay actividad de usuarios.': 'No user activity.',
+        'Cerrar sesion activa': 'Close active session',
+        'Sesion cerrada': 'Session closed',
+        'No se pudo cerrar': 'Could not close',
+        'Cerrar sesion': 'Log out',
+        'Inicios de sesion': 'Logins',
+        'activo': 'active',
+        'cerrado': 'closed',
+        'No hay restaurantes configurados.': 'No restaurants configured.',
+        'Habilitar': 'Enable',
+        'Deshabilitar': 'Disable',
+        'Si, habilitar': 'Yes, enable',
+        'Sí, habilitar': 'Yes, enable',
+        'Si, deshabilitar': 'Yes, disable',
+        'Sí, deshabilitar': 'Yes, disable',
+        'Si, activar': 'Yes, activate',
+        'Si, desactivar': 'Yes, deactivate',
+        'Editar Usuario': 'Edit User',
+        'Sin departamento': 'No department',
+        'Todos': 'All',
+        'Registrada': 'Registered',
 
         // ----- Menu lateral (abrir/cerrar) -----
         'Abrir/cerrar menu': 'Open/close menu',
@@ -194,6 +258,7 @@
         'Libro de conciliación de ventas': 'Sales reconciliation ledger',
         'Carga fuentes operativas, valida diferencias y prepara el asiento para revisión contable.': 'Load operating sources, validate differences and prepare the entry for accounting review.',
         'Seleccion': 'Selection',
+        'Define restaurante y template.': 'Define restaurant and template.',
         'Define restaurante, template y fecha de trabajo.': 'Define restaurant, template and working date.',
         'Template': 'Template',
         'Selecciona primero un restaurante': 'Select a restaurant first',
@@ -258,6 +323,43 @@
         '¿Dónde deseas guardar el archivo?': 'Where do you want to save the file?',
         'Archivo descargado': 'File downloaded',
         'Archivo descargado y conciliación registrada': 'File downloaded and reconciliation recorded',
+        'Conciliacion': 'Reconciliation',
+        'Tiendas y tax rate': 'Stores and tax rate',
+        'Administra el listado local de tiendas que usa la conciliacion. CDTFA se actualiza solo cuando presionas el boton de actualizar.': 'Manage the local store list used by reconciliation. CDTFA updates only when you press the update button.',
+        'Administra el listado local de tiendas que usa la conciliacion.': 'Manage the local store list used by reconciliation.',
+        'CDTFA se actualiza solo cuando presionas el boton de actualizar.': 'CDTFA updates only when you press the update button.',
+        'Datos de tienda': 'Store details',
+        'Nueva tienda': 'New store',
+        'Agregar tienda': 'Add store',
+        'Guardar tienda': 'Save store',
+        'Actualizar rates CDTFA': 'Update CDTFA rates',
+        'Restaurar catalogo': 'Restore catalog',
+        'Restaurar catálogo': 'Restore catalog',
+        'Listo': 'Done',
+        'Ubicacion': 'Location',
+        'Ubicación': 'Location',
+        'Coordenadas': 'Coordinates',
+        'Direccion': 'Address',
+        'Dirección': 'Address',
+        'Ciudad': 'City',
+        'Jurisdiccion': 'Jurisdiction',
+        'Jurisdicción': 'Jurisdiction',
+        'Tax Rate': 'Tax Rate',
+        'Override': 'Override',
+        'Los cambios se guardan en este navegador con localStorage.': 'Changes are saved in this browser with localStorage.',
+        'Captura los datos de la tienda nueva.': 'Enter the new store details.',
+        'Editando tienda seleccionada.': 'Editing the selected store.',
+        'Edicion cancelada.': 'Edit canceled.',
+        'Tienda guardada correctamente.': 'Store saved successfully.',
+        'CSV no valido': 'Invalid CSV',
+        'Los datos no tienen una estructura de columnas valida para exportar.': 'The data does not have a valid column structure for export.',
+        'No se encontraron columnas para exportar.': 'No columns were found to export.',
+        'Estructura Intacct invalida': 'Invalid Intacct structure',
+        'Estructura Intacct inválida': 'Invalid Intacct structure',
+        'No se descargo el archivo porque sus columnas no coinciden con el template.': 'The file was not downloaded because its columns do not match the template.',
+        'No se descargó el archivo porque sus columnas no coinciden con el template.': 'The file was not downloaded because its columns do not match the template.',
+        'La fila': 'Row',
+        'no tiene una estructura valida.': 'does not have a valid structure.',
         'Sesión expirada': 'Session expired',
         'Restaurante requerido': 'Restaurant required',
         'Selecciona un restaurante': 'Select a restaurant',
@@ -347,6 +449,15 @@
         'Permisos restablecidos': 'Permissions reset',
         'Se restauraron los permisos originales.': 'The original permissions were restored.',
         'Selecciona una ventana': 'Select a window',
+        'Sesiones, movimientos y actividad general del sistema': 'Sessions, movements and general system activity',
+        'Gestion de restaurantes y sucursales': 'Restaurant and store management',
+        'Editor y validador de Excel': 'Excel editor and validator',
+        'Configuracion de cuenta personal': 'Personal account settings',
+        'Configuracion de accesos': 'Access settings',
+        'Registro de actividades y cambios': 'Activity and change log',
+        'Administracion de usuarios': 'User administration',
+        'Disponibilidad operativa por mantenimiento o fallas': 'Operational availability for maintenance or incidents',
+        'Solo Admin': 'Admin only',
         'El usuario debe tener acceso al menos a Tiendas, Documentos o Historial.': 'The user must have access to at least Stores, Documents or History.',
         'Permisos guardados': 'Permissions saved',
         'Los permisos se actualizaron correctamente.': 'Permissions were updated successfully.',
@@ -424,6 +535,13 @@
         ['No se guardó ningún cambio.', 'No changes were saved.'],
         ['La comparación quedará pendiente hasta registrarlo en el servidor.', 'The comparison will remain pending until it is recorded on the server.'],
         ['Validacion', 'Validation'],
+        ['Editando tienda', 'Editing store'],
+        ['La fila', 'Row'],
+        ['no tiene una estructura valida.', 'does not have a valid structure.'],
+        ['tiendas configuradas', 'stores configured'],
+        ['tienda configurada', 'store configured'],
+        ['Genera la conciliación antes de descargar el archivo.', 'Generate the reconciliation before downloading the file.'],
+        ['Genera la conciliaciÃ³n antes de descargar el archivo.', 'Generate the reconciliation before downloading the file.'],
         ['Hola,', 'Hello,'],
         ['Mostrando', 'Showing'],
         ['usuarios', 'users']
@@ -512,6 +630,71 @@
         if (document.body) walk(document.body);
     }
 
+    function translateIfEnglish(value) {
+        if (getLang() !== 'en') return value;
+        if (typeof value === 'string') return translate(value);
+        return value;
+    }
+
+    function translateSwalOptions(options) {
+        if (!options || typeof options !== 'object' || options.nodeType) {
+            return options;
+        }
+
+        var copy = {};
+        var textKeys = [
+            'title',
+            'titleText',
+            'text',
+            'html',
+            'footer',
+            'confirmButtonText',
+            'denyButtonText',
+            'cancelButtonText',
+            'inputLabel',
+            'inputPlaceholder',
+            'validationMessage'
+        ];
+
+        Object.keys(options).forEach(function (key) {
+            copy[key] = textKeys.indexOf(key) !== -1
+                ? translateIfEnglish(options[key])
+                : options[key];
+        });
+
+        return copy;
+    }
+
+    function patchSweetAlert() {
+        if (!window.Swal || window.Swal.__i18nPatched) return;
+
+        var originalFire = window.Swal.fire.bind(window.Swal);
+        var originalValidation =
+            typeof window.Swal.showValidationMessage === 'function'
+                ? window.Swal.showValidationMessage.bind(window.Swal)
+                : null;
+
+        window.Swal.fire = function () {
+            var args = Array.prototype.slice.call(arguments);
+
+            if (args.length === 1 && typeof args[0] === 'object') {
+                args[0] = translateSwalOptions(args[0]);
+            } else {
+                args = args.map(translateIfEnglish);
+            }
+
+            return originalFire.apply(window.Swal, args);
+        };
+
+        if (originalValidation) {
+            window.Swal.showValidationMessage = function (message) {
+                return originalValidation(translateIfEnglish(message));
+            };
+        }
+
+        window.Swal.__i18nPatched = true;
+    }
+
     function startObserver() {
         if (observer || !window.MutationObserver) return;
         observer = new MutationObserver(function (mutations) {
@@ -579,6 +762,7 @@
     function init() {
         currentLang = getLang();
         document.documentElement.setAttribute('lang', currentLang);
+        patchSweetAlert();
         if (currentLang === 'en') {
             translateDocument();
             startObserver();
@@ -589,7 +773,12 @@
     window.appI18n = {
         getLang: getLang,
         setLanguage: setLanguage,
-        translate: translate
+        translate: translate,
+        refresh: translateDocument
+    };
+
+    window.t = function (text) {
+        return getLang() === 'en' ? translate(text) : text;
     };
 
     if (document.readyState === 'loading') {
