@@ -22,6 +22,13 @@ function obtenerTokenAutenticacion(req) {
     return obtenerCookie(req, 'auth_token');
 }
 
+function esErrorEsquemaSesiones(error) {
+    const detalle = String(error.sqlMessage || error.message || error.sql || '');
+
+    return ['ER_NO_SUCH_TABLE', 'ER_BAD_FIELD_ERROR'].includes(error.code)
+        && /sesiones/i.test(detalle);
+}
+
 const verificarToken = async (req, res, next) => {
     const token = obtenerTokenAutenticacion(req);
 
@@ -36,13 +43,24 @@ const verificarToken = async (req, res, next) => {
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-        const [sesiones] = await pool.query(
-            'SELECT id FROM sesiones WHERE token = ? AND activa = TRUE LIMIT 1',
-            [token]
-        );
+        try {
+            const [sesiones] = await pool.query(
+                'SELECT id FROM sesiones WHERE token = ? AND activa = TRUE LIMIT 1',
+                [token]
+            );
 
-        if (sesiones.length === 0) {
-            return res.status(403).json({ error: true, message: 'Token invalido o expirado' });
+            if (sesiones.length === 0) {
+                return res.status(403).json({ error: true, message: 'Token invalido o expirado' });
+            }
+        } catch (error) {
+            if (!esErrorEsquemaSesiones(error)) {
+                throw error;
+            }
+
+            console.warn(
+                'Validacion de sesion omitida porque falta actualizar la tabla sesiones.',
+                error.code
+            );
         }
 
         req.usuario = decoded;
