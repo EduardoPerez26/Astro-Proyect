@@ -23,7 +23,11 @@ function obtenerTokenAutenticacion(req) {
 }
 
 function esErrorEsquemaSesiones(error) {
-    const detalle = String(error.sqlMessage || error.message || error.sql || '');
+    const detalle = [
+        error.sqlMessage,
+        error.message,
+        error.sql
+    ].filter(Boolean).join(' ');
 
     return ['ER_NO_SUCH_TABLE', 'ER_BAD_FIELD_ERROR'].includes(error.code)
         && /sesiones/i.test(detalle);

@@ -112,7 +112,13 @@ function esErrorEsquema(error) {
 }
 
 function esErrorEsquemaSesiones(error) {
-    return esErrorEsquema(error) && /sesiones/i.test(String(error.sqlMessage || error.message || error.sql || ''));
+    const detalle = [
+        error.sqlMessage,
+        error.message,
+        error.sql
+    ].filter(Boolean).join(' ');
+
+    return esErrorEsquema(error) && /sesiones/i.test(detalle);
 }
 
 async function registrarSesion(usuarioId, token, req) {
