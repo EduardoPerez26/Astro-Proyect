@@ -91,4 +91,40 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
         @media(max-width:1200px){.comparison-history-filters{grid-template-columns:repeat(3,minmax(0,1fr))}.comparison-history-item{grid-template-columns:auto minmax(200px,1fr) auto}.comparison-metrics{grid-column:2/-1}.comparison-item-actions{grid-column:3;grid-row:1}.comparison-history-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
         @media(max-width:720px){.comparison-history-hero{align-items:flex-start;flex-direction:column}.comparison-history-filters{grid-template-columns:1fr}.comparison-history-stats{grid-template-columns:1fr}.comparison-history-item{grid-template-columns:auto minmax(0,1fr)}.comparison-metrics{grid-column:1/-1;grid-template-columns:repeat(2,minmax(0,1fr))}.comparison-item-actions{grid-column:1/-1;grid-row:auto}.comparison-item-actions button{flex:1}.comparison-date-header{grid-template-columns:auto 1fr}.comparison-date-header>strong{grid-column:2}.comparison-detail-summary{grid-template-columns:repeat(2,minmax(0,1fr))}}
     </style>
+    <style is:inline>
+        .comparison-detail-overlay.active {
+            animation: appBackdropIn .18s ease-out both;
+        }
+
+        .comparison-detail-modal {
+            border: 1px solid #d4dfeb;
+            border-top: 5px solid #102a43;
+            border-radius: 12px;
+            box-shadow: 0 30px 80px -36px rgba(8, 31, 51, .72);
+            animation: appModalIn .22s cubic-bezier(.2, .8, .2, 1) both;
+        }
+
+        .comparison-detail-modal > header {
+            border-bottom: 1px solid #dbe5ef;
+            color: #102a43;
+            background:
+                linear-gradient(135deg, rgba(16, 42, 67, .07), transparent 58%),
+                #fff;
+        }
+
+        .comparison-detail-modal > header h2 {
+            color: #102a43;
+            font-family: 'Source Serif 4', Georgia, serif;
+        }
+
+        .comparison-detail-modal > header p {
+            color: #60758a;
+        }
+
+        .comparison-detail-modal > header button {
+            border: 1px solid #d1ddea;
+            color: #42617c;
+            background: #fff;
+        }
+    </style>
 </DashboardLayout>

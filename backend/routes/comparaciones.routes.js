@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { pool } = require('../config/database');
-const { verificarToken, esAdmin } = require('../middleware/auth.middleware');
+const { verificarToken, esAdmin, checkPermission } = require('../middleware/auth.middleware');
 
 function errorHistorial(error, res) {
     if (['ER_NO_SUCH_TABLE', 'ER_BAD_FIELD_ERROR'].includes(error.code)) {
@@ -18,7 +18,7 @@ function errorHistorial(error, res) {
     });
 }
 
-router.get('/', verificarToken, async (req, res) => {
+router.get('/', verificarToken, checkPermission('view_validaciones'), async (req, res) => {
     try {
         const {
             restaurante_id,
@@ -29,22 +29,32 @@ router.get('/', verificarToken, async (req, res) => {
         } = req.query;
         const condiciones = ['1 = 1'];
         const parametros = [];
+        const condicionesEstadisticas = ['1 = 1'];
+        const parametrosEstadisticas = [];
 
         if (restaurante_id) {
             condiciones.push('ca.restaurante_id = ?');
             parametros.push(restaurante_id);
+            condicionesEstadisticas.push('ca.restaurante_id = ?');
+            parametrosEstadisticas.push(restaurante_id);
         }
         if (estado) {
             condiciones.push('ca.estado = ?');
             parametros.push(estado);
+            condicionesEstadisticas.push('ca.estado = ?');
+            parametrosEstadisticas.push(estado);
         }
         if (fecha_desde) {
             condiciones.push('DATE(ca.fecha_comparacion) >= ?');
             parametros.push(fecha_desde);
+            condicionesEstadisticas.push('DATE(ca.fecha_comparacion) >= ?');
+            parametrosEstadisticas.push(fecha_desde);
         }
         if (fecha_hasta) {
             condiciones.push('DATE(ca.fecha_comparacion) <= ?');
             parametros.push(fecha_hasta);
+            condicionesEstadisticas.push('DATE(ca.fecha_comparacion) <= ?');
+            parametrosEstadisticas.push(fecha_hasta);
         }
         if (busqueda?.trim()) {
             condiciones.push(`(
@@ -57,6 +67,12 @@ router.get('/', verificarToken, async (req, res) => {
             )`);
             const termino = `%${busqueda.trim()}%`;
             parametros.push(termino, termino, termino, termino);
+        }
+        if (req.usuario?.rol !== 'admin' && req.departamento?.id) {
+            condiciones.push('(ca.departamento_id = ? OR ca.departamento_id IS NULL)');
+            parametros.push(req.departamento.id);
+            condicionesEstadisticas.push('(ca.departamento_id = ? OR ca.departamento_id IS NULL)');
+            parametrosEstadisticas.push(req.departamento.id);
         }
 
         const [comparaciones] = await pool.query(
@@ -92,7 +108,9 @@ router.get('/', verificarToken, async (req, res) => {
                     COALESCE(SUM(estado = 'sin_cambios'), 0) AS sin_cambios,
                     COALESCE(SUM(estado = 'primera_carga'), 0) AS primeras_cargas,
                     COALESCE(SUM(tiendas_con_diferencias), 0) AS tiendas_con_diferencias
-             FROM comparaciones_archivos`
+             FROM comparaciones_archivos ca
+             WHERE ${condicionesEstadisticas.join(' AND ')}`,
+            parametrosEstadisticas
         );
 
         const estadisticas = estadisticasRows[0] || {};
@@ -119,7 +137,7 @@ router.get('/', verificarToken, async (req, res) => {
     }
 });
 
-router.get('/:id', verificarToken, async (req, res) => {
+router.get('/:id', verificarToken, checkPermission('view_validaciones'), async (req, res) => {
     try {
         const [comparaciones] = await pool.query(
             `SELECT ca.*,
@@ -132,8 +150,13 @@ router.get('/:id', verificarToken, async (req, res) => {
              LEFT JOIN usuarios u ON u.id = ca.usuario_id
              LEFT JOIN archivos_excel a ON a.id = ca.archivo_referencia_id
              WHERE ca.id = ?
+               ${req.usuario?.rol !== 'admin' && req.departamento?.id
+                    ? 'AND (ca.departamento_id = ? OR ca.departamento_id IS NULL)'
+                    : ''}
              LIMIT 1`,
-            [req.params.id]
+            req.usuario?.rol !== 'admin' && req.departamento?.id
+                ? [req.params.id, req.departamento.id]
+                : [req.params.id]
         );
 
         if (!comparaciones.length) {

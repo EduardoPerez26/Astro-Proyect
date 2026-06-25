@@ -1,7 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const { pool } = require('../config/database');
-const { verificarToken, esAdmin } = require('../middleware/auth.middleware');
+const { verificarToken, esAdmin, checkPermission } = require('../middleware/auth.middleware');
+const { tokenHash, isSchemaError } = require('../services/securityAudit.service');
 
 const PERIODOS = {
     '30d': 30,
@@ -26,7 +27,175 @@ function numero(valor) {
     return Number(valor || 0);
 }
 
-router.get('/resumen', verificarToken, async (req, res) => {
+async function consultaSegura(sql, params = [], fallback = []) {
+    try {
+        const [rows] = await pool.query(sql, params);
+        return rows;
+    } catch (error) {
+        if (isSchemaError(error)) {
+            return fallback;
+        }
+
+        throw error;
+    }
+}
+
+async function obtenerDashboardAdminBasico(tokenActual) {
+    const [
+        usuariosRows,
+        sesionesRows,
+        archivosRows,
+        validacionesRows,
+        sesionesRecientes,
+        movimientos,
+        actividadUsuarios
+    ] = await Promise.all([
+        consultaSegura(
+            `SELECT COUNT(*) AS total,
+                    COALESCE(SUM(activo = TRUE), 0) AS activos,
+                    COALESCE(SUM(rol = 'admin'), 0) AS administradores
+             FROM usuarios`,
+            [],
+            [{ total: 0, activos: 0, administradores: 0 }]
+        ),
+        consultaSegura(
+            `SELECT COALESCE(SUM(activa = TRUE AND fecha_expiracion > NOW()), 0) AS activas,
+                    COALESCE(SUM(DATE(fecha_creacion) = CURDATE()), 0) AS inicios_hoy,
+                    COALESCE(SUM(fecha_creacion >= DATE_SUB(NOW(), INTERVAL 7 DAY)), 0) AS inicios_7_dias
+             FROM sesiones`,
+            [],
+            [{ activas: 0, inicios_hoy: 0, inicios_7_dias: 0 }]
+        ),
+        consultaSegura(
+            `SELECT COUNT(*) AS total,
+                    COALESCE(SUM(DATE(fecha_subida) = CURDATE()), 0) AS hoy,
+                    COALESCE(SUM(fecha_subida >= DATE_SUB(NOW(), INTERVAL 7 DAY)), 0) AS ultimos_7_dias
+             FROM archivos_excel`,
+            [],
+            [{ total: 0, hoy: 0, ultimos_7_dias: 0 }]
+        ),
+        consultaSegura(
+            `SELECT COUNT(*) AS total,
+                    COALESCE(SUM(DATE(fecha_validacion) = CURDATE()), 0) AS hoy,
+                    COALESCE(SUM(resultado IN ('con_errores', 'fallido')), 0) AS con_incidencias
+             FROM historial_validaciones`,
+            [],
+            [{ total: 0, hoy: 0, con_incidencias: 0 }]
+        ),
+        consultaSegura(
+            `SELECT s.id,
+                    s.ip_address,
+                    s.user_agent,
+                    s.fecha_creacion,
+                    s.fecha_expiracion,
+                    (s.activa = TRUE AND s.fecha_expiracion > NOW()) AS activa,
+                    (s.token = ?) AS sesion_actual,
+                    u.id AS usuario_id,
+                    u.nombre_completo AS usuario_nombre,
+                    u.username,
+                    u.rol,
+                    NULL AS departamento_nombre
+             FROM sesiones s
+             JOIN usuarios u ON u.id = s.usuario_id
+             ORDER BY s.fecha_creacion DESC, s.id DESC
+             LIMIT 20`,
+            [tokenActual],
+            []
+        ),
+        consultaSegura(
+            `SELECT movimientos.*
+             FROM (
+                SELECT CONCAT('sesion-', s.id) AS id,
+                       'sesion' AS tipo,
+                       'Inicio de sesion' AS accion,
+                       u.nombre_completo AS usuario_nombre,
+                       u.username,
+                       s.fecha_creacion AS fecha,
+                       CONCAT_WS(' | ', s.ip_address, LEFT(s.user_agent, 90)) AS detalle,
+                       IF(s.activa = TRUE AND s.fecha_expiracion > NOW(), 'activo', 'cerrado') AS estado
+                FROM sesiones s
+                JOIN usuarios u ON u.id = s.usuario_id
+
+                UNION ALL
+
+                SELECT CONCAT('archivo-', a.id) AS id,
+                       'archivo' AS tipo,
+                       'Archivo guardado' AS accion,
+                       u.nombre_completo AS usuario_nombre,
+                       u.username,
+                       a.fecha_subida AS fecha,
+                       CONCAT_WS(' | ', a.nombre_original, r.nombre) AS detalle,
+                       a.estado AS estado
+                FROM archivos_excel a
+                LEFT JOIN usuarios u ON u.id = a.usuario_id
+                LEFT JOIN restaurantes r ON r.id = a.restaurante_id
+             ) movimientos
+             ORDER BY movimientos.fecha DESC
+             LIMIT 30`,
+            [],
+            []
+        ),
+        consultaSegura(
+            `SELECT u.id,
+                    u.nombre_completo AS nombre,
+                    u.username,
+                    u.rol,
+                    u.activo,
+                    NULL AS departamento_nombre,
+                    COUNT(DISTINCT s.id) AS total_sesiones,
+                    COUNT(DISTINCT a.id) AS total_archivos,
+                    MAX(s.fecha_creacion) AS ultimo_acceso
+             FROM usuarios u
+             LEFT JOIN sesiones s ON s.usuario_id = u.id
+             LEFT JOIN archivos_excel a ON a.usuario_id = u.id
+             GROUP BY u.id, u.nombre_completo, u.username, u.rol, u.activo
+             ORDER BY ultimo_acceso DESC, u.nombre_completo ASC
+             LIMIT 12`,
+            [],
+            []
+        )
+    ]);
+
+    const usuarios = usuariosRows[0] || {};
+    const sesiones = sesionesRows[0] || {};
+    const archivos = archivosRows[0] || {};
+    const validaciones = validacionesRows[0] || {};
+
+    return {
+        success: true,
+        modo_compatibilidad: true,
+        generado_en: new Date().toISOString(),
+        resumen: {
+            usuarios_total: numero(usuarios.total),
+            usuarios_activos: numero(usuarios.activos),
+            administradores: numero(usuarios.administradores),
+            sesiones_activas: numero(sesiones.activas),
+            inicios_hoy: numero(sesiones.inicios_hoy),
+            inicios_7_dias: numero(sesiones.inicios_7_dias),
+            archivos_total: numero(archivos.total),
+            archivos_hoy: numero(archivos.hoy),
+            archivos_7_dias: numero(archivos.ultimos_7_dias),
+            validaciones_total: numero(validaciones.total),
+            validaciones_hoy: numero(validaciones.hoy),
+            validaciones_con_incidencias: numero(validaciones.con_incidencias),
+            departamentos_total: 0,
+            departamentos_activos: 0
+        },
+        sesiones_recientes: sesionesRecientes.map(row => ({
+            ...row,
+            activa: Boolean(row.activa),
+            sesion_actual: Boolean(row.sesion_actual)
+        })),
+        movimientos,
+        actividad_usuarios: actividadUsuarios.map(row => ({
+            ...row,
+            total_sesiones: numero(row.total_sesiones),
+            total_archivos: numero(row.total_archivos)
+        }))
+    };
+}
+
+router.get('/resumen', verificarToken, checkPermission('view_dashboard'), async (req, res) => {
     try {
         const periodo = Object.hasOwn(PERIODOS, req.query.periodo)
             ? req.query.periodo
@@ -192,10 +361,12 @@ router.get('/resumen', verificarToken, async (req, res) => {
 });
 
 router.get('/admin', verificarToken, esAdmin, async (req, res) => {
-    try {
-        const tokenActual =
-            req.headers.authorization?.split(' ')[1] || '';
+    const tokenActual =
+        req.authToken ||
+        req.headers.authorization?.split(' ')[1] ||
+        '';
 
+    try {
         const [
             [usuariosRows],
             [sesionesRows],
@@ -358,6 +529,15 @@ router.get('/admin', verificarToken, esAdmin, async (req, res) => {
         });
     } catch (error) {
         console.error('Error cargando dashboard administrativo:', error);
+
+        if (isSchemaError(error)) {
+            try {
+                return res.json(await obtenerDashboardAdminBasico(tokenActual));
+            } catch (fallbackError) {
+                console.error('Error cargando dashboard admin basico:', fallbackError);
+            }
+        }
+
         res.status(500).json({
             success: false,
             message: 'No se pudo cargar el dashboard administrativo',
@@ -370,7 +550,10 @@ router.patch('/admin/sessions/:sessionId/logout', verificarToken, esAdmin, async
     try {
         const sessionId = Number(req.params.sessionId);
         const tokenActual =
-            req.headers.authorization?.split(' ')[1] || '';
+            req.authToken ||
+            req.headers.authorization?.split(' ')[1] ||
+            '';
+        const hashActual = tokenHash(tokenActual);
 
         if (!Number.isInteger(sessionId) || sessionId <= 0) {
             return res.status(400).json({
@@ -379,14 +562,29 @@ router.patch('/admin/sessions/:sessionId/logout', verificarToken, esAdmin, async
             });
         }
 
-        const [sesiones] = await pool.query(
-            `SELECT s.id, s.token, s.activa, u.nombre_completo AS usuario_nombre
-             FROM sesiones s
-             JOIN usuarios u ON u.id = s.usuario_id
-             WHERE s.id = ?
-             LIMIT 1`,
-            [sessionId]
-        );
+        let sesiones;
+
+        try {
+            [sesiones] = await pool.query(
+                `SELECT s.id, s.token, s.token_hash, s.activa, u.nombre_completo AS usuario_nombre
+                 FROM sesiones s
+                 JOIN usuarios u ON u.id = s.usuario_id
+                 WHERE s.id = ?
+                 LIMIT 1`,
+                [sessionId]
+            );
+        } catch (error) {
+            if (error.code !== 'ER_BAD_FIELD_ERROR') throw error;
+
+            [sesiones] = await pool.query(
+                `SELECT s.id, s.token, NULL AS token_hash, s.activa, u.nombre_completo AS usuario_nombre
+                 FROM sesiones s
+                 JOIN usuarios u ON u.id = s.usuario_id
+                 WHERE s.id = ?
+                 LIMIT 1`,
+                [sessionId]
+            );
+        }
 
         const sesion = sesiones[0];
 
@@ -397,7 +595,7 @@ router.patch('/admin/sessions/:sessionId/logout', verificarToken, esAdmin, async
             });
         }
 
-        if (sesion.token === tokenActual) {
+        if (sesion.token === tokenActual || sesion.token_hash === hashActual) {
             return res.status(400).json({
                 success: false,
                 message: 'No puedes cerrar la sesion actual desde este panel'
@@ -411,13 +609,28 @@ router.patch('/admin/sessions/:sessionId/logout', verificarToken, esAdmin, async
             });
         }
 
-        await pool.query(
-            `UPDATE sesiones
-             SET activa = FALSE,
-                 fecha_expiracion = NOW()
-             WHERE id = ?`,
-            [sessionId]
-        );
+        try {
+            await pool.query(
+                `UPDATE sesiones
+                 SET activa = FALSE,
+                     fecha_expiracion = NOW(),
+                     fecha_revocacion = NOW(),
+                     revocada_por = ?,
+                     motivo_revocacion = 'cerrada_por_admin'
+                 WHERE id = ?`,
+                [req.usuario.id, sessionId]
+            );
+        } catch (error) {
+            if (error.code !== 'ER_BAD_FIELD_ERROR') throw error;
+
+            await pool.query(
+                `UPDATE sesiones
+                 SET activa = FALSE,
+                     fecha_expiracion = NOW()
+                 WHERE id = ?`,
+                [sessionId]
+            );
+        }
 
         res.json({
             success: true,

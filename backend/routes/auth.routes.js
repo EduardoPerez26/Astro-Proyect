@@ -4,6 +4,13 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { pool } = require('../config/database');
 const { verificarToken, esAdmin } = require('../middleware/auth.middleware');
+const { buildDepartmentContext } = require('../config/departments');
+const {
+    tokenHash,
+    registrarEventoSeguridad,
+    registrarIntentoLogin,
+    contarIntentosFallidos
+} = require('../services/securityAudit.service');
 
 const PERMISOS_ADMIN = {
     dashboardAdmin: true,
@@ -28,8 +35,7 @@ function parsearJson(valor) {
 }
 
 function construirContextoUsuario(usuario) {
-    const tieneDepartamento = Boolean(usuario.departamento_id);
-    const departamentoActivo = tieneDepartamento && usuario.departamento_activo !== 0;
+    const departamento = buildDepartmentContext(usuario);
     let permisos;
 
     if (usuario.rol === 'admin') {
@@ -61,14 +67,7 @@ function construirContextoUsuario(usuario) {
         email: usuario.email,
         rol: usuario.rol,
         permisos,
-        departamento: tieneDepartamento
-            ? {
-                id: usuario.departamento_id,
-                codigo: usuario.departamento_codigo,
-                nombre: usuario.departamento_nombre,
-                activo: departamentoActivo
-            }
-            : null
+        departamento
     };
 }
 
@@ -122,16 +121,49 @@ function esErrorEsquemaSesiones(error) {
 }
 
 async function registrarSesion(usuarioId, token, req) {
+    const hash = tokenHash(token);
+
     try {
         await pool.query(
             `INSERT INTO sesiones
-            (usuario_id, token, ip_address, user_agent, fecha_expiracion)
-            VALUES (?, ?, ?, ?, DATE_ADD(NOW(), INTERVAL 24 HOUR))`,
-            [usuarioId, token, req.ip, req.headers['user-agent']]
+            (usuario_id, token, token_hash, ip_address, user_agent, fecha_expiracion, ultimo_uso)
+            VALUES (?, ?, ?, ?, ?, DATE_ADD(NOW(), INTERVAL 24 HOUR), NOW())`,
+            [usuarioId, token, hash, req.ip, req.headers['user-agent']]
         );
 
         return true;
     } catch (error) {
+        if (error.code === 'ER_BAD_FIELD_ERROR') {
+            try {
+                await pool.query(
+                    `INSERT INTO sesiones
+                    (usuario_id, token, ip_address, user_agent, fecha_expiracion)
+                    VALUES (?, ?, ?, ?, DATE_ADD(NOW(), INTERVAL 24 HOUR))`,
+                    [usuarioId, token, req.ip, req.headers['user-agent']]
+                );
+            } catch (fallbackError) {
+                if (fallbackError.code === 'ER_DATA_TOO_LONG') {
+                    console.warn(
+                        'No se pudo registrar la sesion porque la columna sesiones.token es corta. El login continuara con JWT.',
+                        fallbackError.code
+                    );
+                    return false;
+                }
+
+                throw fallbackError;
+            }
+
+            return true;
+        }
+
+        if (error.code === 'ER_DATA_TOO_LONG') {
+            console.warn(
+                'No se pudo registrar la sesion porque la columna sesiones.token es corta. El login continuara con JWT.',
+                error.code
+            );
+            return false;
+        }
+
         if (!esErrorEsquemaSesiones(error)) {
             throw error;
         }
@@ -161,22 +193,50 @@ function opcionesCookieAuth(req) {
 router.post('/login', async (req, res) => {
     try {
         const { username, password } = req.body;
+        const usernameNormalizado = String(username || '').trim();
 
         // Validar que se enviaron los datos
-        if (!username || !password) {
+        if (!usernameNormalizado || !password) {
             return res.status(400).json({
                 error: true,
                 mensaje: 'Usuario y contrasena son requeridos'
             });
         }
 
+        const intentosFallidos = await contarIntentosFallidos({
+            username: usernameNormalizado,
+            req,
+            ventanaMinutos: Number(process.env.AUTH_LOCK_WINDOW_MINUTES || 15)
+        });
+        const maxIntentos = Number(process.env.AUTH_MAX_FAILED_ATTEMPTS || 7);
+
+        if (intentosFallidos >= maxIntentos) {
+            await registrarEventoSeguridad({
+                evento: 'login_bloqueado',
+                req,
+                detalle: { username: usernameNormalizado, intentosFallidos }
+            });
+
+            return res.status(429).json({
+                error: true,
+                mensaje: 'Demasiados intentos. Espera unos minutos e intenta nuevamente.'
+            });
+        }
+
         // Buscar usuario
         const usuario = await obtenerUsuarioConDepartamento(
             'u.username = ? AND u.activo = TRUE',
-            [username]
+            [usernameNormalizado]
         );
 
         if (!usuario) {
+            await registrarIntentoLogin({
+                username: usernameNormalizado,
+                req,
+                exitoso: false,
+                detalle: 'usuario_no_encontrado'
+            });
+
             return res.status(401).json({
                 error: true,
                 mensaje: 'Usuario o contrasena incorrectos'
@@ -188,6 +248,13 @@ router.post('/login', async (req, res) => {
             usuario.departamento_id &&
             usuario.departamento_activo === 0
         ) {
+            await registrarEventoSeguridad({
+                usuarioId: usuario.id,
+                departamentoId: usuario.departamento_id,
+                evento: 'login_departamento_inactivo',
+                req
+            });
+
             return res.status(403).json({
                 error: true,
                 mensaje: 'Tu departamento esta inactivo. Contacta al administrador.'
@@ -200,6 +267,13 @@ router.post('/login', async (req, res) => {
         );
 
         if (!passwordValido) {
+            await registrarIntentoLogin({
+                username: usernameNormalizado,
+                req,
+                exitoso: false,
+                detalle: 'password_incorrecto'
+            });
+
             return res.status(401).json({
                 error: true,
                 mensaje: 'Usuario o contrasena incorrectos'
@@ -212,7 +286,8 @@ router.post('/login', async (req, res) => {
             {
                 id: usuario.id,
                 username: usuario.username,
-                rol: usuario.rol
+                rol: usuario.rol,
+                departamento: contextoUsuario.departamento.codigo
             },
             process.env.JWT_SECRET,
             {
@@ -222,6 +297,19 @@ router.post('/login', async (req, res) => {
 
 
         await registrarSesion(usuario.id, token, req);
+        await registrarIntentoLogin({
+            username: usernameNormalizado,
+            req,
+            exitoso: true,
+            detalle: 'login_exitoso'
+        });
+        await registrarEventoSeguridad({
+            usuarioId: usuario.id,
+            departamentoId: contextoUsuario.departamento.id,
+            evento: 'login_exitoso',
+            req,
+            detalle: { departamento: contextoUsuario.departamento.codigo }
+        });
 
         res.cookie('auth_token', token, opcionesCookieAuth(req));
 
@@ -237,9 +325,7 @@ router.post('/login', async (req, res) => {
 
         res.status(500).json({
             error: true,
-            mensaje: esErrorEsquema(error)
-                ? 'Ejecuta primero la migracion SQL de departamentos'
-                : 'Error al iniciar sesion',
+            mensaje: 'Error al iniciar sesion',
             code: error.code
         });
     }
@@ -325,23 +411,21 @@ router.get('/verify', verificarToken, async (req, res) => {
 
 router.get('/profile', verificarToken, async (req, res) => {
     try {
-        const [usuarios] = await pool.query(
-            'SELECT id, username, nombre_completo, email, rol, activo, fecha_creacion FROM usuarios WHERE id = ? AND activo = TRUE',
+        const usuario = await obtenerUsuarioConDepartamento(
+            'u.id = ? AND u.activo = TRUE',
             [req.usuario.id]
         );
 
-        if (usuarios.length === 0) {
+        if (!usuario) {
             return res.status(404).json({
                 error: true,
                 mensaje: 'Usuario no encontrado'
             });
         }
 
-        const usuario = usuarios[0];
-
         res.json({
             error: false,
-            usuario
+            usuario: construirContextoUsuario(usuario)
         });
     } catch (error) {
         console.error('Error al cargar perfil:', error);
@@ -355,12 +439,37 @@ router.get('/profile', verificarToken, async (req, res) => {
 router.post('/logout', verificarToken, async (req, res) => {
     try {
         const token = req.authToken;
+        const hash = tokenHash(token);
 
         // Marcar la sesion como inactiva
-        await pool.query(
-            'UPDATE sesiones SET activa = FALSE WHERE token = ?',
-            [token]
-        );
+        try {
+            await pool.query(
+                `UPDATE sesiones
+                 SET activa = FALSE,
+                     fecha_expiracion = NOW(),
+                     fecha_revocacion = NOW(),
+                     revocada_por = ?,
+                     motivo_revocacion = 'logout_usuario'
+                 WHERE token_hash = ? OR token = ?`,
+                [req.usuario.id, hash, token]
+            );
+        } catch (error) {
+            if (error.code === 'ER_BAD_FIELD_ERROR') {
+                await pool.query(
+                    'UPDATE sesiones SET activa = FALSE WHERE token = ?',
+                    [token]
+                );
+            } else if (!esErrorEsquemaSesiones(error)) {
+                throw error;
+            }
+        }
+
+        await registrarEventoSeguridad({
+            usuarioId: req.usuario.id,
+            departamentoId: req.departamento?.id || null,
+            evento: 'logout_usuario',
+            req
+        });
 
         res.clearCookie('auth_token', opcionesCookieAuth(req));
 

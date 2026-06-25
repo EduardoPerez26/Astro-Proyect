@@ -13,6 +13,39 @@ const upload = multer({
     limits: { fileSize: 50 * 1024 * 1024 }
 });
 
+function debeFiltrarPorDepartamento(req) {
+    return req.usuario?.rol !== 'admin' && Boolean(req.departamento?.id);
+}
+
+async function obtenerArchivoPorId(req, archivoId) {
+    if (!debeFiltrarPorDepartamento(req)) {
+        const [archivos] = await pool.query(
+            'SELECT * FROM archivos_excel WHERE id = ?',
+            [archivoId]
+        );
+        return archivos;
+    }
+
+    try {
+        const [archivos] = await pool.query(
+            `SELECT *
+             FROM archivos_excel
+             WHERE id = ?
+               AND (departamento_id = ? OR departamento_id IS NULL)`,
+            [archivoId, req.departamento.id]
+        );
+        return archivos;
+    } catch (error) {
+        if (error.code !== 'ER_BAD_FIELD_ERROR') throw error;
+
+        const [archivos] = await pool.query(
+            'SELECT * FROM archivos_excel WHERE id = ?',
+            [archivoId]
+        );
+        return archivos;
+    }
+}
+
 router.get(
     '/',
     verificarToken,
@@ -20,35 +53,80 @@ router.get(
     async (req, res) => {
         try {
 
-            const [rows] = await pool.query(`
-                SELECT
-                    a.id,
-                    a.usuario_id,
-                    a.restaurante_id,
-                    a.nombre_original,
-                    a.nombre_servidor,
-                    a.tamano_bytes,
-                    a.tipo_mime,
-                    a.ruta_archivo,
-                    a.numero_hojas,
-                    a.nombres_hojas,
-                    a.estado,
-                    a.periodo_fecha,
-                    a.notas,
-                    a.fecha_subida,
-                    a.fecha_actualizacion,
-                    (a.archivo_blob IS NOT NULL AND OCTET_LENGTH(a.archivo_blob) > 0) AS tiene_blob,
-                    r.nombre AS restaurante_nombre,
-                    r.codigo AS restaurante_codigo,
-                    u.username,
-                    u.nombre_completo AS usuario_nombre
-                FROM archivos_excel a
-                LEFT JOIN restaurantes r
-                    ON r.id = a.restaurante_id
-                LEFT JOIN usuarios u
-                    ON u.id = a.usuario_id
-                ORDER BY a.id DESC
-            `);
+            let rows;
+            const whereDepartamento = debeFiltrarPorDepartamento(req)
+                ? 'WHERE (a.departamento_id = ? OR a.departamento_id IS NULL)'
+                : '';
+            const paramsDepartamento = debeFiltrarPorDepartamento(req)
+                ? [req.departamento.id]
+                : [];
+
+            try {
+                [rows] = await pool.query(`
+                    SELECT
+                        a.id,
+                        a.usuario_id,
+                        a.departamento_id,
+                        a.restaurante_id,
+                        a.nombre_original,
+                        a.nombre_servidor,
+                        a.tamano_bytes,
+                        a.tipo_mime,
+                        a.ruta_archivo,
+                        a.numero_hojas,
+                        a.nombres_hojas,
+                        a.estado,
+                        a.periodo_fecha,
+                        a.notas,
+                        a.fecha_subida,
+                        a.fecha_actualizacion,
+                        (a.archivo_blob IS NOT NULL AND OCTET_LENGTH(a.archivo_blob) > 0) AS tiene_blob,
+                        r.nombre AS restaurante_nombre,
+                        r.codigo AS restaurante_codigo,
+                        u.username,
+                        u.nombre_completo AS usuario_nombre
+                    FROM archivos_excel a
+                    LEFT JOIN restaurantes r
+                        ON r.id = a.restaurante_id
+                    LEFT JOIN usuarios u
+                        ON u.id = a.usuario_id
+                    ${whereDepartamento}
+                    ORDER BY a.id DESC
+                `, paramsDepartamento);
+            } catch (error) {
+                if (error.code !== 'ER_BAD_FIELD_ERROR') throw error;
+
+                [rows] = await pool.query(`
+                    SELECT
+                        a.id,
+                        a.usuario_id,
+                        NULL AS departamento_id,
+                        a.restaurante_id,
+                        a.nombre_original,
+                        a.nombre_servidor,
+                        a.tamano_bytes,
+                        a.tipo_mime,
+                        a.ruta_archivo,
+                        a.numero_hojas,
+                        a.nombres_hojas,
+                        a.estado,
+                        a.periodo_fecha,
+                        a.notas,
+                        a.fecha_subida,
+                        a.fecha_actualizacion,
+                        (a.archivo_blob IS NOT NULL AND OCTET_LENGTH(a.archivo_blob) > 0) AS tiene_blob,
+                        r.nombre AS restaurante_nombre,
+                        r.codigo AS restaurante_codigo,
+                        u.username,
+                        u.nombre_completo AS usuario_nombre
+                    FROM archivos_excel a
+                    LEFT JOIN restaurantes r
+                        ON r.id = a.restaurante_id
+                    LEFT JOIN usuarios u
+                        ON u.id = a.usuario_id
+                    ORDER BY a.id DESC
+                `);
+            }
 
             const archivos = rows.map(row => ({
                 ...row,
@@ -423,37 +501,78 @@ router.post(
             }
 
 
-            const [result] = await pool.query(
-                `
-                INSERT INTO archivos_excel (
-                usuario_id,
-                restaurante_id,
-                nombre_original,
-                nombre_servidor,
-                tamano_bytes,
-                tipo_mime,
-                archivo_blob,
-                ruta_archivo,
-                periodo_fecha,
+            let result;
+            const paramsArchivo = [
+                req.usuario.id,
+                req.departamento?.id || null,
+                restauranteId,
+                originalname,
+                nombreServidor,
+                size,
+                mimetype,
+                buffer,
+                null,
+                fechaDocumentoNormalizada || null,
                 notas,
-                estado
-                )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                `,
-                [
-                    req.usuario.id,
-                    restauranteId,
-                    originalname,
-                    nombreServidor,
-                    size,
-                    mimetype,
-                    buffer,
-                    null,
-                    fechaDocumentoNormalizada || null,
+                'pendiente'
+            ];
+
+            try {
+                [result] = await pool.query(
+                    `
+                    INSERT INTO archivos_excel (
+                    usuario_id,
+                    departamento_id,
+                    restaurante_id,
+                    nombre_original,
+                    nombre_servidor,
+                    tamano_bytes,
+                    tipo_mime,
+                    archivo_blob,
+                    ruta_archivo,
+                    periodo_fecha,
                     notas,
-                    'pendiente'
-                ]
-            );
+                    estado
+                    )
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    `,
+                    paramsArchivo
+                );
+            } catch (error) {
+                if (error.code !== 'ER_BAD_FIELD_ERROR') throw error;
+
+                [result] = await pool.query(
+                    `
+                    INSERT INTO archivos_excel (
+                    usuario_id,
+                    restaurante_id,
+                    nombre_original,
+                    nombre_servidor,
+                    tamano_bytes,
+                    tipo_mime,
+                    archivo_blob,
+                    ruta_archivo,
+                    periodo_fecha,
+                    notas,
+                    estado
+                    )
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    `,
+                    [
+                        req.usuario.id,
+                        restauranteId,
+                        originalname,
+                        nombreServidor,
+                        size,
+                        mimetype,
+                        buffer,
+                        null,
+                        fechaDocumentoNormalizada || null,
+                        notas,
+                        'pendiente'
+                    ]
+                );
+            }
 
             res.json({
                 success: true,
@@ -485,10 +604,7 @@ router.get(
             console.log('DESCARGAR ARCHIVO');
             console.log('ID:', req.params.id);
 
-            const [archivos] = await pool.query(
-                'SELECT * FROM archivos_excel WHERE id = ?',
-                [req.params.id]
-            );
+            const archivos = await obtenerArchivoPorId(req, req.params.id);
 
             if (!archivos.length) {
                 return res.status(404).json({
@@ -550,10 +666,7 @@ router.delete(
     async (req, res) => {
         try {
 
-            const [archivos] = await pool.query(
-                'SELECT * FROM archivos_excel WHERE id = ?',
-                [req.params.id]
-            );
+            const archivos = await obtenerArchivoPorId(req, req.params.id);
 
             if (!archivos.length) {
                 return res.status(404).json({

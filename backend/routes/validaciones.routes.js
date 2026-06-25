@@ -3,10 +3,10 @@
 const express = require('express');
 const router = express.Router();
 const { pool } = require('../config/database');
-const { verificarToken } = require('../middleware/auth.middleware');
+const { verificarToken, checkPermission } = require('../middleware/auth.middleware');
 
 
-router.get('/', verificarToken, async (req, res) => {
+router.get('/', verificarToken, checkPermission('view_validaciones'), async (req, res) => {
     try {
         const { limite = 100, pagina = 1, resultado, tipo, fecha } = req.query;
         const offset = (pagina - 1) * limite;
@@ -75,7 +75,7 @@ router.get('/', verificarToken, async (req, res) => {
 });
 
 
-router.get('/:id', verificarToken, async (req, res) => {
+router.get('/:id', verificarToken, checkPermission('view_validaciones'), async (req, res) => {
     try {
         const [validaciones] = await pool.query(`
             SELECT 
@@ -110,7 +110,7 @@ router.get('/:id', verificarToken, async (req, res) => {
 });
 
 
-router.post('/', verificarToken, async (req, res) => {
+router.post('/', verificarToken, checkPermission('validate_files'), async (req, res) => {
     try {
 
         const {
@@ -134,28 +134,58 @@ router.post('/', verificarToken, async (req, res) => {
             duracion_segundos
         });
 
-        const [result] = await pool.query(`
-            INSERT INTO historial_validaciones (
+        const detalleErroresSeguro = typeof detalle_errores === 'string'
+            ? detalle_errores
+            : JSON.stringify(detalle_errores || {});
+        let result;
+
+        try {
+            [result] = await pool.query(`
+                INSERT INTO historial_validaciones (
+                    archivo_id,
+                    usuario_id,
+                    departamento_id,
+                    tipo_validacion,
+                    resultado,
+                    total_errores,
+                    detalle_errores,
+                    duracion_segundos
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            `, [
                 archivo_id,
-                usuario_id,
+                req.usuario.id,
+                req.departamento?.id || null,
                 tipo_validacion,
                 resultado,
                 total_errores,
-                detalle_errores,
+                detalleErroresSeguro,
                 duracion_segundos
-            )
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-        `, [
-            archivo_id,
-            req.usuario.id,
-            tipo_validacion,
-            resultado,
-            total_errores,
-            typeof detalle_errores === 'string'
-                ? detalle_errores
-                : JSON.stringify(detalle_errores || {}),
-            duracion_segundos
-        ]);
+            ]);
+        } catch (error) {
+            if (error.code !== 'ER_BAD_FIELD_ERROR') throw error;
+
+            [result] = await pool.query(`
+                INSERT INTO historial_validaciones (
+                    archivo_id,
+                    usuario_id,
+                    tipo_validacion,
+                    resultado,
+                    total_errores,
+                    detalle_errores,
+                    duracion_segundos
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            `, [
+                archivo_id,
+                req.usuario.id,
+                tipo_validacion,
+                resultado,
+                total_errores,
+                detalleErroresSeguro,
+                duracion_segundos
+            ]);
+        }
 
         console.log('VALIDACION GUARDADA');
         console.log('INSERT ID:', result.insertId);

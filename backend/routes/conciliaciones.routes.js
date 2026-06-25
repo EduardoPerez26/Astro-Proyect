@@ -431,6 +431,10 @@ router.get('/', verificarToken, async (req, res) => {
             query += ' AND c.fecha_conciliacion <= ?';
             params.push(fecha_fin);
         }
+        if (req.usuario?.rol !== 'admin' && req.departamento?.id) {
+            query += ' AND (c.departamento_id = ? OR c.departamento_id IS NULL)';
+            params.push(req.departamento.id);
+        }
         
         query += ' ORDER BY c.fecha_conciliacion DESC, c.id DESC';
         
@@ -514,6 +518,7 @@ router.post('/comparar-existente', verificarToken, async (req, res) => {
             const comparacionId = await registrarComparacion({
                 restauranteId: restaurante_id,
                 usuarioId: req.usuario.id,
+                departamentoId: req.departamento?.id || null,
                 conciliacionReferenciaId: conciliacionReferencia.id,
                 fechaOperacion: fechaBuscada,
                 estado: resultado.tiendasConDiferencias
@@ -563,6 +568,7 @@ router.post('/comparar-existente', verificarToken, async (req, res) => {
             const comparacionId = await registrarComparacion({
                 restauranteId: restaurante_id,
                 usuarioId: req.usuario.id,
+                departamentoId: req.departamento?.id || null,
                 fechaOperacion: fechaBuscada,
                 estado: 'primera_carga',
                 datosNuevos: datos_extraidos,
@@ -599,6 +605,7 @@ router.post('/comparar-existente', verificarToken, async (req, res) => {
             const comparacionId = await registrarComparacion({
                 restauranteId: restaurante_id,
                 usuarioId: req.usuario.id,
+                departamentoId: req.departamento?.id || null,
                 archivoReferenciaId: referencia.id,
                 fechaOperacion: fechaBuscada,
                 estado: 'referencia_incompatible',
@@ -627,6 +634,7 @@ router.post('/comparar-existente', verificarToken, async (req, res) => {
         const comparacionId = await registrarComparacion({
             restauranteId: restaurante_id,
             usuarioId: req.usuario.id,
+            departamentoId: req.departamento?.id || null,
             archivoReferenciaId: referencia.id,
             fechaOperacion: fechaBuscada,
             estado: resultado.tiendasConDiferencias
@@ -666,8 +674,13 @@ router.get('/:id', verificarToken, async (req, res) => {
              JOIN restaurantes r ON c.restaurante_id = r.id
              JOIN templates_conciliacion t ON c.template_id = t.id
              JOIN usuarios u ON c.usuario_id = u.id
-             WHERE c.id = ?`,
-            [req.params.id]
+             WHERE c.id = ?
+               ${req.usuario?.rol !== 'admin' && req.departamento?.id
+                    ? 'AND (c.departamento_id = ? OR c.departamento_id IS NULL)'
+                    : ''}`,
+            req.usuario?.rol !== 'admin' && req.departamento?.id
+                ? [req.params.id, req.departamento.id]
+                : [req.params.id]
         );
         
         if (conciliaciones.length === 0) {
@@ -831,26 +844,54 @@ router.post('/', verificarToken, async (req, res) => {
             });
         }
         
-        const [result] = await pool.query(
-            `INSERT INTO conciliaciones 
-             (restaurante_id, template_id, usuario_id, fecha_conciliacion, periodo_inicio, periodo_fin,
-              datos_extraidos, total_conceptos, conceptos_ok, conceptos_diferencia, monto_total_diferencia, notas, estado)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'borrador')`,
-            [
-                restaurante_id,
-                templateId,
-                req.usuario.id,
-                fecha_conciliacion,
-                periodo_inicio || null,
-                periodo_fin || null,
-                JSON.stringify(datos_extraidos),
-                total_conceptos,
-                conceptos_ok,
-                conceptos_diferencia,
-                monto_total_diferencia,
-                notas || null
-            ]
-        );
+        let result;
+
+        try {
+            [result] = await pool.query(
+                `INSERT INTO conciliaciones
+                 (restaurante_id, template_id, usuario_id, departamento_id, fecha_conciliacion, periodo_inicio, periodo_fin,
+                  datos_extraidos, total_conceptos, conceptos_ok, conceptos_diferencia, monto_total_diferencia, notas, estado)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'borrador')`,
+                [
+                    restaurante_id,
+                    templateId,
+                    req.usuario.id,
+                    req.departamento?.id || null,
+                    fecha_conciliacion,
+                    periodo_inicio || null,
+                    periodo_fin || null,
+                    JSON.stringify(datos_extraidos),
+                    total_conceptos,
+                    conceptos_ok,
+                    conceptos_diferencia,
+                    monto_total_diferencia,
+                    notas || null
+                ]
+            );
+        } catch (error) {
+            if (error.code !== 'ER_BAD_FIELD_ERROR') throw error;
+
+            [result] = await pool.query(
+                `INSERT INTO conciliaciones
+                 (restaurante_id, template_id, usuario_id, fecha_conciliacion, periodo_inicio, periodo_fin,
+                  datos_extraidos, total_conceptos, conceptos_ok, conceptos_diferencia, monto_total_diferencia, notas, estado)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'borrador')`,
+                [
+                    restaurante_id,
+                    templateId,
+                    req.usuario.id,
+                    fecha_conciliacion,
+                    periodo_inicio || null,
+                    periodo_fin || null,
+                    JSON.stringify(datos_extraidos),
+                    total_conceptos,
+                    conceptos_ok,
+                    conceptos_diferencia,
+                    monto_total_diferencia,
+                    notas || null
+                ]
+            );
+        }
 
         await vincularComparacion(
             Number(comparacion_id) || null,

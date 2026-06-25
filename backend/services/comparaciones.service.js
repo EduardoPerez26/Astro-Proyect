@@ -42,6 +42,7 @@ function aplanarDiferencias(resultado, fechaOperacion) {
 async function registrarComparacion({
     restauranteId,
     usuarioId,
+    departamentoId = null,
     archivoReferenciaId = null,
     conciliacionReferenciaId = null,
     fechaOperacion,
@@ -78,33 +79,69 @@ async function registrarComparacion({
             return existentes[0].id;
         }
 
-        const [registro] = await connection.query(
-            `INSERT INTO comparaciones_archivos
-             (restaurante_id, usuario_id, archivo_referencia_id, conciliacion_id,
-              fecha_operacion, estado, tiendas_comparadas,
-              tiendas_con_diferencias, total_diferencias,
-              monto_diferencia_absoluta, huella_datos, resumen)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [
-                restauranteId,
-                usuarioId || null,
-                archivoReferenciaId || null,
-                conciliacionReferenciaId || null,
-                fechaOperacion,
-                estado,
-                Number(resultado?.tiendasComparadas || 0),
-                Number(resultado?.tiendasConDiferencias || 0),
-                detalles.length,
-                montoAbsoluto,
-                huellaDatos,
-                JSON.stringify({
-                    existeReferencia: Boolean(
-                        archivoReferenciaId || conciliacionReferenciaId
-                    ),
-                    estado
-                })
-            ]
-        );
+        let registro;
+        const parametrosRegistro = [
+            restauranteId,
+            usuarioId || null,
+            departamentoId || null,
+            archivoReferenciaId || null,
+            conciliacionReferenciaId || null,
+            fechaOperacion,
+            estado,
+            Number(resultado?.tiendasComparadas || 0),
+            Number(resultado?.tiendasConDiferencias || 0),
+            detalles.length,
+            montoAbsoluto,
+            huellaDatos,
+            JSON.stringify({
+                existeReferencia: Boolean(
+                    archivoReferenciaId || conciliacionReferenciaId
+                ),
+                estado
+            })
+        ];
+
+        try {
+            [registro] = await connection.query(
+                `INSERT INTO comparaciones_archivos
+                 (restaurante_id, usuario_id, departamento_id, archivo_referencia_id, conciliacion_id,
+                  fecha_operacion, estado, tiendas_comparadas,
+                  tiendas_con_diferencias, total_diferencias,
+                  monto_diferencia_absoluta, huella_datos, resumen)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                parametrosRegistro
+            );
+        } catch (error) {
+            if (error.code !== 'ER_BAD_FIELD_ERROR') throw error;
+
+            [registro] = await connection.query(
+                `INSERT INTO comparaciones_archivos
+                 (restaurante_id, usuario_id, archivo_referencia_id, conciliacion_id,
+                  fecha_operacion, estado, tiendas_comparadas,
+                  tiendas_con_diferencias, total_diferencias,
+                  monto_diferencia_absoluta, huella_datos, resumen)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                [
+                    restauranteId,
+                    usuarioId || null,
+                    archivoReferenciaId || null,
+                    conciliacionReferenciaId || null,
+                    fechaOperacion,
+                    estado,
+                    Number(resultado?.tiendasComparadas || 0),
+                    Number(resultado?.tiendasConDiferencias || 0),
+                    detalles.length,
+                    montoAbsoluto,
+                    huellaDatos,
+                    JSON.stringify({
+                        existeReferencia: Boolean(
+                            archivoReferenciaId || conciliacionReferenciaId
+                        ),
+                        estado
+                    })
+                ]
+            );
+        }
 
         for (let inicio = 0; inicio < detalles.length; inicio += 400) {
             const lote = detalles.slice(inicio, inicio + 400);

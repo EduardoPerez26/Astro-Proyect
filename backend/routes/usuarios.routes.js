@@ -47,6 +47,31 @@ function normalizarPermisosUsuario(permisos, rol) {
     return normalizados;
 }
 
+function esErrorEsquemaDepartamentos(error) {
+    const detalle = [
+        error.sqlMessage,
+        error.message,
+        error.sql
+    ].filter(Boolean).join(' ');
+
+    return ['ER_NO_SUCH_TABLE', 'ER_BAD_FIELD_ERROR'].includes(error.code)
+        && /departamento|departamentos/i.test(detalle);
+}
+
+function formatearUsuarios(usuarios) {
+    return usuarios.map(u => {
+        let permisos = {};
+        if (u.permisos) {
+            if (typeof u.permisos === 'string') {
+                try { permisos = JSON.parse(u.permisos); } catch { permisos = {}; }
+            } else {
+                permisos = u.permisos;
+            }
+        }
+        return { ...u, permisos };
+    });
+}
+
 router.get('/', verificarToken, esAdmin, async (req, res) => {
     try {
         const [usuarios] = await pool.query(
@@ -68,32 +93,46 @@ router.get('/', verificarToken, esAdmin, async (req, res) => {
              ORDER BY u.nombre_completo`
         );
 
-        const usuariosFormateados = usuarios.map(u => {
-            let permisos = {};
-            if (u.permisos) {
-                if (typeof u.permisos === 'string') {
-                    try { permisos = JSON.parse(u.permisos); } catch { permisos = {}; }
-                } else {
-                    permisos = u.permisos;
-                }
-            }
-            return { ...u, permisos };
-        });
-
         res.json({
             error: false,
             success: true,
-            usuarios: usuariosFormateados
+            usuarios: formatearUsuarios(usuarios)
         });
 
     } catch (error) {
         console.error('Error al listar usuarios:', error);
+
+        if (esErrorEsquemaDepartamentos(error)) {
+            const [usuarios] = await pool.query(
+                `SELECT u.id,
+                        u.username,
+                        u.nombre_completo AS nombre,
+                        u.email,
+                        u.rol,
+                        u.activo,
+                        IF(u.activo = 1, 'activo', 'inactivo') AS estado,
+                        u.permisos,
+                        NULL AS departamento_id,
+                        u.fecha_creacion,
+                        NULL AS departamento_codigo,
+                        NULL AS departamento_nombre,
+                        NULL AS departamento_activo
+                 FROM usuarios u
+                 ORDER BY u.nombre_completo`
+            );
+
+            return res.json({
+                error: false,
+                success: true,
+                modo_compatibilidad: true,
+                usuarios: formatearUsuarios(usuarios)
+            });
+        }
+
         res.status(500).json({
             error: true,
             success: false,
-            mensaje: ['ER_NO_SUCH_TABLE', 'ER_BAD_FIELD_ERROR'].includes(error.code)
-                ? 'Ejecuta primero la migracion SQL de departamentos'
-                : 'Error al obtener usuarios',
+            mensaje: 'Error al obtener usuarios',
             code: error.code
         });
     }

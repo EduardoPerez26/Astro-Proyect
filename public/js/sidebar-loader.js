@@ -157,6 +157,7 @@ async function actualizarContextoUsuario() {
 
         if (response.ok && data.usuario) {
             localStorage.setItem('usuario', JSON.stringify(data.usuario));
+            window.AppDepartment?.refresh?.();
         }
     } catch (error) {
         console.warn('No se pudo actualizar el contexto del usuario:', error);
@@ -166,6 +167,10 @@ async function actualizarContextoUsuario() {
 // Cargar informacion del usuario en el header y sidebar
 function cargarInfoUsuario() {
     const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
+    const departamento = window.AppDepartment?.refresh?.() || usuario.departamento || {
+        label: 'AR',
+        nombre: 'Accounts Receivable'
+    };
     
     // Header elements
     const headerUserName = document.querySelector('.header-user-name');
@@ -183,8 +188,8 @@ function cargarInfoUsuario() {
         'usuario': 'Usuario'
     };
     const etiquetaRol = roles[usuario.rol] || usuario.rol || 'Rol';
-    const etiquetaContexto = usuario.departamento?.nombre
-        ? `${etiquetaRol} · ${usuario.departamento.nombre}`
+    const etiquetaContexto = departamento?.nombre
+        ? `${etiquetaRol} · ${departamento.nombre}`
         : etiquetaRol;
 
     // Obtener iniciales

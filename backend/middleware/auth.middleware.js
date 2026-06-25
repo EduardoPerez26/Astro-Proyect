@@ -1,5 +1,7 @@
 const jwt = require('jsonwebtoken');
 const { pool } = require('../config/database');
+const { buildDepartmentContext } = require('../config/departments');
+const { tokenHash } = require('../services/securityAudit.service');
 
 function obtenerCookie(req, nombre) {
     const header = req.headers.cookie || '';
@@ -33,6 +35,40 @@ function esErrorEsquemaSesiones(error) {
         && /sesiones/i.test(detalle);
 }
 
+async function validarSesionActiva(token) {
+    const hash = tokenHash(token);
+
+    try {
+        const [sesiones] = await pool.query(
+            `SELECT id
+             FROM sesiones
+             WHERE (token_hash = ? OR token = ?)
+               AND activa = TRUE
+               AND fecha_expiracion > NOW()
+             LIMIT 1`,
+            [hash, token]
+        );
+
+        return sesiones.length > 0;
+    } catch (error) {
+        if (error.code !== 'ER_BAD_FIELD_ERROR') {
+            throw error;
+        }
+
+        const [sesiones] = await pool.query(
+            `SELECT id
+             FROM sesiones
+             WHERE token = ?
+               AND activa = TRUE
+               AND fecha_expiracion > NOW()
+             LIMIT 1`,
+            [token]
+        );
+
+        return sesiones.length > 0;
+    }
+}
+
 const verificarToken = async (req, res, next) => {
     const token = obtenerTokenAutenticacion(req);
 
@@ -48,12 +84,9 @@ const verificarToken = async (req, res, next) => {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
         try {
-            const [sesiones] = await pool.query(
-                'SELECT id FROM sesiones WHERE token = ? AND activa = TRUE LIMIT 1',
-                [token]
-            );
+            const sesionActiva = await validarSesionActiva(token);
 
-            if (sesiones.length === 0) {
+            if (!sesionActiva) {
                 return res.status(403).json({ error: true, message: 'Token invalido o expirado' });
             }
         } catch (error) {
@@ -68,6 +101,10 @@ const verificarToken = async (req, res, next) => {
         }
 
         req.usuario = decoded;
+        req.departamento = buildDepartmentContext({
+            departamento_codigo: decoded.departamento
+        });
+        req.usuario.departamento = req.departamento;
         req.authToken = token;
         next();
     } catch (error) {
@@ -129,7 +166,7 @@ const checkPermission = (permiso) => {
             }
 
             const mapping = {
-                view_dashboard: 'dashboard',
+                view_dashboard: 'dashboardAdmin',
 
                 view_archivos: 'documentos',
                 upload_files: 'documentos',
@@ -169,11 +206,37 @@ const checkPermission = (permiso) => {
     };
 };
 
+const requireDepartment = (allowedDepartments = []) => {
+    const allowed = Array.isArray(allowedDepartments)
+        ? allowedDepartments.map(value => String(value).toLowerCase())
+        : [String(allowedDepartments).toLowerCase()];
+
+    return (req, res, next) => {
+        if (req.usuario?.rol === 'admin') return next();
+
+        const departmentCode = String(
+            req.departamento?.codigo ||
+            req.usuario?.departamento?.codigo ||
+            ''
+        ).toLowerCase();
+
+        if (!departmentCode || !allowed.includes(departmentCode)) {
+            return res.status(403).json({
+                error: true,
+                message: 'Acceso denegado para este departamento'
+            });
+        }
+
+        next();
+    };
+};
+
 module.exports = {
     verificarToken,
     esAdmin,
     esSupervisorOAdmin,
     checkPermission,
+    requireDepartment,
     obtenerTokenAutenticacion
 };
 

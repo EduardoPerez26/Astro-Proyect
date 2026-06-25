@@ -4,7 +4,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 const currentYear = new Date().getFullYear();
 ---
 
-<BaseLayout title="Iniciar sesión | Conciliación+">
+<BaseLayout title="Iniciar sesion | XBFS Operations Hub">
     <main class="login-screen">
         <div class="login-glow login-glow--top" aria-hidden="true"></div>
         <div class="login-glow login-glow--bottom" aria-hidden="true"></div>
@@ -13,23 +13,21 @@ const currentYear = new Date().getFullYear();
             <section class="login-brand-panel" aria-label="Acerca del sistema">
                 <div class="login-brand">
                     <span class="login-brand-icon" aria-hidden="true">
-                        <i class="fa-solid fa-scale-balanced"></i>
+                        <i class="fa-solid fa-building-shield"></i>
                     </span>
                     <span class="login-brand-copy">
-                        <strong>Conciliación<span>+</span></strong>
-                        <small>Control financiero</small>
+                        <strong>XBFS<span> Hub</span></strong>
+                        <small>Plataforma operacional</small>
                     </span>
                 </div>
 
                 <div class="login-brand-message">
-                    <h1>XBFS<br />Conciliations</h1>
+                    <h1>XBFS<br />Operations Hub</h1>
                     <p>
-                        Centraliza tus archivos, valida diferencias y mantén cada
-                        conciliación lista para revisión.
+                        Acceso global por departamento para procesos sensibles,
+                        auditoria operativa y conciliaciones de AR.
                     </p>
                 </div>
-
-                
             </section>
 
             <section class="login-form-panel">
@@ -43,21 +41,22 @@ const currentYear = new Date().getFullYear();
                     <i class="fa-solid fa-language" aria-hidden="true"></i>
                     <span data-lang-label>EN</span>
                 </button>
+
                 <div class="login-form-wrap">
                     <div class="login-mobile-brand" aria-hidden="true">
                         <span class="login-brand-icon">
-                            <i class="fa-solid fa-scale-balanced"></i>
+                            <i class="fa-solid fa-building-shield"></i>
                         </span>
-                        <strong>Conciliación<span>+</span></strong>
+                        <strong>XBFS<span> Hub</span></strong>
                     </div>
 
                     <div class="login-header">
                         <span class="login-status">
                             <span class="login-status-dot"></span>
-                            Acceso seguro
+                            Acceso seguro por departamento
                         </span>
                         <h2>Bienvenido de nuevo</h2>
-                        <p>Ingresa tus credenciales para continuar al sistema.</p>
+                        <p>Ingresa tus credenciales para continuar al hub interno.</p>
                     </div>
 
                     <form class="login-form" id="loginForm">
@@ -78,14 +77,14 @@ const currentYear = new Date().getFullYear();
                         </div>
 
                         <div class="login-field">
-                            <label for="password">Contraseña</label>
+                            <label for="password">Contrasena</label>
                             <div class="login-input-wrap">
                                 <i class="fa-solid fa-lock" aria-hidden="true"></i>
                                 <input
                                     type="password"
                                     id="password"
                                     name="password"
-                                    placeholder="Ingresa tu contraseña"
+                                    placeholder="Ingresa tu contrasena"
                                     autocomplete="current-password"
                                     required
                                 />
@@ -93,7 +92,7 @@ const currentYear = new Date().getFullYear();
                                     class="login-password-toggle"
                                     id="passwordToggle"
                                     type="button"
-                                    aria-label="Mostrar contraseña"
+                                    aria-label="Mostrar contrasena"
                                     aria-pressed="false"
                                 >
                                     <i class="fa-regular fa-eye" aria-hidden="true"></i>
@@ -102,18 +101,18 @@ const currentYear = new Date().getFullYear();
                         </div>
 
                         <button type="submit" id="loginBtn" class="login-submit">
-                            <span>Iniciar sesión</span>
+                            <span>Iniciar sesion</span>
                             <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
                         </button>
                     </form>
 
                     <p class="login-help">
-                        ¿Problemas para ingresar? Contacta a tu administrador.
+                        Problemas para ingresar? Contacta a tu administrador.
                     </p>
                 </div>
 
                 <p class="login-copyright">
-                    © {currentYear} Sistema de Conciliación
+                    &copy; {currentYear} XB Franchise Solutions
                 </p>
             </section>
         </div>
