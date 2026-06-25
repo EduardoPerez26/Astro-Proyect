@@ -193,6 +193,96 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
         .admin-loading { padding: 30px !important; color: #718496 !important; text-align: center !important; }
         .user-activity-panel { margin-bottom: 20px; }
 
+        .admin-dashboard-page {
+            --admin-border: #d7e1ea;
+            --admin-ink: #0b2943;
+            --admin-muted: #60758a;
+        }
+
+        .admin-dashboard-header {
+            border: 1px solid rgba(255,255,255,.12);
+            border-radius: 8px;
+            background:
+                linear-gradient(120deg, rgba(116,183,234,.18), transparent 44%),
+                #0b2943;
+            box-shadow: 0 22px 48px -38px rgba(8,31,51,.78);
+        }
+
+        .admin-dashboard-header h1 {
+            font-size: clamp(26px, 2.3vw, 36px);
+            line-height: 1.05;
+        }
+
+        .admin-dashboard-header-actions .btn {
+            border-color: rgba(255,255,255,.24);
+            background: rgba(255,255,255,.12);
+        }
+
+        .admin-dashboard-header-actions .btn:hover {
+            background: rgba(255,255,255,.2);
+        }
+
+        .admin-metrics {
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 14px;
+        }
+
+        .admin-metric-card {
+            min-height: 104px;
+            border-radius: 8px;
+            border-color: var(--admin-border);
+            background: linear-gradient(180deg, #ffffff, #fbfdff);
+        }
+
+        .admin-metric-card strong {
+            font-size: 26px;
+            line-height: 1;
+        }
+
+        .admin-dashboard-panel {
+            border-radius: 8px;
+            border-color: var(--admin-border);
+            box-shadow: 0 18px 44px -40px rgba(8,31,51,.65);
+        }
+
+        .admin-panel-header {
+            min-height: 64px;
+            background: #ffffff;
+        }
+
+        .admin-panel-header h2 {
+            color: var(--admin-ink);
+            font-size: 18px;
+        }
+
+        .admin-table th {
+            color: #fff;
+            background: #0b2943;
+            border-bottom-color: #0b2943;
+        }
+
+        .admin-table td {
+            font-size: 12px;
+        }
+
+        .admin-session-item {
+            min-height: 76px;
+            transition: background .18s ease, border-color .18s ease;
+        }
+
+        .admin-session-item:hover {
+            background: #f6f9fc;
+        }
+
+        .admin-session-avatar {
+            border-radius: 8px;
+            background: #0b2943;
+        }
+
+        .admin-session-logout {
+            border-radius: 7px;
+        }
+
         @media (max-width: 1180px) {
             .admin-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); }
             .admin-dashboard-grid { grid-template-columns: 1fr; }

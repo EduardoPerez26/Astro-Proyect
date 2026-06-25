@@ -761,6 +761,9 @@ function limpiarFormularioTiendaTaxPopeyes() {
         const input = document.getElementById(id);
         if (input) input.value = '';
     });
+
+    const formMode = document.getElementById('pyTaxFormMode');
+    if (formMode) formMode.textContent = 'Nueva tienda';
 }
 
 function cargarFormularioTiendaTaxPopeyes(store) {
@@ -786,6 +789,9 @@ function cargarFormularioTiendaTaxPopeyes(store) {
         const input = document.getElementById(id);
         if (input) input.value = valor ?? '';
     });
+
+    const formMode = document.getElementById('pyTaxFormMode');
+    if (formMode) formMode.textContent = `Editando tienda ${tienda.store}`;
 }
 
 function leerFormularioTiendaTaxPopeyes() {
@@ -843,10 +849,12 @@ function renderTiendasTaxPopeyes() {
             <td>${tienda.preferredJurisdiction || '-'}</td>
             <td>${estadoTaxRateDesdeCachePopeyes(tienda)}</td>
             <td class="bk-tax-store-actions">
-                <button type="button" class="btn btn-secondary btn-sm" data-py-tax-edit="${tienda.store}">
+                <button type="button" class="btn btn-outline btn-sm" data-py-tax-edit="${tienda.store}" title="Editar tienda ${tienda.store}">
+                    <i class="fa-solid fa-pen"></i>
                     Editar
                 </button>
-                <button type="button" class="btn btn-danger btn-sm" data-py-tax-delete="${tienda.store}">
+                <button type="button" class="btn btn-danger btn-sm" data-py-tax-delete="${tienda.store}" title="Quitar tienda ${tienda.store}">
+                    <i class="fa-solid fa-trash"></i>
                     Quitar
                 </button>
             </td>

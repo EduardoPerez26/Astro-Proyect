@@ -45,7 +45,7 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
         </div>
 
         <!-- Acciones -->
-        <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px;">
+        <div class="permission-actions">
             <button class="btn btn-secondary" onclick="resetPermissions()">
                 <i class="fa-solid fa-rotate-left"></i>
                 Restablecer
@@ -57,6 +57,61 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
         </div>
     </div>
     <style>
+        .permissions-container {
+            border-radius: 8px;
+            border-color: #d7e1ea;
+            box-shadow: 0 18px 44px -40px rgba(8,31,51,.65);
+        }
+
+        .permissions-header {
+            align-items: center;
+            padding: 22px 24px;
+            background:
+                linear-gradient(90deg, rgba(16,42,67,.08), transparent 46%),
+                #ffffff;
+        }
+
+        .permissions-user-avatar {
+            border-radius: 8px;
+            background: #0b2943;
+        }
+
+        .permissions-grid {
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 14px;
+            padding: 20px;
+            background: #f8fafc;
+        }
+
+        .permission-card {
+            min-height: 92px;
+            padding: 16px;
+            border-color: #d8e3ec;
+            border-radius: 8px;
+            background: #fff;
+        }
+
+        .permission-card:hover {
+            border-color: #b9c8d6;
+            background: #ffffff;
+            box-shadow: 0 16px 36px -34px rgba(8,31,51,.58);
+        }
+
+        .permission-icon {
+            border-radius: 8px;
+            color: #173a59;
+            background: #eef4f9;
+        }
+
+        .permission-details h4 {
+            color: #0b2943;
+        }
+
+        .permission-tags span {
+            border-color: #d7e1ea;
+            background: #f7fafc;
+        }
+
         .permission-start-panel {
             display: grid;
             grid-template-columns: auto minmax(0, 1fr) minmax(220px, 300px);
@@ -68,6 +123,13 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
             border-left: 4px solid #173f67;
             border-radius: 8px;
             background: #f8fafc;
+        }
+
+        .permission-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 18px;
         }
 
         .permission-start-icon {
@@ -86,6 +148,9 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
         @media (max-width: 720px) {
             .permission-start-panel { grid-template-columns: auto 1fr; }
             .permission-start-panel select { grid-column: 1 / -1; }
+            .permission-actions { flex-direction: column; }
+            .permission-actions .btn { width: 100%; }
+            .permissions-grid { grid-template-columns: 1fr; padding: 14px; }
         }
     </style>
 <script src="/js/config.js" is:inline></script>
