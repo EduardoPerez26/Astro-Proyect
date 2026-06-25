@@ -1936,30 +1936,54 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
             left: 50%;
             right: auto;
             bottom: auto;
-            width: min(920px, calc(100vw - 40px));
+            width: min(860px, calc(100vw - 40px));
             max-width: none;
             max-height: calc(100vh - 40px);
             margin: 0;
             padding: 0;
             overflow: hidden;
-            border: 1px solid #9db2c5;
-            border-radius: 8px;
-            background: #eef3f8;
-            box-shadow: 0 24px 70px rgba(9, 30, 49, .28);
+            border: 1px solid #cbd8e5;
+            border-top: 5px solid #102f4a;
+            border-radius: 12px;
+            background: #fff;
+            box-shadow: 0 30px 90px -42px rgba(7, 27, 44, .74);
             transform: translate(-50%, -50%);
         }
 
         .file-comparison-dialog[data-size="compacto"] {
-            width: min(720px, calc(100vw - 40px));
+            width: min(660px, calc(100vw - 40px));
+        }
+
+        .file-comparison-dialog[data-size="compacto"] .file-comparison-window-header {
+            padding: 16px 20px 14px;
+        }
+
+        .file-comparison-dialog[data-size="compacto"] .file-comparison-window-header h2 {
+            font-size: 23px;
+        }
+
+        .file-comparison-dialog[data-size="compacto"] .file-comparison-window-header p {
+            font-size: 11px;
         }
 
         .file-comparison-dialog[data-size="compacto"] .file-comparison-window-content {
-            padding: 16px 18px;
+            padding: 18px 20px 12px;
+        }
+
+        .file-comparison-dialog[data-size="compacto"] .file-comparison-window-footer {
+            justify-content: flex-end;
+            padding: 12px 20px 18px;
+            border-top: 0;
+            background: #fff;
+        }
+
+        .file-comparison-dialog[data-size="compacto"] .file-comparison-window-footer > p {
+            display: none;
         }
 
         .file-comparison-dialog::backdrop {
-            background: rgba(8, 27, 44, .72);
-            backdrop-filter: blur(3px);
+            background: rgba(8, 27, 44, .64);
+            backdrop-filter: blur(5px);
         }
 
         .file-comparison-window {
@@ -1970,17 +1994,17 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
 
         .file-comparison-window-header {
             display: flex;
-            align-items: flex-start;
+            align-items: center;
             justify-content: space-between;
-            gap: 20px;
-            padding: 20px 22px;
-            border-bottom: 1px solid #294f6f;
-            background: #102f4a;
-            color: #fff;
+            gap: 16px;
+            padding: 18px 20px 16px;
+            border-bottom: 1px solid #dbe5ef;
+            background: linear-gradient(180deg, #fff 0%, #f7fafc 100%);
+            color: #102a43;
         }
 
         .file-comparison-window-header span {
-            color: #9ec8e8;
+            color: #2c6b9e;
             font-size: 10px;
             font-weight: 900;
             letter-spacing: .12em;
@@ -1988,14 +2012,15 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
 
         .file-comparison-window-header h2 {
             margin: 3px 0 2px;
-            color: #fff;
-            font-family: inherit;
-            font-size: 21px;
+            color: #102a43;
+            font-family: 'Source Serif 4', Georgia, serif;
+            font-size: 25px;
+            line-height: 1.05;
         }
 
         .file-comparison-window-header p {
             margin: 0;
-            color: #c9dbea;
+            color: #5f7488;
             font-size: 12px;
         }
 
@@ -2003,15 +2028,16 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
             width: 34px;
             height: 34px;
             flex: 0 0 auto;
-            border: 1px solid rgba(255, 255, 255, .25);
-            border-radius: 4px;
-            background: rgba(255, 255, 255, .08);
-            color: #fff;
+            border: 1px solid #c9d8e6;
+            border-radius: 7px;
+            background: #fff;
+            color: #244966;
             cursor: pointer;
         }
 
         .file-comparison-close:hover {
-            background: rgba(255, 255, 255, .16);
+            border-color: #9fb7ce;
+            background: #eef4f9;
         }
 
         .file-comparison-window-content {
@@ -2052,27 +2078,29 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
             display: grid;
             grid-template-columns: max-content minmax(0, 1fr);
             align-items: center;
-            gap: 4px 12px;
-            margin-bottom: 16px;
-            padding: 12px 14px;
-            border: 1px solid #b8d4e8;
-            border-left: 4px solid #25608a;
-            border-radius: 5px;
-            background: #f1f7fb;
+            gap: 5px 13px;
+            margin-bottom: 14px;
+            padding: 14px 15px;
+            border: 1px solid #d4e1ed;
+            border-radius: 9px;
+            background: #f7fafc;
         }
 
         :global(.file-comparison-result span) {
             grid-row: 1 / span 2;
-            padding: 5px 8px;
-            border-radius: 3px;
+            padding: 6px 9px;
+            border-radius: 6px;
             background: #123b5d;
             color: #fff;
-            font-size: 10px;
+            font-size: 9px;
             font-weight: 900;
             letter-spacing: .08em;
         }
 
         :global(.file-comparison-result strong) {
+            display: flex;
+            align-items: center;
+            gap: 7px;
             color: #102a43;
             font-size: 15px;
         }
@@ -2084,9 +2112,8 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
         }
 
         :global(.file-comparison-view[data-result="igual"] .file-comparison-result) {
-            border-color: #a8d5ba;
-            border-left-color: #15803d;
-            background: #f0f9f4;
+            border-color: #b8dec7;
+            background: #f2fbf5;
         }
 
         :global(.file-comparison-view[data-result="igual"] .file-comparison-result span) {
@@ -2094,9 +2121,8 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
         }
 
         :global(.file-comparison-view[data-result="actualizado"] .file-comparison-result) {
-            border-color: #efc68a;
-            border-left-color: #b45309;
-            background: #fff8e8;
+            border-color: #efcf9d;
+            background: #fff9ed;
         }
 
         :global(.file-comparison-view[data-result="actualizado"] .file-comparison-result span) {
@@ -2259,31 +2285,31 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
         :global(.reconciliation-comparison-summary) {
             display: grid;
             grid-template-columns: repeat(3, minmax(0, 1fr));
-            gap: 10px;
-            margin-bottom: 14px;
+            gap: 8px;
+            margin-bottom: 12px;
         }
 
         :global(.reconciliation-comparison-summary > div) {
             display: flex;
-            min-height: 68px;
+            min-height: 62px;
             flex-direction: column;
             justify-content: center;
-            padding: 10px 12px;
-            border: 1px solid #ccd8e4;
-            border-radius: 4px;
+            padding: 10px 11px;
+            border: 1px solid #d7e2ec;
+            border-radius: 8px;
             background: #fff;
         }
 
         :global(.reconciliation-comparison-summary strong) {
             color: #102a43;
             font-family: "SF Mono", Consolas, monospace;
-            font-size: 20px;
+            font-size: 18px;
         }
 
         :global(.reconciliation-comparison-summary span) {
             margin-top: 2px;
             color: #60758a;
-            font-size: 10px;
+            font-size: 9px;
             font-weight: 800;
             letter-spacing: .04em;
             text-transform: uppercase;
@@ -2293,18 +2319,18 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
             display: grid;
             grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
             align-items: center;
-            gap: 12px;
+            gap: 10px;
             margin-bottom: 12px;
-            padding: 12px;
-            border: 1px solid #ccd8e4;
-            border-radius: 6px;
-            background: #f7f9fb;
+            padding: 10px;
+            border: 1px solid #d7e2ec;
+            border-radius: 9px;
+            background: #f8fafc;
         }
 
         :global(.reconciliation-comparison-context > div) {
             min-width: 0;
-            padding: 9px 11px;
-            border-radius: 5px;
+            padding: 9px 10px;
+            border-radius: 7px;
             background: #fff;
         }
 
@@ -2379,10 +2405,10 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
             grid-template-columns: auto minmax(0, 1fr);
             align-items: start;
             gap: 10px;
-            margin-top: 12px;
-            padding: 11px 13px;
-            border: 1px solid #cbd9e5;
-            border-radius: 6px;
+            margin-top: 10px;
+            padding: 10px 12px;
+            border: 1px solid #d6e2ed;
+            border-radius: 8px;
             color: #35536c;
             background: #f8fafc;
         }
@@ -2517,6 +2543,11 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
             .file-comparison-window-footer > div {
                 display: grid;
                 grid-template-columns: 1fr 1fr;
+            }
+
+            .file-comparison-dialog[data-size="compacto"] .file-comparison-window-footer > div {
+                grid-template-columns: 1fr;
+                width: 100%;
             }
 
             :global(.file-comparison-result) {
@@ -2980,22 +3011,21 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
         }
 
         .bk-tax-store-dialog {
-            position: fixed;
-            inset: auto;
-            top: 50%;
-            left: 50%;
-            width: min(1120px, calc(100vw - 72px));
-            height: min(84vh, 760px);
-            max-height: min(84vh, 760px);
-            margin: 0;
-            padding: 0;
-            border: 1px solid rgba(16, 42, 67, .22);
-            border-radius: 12px;
-            background: #eef3f7;
-            box-shadow: 0 34px 80px -32px rgba(8, 31, 51, .78);
-            transform: translate(-50%, -50%);
-            overflow: hidden;
-        }
+    position: fixed;
+    inset: 0;
+    margin: auto;
+
+    width: min(1120px, calc(100vw - 72px));
+    height: min(84vh, 760px);
+    max-height: min(84vh, 760px);
+
+    padding: 0;
+    border: 1px solid rgba(16, 42, 67, .22);
+    border-radius: 12px;
+    background: #eef3f7;
+    box-shadow: 0 34px 80px -32px rgba(8, 31, 51, .78);
+    overflow: hidden;
+}
 
         .bk-tax-store-dialog::backdrop {
             background: rgba(16, 42, 67, .58);

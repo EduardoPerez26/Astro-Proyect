@@ -131,7 +131,7 @@ document.addEventListener('DOMContentLoaded', function () {
         loginForm.setAttribute('aria-busy', String(isLoading));
         loginBtn.innerHTML = isLoading
             ? '<i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i><span>Verificando...</span>'
-            : '<span>Iniciar sesion</span><i class="fa-solid fa-arrow-right" aria-hidden="true"></i>';
+            : '<span>Entrar al hub</span><i class="fa-solid fa-arrow-right" aria-hidden="true"></i>';
     }
 });
 

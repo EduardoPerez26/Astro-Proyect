@@ -22,11 +22,17 @@ const currentYear = new Date().getFullYear();
                 </div>
 
                 <div class="login-brand-message">
-                    <h1>XBFS<br />Operations Hub</h1>
+                    <span class="login-eyebrow">XB Franchise Solutions</span>
+                    <h1>Operations Hub</h1>
                     <p>
-                        Acceso global por departamento para procesos sensibles,
-                        auditoria operativa y conciliaciones de AR.
+                        Portal interno para procesos financieros y operativos
+                        controlados por departamento, rol y sesion.
                     </p>
+                </div>
+
+                <div class="login-brand-footnote">
+                    <i class="fa-solid fa-lock" aria-hidden="true"></i>
+                    <span>Acceso restringido a personal autorizado.</span>
                 </div>
             </section>
 
@@ -50,65 +56,68 @@ const currentYear = new Date().getFullYear();
                         <strong>XBFS<span> Hub</span></strong>
                     </div>
 
-                    <div class="login-header">
-                        <span class="login-status">
-                            <span class="login-status-dot"></span>
-                            Acceso seguro por departamento
-                        </span>
-                        <h2>Bienvenido de nuevo</h2>
-                        <p>Ingresa tus credenciales para continuar al hub interno.</p>
+                    <div class="login-access-card">
+                        <div class="login-header">
+                            <span class="login-status">
+                                <span class="login-status-dot"></span>
+                                Acceso corporativo
+                            </span>
+                            <h2>Iniciar sesion</h2>
+                            <p>Valida tu identidad para continuar al entorno interno.</p>
+                        </div>
+
+                        <form class="login-form" id="loginForm">
+                            <div class="login-field">
+                                <label for="username">Usuario</label>
+                                <div class="login-input-wrap">
+                                    <i class="fa-regular fa-user" aria-hidden="true"></i>
+                                    <input
+                                        type="text"
+                                        id="username"
+                                        name="username"
+                                        placeholder="usuario"
+                                        autocomplete="username"
+                                        required
+                                        autofocus
+                                    />
+                                </div>
+                            </div>
+
+                            <div class="login-field">
+                                <label for="password">Contrasena</label>
+                                <div class="login-input-wrap">
+                                    <i class="fa-solid fa-lock" aria-hidden="true"></i>
+                                    <input
+                                        type="password"
+                                        id="password"
+                                        name="password"
+                                        placeholder="contrasena"
+                                        autocomplete="current-password"
+                                        required
+                                    />
+                                    <button
+                                        class="login-password-toggle"
+                                        id="passwordToggle"
+                                        type="button"
+                                        aria-label="Mostrar contrasena"
+                                        aria-pressed="false"
+                                    >
+                                        <i class="fa-regular fa-eye" aria-hidden="true"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <button type="submit" id="loginBtn" class="login-submit">
+                                <span>Entrar al hub</span>
+                                <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
+                            </button>
+                        </form>
+
+                        <div class="login-security-note">
+                            <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
+                            <span>Tu acceso se registra para auditoria interna.</span>
+                        </div>
                     </div>
-
-                    <form class="login-form" id="loginForm">
-                        <div class="login-field">
-                            <label for="username">Usuario</label>
-                            <div class="login-input-wrap">
-                                <i class="fa-regular fa-user" aria-hidden="true"></i>
-                                <input
-                                    type="text"
-                                    id="username"
-                                    name="username"
-                                    placeholder="Ingresa tu usuario"
-                                    autocomplete="username"
-                                    required
-                                    autofocus
-                                />
-                            </div>
-                        </div>
-
-                        <div class="login-field">
-                            <label for="password">Contrasena</label>
-                            <div class="login-input-wrap">
-                                <i class="fa-solid fa-lock" aria-hidden="true"></i>
-                                <input
-                                    type="password"
-                                    id="password"
-                                    name="password"
-                                    placeholder="Ingresa tu contrasena"
-                                    autocomplete="current-password"
-                                    required
-                                />
-                                <button
-                                    class="login-password-toggle"
-                                    id="passwordToggle"
-                                    type="button"
-                                    aria-label="Mostrar contrasena"
-                                    aria-pressed="false"
-                                >
-                                    <i class="fa-regular fa-eye" aria-hidden="true"></i>
-                                </button>
-                            </div>
-                        </div>
-
-                        <button type="submit" id="loginBtn" class="login-submit">
-                            <span>Iniciar sesion</span>
-                            <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
-                        </button>
-                    </form>
-
-                    <p class="login-help">
-                        Problemas para ingresar? Contacta a tu administrador.
-                    </p>
                 </div>
 
                 <p class="login-copyright">
