@@ -1931,24 +1931,24 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
         }
 
         .file-comparison-dialog {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            right: auto;
-            bottom: auto;
-            width: min(860px, calc(100vw - 40px));
-            max-width: none;
-            max-height: calc(100vh - 40px);
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-            border: 1px solid #cbd8e5;
-            border-top: 5px solid #102f4a;
-            border-radius: 12px;
-            background: #fff;
-            box-shadow: 0 30px 90px -42px rgba(7, 27, 44, .74);
-            transform: translate(-50%, -50%);
-        }
+    position: fixed;
+    inset: 0;
+    margin: auto;
+
+    width: min(860px, calc(100vw - 40px));
+    max-width: none;
+    max-height: calc(100vh - 40px);
+
+    padding: 0;
+    overflow: hidden;
+
+    border: 1px solid #cbd8e5;
+    border-top: 5px solid #102f4a;
+    border-radius: 12px;
+
+    background: #fff;
+    box-shadow: 0 30px 90px -42px rgba(7, 27, 44, .74);
+}
 
         .file-comparison-dialog[data-size="compacto"] {
             width: min(660px, calc(100vw - 40px));
