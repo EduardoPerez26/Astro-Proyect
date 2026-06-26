@@ -8,13 +8,18 @@
 
     function forceEnglish() {
         try {
-            localStorage.setItem(STORAGE_KEY, FORCED_LANG);
+            if (localStorage.getItem(STORAGE_KEY) !== FORCED_LANG) {
+                localStorage.setItem(STORAGE_KEY, FORCED_LANG);
+            }
         } catch (error) {
             // Storage can be unavailable in private contexts.
         }
 
-        if (document.documentElement) {
-            document.documentElement.lang = FORCED_LANG;
+        if (
+            document.documentElement &&
+            document.documentElement.getAttribute('lang') !== FORCED_LANG
+        ) {
+            document.documentElement.setAttribute('lang', FORCED_LANG);
         }
     }
 
@@ -44,8 +49,8 @@
         hideLanguageControls(document);
 
         if (observer) observer.disconnect();
+
         observer = new MutationObserver(function (mutations) {
-            forceEnglish();
             mutations.forEach(function (mutation) {
                 mutation.addedNodes.forEach(function (node) {
                     if (node.nodeType === 1) hideLanguageControls(node);
@@ -55,9 +60,7 @@
 
         observer.observe(document.documentElement, {
             childList: true,
-            subtree: true,
-            attributes: true,
-            attributeFilter: ['lang']
+            subtree: true
         });
     }
 
