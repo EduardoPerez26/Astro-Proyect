@@ -1,10 +1,10 @@
----
-// Componente Sidebar - Barra lateral de navegacion con control de permisos
+﻿---
+// Sidebar component with permission-aware navigation.
 ---
 
 <aside class="sidebar sidebar-permissions-pending" id="sidebar">
     <div class="sidebar-header">
-        <button class="sidebar-toggle" id="sidebarToggle" aria-label="Abrir/cerrar menu">
+        <button class="sidebar-toggle" id="sidebarToggle" aria-label="Open or close menu">
             <i class="fa-solid fa-bars"></i>
         </button>
         <div class="sidebar-logo">
@@ -19,19 +19,19 @@
                 <li class="sidebar-menu-item" data-permission="tiendas">
                     <a class="sidebar-menu-link" href="/views/tiendas">
                         <i class="fa-solid fa-shop"></i>
-                        <span>Tiendas</span>
+                        <span>Stores</span>
                     </a>
                 </li>
                 <li class="sidebar-menu-item" data-permission="documentos">
                     <a class="sidebar-menu-link" href="/views/documentos">
                         <i class="fa-solid fa-file-excel"></i>
-                        <span>Documentos</span>
+                        <span>Documents</span>
                     </a>
                 </li>
                 <li class="sidebar-menu-item" data-permission="historial">
                     <a class="sidebar-menu-link" href="/views/historial">
                         <i class="fa-solid fa-clock-rotate-left"></i>
-                        <span>Historial</span>
+                        <span>History</span>
                     </a>
                 </li>
             </ul>
@@ -39,7 +39,7 @@
         
         <!-- ADMINISTRACION -->
         <div class="sidebar-section" id="sectionAdmin">
-            <div class="sidebar-section-title">Administracion</div>
+            <div class="sidebar-section-title">Administration</div>
             <ul class="sidebar-menu">
                 <li class="sidebar-menu-item" data-permission="dashboardAdmin" data-admin-only>
                     <a class="sidebar-menu-link" href="/views/dashboard-admin">
@@ -50,13 +50,13 @@
                 <li class="sidebar-menu-item" data-permission="usuarios" data-admin-only>
                     <a class="sidebar-menu-link" href="/views/usuarios">
                         <i class="fa-solid fa-users"></i>
-                        <span>Usuarios</span>
+                        <span>Users</span>
                     </a>
                 </li>
-                <li class="sidebar-menu-item" data-permission="controlRestaurantes" data-admin-only>
+                <li class="sidebar-menu-item" data-permission="controlRestaurants" data-admin-only>
                     <a class="sidebar-menu-link" href="/views/restaurantes">
                         <i class="fa-solid fa-screwdriver-wrench"></i>
-                        <span>Control de restaurantes</span>
+                        <span>Restaurant control</span>
                     </a>
                 </li>
             </ul>
@@ -66,7 +66,7 @@
     <div class="sidebar-footer">
         <button class="sidebar-logout" id="logoutBtn">
             <i class="fa-solid fa-right-from-bracket"></i>
-            <span>Cerrar sesion</span>
+            <span>Log out</span>
         </button>
     </div>
 </aside>

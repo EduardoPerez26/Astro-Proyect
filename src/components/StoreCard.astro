@@ -64,18 +64,18 @@ const {
                 data-store-status-badge
             >
                 <span class="store-status-dot"></span>
-                <span data-store-status-label>{enabled ? 'Disponible' : 'En preparación'}</span>
+                <span data-store-status-label>{enabled ? 'Available' : 'In preparation'}</span>
             </span>
         </header>
 
         <div class="store-card-copy">
-            <span class="store-card-kicker">Flujo de conciliación</span>
+            <span class="store-card-kicker">Reconciliation flow</span>
             <h2>{name}</h2>
             <p data-store-description data-default-description={description}>{description}</p>
         </div>
 
         <div class="store-requirements">
-            <span class="store-requirements-label">Archivos requeridos</span>
+            <span class="store-requirements-label">Required files</span>
             <div class="store-file-list">
                 {files.map((file) => (
                     <span><i class="fa-regular fa-file-excel" aria-hidden="true"></i>{file}</span>
@@ -91,12 +91,12 @@ const {
                 data-store-action
                 hidden={!enabled}
             >
-                Iniciar conciliación
+                Start reconciliation
                 <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
             </a>
             <span class="store-action-disabled" data-store-disabled-action hidden={enabled}>
                 <i class="fa-solid fa-lock" aria-hidden="true"></i>
-                <span data-store-disabled-label>No disponible</span>
+                <span data-store-disabled-label>Not available</span>
             </span>
         </footer>
     </div>
@@ -225,7 +225,7 @@ const {
     .store-card-copy h2 {
         margin: 7px 0 8px;
         color: #102a43;
-        font-family: 'Source Serif 4', Georgia, serif;
+        font-family: 'Inter', sans-serif;
         font-size: 27px;
         line-height: 1.1;
     }

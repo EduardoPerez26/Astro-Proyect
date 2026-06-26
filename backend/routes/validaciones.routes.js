@@ -52,7 +52,7 @@ router.get('/', verificarToken, checkPermission('view_validaciones'), async (req
         
         const [validaciones] = await pool.query(query, params);
         
-        // Contar total para paginacion
+        // Count total rows for pagination
         const [countResult] = await pool.query(
             'SELECT COUNT(*) as total FROM historial_validaciones'
         );
@@ -66,10 +66,10 @@ router.get('/', verificarToken, checkPermission('view_validaciones'), async (req
         });
         
     } catch (error) {
-        console.error('Error obteniendo validaciones:', error);
+        console.error('Error loading validations:', error);
         res.status(500).json({
             success: false,
-            message: 'Error al obtener historial de validaciones'
+            message: 'Validation history could not be loaded'
         });
     }
 });
@@ -91,7 +91,7 @@ router.get('/:id', verificarToken, checkPermission('view_validaciones'), async (
         if (validaciones.length === 0) {
             return res.status(404).json({
                 success: false,
-                message: 'Validacion no encontrada'
+                message: 'Validation not found'
             });
         }
         
@@ -101,10 +101,10 @@ router.get('/:id', verificarToken, checkPermission('view_validaciones'), async (
         });
         
     } catch (error) {
-        console.error('Error obteniendo validacion:', error);
+        console.error('Error loading validation:', error);
         res.status(500).json({
             success: false,
-            message: 'Error al obtener validacion'
+            message: 'Validation could not be loaded'
         });
     }
 });
@@ -190,29 +190,29 @@ router.post('/', verificarToken, checkPermission('validate_files'), async (req, 
         console.log('VALIDACION GUARDADA');
         console.log('INSERT ID:', result.insertId);
 
-        // Actualizar estado del archivo
+        // Refresh file status.
         if (archivo_id) {
 
-            let nuevoEstado = 'pendiente';
+            let nuevoStatus = 'pendiente';
 
             if (resultado === 'exitoso') {
-                nuevoEstado = 'validado';
+                nuevoStatus = 'validado';
             } else if (
                 resultado === 'con_errores' ||
                 resultado === 'con_advertencias'
             ) {
-                nuevoEstado = 'con_errores';
+                nuevoStatus = 'con_errores';
             }
 
             await pool.query(
                 'UPDATE archivos_excel SET estado = ? WHERE id = ?',
-                [nuevoEstado, archivo_id]
+                [nuevoStatus, archivo_id]
             );
 
             console.log(
                 'ARCHIVO ACTUALIZADO',
                 archivo_id,
-                nuevoEstado
+                nuevoStatus
             );
         }
 
@@ -220,14 +220,14 @@ router.post('/', verificarToken, checkPermission('validate_files'), async (req, 
 
         return res.status(201).json({
             success: true,
-            message: 'Validacion registrada',
+            message: 'Validation recorded',
             id: result.insertId
         });
 
     } catch (dbError) {
 
         console.error('================================');
-        console.error('ERROR GUARDANDO VALIDACION');
+        console.error('ERROR SAVING VALIDATION');
         console.error('MESSAGE:', dbError.message);
         console.error('CODE:', dbError.code);
         console.error('SQLSTATE:', dbError.sqlState);
@@ -238,7 +238,7 @@ router.post('/', verificarToken, checkPermission('validate_files'), async (req, 
 
         return res.status(500).json({
             success: false,
-            message: 'Error al guardar validacion',
+            message: 'Validation could not be saved',
             error: dbError.message,
             code: dbError.code,
             sqlState: dbError.sqlState,
@@ -265,10 +265,10 @@ router.get('/stats/resumen', verificarToken, async (req, res) => {
         });
         
     } catch (error) {
-        console.error('Error obteniendo estadisticas:', error);
+        console.error('Error loading statistics:', error);
         res.status(500).json({
             success: false,
-            message: 'Error al obtener estadisticas'
+            message: 'Statistics could not be loaded'
         });
     }
 });

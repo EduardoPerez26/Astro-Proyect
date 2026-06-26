@@ -1,4 +1,4 @@
-// rutas/archivos.routes.js
+// File routes.
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');
@@ -13,12 +13,12 @@ const upload = multer({
     limits: { fileSize: 50 * 1024 * 1024 }
 });
 
-function debeFiltrarPorDepartamento(req) {
+function debeFiltrarPorDepartment(req) {
     return req.usuario?.rol !== 'admin' && Boolean(req.departamento?.id);
 }
 
 async function obtenerArchivoPorId(req, archivoId) {
-    if (!debeFiltrarPorDepartamento(req)) {
+    if (!debeFiltrarPorDepartment(req)) {
         const [archivos] = await pool.query(
             'SELECT * FROM archivos_excel WHERE id = ?',
             [archivoId]
@@ -54,10 +54,10 @@ router.get(
         try {
 
             let rows;
-            const whereDepartamento = debeFiltrarPorDepartamento(req)
+            const whereDepartment = debeFiltrarPorDepartment(req)
                 ? 'WHERE (a.departamento_id = ? OR a.departamento_id IS NULL)'
                 : '';
-            const paramsDepartamento = debeFiltrarPorDepartamento(req)
+            const paramsDepartment = debeFiltrarPorDepartment(req)
                 ? [req.departamento.id]
                 : [];
 
@@ -90,9 +90,9 @@ router.get(
                         ON r.id = a.restaurante_id
                     LEFT JOIN usuarios u
                         ON u.id = a.usuario_id
-                    ${whereDepartamento}
+                    ${whereDepartment}
                     ORDER BY a.id DESC
-                `, paramsDepartamento);
+                `, paramsDepartment);
             } catch (error) {
                 if (error.code !== 'ER_BAD_FIELD_ERROR') throw error;
 
@@ -143,11 +143,11 @@ router.get(
 
         } catch (error) {
 
-            console.error('Error al obtener archivos:', error);
+            console.error('Files could not be loaded:', error);
 
             res.status(500).json({
                 error: true,
-                message: 'Error al obtener archivos'
+                message: 'Files could not be loaded'
             });
         }
     }
@@ -164,7 +164,7 @@ router.post(
             if (!req.file) {
                 return res.status(400).json({
                     error: true,
-                    message: 'No se recibió ningún archivo'
+                    message: 'No file was received'
                 });
             }
 
@@ -178,7 +178,7 @@ router.post(
             if (!restaurantes.length) {
                 return res.status(400).json({
                     error: true,
-                    message: 'Restaurante no encontrado'
+                    message: 'Restaurant not found'
                 });
             }
 
@@ -193,7 +193,7 @@ router.post(
             const nombreServidor = `${Date.now()}-${originalname}`;
             const esReferenciaComparacion =
                 String(req.body.es_referencia_comparacion || '').toLowerCase() === 'true';
-            const esRevisionFuente =
+            const esReviewFuente =
                 String(req.body.es_revision_fuente || '').toLowerCase() === 'true';
             let resumenContenido = null;
 
@@ -213,7 +213,7 @@ router.post(
                     nombreOriginal: originalname,
                     resumen: resumenContenido
                 })
-                : esRevisionFuente
+                : esReviewFuente
                     ? JSON.stringify({
                         tipo: 'revision_fuente',
                         fuente: req.body.tipo_fuente || 'sales',
@@ -408,7 +408,7 @@ router.post(
                     return res.status(400).json({
                         error: true,
                         code: 'CONFIRMACION_REEMPLAZO_REQUERIDA',
-                        message: 'La confirmacion de reemplazo no es valida.'
+                        message: 'The replacement confirmation is not valid.'
                     });
                 }
 
@@ -425,7 +425,7 @@ router.post(
                     return res.status(409).json({
                         error: true,
                         code: 'ARCHIVO_REEMPLAZO_NO_DISPONIBLE',
-                        message: 'El archivo que confirmaste reemplazar ya no esta disponible. Actualiza la pagina e intenta de nuevo.'
+                        message: 'The file you confirmed for replacement is no longer available. Refresh the page and try again.'
                     });
                 }
 
@@ -491,7 +491,7 @@ router.post(
                     return res.status(409).json({
                         error: true,
                         code: 'ARCHIVO_DUPLICADO',
-                        message: 'Ya existe un archivo para este restaurante y documento. Confirma el reemplazo antes de subirlo.',
+                        message: 'A file already exists for this restaurant and document. Confirm the replacement before uploading.',
                         archivo: {
                             id: duplicado.id,
                             nombre_original: duplicado.nombre_original
@@ -583,7 +583,7 @@ router.post(
 
         } catch (error) {
 
-            console.error('Error al subir archivo:', error);
+            console.error('Error uploading file:', error);
 
             res.status(500).json({
                 error: true,
@@ -609,7 +609,7 @@ router.get(
             if (!archivos.length) {
                 return res.status(404).json({
                     error: true,
-                    message: 'Archivo no encontrado'
+                    message: 'File not found'
                 });
             }
 
@@ -644,16 +644,16 @@ router.get(
 
             return res.status(410).json({
                 error: true,
-                message: 'El archivo anterior ya no existe en el almacenamiento temporal. Debe volver a cargarse.'
+                message: 'The previous file no longer exists in temporary storage. It must be uploaded again.'
             });
 
         } catch (error) {
 
-            console.error('Error descargando archivo:', error);
+            console.error('Error downloading file:', error);
 
             res.status(500).json({
                 error: true,
-                message: 'Error descargando archivo'
+                message: 'Error downloading file'
             });
         }
     }
@@ -671,7 +671,7 @@ router.delete(
             if (!archivos.length) {
                 return res.status(404).json({
                     error: true,
-                    message: 'Archivo no encontrado'
+                    message: 'File not found'
                 });
             }
 
@@ -707,19 +707,19 @@ router.delete(
 
             res.json({
                 success: true,
-                message: 'Archivo eliminado correctamente'
+                message: 'File deleted successfully'
             });
 
         } catch (error) {
 
             console.error(
-                'Error eliminando archivo:',
+                'Error deleting file:',
                 error
             );
 
             res.status(500).json({
                 error: true,
-                message: 'Error eliminando archivo'
+                message: 'Error deleting file'
             });
         }
     }

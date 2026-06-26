@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS departamentos (
     nombre VARCHAR(120) NOT NULL,
     descripcion VARCHAR(255) NULL,
     -- Campos conservados por compatibilidad. Las ventanas se gestionan
-    -- exclusivamente en usuarios.permisos desde la pantalla Permisos.
+    -- only in usuarios.permisos from the Permissions screen.
     modulos JSON NOT NULL,
     pagina_inicio VARCHAR(60) NOT NULL DEFAULT 'tiendas',
     activo BOOLEAN NOT NULL DEFAULT TRUE,
@@ -82,25 +82,25 @@ DROP PROCEDURE instalar_departamentos;
 INSERT INTO departamentos (codigo, nombre, descripcion, modulos, pagina_inicio, activo)
 VALUES
     (
-        'contabilidad',
-        'Contabilidad',
-        'Conciliaciones, documentos e historial contable.',
+        'accounting',
+        'Accounting',
+        'Reconciliations, documents, and accounting history.',
         JSON_OBJECT(),
         'tiendas',
         TRUE
     ),
     (
-        'operaciones',
-        'Operaciones',
-        'Operacion diaria de tiendas y consulta de documentos.',
+        'operations',
+        'Operations',
+        'Daily store operations and document lookup.',
         JSON_OBJECT(),
         'tiendas',
         TRUE
     ),
     (
-        'auditoria',
-        'Auditoria',
-        'Revision de documentos, conciliaciones e historial.',
+        'auditing',
+        'Auditing',
+        'Document review, reconciliations, and history.',
         JSON_OBJECT(),
         'tiendas',
         TRUE
@@ -111,5 +111,5 @@ ON DUPLICATE KEY UPDATE
     pagina_inicio = VALUES(pagina_inicio),
     activo = VALUES(activo);
 
--- Los usuarios existentes permanecen sin departamento para no alterar
--- sus accesos actuales. El administrador puede asignarlos desde Usuarios.
+-- Existing users remain without a department to avoid changing
+-- their current access. The administrator can assign them from Users.

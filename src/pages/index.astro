@@ -4,11 +4,8 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 const currentYear = new Date().getFullYear();
 ---
 
-<BaseLayout title="Iniciar sesion | XBFS Operations Hub">
+<BaseLayout title="Sign in | XBFS Operations Hub">
     <main class="login-screen">
-        <div class="login-glow login-glow--top" aria-hidden="true"></div>
-        <div class="login-glow login-glow--bottom" aria-hidden="true"></div>
-
         <div class="login-shell">
             <section class="login-brand-panel" aria-label="Acerca del sistema">
                 <div class="login-brand">
@@ -17,22 +14,21 @@ const currentYear = new Date().getFullYear();
                     </span>
                     <span class="login-brand-copy">
                         <strong>XBFS<span> Hub</span></strong>
-                        <small>Plataforma operacional</small>
+                    <small>Operations platform</small>
                     </span>
                 </div>
 
                 <div class="login-brand-message">
                     <span class="login-eyebrow">XB Franchise Solutions</span>
-                    <h1>Operations Hub</h1>
+                    <h1>XBFS Operations Hub</h1>
                     <p>
-                        Portal interno para procesos financieros y operativos
-                        controlados por departamento, rol y sesion.
+                        Centralized access for reconciliations, documents, and
+                        internal controls across XBFS-operated brands.
                     </p>
                 </div>
-
                 <div class="login-brand-footnote">
                     <i class="fa-solid fa-lock" aria-hidden="true"></i>
-                    <span>Acceso restringido a personal autorizado.</span>
+                    <span>Restricted access for authorized personnel.</span>
                 </div>
             </section>
 
@@ -43,6 +39,7 @@ const currentYear = new Date().getFullYear();
                     data-lang-toggle
                     aria-label="Switch to English"
                     title="Switch to English"
+                    hidden
                 >
                     <i class="fa-solid fa-language" aria-hidden="true"></i>
                     <span data-lang-label>EN</span>
@@ -60,15 +57,15 @@ const currentYear = new Date().getFullYear();
                         <div class="login-header">
                             <span class="login-status">
                                 <span class="login-status-dot"></span>
-                                Acceso corporativo
+                                Secure access
                             </span>
-                            <h2>Iniciar sesion</h2>
-                            <p>Valida tu identidad para continuar al entorno interno.</p>
+                            <h2>Sign in</h2>
+                            <p>Enter your credentials to continue.</p>
                         </div>
 
                         <form class="login-form" id="loginForm">
                             <div class="login-field">
-                                <label for="username">Usuario</label>
+                                <label for="username">Username</label>
                                 <div class="login-input-wrap">
                                     <i class="fa-regular fa-user" aria-hidden="true"></i>
                                     <input
@@ -84,14 +81,14 @@ const currentYear = new Date().getFullYear();
                             </div>
 
                             <div class="login-field">
-                                <label for="password">Contrasena</label>
+                                <label for="password">Password</label>
                                 <div class="login-input-wrap">
                                     <i class="fa-solid fa-lock" aria-hidden="true"></i>
                                     <input
                                         type="password"
                                         id="password"
                                         name="password"
-                                        placeholder="contrasena"
+                                        placeholder="password"
                                         autocomplete="current-password"
                                         required
                                     />
@@ -99,7 +96,7 @@ const currentYear = new Date().getFullYear();
                                         class="login-password-toggle"
                                         id="passwordToggle"
                                         type="button"
-                                        aria-label="Mostrar contrasena"
+                                        aria-label="Show password"
                                         aria-pressed="false"
                                     >
                                         <i class="fa-regular fa-eye" aria-hidden="true"></i>
@@ -108,14 +105,14 @@ const currentYear = new Date().getFullYear();
                             </div>
 
                             <button type="submit" id="loginBtn" class="login-submit">
-                                <span>Entrar al hub</span>
+                                <span>Enter the hub</span>
                                 <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
                             </button>
                         </form>
 
                         <div class="login-security-note">
                             <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
-                            <span>Tu acceso se registra para auditoria interna.</span>
+                            <span>Your access is logged for internal audit.</span>
                         </div>
                     </div>
                 </div>

@@ -86,6 +86,15 @@
         }
 
         var options = Object.assign({}, args[0]);
+
+        if (options.toast) {
+            options.backdrop = false;
+            options.heightAuto = false;
+            if (options.allowOutsideClick === undefined) {
+                options.allowOutsideClick = true;
+            }
+        }
+
         var loading = isLoadingDialog(options);
         var passiveAlert =
             !options.toast &&

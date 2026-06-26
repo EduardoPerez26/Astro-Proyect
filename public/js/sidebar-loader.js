@@ -1,4 +1,4 @@
-// Sidebar loader adaptado para Astro con Backend y Control de Permisos
+// Sidebar loader adapted for Astro, backend data, and permission control.
 window.API_URL
 
 document.addEventListener('DOMContentLoaded', async function() {
@@ -8,19 +8,19 @@ document.addEventListener('DOMContentLoaded', async function() {
     const logoutBtn = document.getElementById('logoutBtn');
     const mainContent = document.getElementById('mainContent');
 
-    // Verificar autenticacion
+    // Verify authentication.
     verificarAutenticacion();
 
-    // Aplicar primero el contexto local para evitar que el menu completo parpadee.
-    cargarInfoUsuario();
-    aplicarPermisos({ verificarPagina: false });
+    // Apply local context first to avoid a full-menu flash.
+    cargarInfoUser();
+    aplicarPermissions({ verificarPagina: false });
 
-    // Refrescar departamento y permisos desde la base de datos y volver a filtrar.
-    await actualizarContextoUsuario();
-    cargarInfoUsuario();
-    aplicarPermisos({ verificarPagina: true });
+    // Refresh department and permissions from the database, then filter again.
+    await actualizarContextoUser();
+    cargarInfoUser();
+    aplicarPermissions({ verificarPagina: true });
 
-    // Restaurar estado del sidebar
+    // Restore sidebar state.
     const sidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
     if (sidebarCollapsed && sidebar) {
         sidebar.classList.add('collapsed');
@@ -44,13 +44,13 @@ document.addEventListener('DOMContentLoaded', async function() {
             
         sidebar.classList.toggle('collapsed');
             
-        // Sincronizar con main content
+        // Sync with the main content.
         if (mainContent) {
             mainContent.classList.toggle('sidebar-collapsed');
         }
         document.body.classList.toggle('sidebar-collapsed');
             
-        // Guardar estado
+        // Save state.
         localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
     }
 
@@ -63,7 +63,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         topbarSidebarToggle.addEventListener('click', toggleSidebar);
     }
 
-    // Marcar link activo basado en la URL actual
+    // Mark the active link from the current URL.
     const currentPath = window.location.pathname;
     const menuLinks = document.querySelectorAll('.sidebar-menu-link');
     
@@ -83,27 +83,60 @@ document.addEventListener('DOMContentLoaded', async function() {
             cerrarSesion();
         });
     }
+
+    configurarMenuPerfil();
 });
 
-// Funcion para cerrar sesion
+function configurarMenuPerfil() {
+    const button = document.getElementById('userProfileMenuButton');
+    const menu = document.getElementById('userProfileMenu');
+
+    if (!button || !menu) return;
+
+    button.addEventListener('click', function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+
+        const isOpen = menu.classList.toggle('open');
+        button.setAttribute('aria-expanded', String(isOpen));
+    });
+
+    menu.addEventListener('click', function (event) {
+        event.stopPropagation();
+    });
+
+    document.addEventListener('click', function () {
+        menu.classList.remove('open');
+        button.setAttribute('aria-expanded', 'false');
+    });
+
+    document.addEventListener('keydown', function (event) {
+        if (event.key !== 'Escape') return;
+
+        menu.classList.remove('open');
+        button.setAttribute('aria-expanded', 'false');
+    });
+}
+
+// Close the current session.
 async function cerrarSesion() {
     const token = localStorage.getItem('token');
     
-    // Confirmar cierre de sesion
+    // Confirm logout.
     const result = await Swal.fire({
-        title: 'Cerrar sesion',
-        text: 'Estas seguro que deseas cerrar sesion?',
+        title: 'Log out',
+        text: 'Are you sure you want to log out?',
         icon: 'question',
         showCancelButton: true,
         confirmButtonColor: '#EF4444',
         cancelButtonColor: '#6B7280',
-        confirmButtonText: 'Si, cerrar sesion',
-        cancelButtonText: 'Cancelar'
+        confirmButtonText: 'Yes, log out',
+        cancelButtonText: 'Cancel'
     });
     
     if (!result.isConfirmed) return;
     
-    // Intentar cerrar sesion en el servidor
+    // Try to close the session on the server.
     if (window.API_URL && !localStorage.getItem('modoOffline')) {
         try {
             await fetch(`${window.API_URL}/auth/logout`, {
@@ -114,11 +147,11 @@ async function cerrarSesion() {
                     : {}
             });
         } catch (error) {
-            // Silenciar error de logout
+            // Ignore logout errors.
         }
     }
 
-    // Limpiar localStorage
+    // Clear localStorage
     localStorage.removeItem('token');
     localStorage.removeItem('usuario');
     localStorage.removeItem('isLoggedIn');
@@ -129,7 +162,7 @@ async function cerrarSesion() {
     window.location.href = '/';
 }
 
-// Verificar que el usuario este autenticado
+// Verify that the user is authenticated.
 function verificarAutenticacion() {
     const isLoggedIn = localStorage.getItem('isLoggedIn');
     const currentPath = window.location.pathname;
@@ -140,7 +173,7 @@ function verificarAutenticacion() {
     }
 }
 
-async function actualizarContextoUsuario() {
+async function actualizarContextoUser() {
     const token = localStorage.getItem('token');
     const apiUrl = window.API_URL;
 
@@ -160,12 +193,47 @@ async function actualizarContextoUsuario() {
             window.AppDepartment?.refresh?.();
         }
     } catch (error) {
-        console.warn('No se pudo actualizar el contexto del usuario:', error);
+        console.warn('User context could not be refreshed:', error);
     }
 }
 
-// Cargar informacion del usuario en el header y sidebar
-function cargarInfoUsuario() {
+function resolverUrlFotoPerfil(url) {
+    if (!url) return '';
+
+    const value = String(url);
+    if (/^(https?:|data:|blob:)/i.test(value)) return value;
+
+    const apiBase = String(window.API_URL || '').replace(/\/$/, '');
+    const apiOrigin = apiBase.replace(/\/api$/, '') || window.location.origin;
+
+    return value.startsWith('/')
+        ? `${apiOrigin}${value}`
+        : `${apiOrigin}/${value}`;
+}
+
+function aplicarAvatarUser(element, nombre, fotoUrl) {
+    if (!element) return;
+
+    const fotoResuelta = resolverUrlFotoPerfil(fotoUrl);
+
+    if (fotoResuelta) {
+        element.textContent = '';
+        element.classList.add('has-image');
+        element.style.backgroundImage = `url("${fotoResuelta}")`;
+        return;
+    }
+
+    const iniciales = nombre
+        ? nombre.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2)
+        : '--';
+
+    element.classList.remove('has-image');
+    element.style.backgroundImage = '';
+    element.textContent = iniciales;
+}
+
+// Load user information in the header and sidebar.
+function cargarInfoUser() {
     const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
     const departamento = window.AppDepartment?.refresh?.() || usuario.departamento || {
         label: 'AR',
@@ -175,7 +243,7 @@ function cargarInfoUsuario() {
     // Header elements
     const headerUserName = document.querySelector('.header-user-name');
     const headerUserRole = document.querySelector('.header-user-role');
-    const avatar = document.querySelector('.avatar');
+    const avatars = document.querySelectorAll('.avatar');
     
     // Sidebar elements
     const sidebarUserName = document.getElementById('sidebarUserName');
@@ -183,40 +251,37 @@ function cargarInfoUsuario() {
     const sidebarUserAvatar = document.getElementById('sidebarUserAvatar');
 
     const roles = {
-        'admin': 'Administrador',
+        'admin': 'Administrator',
         'supervisor': 'Supervisor',
-        'usuario': 'Usuario'
+        'usuario': 'User'
     };
-    const etiquetaRol = roles[usuario.rol] || usuario.rol || 'Rol';
+    const etiquetaRole = roles[usuario.rol] || usuario.rol || 'Role';
     const etiquetaContexto = departamento?.nombre
-        ? `${etiquetaRol} · ${departamento.nombre}`
-        : etiquetaRol;
+        ? `${etiquetaRole} / ${departamento.nombre}`
+        : etiquetaRole;
 
-    // Obtener iniciales
-    const iniciales = usuario.nombre 
-        ? usuario.nombre.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2)
-        : '--';
-
-    // Actualizar header
+    // Refresh header
     if (headerUserName && usuario.nombre) {
         headerUserName.textContent = usuario.nombre;
     }
     if (headerUserRole && usuario.rol) {
         headerUserRole.textContent = etiquetaContexto;
     }
-    if (avatar) {
-        avatar.textContent = iniciales;
+    if (avatars.length > 0) {
+        avatars.forEach((avatar) => {
+            aplicarAvatarUser(avatar, usuario.nombre, usuario.foto_perfil_url);
+        });
     }
     
-    // Actualizar sidebar
+    // Refresh sidebar
     if (sidebarUserName) {
-        sidebarUserName.textContent = usuario.nombre || 'Usuario';
+        sidebarUserName.textContent = usuario.nombre || 'User';
     }
     if (sidebarUserRole) {
         sidebarUserRole.textContent = etiquetaContexto;
     }
     if (sidebarUserAvatar) {
-        sidebarUserAvatar.textContent = iniciales;
+        aplicarAvatarUser(sidebarUserAvatar, usuario.nombre, usuario.foto_perfil_url);
     }
 
     // Mostrar indicador de modo offline
@@ -226,25 +291,25 @@ function cargarInfoUsuario() {
             const offlineIndicator = document.createElement('div');
             offlineIndicator.className = 'badge badge-warning offline-badge';
             offlineIndicator.style.marginRight = '10px';
-            offlineIndicator.innerHTML = '<i class="fa-solid fa-wifi-slash"></i> Modo Offline';
+            offlineIndicator.innerHTML = '<i class="fa-solid fa-wifi-slash"></i> Offline mode';
             topbar.insertBefore(offlineIndicator, topbar.firstChild);
         }
     }
 }
 
-// Aplicar permisos al menu del sidebar
-function aplicarPermisos(opciones = {}) {
+// Apply permissions to the sidebar menu.
+function aplicarPermissions(opciones = {}) {
     const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
-    const permisos = obtenerPermisos(usuario);
+    const permisos = obtenerPermissions(usuario);
     
-    // Obtener todos los items del menu con data-permission
+    // Get all menu items with data-permission.
     const menuItems = document.querySelectorAll('[data-permission]');
     
     menuItems.forEach(item => {
         const permiso = item.getAttribute('data-permission');
         const soloAdmin = item.hasAttribute('data-admin-only');
         
-        // Verificar si el usuario tiene el permiso
+        // Check whether the user has the permission.
         if (!permisos[permiso] || (soloAdmin && usuario.rol !== 'admin')) {
             item.classList.add('hidden');
         } else {
@@ -266,14 +331,14 @@ function aplicarPermisos(opciones = {}) {
         .getElementById('sidebar')
         ?.classList.remove('sidebar-permissions-pending');
     
-    // Verificar acceso a la pagina actual
+    // Check access to the current page.
     if (opciones.verificarPagina !== false) {
         verificarAccesoPagina(permisos);
     }
 }
 
-// Obtener permisos del usuario
-function obtenerPermisos(usuario) {
+// Get user permissions.
+function obtenerPermissions(usuario) {
     const defaultPermissions = {
         'admin': {
             dashboardAdmin: true,
@@ -283,7 +348,7 @@ function obtenerPermisos(usuario) {
             permisos: true,
             historial: true,
             usuarios: true,
-            controlRestaurantes: true
+            controlRestaurants: true
         },
         'supervisor': {
             tiendas: true,
@@ -292,7 +357,7 @@ function obtenerPermisos(usuario) {
             permisos: false,
             historial: true,
             usuarios: false,
-            controlRestaurantes: false
+            controlRestaurants: false
         },
         'usuario': {
             tiendas: true,
@@ -301,7 +366,7 @@ function obtenerPermisos(usuario) {
             permisos: false,
             historial: false,
             usuarios: false,
-            controlRestaurantes: false
+            controlRestaurants: false
         }
     };
 
@@ -312,7 +377,7 @@ function obtenerPermisos(usuario) {
         };
     }
 
-    // Si hay permisos guardados en localStorage, usarlos
+    // Use permissions saved in localStorage when available.
     const savedPermissions = JSON.parse(localStorage.getItem('userPermissions') || '{}');
 
     if (usuario.id && savedPermissions[usuario.id]) {
@@ -321,11 +386,11 @@ function obtenerPermisos(usuario) {
             perfil: true,
             usuarios: false,
             permisos: false,
-            controlRestaurantes: false
+            controlRestaurants: false
         };
     }
 
-    // Si el usuario tiene permisos en su objeto, usarlos
+    // Use permissions from the user object when available.
     if (usuario.permisos) {
         return {
             tiendas: false,
@@ -335,33 +400,32 @@ function obtenerPermisos(usuario) {
             perfil: true,
             usuarios: false,
             permisos: false,
-            controlRestaurantes: false
+            controlRestaurants: false
         };
     }
     
     return defaultPermissions[usuario.rol] || defaultPermissions['usuario'];
 }
 
-// Verificar si el usuario tiene acceso a la pagina actual
+// Check whether the user can access the current page.
 function verificarAccesoPagina(permisos) {
     const currentPath = window.location.pathname.replace(/\/+$/, '') || '/';
     
-    // Mapeo de rutas a permisos
+    // Route-to-permission map.
     const routePermissions = {
         '/views/tiendas': 'tiendas',
         '/views/dashboard-admin': 'dashboardAdmin',
         '/views/documentos': 'documentos',
-        '/views/editor': 'documentos',
         '/views/perfil': 'perfil',
         '/views/permisos': 'permisos',
         '/views/historial': 'historial',
         '/views/usuarios': 'usuarios',
-        '/views/restaurantes': 'controlRestaurantes'
+        '/views/restaurantes': 'controlRestaurants'
     };
     
     const requiredPermission = routePermissions[currentPath];
     
-    // Si la pagina requiere permiso y el usuario no lo tiene
+    // If the page requires a permission and the user does not have it.
     const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
     const requiereAdmin = [
         '/views/restaurantes',
@@ -376,11 +440,11 @@ function verificarAccesoPagina(permisos) {
     ) {
         Swal.fire({
             icon: 'error',
-            title: 'Acceso denegado',
-            text: 'No tienes permisos para acceder a esta seccion.',
+            title: 'Access denied',
+            text: 'You do not have permission to access this section.',
             confirmButtonColor: '#2563eb'
         }).then(() => {
-            const rutasDepartamento = {
+            const rutasDepartment = {
                 dashboardAdmin: '/views/dashboard-admin',
                 tiendas: '/views/tiendas',
                 documentos: '/views/documentos',
@@ -388,7 +452,7 @@ function verificarAccesoPagina(permisos) {
             };
             const paginaConfigurada = permisos.paginaInicio;
             const destinoConfigurado = paginaConfigurada && permisos[paginaConfigurada]
-                ? rutasDepartamento[paginaConfigurada]
+                ? rutasDepartment[paginaConfigurada]
                 : null;
             const destino = destinoConfigurado || (permisos.tiendas
                 ? '/views/tiendas'
@@ -403,3 +467,4 @@ function verificarAccesoPagina(permisos) {
         });
     }
 }
+

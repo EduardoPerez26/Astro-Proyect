@@ -1,33 +1,33 @@
----
+﻿---
 import DashboardLayout from '../../layouts/DashboardLayout.astro';
 ---
 
-<DashboardLayout title="Permisos">
+<DashboardLayout title="Permissions">
     <div class="page-container">
         <!-- Header -->
         <div class="page-header">
             <div class="page-header-info">
-                <h1>Configuracion de Permisos</h1>
-                <p>Asigna permisos de acceso a las secciones del sistema</p>
+                <h1>Permission settings</h1>
+                <p>Assign section access for this user</p>
             </div>
             <button class="btn btn-secondary" onclick="window.history.back()">
                 <i class="fa-solid fa-arrow-left"></i>
-                Volver
+                Back
             </button>
         </div>
 
-        <!-- Info Usuario -->
+        <!-- Info User -->
         <div class="permissions-container" id="userInfoCard">
             <div class="permissions-header">
                 <div class="permissions-user-avatar" id="userAvatar">--</div>
                 <div class="permissions-user-info">
-                    <h2 id="permUserName">Cargando...</h2>
+                    <h2 id="permUserName">Loading...</h2>
                     <p id="permUserEmail">---</p>
                     <span class="status-badge" id="permUserRole">---</span>
                 </div>
             </div>
             
-            <!-- Permisos Grid -->
+            <!-- Permissions Grid -->
             <div class="permissions-grid" id="permissionsList">
                 <!-- Se genera dinamicamente -->
             </div>
@@ -37,22 +37,22 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
                     <i class="fa-solid fa-house-laptop"></i>
                 </div>
                 <div class="permission-start-copy">
-                    <strong>Ventana inicial</strong>
-                    <span>Selecciona la pantalla que vera este usuario al iniciar sesion.</span>
+                    <strong>Initial window</strong>
+                    <span>Select the screen this user sees after signing in.</span>
                 </div>
                 <select id="initialWindow" class="form-control" onchange="changeInitialWindow(this.value)"></select>
             </div>
         </div>
 
-        <!-- Acciones -->
+        <!-- Actions -->
         <div class="permission-actions">
             <button class="btn btn-secondary" onclick="resetPermissions()">
                 <i class="fa-solid fa-rotate-left"></i>
-                Restablecer
+                Reset
             </button>
             <button class="btn btn-primary" onclick="savePermissions()">
                 <i class="fa-solid fa-floppy-disk"></i>
-                Guardar Permisos
+                Save permissions
             </button>
         </div>
     </div>
@@ -156,3 +156,4 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
 <script src="/js/config.js" is:inline></script>
     <script is:inline src="/js/permisos.js"></script>
 </DashboardLayout>
+

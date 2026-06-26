@@ -9,7 +9,7 @@ let documentosFiltrados = [];
 let paginaActual = 1;
 const porPagina = 10;
 const ITEMS_POR_PAGINA = 10;
-let documentoSeleccionado = null;
+let selectedDocument = null;
 
 // ============================================
 // INICIALIZACION
@@ -39,7 +39,7 @@ async function cargarDocumentos() {
     const modoOffline = localStorage.getItem('modoOffline');
 
     if (modoOffline) {
-        // Datos de ejemplo en modo offline
+        // Offline sample data.
         documentos = generarDatosEjemplo();
         mostrarDocumentos();
         loadingState.style.display = 'none';
@@ -54,7 +54,7 @@ async function cargarDocumentos() {
         });
 
         if (!response.ok) {
-            throw new Error('Error al cargar documentos');
+            throw new Error('Documents could not be loaded');
         }
 
         const data = await response.json();
@@ -65,8 +65,8 @@ async function cargarDocumentos() {
         mostrarDocumentos();
 
     } catch (error) {
-        console.error('Error cargando documentos:', error);
-        // Mostrar datos de ejemplo si falla
+        console.error('Error loading documents:', error);
+        // Show sample data if loading fails.
         documentos = generarDatosEjemplo();
         mostrarDocumentos();
     } finally {
@@ -78,12 +78,12 @@ async function cargarDocumentos() {
 // MOSTRAR DOCUMENTOS EN TABLA
 // ============================================
 
-function obtenerInfoRevisionFuente(documento = '') {
+function obtenerInfoReviewFuente(documento = '') {
     const doc = typeof documento === 'object'
         ? documento
         : { nombre_original: documento };
     const etiquetas = {
-        sales: 'Archivo principal',
+        sales: 'Main file',
         salesDetail: 'Sales Detail',
         ebt: 'EBT'
     };
@@ -156,16 +156,16 @@ function mostrarDocumentos() {
     emptyState.style.display = 'none';
 
     tbody.innerHTML = paginados.map(doc => {
-        const revision = obtenerInfoRevisionFuente(doc);
+        const revision = obtenerInfoReviewFuente(doc);
         const nombreVisible = revision?.nombreOriginal || doc.nombre_original;
         let metaVisible = revision
-            ? `${revision.etiqueta} · Revisión V${String(revision.version).padStart(3, '0')}`
-            : `${doc.numero_hojas || 1} hoja(s)`;
+            ? `${revision.etiqueta} - Revision V${String(revision.version).padStart(3, '0')}`
+            : `${doc.numero_hojas || 1} sheet(s)`;
 
         if (revision) {
             metaVisible = revision.esReferenciaActual
-                ? `${revision.etiqueta} · Referencia de comparación`
-                : `${revision.etiqueta} · Referencia anterior`;
+                ? `${revision.etiqueta} - Comparison reference`
+                : `${revision.etiqueta} - Previous reference`;
         }
 
         return `
@@ -184,7 +184,7 @@ function mostrarDocumentos() {
             </td>
             <td>${doc.restaurante_nombre || doc.restaurante || '-'}</td>
             <td>${formatearTamano(doc.tamano_bytes)}</td>
-            <td><span class="status-badge ${doc.estado}">${formatearEstado(doc.estado)}</span></td>
+            <td><span class="status-badge ${doc.estado}">${formatearStatus(doc.estado)}</span></td>
             <td>
                 <div class="user-cell">
                     <div class="user-avatar">${(doc.usuario_nombre || doc.subido_por || 'U').charAt(0).toUpperCase()}</div>
@@ -194,17 +194,17 @@ function mostrarDocumentos() {
             <td>${formatearFecha(doc.fecha_subida)}</td>
             <td>
                 <div class="action-buttons">
-                    <button class="action-btn view" onclick="previsualizarConciliacion(${doc.id})" title="Ver conciliación">
+                    <button class="action-btn view" onclick="previsualizarConciliacion(${doc.id})" title="View reconciliation">
     <i class="fa-solid fa-eye"></i>
 </button>
 
-<button class="action-btn view" onclick="verDetalles(${doc.id})" title="Ver detalles">
+<button class="action-btn view" onclick="verDetalles(${doc.id})" title="View details">
     <i class="fa-solid fa-circle-info"></i>
 </button>
-                    <button class="action-btn download" onclick="descargarArchivo(${doc.id})" title="Descargar">
+                    <button class="action-btn download" onclick="descargarArchivo(${doc.id})" title="Download">
                         <i class="fa-solid fa-download"></i>
                     </button>
-                    <button class="action-btn delete" onclick="eliminarArchivo(${doc.id})" title="Eliminar">
+                    <button class="action-btn delete" onclick="eliminarArchivo(${doc.id})" title="Delete">
                         <i class="fa-solid fa-trash"></i>
                     </button>
                 </div>
@@ -213,7 +213,7 @@ function mostrarDocumentos() {
     `;
     }).join('');
 
-    // Actualizar paginacion
+    // Refresh paginacion
     actualizarPaginacion(totalPaginas);
 }
 
@@ -223,12 +223,12 @@ function mostrarDocumentos() {
 
 function configurarFiltros() {
     const searchInput = document.getElementById('searchInput');
-    const filterRestaurante = document.getElementById('filterRestaurante');
-    const filterEstado = document.getElementById('filterEstado');
+    const filterRestaurant = document.getElementById('filterRestaurant');
+    const filterStatus = document.getElementById('filterStatus');
     const filterFechaDesde = document.getElementById('filterFechaDesde');
     const filterFechaHasta = document.getElementById('filterFechaHasta');
 
-    [searchInput, filterRestaurante, filterEstado, filterFechaDesde, filterFechaHasta].forEach(el => {
+    [searchInput, filterRestaurant, filterStatus, filterFechaDesde, filterFechaHasta].forEach(el => {
         if (el) {
             el.addEventListener('change', () => {
                 paginaActual = 1;
@@ -251,13 +251,13 @@ function aplicarFiltros(docs) {
         .toLowerCase()
         .trim();
     const search = normalizar(document.getElementById('searchInput')?.value);
-    const restaurante = document.getElementById('filterRestaurante')?.value || '';
-    const estado = document.getElementById('filterEstado')?.value || '';
+    const restaurante = document.getElementById('filterRestaurant')?.value || '';
+    const estado = document.getElementById('filterStatus')?.value || '';
     const fechaDesde = document.getElementById('filterFechaDesde')?.value || '';
     const fechaHasta = document.getElementById('filterFechaHasta')?.value || '';
 
     return docs.filter(doc => {
-        const revision = obtenerInfoRevisionFuente(doc);
+        const revision = obtenerInfoReviewFuente(doc);
         const nombreVisible = revision?.nombreOriginal || doc.nombre_original;
         const textoBusqueda = normalizar([
             nombreVisible,
@@ -309,8 +309,8 @@ function aplicarFiltros(docs) {
 
 function limpiarFiltros() {
     document.getElementById('searchInput').value = '';
-    document.getElementById('filterRestaurante').value = '';
-    document.getElementById('filterEstado').value = '';
+    document.getElementById('filterRestaurant').value = '';
+    document.getElementById('filterStatus').value = '';
     document.getElementById('filterFechaDesde').value = '';
     document.getElementById('filterFechaHasta').value = '';
     paginaActual = 1;
@@ -360,52 +360,52 @@ function verDetalles(id) {
     const doc = documentos.find(d => d.id === id);
     if (!doc) return;
 
-    documentoSeleccionado = doc;
+    selectedDocument = doc;
 
     const modalBody = document.getElementById('modalBody');
     const modalTitulo = document.getElementById('modalTitulo');
-    const revision = obtenerInfoRevisionFuente(doc);
+    const revision = obtenerInfoReviewFuente(doc);
     const nombreVisible = revision?.nombreOriginal || doc.nombre_original;
     const nombreSeguro = escapeDocumentoHtml(nombreVisible);
-    const restaurante = escapeDocumentoHtml(doc.restaurante_nombre || doc.restaurante || 'Sin restaurante');
-    const usuario = escapeDocumentoHtml(doc.usuario_nombre || doc.subido_por || 'Sin usuario');
-    const hojas = escapeDocumentoHtml(doc.nombres_hojas || 'No especificadas');
-    const estado = escapeDocumentoHtml(formatearEstado(doc.estado));
+    const restaurante = escapeDocumentoHtml(doc.restaurante_nombre || doc.restaurante || 'No restaurant');
+    const usuario = escapeDocumentoHtml(doc.usuario_nombre || doc.subido_por || 'No user');
+    const hojas = escapeDocumentoHtml(doc.nombres_hojas || 'Not specified');
+    const estado = escapeDocumentoHtml(formatearStatus(doc.estado));
     const uso = revision
-        ? `${revision.esReferenciaActual ? 'Referencia de comparación' : 'Referencia anterior'} / ${revision.etiqueta}`
-        : 'Archivo operativo';
+        ? `${revision.esReferenciaActual ? 'Comparison reference' : 'Previous reference'} / ${revision.etiqueta}`
+        : 'Operational file';
 
-    modalTitulo.textContent = 'Detalle del documento';
+    modalTitulo.textContent = 'Document detail';
     modalBody.innerHTML = `
         <section class="document-detail-overview">
             <div class="document-detail-file-icon"><i class="fa-solid fa-file-excel"></i></div>
             <div class="document-detail-file-copy">
-                <span>ARCHIVO REGISTRADO</span>
+                <span>REGISTERED FILE</span>
                 <h4 title="${nombreSeguro}">${nombreSeguro}</h4>
-                <p>${restaurante} / Registro #${Number(doc.id)}</p>
+                <p>${restaurante} / Record #${Number(doc.id)}</p>
             </div>
             <span class="document-detail-status badge badge-${escapeDocumentoHtml(doc.estado)}">${estado}</span>
         </section>
 
         <section class="document-detail-grid">
-            <article><span class="document-detail-card-icon"><i class="fa-solid fa-store"></i></span><div><small>Restaurante</small><strong>${restaurante}</strong></div></article>
-            <article><span class="document-detail-card-icon"><i class="fa-solid fa-user"></i></span><div><small>Subido por</small><strong>${usuario}</strong></div></article>
-            <article><span class="document-detail-card-icon"><i class="fa-solid fa-calendar-day"></i></span><div><small>Fecha de carga</small><strong>${escapeDocumentoHtml(formatearFecha(doc.fecha_subida, true))}</strong></div></article>
-            <article><span class="document-detail-card-icon"><i class="fa-solid fa-weight-hanging"></i></span><div><small>Tamaño</small><strong>${escapeDocumentoHtml(formatearTamano(doc.tamano_bytes))}</strong></div></article>
+            <article><span class="document-detail-card-icon"><i class="fa-solid fa-store"></i></span><div><small>Restaurant</small><strong>${restaurante}</strong></div></article>
+            <article><span class="document-detail-card-icon"><i class="fa-solid fa-user"></i></span><div><small>Uploaded by</small><strong>${usuario}</strong></div></article>
+            <article><span class="document-detail-card-icon"><i class="fa-solid fa-calendar-day"></i></span><div><small>Upload date</small><strong>${escapeDocumentoHtml(formatearFecha(doc.fecha_subida, true))}</strong></div></article>
+            <article><span class="document-detail-card-icon"><i class="fa-solid fa-weight-hanging"></i></span><div><small>Size</small><strong>${escapeDocumentoHtml(formatearTamano(doc.tamano_bytes))}</strong></div></article>
         </section>
 
         <section class="document-detail-section">
-            <header><span>INFORMACION TECNICA</span><h4>Datos del archivo</h4></header>
+            <header><span>TECHNICAL INFORMATION</span><h4>File data</h4></header>
             <dl class="document-detail-list">
-                <div><dt>Identificador</dt><dd>#${Number(doc.id)}</dd></div>
-                <div><dt>Uso en el sistema</dt><dd>${escapeDocumentoHtml(uso)}</dd></div>
-                <div><dt>Hojas incluidas</dt><dd>${hojas}</dd></div>
+                <div><dt>Identifier</dt><dd>#${Number(doc.id)}</dd></div>
+                <div><dt>System use</dt><dd>${escapeDocumentoHtml(uso)}</dd></div>
+                <div><dt>Included sheets</dt><dd>${hojas}</dd></div>
             </dl>
         </section>
         ${doc.notas && !revision ? `
         <section class="document-detail-note">
             <i class="fa-solid fa-note-sticky"></i>
-            <div><span>NOTAS</span><p>${escapeDocumentoHtml(doc.notas)}</p></div>
+            <div><span>NOTES</span><p>${escapeDocumentoHtml(doc.notas)}</p></div>
         </section>` : ''}
     `;
 
@@ -414,11 +414,11 @@ function verDetalles(id) {
 
 function cerrarModal() {
     document.getElementById('modalDetalles').classList.remove('active');
-    documentoSeleccionado = null;
+    selectedDocument = null;
 }
 
-function descargarDocumentoSeleccionado() {
-    if (documentoSeleccionado?.id) descargarArchivo(documentoSeleccionado.id);
+function downloadSelectedDocument() {
+    if (selectedDocument?.id) descargarArchivo(selectedDocument.id);
 }
 
 function escapeDocumentoHtml(value) {
@@ -438,7 +438,7 @@ async function descargarArchivo(id) {
         Swal.fire({
             icon: 'info',
             title: 'Modo offline',
-            text: 'La descarga no esta disponible en modo offline'
+            text: 'Download is not available in offline mode'
         });
         return;
     }
@@ -453,40 +453,40 @@ async function descargarArchivo(id) {
 
         if (!response.ok) {
             const data = await response.json().catch(() => ({}));
-            throw new Error(data.message || 'Error al descargar');
+            throw new Error(data.message || 'Download failed');
         }
 
         const blob = await response.blob();
         const doc = documentos.find(d => d.id === id);
-        const revision = obtenerInfoRevisionFuente(doc);
+        const revision = obtenerInfoReviewFuente(doc);
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = revision?.nombreOriginal || doc?.nombre_original || 'archivo.xlsx';
+        a.download = revision?.nombreOriginal || doc?.nombre_original || 'file.xlsx';
         document.body.appendChild(a);
         a.click();
         window.URL.revokeObjectURL(url);
         a.remove();
 
     } catch (error) {
-        console.error('Error descargando:', error);
+        console.error('Download error:', error);
         Swal.fire({
             icon: 'error',
-            title: 'No se pudo descargar',
-            text: error.message || 'No se pudo descargar el archivo'
+            title: 'Could not download',
+            text: error.message || 'The file could not be downloaded'
         });
     }
 }
 
 async function eliminarArchivo(id) {
     const result = await Swal.fire({
-        title: 'Eliminar documento',
-        text: 'Esta accion no se puede deshacer. El archivo y todos sus datos seran eliminados.',
+        title: 'Delete document',
+        text: 'This action cannot be undone. The file and all its data will be deleted.',
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#dc2626',
-        confirmButtonText: 'Si, eliminar',
-        cancelButtonText: 'Cancelar'
+        confirmButtonText: 'Yes, delete',
+        cancelButtonText: 'Cancel'
     });
 
     if (!result.isConfirmed) return;
@@ -497,7 +497,7 @@ async function eliminarArchivo(id) {
     if (modoOffline) {
         documentos = documentos.filter(d => d.id !== id);
         mostrarDocumentos();
-        Swal.fire('Eliminado', 'El documento ha sido eliminado (modo offline)', 'success');
+        Swal.fire('Deleted', 'The document was deleted (offline mode)', 'success');
         return;
     }
 
@@ -509,25 +509,25 @@ async function eliminarArchivo(id) {
             }
         });
 
-        if (!response.ok) throw new Error('Error al eliminar');
+        if (!response.ok) throw new Error('Delete failed');
 
         documentos = documentos.filter(d => d.id !== id);
         mostrarDocumentos();
 
         Swal.fire({
             icon: 'success',
-            title: 'Eliminado',
-            text: 'El documento ha sido eliminado',
+            title: 'Deleted',
+            text: 'The document was deleted',
             timer: 2000,
             showConfirmButton: false
         });
 
     } catch (error) {
-        console.error('Error eliminando:', error);
+        console.error('Delete error:', error);
         Swal.fire({
             icon: 'error',
             title: 'Error',
-            text: 'No se pudo eliminar el archivo'
+            text: 'The file could not be deleted'
         });
     }
 }
@@ -543,12 +543,12 @@ function formatearTamano(bytes) {
     return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
 }
 
-function formatearEstado(estado) {
+function formatearStatus(estado) {
     const estados = {
-        'pendiente': 'Pendiente',
-        'validado': 'Validado',
-        'con_errores': 'Con errores',
-        'procesado': 'Procesado'
+        'pendiente': 'Pending',
+        'validado': 'Validated',
+        'con_errores': 'With errors',
+        'procesado': 'Processed'
     };
     return estados[estado] || estado;
 }
@@ -561,7 +561,7 @@ function formatearFecha(fecha, conHora = false) {
         opciones.hour = '2-digit';
         opciones.minute = '2-digit';
     }
-    return d.toLocaleDateString('es-ES', opciones);
+    return d.toLocaleDateString('en-US', opciones);
 }
 
 function generarDatosEjemplo() {
@@ -575,7 +575,7 @@ function generarDatosEjemplo() {
             nombres_hojas: 'Sales, EBT, Summary',
             tamano_bytes: 245760,
             estado: 'validado',
-            subido_por: 'Administrador',
+            subido_por: 'Administrator',
             fecha_subida: '2026-05-26T10:30:00'
         },
         {
@@ -584,10 +584,10 @@ function generarDatosEjemplo() {
             restaurante: 'Burger King',
             restaurante_nombre: 'Burger King',
             numero_hojas: 2,
-            nombres_hojas: 'Datos, Resumen',
+            nombres_hojas: 'Data, Summary',
             tamano_bytes: 189440,
             estado: 'pendiente',
-            subido_por: 'Usuario1',
+            subido_por: 'User1',
             fecha_subida: '2026-05-25T14:15:00'
         },
         {
@@ -601,7 +601,7 @@ function generarDatosEjemplo() {
             estado: 'con_errores',
             subido_por: 'Supervisor',
             fecha_subida: '2026-05-24T09:00:00',
-            notas: 'Revisar errores en semana 3'
+            notas: 'Review errors in week 3'
         },
         {
             id: 4,
@@ -612,7 +612,7 @@ function generarDatosEjemplo() {
             nombres_hojas: 'Sales',
             tamano_bytes: 98304,
             estado: 'procesado',
-            subido_por: 'Administrador',
+            subido_por: 'Administrator',
             fecha_subida: '2026-05-20T16:45:00'
         }
     ];
@@ -628,7 +628,7 @@ async function previsualizarConciliacion(id) {
         Swal.fire({
             icon: 'info',
             title: 'Modo offline',
-            text: 'La vista previa no está disponible en modo offline'
+            text: 'Preview is not available in offline mode'
         });
         return;
     }
@@ -636,21 +636,21 @@ async function previsualizarConciliacion(id) {
     const doc = documentos.find(d => d.id === id);
     if (!doc) return;
 
-    documentoSeleccionado = doc;
+    selectedDocument = doc;
 
     if (typeof XLSX === 'undefined') {
         Swal.fire({
             icon: 'error',
-            title: 'No se puede abrir el Excel',
-            text: 'No se cargó la librería XLSX. Revisa que xlsx.full.min.js esté agregado en documentos.astro.'
+            title: 'Excel cannot be opened',
+            text: 'The XLSX library was not loaded. Check that xlsx.full.min.js is included in documentos.astro.'
         });
         return;
     }
 
     try {
         Swal.fire({
-            title: 'Abriendo conciliación...',
-            text: 'Leyendo el archivo Excel',
+            title: 'Opening reconciliation...',
+            text: 'Reading the Excel file',
             allowOutsideClick: false,
             didOpen: () => Swal.showLoading()
         });
@@ -663,7 +663,7 @@ async function previsualizarConciliacion(id) {
 
         if (!response.ok) {
             const data = await response.json().catch(() => ({}));
-            throw new Error(data.message || 'No se pudo abrir el archivo');
+            throw new Error(data.message || 'The file could not be opened');
         }
 
         const buffer = await response.arrayBuffer();
@@ -679,12 +679,12 @@ async function previsualizarConciliacion(id) {
         abrirPreviewExcel(doc, previewWorkbookActual);
 
     } catch (error) {
-        console.error('Error abriendo vista previa:', error);
+        console.error('Preview open error:', error);
 
         Swal.fire({
             icon: 'error',
-            title: 'No se pudo abrir la conciliación',
-            text: error.message || 'Error al leer el archivo'
+            title: 'Could not open the reconciliation',
+            text: error.message || 'Error reading the file'
         });
     }
 }
@@ -697,14 +697,14 @@ function abrirPreviewExcel(doc, workbook) {
     if (!modal || !titulo || !tabs) {
         Swal.fire({
             icon: 'error',
-            title: 'Falta el modal de vista previa',
-            text: 'Revisa que modalPreviewExcel exista en documentos.astro.'
+            title: 'Preview modal is missing',
+            text: 'Check that modalPreviewExcel exists in documentos.astro.'
         });
         return;
     }
 
-    const revision = obtenerInfoRevisionFuente(doc);
-    const nombreVisible = revision?.nombreOriginal || doc.nombre_original || 'Conciliación';
+    const revision = obtenerInfoReviewFuente(doc);
+    const nombreVisible = revision?.nombreOriginal || doc.nombre_original || 'Reconciliation';
 
     titulo.textContent = nombreVisible;
     tabs.innerHTML = '';
@@ -806,7 +806,7 @@ function cerrarPreviewExcel() {
     previewWorkbookActual = null;
 }
 
-// Cerrar modal con Escape
+// Close modal con Escape
 document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
         cerrarModal();

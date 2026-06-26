@@ -1,81 +1,91 @@
----
+﻿---
 import DashboardLayout from '../../layouts/DashboardLayout.astro';
 ---
 
-<DashboardLayout title="Panel administrativo">
+<DashboardLayout title="Admin dashboard">
     <div class="page-container admin-dashboard-page">
         <header class="admin-dashboard-header">
             <div>
-                <span class="admin-dashboard-eyebrow">CONTROL GENERAL DEL SISTEMA</span>
-                <h1>Dashboard administrativo</h1>
-                <p>Supervisa accesos, actividad de usuarios, archivos y movimientos recientes.</p>
+                <span class="admin-dashboard-eyebrow">GENERAL SYSTEM CONTROL</span>
+                <h1>Admin dashboard</h1>
+                <p>Monitor access, user activity, files, and recent movements.</p>
             </div>
             <div class="admin-dashboard-header-actions">
-                <span id="adminDashboardUpdated">Sin actualizar</span>
+                <span id="adminDashboardUpdated">Not refreshed</span>
                 <button class="btn btn-primary" id="refreshAdminDashboard">
                     <i class="fa-solid fa-rotate"></i>
-                    Actualizar
+                    Refresh
                 </button>
             </div>
         </header>
 
-        <section class="admin-metrics" aria-label="Resumen administrativo">
+        <section class="admin-metrics" aria-label="Admin summary">
             <article class="admin-metric-card">
                 <span class="admin-metric-icon users"><i class="fa-solid fa-users"></i></span>
-                <div><strong id="adminUsersTotal">0</strong><span>Usuarios activos</span><small id="adminUsersMeta">0 registrados</small></div>
+                <div><strong id="adminUsersTotal">0</strong><span>Active users</span><small id="adminUsersMeta">0 registered</small></div>
             </article>
             <article class="admin-metric-card">
                 <span class="admin-metric-icon sessions"><i class="fa-solid fa-right-to-bracket"></i></span>
-                <div><strong id="adminActiveSessions">0</strong><span>Sesiones activas</span><small id="adminLoginsToday">0 inicios hoy</small></div>
+                <div><strong id="adminActiveSessions">0</strong><span>Active sessions</span><small id="adminLoginsToday">0 logins today</small></div>
             </article>
             <article class="admin-metric-card">
                 <span class="admin-metric-icon files"><i class="fa-solid fa-file-arrow-up"></i></span>
-                <div><strong id="adminFilesToday">0</strong><span>Archivos hoy</span><small id="adminFilesMeta">0 en los ultimos 7 dias</small></div>
+                <div><strong id="adminFilesToday">0</strong><span>Files today</span><small id="adminFilesMeta">0 in the last 7 days</small></div>
             </article>
             <article class="admin-metric-card">
                 <span class="admin-metric-icon validations"><i class="fa-solid fa-shield-halved"></i></span>
-                <div><strong id="adminValidationsToday">0</strong><span>Validaciones hoy</span><small id="adminValidationMeta">0 con incidencias</small></div>
+                <div><strong id="adminValidationsToday">0</strong><span>Validations today</span><small id="adminValidationMeta">0 with issues</small></div>
             </article>
             <article class="admin-metric-card">
                 <span class="admin-metric-icon departments"><i class="fa-solid fa-building"></i></span>
-                <div><strong id="adminDepartmentsActive">0</strong><span>Departamentos activos</span><small id="adminDepartmentsMeta">0 registrados</small></div>
+                <div><strong id="adminDepartmentsActive">0</strong><span>Active departments</span><small id="adminDepartmentsMeta">0 registered</small></div>
             </article>
+        </section>
+
+        <section class="admin-dashboard-panel database-tables-panel">
+            <header class="admin-panel-header">
+                <div><span>AUDIT</span><h2>Security audit table</h2></div>
+                <i class="fa-solid fa-user-shield"></i>
+            </header>
+            <div class="admin-database-tables" id="adminDatabaseTables">
+                <div class="admin-loading">Loading security audit...</div>
+            </div>
         </section>
 
         <div class="admin-dashboard-grid">
             <section class="admin-dashboard-panel movements-panel">
                 <header class="admin-panel-header">
-                    <div><span>TRAZABILIDAD</span><h2>Movimientos recientes</h2></div>
+                    <div><span>TRACEABILITY</span><h2>Recent movements</h2></div>
                     <i class="fa-solid fa-wave-square"></i>
                 </header>
                 <div class="admin-table-wrap">
                     <table class="admin-table">
-                        <thead><tr><th>Movimiento</th><th>Usuario</th><th>Detalle</th><th>Estado</th><th>Fecha</th></tr></thead>
-                        <tbody id="adminMovementsBody"><tr><td colspan="5" class="admin-loading">Cargando movimientos...</td></tr></tbody>
+                        <thead><tr><th>Movement</th><th>User</th><th>Detail</th><th>Status</th><th>Date</th></tr></thead>
+                        <tbody id="adminMovementsBody"><tr><td colspan="5" class="admin-loading">Loading movements...</td></tr></tbody>
                     </table>
                 </div>
             </section>
 
             <section class="admin-dashboard-panel sessions-panel">
                 <header class="admin-panel-header">
-                    <div><span>SEGURIDAD</span><h2>Inicios de sesion</h2></div>
+                    <div><span>SECURITY</span><h2>Logins</h2></div>
                     <i class="fa-solid fa-fingerprint"></i>
                 </header>
                 <div class="admin-session-list" id="adminSessionsList">
-                    <div class="admin-loading">Cargando sesiones...</div>
+                    <div class="admin-loading">Loading sessions...</div>
                 </div>
             </section>
         </div>
 
         <section class="admin-dashboard-panel user-activity-panel">
             <header class="admin-panel-header">
-                <div><span>USO DEL SISTEMA</span><h2>Actividad por usuario</h2></div>
+                <div><span>SYSTEM USAGE</span><h2>User activity</h2></div>
                 <i class="fa-solid fa-chart-column"></i>
             </header>
             <div class="admin-table-wrap">
                 <table class="admin-table">
-                    <thead><tr><th>Usuario</th><th>Departamento</th><th>Rol</th><th>Sesiones</th><th>Archivos</th><th>Ultimo acceso</th></tr></thead>
-                    <tbody id="adminUserActivityBody"><tr><td colspan="6" class="admin-loading">Cargando actividad...</td></tr></tbody>
+                    <thead><tr><th>User</th><th>Department</th><th>Role</th><th>Sessions</th><th>Files</th><th>Last access</th></tr></thead>
+                    <tbody id="adminUserActivityBody"><tr><td colspan="6" class="admin-loading">Loading activity...</td></tr></tbody>
                 </table>
             </div>
         </section>
@@ -90,7 +100,7 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
             box-shadow: 0 10px 24px rgba(16, 47, 76, .16);
         }
         .admin-dashboard-eyebrow { font-size: 11px; font-weight: 800; letter-spacing: .1em; color: #a9d5f4; }
-        .admin-dashboard-header h1 { margin: 6px 0; font-family: 'Source Serif 4', serif; font-size: 30px; }
+        .admin-dashboard-header h1 { margin: 6px 0; font-family: 'Inter', sans-serif; font-size: 30px; }
         .admin-dashboard-header p { margin: 0; color: #d7e8f5; }
         .admin-dashboard-header-actions { display: flex; align-items: center; gap: 12px; }
         .admin-dashboard-header-actions > span { font-size: 12px; color: #c8dceb; white-space: nowrap; }
@@ -192,6 +202,129 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
         }
         .admin-loading { padding: 30px !important; color: #718496 !important; text-align: center !important; }
         .user-activity-panel { margin-bottom: 20px; }
+
+        .database-tables-panel { margin-bottom: 16px; }
+        .admin-database-tables {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 14px;
+            padding: 16px;
+            background: #f4f7fa;
+        }
+        .admin-db-card {
+            min-width: 0;
+            overflow: hidden;
+            border: 1px solid #d7e1ea;
+            border-radius: 8px;
+            background: #fff;
+        }
+        .admin-db-card.is-missing {
+            border-style: dashed;
+            background: #fbfcfd;
+        }
+        .admin-db-card-head {
+            display: grid;
+            grid-template-columns: auto minmax(0, 1fr) auto;
+            gap: 11px;
+            align-items: start;
+            padding: 14px;
+            border-bottom: 1px solid #e2e9f0;
+        }
+        .admin-db-icon {
+            display: grid;
+            width: 36px;
+            height: 36px;
+            place-items: center;
+            border-radius: 7px;
+            background: #e4eef7;
+            color: #174f7d;
+        }
+        .admin-db-title { min-width: 0; }
+        .admin-db-title strong {
+            display: block;
+            overflow: hidden;
+            color: #0b2943;
+            font-size: 14px;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .admin-db-title span {
+            display: block;
+            margin-top: 3px;
+            color: #687d91;
+            font-size: 11px;
+            line-height: 1.35;
+        }
+        .admin-db-count {
+            display: grid;
+            min-width: 64px;
+            min-height: 36px;
+            place-items: center;
+            padding: 0 10px;
+            border-radius: 6px;
+            background: #0b2943;
+            color: #fff;
+            font-size: 16px;
+            font-weight: 900;
+        }
+        .admin-db-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding: 10px 14px;
+            border-bottom: 1px solid #e8eef4;
+        }
+        .admin-db-meta span {
+            display: inline-flex;
+            align-items: center;
+            min-height: 24px;
+            padding: 4px 7px;
+            border: 1px solid #d9e3ec;
+            border-radius: 999px;
+            background: #f8fbfd;
+            color: #536a7f;
+            font-size: 10px;
+            font-weight: 800;
+        }
+        .admin-db-preview {
+            max-height: 340px;
+            overflow: auto;
+            scrollbar-width: thin;
+            scrollbar-color: #9fb1c2 #edf2f6;
+        }
+        .admin-db-preview table {
+            width: 100%;
+            min-width: 560px;
+            border-collapse: collapse;
+            font-size: 11px;
+        }
+        .admin-db-preview th {
+            position: sticky;
+            top: 0;
+            z-index: 1;
+            padding: 9px 10px;
+            background: #f6f9fc;
+            color: #5c7185;
+            font-size: 9px;
+            letter-spacing: .05em;
+            text-align: left;
+            text-transform: uppercase;
+        }
+        .admin-db-preview td {
+            max-width: 180px;
+            padding: 9px 10px;
+            border-top: 1px solid #ecf1f5;
+            color: #334f68;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .admin-db-empty {
+            padding: 18px 14px;
+            color: #6d8194;
+            font-size: 12px;
+            line-height: 1.45;
+        }
 
         .admin-dashboard-page {
             --admin-border: #d7e1ea;
@@ -305,6 +438,9 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
             .admin-dashboard-header { align-items: flex-start; flex-direction: column; padding: 20px; }
             .admin-dashboard-header-actions { width: 100%; justify-content: space-between; }
             .admin-metrics { grid-template-columns: 1fr; }
+            .admin-database-tables { grid-template-columns: 1fr; padding: 12px; }
+            .admin-db-card-head { grid-template-columns: auto minmax(0, 1fr); }
+            .admin-db-count { grid-column: 1 / -1; justify-self: start; }
             .admin-session-list { grid-template-columns: 1fr; }
             .admin-session-item:nth-child(odd) { border-right: 0; }
             .movements-panel .admin-table tr { grid-template-columns: 1fr; }
@@ -315,3 +451,4 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
     <script src="/js/config.js" is:inline></script>
     <script src="/js/dashboard-admin.js" is:inline></script>
 </DashboardLayout>
+

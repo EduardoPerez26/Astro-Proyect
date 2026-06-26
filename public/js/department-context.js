@@ -3,7 +3,7 @@
         codigo: 'ar',
         label: 'AR',
         nombre: 'Accounts Receivable',
-        descripcion: 'Conciliaciones, documentos, tiendas e historial de AR.'
+        descripcion: 'AR reconciliations, documents, stores, and history.'
     };
 
     function readUser() {

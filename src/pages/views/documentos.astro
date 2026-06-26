@@ -2,36 +2,36 @@
 import DashboardLayout from "../../layouts/DashboardLayout.astro";
 ---
 
-<DashboardLayout title="Documentos">
+<DashboardLayout title="Documents">
     <div class="page-container">
         <!-- Header -->
         <div class="page-header">
             <div class="page-header-info">
-                <h1>Documentos</h1>
-                <p>Todos los archivos Excel subidos al sistema</p>
+                <h1>Documents</h1>
+                <p>All Excel files uploaded to the system</p>
             </div>
         </div>
 
-        <!-- Filtros -->
+        <!-- Filters -->
         <div class="filters-bar documents-filters">
             <div class="filter-group search-filter">
-                <label for="searchInput">Buscar archivo</label>
+                <label for="searchInput">Search file</label>
                 <div class="search-field">
                     <i class="fa-solid fa-magnifying-glass" aria-hidden="true"
                     ></i>
                     <input
                         type="search"
                         id="searchInput"
-                        placeholder="Nombre o restaurante..."
+                        placeholder="Name or restaurant..."
                         autocomplete="off"
                     />
                 </div>
             </div>
 
             <div class="filter-group">
-                <label>Restaurante:</label>
-                <select id="filterRestaurante">
-                    <option value="">Todos</option>
+                <label>Restaurant:</label>
+                <select id="filterRestaurant">
+                    <option value="">All</option>
                     <option value="taco-bell">Taco Bell</option>
                     <option value="burger-king">Burger King</option>
                     <option value="popeyes">Popeyes</option>
@@ -40,23 +40,23 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
             </div>
 
             <div class="filter-group">
-                <label>Estado:</label>
-                <select id="filterEstado">
-                    <option value="">Todos</option>
-                    <option value="pendiente">Pendiente</option>
-                    <option value="validado">Validado</option>
-                    <option value="con_errores">Con errores</option>
-                    <option value="procesado">Procesado</option>
+                <label>Status:</label>
+                <select id="filterStatus">
+                    <option value="">All</option>
+                    <option value="pendiente">Pending</option>
+                    <option value="validado">Validated</option>
+                    <option value="con_errores">With errors</option>
+                    <option value="procesado">Processed</option>
                 </select>
             </div>
 
             <div class="filter-group">
-                <label>Desde:</label>
+                <label>From:</label>
                 <input type="date" id="filterFechaDesde" />
             </div>
 
             <div class="filter-group">
-                <label>Hasta:</label>
+                <label>To:</label>
                 <input type="date" id="filterFechaHasta" />
             </div>
 
@@ -66,21 +66,21 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
                 onclick="limpiarFiltros()"
             >
                 <i class="fa-solid fa-times"></i>
-                Limpiar
+                Clear
             </button>
         </div>
 
-        <!-- Tabla de documentos -->
+        <!-- Documents table -->
         <div class="table-container">
             <div class="table-header">
-                <h3>Lista de documentos</h3>
+                <h3>Document list</h3>
                 <div class="table-actions">
                     <button
                         class="btn btn-secondary btn-sm"
                         onclick="exportarCSV()"
                     >
                         <i class="fa-solid fa-download"></i>
-                        Exportar
+                        Export
                     </button>
                 </div>
             </div>
@@ -89,13 +89,13 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
                 <thead>
                     <tr>
                         <th>ID</th>
-                        <th>Archivo</th>
-                        <th>Restaurante</th>
-                        <th>Tamano</th>
-                        <th>Estado</th>
-                        <th>Subido por</th>
-                        <th>Fecha</th>
-                        <th>Acciones</th>
+                        <th>File</th>
+                        <th>Restaurant</th>
+                        <th>Size</th>
+                        <th>Status</th>
+                        <th>Uploaded by</th>
+                        <th>Date</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody id="documentosBody">
@@ -105,24 +105,24 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
 
             <div id="emptyState" class="empty-state" style="display: none;">
                 <i class="fa-solid fa-folder-open"></i>
-                <h4>No hay documentos</h4>
+                <h4>No documents</h4>
                 <p>
-                    No se encontraron documentos con los filtros seleccionados
+                    No documents match the selected filters
                 </p>
             </div>
 
             <div id="loadingState" class="empty-state">
                 <i class="fa-solid fa-spinner fa-spin"></i>
-                <h4>Cargando...</h4>
-                <p>Obteniendo documentos del servidor</p>
+                <h4>Loading...</h4>
+                <p>Fetching documents from the server</p>
             </div>
 
             <!-- Paginacion -->
             <div class="pagination" id="pagination" style="display: none;">
                 <div class="pagination-info">
-                    Mostrando <span id="showingFrom">1</span> - <span
+                    Showing <span id="showingFrom">1</span> - <span
                         id="showingTo">10</span
-                    > de <span id="totalItems">0</span> documentos
+                    > of <span id="totalItems">0</span> documents
                 </div>
                 <div class="pagination-buttons">
                     <button
@@ -150,9 +150,9 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
         <div class="modal modal-lg document-detail-modal">
             <div class="modal-header document-detail-modal-header">
                 <div>
-                    <span>EXPEDIENTE DIGITAL</span>
-                    <h3 id="modalTitulo">Detalle del documento</h3>
-                    <p>Información y trazabilidad del archivo seleccionado</p>
+                    <span>DIGITAL FILE</span>
+                    <h3 id="modalTitulo">Document detail</h3>
+                    <p>Information and traceability for the selected file</p>
                 </div>
                 <button class="modal-close" onclick="cerrarModal()">
                     <i class="fa-solid fa-times"></i>
@@ -161,28 +161,28 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
             <div class="modal-body" id="modalBody"></div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" onclick="cerrarModal()"
-                    >Cerrar</button
+                    >Close</button
                 >
                 <button
                     class="btn btn-primary"
-                    id="btnDescargar"
-                    onclick="descargarDocumentoSeleccionado()"
+                    id="btnDownload"
+                    onclick="downloadSelectedDocument()"
                 >
                     <i class="fa-solid fa-download"></i>
-                    Descargar
+                    Download
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- Modal de vista previa de Excel -->
+    <!-- Excel preview modal -->
     <div id="modalPreviewExcel" class="modal-overlay">
         <div class="modal modal-xl document-preview-modal">
             <div class="modal-header document-detail-modal-header">
                 <div>
-                    <span>VISTA PREVIA</span>
-                    <h3 id="previewTitulo">Vista de conciliación</h3>
-                    <p>Consulta el archivo sin descargarlo</p>
+                    <span>PREVIEW</span>
+                    <h3 id="previewTitulo">Reconciliation view</h3>
+                    <p>Review the file without downloading it</p>
                 </div>
                 <button class="modal-close" onclick="cerrarPreviewExcel()">
                     <i class="fa-solid fa-times"></i>
@@ -202,14 +202,14 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
 
             <div class="modal-footer">
                 <button class="btn btn-secondary" onclick="cerrarPreviewExcel()"
-                    >Cerrar</button
+                    >Close</button
                 >
                 <button
                     class="btn btn-primary"
-                    onclick="descargarDocumentoSeleccionado()"
+                    onclick="downloadSelectedDocument()"
                 >
                     <i class="fa-solid fa-download"></i>
-                    Descargar
+                    Download
                 </button>
             </div>
         </div>
@@ -322,7 +322,7 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
         .document-detail-modal-header h3 {
             margin: 4px 0 2px;
             color: #fff;
-            font-family: "Source Serif 4", serif;
+            font-family: "Inter", sans-serif;
             font-size: 22px;
         }
         .document-detail-modal-header p {
@@ -601,7 +601,7 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
             background: #174a75 !important;
         }
 
-        /* Tabla */
+        /* Table */
         .preview-table-wrapper {
             width: 100% !important;
             height: calc(88vh - 210px) !important;
@@ -699,7 +699,7 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
             padding-bottom: 8px !important;
         }
 
-        /* La tabla debe poder crecer hacia la derecha */
+        /* The table must be able to grow to the right */
         .preview-excel-table {
             width: max-content !important;
             min-width: 100% !important;

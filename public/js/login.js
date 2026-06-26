@@ -48,7 +48,7 @@ document.addEventListener('DOMContentLoaded', function () {
             passwordToggle.setAttribute('aria-pressed', String(!isVisible));
             passwordToggle.setAttribute(
                 'aria-label',
-                isVisible ? 'Mostrar contrasena' : 'Ocultar contrasena'
+                isVisible ? 'Show password' : 'Hide password'
             );
             passwordToggle.innerHTML = isVisible
                 ? '<i class="fa-regular fa-eye" aria-hidden="true"></i>'
@@ -67,8 +67,8 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!username || !password) {
             await Swal.fire({
                 icon: 'warning',
-                title: 'Completa los campos',
-                text: 'Ingresa tu usuario y contrasena para continuar.',
+                title: 'Complete the fields',
+                text: 'Enter your username and password to continue.',
                 confirmButtonColor: '#102A43'
             });
             return;
@@ -92,7 +92,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 throw new Error(
                     data.message ||
                     data.mensaje ||
-                    'El usuario o la contrasena no son correctos.'
+                    'The username or password is incorrect.'
                 );
             }
 
@@ -105,20 +105,20 @@ document.addEventListener('DOMContentLoaded', function () {
 
             await Swal.fire({
                 icon: 'success',
-                title: 'Bienvenido',
-                text: `Hola, ${data.usuario.nombre}`,
+                title: 'Welcome',
+                text: `Hello, ${data.usuario.nombre}`,
                 timer: 1200,
                 showConfirmButton: false
             });
 
             window.location.href = rutaInicial;
         } catch (error) {
-            console.error('Error de login:', error);
+            console.error('Login error:', error);
 
             await Swal.fire({
                 icon: 'error',
-                title: 'No pudimos iniciar sesion',
-                text: error.message || 'No se pudieron validar tus credenciales.',
+                title: 'We could not sign you in',
+                text: error.message || 'Your credentials could not be validated.',
                 confirmButtonColor: '#102A43'
             });
         } finally {
@@ -130,8 +130,8 @@ document.addEventListener('DOMContentLoaded', function () {
         loginBtn.disabled = isLoading;
         loginForm.setAttribute('aria-busy', String(isLoading));
         loginBtn.innerHTML = isLoading
-            ? '<i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i><span>Verificando...</span>'
-            : '<span>Entrar al hub</span><i class="fa-solid fa-arrow-right" aria-hidden="true"></i>';
+            ? '<i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i><span>Verifying...</span>'
+            : '<span>Enter the hub</span><i class="fa-solid fa-arrow-right" aria-hidden="true"></i>';
     }
 });
 
@@ -158,6 +158,6 @@ async function verificarSesion(token) {
 
         limpiarSesionLocal();
     } catch (error) {
-        console.warn('No se pudo verificar la sesion:', error);
+        console.warn('Session could not be verified:', error);
     }
 }

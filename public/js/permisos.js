@@ -1,17 +1,17 @@
-// ============================================
-// CONFIGURACION DE PERMISOS
+﻿// ============================================
+// PERMISSION SETTINGS
 // ============================================
 
 let currentUserId = null;
 let currentUser = null;
 let originalPermissions = {};
 
-// Definicion de todas las secciones del sistema
+// System sections shown in the permission editor.
 const MENU_SECTIONS = [
     {
         id: 'dashboardAdmin',
-        name: 'Dashboard administrativo',
-        description: 'Sesiones, movimientos y actividad general del sistema',
+        name: 'Admin dashboard',
+        description: 'Sessions, movements, and overall system activity',
         icon: 'fa-chart-line',
         iconClass: 'dashboard',
         path: '/views/dashboard-admin',
@@ -21,8 +21,8 @@ const MENU_SECTIONS = [
     },
     {
         id: 'tiendas',
-        name: 'Tiendas',
-        description: 'Gestion de restaurantes y sucursales',
+        name: 'Stores',
+        description: 'Restaurant and branch operations',
         icon: 'fa-shop',
         iconClass: 'tiendas',
         path: '/views/tiendas',
@@ -31,8 +31,8 @@ const MENU_SECTIONS = [
     },
     {
         id: 'documentos',
-        name: 'Documentos',
-        description: 'Editor y validador de Excel',
+        name: 'Documents',
+        description: 'Excel files and validation records',
         icon: 'fa-file-excel',
         iconClass: 'documentos',
         path: '/views/documentos',
@@ -41,8 +41,8 @@ const MENU_SECTIONS = [
     },
     {
         id: 'perfil',
-        name: 'Perfil',
-        description: 'Configuracion de cuenta personal',
+        name: 'Profile',
+        description: 'Personal account settings',
         icon: 'fa-user',
         iconClass: 'perfil',
         path: '/views/perfil',
@@ -50,8 +50,8 @@ const MENU_SECTIONS = [
     },
     {
         id: 'permisos',
-        name: 'Permisos',
-        description: 'Configuracion de accesos',
+        name: 'Permissions',
+        description: 'Access settings',
         icon: 'fa-key',
         iconClass: 'permisos',
         path: '/views/permisos',
@@ -60,8 +60,8 @@ const MENU_SECTIONS = [
     },
     {
         id: 'historial',
-        name: 'Historial',
-        description: 'Registro de actividades y cambios',
+        name: 'History',
+        description: 'Activity and change log',
         icon: 'fa-clock-rotate-left',
         iconClass: 'historial',
         path: '/views/historial',
@@ -70,8 +70,8 @@ const MENU_SECTIONS = [
     },
     {
         id: 'usuarios',
-        name: 'Usuarios',
-        description: 'Administracion de usuarios',
+        name: 'Users',
+        description: 'User administration',
         icon: 'fa-users',
         iconClass: 'usuarios',
         path: '/views/usuarios',
@@ -79,9 +79,9 @@ const MENU_SECTIONS = [
         adminOnly: true
     },
     {
-        id: 'controlRestaurantes',
-        name: 'Control de restaurantes',
-        description: 'Disponibilidad operativa por mantenimiento o fallas',
+        id: 'controlRestaurants',
+        name: 'Restaurant control',
+        description: 'Operational availability for maintenance or outages',
         icon: 'fa-screwdriver-wrench',
         iconClass: 'restaurantes',
         path: '/views/restaurantes',
@@ -90,17 +90,17 @@ const MENU_SECTIONS = [
     }
 ];
 
-// Inicializar
+// Initialize
 document.addEventListener('DOMContentLoaded', function() {
-    // Obtener userId de la URL
+    // Read userId from the URL.
     const urlParams = new URLSearchParams(window.location.search);
     currentUserId = urlParams.get('userId');
     
     if (!currentUserId) {
         Swal.fire({
             icon: 'error',
-            title: 'Usuario no especificado',
-            text: 'No se especifico el usuario a configurar.',
+            title: 'User not specified',
+            text: 'No user was specified for configuration.',
         }).then(() => {
             window.location.href = '/views/usuarios';
         });
@@ -111,16 +111,16 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // ============================================
-// CARGAR DATOS DEL USUARIO
+// LOAD USER DATA
 // ============================================
 
 async function loadUserData() {
     const token = localStorage.getItem('token');
     
-    // Modo offline - datos de ejemplo
+    // Offline mode sample data
     if (!token || localStorage.getItem('modoOffline')) {
         const users = [
-            { id: 1, nombre: 'Administrador', email: 'admin@empresa.com', username: 'admin', rol: 'admin' },
+            { id: 1, nombre: 'Administrator', email: 'admin@empresa.com', username: 'admin', rol: 'admin' },
             { id: 2, nombre: 'Juan Perez', email: 'juan@empresa.com', username: 'jperez', rol: 'supervisor' },
             { id: 3, nombre: 'Maria Garcia', email: 'maria@empresa.com', username: 'mgarcia', rol: 'usuario' },
             { id: 4, nombre: 'Carlos Lopez', email: 'carlos@empresa.com', username: 'clopez', rol: 'usuario' }
@@ -131,19 +131,19 @@ async function loadUserData() {
         if (!currentUser) {
             Swal.fire({
                 icon: 'error',
-                title: 'Usuario no encontrado',
+                title: 'User not found',
             }).then(() => {
                 window.location.href = '/views/usuarios';
             });
             return;
         }
         
-        // Permisos de ejemplo
+        // Sample permissions
         const defaultPermissions = {
-            1: { dashboardAdmin: true, tiendas: true, documentos: true, perfil: true, permisos: true, historial: true, usuarios: true, controlRestaurantes: true, paginaInicio: 'dashboardAdmin' },
-            2: { tiendas: true, documentos: true, perfil: true, permisos: false, historial: true, usuarios: false, controlRestaurantes: false, paginaInicio: 'tiendas' },
-            3: { tiendas: true, documentos: true, perfil: true, permisos: false, historial: false, usuarios: false, controlRestaurantes: false, paginaInicio: 'tiendas' },
-            4: { tiendas: true, documentos: false, perfil: true, permisos: false, historial: false, usuarios: false, controlRestaurantes: false, paginaInicio: 'tiendas' }
+            1: { dashboardAdmin: true, tiendas: true, documentos: true, perfil: true, permisos: true, historial: true, usuarios: true, controlRestaurants: true, paginaInicio: 'dashboardAdmin' },
+            2: { tiendas: true, documentos: true, perfil: true, permisos: false, historial: true, usuarios: false, controlRestaurants: false, paginaInicio: 'tiendas' },
+            3: { tiendas: true, documentos: true, perfil: true, permisos: false, historial: false, usuarios: false, controlRestaurants: false, paginaInicio: 'tiendas' },
+            4: { tiendas: true, documentos: false, perfil: true, permisos: false, historial: false, usuarios: false, controlRestaurants: false, paginaInicio: 'tiendas' }
         };
         
         currentUser.permisos = defaultPermissions[currentUser.id] || {};
@@ -163,7 +163,7 @@ async function loadUserData() {
             const data = await response.json();
             currentUser = data.usuario || data;
             
-            // Asegurar que permisos sea un objeto
+            // Ensure permissions are an object.
             if (typeof currentUser.permisos === 'string') {
                 try {
                     currentUser.permisos = JSON.parse(currentUser.permisos);
@@ -183,14 +183,14 @@ async function loadUserData() {
             renderPermissions();
         } else {
             const errorData = await response.json();
-            throw new Error(errorData.mensaje || 'Error al cargar usuario');
+            throw new Error(errorData.message || errorData.mensaje || 'User could not be loaded');
         }
     } catch (error) {
         console.error('Error:', error);
         Swal.fire({
             icon: 'error',
             title: 'Error',
-            text: error.message || 'No se pudo cargar la informacion del usuario.',
+            text: error.message || 'User information could not be loaded.',
         }).then(() => {
             window.location.href = '/views/usuarios';
         });
@@ -198,7 +198,7 @@ async function loadUserData() {
 }
 
 // ============================================
-// RENDERIZAR INFO USUARIO
+// RENDER USER INFO
 // ============================================
 
 function renderUserInfo() {
@@ -210,7 +210,7 @@ function renderUserInfo() {
     const roleEl = document.getElementById('permUserRole');
     
     if (avatarEl) avatarEl.textContent = getInitials(currentUser.nombre || '');
-    if (nameEl) nameEl.textContent = currentUser.nombre || 'Sin nombre';
+    if (nameEl) nameEl.textContent = currentUser.nombre || 'No name';
     if (emailEl) emailEl.textContent = currentUser.email || '';
     
     if (roleEl) {
@@ -220,7 +220,7 @@ function renderUserInfo() {
 }
 
 // ============================================
-// RENDERIZAR PERMISOS
+// RENDER PERMISSIONS
 // ============================================
 
 function renderPermissions() {
@@ -234,8 +234,8 @@ function renderPermissions() {
             : isRequired || currentUser.permisos[section.id] === true;
         const isDisabled = isRequired || (isAdminSection && currentUser.rol !== 'admin');
         const tags = [
-            isRequired ? 'Requerido' : '',
-            isAdminSection ? 'Solo Admin' : ''
+            isRequired ? 'Required' : '',
+            isAdminSection ? 'Admin only' : ''
         ].filter(Boolean);
         
         return `
@@ -286,7 +286,7 @@ function renderInitialWindow() {
         ? enabled.map(section => `
             <option value="${section.id}">${section.name}</option>
         `).join('')
-        : '<option value="">Sin ventanas habilitadas</option>';
+        : '<option value="">No enabled windows</option>';
     select.disabled = enabled.length === 0;
     currentUser.permisos.paginaInicio = enabled.some(section => section.id === current)
         ? current
@@ -300,7 +300,7 @@ function changeInitialWindow(value) {
 }
 
 // ============================================
-// TOGGLE PERMISO
+// TOGGLE PERMISSION
 // ============================================
 
 function togglePermission(sectionId, enabled) {
@@ -310,7 +310,7 @@ function togglePermission(sectionId, enabled) {
 }
 
 // ============================================
-// RESTABLECER PERMISOS
+// RESET PERMISSIONS
 // ============================================
 
 function resetPermissions() {
@@ -319,21 +319,21 @@ function resetPermissions() {
     
     Swal.fire({
         icon: 'info',
-        title: 'Permisos restablecidos',
-        text: 'Se restauraron los permisos originales.',
+        title: 'Permissions reset',
+        text: 'The original permissions were restored.',
         timer: 2000,
         showConfirmButton: false
     });
 }
 
 // ============================================
-// GUARDAR PERMISOS
+// SAVE PERMISSIONS
 // ============================================
 
 async function savePermissions() {
     const token = localStorage.getItem('token');
     
-    // Recopilar permisos actuales
+    // Collect current permissions.
     const permissions = {};
     MENU_SECTIONS.forEach(section => {
         const checkbox = document.getElementById(`perm_${section.id}`);
@@ -351,8 +351,8 @@ async function savePermissions() {
     if (!enabledWindows.length && currentUser.rol !== 'admin') {
         await Swal.fire({
             icon: 'warning',
-            title: 'Selecciona una ventana',
-            text: 'El usuario debe tener acceso al menos a Tiendas, Documentos o Historial.'
+            title: 'Select a window',
+            text: 'The user must have access to at least Stores, Documents, or History.'
         });
         return;
     }
@@ -361,9 +361,9 @@ async function savePermissions() {
         ? initialWindow
         : enabledWindows[0]?.id || 'tiendas';
     
-    // Modo offline
+    // Offline mode
     if (!token || localStorage.getItem('modoOffline')) {
-        // Guardar en localStorage para simular persistencia
+        // Save to localStorage to simulate persistence.
         const savedPermissions = JSON.parse(localStorage.getItem('userPermissions') || '{}');
         savedPermissions[currentUserId] = permissions;
         localStorage.setItem('userPermissions', JSON.stringify(savedPermissions));
@@ -372,8 +372,8 @@ async function savePermissions() {
         
         Swal.fire({
             icon: 'success',
-            title: 'Permisos guardados',
-            text: 'Los permisos se actualizaron correctamente.',
+            title: 'Permissions saved',
+            text: 'Permissions were updated successfully.',
             timer: 2000,
             showConfirmButton: false
         });
@@ -399,25 +399,25 @@ async function savePermissions() {
             
             Swal.fire({
                 icon: 'success',
-                title: 'Permisos guardados',
-                text: data.message || 'Los permisos se actualizaron correctamente.',
+                title: 'Permissions saved',
+                text: data.message || 'Permissions were updated successfully.',
                 timer: 2000,
                 showConfirmButton: false
             });
         } else {
-            throw new Error(data.message || 'Error al guardar');
+            throw new Error(data.message || 'Save failed');
         }
     } catch (error) {
         Swal.fire({
             icon: 'error',
             title: 'Error',
-            text: error.message || 'No se pudieron guardar los permisos.'
+            text: error.message || 'Permissions could not be saved.'
         });
     }
 }
 
 // ============================================
-// UTILIDADES
+// UTILITIES
 // ============================================
 
 function getInitials(name) {
@@ -431,9 +431,10 @@ function getInitials(name) {
 
 function getRoleLabel(role) {
     const labels = {
-        'admin': 'Administrador',
+        'admin': 'Administrator',
         'supervisor': 'Supervisor',
-        'usuario': 'Usuario'
+        'usuario': 'User'
     };
     return labels[role] || role;
 }
+

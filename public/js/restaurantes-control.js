@@ -1,4 +1,4 @@
-const RESTAURANT_STATE_STORAGE_KEY = 'restaurantOperationalStates';
+﻿const RESTAURANT_STATE_STORAGE_KEY = 'restaurantOperationalStates';
 
 const DEFAULT_RESTAURANTS = [
     { id: 1, codigo: 'taco-bell', nombre: 'Taco Bell', activo: true },
@@ -13,8 +13,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (usuario.rol !== 'admin') {
         Swal.fire({
             icon: 'error',
-            title: 'Acceso restringido',
-            text: 'Solo un administrador puede habilitar o deshabilitar restaurantes.',
+            title: 'Restricted access',
+            text: 'Only an administrator can enable or disable restaurants.',
             confirmButtonColor: '#102A43'
         }).then(() => {
             window.location.href = '/views/tiendas';
@@ -71,7 +71,7 @@ async function loadRestaurants() {
     const container = document.getElementById('restaurantControlList');
     const refreshButton = document.getElementById('refreshRestaurants');
     if (container) {
-        container.innerHTML = '<div class="operations-loading"><i class="fa-solid fa-circle-notch fa-spin"></i> Consultando restaurantes...</div>';
+        container.innerHTML = '<div class="operations-loading"><i class="fa-solid fa-circle-notch fa-spin"></i> Checking restaurants...</div>';
     }
     if (refreshButton) refreshButton.disabled = true;
 
@@ -95,12 +95,12 @@ async function loadRestaurants() {
         }
         renderRestaurants();
     } catch (error) {
-        console.error('Error al cargar restaurantes:', error);
+        console.error('Error loading restaurants:', error);
         const storedStates = getStoredStates();
         if (storedStates.length) {
             operationalRestaurants = mergeStoredStates(DEFAULT_RESTAURANTS, storedStates);
             renderRestaurants();
-            showToast('Se muestran los últimos estados guardados', 'warning');
+            showToast('Showing the latest saved statuses', 'warning');
         } else if (container) {
             container.innerHTML = `<div class="operations-error"><i class="fa-solid fa-triangle-exclamation"></i>${escapeHtml(error.message)}</div>`;
         }
@@ -130,7 +130,7 @@ function renderRestaurants() {
     if (!container) return;
 
     if (!operationalRestaurants.length) {
-        container.innerHTML = '<div class="operations-error">No hay restaurantes configurados.</div>';
+        container.innerHTML = '<div class="operations-error">No restaurants configured.</div>';
         updateSummary();
         return;
     }
@@ -141,21 +141,21 @@ function renderRestaurants() {
                 <span class="restaurant-mark"><i class="fa-solid ${getRestaurantIcon(restaurant.codigo)}"></i></span>
                 <div>
                     <strong>${escapeHtml(restaurant.nombre)}</strong>
-                    <small>${escapeHtml(restaurant.codigo || 'sin-codigo')}</small>
+                    <small>${escapeHtml(restaurant.codigo || 'no-code')}</small>
                 </div>
             </div>
             <span class="restaurant-state-badge ${restaurant.activo ? 'is-available' : 'is-disabled'}">
                 <i class="fa-solid ${restaurant.activo ? 'fa-circle-check' : 'fa-circle-pause'}"></i>
-                ${restaurant.activo ? 'Disponible' : 'Deshabilitado'}
+                ${restaurant.activo ? 'Available' : 'Disabled'}
             </span>
             <p class="restaurant-state-copy">
                 ${restaurant.activo
-                    ? 'El equipo puede iniciar conciliaciones.'
-                    : 'El botón de conciliación está bloqueado.'}
+                    ? 'The team can start reconciliations.'
+                    : 'The reconciliation button is locked.'}
             </p>
             <button class="toggle-restaurant-state ${restaurant.activo ? 'is-disable' : 'is-enable'}" type="button">
                 <i class="fa-solid ${restaurant.activo ? 'fa-ban' : 'fa-power-off'}"></i>
-                ${restaurant.activo ? 'Deshabilitar' : 'Habilitar'}
+                ${restaurant.activo ? 'Disable' : 'Enable'}
             </button>
         </article>
     `).join('');
@@ -172,22 +172,22 @@ async function toggleRestaurant(row) {
     const nextActive = !restaurant.activo;
     const result = await Swal.fire({
         icon: nextActive ? 'question' : 'warning',
-        title: nextActive ? 'Habilitar restaurante' : 'Deshabilitar restaurante',
+        title: nextActive ? 'Enable restaurant' : 'Disable restaurant',
         text: nextActive
-            ? `Se habilitará el botón de conciliación de ${restaurant.nombre}.`
-            : `Se bloqueará el botón de conciliación de ${restaurant.nombre}.`,
+            ? `The reconciliation button for ${restaurant.nombre} will be enabled.`
+            : `The reconciliation button for ${restaurant.nombre} will be locked.`,
         showCancelButton: true,
         confirmButtonColor: nextActive ? '#18713B' : '#A83232',
         cancelButtonColor: '#718096',
-        confirmButtonText: nextActive ? 'Sí, habilitar' : 'Sí, deshabilitar',
-        cancelButtonText: 'Cancelar'
+        confirmButtonText: nextActive ? 'Yes, enable' : 'Yes, disable',
+        cancelButtonText: 'Cancel'
     });
     if (!result.isConfirmed) return;
 
     const button = row.querySelector('.toggle-restaurant-state');
     if (button) {
         button.disabled = true;
-        button.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Guardando';
+        button.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Saving';
     }
 
     try {
@@ -210,7 +210,7 @@ async function toggleRestaurant(row) {
             });
             if (!response.ok) {
                 const error = await response.json().catch(() => ({}));
-                throw new Error(error.mensaje || error.message || 'No se pudo actualizar el restaurante');
+                throw new Error(error.message || error.mensaje || 'The restaurant could not be updated');
             }
         }
 
@@ -218,18 +218,18 @@ async function toggleRestaurant(row) {
         restaurant.estado = nextActive ? 'disponible' : 'deshabilitado';
         saveLocalStates();
         renderRestaurants();
-        showToast(nextActive ? 'Restaurante habilitado' : 'Restaurante deshabilitado', 'success');
+        showToast(nextActive ? 'Restaurant enabled' : 'Restaurant disabled', 'success');
     } catch (error) {
-        console.error('Error al actualizar restaurante:', error);
+        console.error('Error updating restaurant:', error);
         Swal.fire({
             icon: 'error',
-            title: 'No se pudo guardar',
+            title: 'Could not save',
             text: error.message,
             confirmButtonColor: '#102A43'
         });
         if (button) {
             button.disabled = false;
-            button.innerHTML = `<i class="fa-solid ${restaurant.activo ? 'fa-ban' : 'fa-power-off'}"></i>${restaurant.activo ? 'Deshabilitar' : 'Habilitar'}`;
+            button.innerHTML = `<i class="fa-solid ${restaurant.activo ? 'fa-ban' : 'fa-power-off'}"></i>${restaurant.activo ? 'Disable' : 'Enable'}`;
         }
     }
 }

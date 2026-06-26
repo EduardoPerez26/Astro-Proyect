@@ -16,17 +16,19 @@ let salesDetailWorkbook = null;
 let editandoIndex = -1;
 let workbook = null;
 let fechaConciliacionActual = null;
-let ebtPorTienda = {};
+let ebtPorStore = {};
 let salesRows = [];
 let salesDetailRows = [];
-let fechaEBTSeleccionada = '';
-let fechaSalesDetailSeleccionada = '';
+let selectedEbtDate = '';
+let selectedServerEbtId = '';
+let ebtDocumentosDisponibles = [];
+let selectedSalesDetailDate = '';
 
 let filtroStore = '';
 let filtroStoreName = '';
 
-let fechaSalesSeleccionada = null;
-let codigoRestauranteCargado = '';
+let selectedSalesDate = null;
+let codigoRestaurantCargado = '';
 const revisionActualPorTipo = {};
 const comparacionActualPorTipo = {};
 let comparacionConciliacionActual = {
@@ -35,15 +37,15 @@ let comparacionConciliacionActual = {
     aprobada: true
 };
 
-function etiquetaTipoRevision(tipo) {
+function etiquetaTipoReview(tipo) {
     return {
-        sales: 'Archivo principal',
+        sales: 'Main file',
         salesDetail: 'Sales Detail',
         ebt: 'EBT'
     }[tipo] || tipo;
 }
 
-function inputIdPorTipoRevision(tipo) {
+function inputIdPorTipoReview(tipo) {
     return {
         sales: 'salesFile',
         salesDetail: 'salesDetailFile',
@@ -51,7 +53,7 @@ function inputIdPorTipoRevision(tipo) {
     }[tipo] || 'salesFile';
 }
 
-function analizarNombreRevision(nombre = '') {
+function analizarNombreReview(nombre = '') {
     const match = String(nombre).match(
         /^XB-REV-([a-zA-Z]+)-V(\d+)-([a-f0-9]{16})--(.+)$/i
     );
@@ -66,7 +68,7 @@ function analizarNombreRevision(nombre = '') {
     };
 }
 
-function analizarRevisionArchivo(archivo) {
+function analizarReviewArchivo(archivo) {
     try {
         const notas = typeof archivo?.notas === 'string'
             ? JSON.parse(archivo.notas)
@@ -83,10 +85,10 @@ function analizarRevisionArchivo(archivo) {
     } catch {
     }
 
-    return analizarNombreRevision(archivo?.nombre_original);
+    return analizarNombreReview(archivo?.nombre_original);
 }
 
-async function hashTextoRevision(texto) {
+async function hashTextoReview(texto) {
     const bytes = new TextEncoder().encode(texto);
 
     if (window.crypto?.subtle) {
@@ -108,7 +110,7 @@ async function hashTextoRevision(texto) {
         .join('');
 }
 
-async function calcularHuellaRevision(file) {
+async function calcularHuellaReview(file) {
     const buffer = await file.arrayBuffer();
 
     try {
@@ -125,7 +127,7 @@ async function calcularHuellaRevision(file) {
             return [nombreHoja, filas];
         });
 
-        return hashTextoRevision(JSON.stringify(contenido));
+        return hashTextoReview(JSON.stringify(contenido));
     } catch {
         const bytes = new Uint8Array(buffer);
         let binario = '';
@@ -135,17 +137,17 @@ async function calcularHuellaRevision(file) {
             binario += String.fromCharCode(...bytes.subarray(index, index + bloque));
         }
 
-        return hashTextoRevision(binario);
+        return hashTextoReview(binario);
     }
 }
 
-async function cargarRevisionesServidor(tipo, restauranteId, token) {
+async function cargarReviewesServidor(tipo, restauranteId, token) {
     const response = await fetch(`${window.API_URL}/archivos`, {
         headers: { Authorization: `Bearer ${token}` }
     });
 
     if (!response.ok) {
-        throw new Error('No se pudo consultar el historial de revisiones');
+        throw new Error('Revision history could not be loaded');
     }
 
     const data = await response.json();
@@ -154,7 +156,7 @@ async function cargarRevisionesServidor(tipo, restauranteId, token) {
     return archivos
         .map(archivo => ({
             archivo,
-            revision: analizarRevisionArchivo(archivo)
+            revision: analizarReviewArchivo(archivo)
         }))
         .filter(item =>
             item.revision?.tipo === tipo &&
@@ -166,7 +168,7 @@ async function cargarRevisionesServidor(tipo, restauranteId, token) {
         );
 }
 
-async function guardarRevisionServidor(file, tipo, version, hash, codigo, token) {
+async function guardarReviewServidor(file, tipo, version, hash, codigo, token) {
     const formData = new FormData();
 
     formData.append('archivo', file, file.name);
@@ -185,62 +187,62 @@ async function guardarRevisionServidor(file, tipo, version, hash, codigo, token)
 
     const data = await response.json().catch(() => ({}));
     if (!response.ok) {
-        throw new Error(data.message || 'No se pudo guardar la revisión');
+        throw new Error(data.message || 'The revision could not be saved');
     }
 
     return data.archivo?.id;
 }
 
-function cargarRevisionesLocales(codigo, tipo) {
+function cargarReviewesLocales(codigo, tipo) {
     try {
-        const todas = JSON.parse(localStorage.getItem('sourceFileRevisions') || '{}');
+        const todas = JSON.parse(localStorage.getItem('sourceFileReviews') || '{}');
         return todas[`${codigo}:${tipo}`] || [];
     } catch {
         return [];
     }
 }
 
-function guardarRevisionLocal(codigo, tipo, revision) {
-    const todas = JSON.parse(localStorage.getItem('sourceFileRevisions') || '{}');
+function guardarReviewLocal(codigo, tipo, revision) {
+    const todas = JSON.parse(localStorage.getItem('sourceFileReviews') || '{}');
     const key = `${codigo}:${tipo}`;
     todas[key] = [...(todas[key] || []), revision].slice(-20);
-    localStorage.setItem('sourceFileRevisions', JSON.stringify(todas));
+    localStorage.setItem('sourceFileReviews', JSON.stringify(todas));
 }
 
-function textoRevisionActual(tipo) {
+function textoReviewActual(tipo) {
     const version = revisionActualPorTipo[tipo];
-    return version ? ` · Revisión V${String(version).padStart(3, '0')}` : '';
+    return version ? ` / Revision V${String(version).padStart(3, '0')}` : '';
 }
 
-async function validarRevisionAntesDeProcesar(file, tipo) {
-    const inputId = inputIdPorTipoRevision(tipo);
-    const select = document.getElementById('selectRestaurante');
+async function validarReviewAntesDeProcesar(file, tipo) {
+    const inputId = inputIdPorTipoReview(tipo);
+    const select = document.getElementById('selectRestaurant');
     const restauranteId = select?.value;
     const codigo = select?.selectedOptions?.[0]?.dataset?.codigo;
 
     if (!restauranteId || !codigo) {
         await Swal.fire({
             icon: 'warning',
-            title: 'Selecciona el restaurante',
-            text: 'Debes elegir el restaurante antes de cargar y comparar el archivo.'
+            title: 'Select the restaurant',
+            text: 'Choose the restaurant before uploading and comparing the file.'
         });
         return false;
     }
 
-    setUploadCardStatus(inputId, 'checking', 'Comparando con la última revisión...');
+    setUploadCardStatus(inputId, 'checking', 'Comparing with the latest revision...');
 
     try {
-        const hash = await calcularHuellaRevision(file);
+        const hash = await calcularHuellaReview(file);
         const token = localStorage.getItem('token');
         const offline = localStorage.getItem('modoOffline') === 'true';
         let revisiones = [];
 
         if (offline || !token) {
-            revisiones = cargarRevisionesLocales(codigo, tipo)
+            revisiones = cargarReviewesLocales(codigo, tipo)
                 .map(revision => ({ revision }))
                 .sort((a, b) => b.revision.version - a.revision.version);
         } else {
-            revisiones = await cargarRevisionesServidor(tipo, restauranteId, token);
+            revisiones = await cargarReviewesServidor(tipo, restauranteId, token);
         }
 
         const ultima = revisiones[0]?.revision || null;
@@ -251,11 +253,11 @@ async function validarRevisionAntesDeProcesar(file, tipo) {
             revisionActualPorTipo[tipo] = ultima.version;
             const result = await Swal.fire({
                 icon: 'info',
-                title: 'El archivo no cambió',
-                html: `<strong>${etiquetaTipoRevision(tipo)}</strong><br>Coincide con la revisión V${String(ultima.version).padStart(3, '0')}.`,
+                title: 'The file did not change',
+                html: `<strong>${etiquetaTipoReview(tipo)}</strong><br>It matches revision V${String(ultima.version).padStart(3, '0')}.`,
                 showCancelButton: true,
                 confirmButtonText: 'Procesar de todos modos',
-                cancelButtonText: 'Cancelar'
+                cancelButtonText: 'Cancel'
             });
 
             if (!result.isConfirmed) setUploadCardStatus(inputId);
@@ -265,13 +267,13 @@ async function validarRevisionAntesDeProcesar(file, tipo) {
         const nuevaVersion = (ultima?.version || 0) + 1;
         const result = await Swal.fire({
             icon: ultima ? 'warning' : 'info',
-            title: ultima ? 'Cambio detectado' : 'Primera revisión',
+            title: ultima ? 'Change detected' : 'First revision',
             html: ultima
-                ? `El contenido de <strong>${etiquetaTipoRevision(tipo)}</strong> cambió respecto a V${String(ultima.version).padStart(3, '0')}.<br>Se guardará como <strong>V${String(nuevaVersion).padStart(3, '0')}</strong> antes de procesarlo.`
-                : `No existe una revisión anterior de <strong>${etiquetaTipoRevision(tipo)}</strong>.<br>Se guardará como <strong>V001</strong>.`,
+                ? `The contents of <strong>${etiquetaTipoReview(tipo)}</strong> changed compared with V${String(ultima.version).padStart(3, '0')}.<br>It will be saved as <strong>V${String(nuevaVersion).padStart(3, '0')}</strong> before processing.`
+                : `No previous revision exists for <strong>${etiquetaTipoReview(tipo)}</strong>.<br>It will be saved as <strong>V001</strong>.`,
             showCancelButton: true,
-            confirmButtonText: 'Guardar y procesar',
-            cancelButtonText: 'Cancelar'
+            confirmButtonText: 'Save y procesar',
+            cancelButtonText: 'Cancel'
         });
 
         if (!result.isConfirmed) {
@@ -279,17 +281,17 @@ async function validarRevisionAntesDeProcesar(file, tipo) {
             return false;
         }
 
-        setUploadCardStatus(inputId, 'checking', `Guardando revisión V${String(nuevaVersion).padStart(3, '0')}...`);
+        setUploadCardStatus(inputId, 'checking', `Saving revision V${String(nuevaVersion).padStart(3, '0')}...`);
 
         if (offline || !token) {
-            guardarRevisionLocal(codigo, tipo, {
+            guardarReviewLocal(codigo, tipo, {
                 version: nuevaVersion,
                 hash: hash.slice(0, 16),
                 nombreOriginal: file.name,
                 fecha: new Date().toISOString()
             });
         } else {
-            await guardarRevisionServidor(
+            await guardarReviewServidor(
                 file,
                 tipo,
                 nuevaVersion,
@@ -302,12 +304,12 @@ async function validarRevisionAntesDeProcesar(file, tipo) {
         revisionActualPorTipo[tipo] = nuevaVersion;
         return true;
     } catch (error) {
-        console.error('Error verificando revisión:', error);
-        setUploadCardStatus(inputId, 'error', 'No se pudo verificar la revisión');
+        console.error('Error verifying revision:', error);
+        setUploadCardStatus(inputId, 'error', 'The revision could not be verified');
         await Swal.fire({
             icon: 'error',
-            title: 'No se procesó el archivo',
-            text: `${error.message}. La comparación debe completarse antes de generar el template.`
+            title: 'The file was not processed',
+            text: `${error.message}. The comparison must finish before generating the template.`
         });
         return false;
     }
@@ -341,7 +343,7 @@ function analizarReferenciaComparacion(archivo) {
     } catch {
     }
 
-    const anterior = analizarNombreRevision(archivo?.nombre_original);
+    const anterior = analizarNombreReview(archivo?.nombre_original);
     return anterior
         ? {
             tipo: anterior.tipo,
@@ -402,7 +404,7 @@ async function analizarContenidoParaComparacion(file) {
         });
 
         return {
-            hash: await hashTextoRevision(JSON.stringify(contenido)),
+            hash: await hashTextoReview(JSON.stringify(contenido)),
             resumen: resumirWorkbookParaComparacion(book)
         };
     } catch {
@@ -414,7 +416,7 @@ async function analizarContenidoParaComparacion(file) {
         }
 
         return {
-            hash: await hashTextoRevision(binario),
+            hash: await hashTextoReview(binario),
             resumen: { totalHojas: 0, totalFilas: 0, totalCeldas: 0, hojas: [] }
         };
     }
@@ -426,7 +428,7 @@ async function cargarReferenciaComparacionServidor(tipo, restauranteId, token) {
     });
 
     if (!response.ok) {
-        throw new Error('No se pudo consultar el archivo anterior');
+        throw new Error('The previous file could not be loaded');
     }
 
     const data = await response.json();
@@ -461,7 +463,7 @@ async function guardarReferenciaComparacionServidor(file, tipo, analisis, codigo
     const data = await response.json().catch(() => ({}));
 
     if (!response.ok) {
-        throw new Error(data.message || 'No se pudo actualizar el archivo anterior');
+        throw new Error(data.message || 'The previous file could not be updated');
     }
 
     return data.archivo?.id;
@@ -476,7 +478,7 @@ function cargarReferenciaComparacionLocal(codigo, tipo) {
         if (actual) return actual;
 
         const anteriores = JSON.parse(
-            localStorage.getItem('sourceFileRevisions') || '{}'
+            localStorage.getItem('sourceFileReviews') || '{}'
         );
         const historial = anteriores[`${codigo}:${tipo}`] || [];
         return historial[historial.length - 1] || null;
@@ -513,7 +515,7 @@ async function obtenerReferenciaComparacion(codigo, tipo, restauranteId, token, 
         return referenciaLocal;
     } catch (error) {
         if (referenciaLocal) {
-            console.warn('Usando referencia local porque el servidor no respondió:', error);
+            console.warn('Using local reference because the server did not respond:', error);
             return referenciaLocal;
         }
 
@@ -548,23 +550,23 @@ async function guardarReferenciaConfirmada(
         );
         return true;
     } catch (error) {
-        console.error('No se pudo sincronizar la referencia con el servidor:', error);
+        console.error('The reference could not be synchronized with the server:', error);
         return false;
     }
 }
 
 function textoComparacionActual(tipo) {
     return {
-        igual: ' · Sin cambios',
-        actualizado: ' · Archivo actualizado',
+        igual: ' / No changes',
+        actualizado: ' / File updated',
         primero: ' · Primera carga'
     }[comparacionActualPorTipo[tipo]?.estado] || '';
 }
 
 function detalleResumenComparacion(resumen) {
     if (!resumen?.totalHojas) return 'Contenido verificado';
-    const hojas = resumen.totalHojas === 1 ? '1 hoja' : `${resumen.totalHojas} hojas`;
-    return `${hojas} · ${resumen.totalFilas.toLocaleString('es-MX')} filas`;
+    const hojas = resumen.totalHojas === 1 ? '1 sheet' : `${resumen.totalHojas} sheets`;
+    return `${hojas} / ${resumen.totalFilas.toLocaleString('en-US')} rows`;
 }
 
 function setComparisonCardStatus(inputId, estado = '', titulo = '', detalle = '') {
@@ -611,26 +613,26 @@ function setComparisonCardStatus(inputId, estado = '', titulo = '', detalle = ''
 }
 
 async function validarArchivoAntesDeProcesar(file, tipo) {
-    const inputId = inputIdPorTipoRevision(tipo);
-    const select = document.getElementById('selectRestaurante');
+    const inputId = inputIdPorTipoReview(tipo);
+    const select = document.getElementById('selectRestaurant');
     const restauranteId = select?.value;
     const codigo = select?.selectedOptions?.[0]?.dataset?.codigo;
 
     if (!restauranteId || !codigo) {
         await Swal.fire({
             icon: 'warning',
-            title: 'Selecciona el restaurante',
-            text: 'Debes elegir el restaurante antes de cargar el archivo.'
+            title: 'Select the restaurant',
+            text: 'Choose the restaurant before uploading the file.'
         });
         return false;
     }
 
-    setUploadCardStatus(inputId, 'checking', 'Leyendo archivo...');
+    setUploadCardStatus(inputId, 'checking', 'Reading file...');
     setComparisonCardStatus(
         inputId,
         'comprobando',
         'Comprobando cambios',
-        'Comparando con el último archivo cargado'
+        'Comparing with the latest uploaded file'
     );
 
     try {
@@ -651,13 +653,13 @@ async function validarArchivoAntesDeProcesar(file, tipo) {
             setComparisonCardStatus(
                 inputId,
                 'igual',
-                'Sin cambios',
-                `Coincide con el archivo anterior · ${detalleResumenComparacion(analisis.resumen)}`
+                'No changes',
+                `Matches the previous file / ${detalleResumenComparacion(analisis.resumen)}`
             );
             return true;
         }
 
-        setUploadCardStatus(inputId, 'checking', 'Actualizando referencia...');
+        setUploadCardStatus(inputId, 'checking', 'Updating reference...');
 
         if (offline || !token) {
             guardarReferenciaComparacionLocal(codigo, tipo, {
@@ -684,19 +686,19 @@ async function validarArchivoAntesDeProcesar(file, tipo) {
         setComparisonCardStatus(
             inputId,
             estado,
-            referencia ? 'Archivo actualizado' : 'Primera carga',
+            referencia ? 'File updated' : 'First upload',
             referencia
-                ? `Se detectaron cambios · ${detalleResumenComparacion(analisis.resumen)}`
-                : `Se creó la referencia inicial · ${detalleResumenComparacion(analisis.resumen)}`
+                ? `Changes detected / ${detalleResumenComparacion(analisis.resumen)}`
+                : `Initial reference created / ${detalleResumenComparacion(analisis.resumen)}`
         );
         return true;
     } catch (error) {
-        console.error('Error comparando archivo:', error);
+        console.error('Error comparing file:', error);
         setComparisonCardStatus(
             inputId,
             'aviso',
-            'Comparación no disponible',
-            'El archivo se procesará, pero no se pudo comparar con el anterior'
+            'Comparison unavailable',
+            'The file will be processed, but it could not be compared with the previous one'
         );
         return true;
     }
@@ -712,7 +714,7 @@ function escaparHtmlComparacion(valor = '') {
 }
 
 function formatearFechaReferencia(fecha) {
-    if (!fecha) return 'Fecha no disponible';
+    if (!fecha) return 'Date unavailable';
     const valor = new Date(fecha);
     if (Number.isNaN(valor.getTime())) return 'Fecha no disponible';
 
@@ -731,8 +733,8 @@ function tarjetaArchivoComparacion(titulo, nombre, resumen, fecha, vacia = false
             <article class="file-compare-card is-empty">
                 <span class="file-compare-eyebrow">${escaparHtmlComparacion(titulo)}</span>
                 <i class="fa-solid fa-folder-open"></i>
-                <strong>No hay archivo anterior</strong>
-                <small>Este archivo será la referencia inicial.</small>
+                <strong>No previous file</strong>
+                <small>This file will become the initial reference.</small>
             </article>
         `;
     }
@@ -742,7 +744,7 @@ function tarjetaArchivoComparacion(titulo, nombre, resumen, fecha, vacia = false
             <span class="file-compare-eyebrow">${escaparHtmlComparacion(titulo)}</span>
             <div class="file-compare-name">
                 <i class="fa-solid fa-file-excel"></i>
-                <strong>${escaparHtmlComparacion(nombre || 'Archivo Excel')}</strong>
+                <strong>${escaparHtmlComparacion(nombre || 'Excel file')}</strong>
             </div>
             <dl>
                 <div><dt>Hojas</dt><dd>${Number(resumen?.totalHojas || 0).toLocaleString('es-MX')}</dd></div>
@@ -759,7 +761,7 @@ function filaCambioComparacion(etiqueta, anterior, nuevo) {
     const actual = Number(nuevo || 0);
     const diferencia = actual - previo;
     const cambio = diferencia === 0
-        ? 'Sin cambio'
+        ? 'No change'
         : `${diferencia > 0 ? '+' : ''}${diferencia.toLocaleString('es-MX')}`;
     const clase = diferencia === 0 ? 'is-same' : 'is-changed';
 
@@ -776,18 +778,18 @@ function crearVistaComparacionArchivo(referencia, file, analisis, estado) {
     const configuracion = {
         primero: {
             etiqueta: 'PRIMERA CARGA',
-            titulo: 'No existe un archivo anterior',
-            texto: 'Revisa el archivo seleccionado y confirma que deseas usarlo.'
+            titulo: 'No previous file exists',
+            texto: 'Review the selected file and confirm that you want to use it.'
         },
         igual: {
-            etiqueta: 'SIN CAMBIOS',
-            titulo: 'El contenido es el mismo',
-            texto: 'No se guardará otra copia. Puedes continuar con este archivo.'
+            etiqueta: 'NO CHANGES',
+            titulo: 'The content is the same',
+            texto: 'Another copy will not be saved. You can continue with this file.'
         },
         actualizado: {
-            etiqueta: 'ARCHIVO DIFERENTE',
-            titulo: 'Se encontraron cambios',
-            texto: 'Revisa las diferencias y confirma si deseas reemplazar la referencia anterior.'
+            etiqueta: 'DIFFERENT FILE',
+            titulo: 'Changes found',
+            texto: 'Review the differences and confirm whether you want to replace the previous reference.'
         }
     }[estado];
     const resumenAnterior = referencia?.resumen;
@@ -803,7 +805,7 @@ function crearVistaComparacionArchivo(referencia, file, analisis, estado) {
 
             <div class="file-comparison-grid">
                 ${tarjetaArchivoComparacion(
-        'Último archivo usado',
+        'Latest file used',
         referencia?.nombreOriginal,
         resumenAnterior,
         referencia ? formatearFechaReferencia(referencia.fecha) : '',
@@ -813,16 +815,16 @@ function crearVistaComparacionArchivo(referencia, file, analisis, estado) {
                     <i class="fa-solid fa-arrow-right"></i>
                 </div>
                 ${tarjetaArchivoComparacion(
-        'Archivo seleccionado',
+        'Selected file',
         file.name,
         analisis.resumen,
-        'Seleccionado ahora'
+        'Selected now'
     )}
             </div>
 
             ${puedeMostrarCambios ? `
                 <div class="file-comparison-changes">
-                    <h4>Resumen de diferencias</h4>
+                    <h4>Difference summary</h4>
                     ${filaCambioComparacion(
         'Hojas',
         resumenAnterior.totalHojas,
@@ -842,7 +844,7 @@ function crearVistaComparacionArchivo(referencia, file, analisis, estado) {
             ` : referencia ? `
                 <div class="file-comparison-legacy-note">
                     <i class="fa-solid fa-circle-info"></i>
-                    <span>El archivo anterior pertenece al sistema previo. Se comparó todo su contenido, pero no tiene un resumen de filas y hojas.</span>
+                    <span>The previous file belongs to the old system. Its full contents were compared, but no sheet or row summary is available.</span>
                 </div>
             ` : ''}
         </div>
@@ -852,8 +854,8 @@ function crearVistaComparacionArchivo(referencia, file, analisis, estado) {
 function abrirVentanaComparacion(
     html,
     textoConfirmar,
-    titulo = 'Comparación de conciliaciones',
-    subtitulo = 'Revisa las diferencias antes de continuar.',
+    titulo = 'Reconciliation comparison',
+    subtitulo = 'Review differences before continuing.',
     opciones = {}
 ) {
     const dialog = document.getElementById('fileComparisonDialog');
@@ -871,13 +873,13 @@ function abrirVentanaComparacion(
 
     content.innerHTML = html;
     confirmButton.textContent = textoConfirmar;
-    cancelButton.hidden = Boolean(opciones.ocultarCancelar);
+    cancelButton.hidden = Boolean(opciones.ocultarCancel);
     dialog.dataset.size = opciones.compacto ? 'compacto' : 'amplio';
     if (titleElement) titleElement.textContent = titulo;
     if (subtitleElement) subtitleElement.textContent = subtitulo;
     if (helpElement) {
         helpElement.textContent = opciones.textoAyuda ||
-            'La conciliación no continuará hasta que confirmes el archivo.';
+            'Reconciliation will not continue until you confirm the file.';
     }
 
     return new Promise(resolve => {
@@ -911,26 +913,26 @@ function abrirVentanaComparacion(
 }
 
 async function revisarArchivoConVistaPrevia(file, tipo) {
-    const inputId = inputIdPorTipoRevision(tipo);
-    const select = document.getElementById('selectRestaurante');
+    const inputId = inputIdPorTipoReview(tipo);
+    const select = document.getElementById('selectRestaurant');
     const restauranteId = select?.value;
     const codigo = select?.selectedOptions?.[0]?.dataset?.codigo;
 
     if (!restauranteId || !codigo) {
         await Swal.fire({
             icon: 'warning',
-            title: 'Selecciona el restaurante',
-            text: 'Debes elegir el restaurante antes de cargar el archivo.'
+            title: 'Select the restaurant',
+            text: 'Choose the restaurant before uploading the file.'
         });
         return false;
     }
 
-    setUploadCardStatus(inputId, 'checking', 'Preparando comparación...');
+    setUploadCardStatus(inputId, 'checking', 'Preparing comparison...');
     setComparisonCardStatus(
         inputId,
         'comprobando',
-        'Revisando archivo',
-        'Leyendo hojas, filas y contenido'
+        'Reviewing file',
+        'Reading sheets, rows, and content'
     );
 
     try {
@@ -951,8 +953,8 @@ async function revisarArchivoConVistaPrevia(file, tipo) {
         const decision = await abrirVentanaComparacion(
             crearVistaComparacionArchivo(referencia, file, analisis, estado),
             estado === 'actualizado'
-                ? 'Usar archivo nuevo'
-                : 'Usar este archivo'
+                ? 'Use new file'
+                : 'Use this file'
         );
 
         if (!decision) {
@@ -962,7 +964,7 @@ async function revisarArchivoConVistaPrevia(file, tipo) {
         }
 
         if (estado !== 'igual') {
-            setUploadCardStatus(inputId, 'checking', 'Guardando archivo de referencia...');
+            setUploadCardStatus(inputId, 'checking', 'Saving reference file...');
 
             if (offline || !token) {
                 guardarReferenciaComparacionLocal(codigo, tipo, {
@@ -990,24 +992,24 @@ async function revisarArchivoConVistaPrevia(file, tipo) {
             inputId,
             estado,
             estado === 'igual'
-                ? 'Archivo verificado'
+                ? 'File verified'
                 : estado === 'actualizado'
-                    ? 'Archivo nuevo aprobado'
-                    : 'Archivo inicial aprobado',
+                    ? 'New file approved'
+                    : 'Initial file approved',
             estado === 'igual'
-                ? 'Es igual al último archivo usado'
-                : `${detalleResumenComparacion(analisis.resumen)} · Listo para procesar`
+                ? 'Matches the latest file used'
+                : `${detalleResumenComparacion(analisis.resumen)} / Ready to process`
         );
         return true;
     } catch (error) {
-        console.error('Error comparando archivo:', error);
+        console.error('Error comparing file:', error);
         const decision = await Swal.fire({
             icon: 'warning',
-            title: 'No se pudo comparar',
-            text: 'Puedes elegir otro archivo o continuar sin compararlo.',
+            title: 'Could not compare',
+            text: 'You can choose another file or continue without comparing it.',
             showCancelButton: true,
             confirmButtonText: 'Usar sin comparar',
-            cancelButtonText: 'Elegir otro archivo'
+            cancelButtonText: 'Choose another file'
         });
 
         if (!decision.isConfirmed) {
@@ -1018,14 +1020,14 @@ async function revisarArchivoConVistaPrevia(file, tipo) {
         setComparisonCardStatus(
             inputId,
             'aviso',
-            'Usado sin comparación',
-            'No fue posible consultar el archivo anterior'
+            'Used without comparison',
+            'The previous file could not be loaded'
         );
         return true;
     }
 }
 
-function resetSelectFecha(selectId, texto = 'Todas las fechas') {
+function resetSelectFecha(selectId, texto = 'All dates') {
     const select = document.getElementById(selectId);
 
     if (select) {
@@ -1087,7 +1089,7 @@ function eliminarArchivoIndividual(tipo) {
         salesWorkbook = null;
         salesRows = [];
         workbook = null;
-        fechaSalesSeleccionada = null;
+        selectedSalesDate = null;
 
         const input =
             document.getElementById('salesFile');
@@ -1096,7 +1098,7 @@ function eliminarArchivoIndividual(tipo) {
 
         resetSelectFecha(
             'salesDateFilter',
-            'Todas las fechas'
+            'All dates'
         );
 
         setUploadCardStatus('salesFile');
@@ -1110,7 +1112,7 @@ function eliminarArchivoIndividual(tipo) {
         salesDetailFile = null;
         salesDetailWorkbook = null;
         salesDetailRows = [];
-        fechaSalesDetailSeleccionada = '';
+        selectedSalesDetailDate = '';
 
         const input =
             document.getElementById('salesDetailFile');
@@ -1119,7 +1121,7 @@ function eliminarArchivoIndividual(tipo) {
 
         resetSelectFecha(
             'salesDetailDateFilter',
-            'Todas las fechas'
+            'All dates'
         );
 
         setUploadCardStatus('salesDetailFile');
@@ -1130,8 +1132,8 @@ function eliminarArchivoIndividual(tipo) {
         delete comparacionActualPorTipo.ebt;
         ebtFile = null;
         ebtWorkbook = null;
-        ebtPorTienda = {};
-        fechaEBTSeleccionada = '';
+        ebtPorStore = {};
+        selectedEbtDate = '';
 
         const input =
             document.getElementById('ebtFile');
@@ -1140,8 +1142,17 @@ function eliminarArchivoIndividual(tipo) {
 
         resetSelectFecha(
             'ebtDateFilter',
-            'Todas las fechas'
+            'All dates'
         );
+
+        selectedServerEbtId = '';
+
+        const savedEbtSelect =
+            document.getElementById('savedEbtFileSelect');
+
+        if (savedEbtSelect) {
+            savedEbtSelect.value = '';
+        }
 
         setUploadCardStatus('ebtFile');
     }
@@ -1154,7 +1165,7 @@ function eliminarArchivoIndividual(tipo) {
     }
 }
 
-function limpiarArchivosExtraTacoBell() {
+function limpiarFilesExtraTacoBell() {
     delete revisionActualPorTipo.salesDetail;
     delete revisionActualPorTipo.ebt;
     delete comparacionActualPorTipo.salesDetail;
@@ -1162,12 +1173,13 @@ function limpiarArchivosExtraTacoBell() {
     salesDetailFile = null;
     salesDetailWorkbook = null;
     salesDetailRows = [];
-    fechaSalesDetailSeleccionada = '';
+    selectedSalesDetailDate = '';
 
     ebtFile = null;
     ebtWorkbook = null;
-    ebtPorTienda = {};
-    fechaEBTSeleccionada = '';
+    ebtPorStore = {};
+    selectedEbtDate = '';
+    selectedServerEbtId = '';
 
     const salesDetailInput =
         document.getElementById('salesDetailFile');
@@ -1182,21 +1194,28 @@ function limpiarArchivosExtraTacoBell() {
         ebtInput.value = '';
     }
 
+    const savedEbtSelect =
+        document.getElementById('savedEbtFileSelect');
+
+    if (savedEbtSelect) {
+        savedEbtSelect.value = '';
+    }
+
     resetSelectFecha(
         'salesDetailDateFilter',
-        'Todas las fechas'
+        'All dates'
     );
 
     resetSelectFecha(
         'ebtDateFilter',
-        'Todas las fechas'
+        'All dates'
     );
 
     setUploadCardStatus('salesDetailFile');
     setUploadCardStatus('ebtFile');
 }
 
-function actualizarUploadsPorRestaurante(codigo) {
+function actualizarUploadsPorRestaurant(codigo) {
     const mostrarExtras =
         codigo === 'taco-bell';
     const badge =
@@ -1211,19 +1230,19 @@ function actualizarUploadsPorRestaurante(codigo) {
     if (badge) {
         const texto =
             codigo === 'taco-bell'
-                ? 'Taco Bell: 3 archivos + Tax Rate'
+                ? 'Taco Bell: 3 files + Tax Rate'
                 : codigo === 'popeyes'
-                    ? 'Popeyes: 1 archivo + Tax Rate'
+                    ? 'Popeyes: 1 file + Tax Rate'
                     : codigo === 'burger-king'
-                        ? 'Burger King: 1 archivo + Tax Rate'
-                        : 'Selecciona restaurante';
+                        ? 'Burger King: 1 file + Tax Rate'
+                        : 'Select restaurant';
 
         badge.textContent = texto;
         badge.dataset.mode = codigo || 'empty';
     }
 
     if (!mostrarExtras) {
-        limpiarArchivosExtraTacoBell();
+        limpiarFilesExtraTacoBell();
     }
 }
 
@@ -1235,15 +1254,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
-    await cargarRestaurantes();
+    await cargarRestaurants();
 
-    actualizarUploadsPorRestaurante('');
+    actualizarUploadsPorRestaurant('');
 
     const urlParams = new URLSearchParams(window.location.search);
     const restauranteId = urlParams.get('restaurante');
     if (restauranteId) {
-        document.getElementById('selectRestaurante').value = restauranteId;
-        await onRestauranteChange();
+        document.getElementById('selectRestaurant').value = restauranteId;
+        await onRestaurantChange();
     }
 
     initEventListeners();
@@ -1253,14 +1272,14 @@ function initEventListeners() {
 
     const restauranteSelect =
         document.getElementById(
-            'selectRestaurante'
+            'selectRestaurant'
         );
 
     if (restauranteSelect) {
 
         restauranteSelect.addEventListener(
             'change',
-            onRestauranteChange
+            onRestaurantChange
         );
 
     }
@@ -1304,7 +1323,7 @@ function initEventListeners() {
 
                     const codigo =
                         document
-                            .getElementById('selectRestaurante')
+                            .getElementById('selectRestaurant')
                             ?.selectedOptions[0]
                             ?.dataset?.codigo;
 
@@ -1362,15 +1381,15 @@ function initEventListeners() {
                             console.error(error);
 
                             Swal.fire(
-                                'Archivo no compatible',
-                                'Este archivo viene protegido o con formato no compatible.',
+                                'Unsupported file',
+                                'This file is protected or uses an unsupported format.',
                                 'error'
                             );
 
                             setUploadCardStatus(
                                 'salesFile',
                                 'error',
-                                'Archivo protegido o formato no compatible'
+                                'Protected file or unsupported format'
                             );
 
                             return;
@@ -1410,7 +1429,7 @@ function initEventListeners() {
                         ];
 
 
-                    const headersRequeridos =
+                    const headersRequireds =
                         ['popeyes', 'burger-king'].includes(codigo)
                             ? [
                                 'Accounting Date',
@@ -1430,7 +1449,7 @@ function initEventListeners() {
                     salesRows =
                         leerFilasExcel(
                             sheet,
-                            headersRequeridos,
+                            headersRequireds,
                             0
                         );
 
@@ -1444,7 +1463,7 @@ function initEventListeners() {
                     setUploadCardStatus(
                         'salesFile',
                         'loaded',
-                        `${file.name} cargado (${salesRows.length} filas)${textoComparacionActual('sales')}`
+                        `${file.name} loaded (${salesRows.length} rows)${textoComparacionActual('sales')}`
                     );
 
                     generarConciliacionDesdeTemplate();
@@ -1456,12 +1475,12 @@ function initEventListeners() {
                     setUploadCardStatus(
                         'salesFile',
                         'error',
-                        'No se pudo leer el archivo'
+                        'The file could not be read'
                     );
 
                     Swal.fire(
                         'Error',
-                        'No se pudo leer el archivo Sales',
+                        'The Sales file could not be read',
                         'error'
                     );
 
@@ -1524,7 +1543,7 @@ function initEventListeners() {
 
                     if (!salesDetailRows.length) {
                         throw new Error(
-                            'No se encontraron filas validas'
+                            'No valid rows were found'
                         );
                     }
 
@@ -1537,8 +1556,8 @@ function initEventListeners() {
                     const tiendasPrincipales = new Set(
                         salesRows
                             .map(row =>
-                                typeof claveTiendaTacoBell === 'function'
-                                    ? claveTiendaTacoBell(row.Store)
+                                typeof claveStoreTacoBell === 'function'
+                                    ? claveStoreTacoBell(row.Store)
                                     : String(row.Store || '')
                             )
                             .filter(Boolean)
@@ -1547,8 +1566,8 @@ function initEventListeners() {
                     const tiendasDetalle = new Set(
                         salesDetailRows
                             .map(row =>
-                                typeof claveTiendaTacoBell === 'function'
-                                    ? claveTiendaTacoBell(row['Store Number'])
+                                typeof claveStoreTacoBell === 'function'
+                                    ? claveStoreTacoBell(row['Store Number'])
                                     : String(row['Store Number'] || '')
                             )
                             .filter(Boolean)
@@ -1564,7 +1583,7 @@ function initEventListeners() {
                     setUploadCardStatus(
                         'salesDetailFile',
                         'loaded',
-                        `${file.name} cargado (${salesDetailRows.length} filas, ${tiendasNuevas} tiendas nuevas)${textoComparacionActual('salesDetail')}`
+                        `${file.name} loaded (${salesDetailRows.length} rows, ${tiendasNuevas} new stores)${textoComparacionActual('salesDetail')}`
                     );
 
                     if (
@@ -1583,12 +1602,12 @@ function initEventListeners() {
                     setUploadCardStatus(
                         'salesDetailFile',
                         'error',
-                        error.message || 'No se pudo leer el archivo'
+                        error.message || 'The file could not be read'
                     );
 
                     Swal.fire(
                         'Error',
-                        error.message || 'No se pudo leer el Sales Detail Export',
+                        error.message || 'The Sales Detail Export could not be read',
                         'error'
                     );
 
@@ -1614,62 +1633,32 @@ function initEventListeners() {
 
                 if (!file) return;
 
-                ebtFile = file;
-
-                const buffer =
-                    await file.arrayBuffer();
-
-                ebtWorkbook =
-                    XLSX.read(
-                        buffer,
-                        { type: 'array' }
+                try {
+                    await cargarEbtDesdeArchivo(
+                        file,
+                        {
+                            origen: 'local'
+                        }
                     );
+                } catch (error) {
+                    console.error(error);
 
-                const hoja =
-                    obtenerHojaPorNombre(
-                        ebtWorkbook,
-                        [
-                            'Net Sales',
-                            'EBT AMOUNTS'
-                        ]
+                    ebtFile = null;
+                    ebtWorkbook = null;
+                    ebtPorStore = {};
+                    selectedServerEbtId = '';
+
+                    setUploadCardStatus(
+                        'ebtFile',
+                        'error',
+                        error.message || 'The EBT file could not be read'
                     );
-
-                if (!hoja) {
 
                     Swal.fire(
                         'Error',
-                        'No existe la hoja Net Sales o EBT AMOUNTS',
+                        error.message || 'The EBT file could not be read',
                         'error'
                     );
-
-                    return;
-                }
-
-                const rows =
-                    leerFilasExcel(
-                        hoja,
-                        ['Funded Date'],
-                        ''
-                    );
-
-                cargarFechasEnFiltro(
-                    rows,
-                    'ebtDateFilter',
-                    'Funded Date'
-                );
-
-                setUploadCardStatus(
-                    'ebtFile',
-                    'loaded',
-                    `${file.name} cargado (${rows.length} filas)${textoComparacionActual('ebt')}`
-                );
-
-                procesarEBT();
-
-                if (salesWorkbook) {
-
-                    generarConciliacionDesdeTemplate();
-
                 }
 
             }
@@ -1772,8 +1761,29 @@ function initEventListeners() {
         );
 
     document
+        .getElementById('btnUploadEbtOnly')
+        ?.addEventListener(
+            'click',
+            subirEbtIndependiente
+        );
+
+    document
+        .getElementById('btnRefreshEbtFiles')
+        ?.addEventListener(
+            'click',
+            () => cargarFilesEbtGuardados()
+        );
+
+    document
+        .getElementById('savedEbtFileSelect')
+        ?.addEventListener(
+            'change',
+            loadSelectedSavedEbt
+        );
+
+    document
         .getElementById(
-            'btnGuardar'
+            'btnSave'
         )
         ?.addEventListener(
             'click',
@@ -1852,7 +1862,7 @@ function initEventListeners() {
             'change',
             e => {
 
-                fechaEBTSeleccionada =
+                selectedEbtDate =
                     e.target.value;
 
                 procesarEBT();
@@ -1872,7 +1882,7 @@ function initEventListeners() {
             'change',
             e => {
 
-                fechaSalesDetailSeleccionada =
+                selectedSalesDetailDate =
                     e.target.value;
 
                 if (
@@ -1936,7 +1946,7 @@ function initEventListeners() {
 }
 
 
-async function cargarRestaurantes() {
+async function cargarRestaurants() {
     try {
         const token = localStorage.getItem('token');
         const response = await fetch(`${window.API_URL}/restaurantes`, {
@@ -1946,24 +1956,24 @@ async function cargarRestaurantes() {
         if (response.ok) {
             const data = await response.json();
             restaurantes = data.restaurantes || data;
-            renderRestaurantes();
+            renderRestaurants();
         }
     } catch (error) {
         console.log(restaurantes);
-        console.error('Error cargando restaurantes:', error);
-        Swal.fire('Error', 'No se pudieron cargar los restaurantes', 'error');
+        console.error('Error loading restaurants:', error);
+        Swal.fire('Error', 'Restaurants could not be loaded', 'error');
     }
 }
 
-function renderRestaurantes() {
+function renderRestaurants() {
 
     const select =
         document.getElementById(
-            'selectRestaurante'
+            'selectRestaurant'
         );
 
     select.innerHTML =
-        '<option value="">Selecciona un restaurante...</option>';
+        '<option value="">Select a restaurant...</option>';
 
     restaurantes
         .filter(r =>
@@ -2001,7 +2011,7 @@ async function cargarTemplates(restauranteId) {
             renderTemplates();
         }
     } catch (error) {
-        console.error('Error cargando templates:', error);
+        console.error('Error loading templates:', error);
     }
 }
 
@@ -2010,17 +2020,17 @@ function renderTemplates() {
     select.disabled = templates.length === 0;
 
     if (templates.length === 0) {
-        select.innerHTML = '<option value="">No hay templates disponibles</option>';
+        select.innerHTML = '<option value="">No templates available</option>';
         return;
     }
 
-    select.innerHTML = '<option value="">Selecciona un template...</option>';
+    select.innerHTML = '<option value="">Select a template...</option>';
     templates.forEach(t => {
-        const defaultLabel = t.es_default ? ' (Por defecto)' : '';
+        const defaultLabel = t.es_default ? ' (Default)' : '';
         select.innerHTML += `<option value="${t.id}" ${t.es_default ? 'selected' : ''}>${t.nombre}${defaultLabel}</option>`;
     });
 
-    // Si hay uno por defecto, seleccionarlo automaticamente
+    // Select the default template automatically when one exists.
     const defaultTemplate = templates.find(t => t.es_default);
     if (defaultTemplate) {
         select.value = defaultTemplate.id;
@@ -2030,7 +2040,7 @@ function renderTemplates() {
 
 
 async function cargarValoresEsperados() {
-    const restauranteId = document.getElementById('selectRestaurante').value;
+    const restauranteId = document.getElementById('selectRestaurant').value;
     const fecha = obtenerFechaConciliacionBD();
 
     if (!restauranteId || !fecha) return;
@@ -2051,16 +2061,16 @@ async function cargarValoresEsperados() {
             }
         }
     } catch (error) {
-        console.error('Error cargando valores esperados:', error);
+        console.error('Error loading expected values:', error);
     }
 }
 
 
-async function onRestauranteChange() {
+async function onRestaurantChange() {
 
     const select =
         document.getElementById(
-            'selectRestaurante'
+            'selectRestaurant'
         );
 
     const restauranteId =
@@ -2071,20 +2081,22 @@ async function onRestauranteChange() {
             ?.dataset?.codigo;
 
     if (
-        codigoRestauranteCargado &&
-        codigo !== codigoRestauranteCargado
+        codigoRestaurantCargado &&
+        codigo !== codigoRestaurantCargado
     ) {
         removerArchivo();
     }
 
-    codigoRestauranteCargado = codigo || '';
+    codigoRestaurantCargado = codigo || '';
 
     currentRestaurantConfig =
         window.RestaurantConfigs?.[
         codigo
         ] || null;
 
-    actualizarUploadsPorRestaurante(codigo);
+    actualizarUploadsPorRestaurant(codigo);
+
+    await cargarFilesEbtGuardados();
 
     const tacoTabs =
         document.getElementById(
@@ -2170,7 +2182,7 @@ async function onRestauranteChange() {
         document.getElementById(
             'selectTemplate'
         ).innerHTML =
-            '<option value="">Selecciona primero un restaurante</option>';
+            '<option value="">Select a restaurant first</option>';
 
         templateActual = null;
 
@@ -2242,7 +2254,7 @@ async function procesarArchivo(file) {
 
         Swal.fire(
             'Error',
-            'No se pudo leer el archivo',
+            'The file could not be read',
             'error'
         );
 
@@ -2258,7 +2270,7 @@ function combineTemplateWithUserExcel(
     const resultWorkbook =
         XLSX.utils.book_new();
 
-    // Copiar hojas usuario
+    // Copy user sheets.
     userWorkbook.SheetNames.forEach(
         sheetName => {
 
@@ -2320,7 +2332,10 @@ function removerArchivo() {
     invalidarComparacionConciliacion();
     salesRows = [];
     salesDetailRows = [];
-    ebtPorTienda = {};
+    ebtPorStore = {};
+    selectedEbtDate = '';
+    selectedSalesDetailDate = '';
+    selectedServerEbtId = '';
 
     const dropZone =
         document.getElementById('dropZone');
@@ -2348,6 +2363,13 @@ function removerArchivo() {
         setUploadCardStatus(id);
 
     });
+
+    const savedEbtSelect =
+        document.getElementById('savedEbtFileSelect');
+
+    if (savedEbtSelect) {
+        savedEbtSelect.value = '';
+    }
 }
 
 function extraerDatos() {
@@ -2357,7 +2379,7 @@ function extraerDatos() {
     if (currentRestaurantConfig) {
 
         console.log(
-            'Generando conciliación desde configuración'
+            'Generating reconciliation from configuration'
         );
 
         generarConciliacionDesdeTemplate();
@@ -2380,7 +2402,7 @@ function extraerDatos() {
         if (!sheet) {
             Swal.fire(
                 'Error',
-                `No se encontró la hoja "${config.hoja}" en el archivo`,
+                `Sheet "${config.hoja}" was not found in the file`,
                 'error'
             );
             return;
@@ -2447,7 +2469,7 @@ function extraerDatos() {
 
         if (!conciliationSheet) {
             throw new Error(
-                'No se encontró la hoja Conciliation'
+                'The Conciliation sheet was not found'
             );
         }
 
@@ -2458,7 +2480,7 @@ function extraerDatos() {
             );
 
         console.log(
-            'Filas conciliación:',
+            'Reconciliation rows:',
             conciliationRows.length
         );
 
@@ -2601,7 +2623,7 @@ function generarConciliacionDesdeTemplate() {
 
         Swal.fire(
             'Error',
-            'No existe configuración para el restaurante seleccionado',
+            'No configuration exists for the selected restaurant',
             'error'
         );
 
@@ -2610,7 +2632,7 @@ function generarConciliacionDesdeTemplate() {
 
     const codigo =
         document.getElementById(
-            'selectRestaurante'
+            'selectRestaurant'
         )
             .selectedOptions[0]
             ?.dataset?.codigo;
@@ -2631,7 +2653,7 @@ function generarConciliacionDesdeTemplate() {
 
             Swal.fire(
                 'Error',
-                `Restaurante no configurado: ${codigo}`,
+                `Restaurant no configurado: ${codigo}`,
                 'error'
             );
 
@@ -2640,15 +2662,15 @@ function generarConciliacionDesdeTemplate() {
 }
 
 
-function obtenerCodigoRestauranteActual() {
+function obtenerCodigoRestaurantActual() {
     return document
-        .getElementById('selectRestaurante')
+        .getElementById('selectRestaurant')
         ?.selectedOptions?.[0]
         ?.dataset?.codigo || '';
 }
 
 function esColumnaOS(columna) {
-    const codigo = obtenerCodigoRestauranteActual();
+    const codigo = obtenerCodigoRestaurantActual();
     const claveOriginal = String(columna?.key || '');
     const etiquetaOriginal = String(columna?.label || '').trim();
 
@@ -2676,7 +2698,7 @@ function esColumnaOS(columna) {
 }
 
 function obtenerValoresOS(row) {
-    const codigo = obtenerCodigoRestauranteActual();
+    const codigo = obtenerCodigoRestaurantActual();
     const claves = codigo === 'taco-bell'
         ? ['oS']
         : ['oS', 'os', 'osSlash', 'overShort'];
@@ -2717,7 +2739,7 @@ function actualizarResumen() {
         datosExtraidos.filter(tieneDiferenciaOS).length;
 
     document.getElementById(
-        'totalConceptos'
+        'totalConcepts'
     ).textContent = total;
 
     document.getElementById(
@@ -2756,13 +2778,13 @@ function actualizarResumen() {
 
     if (statusText) {
         statusText.textContent = hayDiferenciasOS
-            ? 'Con diferencias'
-            : 'Sin diferencias';
+            ? 'With differences'
+            : 'No differences';
     }
 
     if (statusMeta) {
         statusMeta.textContent = hayDiferenciasOS
-            ? `${diferenciasOS} tienda${diferenciasOS === 1 ? '' : 's'} con O/S`
+            ? `${diferenciasOS} store${diferenciasOS === 1 ? '' : 's'} with O/S`
             : 'O/S balanceado';
     }
 
@@ -2774,7 +2796,7 @@ function actualizarResumen() {
 }
 
 
-function abrirModalEditar(index) {
+function abrirModalEdit(index) {
     editandoIndex = index;
     const dato = datosExtraidos[index];
 
@@ -2782,11 +2804,11 @@ function abrirModalEditar(index) {
     document.getElementById('editValorExcel').value = formatMoney(dato.valorExcel);
     document.getElementById('editValorEsperado').value = dato.valorEsperado;
 
-    document.getElementById('modalEditarValor').classList.add('active');
+    document.getElementById('modalEditValor').classList.add('active');
 }
 
-function cerrarModalEditar() {
-    document.getElementById('modalEditarValor').classList.remove('active');
+function cerrarModalEdit() {
+    document.getElementById('modalEditValor').classList.remove('active');
     editandoIndex = -1;
 }
 
@@ -2798,11 +2820,11 @@ function guardarValorEsperado() {
     datosExtraidos[editandoIndex].diferencia = datosExtraidos[editandoIndex].valorExcel - nuevoValor;
     invalidarComparacionConciliacion();
 
-    // Actualizar en memoria de valores esperados
+    // Refresh en memoria de valores esperados
     const concepto = datosExtraidos[editandoIndex].concepto;
     valoresEsperados[concepto] = { valor: nuevoValor, fuente: 'manual' };
 
-    cerrarModalEditar();
+    cerrarModalEdit();
     renderTablaSucursales();
     actualizarResumen();
 }
@@ -2812,7 +2834,7 @@ async function abrirHistorial() {
 
     try {
         const token = localStorage.getItem('token');
-        const restauranteId = document.getElementById('selectRestaurante').value;
+        const restauranteId = document.getElementById('selectRestaurant').value;
 
         let url = `${API_URL}/conciliaciones`;
         if (restauranteId) url += `?restaurante_id=${restauranteId}`;
@@ -2826,7 +2848,7 @@ async function abrirHistorial() {
             renderHistorial(data.conciliaciones || []);
         }
     } catch (error) {
-        console.error('Error cargando historial:', error);
+        console.error('Error loading history:', error);
     }
 }
 
@@ -2837,7 +2859,7 @@ function renderHistorial(conciliaciones) {
         tbody.innerHTML = `
             <tr>
                 <td colspan="6" class="text-center" style="padding: 40px; color: var(--gray-500);">
-                    No hay conciliaciones registradas
+                    No reconciliations registered
                 </td>
             </tr>
         `;
@@ -2857,7 +2879,7 @@ function renderHistorial(conciliaciones) {
                 <td>${formatMoney(c.monto_total_diferencia)}</td>
                 <td><span class="status-badge ${estadoClass}">${c.estado}</span></td>
                 <td>
-                    <button class="action-btn view" onclick="verConciliacion(${c.id})" title="Ver detalle">
+                    <button class="action-btn view" onclick="verConciliacion(${c.id})" title="View detail">
                         <i class="fa-solid fa-eye"></i>
                     </button>
                 </td>
@@ -2871,7 +2893,7 @@ function cerrarModalHistorial() {
 }
 
 async function verConciliacion(id) {
-    // Cargar y mostrar una conciliacion existente
+    // Load and show an existing reconciliation.
     try {
         const token = localStorage.getItem('token');
         const response = await fetch(`${window.API_URL}/conciliaciones/${id}`, {
@@ -2882,8 +2904,8 @@ async function verConciliacion(id) {
             const data = await response.json();
             const c = data.conciliacion;
 
-            // Setear valores
-            document.getElementById('selectRestaurante').value = c.restaurante_id;
+            // Set values.
+            document.getElementById('selectRestaurant').value = c.restaurante_id;
             await cargarTemplates(c.restaurante_id);
             document.getElementById('selectTemplate').value = c.template_id;
             fechaConciliacionActual = c.fecha_conciliacion
@@ -2894,7 +2916,7 @@ async function verConciliacion(id) {
             templateActual = templates.find(t => t.id == c.template_id);
             datosExtraidos = c.datos_extraidos;
 
-            // Mostrar resultados
+            // Show results.
             document.getElementById('resultsSection').style.display = 'block';
             document.getElementById('dropZone').style.display = 'none';
             document.getElementById('fileLoaded').style.display = 'none';
@@ -2904,21 +2926,21 @@ async function verConciliacion(id) {
             cerrarModalHistorial();
         }
     } catch (error) {
-        console.error('Error cargando conciliacion:', error);
+        console.error('Error loading reconciliation:', error);
     }
 }
 
 function exportarPDF() {
-    // Implementacion basica con window.print
-    const restaurante = document.getElementById('selectRestaurante').selectedOptions[0]?.text || '';
+    // Basic implementation with window.print.
+    const restaurante = document.getElementById('selectRestaurant').selectedOptions[0]?.text || '';
     const fecha = obtenerFechaConciliacionBD() || obtenerFechaParaNombreArchivo();
 
     const printContent = `
         <html>
         <head>
-            <title>Conciliacion - ${restaurante} - ${fecha}</title>
+            <title>Reconciliation - ${restaurante} - ${fecha}</title>
             <style>
-                body { font-family: Arial, sans-serif; padding: 20px; }
+                body { font-family: Inter, sans-serif; padding: 20px; }
                 h1 { font-size: 24px; margin-bottom: 5px; }
                 h2 { font-size: 16px; color: #666; margin-bottom: 20px; }
                 table { width: 100%; border-collapse: collapse; margin-top: 20px; }
@@ -2931,7 +2953,7 @@ function exportarPDF() {
             </style>
         </head>
         <body>
-            <h1>Reporte de Conciliacion</h1>
+            <h1>Reconciliation Report</h1>
             <h2>${restaurante} - ${fecha}</h2>
             <table>
                 <thead>
@@ -3004,7 +3026,7 @@ function normalizarEncabezado(valor) {
 
 function leerFilasExcel(
     sheet,
-    encabezadosRequeridos = [],
+    encabezadosRequireds = [],
     defval = 0
 ) {
 
@@ -3020,7 +3042,7 @@ function leerFilasExcel(
         );
 
     const requeridos =
-        encabezadosRequeridos.map(
+        encabezadosRequireds.map(
             normalizarEncabezado
         );
 
@@ -3111,7 +3133,7 @@ function renderTablaSucursales() {
 
     const codigo =
         document
-            .getElementById('selectRestaurante')
+            .getElementById('selectRestaurant')
             ?.selectedOptions?.[0]
             ?.dataset?.codigo;
 
@@ -3127,7 +3149,7 @@ function renderTablaSucursales() {
         columnasConfiguradas.length === 0
     ) {
         console.error(
-            'No hay columnas configuradas',
+            'No columns configured',
             currentRestaurantConfig
         );
         return;
@@ -3230,7 +3252,7 @@ function renderTablaSucursales() {
                 if (tieneDiferencia) {
                     td.title = 'Diferencia O/S detectada';
                     tr.classList.add('os-row-difference');
-                    tr.title = 'Esta tienda tiene una diferencia en O/S';
+                    tr.title = 'This store has an O/S difference';
                 }
             }
 
@@ -3333,11 +3355,11 @@ function procesarEBT() {
 
     let fechaTexto;
 
-    if (fechaEBTSeleccionada) {
+    if (selectedEbtDate) {
 
         fechaTexto =
             normalizarFecha(
-                fechaEBTSeleccionada
+                selectedEbtDate
             );
 
     } else {
@@ -3355,7 +3377,7 @@ function procesarEBT() {
         fechaTexto
     );
 
-    ebtPorTienda = {};
+    ebtPorStore = {};
 
     rows.forEach(row => {
 
@@ -3394,8 +3416,8 @@ function procesarEBT() {
                 ]
             ) || 0;
 
-        ebtPorTienda[store] =
-            (ebtPorTienda[store] || 0)
+        ebtPorStore[store] =
+            (ebtPorStore[store] || 0)
             + amount;
 
     });
@@ -3407,7 +3429,7 @@ function obtenerEBTPorStore(
 ) {
 
     return (
-        ebtPorTienda[
+        ebtPorStore[
         Number(store)
         ] || 0
     );
@@ -3419,7 +3441,7 @@ function obtenerEBTPorStore(
 document
     .getElementById('salesDateFilter')
     ?.addEventListener('change', async e => {
-        fechaSalesSeleccionada = e.target.value;
+        selectedSalesDate = e.target.value;
         fechaConciliacionActual = e.target.value;
 
         invalidarComparacionConciliacion();
@@ -3431,39 +3453,39 @@ document
         // Mantiene visible la fecha después de recalcular
         setTimeout(() => {
             const select = document.getElementById('salesDateFilter');
-            if (select && fechaSalesSeleccionada) {
-                select.value = fechaSalesSeleccionada;
+            if (select && selectedSalesDate) {
+                select.value = selectedSalesDate;
             }
         }, 0);
     });
 
-function obtenerFechaSeleccionadaFiltro(selectId) {
+function getSelectedFilterDate(selectId) {
     if (selectId === 'salesDateFilter') {
-        return fechaSalesSeleccionada || '';
+        return selectedSalesDate || '';
     }
 
     if (selectId === 'salesDetailDateFilter') {
-        return fechaSalesDetailSeleccionada || '';
+        return selectedSalesDetailDate || '';
     }
 
     if (selectId === 'ebtDateFilter') {
-        return fechaEBTSeleccionada || '';
+        return selectedEbtDate || '';
     }
 
     return '';
 }
 
-function guardarFechaSeleccionadaFiltro(selectId, fecha) {
+function saveSelectedFilterDate(selectId, fecha) {
     if (selectId === 'salesDateFilter') {
-        fechaSalesSeleccionada = fecha;
+        selectedSalesDate = fecha;
     }
 
     if (selectId === 'salesDetailDateFilter') {
-        fechaSalesDetailSeleccionada = fecha;
+        selectedSalesDetailDate = fecha;
     }
 
     if (selectId === 'ebtDateFilter') {
-        fechaEBTSeleccionada = fecha;
+        selectedEbtDate = fecha;
     }
 }
 
@@ -3478,7 +3500,7 @@ function cargarFechasEnFiltro(
 
     const fechaAnterior =
         select.value ||
-        obtenerFechaSeleccionadaFiltro(selectId) ||
+        getSelectedFilterDate(selectId) ||
         '';
 
     const fechaAnteriorNormalizada =
@@ -3508,7 +3530,7 @@ function cargarFechasEnFiltro(
 
     const optionDefault = document.createElement('option');
     optionDefault.value = '';
-    optionDefault.textContent = 'Selecciona fecha';
+    optionDefault.textContent = 'Select date';
     select.appendChild(optionDefault);
 
     let fechaEncontrada = '';
@@ -3536,7 +3558,7 @@ function cargarFechasEnFiltro(
 
     if (fechaEncontrada) {
         select.value = fechaEncontrada;
-        guardarFechaSeleccionadaFiltro(selectId, fechaEncontrada);
+        saveSelectedFilterDate(selectId, fechaEncontrada);
     }
 }
 
@@ -3552,7 +3574,7 @@ function obtenerFechaFila(row) {
 
 }
 
-function cargarFiltroTiendas() {
+function cargarFiltroStores() {
 
     const select =
         document.getElementById(
@@ -3571,7 +3593,7 @@ function cargarFiltroTiendas() {
             .sort();
 
     select.innerHTML =
-        '<option value="">Todas las tiendas</option>';
+        '<option value="">All stores</option>';
 
     tiendas.forEach(store => {
 
@@ -3592,7 +3614,7 @@ function cargarFiltroTiendas() {
     });
 
 }
-function llenarFiltroTiendas() {
+function llenarFiltroStores() {
 
     const select =
         document.getElementById('filterStore');
@@ -3609,7 +3631,7 @@ function llenarFiltroTiendas() {
     if (!select) return;
 
     select.innerHTML =
-        '<option value="">Todas las tiendas</option>';
+        '<option value="">All stores</option>';
 
     tiendas.forEach(store => {
 
@@ -3660,7 +3682,7 @@ function obtenerFechaParaNombreArchivo() {
 }
 
 function construirNombreArchivo(tipoArchivo, extension) {
-    const select = document.getElementById('selectRestaurante');
+    const select = document.getElementById('selectRestaurant');
     const option = select?.selectedOptions?.[0];
     const codigo = option?.dataset?.codigo || '';
 
@@ -3670,7 +3692,7 @@ function construirNombreArchivo(tipoArchivo, extension) {
         'popeyes': 'Daily_Sales_Popeyes'
     };
 
-    const restaurante = nombres[codigo] || String(option?.textContent || 'Restaurante')
+    const restaurante = nombres[codigo] || String(option?.textContent || 'Restaurant')
         .trim()
         .replace(/\s+-\s+.*$/, '')
         .normalize('NFD')
@@ -3680,10 +3702,10 @@ function construirNombreArchivo(tipoArchivo, extension) {
 
     const fechaGuardado = obtenerFechaParaNombreArchivo();
 
-    const tipo = String(tipoArchivo || 'Conciliacion')
+    const tipo = String(tipoArchivo || 'Reconciliation')
         .replace(/Taco\s*Bell|Burger\s*King|Popeyes/gi, '')
         .replace(/[^a-zA-Z0-9]+/g, '_')
-        .replace(/^_+|_+$/g, '') || 'Conciliacion';
+        .replace(/^_+|_+$/g, '') || 'Reconciliation';
 
     return `${restaurante}_${fechaGuardado}_${tipo}.${extension}`;
 }
@@ -3723,8 +3745,8 @@ function etiquetaCampoConciliacion(campo) {
 }
 
 function crearVistaDiferenciasConciliacion(resultado) {
-    const codigo = obtenerCodigoRestauranteActual();
-    const nombreRestaurante = {
+    const codigo = obtenerCodigoRestaurantActual();
+    const nombreRestaurant = {
         'taco-bell': 'Taco Bell',
         popeyes: 'Popeyes',
         'burger-king': 'Burger King'
@@ -3733,7 +3755,7 @@ function crearVistaDiferenciasConciliacion(resultado) {
         if (diferencia.tipo === 'tienda_nueva') {
             return [{
                 tienda: diferencia.tienda,
-                concepto: 'Tienda nueva en el archivo',
+                concepto: 'New store in the file',
                 anterior: '—',
                 nuevo: 'Incluida',
                 diferencia: 'Nueva'
@@ -3743,7 +3765,7 @@ function crearVistaDiferenciasConciliacion(resultado) {
         if (diferencia.tipo === 'tienda_eliminada') {
             return [{
                 tienda: diferencia.tienda,
-                concepto: 'Tienda no incluida en el archivo nuevo',
+                concepto: 'Store not included in the new file',
                 anterior: 'Incluida',
                 nuevo: '—',
                 diferencia: 'Retirada'
@@ -3773,34 +3795,34 @@ function crearVistaDiferenciasConciliacion(resultado) {
     return `
         <div class="file-comparison-view reconciliation-comparison" data-result="actualizado">
             <div class="file-comparison-result">
-                <span>DIFERENCIAS</span>
-                <strong>${escaparHtmlComparacion(nombreRestaurante)} · ${escaparHtmlComparacion(obtenerFechaConciliacionBD())}</strong>
-                <p>Ya existe una conciliación para esta fecha y algunos montos cambiaron.</p>
+                <span>DIFFERENCES</span>
+                <strong>${escaparHtmlComparacion(nombreRestaurant)} / ${escaparHtmlComparacion(obtenerFechaConciliacionBD())}</strong>
+                <p>A reconciliation already exists for this date and some amounts changed.</p>
             </div>
 
             <div class="reconciliation-comparison-summary">
-                <div><strong>${resultado.tiendasComparadas}</strong><span>Tiendas comparadas</span></div>
-                <div><strong>${resultado.tiendasConDiferencias}</strong><span>Tiendas con cambios</span></div>
-                <div><strong>${filas.length}</strong><span>Montos diferentes</span></div>
+                <div><strong>${resultado.tiendasComparadas}</strong><span>Compared stores</span></div>
+                <div><strong>${resultado.tiendasConDiferencias}</strong><span>Stores with changes</span></div>
+                <div><strong>${filas.length}</strong><span>Different amounts</span></div>
             </div>
 
             <div class="reconciliation-reading-guide">
-                <div><span>ANTERIOR</span><p>Monto de la conciliación guardada.</p></div>
+                <div><span>PREVIOUS</span><p>Amount from the saved reconciliation.</p></div>
                 <i class="fa-solid fa-arrow-right"></i>
-                <div><span>NUEVO</span><p>Monto del archivo que acabas de procesar.</p></div>
+                <div><span>NEW</span><p>Amount from the file you just processed.</p></div>
                 <i class="fa-solid fa-equals"></i>
-                <div><span>DIFERENCIA</span><p>Cambio que será registrado si continúas.</p></div>
+                <div><span>DIFFERENCE</span><p>Change that will be recorded if you continue.</p></div>
             </div>
 
             <div class="reconciliation-diff-wrapper">
                 <table class="reconciliation-diff-table">
                     <thead>
                         <tr>
-                            <th>Tienda</th>
-                            <th>Concepto</th>
-                            <th>Anterior</th>
-                            <th>Nuevo</th>
-                            <th>Diferencia</th>
+                            <th>Store</th>
+                            <th>Concept</th>
+                            <th>Previous</th>
+                            <th>New</th>
+                            <th>Difference</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -3818,7 +3840,7 @@ function crearVistaDiferenciasConciliacion(resultado) {
             </div>
 
             ${filas.length > visibles.length
-            ? `<p class="reconciliation-diff-more">Se muestran 250 de ${filas.length} diferencias.</p>`
+            ? `<p class="reconciliation-diff-more">Showing 250 of ${filas.length} differences.</p>`
             : ''}
         </div>
     `;
@@ -3832,8 +3854,8 @@ function invalidarComparacionConciliacion() {
     };
     actualizarPanelComparacion(
         'pendiente',
-        'Compara antes de guardar',
-        'El sistema revisará el mismo restaurante, tienda y fecha contra la última conciliación guardada.'
+        'Compare before saving',
+        'The system will review the same restaurant, store, and date against the latest saved reconciliation.'
     );
 }
 
@@ -3857,14 +3879,14 @@ function actualizarPanelComparacion(estado, titulo, detalle) {
     if (title) title.textContent = titulo;
     if (text) text.textContent = detalle;
     if (button && estado !== 'cargando') {
-        button.innerHTML = estado === 'pendiente'
-            ? '<i class="fa-solid fa-magnifying-glass-chart"></i> Comparar ahora'
-            : '<i class="fa-solid fa-eye"></i> Ver resultado';
+        button.innerHTML = estado === 'pendiente' || estado === 'pending'
+            ? '<i class="fa-solid fa-magnifying-glass-chart"></i> Compare now'
+            : '<i class="fa-solid fa-eye"></i> View result';
     }
 }
 
 function crearVistaResumenComparacionConciliacion(resultado) {
-    const codigo = obtenerCodigoRestauranteActual();
+    const codigo = obtenerCodigoRestaurantActual();
     const restaurante = {
         'taco-bell': 'Taco Bell',
         popeyes: 'Popeyes',
@@ -3875,24 +3897,24 @@ function crearVistaResumenComparacionConciliacion(resultado) {
     const configuracion = esIncompatible
         ? {
             estado: 'actualizado',
-            etiqueta: 'REFERENCIA NO COMPATIBLE',
-            titulo: 'El archivo anterior no contiene datos comparables',
-            texto: 'La conciliación actual se conservará como una nueva referencia para futuras comparaciones.',
+            etiqueta: 'INCOMPATIBLE REFERENCE',
+            titulo: 'The previous file has no comparable data',
+            texto: 'The current reconciliation will be kept as a new reference for future comparisons.',
             icono: 'fa-triangle-exclamation'
         }
         : esPrimera
             ? {
                 estado: 'actualizado',
-                etiqueta: 'PRIMERA COMPARACION',
-                titulo: 'No existe una conciliación anterior para esta fecha',
-                texto: 'No hay montos anteriores contra los cuales comparar. Puedes continuar normalmente.',
+                etiqueta: 'FIRST COMPARISON',
+                titulo: 'No previous reconciliation exists for this date',
+                texto: 'There are no previous amounts to compare against. You can continue normally.',
                 icono: 'fa-file-circle-plus'
             }
             : {
                 estado: 'igual',
-                etiqueta: 'SIN DIFERENCIAS',
-                titulo: 'Los montos coinciden con la conciliación guardada',
-                texto: 'Se revisaron todas las tiendas y conceptos configurados para este restaurante.',
+                etiqueta: 'NO DIFFERENCES',
+                titulo: 'Amounts match the saved reconciliation',
+                texto: 'All configured stores and concepts for this restaurant were reviewed.',
                 icono: 'fa-circle-check'
             };
 
@@ -3904,22 +3926,22 @@ function crearVistaResumenComparacionConciliacion(resultado) {
                 <p>${configuracion.texto}</p>
             </div>
             <div class="reconciliation-comparison-context">
-                <div><span>Restaurante</span><strong>${escaparHtmlComparacion(restaurante)}</strong></div>
+                <div><span>Restaurant</span><strong>${escaparHtmlComparacion(restaurante)}</strong></div>
                 <i class="fa-solid fa-arrow-right"></i>
-                <div><span>Fecha operativa</span><strong>${escaparHtmlComparacion(obtenerFechaConciliacionBD())}</strong></div>
+                <div><span>Operating date</span><strong>${escaparHtmlComparacion(obtenerFechaConciliacionBD())}</strong></div>
             </div>
             <div class="reconciliation-comparison-summary">
-                <div><strong>${Number(resultado.tiendasComparadas || datosExtraidos.length)}</strong><span>Tiendas revisadas</span></div>
-                <div><strong>${Number(resultado.tiendasConDiferencias || 0)}</strong><span>Tiendas con cambios</span></div>
-                <div><strong>0</strong><span>Montos diferentes</span></div>
+                <div><strong>${Number(resultado.tiendasComparadas || datosExtraidos.length)}</strong><span>Reviewed stores</span></div>
+                <div><strong>${Number(resultado.tiendasConDiferencias || 0)}</strong><span>Stores with changes</span></div>
+                <div><strong>0</strong><span>Different amounts</span></div>
             </div>
             <div class="reconciliation-comparison-next-step">
                 <i class="fa-solid fa-circle-info"></i>
                 <div>
-                    <strong>${esPrimera ? '¿Qué sigue?' : 'Resultado verificado'}</strong>
+                    <strong>${esPrimera ? 'What is next?' : 'Result verified'}</strong>
                     <p>${esPrimera
-            ? 'Guarda esta conciliación para usarla como referencia cuando vuelvas a procesar la misma fecha.'
-            : 'Puedes cerrar esta ventana y continuar; la consulta ya quedó registrada en el historial.'}</p>
+            ? 'Save this reconciliation to use it as the reference the next time you process the same date.'
+            : 'You can close this window and continue; the query was already recorded in history.'}</p>
                 </div>
             </div>
         </div>`;
@@ -3927,15 +3949,15 @@ function crearVistaResumenComparacionConciliacion(resultado) {
 
 async function consultarComparacionConciliacion() {
     const token = localStorage.getItem('token');
-    const restauranteId = document.getElementById('selectRestaurante')?.value;
+    const restauranteId = document.getElementById('selectRestaurant')?.value;
     const fecha = obtenerFechaConciliacionBD();
 
-    if (!token) throw new Error('La sesión no está disponible');
-    if (!restauranteId) throw new Error('Selecciona un restaurante');
-    if (!fecha) throw new Error('Selecciona la fecha de la conciliación');
-    if (!datosExtraidos.length) throw new Error('Primero genera la conciliación para obtener los montos');
+    if (!token) throw new Error('The session is not available');
+    if (!restauranteId) throw new Error('Select a restaurant');
+    if (!fecha) throw new Error('Select the reconciliation date');
+    if (!datosExtraidos.length) throw new Error('Generate the reconciliation first to get the amounts');
 
-    const huella = await hashTextoRevision(JSON.stringify(datosExtraidos));
+    const huella = await hashTextoReview(JSON.stringify(datosExtraidos));
     const clave = `${restauranteId}:${fecha}:${huella.slice(0, 16)}`;
     if (
         comparacionConciliacionActual.clave === clave &&
@@ -3961,7 +3983,7 @@ async function consultarComparacionConciliacion() {
     );
     const resultado = await response.json().catch(() => ({}));
     if (!response.ok) {
-        throw new Error(resultado.message || resultado.mensaje || 'No se pudo comparar la conciliación');
+        throw new Error(resultado.message || resultado.mensaje || 'The reconciliation could not be compared');
     }
 
     comparacionConciliacionActual = {
@@ -3977,8 +3999,8 @@ async function ejecutarComparacionManual() {
     if (localStorage.getItem('modoOffline') === 'true') {
         await Swal.fire({
             icon: 'info',
-            title: 'Comparación disponible en línea',
-            text: 'El sistema necesita consultar la última conciliación guardada en el servidor.'
+            title: 'Comparison available online',
+            text: 'The system needs to query the latest reconciliation saved on the server.'
         });
         return;
     }
@@ -3986,12 +4008,12 @@ async function ejecutarComparacionManual() {
     try {
         if (button) {
             button.disabled = true;
-            button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Comparando';
+            button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Comparing';
         }
         actualizarPanelComparacion(
             'cargando',
-            'Comparando tienda por tienda',
-            'Buscando la conciliación guardada para el mismo restaurante y fecha...'
+            'Comparing store by store',
+            'Looking for the saved reconciliation for the same restaurant and date...'
         );
         const resultado = await consultarComparacionConciliacion();
         const tieneCambios = Number(resultado.tiendasConDiferencias || 0) > 0;
@@ -3999,26 +4021,26 @@ async function ejecutarComparacionManual() {
         if (tieneCambios) {
             actualizarPanelComparacion(
                 'cambios',
-                'Se encontraron diferencias',
-                `${resultado.tiendasConDiferencias} tienda(s) tienen montos distintos. Abre el resultado para revisarlos.`
+                'Differences found',
+                `${resultado.tiendasConDiferencias} store(s) have different amounts. Open the result to review them.`
             );
         } else if (resultado.referenciaIncompatible) {
             actualizarPanelComparacion(
                 'error',
-                'La referencia anterior no es compatible',
-                'El archivo guardado no contiene la hoja interna necesaria para comparar montos.'
+                'The previous reference is not compatible',
+                'The saved file does not contain the internal sheet needed to compare amounts.'
             );
         } else if (!resultado.existe) {
             actualizarPanelComparacion(
                 'primera',
-                'Esta es la primera conciliación de la fecha',
-                'No existe una referencia anterior; el resultado quedará disponible para la próxima revisión.'
+                'This is the first reconciliation for the date',
+                'No previous reference exists; the result will be available for the next review.'
             );
         } else {
             actualizarPanelComparacion(
                 'igual',
-                'No se encontraron diferencias',
-                `${resultado.tiendasComparadas} tienda(s) coinciden con la conciliación guardada.`
+                'No differences found',
+                `${resultado.tiendasComparadas} store(s) match the saved reconciliation.`
             );
         }
 
@@ -4026,19 +4048,19 @@ async function ejecutarComparacionManual() {
             tieneCambios
                 ? crearVistaDiferenciasConciliacion(resultado)
                 : crearVistaResumenComparacionConciliacion(resultado),
-            'Cerrar resultado',
-            'Resultado de la comparación',
-            'Comparación por restaurante, tienda y fecha operativa.',
+            'Close result',
+            'Comparison result',
+            'Comparison by restaurant, store, and operating date.',
             {
-                ocultarCancelar: true,
+                ocultarCancel: true,
                 compacto: !tieneCambios,
-                textoAyuda: 'Esta consulta no modifica ni reemplaza ningún archivo.'
+                textoAyuda: 'This query does not modify or replace any file.'
             }
         );
     } catch (error) {
-        console.error('Error en comparación manual:', error);
-        actualizarPanelComparacion('error', 'No se pudo comparar', error.message);
-        await Swal.fire({ icon: 'warning', title: 'Comparación no disponible', text: error.message });
+        console.error('Manual comparison error:', error);
+        actualizarPanelComparacion('error', 'Could not compare', error.message);
+        await Swal.fire({ icon: 'warning', title: 'Comparison unavailable', text: error.message });
     } finally {
         if (button) button.disabled = false;
     }
@@ -4054,19 +4076,19 @@ async function compararConciliacionConBD() {
 
         const decision = await abrirVentanaComparacion(
             crearVistaDiferenciasConciliacion(resultado),
-            'Continuar con datos nuevos',
-            'Confirma los cambios detectados',
-            'Revisa las tiendas y montos diferentes antes de guardar.'
+            'Continue with new data',
+            'Confirm detected changes',
+            'Review different stores and amounts before saving.'
         );
         comparacionConciliacionActual.aprobada = decision;
         return decision;
     } catch (error) {
-        console.error('Error comparando conciliación:', error);
-        actualizarPanelComparacion('error', 'No se pudo comparar', error.message);
+        console.error('Error comparing reconciliation:', error);
+        actualizarPanelComparacion('error', 'Could not compare', error.message);
         await Swal.fire({
             icon: 'error',
-            title: 'No se pudo validar la conciliación',
-            text: `${error.message}. No se guardó ningún cambio.`
+            title: 'Could not validate reconciliation',
+            text: `${error.message}. No changes were saved.`
         });
         return false;
     }
@@ -4074,12 +4096,12 @@ async function compararConciliacionConBD() {
 
 async function registrarConciliacionEnBD() {
     const token = localStorage.getItem('token');
-    const restauranteId = document.getElementById('selectRestaurante')?.value;
+    const restauranteId = document.getElementById('selectRestaurant')?.value;
     const templateId = document.getElementById('selectTemplate')?.value;
     const fecha = obtenerFechaConciliacionBD();
 
     if (!token || !restauranteId || !templateId || !fecha) {
-        throw new Error('Faltan restaurante, template o fecha para registrar la conciliación');
+        throw new Error('Restaurant, template, or date is missing to register the reconciliation');
     }
 
     const response = await fetch(`${window.API_URL}/conciliaciones`, {
@@ -4096,7 +4118,7 @@ async function registrarConciliacionEnBD() {
             periodo_fin: fecha,
             datos_extraidos: datosExtraidos,
             comparacion_id: comparacionConciliacionActual.resultado?.comparacionId || null,
-            notas: 'Generada desde el módulo de conciliación'
+            notas: 'Generated from the reconciliation module'
         })
     });
     const data = await response.json().catch(() => ({}));
@@ -4106,7 +4128,7 @@ async function registrarConciliacionEnBD() {
         throw new Error(
             data.message ||
             data.mensaje ||
-            'No se pudo registrar la conciliación'
+            'The reconciliation could not be registered'
         );
     }
 
@@ -4123,8 +4145,8 @@ async function saveConciliacion() {
     if (!workbook) {
         Swal.fire({
             icon: 'warning',
-            title: 'Sin datos',
-            text: 'Primero debes cargar un archivo'
+            title: 'No data',
+            text: 'Upload a file first'
         });
         return;
     }
@@ -4132,8 +4154,8 @@ async function saveConciliacion() {
     if (!datosExtraidos.length) {
         await Swal.fire({
             icon: 'warning',
-            title: 'Sin conciliación',
-            text: 'Primero genera la conciliación'
+            title: 'No reconciliation',
+            text: 'Generate the reconciliation first'
         });
         return;
     }
@@ -4143,16 +4165,16 @@ async function saveConciliacion() {
     if (!comparacionAprobada) return;
 
     Swal.fire({
-        title: 'Guardar conciliación',
-        text: '¿Dónde deseas guardar el archivo?',
+        title: 'Save reconciliation',
+        text: 'Where do you want to save the file?',
         icon: 'question',
         showCancelButton: true,
         showDenyButton: localStorage.getItem('modoOffline') !== 'true',
         confirmButtonText:
-            '<i class="fa-solid fa-download"></i> Descargar',
+            '<i class="fa-solid fa-download"></i> Download',
         denyButtonText:
-            '<i class="fa-solid fa-cloud-arrow-up"></i> Guardar en servidor',
-        cancelButtonText: 'Cancelar',
+            '<i class="fa-solid fa-cloud-arrow-up"></i> Save to server',
+        cancelButtonText: 'Cancel',
         confirmButtonColor: '#2563eb',
         denyButtonColor: '#10b981'
     }).then(async (result) => {
@@ -4167,7 +4189,7 @@ async function saveConciliacion() {
                     registro = await registrarConciliacionEnBD();
                 } catch (error) {
                     errorRegistro = error;
-                    console.error('No se registró la conciliación:', error);
+                    console.error('The reconciliation was not registered:', error);
                 }
             }
 
@@ -4176,19 +4198,19 @@ async function saveConciliacion() {
 
             XLSX.writeFile(
                 workbookFinal,
-                construirNombreArchivo('Conciliacion', 'xlsx')
+                construirNombreArchivo('Reconciliation', 'xlsx')
             );
 
             Swal.fire(errorRegistro
                 ? {
                     icon: 'warning',
-                    title: 'Archivo descargado',
-                    text: `${errorRegistro.message}. La comparación quedará pendiente hasta registrarlo en el servidor.`
+                    title: 'File downloaded',
+                    text: `${errorRegistro.message}. The comparison will remain pending until it is registered on the server.`
                 }
                 : {
                     icon: 'success',
-                    title: 'Archivo descargado y conciliación registrada',
-                    text: registro?.id ? `Registro contable ID: ${registro.id}` : '',
+                    title: 'File downloaded and reconciliation registered',
+                    text: registro?.id ? `Accounting record ID: ${registro.id}` : '',
                     timer: 1800,
                     showConfirmButton: false
                 });
@@ -4206,6 +4228,473 @@ function obtenerExtensionArchivo(nombre = '') {
     return partes.length > 1
         ? partes.pop().toLowerCase()
         : 'xlsx';
+}
+
+// INICIO CAMBIO EBT INDEPENDIENTE
+
+function getSelectedEbtRestaurant() {
+    const select = document.getElementById('selectRestaurant');
+    const option = select?.selectedOptions?.[0];
+
+    return {
+        id: select?.value || '',
+        codigo: option?.dataset?.codigo || '',
+        nombre: String(option?.textContent || '').trim()
+    };
+}
+
+function leerNotasArchivoEbt(doc) {
+    try {
+        return typeof doc?.notas === 'string'
+            ? JSON.parse(doc.notas)
+            : doc?.notas || {};
+    } catch {
+        return {};
+    }
+}
+
+function normalizarFechaIsoEbt(valor) {
+    if (!valor) return '';
+
+    const texto = String(valor).trim();
+
+    if (/^\d{4}-\d{2}-\d{2}/.test(texto)) {
+        return texto.slice(0, 10);
+    }
+
+    const fechaUsa = texto.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+    if (fechaUsa) {
+        return `${fechaUsa[3]}-${fechaUsa[1].padStart(2, '0')}-${fechaUsa[2].padStart(2, '0')}`;
+    }
+
+    const fecha = new Date(valor);
+    if (Number.isNaN(fecha.getTime())) return '';
+
+    return [
+        fecha.getFullYear(),
+        String(fecha.getMonth() + 1).padStart(2, '0'),
+        String(fecha.getDate()).padStart(2, '0')
+    ].join('-');
+}
+
+function obtenerFechaEbtParaServidor(rows = []) {
+    const selectedValue =
+        selectedEbtDate ||
+        document.getElementById('ebtDateFilter')?.value ||
+        '';
+
+    if (selectedValue) {
+        return normalizarFechaIsoEbt(selectedValue);
+    }
+
+    const fechas = rows
+        .map(row => normalizarFechaIsoEbt(normalizarFecha(row['Funded Date'])))
+        .filter(Boolean)
+        .sort((a, b) => new Date(b) - new Date(a));
+
+    return fechas[0] || '';
+}
+
+function construirNombreArchivoEbtIndependiente(fecha, extension) {
+    const restaurante = getSelectedEbtRestaurant();
+    const nombres = {
+        'taco-bell': 'Daily_Sales_Taco_Bell',
+        'burger-king': 'Daily_Sales_Burger_King',
+        'popeyes': 'Daily_Sales_Popeyes'
+    };
+
+    const nombreRestaurant = nombres[restaurante.codigo] || restaurante.nombre
+        .replace(/\s+-\s+.*$/, '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-zA-Z0-9]+/g, '_')
+        .replace(/^_+|_+$/g, '') || 'Restaurant';
+
+    return `${nombreRestaurant}_${fecha}_EBT.${extension || 'xlsx'}`;
+}
+
+function esArchivoEbtGuardado(doc, restauranteCodigo) {
+    const notas = leerNotasArchivoEbt(doc);
+    const nombre = String(doc?.nombre_original || '');
+
+    const mismoRestaurant =
+        doc?.restaurante_codigo === restauranteCodigo ||
+        doc?.codigo === restauranteCodigo ||
+        String(doc?.restaurante || '').toLowerCase().includes(
+            String(restauranteCodigo || '').replace('-', ' ').toLowerCase()
+        );
+
+    const esEbt =
+        notas.tipoDocumento === 'ebt' ||
+        notas.fuente === 'ebt' ||
+        /_EBT\./i.test(nombre);
+
+    const esArchivoOperativo =
+        notas.tipo !== 'revision_fuente' &&
+        notas.tipo !== 'referencia_comparacion';
+
+    return mismoRestaurant && esEbt && esArchivoOperativo && doc.archivoExiste !== false;
+}
+
+function textoOptionEbtGuardado(doc) {
+    const notas = leerNotasArchivoEbt(doc);
+    const fecha =
+        normalizarFechaIsoEbt(notas.fecha) ||
+        normalizarFechaIsoEbt(notas.fecha_conciliacion) ||
+        normalizarFechaIsoEbt(doc.periodo_fecha) ||
+        'no date';
+
+    const nombreOriginal =
+        notas.nombreOriginal ||
+        doc.nombre_original ||
+        `File #${doc.id}`;
+
+    return `${fecha} - ${nombreOriginal}`;
+}
+
+async function cargarFilesEbtGuardados(seleccionarId = '') {
+    const select = document.getElementById('savedEbtFileSelect');
+    if (!select) return;
+
+    const token = localStorage.getItem('token');
+    const restaurante = getSelectedEbtRestaurant();
+
+    select.disabled = true;
+    select.innerHTML = '<option value="">Select a saved EBT file...</option>';
+    ebtDocumentosDisponibles = [];
+
+    if (!token || !restaurante.codigo) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`${window.API_URL}/archivos`, {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error('Saved EBT files could not be loaded');
+        }
+
+        const data = await response.json().catch(() => []);
+        const archivos = Array.isArray(data) ? data : (data.archivos || []);
+
+        ebtDocumentosDisponibles = archivos
+            .filter(doc => esArchivoEbtGuardado(doc, restaurante.codigo))
+            .sort((a, b) => {
+                const fechaA = normalizarFechaIsoEbt(
+                    leerNotasArchivoEbt(a).fecha || a.periodo_fecha
+                );
+                const fechaB = normalizarFechaIsoEbt(
+                    leerNotasArchivoEbt(b).fecha || b.periodo_fecha
+                );
+
+                return (
+                    new Date(fechaB || 0) - new Date(fechaA || 0) ||
+                    Number(b.id) - Number(a.id)
+                );
+            });
+
+        ebtDocumentosDisponibles.forEach(doc => {
+            const option = document.createElement('option');
+            option.value = String(doc.id);
+            option.textContent = textoOptionEbtGuardado(doc);
+            select.appendChild(option);
+        });
+
+        select.disabled = ebtDocumentosDisponibles.length === 0;
+
+        if (seleccionarId) {
+            select.value = String(seleccionarId);
+            selectedServerEbtId = String(seleccionarId);
+        }
+    } catch (error) {
+        console.error(error);
+        select.innerHTML = '<option value="">Saved EBT files could not be loaded</option>';
+    }
+}
+
+function extraerRowsEbtDesdeWorkbook(book) {
+    const hoja = obtenerHojaPorNombre(
+        book,
+        [
+            'Net Sales',
+            'EBT AMOUNTS'
+        ]
+    );
+
+    if (!hoja) {
+        throw new Error('The Net Sales or EBT AMOUNTS sheet does not exist');
+    }
+
+    const rows = leerFilasExcel(
+        hoja,
+        ['Funded Date'],
+        ''
+    );
+
+    if (!rows.length) {
+        throw new Error('No valid rows were found in the EBT file');
+    }
+
+    return rows;
+}
+
+async function cargarEbtDesdeArchivo(file, opciones = {}) {
+    const { origen = 'local', documento = null } = opciones;
+
+    ebtFile = file;
+    selectedServerEbtId =
+        origen === 'servidor' && documento?.id
+            ? String(documento.id)
+            : '';
+
+    if (origen !== 'servidor') {
+        const select = document.getElementById('savedEbtFileSelect');
+        if (select) select.value = '';
+    }
+
+    const buffer = await file.arrayBuffer();
+    ebtWorkbook = XLSX.read(
+        buffer,
+        {
+            type: 'array'
+        }
+    );
+
+    const rows = extraerRowsEbtDesdeWorkbook(ebtWorkbook);
+
+    cargarFechasEnFiltro(
+        rows,
+        'ebtDateFilter',
+        'Funded Date'
+    );
+
+    setUploadCardStatus(
+        'ebtFile',
+        'loaded',
+        `${file.name} loaded (${rows.length} rows)${origen === 'servidor' ? ' from documents' : ''}${textoComparacionActual('ebt')}`
+    );
+
+    procesarEBT();
+
+    if (salesWorkbook && currentRestaurantConfig) {
+        generarConciliacionDesdeTemplate();
+    }
+
+    return rows;
+}
+
+async function loadSelectedSavedEbt() {
+    const select = document.getElementById('savedEbtFileSelect');
+    const id = select?.value || '';
+
+    if (!id) {
+        selectedServerEbtId = '';
+        return;
+    }
+
+    const token = localStorage.getItem('token');
+    const documento = ebtDocumentosDisponibles.find(doc => String(doc.id) === String(id));
+
+    if (!token || !documento) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'EBT unavailable',
+            text: 'Refresh the saved EBT file list and try again.'
+        });
+        return;
+    }
+
+    try {
+        Swal.fire({
+            title: 'Loading EBT...',
+            text: 'Reading the saved file',
+            allowOutsideClick: false,
+            didOpen: () => Swal.showLoading()
+        });
+
+        const response = await fetch(`${window.API_URL}/archivos/${id}/descargar`, {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
+
+        if (!response.ok) {
+            const data = await response.json().catch(() => ({}));
+            throw new Error(data.message || 'The saved EBT file could not be downloaded');
+        }
+
+        const blob = await response.blob();
+        const notas = leerNotasArchivoEbt(documento);
+        const nombre =
+            notas.nombreOriginal ||
+            documento.nombre_original ||
+            `EBT_${id}.xlsx`;
+
+        let archivo;
+
+        try {
+            archivo = new File(
+                [blob],
+                nombre,
+                {
+                    type: blob.type || documento.tipo_mime || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                }
+            );
+        } catch {
+            archivo = blob;
+            archivo.name = nombre;
+        }
+
+        await cargarEbtDesdeArchivo(
+            archivo,
+            {
+                origen: 'servidor',
+                documento
+            }
+        );
+
+        Swal.close();
+    } catch (error) {
+        console.error(error);
+        setUploadCardStatus('ebtFile', 'error', error.message || 'The EBT file could not be loaded');
+        Swal.fire({
+            icon: 'error',
+            title: 'The EBT file could not be loaded',
+            text: error.message || 'Try another EBT file.'
+        });
+    }
+}
+
+async function subirEbtIndependiente() {
+    const token = localStorage.getItem('token');
+    const restaurante = getSelectedEbtRestaurant();
+
+    if (!token) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Session expired'
+        });
+        return;
+    }
+
+    if (!restaurante.codigo) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Restaurant required',
+            text: 'Select a restaurant before saving the EBT file.'
+        });
+        return;
+    }
+
+    if (!ebtFile || !ebtWorkbook) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'EBT required',
+            text: 'Select an EBT file first.'
+        });
+        return;
+    }
+
+    if (selectedServerEbtId) {
+        Swal.fire({
+            icon: 'info',
+            title: 'EBT already saved',
+            text: `EBT file ID: ${selectedServerEbtId}`
+        });
+        return;
+    }
+
+    let rows = [];
+
+    try {
+        rows = extraerRowsEbtDesdeWorkbook(ebtWorkbook);
+    } catch (error) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Invalid EBT',
+            text: error.message
+        });
+        return;
+    }
+
+    const fecha = obtenerFechaEbtParaServidor(rows);
+
+    if (!fecha) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Date required',
+            text: 'Select the EBT date before saving it.'
+        });
+        return;
+    }
+
+    const extension = obtenerExtensionArchivo(ebtFile.name);
+    const nombreEbt = construirNombreArchivoEbtIndependiente(fecha, extension);
+
+    const decisionEbt = await confirmarReemplazoArchivo({
+        token,
+        restaurante: restaurante.codigo,
+        tipoDocumento: 'ebt',
+        fecha,
+        nombreArchivo: nombreEbt
+    });
+
+    if (!decisionEbt.ok) return;
+
+    try {
+        Swal.fire({
+            title: 'Saving EBT...',
+            text: 'Uploading EBT file',
+            allowOutsideClick: false,
+            didOpen: () => Swal.showLoading()
+        });
+
+        const data = await subirArchivoConciliacionServidor({
+            token,
+            restaurante: restaurante.codigo,
+            archivo: ebtFile,
+            nombreArchivo: nombreEbt,
+            procesarDatos: 'false',
+            tipoDocumento: 'ebt',
+            fecha,
+            notas: {
+                tipo: 'archivo_ebt_independiente',
+                tipoDocumento: 'ebt',
+                fuente: 'ebt',
+                fecha,
+                nombreOriginal: ebtFile.name
+            },
+            reemplazarSiExiste: Boolean(decisionEbt.archivoReemplazarId),
+            archivoReemplazarId: decisionEbt.archivoReemplazarId
+        });
+
+        const archivoId = data.archivo?.id || decisionEbt.archivoReemplazarId || '';
+
+        if (archivoId) {
+            selectedServerEbtId = String(archivoId);
+        }
+
+        await cargarFilesEbtGuardados(archivoId);
+
+        Swal.fire({
+            icon: 'success',
+            title: 'EBT saved',
+            text: archivoId
+                ? `EBT file ID: ${archivoId}`
+                : 'The EBT file was saved successfully.'
+        });
+    } catch (error) {
+        console.error(error);
+        Swal.fire({
+            icon: 'error',
+            title: 'The EBT file could not be saved',
+            text: error.message || 'Try again.'
+        });
+    }
 }
 
 async function subirArchivoConciliacionServidor({
@@ -4256,7 +4745,7 @@ async function subirArchivoConciliacionServidor({
     const data = await response.json().catch(() => ({}));
 
     if (!response.ok) {
-        const error = new Error(data.message || 'Error al guardar archivo');
+        const error = new Error(data.message || 'File save failed');
         error.status = response.status;
         error.data = data;
         throw error;
@@ -4295,7 +4784,7 @@ async function buscarArchivoMismaFechaServidor({
     return archivos.find(doc => {
         const notas = leerNotasConciliacion(doc);
 
-        const mismoRestaurante =
+        const mismoRestaurant =
             doc.restaurante_codigo === restaurante ||
             doc.codigo === restaurante ||
             String(doc.restaurante || '').toLowerCase().includes(
@@ -4322,7 +4811,7 @@ async function buscarArchivoMismaFechaServidor({
             nombreArchivo &&
             String(doc.nombre_original || '') === String(nombreArchivo);
 
-        return mismoRestaurante && (mismoNombre || (mismoTipo && mismaFecha));
+        return mismoRestaurant && (mismoNombre || (mismoTipo && mismaFecha));
     }) || null;
 }
 
@@ -4351,7 +4840,7 @@ async function confirmarReemplazoArchivo({
     const tipoTexto =
         tipoDocumento === 'ebt'
             ? 'EBT'
-            : 'Conciliación';
+            : 'Reconciliation';
 
     const restauranteSeguro = escaparHtmlComparacion(restaurante);
     const tipoSeguro = escaparHtmlComparacion(tipoTexto);
@@ -4366,48 +4855,48 @@ async function confirmarReemplazoArchivo({
             <section class="replacement-file-card">
                 <header class="replacement-file-hero">
                     <div>
-                        <span class="replacement-file-eyebrow">Archivo existente</span>
-                        <h3>Ya existe un archivo guardado</h3>
-                        <p>Revisa la informacion antes de reemplazarlo.</p>
+                        <span class="replacement-file-eyebrow">Existing file</span>
+                        <h3>A saved file already exists</h3>
+                        <p>Review the information before replacing it.</p>
                     </div>
                 </header>
 
                 <div class="replacement-file-summary">
                     <div class="replacement-file-summary-row">
-                        <span>Restaurante</span>
+                        <span>Restaurant</span>
                         <strong>${restauranteSeguro}</strong>
                     </div>
                     <div class="replacement-file-summary-row">
-                        <span>Tipo</span>
+                        <span>Type</span>
                         <strong>${tipoSeguro}</strong>
                     </div>
                 </div>
 
                 <div class="replacement-file-compare">
                     <article>
-                        <span>Archivo actual</span>
+                        <span>Current file</span>
                         <strong title="${archivoActualSeguro}">${archivoActualSeguro}</strong>
                     </article>
                     <article>
-                        <span>Archivo nuevo</span>
+                        <span>New file</span>
                         <strong title="${archivoNuevoSeguro}">${archivoNuevoSeguro}</strong>
                     </article>
                 </div>
 
                 <div class="replacement-file-warning">
-                    <strong>Si continuas, el archivo actual sera reemplazado.</strong>
+                    <strong>If you continue, the current file will be replaced.</strong>
                 </div>
 
                 <p class="replacement-file-confirm">
-                    Escribe <strong>REEMPLAZAR</strong> para confirmar.
+                    Type <strong>REPLACE</strong> to confirm.
                 </p>
             </section>
         `,
         input: 'text',
-        inputPlaceholder: 'REEMPLAZAR',
+        inputPlaceholder: 'REPLACE',
         showCancelButton: true,
-        confirmButtonText: 'Reemplazar archivo',
-        cancelButtonText: 'Cancelar',
+        confirmButtonText: 'Replace file',
+        cancelButtonText: 'Cancel',
         buttonsStyling: false,
         customClass: {
             popup: 'replacement-file-dialog',
@@ -4420,8 +4909,8 @@ async function confirmarReemplazoArchivo({
             validationMessage: 'replacement-file-validation'
         },
         preConfirm: value => {
-            if (String(value || '').trim().toUpperCase() !== 'REEMPLAZAR') {
-                Swal.showValidationMessage('Debes escribir REEMPLAZAR para continuar');
+            if (String(value || '').trim().toUpperCase() !== 'REPLACE') {
+                Swal.showValidationMessage('You must type REPLACE to continue');
                 return false;
             }
 
@@ -4442,14 +4931,14 @@ async function guardarConciliacionServidor() {
 
     const restaurante =
         document
-            .getElementById('selectRestaurante')
+            .getElementById('selectRestaurant')
             ?.selectedOptions[0]
             ?.dataset?.codigo;
 
     if (!token) {
         Swal.fire({
             icon: 'error',
-            title: 'Sesión expirada'
+            title: 'Session expired'
         });
         return;
     }
@@ -4457,8 +4946,8 @@ async function guardarConciliacionServidor() {
     if (!restaurante) {
         Swal.fire({
             icon: 'warning',
-            title: 'Restaurante requerido',
-            text: 'Selecciona un restaurante'
+            title: 'Restaurant required',
+            text: 'Select a restaurant'
         });
         return;
     }
@@ -4466,8 +4955,8 @@ async function guardarConciliacionServidor() {
     if (!datosExtraidos.length) {
         Swal.fire({
             icon: 'warning',
-            title: 'Sin conciliación',
-            text: 'Primero genera la conciliación'
+            title: 'No reconciliation',
+            text: 'Generate the reconciliation first'
         });
         return;
     }
@@ -4477,14 +4966,14 @@ async function guardarConciliacionServidor() {
     if (!fecha) {
         Swal.fire({
             icon: 'warning',
-            title: 'Fecha requerida',
-            text: 'Selecciona la fecha de la conciliación antes de guardar.'
+            title: 'Date required',
+            text: 'Select the reconciliation date before saving.'
         });
         return;
     }
 
     const nombreConciliacion =
-        construirNombreArchivo('Conciliacion', 'xlsx');
+        construirNombreArchivo('Reconciliation', 'xlsx');
 
     const extensionEbt = ebtFile
         ? obtenerExtensionArchivo(ebtFile.name)
@@ -4508,7 +4997,9 @@ async function guardarConciliacionServidor() {
         archivoReemplazarId: null
     };
 
-    if (ebtFile) {
+    const ebtYaGuardadoId = selectedServerEbtId || '';
+
+    if (ebtFile && !ebtYaGuardadoId) {
         decisionEbt = await confirmarReemplazoArchivo({
             token,
             restaurante,
@@ -4521,8 +5012,8 @@ async function guardarConciliacionServidor() {
     }
 
     Swal.fire({
-        title: 'Guardando...',
-        text: 'Subiendo conciliación',
+        title: 'Saving...',
+        text: 'Uploading reconciliation',
         allowOutsideClick: false,
         didOpen: () => Swal.showLoading()
     });
@@ -4561,6 +5052,7 @@ async function guardarConciliacionServidor() {
                 tipo: 'archivo_conciliacion',
                 tipoDocumento: 'conciliacion',
                 conciliacionId: registroConciliacion.id,
+                ebtArchivoId: ebtYaGuardadoId || null,
                 fecha
             },
             reemplazarSiExiste: Boolean(decisionConciliacion.archivoReemplazarId),
@@ -4569,7 +5061,7 @@ async function guardarConciliacionServidor() {
 
         let dataEbt = null;
 
-        if (ebtFile) {
+        if (ebtFile && !ebtYaGuardadoId) {
             dataEbt = await subirArchivoConciliacionServidor({
                 token,
                 restaurante,
@@ -4592,15 +5084,20 @@ async function guardarConciliacionServidor() {
             });
         }
 
+        const ebtMostradoId =
+            dataEbt?.archivo?.id ||
+            ebtYaGuardadoId ||
+            '';
+
         Swal.fire({
             icon: 'success',
-            title: 'Conciliación guardada',
+            title: 'Reconciliation saved',
             html: `
-                <p>La conciliación se guardó correctamente.</p>
+                <p>The reconciliation was saved successfully.</p>
                 <p style="margin-top:10px;">
-                    Archivo conciliación ID: ${data.archivo?.id || '-'}<br>
-                    ${dataEbt ? `Archivo EBT ID: ${dataEbt.archivo?.id || '-'}<br>` : ''}
-                    Registro contable ID: ${registroConciliacion.id}
+                    Reconciliation file ID: ${data.archivo?.id || '-'}<br>
+                    ${ebtMostradoId ? `EBT file ID: ${ebtMostradoId}<br>` : ''}
+                    Accounting record ID: ${registroConciliacion.id}
                 </p>
             `
         });
@@ -4732,7 +5229,7 @@ function generarWorkbookConConciliacion() {
 
     const codigo =
         document
-            .getElementById('selectRestaurante')
+            .getElementById('selectRestaurant')
             ?.selectedOptions[0]
             ?.dataset?.codigo;
 
@@ -4811,7 +5308,7 @@ function generarWorkbookConConciliacion() {
         );
     };
 
-    // Cada restaurante exporta exclusivamente sus propias hojas generadas.
+    // Each restaurant exports only its own generated sheets.
     if (codigo === 'taco-bell') {
         agregarHojaDatos(taxReviewData, 'Tax Review');
         agregarHojaDatos(prepararDatosIntacct(dailySalesREDData), 'Daily Sales RED');
@@ -4859,7 +5356,7 @@ function renderActiveTab() {
 
     const codigo =
         document.getElementById(
-            'selectRestaurante'
+            'selectRestaurant'
         )
             ?.selectedOptions?.[0]
             ?.dataset?.codigo;
@@ -5012,7 +5509,7 @@ function descripcionIntacctPredeterminada(row) {
     const memo = String(obtenerPrimerValor(row, ['memo', 'MEMO'], ''));
     if (/statistical delivery/i.test(memo)) return 'Statistical Delivery Sales';
 
-    return obtenerCodigoRestauranteActual() === 'taco-bell'
+    return obtenerCodigoRestaurantActual() === 'taco-bell'
         ? 'POS Data Upload Sabretooth'
         : 'POS Data Upload DC Central';
 }
@@ -5144,8 +5641,8 @@ function validarEstructuraCSVExportable(data, opciones = {}) {
     ) {
         return {
             ok: false,
-            title: 'CSV no valido',
-            text: 'Los datos no tienen una estructura de columnas valida para exportar.'
+            title: 'Invalid CSV',
+            text: 'The data does not have a valid column structure for export.'
         };
     }
 
@@ -5154,8 +5651,8 @@ function validarEstructuraCSVExportable(data, opciones = {}) {
     if (!columnas.length) {
         return {
             ok: false,
-            title: 'CSV no valido',
-            text: 'No se encontraron columnas para exportar.'
+            title: 'Invalid CSV',
+            text: 'No columns were found to export.'
         };
     }
 
@@ -5165,8 +5662,8 @@ function validarEstructuraCSVExportable(data, opciones = {}) {
     ) {
         return {
             ok: false,
-            title: 'Estructura Intacct invalida',
-            text: 'No se descargo el archivo porque sus columnas no coinciden con el template.'
+            title: 'Invalid Intacct structure',
+            text: 'The file was not downloaded because its columns do not match the template.'
         };
     }
 
@@ -5179,15 +5676,15 @@ function validarEstructuraCSVExportable(data, opciones = {}) {
     if (filaInvalida >= 0) {
         return {
             ok: false,
-            title: 'CSV no valido',
-            text: `La fila ${filaInvalida + 1} no tiene una estructura valida.`
+            title: 'Invalid CSV',
+            text: `Row ${filaInvalida + 1} does not have a valid structure.`
         };
     }
 
     return { ok: true };
 }
 
-async function validarAntesDeExportarCSV(data, opciones = {}) {
+async function validarAntesDeExportCSV(data, opciones = {}) {
     const estructura =
         validarEstructuraCSVExportable(data, opciones);
 
@@ -5219,15 +5716,15 @@ async function descargarCSV(data, nombreArchivo, opciones = {}) {
     if (!data || !data.length) {
         Swal.fire({
             icon: 'warning',
-            title: 'Sin datos para exportar',
-            text: 'Genera la conciliación antes de descargar el archivo.'
+            title: 'No data to export',
+            text: 'Generate the reconciliation before downloading the file.'
         });
         return;
     }
 
     if (
         !opciones.omitirValidacion &&
-        !(await validarAntesDeExportarCSV(data, opciones))
+        !(await validarAntesDeExportCSV(data, opciones))
     ) {
         return;
     }
@@ -5279,14 +5776,14 @@ async function descargarCSVIntacct(data, nombreArchivo) {
     if (datosIntacct.length && Object.keys(datosIntacct[0]).join('|') !== COLUMNAS_INTACCT.join('|')) {
         Swal.fire({
             icon: 'error',
-            title: 'Estructura Intacct inválida',
-            text: 'No se descargó el archivo porque sus columnas no coinciden con el template.'
+            title: 'Invalid Intacct structure',
+            text: 'The file was not downloaded because its columns do not match the template.'
         });
         return;
     }
 
     if (
-        !(await validarAntesDeExportarCSV(datosIntacct, {
+        !(await validarAntesDeExportCSV(datosIntacct, {
             intacct: true
         }))
     ) {
@@ -5302,7 +5799,7 @@ async function exportarTabActualCSV() {
 
     const codigo =
         document
-            .getElementById('selectRestaurante')
+            .getElementById('selectRestaurant')
             ?.selectedOptions?.[0]
             ?.dataset?.codigo;
 
@@ -5393,8 +5890,8 @@ async function exportarTabActualCSV() {
             default:
                 Swal.fire({
                     icon: 'info',
-                    title: 'Selecciona una pestaña',
-                    text: 'Elige la vista que deseas exportar.'
+                    title: 'Select a tab',
+                    text: 'Choose the view you want to export.'
                 });
         }
 
@@ -5436,8 +5933,8 @@ async function exportarTabActualCSV() {
             default:
                 Swal.fire({
                     icon: 'info',
-                    title: 'Selecciona una pestaña',
-                    text: 'Elige la vista que deseas exportar.'
+                    title: 'Select a tab',
+                    text: 'Choose the view you want to export.'
                 });
         }
 
@@ -5484,8 +5981,8 @@ async function exportarTabActualCSV() {
         default:
             Swal.fire({
                 icon: 'info',
-                title: 'Selecciona una pestaña',
-                text: 'Elige la vista que deseas exportar.'
+                title: 'Select a tab',
+                text: 'Choose the view you want to export.'
             });
     }
 

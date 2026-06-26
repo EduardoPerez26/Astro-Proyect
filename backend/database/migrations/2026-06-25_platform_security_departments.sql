@@ -1,7 +1,7 @@
 -- ============================================================
--- PLATAFORMA GLOBAL + SEGURIDAD
--- Ejecutar sobre la misma base usada por el backend.
--- Es idempotente y compatible con MySQL 8.
+-- GLOBAL PLATFORM + SECURITY
+-- Run against the same database used by the backend.
+-- It is idempotent and compatible with MySQL 8.
 -- ============================================================
 
 CREATE TABLE IF NOT EXISTS departamentos (
@@ -208,11 +208,11 @@ BEGIN
 
     INSERT INTO departamentos (codigo, nombre, descripcion, modulos, pagina_inicio, activo)
     VALUES
-        ('ar', 'Accounts Receivable', 'Modulo actual: conciliaciones, documentos, tiendas e historial.', JSON_OBJECT(), 'tiendas', TRUE),
-        ('ap', 'Accounts Payable', 'Base preparada para procesos futuros de AP.', JSON_OBJECT(), 'documentos', TRUE),
-        ('operations', 'Operations', 'Base preparada para procesos futuros de operaciones.', JSON_OBJECT(), 'tiendas', TRUE),
-        ('hr', 'Human Resources', 'Base preparada para procesos futuros de recursos humanos.', JSON_OBJECT(), 'documentos', TRUE),
-        ('it', 'Information Technology', 'Administracion tecnica, seguridad y soporte.', JSON_OBJECT(), 'dashboardAdmin', TRUE)
+        ('ar', 'Accounts Receivable', 'Current module: reconciliations, documents, stores, and history.', JSON_OBJECT(), 'tiendas', TRUE),
+        ('ap', 'Accounts Payable', 'Base prepared for future AP workflows.', JSON_OBJECT(), 'documentos', TRUE),
+        ('operations', 'Operations', 'Base prepared for future operations workflows.', JSON_OBJECT(), 'tiendas', TRUE),
+        ('hr', 'Human Resources', 'Base prepared for future human resources workflows.', JSON_OBJECT(), 'documentos', TRUE),
+        ('it', 'Information Technology', 'Technical administration, security, and support.', JSON_OBJECT(), 'dashboardAdmin', TRUE)
     ON DUPLICATE KEY UPDATE
         descripcion = VALUES(descripcion),
         pagina_inicio = VALUES(pagina_inicio),

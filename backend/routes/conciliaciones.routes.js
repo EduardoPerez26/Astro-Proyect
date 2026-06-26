@@ -58,7 +58,7 @@ const CAMPOS_COMPARACION_POR_RESTAURANTE = {
     ]
 };
 
-function obtenerTiendaConciliacion(fila = {}) {
+function obtenerStoreConciliacion(fila = {}) {
     return String(
         fila.store ??
         fila.locationId ??
@@ -122,7 +122,7 @@ function extraerDatosComparacionArchivo(archivoBlob) {
 
 function crearMapaConciliacion(filas, fechaPredeterminada) {
     return new Map(filas.map(fila => {
-        const tienda = obtenerTiendaConciliacion(fila);
+        const tienda = obtenerStoreConciliacion(fila);
         const fecha = normalizarFechaConciliacionFila(
             fila.date ?? fila.accountingDate,
             fechaPredeterminada
@@ -148,7 +148,7 @@ function compararDatosConciliacion(
     datosAnteriores,
     datosNuevos,
     fecha,
-    codigoRestaurante
+    codigoRestaurant
 ) {
     const anteriores = Array.isArray(datosAnteriores) ? datosAnteriores : [];
     const nuevos = Array.isArray(datosNuevos) ? datosNuevos : [];
@@ -166,19 +166,19 @@ function compararDatosConciliacion(
         const anterior = registroAnterior?.fila;
         const nuevo = registroNuevo?.fila;
         const tienda = registroNuevo?.tienda || registroAnterior?.tienda || '';
-        const fechaTienda = registroNuevo?.fecha || registroAnterior?.fecha || fecha;
+        const fechaStore = registroNuevo?.fecha || registroAnterior?.fecha || fecha;
 
         if (!anterior || !nuevo) {
             diferencias.push({
                 tienda,
-                fecha: fechaTienda,
+                fecha: fechaStore,
                 tipo: anterior ? 'tienda_eliminada' : 'tienda_nueva',
                 cambios: []
             });
             return;
         }
 
-        const campos = CAMPOS_COMPARACION_POR_RESTAURANTE[codigoRestaurante] ||
+        const campos = CAMPOS_COMPARACION_POR_RESTAURANTE[codigoRestaurant] ||
             [...new Set([...Object.keys(anterior), ...Object.keys(nuevo)])];
         const cambios = campos.flatMap(campo => {
             if (CAMPOS_IDENTIDAD_CONCILIACION.has(campo)) return [];
@@ -203,7 +203,7 @@ function compararDatosConciliacion(
         if (cambios.length) {
             diferencias.push({
                 tienda,
-                fecha: fechaTienda,
+                fecha: fechaStore,
                 tipo: 'montos_diferentes',
                 cambios
             });
@@ -238,7 +238,7 @@ router.get('/templates', verificarToken, async (req, res) => {
         
         const [templates] = await pool.query(query, params);
         
-        // Parsear configuracion JSON
+        // Parse JSON configuration.
         const templatesFormateados = templates.map(t => ({
             ...t,
             configuracion: typeof t.configuracion === 'string' 
@@ -252,10 +252,10 @@ router.get('/templates', verificarToken, async (req, res) => {
         });
         
     } catch (error) {
-        console.error('Error al listar templates:', error);
+        console.error('Error listing templates:', error);
         res.status(500).json({
             success: false,
-            message: 'Error al obtener templates'
+            message: 'Templates could not be loaded'
         });
     }
 });
@@ -273,7 +273,7 @@ router.get('/templates/:id', verificarToken, async (req, res) => {
         if (templates.length === 0) {
             return res.status(404).json({
                 success: false,
-                message: 'Template no encontrado'
+                message: 'Template not found'
             });
         }
         
@@ -288,10 +288,10 @@ router.get('/templates/:id', verificarToken, async (req, res) => {
         });
         
     } catch (error) {
-        console.error('Error al obtener template:', error);
+        console.error('Template could not be loaded:', error);
         res.status(500).json({
             success: false,
-            message: 'Error al obtener template'
+            message: 'Template could not be loaded'
         });
     }
 });
@@ -303,7 +303,7 @@ router.post('/templates', verificarToken, esAdmin, async (req, res) => {
         if (!restaurante_id || !nombre || !configuracion) {
             return res.status(400).json({
                 success: false,
-                message: 'Faltan campos requeridos'
+                message: 'Required fields are missing'
             });
         }
         
@@ -328,15 +328,15 @@ router.post('/templates', verificarToken, esAdmin, async (req, res) => {
         
         res.status(201).json({
             success: true,
-            message: 'Template creado',
+            message: 'Template created',
             id: result.insertId
         });
         
     } catch (error) {
-        console.error('Error al crear template:', error);
+        console.error('Template could not be created:', error);
         res.status(500).json({
             success: false,
-            message: 'Error al crear template'
+            message: 'Template could not be created'
         });
     }
 });
@@ -372,7 +372,7 @@ router.put('/templates/:id', verificarToken, esAdmin, async (req, res) => {
         if (updates.length === 0) {
             return res.status(400).json({
                 success: false,
-                message: 'No hay campos para actualizar'
+                message: 'There are no fields to update'
             });
         }
         
@@ -385,14 +385,14 @@ router.put('/templates/:id', verificarToken, esAdmin, async (req, res) => {
         
         res.json({
             success: true,
-            message: 'Template actualizado'
+            message: 'Template updated'
         });
         
     } catch (error) {
-        console.error('Error al actualizar template:', error);
+        console.error('Template could not be updated:', error);
         res.status(500).json({
             success: false,
-            message: 'Error al actualizar template'
+            message: 'Template could not be updated'
         });
     }
 });
@@ -454,10 +454,10 @@ router.get('/', verificarToken, async (req, res) => {
         });
         
     } catch (error) {
-        console.error('Error al listar conciliaciones:', error);
+        console.error('Error listing reconciliations:', error);
         res.status(500).json({
             success: false,
-            message: 'Error al obtener conciliaciones'
+            message: 'Reconciliations could not be loaded'
         });
     }
 });
@@ -473,7 +473,7 @@ router.post('/comparar-existente', verificarToken, async (req, res) => {
         if (!restaurante_id || !fecha_conciliacion || !Array.isArray(datos_extraidos)) {
             return res.status(400).json({
                 success: false,
-                message: 'Faltan datos para comparar la conciliación'
+                message: 'Missing data to compare the reconciliation'
             });
         }
 
@@ -485,7 +485,7 @@ router.post('/comparar-existente', verificarToken, async (req, res) => {
         if (!restaurantes.length) {
             return res.status(404).json({
                 success: false,
-                message: 'Restaurante no encontrado'
+                message: 'Restaurant not found'
             });
         }
 
@@ -654,10 +654,10 @@ router.post('/comparar-existente', verificarToken, async (req, res) => {
             ...resultado
         });
     } catch (error) {
-        console.error('Error comparando conciliación existente:', error);
+        console.error('Error comparing existing reconciliation:', error);
         res.status(500).json({
             success: false,
-            message: 'Error al comparar la conciliación existente'
+            message: 'Existing reconciliation could not be compared'
         });
     }
 });
@@ -686,7 +686,7 @@ router.get('/:id', verificarToken, async (req, res) => {
         if (conciliaciones.length === 0) {
             return res.status(404).json({
                 success: false,
-                message: 'Conciliacion no encontrada'
+                message: 'Reconciliation not found'
             });
         }
         
@@ -704,10 +704,10 @@ router.get('/:id', verificarToken, async (req, res) => {
         });
         
     } catch (error) {
-        console.error('Error al obtener conciliacion:', error);
+        console.error('Reconciliation could not be loaded:', error);
         res.status(500).json({
             success: false,
-            message: 'Error al obtener conciliacion'
+            message: 'Reconciliation could not be loaded'
         });
     }
 });
@@ -728,7 +728,7 @@ router.post('/', verificarToken, async (req, res) => {
         if (!restaurante_id || !fecha_conciliacion || !datos_extraidos) {
             return res.status(400).json({
                 success: false,
-                message: 'Faltan campos requeridos'
+                message: 'Required fields are missing'
             });
         }
 
@@ -765,8 +765,8 @@ router.post('/', verificarToken, async (req, res) => {
                      VALUES (?, ?, ?, ?, TRUE)`,
                     [
                         restaurante_id,
-                        'Template automático de conciliación',
-                        'Configuración interna para historial y comparación',
+                        'Automatic reconciliation template',
+                        'Internal configuration for history and comparison',
                         JSON.stringify({ generadoPorSistema: true })
                     ]
                 );
@@ -832,7 +832,7 @@ router.post('/', verificarToken, async (req, res) => {
 
             return res.json({
                 success: true,
-                message: 'Conciliación actualizada',
+                message: 'Reconciliation updated',
                 id: conciliacionId,
                 actualizada: true,
                 stats: {
@@ -901,7 +901,7 @@ router.post('/', verificarToken, async (req, res) => {
         
         res.status(201).json({
             success: true,
-            message: 'Conciliacion creada',
+            message: 'Reconciliation created',
             id: result.insertId,
             stats: {
                 total_conceptos,
@@ -912,10 +912,10 @@ router.post('/', verificarToken, async (req, res) => {
         });
         
     } catch (error) {
-        console.error('Error al crear conciliacion:', error);
+        console.error('Reconciliation could not be created:', error);
         res.status(500).json({
             success: false,
-            message: 'Error al crear conciliacion',
+            message: 'Reconciliation could not be created',
             code: error.code || 'CONCILIACION_DB_ERROR'
         });
     }
@@ -954,7 +954,7 @@ router.put('/:id', verificarToken, async (req, res) => {
         if (updates.length === 0) {
             return res.status(400).json({
                 success: false,
-                message: 'No hay campos para actualizar'
+                message: 'There are no fields to update'
             });
         }
         
@@ -967,14 +967,14 @@ router.put('/:id', verificarToken, async (req, res) => {
         
         res.json({
             success: true,
-            message: 'Conciliacion actualizada'
+            message: 'Reconciliation updated'
         });
         
     } catch (error) {
-        console.error('Error al actualizar conciliacion:', error);
+        console.error('Reconciliation could not be updated:', error);
         res.status(500).json({
             success: false,
-            message: 'Error al actualizar conciliacion'
+            message: 'Reconciliation could not be updated'
         });
     }
 });
@@ -1004,10 +1004,10 @@ router.get('/valores-esperados/:restaurante_id/:fecha', verificarToken, async (r
         });
         
     } catch (error) {
-        console.error('Error al obtener valores esperados:', error);
+        console.error('Expected values could not be loaded:', error);
         res.status(500).json({
             success: false,
-            message: 'Error al obtener valores esperados'
+            message: 'Expected values could not be loaded'
         });
     }
 });
@@ -1020,7 +1020,7 @@ router.post('/valores-esperados', verificarToken, async (req, res) => {
         if (!restaurante_id || !fecha || !valores || !Array.isArray(valores)) {
             return res.status(400).json({
                 success: false,
-                message: 'Faltan campos requeridos'
+                message: 'Required fields are missing'
             });
         }
         
@@ -1036,14 +1036,14 @@ router.post('/valores-esperados', verificarToken, async (req, res) => {
         
         res.json({
             success: true,
-            message: 'Valores guardados'
+            message: 'Values saved'
         });
         
     } catch (error) {
-        console.error('Error al guardar valores esperados:', error);
+        console.error('Expected values could not be saved:', error);
         res.status(500).json({
             success: false,
-            message: 'Error al guardar valores esperados'
+            message: 'Expected values could not be saved'
         });
     }
 });

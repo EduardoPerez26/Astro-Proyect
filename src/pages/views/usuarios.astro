@@ -2,32 +2,32 @@
 import DashboardLayout from '../../layouts/DashboardLayout.astro';
 ---
 
-<DashboardLayout title="Usuarios">
+<DashboardLayout title="Users">
     <div class="page-container">
         <!-- Header -->
         <div class="page-header">
             <div class="page-header-info">
-                <h1>Administracion de Usuarios</h1>
-                <p>Gestiona los usuarios del sistema</p>
+                <h1>User administration</h1>
+                <p>Manage system users</p>
             </div>
-            <button class="btn btn-primary" id="btnNuevoUsuario" onclick="openUserModal()">
+            <button class="btn btn-primary" id="btnNuevoUser" onclick="openUserModal()">
                 <i class="fa-solid fa-user-plus"></i>
-                Nuevo Usuario
+                New user
             </button>
-            <button class="btn btn-primary" id="btnNuevoDepartamento" onclick="openDepartmentModal()" hidden>
+            <button class="btn btn-primary" id="btnNuevoDepartment" onclick="openDepartmentModal()" hidden>
                 <i class="fa-solid fa-building-circle-check"></i>
-                Nuevo departamento
+                New department
             </button>
         </div>
 
-        <div class="admin-view-tabs" role="tablist" aria-label="Administracion de acceso">
-            <button class="admin-view-tab active" id="tabUsuarios" onclick="switchAdminView('usuarios')">
+        <div class="admin-view-tabs" role="tablist" aria-label="Access administration">
+            <button class="admin-view-tab active" id="tabUsers" onclick="switchAdminView('usuarios')">
                 <i class="fa-solid fa-users"></i>
-                Usuarios
+                Users
             </button>
-            <button class="admin-view-tab" id="tabDepartamentos" onclick="switchAdminView('departamentos')">
+            <button class="admin-view-tab" id="tabDepartments" onclick="switchAdminView('departamentos')">
                 <i class="fa-solid fa-building"></i>
-                Departamentos
+                Departments
             </button>
         </div>
 
@@ -40,8 +40,8 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
                     <i class="fa-solid fa-users"></i>
                 </div>
                 <div class="stat-info">
-                    <h3 id="totalUsuarios">0</h3>
-                    <p>Total Usuarios</p>
+                    <h3 id="totalUsers">0</h3>
+                    <p>Total users</p>
                 </div>
             </div>
             <div class="stat-card">
@@ -50,7 +50,7 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
                 </div>
                 <div class="stat-info">
                     <h3 id="usuariosActivos">0</h3>
-                    <p>Activos</p>
+                    <p>Active</p>
                 </div>
             </div>
             <div class="stat-card">
@@ -59,7 +59,7 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
                 </div>
                 <div class="stat-info">
                     <h3 id="usuariosInactivos">0</h3>
-                    <p>Inactivos</p>
+                    <p>Inactive</p>
                 </div>
             </div>
             <div class="stat-card">
@@ -68,54 +68,54 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
                 </div>
                 <div class="stat-info">
                     <h3 id="usuariosAdmin">0</h3>
-                    <p>Administradores</p>
+                    <p>Administrators</p>
                 </div>
             </div>
         </div>
 
-        <!-- Filtros -->
+        <!-- Filters -->
         <div class="filters-bar">
             <div class="filter-group">
-                <label>Buscar:</label>
-                <input type="text" id="searchUsers" placeholder="Nombre, email o usuario..." oninput="filterUsers()">
+                <label>Search:</label>
+                <input type="text" id="searchUsers" placeholder="Name, email, or username..." oninput="filterUsers()">
             </div>
             <div class="filter-group">
-                <label>Rol:</label>
+                <label>Role:</label>
                 <select id="filterRole" onchange="filterUsers()">
-                    <option value="">Todos</option>
-                    <option value="admin">Administrador</option>
+                    <option value="">All</option>
+                    <option value="admin">Administrator</option>
                     <option value="supervisor">Supervisor</option>
-                    <option value="usuario">Usuario</option>
+                    <option value="usuario">User</option>
                 </select>
             </div>
             <div class="filter-group">
-                <label>Estado:</label>
+                <label>Status:</label>
                 <select id="filterStatus" onchange="filterUsers()">
-                    <option value="">Todos</option>
-                    <option value="activo">Activo</option>
-                    <option value="inactivo">Inactivo</option>
+                    <option value="">All</option>
+                    <option value="activo">Active</option>
+                    <option value="inactivo">Inactive</option>
                 </select>
             </div>
             <div class="filter-group">
-                <label>Departamento:</label>
+                <label>Department:</label>
                 <select id="filterDepartment" onchange="filterUsers()">
-                    <option value="">Todos</option>
+                    <option value="">All</option>
                 </select>
             </div>
         </div>
 
-        <!-- Tabla -->
+        <!-- Table -->
         <div class="table-container">
             <table class="data-table" id="usersTable">
                 <thead>
                     <tr>
-                        <th>Usuario</th>
+                        <th>User</th>
                         <th>Email</th>
-                        <th>Rol</th>
-                        <th>Departamento</th>
-                        <th>Estado</th>
-                        <th>Fecha registro</th>
-                        <th>Acciones</th>
+                        <th>Role</th>
+                        <th>Department</th>
+                        <th>Status</th>
+                        <th>Registration date</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody id="usersTableBody">
@@ -123,14 +123,14 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
                         <td colspan="7">
                             <div class="empty-state">
                                 <i class="fa-solid fa-spinner fa-spin"></i>
-                                <p>Cargando usuarios...</p>
+                                <p>Loading users...</p>
                             </div>
                         </td>
                     </tr>
                 </tbody>
             </table>
             <div class="pagination">
-                <div class="pagination-info" id="paginationInfo">Mostrando 0 usuarios</div>
+                <div class="pagination-info" id="paginationInfo">Showing 0 users</div>
                 <div class="pagination-buttons" id="paginationButtons"></div>
             </div>
         </div>
@@ -139,13 +139,13 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
         <section id="departamentosPanel" hidden>
             <div class="department-intro">
                 <div>
-                    <span>ESTRUCTURA DE ACCESO</span>
-                    <h2>Departamentos de la organizacion</h2>
-                    <p>Clasifica a los usuarios por area. Las ventanas y la pantalla inicial se asignan unicamente desde Permisos.</p>
+                    <span>ACCESS STRUCTURE</span>
+                    <h2>Organization departments</h2>
+                    <p>Classify users by area. Windows and the initial screen are assigned only from Permissions.</p>
                 </div>
                 <div class="department-count">
-                    <strong id="totalDepartamentos">0</strong>
-                    <span>departamentos</span>
+                    <strong id="totalDepartments">0</strong>
+                    <span>departments</span>
                 </div>
             </div>
 
@@ -153,11 +153,11 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
                 <table class="data-table">
                     <thead>
                         <tr>
-                            <th>Departamento</th>
-                            <th>Codigo</th>
-                            <th>Usuarios</th>
-                            <th>Estado</th>
-                            <th>Acciones</th>
+                            <th>Department</th>
+                            <th>Code</th>
+                            <th>Users</th>
+                            <th>Status</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody id="departmentsTableBody">
@@ -165,7 +165,7 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
                             <td colspan="5">
                                 <div class="empty-state">
                                     <i class="fa-solid fa-spinner fa-spin"></i>
-                                    <p>Cargando departamentos...</p>
+                                    <p>Loading departments...</p>
                                 </div>
                             </td>
                         </tr>
@@ -175,11 +175,11 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
         </section>
     </div>
 
-    <!-- Modal Crear/Editar Usuario -->
+    <!-- Create/edit user modal -->
     <div class="modal-overlay" id="userModal">
         <div class="modal">
             <div class="modal-header">
-                <h3 id="modalTitle">Nuevo Usuario</h3>
+                <h3 id="modalTitle">New user</h3>
                 <button class="modal-close" onclick="closeUserModal()">
                     <i class="fa-solid fa-xmark"></i>
                 </button>
@@ -189,60 +189,60 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
                     <input type="hidden" id="userId" value="">
                     
                     <div class="form-group">
-                        <label class="form-label" for="userName">Nombre completo</label>
-                        <input type="text" id="userName" class="form-control" placeholder="Ej: Juan Perez" required>
+                        <label class="form-label" for="userName">Full name</label>
+                        <input type="text" id="userName" class="form-control" placeholder="E.g. John Doe" required>
                     </div>
                     
                     <div class="form-group">
                         <label class="form-label" for="userEmail">Email</label>
-                        <input type="email" id="userEmail" class="form-control" placeholder="Ej: juan@empresa.com" required>
+                        <input type="email" id="userEmail" class="form-control" placeholder="E.g. john@company.com" required>
                     </div>
                     
                     <div class="form-group">
-                        <label class="form-label" for="userUsername">Usuario</label>
-                        <input type="text" id="userUsername" class="form-control" placeholder="Ej: jperez" required>
+                        <label class="form-label" for="userUsername">Username</label>
+                        <input type="text" id="userUsername" class="form-control" placeholder="E.g. jdoe" required>
                     </div>
                     
                     <div class="form-group" id="passwordGroup">
-                        <label class="form-label" for="userPassword">Contrasena</label>
-                        <input type="password" id="userPassword" class="form-control" placeholder="Minimo 6 caracteres">
-                        <small class="form-text" id="passwordHelp">Deja vacio para mantener la contrasena actual</small>
+                        <label class="form-label" for="userPassword">Password</label>
+                        <input type="password" id="userPassword" class="form-control" placeholder="Minimum 6 characters">
+                        <small class="form-text" id="passwordHelp">Leave empty to keep the current password</small>
                     </div>
                     
                     <div class="form-row">
                         <div class="form-group">
-                            <label class="form-label" for="userRole">Rol</label>
+                            <label class="form-label" for="userRole">Role</label>
                             <select id="userRole" class="form-control" required>
-                                <option value="">Seleccionar...</option>
-                                <option value="admin">Administrador</option>
+                                <option value="">Select...</option>
+                                <option value="admin">Administrator</option>
                                 <option value="supervisor">Supervisor</option>
-                                <option value="usuario">Usuario</option>
+                                <option value="usuario">User</option>
                             </select>
                         </div>
                         
                         <div class="form-group">
-                            <label class="form-label" for="userStatus">Estado</label>
+                            <label class="form-label" for="userStatus">Status</label>
                             <select id="userStatus" class="form-control" required>
-                                <option value="activo">Activo</option>
-                                <option value="inactivo">Inactivo</option>
+                                <option value="activo">Active</option>
+                                <option value="inactivo">Inactive</option>
                             </select>
                         </div>
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label" for="userDepartment">Departamento</label>
+                        <label class="form-label" for="userDepartment">Department</label>
                         <select id="userDepartment" class="form-control">
-                            <option value="">Sin departamento</option>
+                            <option value="">No department</option>
                         </select>
-                        <small class="form-text">El departamento define las ventanas visibles para usuarios no administradores.</small>
+                        <small class="form-text">The department defines visible windows for non-admin users.</small>
                     </div>
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" onclick="closeUserModal()">Cancelar</button>
+                <button type="button" class="btn btn-secondary" onclick="closeUserModal()">Cancel</button>
                 <button type="button" class="btn btn-primary" onclick="saveUser()">
                     <i class="fa-solid fa-floppy-disk"></i>
-                    Guardar
+                    Save
                 </button>
             </div>
         </div>
@@ -251,7 +251,7 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
     <div class="modal-overlay" id="departmentModal">
         <div class="modal department-modal">
             <div class="modal-header">
-                <h3 id="departmentModalTitle">Nuevo departamento</h3>
+                <h3 id="departmentModalTitle">New department</h3>
                 <button class="modal-close" onclick="closeDepartmentModal()">
                     <i class="fa-solid fa-xmark"></i>
                 </button>
@@ -261,42 +261,42 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
                     <input type="hidden" id="departmentId" value="">
                     <div class="form-row">
                         <div class="form-group">
-                            <label class="form-label" for="departmentName">Nombre</label>
-                            <input id="departmentName" class="form-control" placeholder="Ej: Contabilidad" required>
+                            <label class="form-label" for="departmentName">Name</label>
+                            <input id="departmentName" class="form-control" placeholder="E.g. Accounting" required>
                         </div>
                         <div class="form-group">
-                            <label class="form-label" for="departmentCode">Codigo</label>
-                            <input id="departmentCode" class="form-control" placeholder="contabilidad" required>
+                            <label class="form-label" for="departmentCode">Code</label>
+                            <input id="departmentCode" class="form-control" placeholder="accounting" required>
                         </div>
                     </div>
                     <div class="form-group">
-                        <label class="form-label" for="departmentDescription">Descripcion</label>
-                        <textarea id="departmentDescription" class="form-control" rows="3" placeholder="Responsabilidad principal del departamento"></textarea>
+                        <label class="form-label" for="departmentDescription">Description</label>
+                        <textarea id="departmentDescription" class="form-control" rows="3" placeholder="Department primary responsibility"></textarea>
                     </div>
                     <div class="form-group">
-                        <label class="form-label" for="departmentStatus">Estado</label>
+                        <label class="form-label" for="departmentStatus">Status</label>
                         <select id="departmentStatus" class="form-control">
-                            <option value="activo">Activo</option>
-                            <option value="inactivo">Inactivo</option>
+                            <option value="activo">Active</option>
+                            <option value="inactivo">Inactive</option>
                         </select>
                     </div>
                 </form>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="closeDepartmentModal()">Cancelar</button>
+                <button class="btn btn-secondary" onclick="closeDepartmentModal()">Cancel</button>
                 <button class="btn btn-primary" onclick="saveDepartment()">
                     <i class="fa-solid fa-floppy-disk"></i>
-                    Guardar departamento
+                    Save department
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- Modal Confirmar Eliminacion -->
+    <!-- Delete confirmation modal -->
     <div class="modal-overlay" id="deleteModal">
         <div class="modal" style="max-width: 400px;">
             <div class="modal-header">
-                <h3>Confirmar eliminacion</h3>
+                <h3>Confirm deletion</h3>
                 <button class="modal-close" onclick="closeDeleteModal()">
                     <i class="fa-solid fa-xmark"></i>
                 </button>
@@ -305,15 +305,15 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
                 <div class="stat-icon red" style="width: 64px; height: 64px; font-size: 28px; margin: 0 auto 16px;">
                     <i class="fa-solid fa-triangle-exclamation"></i>
                 </div>
-                <p>Estas seguro de eliminar al usuario:</p>
+                <p>Are you sure you want to delete this user?</p>
                 <p style="font-weight: 600;" id="deleteUserName"></p>
-                <p class="form-text">Esta accion no se puede deshacer.</p>
+                <p class="form-text">This action cannot be undone.</p>
             </div>
             <div class="modal-footer" style="justify-content: center;">
-                <button type="button" class="btn btn-secondary" onclick="closeDeleteModal()">Cancelar</button>
+                <button type="button" class="btn btn-secondary" onclick="closeDeleteModal()">Cancel</button>
                 <button type="button" class="btn btn-danger" onclick="confirmDelete()">
                     <i class="fa-solid fa-trash"></i>
-                    Eliminar
+                    Delete
                 </button>
             </div>
         </div>
@@ -422,3 +422,4 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
 <script src="/js/config.js" is:inline></script>
     <script is:inline src="/js/usuarios.js"></script>
 </DashboardLayout>
+

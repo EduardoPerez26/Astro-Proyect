@@ -1,54 +1,54 @@
----
+﻿---
 import DashboardLayout from '../../layouts/DashboardLayout.astro';
 ---
 
-<DashboardLayout title="Historial de comparaciones">
+<DashboardLayout title="Comparison history">
     <div class="page-container comparison-history-page">
         <header class="comparison-history-hero">
             <div>
-                <span>CONTROL DE REVISIONES</span>
-                <h1>Historial de comparaciones</h1>
-                <p>Consulta cuándo cambió un archivo, qué tiendas fueron afectadas y cuáles montos se modificaron.</p>
+                <span>REVIEW CONTROL</span>
+                <h1>Comparison history</h1>
+                <p>See when a file changed, which stores were affected, and which amounts were modified.</p>
             </div>
             <button class="btn comparison-export-button" type="button" onclick="exportarHistorial()">
                 <i class="fa-solid fa-file-export"></i>
-                Exportar resumen
+                Export summary
             </button>
         </header>
 
-        <section class="comparison-history-stats" aria-label="Resumen de comparaciones">
-            <article><span class="history-stat-icon total"><i class="fa-solid fa-code-compare"></i></span><div><strong id="statTotal">0</strong><p>Comparaciones</p></div></article>
-            <article><span class="history-stat-icon changed"><i class="fa-solid fa-triangle-exclamation"></i></span><div><strong id="statCambios">0</strong><p>Con diferencias</p></div></article>
-            <article><span class="history-stat-icon equal"><i class="fa-solid fa-circle-check"></i></span><div><strong id="statSinCambios">0</strong><p>Sin cambios</p></div></article>
-            <article><span class="history-stat-icon stores"><i class="fa-solid fa-shop"></i></span><div><strong id="statTiendas">0</strong><p>Tiendas afectadas</p></div></article>
+        <section class="comparison-history-stats" aria-label="Comparison summary">
+            <article><span class="history-stat-icon total"><i class="fa-solid fa-code-compare"></i></span><div><strong id="statTotal">0</strong><p>Comparisons</p></div></article>
+            <article><span class="history-stat-icon changed"><i class="fa-solid fa-triangle-exclamation"></i></span><div><strong id="statCambios">0</strong><p>With differences</p></div></article>
+            <article><span class="history-stat-icon equal"><i class="fa-solid fa-circle-check"></i></span><div><strong id="statSinCambios">0</strong><p>No changes</p></div></article>
+            <article><span class="history-stat-icon stores"><i class="fa-solid fa-shop"></i></span><div><strong id="statStores">0</strong><p>Affected stores</p></div></article>
         </section>
 
         <section class="comparison-history-filters">
             <div class="comparison-filter search">
-                <label for="searchInput">Buscar</label>
-                <div><i class="fa-solid fa-magnifying-glass"></i><input id="searchInput" type="search" placeholder="Restaurante, usuario o fecha..."></div>
+                <label for="searchInput">Search</label>
+                <div><i class="fa-solid fa-magnifying-glass"></i><input id="searchInput" type="search" placeholder="Restaurant, user, or date..."></div>
             </div>
-            <div class="comparison-filter"><label for="filterRestaurante">Restaurante</label><select id="filterRestaurante"><option value="">Todos</option></select></div>
-            <div class="comparison-filter"><label for="filterEstado">Resultado</label><select id="filterEstado"><option value="">Todos</option><option value="con_cambios">Con diferencias</option><option value="sin_cambios">Sin cambios</option><option value="primera_carga">Primera carga</option><option value="referencia_incompatible">Referencia incompatible</option></select></div>
-            <div class="comparison-filter"><label for="filterDesde">Desde</label><input id="filterDesde" type="date"></div>
-            <div class="comparison-filter"><label for="filterHasta">Hasta</label><input id="filterHasta" type="date"></div>
-            <button type="button" class="comparison-clear-button" onclick="limpiarFiltros()"><i class="fa-solid fa-xmark"></i> Limpiar</button>
+            <div class="comparison-filter"><label for="filterRestaurant">Restaurant</label><select id="filterRestaurant"><option value="">All</option></select></div>
+            <div class="comparison-filter"><label for="filterStatus">Result</label><select id="filterStatus"><option value="">All</option><option value="con_cambios">With differences</option><option value="sin_cambios">No changes</option><option value="primera_carga">First load</option><option value="referencia_incompatible">Incompatible reference</option></select></div>
+            <div class="comparison-filter"><label for="filterDesde">From</label><input id="filterDesde" type="date"></div>
+            <div class="comparison-filter"><label for="filterHasta">To</label><input id="filterHasta" type="date"></div>
+            <button type="button" class="comparison-clear-button" onclick="limpiarFiltros()"><i class="fa-solid fa-xmark"></i> Clear</button>
         </section>
 
-        <div id="historyLoading" class="comparison-history-message"><i class="fa-solid fa-spinner fa-spin"></i><p>Cargando comparaciones...</p></div>
-        <div id="historyError" class="comparison-history-message error" hidden><i class="fa-solid fa-database"></i><h3>Historial no disponible</h3><p></p></div>
-        <div id="historyEmpty" class="comparison-history-message" hidden><i class="fa-solid fa-folder-open"></i><h3>Sin comparaciones</h3><p>No hay registros para los filtros seleccionados.</p></div>
+        <div id="historyLoading" class="comparison-history-message"><i class="fa-solid fa-spinner fa-spin"></i><p>Loading comparisons...</p></div>
+        <div id="historyError" class="comparison-history-message error" hidden><i class="fa-solid fa-database"></i><h3>History unavailable</h3><p></p></div>
+        <div id="historyEmpty" class="comparison-history-message" hidden><i class="fa-solid fa-folder-open"></i><h3>No comparisons</h3><p>No records match the selected filters.</p></div>
         <div id="comparisonHistoryGroups" class="comparison-history-groups"></div>
     </div>
 
     <div id="comparisonDetailModal" class="comparison-detail-overlay" onclick="if (event.target === this) cerrarDetalleComparacion()">
         <section class="comparison-detail-modal" role="dialog" aria-modal="true" aria-labelledby="comparisonDetailTitle">
             <header>
-                <div><span>DETALLE DE DIFERENCIAS</span><h2 id="comparisonDetailTitle">Comparacion</h2><p id="comparisonDetailSubtitle"></p></div>
-                <button type="button" onclick="cerrarDetalleComparacion()" aria-label="Cerrar"><i class="fa-solid fa-xmark"></i></button>
+                <div><span>DIFFERENCE DETAIL</span><h2 id="comparisonDetailTitle">Comparison</h2><p id="comparisonDetailSubtitle"></p></div>
+                <button type="button" onclick="cerrarDetalleComparacion()" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
             </header>
             <div id="comparisonDetailBody" class="comparison-detail-body"></div>
-            <footer><button type="button" class="btn btn-secondary" onclick="cerrarDetalleComparacion()">Cerrar</button></footer>
+            <footer><button type="button" class="btn btn-secondary" onclick="cerrarDetalleComparacion()">Close</button></footer>
         </section>
     </div>
 
@@ -59,7 +59,7 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
         .comparison-history-page { color: #102f4c; }
         .comparison-history-hero { display: flex; justify-content: space-between; align-items: center; gap: 24px; margin-bottom: 16px; padding: 23px 25px; border-radius: 9px; color: #fff; background: linear-gradient(120deg,#0b2943,#174d78); }
         .comparison-history-hero > div > span { color: #a9d5f4; font-size: 10px; font-weight: 800; letter-spacing: .1em; }
-        .comparison-history-hero h1 { margin: 6px 0; font-family: 'Source Serif 4',serif; font-size: 29px; }
+        .comparison-history-hero h1 { margin: 6px 0; font-family: 'Inter',sans-serif; font-size: 29px; }
         .comparison-history-hero p { margin: 0; color: #d6e6f2; font-size: 13px; }
         .comparison-export-button { border: 1px solid #7699b5; color: #fff; background: #ffffff12; white-space: nowrap; }
         .comparison-history-stats { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 12px; margin-bottom: 16px; }
@@ -114,7 +114,7 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
 
         .comparison-detail-modal > header h2 {
             color: #102a43;
-            font-family: 'Source Serif 4', Georgia, serif;
+            font-family: 'Inter', sans-serif;
         }
 
         .comparison-detail-modal > header p {

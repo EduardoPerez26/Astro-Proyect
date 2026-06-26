@@ -5,7 +5,7 @@ const DEPARTMENT_CATALOG = {
         codigo: 'ar',
         label: 'AR',
         nombre: 'Accounts Receivable',
-        descripcion: 'Conciliaciones, documentos, tiendas e historial de AR.',
+        descripcion: 'AR reconciliations, documents, stores, and history.',
         paginaInicio: 'tiendas',
         modulos: ['tiendas', 'documentos', 'historial']
     },
@@ -13,7 +13,7 @@ const DEPARTMENT_CATALOG = {
         codigo: 'ap',
         label: 'AP',
         nombre: 'Accounts Payable',
-        descripcion: 'Base preparada para futuros procesos de AP.',
+        descripcion: 'Base prepared for future AP workflows.',
         paginaInicio: 'documentos',
         modulos: ['documentos']
     },
@@ -21,7 +21,7 @@ const DEPARTMENT_CATALOG = {
         codigo: 'operations',
         label: 'OPS',
         nombre: 'Operations',
-        descripcion: 'Base preparada para futuros procesos operativos.',
+        descripcion: 'Base prepared for future operations workflows.',
         paginaInicio: 'tiendas',
         modulos: ['tiendas', 'documentos']
     },
@@ -29,7 +29,7 @@ const DEPARTMENT_CATALOG = {
         codigo: 'hr',
         label: 'HR',
         nombre: 'Human Resources',
-        descripcion: 'Base preparada para futuros procesos de recursos humanos.',
+        descripcion: 'Base prepared for future human resources workflows.',
         paginaInicio: 'documentos',
         modulos: ['documentos']
     },
@@ -37,7 +37,7 @@ const DEPARTMENT_CATALOG = {
         codigo: 'it',
         label: 'IT',
         nombre: 'Information Technology',
-        descripcion: 'Base preparada para administracion tecnica y soporte.',
+        descripcion: 'Base prepared for technical administration and support.',
         paginaInicio: 'dashboardAdmin',
         modulos: ['dashboardAdmin', 'usuarios', 'permisos']
     }
@@ -99,7 +99,7 @@ function buildDepartmentContext(source = {}) {
             source.department?.nombre ||
             source.nombre ||
             normalizedCode.toUpperCase(),
-        descripcion: 'Departamento configurado desde la base de datos.',
+        descripcion: 'Department configured from the database.',
         paginaInicio: fallbackBase.paginaInicio,
         modulos: [...fallbackBase.modulos]
     };

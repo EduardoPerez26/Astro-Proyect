@@ -8,13 +8,13 @@ function errorHistorial(error, res) {
         return res.status(503).json({
             success: false,
             code: 'HISTORIAL_COMPARACIONES_NO_INSTALADO',
-            message: 'Ejecuta la migracion SQL del historial de comparaciones.'
+            message: 'Run the SQL migration for comparison history.'
         });
     }
 
     return res.status(500).json({
         success: false,
-        message: 'No se pudo consultar el historial de comparaciones'
+        message: 'Comparison history could not be queried'
     });
 }
 
@@ -132,7 +132,7 @@ router.get('/', verificarToken, checkPermission('view_validaciones'), async (req
             }
         });
     } catch (error) {
-        console.error('Error listando comparaciones:', error);
+        console.error('Error listing comparisons:', error);
         return errorHistorial(error, res);
     }
 });
@@ -162,7 +162,7 @@ router.get('/:id', verificarToken, checkPermission('view_validaciones'), async (
         if (!comparaciones.length) {
             return res.status(404).json({
                 success: false,
-                message: 'Comparacion no encontrada'
+                message: 'Comparison not found'
             });
         }
 
@@ -186,7 +186,7 @@ router.get('/:id', verificarToken, checkPermission('view_validaciones'), async (
             }))
         });
     } catch (error) {
-        console.error('Error consultando comparacion:', error);
+        console.error('Error querying comparison:', error);
         return errorHistorial(error, res);
     }
 });
@@ -201,16 +201,16 @@ router.delete('/:id', verificarToken, esAdmin, async (req, res) => {
         if (!resultado.affectedRows) {
             return res.status(404).json({
                 success: false,
-                message: 'Comparacion no encontrada'
+                message: 'Comparison not found'
             });
         }
 
         res.json({
             success: true,
-            message: 'Comparacion eliminada correctamente'
+            message: 'Comparison deleted successfully'
         });
     } catch (error) {
-        console.error('Error eliminando comparacion:', error);
+        console.error('Error deleting comparison:', error);
         return errorHistorial(error, res);
     }
 });

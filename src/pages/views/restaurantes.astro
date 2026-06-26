@@ -2,54 +2,54 @@
 import DashboardLayout from '../../layouts/DashboardLayout.astro';
 ---
 
-<DashboardLayout title="Control de restaurantes">
+<DashboardLayout title="Restaurant control">
     <section class="operations-admin" aria-labelledby="operationsTitle">
         <header class="operations-header">
             <div>
                 <span class="operations-eyebrow">
                     <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
-                    Acceso exclusivo para administradores
+                    Administrator-only access
                 </span>
-                <h1 id="operationsTitle">Disponibilidad de restaurantes</h1>
+                <h1 id="operationsTitle">Restaurant availability</h1>
                 <p>
-                    Habilita o deshabilita el acceso a cada flujo usando el estado que ya existe
-                    en la base de datos. No se crean tablas ni configuraciones adicionales.
+                    Enable or disable access to each flow using the existing database status.
+                    No extra tables or settings are created.
                 </p>
             </div>
             <button class="operations-refresh" id="refreshRestaurants" type="button">
                 <i class="fa-solid fa-rotate" aria-hidden="true"></i>
-                Actualizar estados
+                Refresh statuses
             </button>
         </header>
 
-        <div class="operations-summary" aria-label="Resumen operativo">
+        <div class="operations-summary" aria-label="Operational summary">
             <article>
                 <span class="summary-icon is-navy"><i class="fa-solid fa-store"></i></span>
-                <div><strong id="restaurantsTotal">0</strong><span>Restaurantes</span></div>
+                <div><strong id="restaurantsTotal">0</strong><span>Restaurants</span></div>
             </article>
             <article>
                 <span class="summary-icon is-green"><i class="fa-solid fa-circle-check"></i></span>
-                <div><strong id="restaurantsAvailable">0</strong><span>Disponibles</span></div>
+                <div><strong id="restaurantsAvailable">0</strong><span>Available</span></div>
             </article>
             <article>
                 <span class="summary-icon is-amber"><i class="fa-solid fa-triangle-exclamation"></i></span>
-                <div><strong id="restaurantsAffected">0</strong><span>Con restricción</span></div>
+                <div><strong id="restaurantsAffected">0</strong><span>Restricted</span></div>
             </article>
         </div>
 
         <div class="operations-panel">
             <div class="operations-panel-heading">
                 <div>
-                    <h2>Estado por restaurante</h2>
-                    <p>Usa el botón de cada fila para permitir o bloquear su conciliación.</p>
+                    <h2>Status by restaurant</h2>
+                    <p>Use each row control to allow or block its reconciliation.</p>
                 </div>
-                <span><i class="fa-solid fa-clock"></i> Aplicación inmediata</span>
+                <span><i class="fa-solid fa-clock"></i> Immediate application</span>
             </div>
 
             <div class="restaurant-control-list" id="restaurantControlList" aria-live="polite">
                 <div class="operations-loading">
                     <i class="fa-solid fa-circle-notch fa-spin" aria-hidden="true"></i>
-                    Consultando restaurantes...
+                    Querying restaurants...
                 </div>
             </div>
         </div>
@@ -87,7 +87,7 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
 
         .operations-header h1 {
             margin: 0;
-            font-family: 'Source Serif 4', Georgia, serif;
+            font-family: 'Inter', sans-serif;
             font-size: clamp(30px, 3vw, 42px);
             font-weight: 600;
             letter-spacing: -.025em;

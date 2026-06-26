@@ -10,6 +10,25 @@ const PERIODOS = {
     all: null
 };
 
+const TABLAS_ADMIN_BASE_DATOS = [
+    {
+        nombre: 'auditoria_seguridad',
+        titulo: 'Security audit',
+        descripcion: 'Sensitive user and session events.',
+        icono: 'fa-user-shield',
+        orden: 'fecha_creacion',
+        columnas: [
+            'id',
+            'usuario_id',
+            'departamento_id',
+            'evento',
+            'ip_address',
+            'detalle',
+            'fecha_creacion'
+        ]
+    }
+];
+
 function obtenerFechaDesde(periodo) {
     const dias = PERIODOS[periodo];
 
@@ -40,6 +59,151 @@ async function consultaSegura(sql, params = [], fallback = []) {
     }
 }
 
+function escaparIdentificador(nombre) {
+    return `\`${String(nombre).replace(/`/g, '``')}\``;
+}
+
+function normalizarValorTabla(valor) {
+    if (valor instanceof Date) {
+        return valor.toISOString();
+    }
+
+    if (Buffer.isBuffer(valor)) {
+        return `[binary ${valor.length} bytes]`;
+    }
+
+    return valor;
+}
+
+function normalizarFilaTabla(row) {
+    return Object.fromEntries(
+        Object.entries(row || {}).map(([clave, valor]) => [
+            clave,
+            normalizarValorTabla(valor)
+        ])
+    );
+}
+
+function tablaPendiente(config) {
+    return {
+        nombre: config.nombre,
+        titulo: config.titulo,
+        descripcion: config.descripcion,
+        icono: config.icono,
+        existe: false,
+        total: 0,
+        columnas: [],
+        columnas_muestra: [],
+        registros: []
+    };
+}
+
+async function obtenerTablasBaseDatosAdmin() {
+    const nombres = TABLAS_ADMIN_BASE_DATOS.map(tabla => tabla.nombre);
+
+    try {
+        const [tablasRows] = await pool.query(
+            `SELECT TABLE_NAME AS nombre,
+                    TABLE_ROWS AS filas_estimadas,
+                    CREATE_TIME AS fecha_creacion,
+                    UPDATE_TIME AS fecha_actualizacion
+             FROM information_schema.TABLES
+             WHERE TABLE_SCHEMA = DATABASE()
+               AND TABLE_NAME IN (?)`,
+            [nombres]
+        );
+
+        const [columnasRows] = await pool.query(
+            `SELECT TABLE_NAME AS tabla,
+                    COLUMN_NAME AS nombre,
+                    DATA_TYPE AS tipo,
+                    COLUMN_KEY AS llave,
+                    IS_NULLABLE AS nullable
+             FROM information_schema.COLUMNS
+             WHERE TABLE_SCHEMA = DATABASE()
+               AND TABLE_NAME IN (?)
+             ORDER BY TABLE_NAME, ORDINAL_POSITION`,
+            [nombres]
+        );
+
+        const tablasPorNombre = new Map(
+            tablasRows.map(tabla => [tabla.nombre, tabla])
+        );
+        const columnasPorTabla = columnasRows.reduce((mapa, columna) => {
+            if (!mapa.has(columna.tabla)) {
+                mapa.set(columna.tabla, []);
+            }
+
+            mapa.get(columna.tabla).push(columna);
+            return mapa;
+        }, new Map());
+
+        return Promise.all(TABLAS_ADMIN_BASE_DATOS.map(async config => {
+            const metadata = tablasPorNombre.get(config.nombre);
+
+            if (!metadata) {
+                return tablaPendiente(config);
+            }
+
+            const columnas = columnasPorTabla.get(config.nombre) || [];
+            const nombresColumnas = new Set(columnas.map(columna => columna.nombre));
+            const columnasMuestra = config.columnas.filter(columna =>
+                nombresColumnas.has(columna)
+            );
+            const tablaSql = escaparIdentificador(config.nombre);
+            const columnaOrden = nombresColumnas.has(config.orden)
+                ? config.orden
+                : (nombresColumnas.has('id') ? 'id' : columnasMuestra[0]);
+            const selectMuestra = columnasMuestra.length
+                ? columnasMuestra.map(escaparIdentificador).join(', ')
+                : null;
+
+            const conteoRows = await consultaSegura(
+                `SELECT COUNT(*) AS total FROM ${tablaSql}`,
+                [],
+                [{ total: 0 }]
+            );
+            const registros = selectMuestra
+                ? await consultaSegura(
+                    `SELECT ${selectMuestra}
+                     FROM ${tablaSql}
+                     ${columnaOrden ? `ORDER BY ${escaparIdentificador(columnaOrden)} DESC` : ''}
+                     LIMIT 10`,
+                    [],
+                    []
+                )
+                : [];
+
+            return {
+                nombre: config.nombre,
+                titulo: config.titulo,
+                descripcion: config.descripcion,
+                icono: config.icono,
+                existe: true,
+                total: numero(conteoRows[0]?.total),
+                filas_estimadas: numero(metadata.filas_estimadas),
+                fecha_creacion: normalizarValorTabla(metadata.fecha_creacion),
+                fecha_actualizacion: normalizarValorTabla(metadata.fecha_actualizacion),
+                columnas: columnas.map(columna => ({
+                    nombre: columna.nombre,
+                    tipo: columna.tipo,
+                    llave: columna.llave,
+                    nullable: columna.nullable === 'YES'
+                })),
+                columnas_muestra: columnasMuestra,
+                registros: registros.map(normalizarFilaTabla)
+            };
+        }));
+    } catch (error) {
+        console.warn(
+            'The admin dashboard table inventory could not be loaded:',
+            error.code || error.message
+        );
+
+        return TABLAS_ADMIN_BASE_DATOS.map(tablaPendiente);
+    }
+}
+
 async function obtenerDashboardAdminBasico(tokenActual) {
     const [
         usuariosRows,
@@ -48,7 +212,7 @@ async function obtenerDashboardAdminBasico(tokenActual) {
         validacionesRows,
         sesionesRecientes,
         movimientos,
-        actividadUsuarios
+        actividadUsers
     ] = await Promise.all([
         consultaSegura(
             `SELECT COUNT(*) AS total,
@@ -107,7 +271,7 @@ async function obtenerDashboardAdminBasico(tokenActual) {
              FROM (
                 SELECT CONCAT('sesion-', s.id) AS id,
                        'sesion' AS tipo,
-                       'Inicio de sesion' AS accion,
+                       'Sign-in' AS accion,
                        u.nombre_completo AS usuario_nombre,
                        u.username,
                        s.fecha_creacion AS fecha,
@@ -120,7 +284,7 @@ async function obtenerDashboardAdminBasico(tokenActual) {
 
                 SELECT CONCAT('archivo-', a.id) AS id,
                        'archivo' AS tipo,
-                       'Archivo guardado' AS accion,
+                       'File saved' AS accion,
                        u.nombre_completo AS usuario_nombre,
                        u.username,
                        a.fecha_subida AS fecha,
@@ -160,6 +324,7 @@ async function obtenerDashboardAdminBasico(tokenActual) {
     const sesiones = sesionesRows[0] || {};
     const archivos = archivosRows[0] || {};
     const validaciones = validacionesRows[0] || {};
+    const tablasBaseDatos = await obtenerTablasBaseDatosAdmin();
 
     return {
         success: true,
@@ -187,11 +352,12 @@ async function obtenerDashboardAdminBasico(tokenActual) {
             sesion_actual: Boolean(row.sesion_actual)
         })),
         movimientos,
-        actividad_usuarios: actividadUsuarios.map(row => ({
+        actividad_usuarios: actividadUsers.map(row => ({
             ...row,
             total_sesiones: numero(row.total_sesiones),
             total_archivos: numero(row.total_archivos)
-        }))
+        })),
+        tablas_base_datos: tablasBaseDatos
     };
 }
 
@@ -201,10 +367,10 @@ router.get('/resumen', verificarToken, checkPermission('view_dashboard'), async 
             ? req.query.periodo
             : '12m';
         const fechaDesde = obtenerFechaDesde(periodo);
-        const filtroArchivos = fechaDesde
+        const filtroFiles = fechaDesde
             ? 'WHERE a.fecha_subida >= ?'
             : '';
-        const condicionRestaurante = fechaDesde
+        const condicionRestaurant = fechaDesde
             ? 'AND a.fecha_subida >= ?'
             : '';
         const filtroValidaciones = fechaDesde
@@ -233,7 +399,7 @@ router.get('/resumen', verificarToken, checkPermission('view_dashboard'), async 
                     COUNT(DISTINCT a.restaurante_id) AS restaurantes_con_actividad,
                     COALESCE(SUM(a.tamano_bytes), 0) AS total_bytes
                  FROM archivos_excel a
-                 ${filtroArchivos}`,
+                 ${filtroFiles}`,
                 parametros
             ),
             pool.query(
@@ -248,7 +414,7 @@ router.get('/resumen', verificarToken, checkPermission('view_dashboard'), async 
                     COALESCE(SUM(a.estado = 'validado'), 0) AS validados,
                     COALESCE(SUM(a.estado = 'con_errores'), 0) AS con_errores
                  FROM archivos_excel a
-                 ${filtroArchivos}
+                 ${filtroFiles}
                  GROUP BY periodo
                  ORDER BY periodo ASC`,
                 parametros
@@ -267,7 +433,7 @@ router.get('/resumen', verificarToken, checkPermission('view_dashboard'), async 
                  FROM restaurantes r
                  LEFT JOIN archivos_excel a
                     ON a.restaurante_id = r.id
-                    ${condicionRestaurante}
+                    ${condicionRestaurant}
                  WHERE r.activo = TRUE
                  GROUP BY r.id, r.nombre, r.codigo, r.icono
                  ORDER BY total_archivos DESC, r.nombre ASC`,
@@ -286,7 +452,7 @@ router.get('/resumen', verificarToken, checkPermission('view_dashboard'), async 
                  FROM archivos_excel a
                  LEFT JOIN restaurantes r ON r.id = a.restaurante_id
                  LEFT JOIN usuarios u ON u.id = a.usuario_id
-                 ${filtroArchivos}
+                 ${filtroFiles}
                  ORDER BY a.fecha_subida DESC, a.id DESC
                  LIMIT 8`,
                 parametros
@@ -307,7 +473,7 @@ router.get('/resumen', verificarToken, checkPermission('view_dashboard'), async 
 
         const resumen = resumenRows[0] || {};
         const validaciones = validacionesRows[0] || {};
-        const totalArchivos = numero(resumen.total_archivos);
+        const totalFiles = numero(resumen.total_archivos);
         const validados = numero(resumen.validados);
 
         res.json({
@@ -315,7 +481,7 @@ router.get('/resumen', verificarToken, checkPermission('view_dashboard'), async 
             periodo,
             generado_en: new Date().toISOString(),
             resumen: {
-                total_archivos: totalArchivos,
+                total_archivos: totalFiles,
                 validados,
                 con_errores: numero(resumen.con_errores),
                 pendientes: numero(resumen.pendientes),
@@ -327,8 +493,8 @@ router.get('/resumen', verificarToken, checkPermission('view_dashboard'), async 
                     resumen.restaurantes_con_actividad
                 ),
                 total_bytes: numero(resumen.total_bytes),
-                tasa_validacion: totalArchivos
-                    ? Math.round((validados / totalArchivos) * 1000) / 10
+                tasa_validacion: totalFiles
+                    ? Math.round((validados / totalFiles) * 1000) / 10
                     : 0,
                 total_validaciones: numero(validaciones.total),
                 errores_detectados: numero(validaciones.total_errores),
@@ -352,10 +518,10 @@ router.get('/resumen', verificarToken, checkPermission('view_dashboard'), async 
             actividad_reciente: actividadRows
         });
     } catch (error) {
-        console.error('Error cargando resumen del dashboard:', error);
+        console.error('Error loading dashboard summary:', error);
         res.status(500).json({
             success: false,
-            message: 'No se pudo cargar el resumen del dashboard'
+            message: 'Dashboard summary could not be loaded'
         });
     }
 });
@@ -375,7 +541,8 @@ router.get('/admin', verificarToken, esAdmin, async (req, res) => {
             [departamentosRows],
             [sesionesRecientes],
             [movimientos],
-            [actividadUsuarios]
+            [actividadUsers],
+            tablasBaseDatos
         ] = await Promise.all([
             pool.query(
                 `SELECT COUNT(*) AS total,
@@ -431,7 +598,7 @@ router.get('/admin', verificarToken, esAdmin, async (req, res) => {
                  FROM (
                     SELECT CONCAT('sesion-', s.id) AS id,
                            'sesion' AS tipo,
-                           'Inicio de sesion' AS accion,
+                           'Sign-in' AS accion,
                            u.nombre_completo AS usuario_nombre,
                            u.username,
                            s.fecha_creacion AS fecha,
@@ -444,7 +611,7 @@ router.get('/admin', verificarToken, esAdmin, async (req, res) => {
 
                     SELECT CONCAT('archivo-', a.id) AS id,
                            'archivo' AS tipo,
-                           'Archivo guardado' AS accion,
+                           'File saved' AS accion,
                            u.nombre_completo AS usuario_nombre,
                            u.username,
                            a.fecha_subida AS fecha,
@@ -458,11 +625,11 @@ router.get('/admin', verificarToken, esAdmin, async (req, res) => {
 
                     SELECT CONCAT('validacion-', hv.id) AS id,
                            'validacion' AS tipo,
-                           'Validacion ejecutada' AS accion,
+                           'Validation executed' AS accion,
                            u.nombre_completo AS usuario_nombre,
                            u.username,
                            hv.fecha_validacion AS fecha,
-                           CONCAT(hv.tipo_validacion, ' | ', hv.total_errores, ' error(es)') AS detalle,
+                           CONCAT(hv.tipo_validacion, ' | ', hv.total_errores, ' error(s)') AS detalle,
                            hv.resultado AS estado
                     FROM historial_validaciones hv
                     LEFT JOIN usuarios u ON u.id = hv.usuario_id
@@ -487,7 +654,8 @@ router.get('/admin', verificarToken, esAdmin, async (req, res) => {
                  GROUP BY u.id, u.nombre_completo, u.username, u.rol, u.activo, d.nombre
                  ORDER BY ultimo_acceso DESC, u.nombre_completo ASC
                  LIMIT 12`
-            )
+            ),
+            obtenerTablasBaseDatosAdmin()
         ]);
 
         const usuarios = usuariosRows[0] || {};
@@ -521,26 +689,27 @@ router.get('/admin', verificarToken, esAdmin, async (req, res) => {
                 sesion_actual: Boolean(row.sesion_actual)
             })),
             movimientos,
-            actividad_usuarios: actividadUsuarios.map(row => ({
+            actividad_usuarios: actividadUsers.map(row => ({
                 ...row,
                 total_sesiones: numero(row.total_sesiones),
                 total_archivos: numero(row.total_archivos)
-            }))
+            })),
+            tablas_base_datos: tablasBaseDatos
         });
     } catch (error) {
-        console.error('Error cargando dashboard administrativo:', error);
+        console.error('Error loading admin dashboard:', error);
 
         if (isSchemaError(error)) {
             try {
                 return res.json(await obtenerDashboardAdminBasico(tokenActual));
             } catch (fallbackError) {
-                console.error('Error cargando dashboard admin basico:', fallbackError);
+                console.error('Error loading basic admin dashboard:', fallbackError);
             }
         }
 
         res.status(500).json({
             success: false,
-            message: 'No se pudo cargar el dashboard administrativo',
+            message: 'Admin dashboard could not be loaded',
             code: error.code
         });
     }
@@ -558,7 +727,7 @@ router.patch('/admin/sessions/:sessionId/logout', verificarToken, esAdmin, async
         if (!Number.isInteger(sessionId) || sessionId <= 0) {
             return res.status(400).json({
                 success: false,
-                message: 'Sesion no valida'
+                message: 'Invalid session'
             });
         }
 
@@ -591,21 +760,21 @@ router.patch('/admin/sessions/:sessionId/logout', verificarToken, esAdmin, async
         if (!sesion) {
             return res.status(404).json({
                 success: false,
-                message: 'Sesion no encontrada'
+                message: 'Session not found'
             });
         }
 
         if (sesion.token === tokenActual || sesion.token_hash === hashActual) {
             return res.status(400).json({
                 success: false,
-                message: 'No puedes cerrar la sesion actual desde este panel'
+                message: 'You cannot close the current session from this panel'
             });
         }
 
         if (!sesion.activa) {
             return res.json({
                 success: true,
-                message: 'La sesion ya estaba cerrada'
+                message: 'The session was already closed'
             });
         }
 
@@ -634,13 +803,13 @@ router.patch('/admin/sessions/:sessionId/logout', verificarToken, esAdmin, async
 
         res.json({
             success: true,
-            message: `Sesion cerrada para ${sesion.usuario_nombre}`
+            message: `Session closed for ${sesion.usuario_nombre}`
         });
     } catch (error) {
-        console.error('Error cerrando sesion desde dashboard admin:', error);
+        console.error('Error closing session from admin dashboard:', error);
         res.status(500).json({
             success: false,
-            message: 'No se pudo cerrar la sesion'
+            message: 'The session could not be closed'
         });
     }
 });

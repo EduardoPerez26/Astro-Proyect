@@ -1,12 +1,12 @@
-// ============================================
-// ADMINISTRACION DE USUARIOS
+﻿// ============================================
+// USER ADMINISTRATION
 // ============================================
 
 let users = [];
 let userToDelete = null;
 let departments = [];
 
-// Inicializar
+// Initialize
 document.addEventListener('DOMContentLoaded', async function () {
     await loadDepartments();
     await loadUsers();
@@ -17,8 +17,8 @@ async function loadDepartments() {
 
     if (!token || localStorage.getItem('modoOffline')) {
         departments = [
-            { id: 1, codigo: 'contabilidad', nombre: 'Contabilidad', activo: true, total_usuarios: 2 },
-            { id: 2, codigo: 'operaciones', nombre: 'Operaciones', activo: true, total_usuarios: 1 }
+            { id: 1, codigo: 'accounting', nombre: 'Accounting', activo: true, total_usuarios: 2 },
+            { id: 2, codigo: 'operations', nombre: 'Operations', activo: true, total_usuarios: 1 }
         ];
         renderDepartments();
         populateDepartmentSelect();
@@ -37,7 +37,7 @@ async function loadDepartments() {
         if (!departmentsResponse.ok) {
             throw new Error(
                 departmentsData.message ||
-                'No se pudieron cargar los departamentos'
+                'Departments could not be loaded'
             );
         }
 
@@ -46,7 +46,7 @@ async function loadDepartments() {
         populateDepartmentSelect();
         populateDepartmentFilter();
     } catch (error) {
-        console.error('Error cargando departamentos:', error);
+        console.error('Error loading departments:', error);
         const tbody = document.getElementById('departmentsTableBody');
         if (tbody) {
             tbody.innerHTML = `
@@ -69,7 +69,7 @@ function populateDepartmentSelect() {
     const currentValue = select.value;
     const activos = departments.filter(department => department.activo === true || department.activo === 1);
 
-    select.innerHTML = '<option value="">Sin departamento</option>' +
+    select.innerHTML = '<option value="">No department</option>' +
         activos.map(department => `
             <option value="${department.id}">${escapeHtml(department.nombre)}</option>
         `).join('');
@@ -81,7 +81,7 @@ function populateDepartmentFilter() {
     if (!select) return;
     const currentValue = select.value;
 
-    select.innerHTML = '<option value="">Todos</option>' + departments.map(department => `
+    select.innerHTML = '<option value="">All</option>' + departments.map(department => `
         <option value="${department.id}">${escapeHtml(department.nombre)}</option>
     `).join('');
     select.value = currentValue;
@@ -89,7 +89,7 @@ function populateDepartmentFilter() {
 
 function renderDepartments() {
     const tbody = document.getElementById('departmentsTableBody');
-    const total = document.getElementById('totalDepartamentos');
+    const total = document.getElementById('totalDepartments');
     if (total) total.textContent = departments.length;
     if (!tbody) return;
 
@@ -99,7 +99,7 @@ function renderDepartments() {
                 <td colspan="5">
                     <div class="empty-state">
                         <i class="fa-solid fa-building-circle-xmark"></i>
-                        <p>No hay departamentos registrados</p>
+                            <p>No departments registered</p>
                     </div>
                 </td>
             </tr>
@@ -113,27 +113,27 @@ function renderDepartments() {
             <tr>
                 <td>
                     <strong>${escapeHtml(department.nombre)}</strong>
-                    <div class="user-email">${escapeHtml(department.descripcion || 'Sin descripcion')}</div>
+                    <div class="user-email">${escapeHtml(department.descripcion || 'No description')}</div>
                 </td>
                 <td><code>${escapeHtml(department.codigo)}</code></td>
                 <td>${Number(department.total_usuarios || 0)}</td>
-                <td><span class="status-badge ${active ? 'activo' : 'inactivo'}">${active ? 'Activo' : 'Inactivo'}</span></td>
+                <td><span class="status-badge ${active ? 'activo' : 'inactivo'}">${active ? 'Active' : 'Inactive'}</span></td>
                 <td>
                     <div class="department-actions">
-                    <button class="action-btn edit" onclick="openDepartmentModal(${department.id})" title="Editar departamento">
+                    <button class="action-btn edit" onclick="openDepartmentModal(${department.id})" title="Edit department">
                         <i class="fa-solid fa-pen"></i>
                     </button>
                     <button
                         class="action-btn department-state ${active ? 'is-disable' : 'is-enable'}"
                         onclick="toggleDepartmentStatus(${department.id}, ${!active})"
-                        title="${active ? 'Desactivar' : 'Activar'} departamento"
+                        title="${active ? 'Disable' : 'Enable'} department"
                     >
                         <i class="fa-solid ${active ? 'fa-ban' : 'fa-power-off'}"></i>
                     </button>
                     <button
                         class="action-btn delete"
                         onclick="deleteDepartment(${department.id})"
-                        title="Eliminar departamento"
+                        title="Delete department"
                     >
                         <i class="fa-solid fa-trash"></i>
                     </button>
@@ -148,27 +148,27 @@ function switchAdminView(view) {
     const isDepartments = view === 'departamentos';
     document.getElementById('usuariosPanel').hidden = isDepartments;
     document.getElementById('departamentosPanel').hidden = !isDepartments;
-    document.getElementById('btnNuevoUsuario').hidden = isDepartments;
-    document.getElementById('btnNuevoDepartamento').hidden = !isDepartments;
-    document.getElementById('tabUsuarios').classList.toggle('active', !isDepartments);
-    document.getElementById('tabDepartamentos').classList.toggle('active', isDepartments);
+    document.getElementById('btnNuevoUser').hidden = isDepartments;
+    document.getElementById('btnNuevoDepartment').hidden = !isDepartments;
+    document.getElementById('tabUsers').classList.toggle('active', !isDepartments);
+    document.getElementById('tabDepartments').classList.toggle('active', isDepartments);
 }
 
 // ============================================
-// CARGAR USUARIOS
+// LOAD USERS
 // ============================================
 
 async function loadUsers() {
     const token = localStorage.getItem('token');
     const tbody = document.getElementById('usersTableBody');
 
-    // Modo offline - datos de ejemplo
+    // Offline mode sample data
     if (!token || localStorage.getItem('modoOffline')) {
         users = [
-            { id: 1, nombre: 'Administrador', email: 'admin@empresa.com', username: 'admin', rol: 'admin', estado: 'activo', ultimo_acceso: '2024-01-15 10:30:00' },
-            { id: 2, nombre: 'Juan Perez', email: 'juan@empresa.com', username: 'jperez', rol: 'supervisor', estado: 'activo', ultimo_acceso: '2024-01-14 15:45:00' },
-            { id: 3, nombre: 'Maria Garcia', email: 'maria@empresa.com', username: 'mgarcia', rol: 'usuario', estado: 'activo', ultimo_acceso: '2024-01-13 09:20:00' },
-            { id: 4, nombre: 'Carlos Lopez', email: 'carlos@empresa.com', username: 'clopez', rol: 'usuario', estado: 'inactivo', ultimo_acceso: '2024-01-10 14:00:00' }
+            { id: 1, nombre: 'Administrator', email: 'admin@empresa.com', username: 'admin', rol: 'admin', estado: 'activo', ultimo_acceso: '2024-01-15 10:30:00' },
+            { id: 2, nombre: 'John Carter', email: 'john@example.com', username: 'jcarter', rol: 'supervisor', estado: 'activo', ultimo_acceso: '2024-01-14 15:45:00' },
+            { id: 3, nombre: 'Mary Garcia', email: 'mary@example.com', username: 'mgarcia', rol: 'usuario', estado: 'activo', ultimo_acceso: '2024-01-13 09:20:00' },
+            { id: 4, nombre: 'Carlos Lopez', email: 'carlos@example.com', username: 'clopez', rol: 'usuario', estado: 'inactivo', ultimo_acceso: '2024-01-10 14:00:00' }
         ];
         renderUsers(users);
         return;
@@ -186,16 +186,16 @@ async function loadUsers() {
             renderUsers(users);
             updateStats();
         } else {
-            throw new Error(data.message || data.mensaje || 'Error al cargar usuarios');
+            throw new Error(data.message || data.mensaje || 'Users could not be loaded');
         }
     } catch (error) {
         console.error('Error:', error);
-        // Mostrar mensaje de error
+        // Show error message
         tbody.innerHTML = `
             <tr>
                 <td colspan="7" class="empty-state">
                     <i class="fa-solid fa-exclamation-circle"></i>
-                    <p>${escapeHtml(error.message || 'Error al cargar usuarios.')}</p>
+                    <p>${escapeHtml(error.message || 'Users could not be loaded.')}</p>
                 </td>
             </tr>
         `;
@@ -203,7 +203,7 @@ async function loadUsers() {
 }
 
 // ============================================
-// RENDERIZAR USUARIOS
+// RENDER USERS
 // ============================================
 
 function renderUsers(usersToRender) {
@@ -214,7 +214,7 @@ function renderUsers(usersToRender) {
             <tr>
                 <td colspan="6" class="empty-state">
                     <i class="fa-solid fa-users-slash"></i>
-                    <p>No hay usuarios registrados</p>
+                    <p>No users registered</p>
                 </td>
             </tr>
         `;
@@ -225,12 +225,12 @@ function renderUsers(usersToRender) {
         const initials = getInitials(user.nombre || user.nombre_completo || '');
         const roleClass = user.rol || 'usuario';
         const roleLabel = getRoleLabel(user.rol);
-        // Manejar estado como booleano o string
+        // Support both boolean and string status values.
         const isActive = user.activo === true || user.activo === 1 || user.estado === 'activo';
         const statusClass = isActive ? 'activo' : 'inactivo';
-        const statusLabel = isActive ? 'Activo' : 'Inactivo';
+        const statusLabel = isActive ? 'Active' : 'Inactive';
         const lastAccess = user.fecha_creacion ? formatDate(user.fecha_creacion) : 'N/A';
-        const departmentLabel = user.departamento_nombre || 'Sin departamento';
+        const departmentLabel = user.departamento_nombre || 'No department';
 
         return `
             <tr data-id="${user.id}">
@@ -250,13 +250,13 @@ function renderUsers(usersToRender) {
                 <td>${lastAccess}</td>
                 <td>
                     <div class="action-buttons">
-                        <button class="action-btn edit" onclick="editUser(${user.id})" title="Editar">
+                        <button class="action-btn edit" onclick="editUser(${user.id})" title="Edit">
                             <i class="fa-solid fa-pen"></i>
                         </button>
-                        <button class="action-btn view" onclick="openPermissions(${user.id})" title="Permisos">
+                        <button class="action-btn view" onclick="openPermissions(${user.id})" title="Permissions">
                             <i class="fa-solid fa-key"></i>
                         </button>
-                        <button class="action-btn delete" onclick="deleteUser(${user.id}, '${user.nombre}')" title="Eliminar">
+                        <button class="action-btn delete" onclick="deleteUser(${user.id}, '${user.nombre}')" title="Delete">
                             <i class="fa-solid fa-trash"></i>
                         </button>
                     </div>
@@ -281,14 +281,14 @@ function updateStats() {
         u.rol === 'admin'
     ).length;
 
-    document.getElementById('totalUsuarios').textContent = total;
+    document.getElementById('totalUsers').textContent = total;
     document.getElementById('usuariosActivos').textContent = activos;
     document.getElementById('usuariosInactivos').textContent = inactivos;
     document.getElementById('usuariosAdmin').textContent = admins;
 }
 
 // ============================================
-// FILTRAR USUARIOS
+// FILTER USERS
 // ============================================
 
 function filterUsers() {
@@ -316,7 +316,7 @@ function filterUsers() {
 }
 
 // ============================================
-// MODAL USUARIO
+// USER MODAL
 // ============================================
 
 function openUserModal(userId = null) {
@@ -331,8 +331,8 @@ function openUserModal(userId = null) {
     populateDepartmentSelect();
 
     if (userId) {
-        // Modo edicion
-        title.textContent = 'Editar Usuario';
+        // Edit mode
+        title.textContent = 'Edit User';
         passwordHelp.style.display = 'block';
         passwordInput.required = false;
 
@@ -347,8 +347,8 @@ function openUserModal(userId = null) {
             document.getElementById('userDepartment').value = user.departamento_id || '';
         }
     } else {
-        // Modo creacion
-        title.textContent = 'Nuevo Usuario';
+        // Create mode
+        title.textContent = 'New User';
         passwordHelp.style.display = 'none';
         passwordInput.required = true;
     }
@@ -361,7 +361,7 @@ function closeUserModal() {
 }
 
 // ============================================
-// GUARDAR USUARIO
+// SAVE USER
 // ============================================
 
 async function saveUser() {
@@ -376,12 +376,12 @@ async function saveUser() {
         departamento_id: document.getElementById('userDepartment').value || null
     };
 
-    // Validaciones
+    // Validation
     if (!userData.nombre || !userData.email || !userData.username || !userData.rol) {
         Swal.fire({
             icon: 'warning',
-            title: 'Campos requeridos',
-            text: 'Por favor completa todos los campos obligatorios.'
+            title: 'Required fields',
+            text: 'Please complete all required fields.'
         });
         return;
     }
@@ -389,28 +389,28 @@ async function saveUser() {
     if (!userId && !userData.password) {
         Swal.fire({
             icon: 'warning',
-            title: 'Contrasena requerida',
-            text: 'Debes ingresar una contrasena para el nuevo usuario.'
+            title: 'Password required',
+            text: 'Enter a password for the new user.'
         });
         return;
     }
 
     const token = localStorage.getItem('token');
 
-    // Modo offline
+    // Offline mode
     if (!token || localStorage.getItem('modoOffline')) {
         if (userId) {
-            // Actualizar usuario local
+            // Refresh local user
             const index = users.findIndex(u => u.id === parseInt(userId));
             if (index !== -1) {
                 users[index] = { ...users[index], ...userData };
             }
         } else {
-            // Crear usuario local
+            // Create local user
             const newUser = {
                 id: users.length + 1,
                 ...userData,
-                ultimo_acceso: 'Nunca'
+                ultimo_acceso: 'Never'
             };
             users.push(newUser);
         }
@@ -420,8 +420,8 @@ async function saveUser() {
 
         Swal.fire({
             icon: 'success',
-            title: userId ? 'Usuario actualizado' : 'Usuario creado',
-            text: 'Los cambios se guardaron correctamente.',
+            title: userId ? 'User updated' : 'User created',
+            text: 'Changes were saved successfully.',
             timer: 2000,
             showConfirmButton: false
         });
@@ -452,25 +452,25 @@ async function saveUser() {
 
             Swal.fire({
                 icon: 'success',
-                title: userId ? 'Usuario actualizado' : 'Usuario creado',
-                text: data.message || 'Los cambios se guardaron correctamente.',
+                title: userId ? 'User updated' : 'User created',
+                text: data.message || 'Changes were saved successfully.',
                 timer: 2000,
                 showConfirmButton: false
             });
         } else {
-            throw new Error(data.message || 'Error al guardar');
+            throw new Error(data.message || 'Save failed');
         }
     } catch (error) {
         Swal.fire({
             icon: 'error',
             title: 'Error',
-            text: error.message || 'No se pudo guardar el usuario.'
+            text: error.message || 'The user could not be saved.'
         });
     }
 }
 
 // ============================================
-// EDITAR USUARIO
+// EDIT USER
 // ============================================
 
 function editUser(userId) {
@@ -478,7 +478,7 @@ function editUser(userId) {
 }
 
 // ============================================
-// ELIMINAR USUARIO
+// DELETE USER
 // ============================================
 
 function deleteUser(userId, userName) {
@@ -509,7 +509,7 @@ async function confirmDelete() {
 
         Swal.fire({
             icon: 'success',
-            title: 'Usuario eliminado',
+            title: 'User deleted',
             timer: 2000,
             showConfirmButton: false
         });
@@ -539,7 +539,7 @@ async function confirmDelete() {
 
             Swal.fire({
                 icon: 'success',
-                title: 'Usuario eliminado',
+                title: 'User deleted',
                 timer: 2000,
                 showConfirmButton: false
             });
@@ -547,7 +547,7 @@ async function confirmDelete() {
         } else {
 
             throw new Error(
-                data.message || 'Error al eliminar'
+                data.message || 'Delete failed'
             );
 
         }
@@ -559,14 +559,14 @@ async function confirmDelete() {
             title: 'Error',
             text:
                 error.message ||
-                'No se pudo eliminar el usuario.'
+                'The user could not be deleted.'
         });
 
     }
 }
 
 // ============================================
-// PERMISOS
+// PERMISSIONS
 // ============================================
 
 function openPermissions(userId) {
@@ -574,7 +574,7 @@ function openPermissions(userId) {
 }
 
 // ============================================
-// DEPARTAMENTOS
+// DEPARTMENTS
 // ============================================
 
 function openDepartmentModal(departmentId = null) {
@@ -584,8 +584,8 @@ function openDepartmentModal(departmentId = null) {
     form.reset();
     document.getElementById('departmentId').value = department?.id || '';
     document.getElementById('departmentModalTitle').textContent = department
-        ? 'Editar departamento'
-        : 'Nuevo departamento';
+        ? 'Edit department'
+        : 'New department';
     document.getElementById('departmentName').value = department?.nombre || '';
     document.getElementById('departmentCode').value = department?.codigo || '';
     document.getElementById('departmentDescription').value = department?.descripcion || '';
@@ -610,8 +610,8 @@ async function saveDepartment() {
     if (!nombre || !codigo) {
         await Swal.fire({
             icon: 'warning',
-            title: 'Datos requeridos',
-            text: 'Escribe el nombre y codigo del departamento.'
+            title: 'Required data',
+            text: 'Enter the department name and code.'
         });
         return;
     }
@@ -651,7 +651,7 @@ async function saveDepartment() {
         const data = await response.json().catch(() => ({}));
 
         if (!response.ok || !data.success) {
-            throw new Error(data.message || 'No se pudo guardar el departamento');
+            throw new Error(data.message || 'The department could not be saved');
         }
 
         closeDepartmentModal();
@@ -659,7 +659,7 @@ async function saveDepartment() {
         await loadUsers();
         await Swal.fire({
             icon: 'success',
-            title: id ? 'Departamento actualizado' : 'Departamento creado',
+            title: id ? 'Department updated' : 'Department created',
             text: data.message,
             timer: 1800,
             showConfirmButton: false
@@ -667,7 +667,7 @@ async function saveDepartment() {
     } catch (error) {
         await Swal.fire({
             icon: 'error',
-            title: 'No se pudo guardar',
+            title: 'Could not save',
             text: error.message
         });
     }
@@ -679,13 +679,13 @@ async function toggleDepartmentStatus(departmentId, activar) {
 
     const confirmation = await Swal.fire({
         icon: activar ? 'question' : 'warning',
-        title: activar ? 'Activar departamento' : 'Desactivar departamento',
+        title: activar ? 'Enable department' : 'Disable department',
         text: activar
-            ? `Se habilitara nuevamente ${department.nombre}.`
-            : `Los usuarios de ${department.nombre} perderan su sesion activa hasta que el departamento vuelva a habilitarse.`,
+            ? `${department.nombre} will be enabled again.`
+            : `Users in ${department.nombre} will lose their active sessions until the department is enabled again.`,
         showCancelButton: true,
-        confirmButtonText: activar ? 'Si, activar' : 'Si, desactivar',
-        cancelButtonText: 'Cancelar',
+        confirmButtonText: activar ? 'Yes, enable' : 'Yes, disable',
+        cancelButtonText: 'Cancel',
         confirmButtonColor: activar ? '#16834b' : '#a46612'
     });
 
@@ -714,14 +714,14 @@ async function toggleDepartmentStatus(departmentId, activar) {
         const data = await response.json().catch(() => ({}));
 
         if (!response.ok || !data.success) {
-            throw new Error(data.message || 'No se pudo cambiar el estado');
+            throw new Error(data.message || 'The status could not be changed');
         }
 
         await loadDepartments();
         await loadUsers();
         await Swal.fire({
             icon: 'success',
-            title: activar ? 'Departamento activado' : 'Departamento desactivado',
+            title: activar ? 'Department enabled' : 'Department disabled',
             text: data.message,
             timer: 1800,
             showConfirmButton: false
@@ -729,7 +729,7 @@ async function toggleDepartmentStatus(departmentId, activar) {
     } catch (error) {
         await Swal.fire({
             icon: 'error',
-            title: 'No se pudo cambiar el estado',
+            title: 'Could not change status',
             text: error.message
         });
     }
@@ -741,18 +741,18 @@ async function deleteDepartment(departmentId) {
     const totalUsers = Number(department.total_usuarios || 0);
     const confirmation = await Swal.fire({
         icon: 'warning',
-        title: 'Eliminar departamento',
+        title: 'Delete department',
         html: `
-            <p>Se eliminara definitivamente <strong>${escapeHtml(department.nombre)}</strong>.</p>
+            <p><strong>${escapeHtml(department.nombre)}</strong> will be permanently deleted.</p>
             <p style="margin-top:8px;color:#64748b;">
                 ${totalUsers
-                    ? `${totalUsers} usuario(s) quedaran sin departamento, pero conservaran su cuenta y permisos.`
-                    : 'Este departamento no tiene usuarios asignados.'}
+                    ? `${totalUsers} user(s) will remain without a department, but their accounts and permissions will stay active.`
+                    : 'This department has no assigned users.'}
             </p>
         `,
         showCancelButton: true,
-        confirmButtonText: 'Eliminar definitivamente',
-        cancelButtonText: 'Cancelar',
+        confirmButtonText: 'Delete permanently',
+        cancelButtonText: 'Cancel',
         confirmButtonColor: '#b4232f'
     });
 
@@ -814,7 +814,7 @@ async function deleteDepartment(departmentId) {
             if (!legacyResponse.ok || !legacyData.success) {
                 throw new Error(
                     legacyData.message || legacyData.mensaje ||
-                    'El backend publicado todavia no permite eliminar departamentos'
+                    'The published backend does not support deleting departments yet'
                 );
             }
 
@@ -822,23 +822,23 @@ async function deleteDepartment(departmentId) {
             await loadUsers();
             await Swal.fire({
                 icon: 'warning',
-                title: 'Departamento desactivado',
-                text: 'Railway todavia usa una version anterior del backend. El departamento se desactivo; al publicar el backend actualizado podra eliminarse definitivamente.'
+                title: 'Department disabled',
+                text: 'Railway is still running an older backend version. The department was disabled and can be permanently deleted after deploying the updated backend.'
             });
             return;
         }
 
         if (!response.ok || !data.success) {
-            throw new Error(data.message || data.mensaje || 'No se pudo eliminar el departamento');
+            throw new Error(data.message || data.mensaje || 'The department could not be deleted');
         }
 
         await loadDepartments();
         await loadUsers();
         await Swal.fire({
             icon: 'success',
-            title: 'Departamento eliminado',
+            title: 'Department deleted',
             text: data.usuariosLiberados
-                ? `${data.usuariosLiberados} usuario(s) quedaron sin departamento.`
+                ? `${data.usuariosLiberados} user(s) now have no department.`
                 : data.message,
             timer: 2000,
             showConfirmButton: false
@@ -846,14 +846,14 @@ async function deleteDepartment(departmentId) {
     } catch (error) {
         await Swal.fire({
             icon: 'error',
-            title: 'No se pudo eliminar',
+            title: 'Could not delete',
             text: error.message
         });
     }
 }
 
 // ============================================
-// UTILIDADES
+// UTILITIES
 // ============================================
 
 function getInitials(name) {
@@ -876,19 +876,19 @@ function escapeHtml(value) {
 
 function getRoleLabel(role) {
     const labels = {
-        'admin': 'Administrador',
+        'admin': 'Administrator',
         'supervisor': 'Supervisor',
-        'usuario': 'Usuario'
+        'usuario': 'User'
     };
     return labels[role] || role;
 }
 
 function formatDate(dateString) {
-    if (!dateString || dateString === 'Nunca') return 'Nunca';
+    if (!dateString || dateString === 'Never') return 'Never';
 
     try {
         const date = new Date(dateString);
-        return date.toLocaleDateString('es-ES', {
+        return date.toLocaleDateString('en-US', {
             day: '2-digit',
             month: '2-digit',
             year: 'numeric',
@@ -899,3 +899,4 @@ function formatDate(dateString) {
         return dateString;
     }
 }
+

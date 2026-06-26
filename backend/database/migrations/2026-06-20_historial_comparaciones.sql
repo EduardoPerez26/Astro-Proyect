@@ -1,5 +1,5 @@
--- Historial de comparaciones por restaurante, tienda y fecha operativa.
--- Ejecutar una sola vez en la base de datos de Railway.
+-- Comparison history by restaurant, store, and operating date.
+-- Run once in the Railway database.
 
 CREATE TABLE IF NOT EXISTS comparaciones_archivos (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,

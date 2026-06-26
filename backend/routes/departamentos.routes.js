@@ -18,7 +18,7 @@ function responderErrorInstalacion(error, res) {
         res.status(503).json({
             success: false,
             code: 'DEPARTAMENTOS_NO_INSTALADOS',
-            message: 'Ejecuta primero el archivo SQL de departamentos en la base de datos.'
+            message: 'Run the departments SQL file in the database first.'
         });
         return true;
     }
@@ -51,9 +51,9 @@ router.get('/', verificarToken, esAdmin, async (req, res) => {
             }))
         });
     } catch (error) {
-        console.error('Error al listar departamentos:', error);
+        console.error('Error listing departments:', error);
         if (responderErrorInstalacion(error, res)) return;
-        res.status(500).json({ success: false, message: 'Error al obtener departamentos' });
+        res.status(500).json({ success: false, message: 'Departments could not be loaded' });
     }
 });
 
@@ -65,7 +65,7 @@ router.post('/', verificarToken, esAdmin, async (req, res) => {
         if (!nombre?.trim() || !codigoNormalizado) {
             return res.status(400).json({
                 success: false,
-                message: 'Nombre y codigo del departamento son requeridos'
+                message: 'Department name and code are required'
             });
         }
 
@@ -85,17 +85,17 @@ router.post('/', verificarToken, esAdmin, async (req, res) => {
 
         res.status(201).json({
             success: true,
-            message: 'Departamento creado correctamente',
+            message: 'Department created successfully',
             id: result.insertId
         });
     } catch (error) {
-        console.error('Error al crear departamento:', error);
+        console.error('Department could not be created:', error);
         if (responderErrorInstalacion(error, res)) return;
         res.status(error.code === 'ER_DUP_ENTRY' ? 409 : 500).json({
             success: false,
             message: error.code === 'ER_DUP_ENTRY'
                 ? 'Ya existe un departamento con ese codigo o nombre'
-                : 'Error al crear departamento'
+                : 'Department could not be created'
         });
     }
 });
@@ -108,7 +108,7 @@ router.put('/:id', verificarToken, esAdmin, async (req, res) => {
         if (!nombre?.trim() || !codigoNormalizado) {
             return res.status(400).json({
                 success: false,
-                message: 'Nombre y codigo del departamento son requeridos'
+                message: 'Department name and code are required'
             });
         }
 
@@ -129,18 +129,18 @@ router.put('/:id', verificarToken, esAdmin, async (req, res) => {
         );
 
         if (!result.affectedRows) {
-            return res.status(404).json({ success: false, message: 'Departamento no encontrado' });
+            return res.status(404).json({ success: false, message: 'Department not found' });
         }
 
-        res.json({ success: true, message: 'Departamento actualizado correctamente' });
+        res.json({ success: true, message: 'Department updated successfully' });
     } catch (error) {
-        console.error('Error al actualizar departamento:', error);
+        console.error('Department could not be updated:', error);
         if (responderErrorInstalacion(error, res)) return;
         res.status(error.code === 'ER_DUP_ENTRY' ? 409 : 500).json({
             success: false,
             message: error.code === 'ER_DUP_ENTRY'
                 ? 'Ya existe un departamento con ese codigo o nombre'
-                : 'Error al actualizar departamento'
+                : 'Department could not be updated'
         });
     }
 });
@@ -152,7 +152,7 @@ router.put('/:id/estado', verificarToken, esAdmin, async (req, res) => {
         if (typeof activo !== 'boolean') {
             return res.status(400).json({
                 success: false,
-                message: 'El estado del departamento no es valido'
+                message: 'The department status is not valid'
             });
         }
 
@@ -164,7 +164,7 @@ router.put('/:id/estado', verificarToken, esAdmin, async (req, res) => {
         if (!result.affectedRows) {
             return res.status(404).json({
                 success: false,
-                message: 'Departamento no encontrado'
+                message: 'Department not found'
             });
         }
 
@@ -183,21 +183,21 @@ router.put('/:id/estado', verificarToken, esAdmin, async (req, res) => {
         res.json({
             success: true,
             message: activo
-                ? 'Departamento activado correctamente'
-                : 'Departamento desactivado correctamente',
+                ? 'Department activado correctamente'
+                : 'Department desactivado correctamente',
             sesionesCerradas
         });
     } catch (error) {
-        console.error('Error al cambiar estado del departamento:', error);
+        console.error('Department status could not be changed:', error);
         if (responderErrorInstalacion(error, res)) return;
         res.status(500).json({
             success: false,
-            message: 'Error al cambiar el estado del departamento'
+            message: 'Department status could not be changed'
         });
     }
 });
 
-async function eliminarDepartamento(req, res) {
+async function eliminarDepartment(req, res) {
     let connection;
 
     try {
@@ -210,7 +210,7 @@ async function eliminarDepartamento(req, res) {
         if (!departamentos.length) {
             return res.status(404).json({
                 success: false,
-                message: 'Departamento no encontrado'
+                message: 'Department not found'
             });
         }
 
@@ -239,29 +239,29 @@ async function eliminarDepartamento(req, res) {
         );
 
         if (!result.affectedRows) {
-            throw new Error('El departamento no pudo eliminarse');
+            throw new Error('The department could not be deleted');
         }
 
         await connection.commit();
         res.json({
             success: true,
-            message: 'Departamento eliminado definitivamente',
+            message: 'Department permanently deleted',
             usuariosLiberados
         });
     } catch (error) {
         if (connection) await connection.rollback();
-        console.error('Error al eliminar departamento:', error);
+        console.error('Department could not be deleted:', error);
         if (responderErrorInstalacion(error, res)) return;
         res.status(500).json({
             success: false,
-            message: error.message || 'Error al eliminar departamento'
+            message: error.message || 'Department could not be deleted'
         });
     } finally {
         if (connection) connection.release();
     }
 }
 
-router.delete('/:id', verificarToken, esAdmin, eliminarDepartamento);
-router.post('/:id/eliminar', verificarToken, esAdmin, eliminarDepartamento);
+router.delete('/:id', verificarToken, esAdmin, eliminarDepartment);
+router.post('/:id/eliminar', verificarToken, esAdmin, eliminarDepartment);
 
 module.exports = router;

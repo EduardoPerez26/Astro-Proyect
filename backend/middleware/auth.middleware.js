@@ -1,4 +1,4 @@
-const jwt = require('jsonwebtoken');
+﻿const jwt = require('jsonwebtoken');
 const { pool } = require('../config/database');
 const { buildDepartmentContext } = require('../config/departments');
 const { tokenHash } = require('../services/securityAudit.service');
@@ -73,11 +73,11 @@ const verificarToken = async (req, res, next) => {
     const token = obtenerTokenAutenticacion(req);
 
     if (!token) {
-        return res.status(401).json({ error: true, message: 'Token no proporcionado' });
+        return res.status(401).json({ error: true, message: 'Token was not provided' });
     }
 
     if (!process.env.JWT_SECRET) {
-        return res.status(500).json({ error: true, message: 'JWT_SECRET no configurado' });
+        return res.status(500).json({ error: true, message: 'JWT_SECRET is not configured' });
     }
 
     try {
@@ -87,7 +87,7 @@ const verificarToken = async (req, res, next) => {
             const sesionActiva = await validarSesionActiva(token);
 
             if (!sesionActiva) {
-                return res.status(403).json({ error: true, message: 'Token invalido o expirado' });
+                return res.status(403).json({ error: true, message: 'Token is invalid or expired' });
             }
         } catch (error) {
             if (!esErrorEsquemaSesiones(error)) {
@@ -95,7 +95,7 @@ const verificarToken = async (req, res, next) => {
             }
 
             console.warn(
-                'Validacion de sesion omitida porque falta actualizar la tabla sesiones.',
+                'Session validation was skipped because the sesiones table needs to be updated.',
                 error.code
             );
         }
@@ -108,20 +108,20 @@ const verificarToken = async (req, res, next) => {
         req.authToken = token;
         next();
     } catch (error) {
-        return res.status(403).json({ error: true, message: 'Token invalido o expirado' });
+        return res.status(403).json({ error: true, message: 'Token is invalid or expired' });
     }
 };
 
 const esAdmin = (req, res, next) => {
     if (!req.usuario || req.usuario.rol !== 'admin') {
-        return res.status(403).json({ error: true, message: 'Acceso denegado: solo administradores' });
+        return res.status(403).json({ error: true, message: 'Access denied: administrators only' });
     }
     next();
 };
 
 const esSupervisorOAdmin = (req, res, next) => {
     if (!req.usuario || (req.usuario.rol !== 'admin' && req.usuario.rol !== 'supervisor')) {
-        return res.status(403).json({ error: true, message: 'Acceso denegado: solo supervisores o administradores' });
+        return res.status(403).json({ error: true, message: 'Access denied: supervisors or administrators only' });
     }
     next();
 };
@@ -133,7 +133,7 @@ const checkPermission = (permiso) => {
             if (!req.usuario) {
                 return res.status(401).json({
                     error: true,
-                    message: 'Usuario no autenticado'
+                    message: 'User is not authenticated'
                 });
             }
 
@@ -152,7 +152,7 @@ const checkPermission = (permiso) => {
             if (!rows.length) {
                 return res.status(404).json({
                     error: true,
-                    message: 'Usuario no encontrado'
+                    message: 'User not found'
                 });
             }
 
@@ -189,18 +189,18 @@ const checkPermission = (permiso) => {
             if (!permisos[permisoJson]) {
                 return res.status(403).json({
                     error: true,
-                    message: `Acceso denegado: permiso requerido: ${permiso}`
+                    message: `Access denied: required permission: ${permiso}`
                 });
             }
 
             next();
 
         } catch (error) {
-            console.error('Error en checkPermission:', error);
+            console.error('Error in checkPermission:', error);
 
             res.status(500).json({
                 error: true,
-                message: 'Error al verificar permiso'
+                message: 'Permission verification failed'
             });
         }
     };
@@ -223,7 +223,7 @@ const requireDepartment = (allowedDepartments = []) => {
         if (!departmentCode || !allowed.includes(departmentCode)) {
             return res.status(403).json({
                 error: true,
-                message: 'Acceso denegado para este departamento'
+                message: 'Access denied for this department'
             });
         }
 

@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', () => {
+﻿document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('refreshAdminDashboard')
         ?.addEventListener('click', loadAdminDashboard);
     document.getElementById('adminSessionsList')
@@ -17,7 +17,7 @@ async function loadAdminDashboard() {
 
     if (button) {
         button.disabled = true;
-        button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Actualizando';
+        button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Updating';
     }
 
     try {
@@ -31,27 +31,28 @@ async function loadAdminDashboard() {
         }
 
         if ((response.status !== 404 && !response.ok) || !data.success) {
-            throw new Error(data.message || data.mensaje || 'No se pudo cargar el dashboard');
+            throw new Error(data.message || data.mensaje || 'Dashboard could not be loaded');
         }
 
         renderAdminSummary(data.resumen || {}, data.modo_compatibilidad);
         renderAdminMovements(data.movimientos || []);
         renderAdminSessions(data.sesiones_recientes || [], data.modo_compatibilidad);
         renderAdminUserActivity(data.actividad_usuarios || []);
+        renderAdminDatabaseTables(data.tablas_base_datos || []);
         document.getElementById('adminDashboardUpdated').textContent = data.modo_compatibilidad
-            ? `Resumen compatible / ${formatAdminDate(data.generado_en, true)}`
-            : `Actualizado ${formatAdminDate(data.generado_en, true)}`;
+            ? `Compatibility summary / ${formatAdminDate(data.generado_en, true)}`
+            : `Updated ${formatAdminDate(data.generado_en, true)}`;
     } catch (error) {
-        console.error('Error en dashboard administrativo:', error);
+        console.error('Admin dashboard error:', error);
         await Swal.fire({
             icon: 'error',
-            title: 'Dashboard no disponible',
+            title: 'Dashboard unavailable',
             text: error.message
         });
     } finally {
         if (button) {
             button.disabled = false;
-            button.innerHTML = '<i class="fa-solid fa-rotate"></i> Actualizar';
+            button.innerHTML = '<i class="fa-solid fa-rotate"></i> Refresh';
         }
     }
 }
@@ -72,7 +73,7 @@ async function loadCompatibleAdminDashboard(token) {
     if (!summaryResponse.ok || !summaryData.success) {
         throw new Error(
             summaryData.message || summaryData.mensaje ||
-            'El backend publicado necesita actualizarse para mostrar el dashboard'
+            'The published backend needs to be updated to show the dashboard'
         );
     }
 
@@ -116,8 +117,8 @@ async function loadCompatibleAdminDashboard(token) {
         movimientos: activity.map(item => ({
             id: `archivo-${item.id}`,
             tipo: 'archivo',
-            accion: 'Archivo guardado',
-            usuario_nombre: item.usuario_nombre || 'Sistema',
+            accion: 'File saved',
+            usuario_nombre: item.usuario_nombre || 'System',
             username: '',
             fecha: item.fecha_subida,
             detalle: [item.nombre_original, item.restaurante_nombre].filter(Boolean).join(' / '),
@@ -133,23 +134,24 @@ async function loadCompatibleAdminDashboard(token) {
             total_sesiones: 0,
             total_archivos: 0,
             ultimo_acceso: user.ultimo_acceso || user.fecha_creacion || null
-        }))
+        })),
+        tablas_base_datos: []
     };
 }
 
 function renderAdminSummary(summary, compatibilityMode = false) {
     setAdminText('adminUsersTotal', summary.usuarios_activos);
-    setAdminText('adminUsersMeta', `${summary.usuarios_total || 0} registrados`);
-    setAdminText('adminActiveSessions', compatibilityMode ? '—' : summary.sesiones_activas);
+    setAdminText('adminUsersMeta', `${summary.usuarios_total || 0} registered`);
+    setAdminText('adminActiveSessions', compatibilityMode ? '-' : summary.sesiones_activas);
     setAdminText('adminLoginsToday', compatibilityMode
-        ? 'Disponible al actualizar Railway'
-        : `${summary.inicios_hoy || 0} inicios hoy`);
+        ? 'Available after updating Railway'
+        : `${summary.inicios_hoy || 0} logins today`);
     setAdminText('adminFilesToday', summary.archivos_hoy);
-    setAdminText('adminFilesMeta', `${summary.archivos_7_dias || 0} en los ultimos 7 dias`);
+    setAdminText('adminFilesMeta', `${summary.archivos_7_dias || 0} in the last 7 days`);
     setAdminText('adminValidationsToday', summary.validaciones_hoy);
-    setAdminText('adminValidationMeta', `${summary.validaciones_con_incidencias || 0} con incidencias`);
+    setAdminText('adminValidationMeta', `${summary.validaciones_con_incidencias || 0} with issues`);
     setAdminText('adminDepartmentsActive', summary.departamentos_activos);
-    setAdminText('adminDepartmentsMeta', `${summary.departamentos_total || 0} registrados`);
+    setAdminText('adminDepartmentsMeta', `${summary.departamentos_total || 0} registered`);
 }
 
 function renderAdminMovements(movements) {
@@ -157,7 +159,7 @@ function renderAdminMovements(movements) {
     if (!tbody) return;
 
     if (!movements.length) {
-        tbody.innerHTML = '<tr><td colspan="5" class="admin-loading">No hay movimientos registrados.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="5" class="admin-loading">No movements registered.</td></tr>';
         return;
     }
 
@@ -170,11 +172,11 @@ function renderAdminMovements(movements) {
 
         return `
             <tr>
-                <td data-label="Movimiento"><span class="admin-movement"><span class="admin-movement-icon"><i class="fa-solid ${icon}"></i></span>${escapeAdminHtml(item.accion)}</span></td>
-                <td data-label="Usuario" class="admin-user-cell"><strong>${escapeAdminHtml(item.usuario_nombre || 'Sistema')}</strong><small>@${escapeAdminHtml(item.username || 'sistema')}</small></td>
-                <td data-label="Detalle"><span class="admin-detail-cell" title="${escapeAdminHtml(item.detalle || 'Sin detalle')}">${escapeAdminHtml(formatAdminMovementDetail(item))}</span></td>
-                <td data-label="Estado"><span class="admin-state ${adminStateClass(item.estado)}">${escapeAdminHtml(item.estado || 'registrado')}</span></td>
-                <td data-label="Fecha" class="admin-date-cell">${formatAdminDate(item.fecha)}</td>
+                <td data-label="Movement"><span class="admin-movement"><span class="admin-movement-icon"><i class="fa-solid ${icon}"></i></span>${escapeAdminHtml(item.accion)}</span></td>
+                <td data-label="User" class="admin-user-cell"><strong>${escapeAdminHtml(item.usuario_nombre || 'System')}</strong><small>@${escapeAdminHtml(item.username || 'system')}</small></td>
+                <td data-label="Detail"><span class="admin-detail-cell" title="${escapeAdminHtml(item.detalle || 'No detail')}">${escapeAdminHtml(formatAdminMovementDetail(item))}</span></td>
+                <td data-label="Status"><span class="admin-state ${adminStateClass(item.estado)}">${escapeAdminHtml(formatAdminStateLabel(item.estado || 'registered'))}</span></td>
+                <td data-label="Date" class="admin-date-cell">${formatAdminDate(item.fecha)}</td>
             </tr>
         `;
     }).join('');
@@ -186,8 +188,8 @@ function renderAdminSessions(sessions, compatibilityMode = false) {
 
     if (!sessions.length) {
         container.innerHTML = compatibilityMode
-            ? '<div class="admin-loading">Publica el backend actualizado para consultar las sesiones.</div>'
-            : '<div class="admin-loading">No hay sesiones registradas.</div>';
+            ? '<div class="admin-loading">Publish the updated backend to view sessions.</div>'
+            : '<div class="admin-loading">No sessions registered.</div>';
         return;
     }
 
@@ -196,23 +198,23 @@ function renderAdminSessions(sessions, compatibilityMode = false) {
             <span class="admin-session-avatar">${getAdminInitials(session.usuario_nombre)}</span>
             <div class="admin-session-copy">
                 <strong>${escapeAdminHtml(session.usuario_nombre || session.username)}</strong>
-                <span>${escapeAdminHtml(session.departamento_nombre || 'Sin departamento')} · ${escapeAdminHtml(session.rol)}</span>
-                <small>${escapeAdminHtml(session.ip_address || 'IP no disponible')} · ${formatAdminDate(session.fecha_creacion)}</small>
+                <span>${escapeAdminHtml(session.departamento_nombre || 'No department')} / ${escapeAdminHtml(formatAdminStateLabel(session.rol))}</span>
+                <small>${escapeAdminHtml(session.ip_address || 'IP unavailable')} / ${formatAdminDate(session.fecha_creacion)}</small>
             </div>
             <div class="admin-session-actions">
-                <span class="admin-session-dot ${session.activa ? 'active' : ''}" title="${session.activa ? 'Activa' : 'Cerrada'}"></span>
+                <span class="admin-session-dot ${session.activa ? 'active' : ''}" title="${session.activa ? 'Active' : 'Closed'}"></span>
                 ${session.activa && !session.sesion_actual ? `
                     <button
                         class="admin-session-logout"
                         type="button"
                         data-session-logout="${session.id}"
                         data-session-user="${escapeAdminHtml(session.usuario_nombre || session.username)}"
-                        title="Cerrar sesion"
+                        title="Log out"
                     >
                         <i class="fa-solid fa-right-from-bracket"></i>
                     </button>
                 ` : ''}
-                ${session.sesion_actual ? '<small class="admin-current-session">Actual</small>' : ''}
+                ${session.sesion_actual ? '<small class="admin-current-session">Current</small>' : ''}
             </div>
         </article>
     `).join('');
@@ -223,18 +225,18 @@ async function onAdminSessionListClick(event) {
     if (!button) return;
 
     const sessionId = button.dataset.sessionLogout;
-    const userName = button.dataset.sessionUser || 'este usuario';
+    const userName = button.dataset.sessionUser || 'this user';
 
-    const confirmacion = await Swal.fire({
+    const confirmation = await Swal.fire({
         icon: 'warning',
-        title: 'Cerrar sesion activa',
-        text: `Se cerrara la sesion abierta de ${userName}.`,
+        title: 'Active logout',
+        text: `The open session for ${userName} will be closed.`,
         showCancelButton: true,
-        confirmButtonText: 'Cerrar sesion',
-        cancelButtonText: 'Cancelar'
+        confirmButtonText: 'Log out',
+        cancelButtonText: 'Cancel'
     });
 
-    if (!confirmacion.isConfirmed) return;
+    if (!confirmation.isConfirmed) return;
 
     await closeAdminSession(sessionId, button);
 }
@@ -258,23 +260,23 @@ async function closeAdminSession(sessionId, button) {
         const data = await response.json().catch(() => ({}));
 
         if (!response.ok || !data.success) {
-            throw new Error(data.message || data.mensaje || 'No se pudo cerrar la sesion');
+            throw new Error(data.message || data.mensaje || 'The session could not be closed');
         }
 
         await Swal.fire({
             icon: 'success',
-            title: 'Sesion cerrada',
-            text: data.message || 'La sesion fue cerrada correctamente.',
+            title: 'Session closed',
+            text: data.message || 'The session was closed successfully.',
             timer: 1700,
             showConfirmButton: false
         });
 
         await loadAdminDashboard();
     } catch (error) {
-        console.error('Error cerrando sesion:', error);
+        console.error('Error closing session:', error);
         await Swal.fire({
             icon: 'error',
-            title: 'No se pudo cerrar',
+            title: 'Could not close',
             text: error.message
         });
         button.disabled = false;
@@ -287,32 +289,168 @@ function renderAdminUserActivity(users) {
     if (!tbody) return;
 
     if (!users.length) {
-        tbody.innerHTML = '<tr><td colspan="6" class="admin-loading">No hay actividad de usuarios.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" class="admin-loading">No user activity.</td></tr>';
         return;
     }
 
     tbody.innerHTML = users.map(user => `
         <tr>
             <td><strong>${escapeAdminHtml(user.nombre)}</strong><br><small>@${escapeAdminHtml(user.username)}</small></td>
-            <td>${escapeAdminHtml(user.departamento_nombre || 'Sin departamento')}</td>
-            <td><span class="admin-state">${escapeAdminHtml(user.rol)}</span></td>
+            <td>${escapeAdminHtml(user.departamento_nombre || 'No department')}</td>
+            <td><span class="admin-state">${escapeAdminHtml(formatAdminStateLabel(user.rol))}</span></td>
             <td>${Number(user.total_sesiones || 0).toLocaleString('en-US')}</td>
             <td>${Number(user.total_archivos || 0).toLocaleString('en-US')}</td>
-            <td>${user.ultimo_acceso ? formatAdminDate(user.ultimo_acceso) : 'Nunca'}</td>
+            <td>${user.ultimo_acceso ? formatAdminDate(user.ultimo_acceso) : 'Never'}</td>
         </tr>
     `).join('');
 }
 
+function renderAdminDatabaseTables(tables) {
+    const container = document.getElementById('adminDatabaseTables');
+    if (!container) return;
+
+    if (!tables.length) {
+        container.innerHTML = '<div class="admin-loading">No audit information was received. Update the backend to inspect the database.</div>';
+        return;
+    }
+
+    container.innerHTML = tables.map(table => {
+        const exists = table.existe === true;
+        const columns = Array.isArray(table.columnas_muestra) && table.columnas_muestra.length
+            ? table.columnas_muestra
+            : (table.columnas || []).map(column => column.nombre);
+        const rows = Array.isArray(table.registros) ? table.registros : [];
+        const columnsMeta = Array.isArray(table.columnas) ? table.columnas : [];
+        const created = table.fecha_creacion ? formatAdminDate(table.fecha_creacion) : 'Pending';
+
+        return `
+            <article class="admin-db-card ${exists ? '' : 'is-missing'}">
+                <header class="admin-db-card-head">
+                    <span class="admin-db-icon"><i class="fa-solid ${escapeAdminHtml(table.icono || 'fa-table')}"></i></span>
+                    <div class="admin-db-title">
+                        <strong>${escapeAdminHtml(table.titulo || table.nombre)}</strong>
+                        <span>${escapeAdminHtml(table.descripcion || table.nombre)}</span>
+                    </div>
+                    <span class="admin-db-count">${exists ? Number(table.total || 0).toLocaleString('en-US') : '-'}</span>
+                </header>
+                <div class="admin-db-meta">
+                    <span>${exists ? 'Available' : 'SQL pending'}</span>
+                    <span>${columnsMeta.length} columns</span>
+                    <span>Created: ${escapeAdminHtml(created)}</span>
+                </div>
+                ${renderAdminDatabasePreview(table, columns, rows)}
+            </article>
+        `;
+    }).join('');
+}
+
+function renderAdminDatabasePreview(table, columns, rows) {
+    if (table.existe !== true) {
+        return '<div class="admin-db-empty">The auditoria_seguridad table does not exist in the connected database yet. Run the security migration to view it here.</div>';
+    }
+
+    if (!columns.length) {
+        return '<div class="admin-db-empty">The table exists, but no column information was received.</div>';
+    }
+
+    if (!rows.length) {
+        return '<div class="admin-db-empty">Table available with no recent records.</div>';
+    }
+
+    return `
+        <div class="admin-db-preview">
+            <table>
+                <thead>
+                    <tr>${columns.map(column => `<th>${escapeAdminHtml(formatAdminColumnName(column))}</th>`).join('')}</tr>
+                </thead>
+                <tbody>
+                    ${rows.map(row => `
+                        <tr>
+                            ${columns.map(column => `
+                                <td title="${escapeAdminHtml(formatAdminTableValue(row[column], column))}">
+                                    ${escapeAdminHtml(formatAdminTableValue(row[column], column))}
+                                </td>
+                            `).join('')}
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        </div>
+    `;
+}
+
+function formatAdminColumnName(column) {
+    const labels = {
+        id: 'ID',
+        username: 'User',
+        ip_address: 'IP',
+        exitoso: 'Result',
+        fecha_creacion: 'Date',
+        fecha_actualizacion: 'Updated',
+        fecha_comparacion: 'Comparison',
+        fecha_operacion: 'Operation',
+        pagina_inicio: 'Start',
+        usuario_id: 'User ID',
+        departamento_id: 'Dept. ID',
+        evento: 'Event',
+        detalle: 'Detail',
+        restaurante_id: 'Rest. ID',
+        comparacion_id: 'Comparison ID',
+        permiso_nombre: 'Permission',
+        tiendas_comparadas: 'Stores',
+        tiendas_con_diferencias: 'With diff.',
+        total_diferencias: 'Differences',
+        monto_diferencia_absoluta: 'Diff. amount',
+        valor_anterior: 'Previous',
+        valor_nuevo: 'New'
+    };
+
+    return labels[column] || String(column || '')
+        .replaceAll('_', ' ')
+        .replace(/\b\w/g, letter => letter.toUpperCase());
+}
+
+function formatAdminTableValue(value, column = '') {
+    if (value === null || value === undefined || value === '') return '-';
+
+    if (column === 'exitoso') {
+        return value === true || value === 1 || value === '1' ? 'Successful' : 'Failed';
+    }
+
+    if (column === 'activo' || column === 'concedido') {
+        return value === true || value === 1 || value === '1' ? 'Active' : 'Inactive';
+    }
+
+    if (String(column).startsWith('fecha_')) {
+        return formatAdminDate(value);
+    }
+
+    if (typeof value === 'object') {
+        try {
+            return truncateAdminText(JSON.stringify(value), 80);
+        } catch {
+            return '[object]';
+        }
+    }
+
+    return truncateAdminText(String(value), 80);
+}
+
+function truncateAdminText(value, maxLength) {
+    const text = String(value ?? '');
+    return text.length > maxLength ? `${text.slice(0, maxLength - 1)}...` : text;
+}
+
 function adminStateClass(state) {
     const value = String(state || '').toLowerCase();
-    if (['activo', 'validado', 'procesado', 'exitoso'].includes(value)) return 'is-success';
-    if (['pendiente', 'con_errores'].includes(value)) return 'is-warning';
-    if (['cerrado', 'fallido', 'inactivo'].includes(value)) return 'is-error';
+    if (['activo', 'active', 'validado', 'validated', 'procesado', 'processed', 'exitoso', 'successful'].includes(value)) return 'is-success';
+    if (['pendiente', 'pending', 'con_errores', 'with_errors'].includes(value)) return 'is-warning';
+    if (['cerrado', 'closed', 'fallido', 'failed', 'inactivo', 'inactive'].includes(value)) return 'is-error';
     return '';
 }
 
 function formatAdminMovementDetail(item) {
-    const detail = String(item.detalle || 'Sin detalle');
+    const detail = String(item.detalle || 'No detail');
     if (item.tipo !== 'sesion') return detail;
 
     const [ip, userAgent = ''] = detail.split(' | ');
@@ -327,12 +465,31 @@ function setAdminText(id, value) {
 }
 
 function formatAdminDate(value, short = false) {
-    if (!value) return '—';
+    if (!value) return '-';
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) return String(value);
-    return date.toLocaleString('es-MX', short
+    return date.toLocaleString('en-US', short
         ? { hour: '2-digit', minute: '2-digit' }
         : { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+
+function formatAdminStateLabel(value) {
+    const labels = {
+        admin: 'Administrator',
+        supervisor: 'Supervisor',
+        usuario: 'User',
+        activo: 'Active',
+        inactivo: 'Inactive',
+        pendiente: 'Pending',
+        registrado: 'Registered',
+        validado: 'Validated',
+        procesado: 'Processed',
+        exitoso: 'Successful',
+        fallido: 'Failed',
+        cerrado: 'Closed',
+        con_errores: 'With errors'
+    };
+    return labels[String(value || '').toLowerCase()] || value;
 }
 
 function getAdminInitials(name) {

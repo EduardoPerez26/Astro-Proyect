@@ -2,6 +2,9 @@ const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const fs = require('fs');
+const path = require('path');
+const multer = require('multer');
 const { pool } = require('../config/database');
 const { verificarToken, esAdmin } = require('../middleware/auth.middleware');
 const { buildDepartmentContext } = require('../config/departments');
@@ -12,13 +15,95 @@ const {
     contarIntentosFallidos
 } = require('../services/securityAudit.service');
 
+const PROFILE_UPLOAD_DIR = path.join(__dirname, '..', 'uploads', 'perfiles');
+const PROFILE_PHOTO_EXTENSIONS = {
+    'image/jpeg': '.jpg', 
+    'image/png': '.png',
+    'image/webp': '.webp'
+};
+
+fs.mkdirSync(PROFILE_UPLOAD_DIR, { recursive: true });
+
+const profilePhotoStorage = multer.diskStorage({
+    destination: (req, file, cb) => cb(null, PROFILE_UPLOAD_DIR),
+    filename: (req, file, cb) => {
+        const extension = PROFILE_PHOTO_EXTENSIONS[file.mimetype]
+            || path.extname(file.originalname || '').toLowerCase()
+            || '.jpg';
+        const safeExtension = ['.jpg', '.jpeg', '.png', '.webp'].includes(extension)
+            ? extension.replace('.jpeg', '.jpg')
+            : '.jpg';
+
+        cb(null, `perfil-${req.usuario.id}-${Date.now()}${safeExtension}`);
+    }
+});
+
+const uploadProfilePhoto = multer({
+    storage: profilePhotoStorage,
+    limits: { fileSize: 3 * 1024 * 1024 },
+    fileFilter: (req, file, cb) => {
+        if (!PROFILE_PHOTO_EXTENSIONS[file.mimetype]) {
+            cb(new Error('Only JPG, PNG, or WebP images are allowed.'));
+            return;
+        }
+
+        cb(null, true);
+    }
+});
+
+function cargarFotoPerfil(req, res, next) {
+    uploadProfilePhoto.fields([
+        { name: 'foto', maxCount: 1 },
+        { name: 'foto_perfil', maxCount: 1 }
+    ])(req, res, (error) => {
+        if (!error) {
+            next();
+            return;
+        }
+
+        const mensaje = error instanceof multer.MulterError && error.code === 'LIMIT_FILE_SIZE'
+            ? 'The photo cannot exceed 3 MB.'
+            : error.message || 'The profile photo could not be uploaded.';
+
+        res.status(400).json({
+            error: true,
+            mensaje
+        });
+    });
+}
+
+function obtenerFotoPerfilSubida(req) {
+    return req.files?.foto?.[0] || req.files?.foto_perfil?.[0] || null;
+}
+
+function construirUrlFotoPerfil(file) {
+    return file ? `/uploads/perfiles/${file.filename}` : null;
+}
+
+function eliminarFotoPerfil(urlFoto) {
+    if (!urlFoto || !String(urlFoto).startsWith('/uploads/perfiles/')) return;
+
+    const filePath = path.join(PROFILE_UPLOAD_DIR, path.basename(urlFoto));
+    fs.unlink(filePath, () => {});
+}
+
+function esErrorColumnaFoto(error) {
+    const detalle = [
+        error.sqlMessage,
+        error.message,
+        error.sql
+    ].filter(Boolean).join(' ');
+
+    return error.code === 'ER_BAD_FIELD_ERROR' && /foto_perfil_url/i.test(detalle);
+}
+
 const PERMISOS_ADMIN = {
     dashboardAdmin: true,
     perfil: true,
     tiendas: true,
     permisos: true,
     usuarios: true,
-    controlRestaurantes: true,
+    controlRestaurants: true,
     historial: true,
     documentos: true
 };
@@ -52,11 +137,12 @@ function construirContextoUsuario(usuario) {
             perfil: true,
             permisos: false,
             usuarios: false,
-            controlRestaurantes: false,
+            controlRestaurants: false,
             ...parsearJson(usuario.permisos),
+            perfil: true,
             usuarios: false,
             permisos: false,
-            controlRestaurantes: false
+            controlRestaurants: false
         };
     }
 
@@ -65,6 +151,7 @@ function construirContextoUsuario(usuario) {
         username: usuario.username,
         nombre: usuario.nombre_completo,
         email: usuario.email,
+        foto_perfil_url: usuario.foto_perfil_url || null,
         rol: usuario.rol,
         permisos,
         departamento
@@ -144,7 +231,7 @@ async function registrarSesion(usuarioId, token, req) {
             } catch (fallbackError) {
                 if (fallbackError.code === 'ER_DATA_TOO_LONG') {
                     console.warn(
-                        'No se pudo registrar la sesion porque la columna sesiones.token es corta. El login continuara con JWT.',
+                        'The session could not be stored because sesiones.token is too short. Login will continue with JWT.',
                         fallbackError.code
                     );
                     return false;
@@ -158,7 +245,7 @@ async function registrarSesion(usuarioId, token, req) {
 
         if (error.code === 'ER_DATA_TOO_LONG') {
             console.warn(
-                'No se pudo registrar la sesion porque la columna sesiones.token es corta. El login continuara con JWT.',
+                'The session could not be stored because sesiones.token is too short. Login will continue with JWT.',
                 error.code
             );
             return false;
@@ -169,7 +256,7 @@ async function registrarSesion(usuarioId, token, req) {
         }
 
         console.warn(
-            'No se pudo registrar la sesion porque falta actualizar la tabla sesiones. El login continuara con JWT.',
+            'The session could not be stored because the sesiones table needs to be updated. Login will continue with JWT.',
             error.code
         );
         return false;
@@ -195,11 +282,11 @@ router.post('/login', async (req, res) => {
         const { username, password } = req.body;
         const usernameNormalizado = String(username || '').trim();
 
-        // Validar que se enviaron los datos
+        // Validate submitted credentials
         if (!usernameNormalizado || !password) {
             return res.status(400).json({
                 error: true,
-                mensaje: 'Usuario y contrasena son requeridos'
+                mensaje: 'Username and password are required'
             });
         }
 
@@ -219,11 +306,11 @@ router.post('/login', async (req, res) => {
 
             return res.status(429).json({
                 error: true,
-                mensaje: 'Demasiados intentos. Espera unos minutos e intenta nuevamente.'
+                mensaje: 'Too many attempts. Wait a few minutes and try again.'
             });
         }
 
-        // Buscar usuario
+        // Find user
         const usuario = await obtenerUsuarioConDepartamento(
             'u.username = ? AND u.activo = TRUE',
             [usernameNormalizado]
@@ -234,12 +321,12 @@ router.post('/login', async (req, res) => {
                 username: usernameNormalizado,
                 req,
                 exitoso: false,
-                detalle: 'usuario_no_encontrado'
+                detalle: 'user_not_found'
             });
 
             return res.status(401).json({
                 error: true,
-                mensaje: 'Usuario o contrasena incorrectos'
+                mensaje: 'Invalid username or password'
             });
         }
 
@@ -257,7 +344,7 @@ router.post('/login', async (req, res) => {
 
             return res.status(403).json({
                 error: true,
-                mensaje: 'Tu departamento esta inactivo. Contacta al administrador.'
+                mensaje: 'Your department is inactive. Contact your administrator.'
             });
         }
 
@@ -271,12 +358,12 @@ router.post('/login', async (req, res) => {
                 username: usernameNormalizado,
                 req,
                 exitoso: false,
-                detalle: 'password_incorrecto'
+                detalle: 'incorrect_password'
             });
 
             return res.status(401).json({
                 error: true,
-                mensaje: 'Usuario o contrasena incorrectos'
+                mensaje: 'Invalid username or password'
             });
         }
 
@@ -301,12 +388,12 @@ router.post('/login', async (req, res) => {
             username: usernameNormalizado,
             req,
             exitoso: true,
-            detalle: 'login_exitoso'
+            detalle: 'login_success'
         });
         await registrarEventoSeguridad({
             usuarioId: usuario.id,
             departamentoId: contextoUsuario.departamento.id,
-            evento: 'login_exitoso',
+            evento: 'login_success',
             req,
             detalle: { departamento: contextoUsuario.departamento.codigo }
         });
@@ -315,7 +402,7 @@ router.post('/login', async (req, res) => {
 
         res.json({
             error: false,
-            mensaje: 'Login exitoso',
+            mensaje: 'Login successful',
             token,
             usuario: contextoUsuario
         });
@@ -325,7 +412,7 @@ router.post('/login', async (req, res) => {
 
         res.status(500).json({
             error: true,
-            mensaje: 'Error al iniciar sesion',
+            mensaje: 'Sign-in failed',
             code: error.code
         });
     }
@@ -335,15 +422,15 @@ router.post('/register', verificarToken, esAdmin, async (req, res) => {
     try {
         const { username, password, nombre_completo, email, rol } = req.body;
 
-        // Validar datos requeridos
+        // Validate required fields
         if (!username || !password || !nombre_completo || !email) {
             return res.status(400).json({
                 error: true,
-                mensaje: 'Todos los campos son requeridos'
+                mensaje: 'All fields are required'
             });
         }
 
-        // Verificar si el usuario ya existe
+        // Check whether the user already exists
         const [existente] = await pool.query(
             'SELECT id FROM usuarios WHERE username = ? OR email = ?',
             [username, email]
@@ -352,15 +439,15 @@ router.post('/register', verificarToken, esAdmin, async (req, res) => {
         if (existente.length > 0) {
             return res.status(400).json({
                 error: true,
-                mensaje: 'El usuario o email ya existe'
+                mensaje: 'The username or email already exists'
             });
         }
 
-        // Encriptar contrasena
+        // Encrypt password
         const salt = await bcrypt.genSalt(10);
         const passwordHash = await bcrypt.hash(password, salt);
 
-        // Insertar usuario
+        // Insert user
         const [resultado] = await pool.query(
             `INSERT INTO usuarios (username, password, nombre_completo, email, rol)
              VALUES (?, ?, ?, ?, ?)`,
@@ -369,15 +456,15 @@ router.post('/register', verificarToken, esAdmin, async (req, res) => {
 
         res.status(201).json({
             error: false,
-            mensaje: 'Usuario registrado exitosamente',
+            mensaje: 'User registered successfully',
             usuarioId: resultado.insertId
         });
 
     } catch (error) {
-        console.error('Error en registro:', error);
+        console.error('Registration error:', error);
         res.status(500).json({
             error: true,
-            mensaje: 'Error al registrar usuario'
+            mensaje: 'User registration failed'
         });
     }
 });
@@ -392,19 +479,19 @@ router.get('/verify', verificarToken, async (req, res) => {
         if (!usuario) {
             return res.status(404).json({
                 error: true,
-                mensaje: 'Usuario no encontrado o inactivo'
+                mensaje: 'User not found or inactive'
             });
         }
 
         res.json({
             error: false,
-            mensaje: 'Token valido',
+            mensaje: 'Token is valid',
             usuario: construirContextoUsuario(usuario)
         });
     } catch (error) {
         res.status(500).json({
             error: true,
-            mensaje: 'Error al verificar token'
+            mensaje: 'Token verification failed'
         });
     }
 });
@@ -419,7 +506,7 @@ router.get('/profile', verificarToken, async (req, res) => {
         if (!usuario) {
             return res.status(404).json({
                 error: true,
-                mensaje: 'Usuario no encontrado'
+                mensaje: 'User not found'
             });
         }
 
@@ -428,20 +515,172 @@ router.get('/profile', verificarToken, async (req, res) => {
             usuario: construirContextoUsuario(usuario)
         });
     } catch (error) {
-        console.error('Error al cargar perfil:', error);
+        console.error('Error loading profile:', error);
         res.status(500).json({
             error: true,
-            mensaje: 'Error al obtener datos del perfil'
+            mensaje: 'Profile data could not be loaded'
         });
     }
 });
+
+async function actualizarPerfil(req, res) {
+    const fotoSubida = obtenerFotoPerfilSubida(req);
+    const nuevaFotoUrl = construirUrlFotoPerfil(fotoSubida);
+
+    try {
+        const nombre = String(req.body.nombre || req.body.nombre_completo || '').trim();
+        const passwordActual = String(req.body.password_actual || '');
+        const passwordNueva = String(req.body.password_nueva || '');
+        const passwordConfirmacion = String(req.body.password_confirmacion || '');
+        const cambiaPassword = Boolean(passwordActual || passwordNueva || passwordConfirmacion);
+
+        if (!nombre || nombre.length < 2 || nombre.length > 100) {
+            eliminarFotoPerfil(nuevaFotoUrl);
+            return res.status(400).json({
+                error: true,
+                mensaje: 'Enter a valid name between 2 and 100 characters.'
+            });
+        }
+
+        if (cambiaPassword) {
+            if (!passwordActual || !passwordNueva || !passwordConfirmacion) {
+                eliminarFotoPerfil(nuevaFotoUrl);
+                return res.status(400).json({
+                    error: true,
+                    mensaje: 'To change your password, complete all three password fields.'
+                });
+            }
+
+            if (passwordNueva.length < 6) {
+                eliminarFotoPerfil(nuevaFotoUrl);
+                return res.status(400).json({
+                    error: true,
+                    mensaje: 'The new password must be at least 6 characters.'
+                });
+            }
+
+            if (passwordNueva !== passwordConfirmacion) {
+                eliminarFotoPerfil(nuevaFotoUrl);
+                return res.status(400).json({
+                    error: true,
+                    mensaje: 'The confirmation does not match the new password.'
+                });
+            }
+        }
+
+        const usuarioActual = await obtenerUsuarioConDepartamento(
+            'u.id = ? AND u.activo = TRUE',
+            [req.usuario.id]
+        );
+
+        if (!usuarioActual) {
+            eliminarFotoPerfil(nuevaFotoUrl);
+            return res.status(404).json({
+                error: true,
+                mensaje: 'User not found'
+            });
+        }
+
+        const cambios = [];
+        const params = [];
+        const detalleAuditoria = {};
+
+        if (nombre !== usuarioActual.nombre_completo) {
+            cambios.push('nombre_completo = ?');
+            params.push(nombre);
+            detalleAuditoria.nombre_actualizado = true;
+        }
+
+        if (cambiaPassword) {
+            const passwordValido = await bcrypt.compare(passwordActual, usuarioActual.password);
+
+            if (!passwordValido) {
+                eliminarFotoPerfil(nuevaFotoUrl);
+                return res.status(400).json({
+                    error: true,
+                    mensaje: 'The current password is not correct.'
+                });
+            }
+
+            const salt = await bcrypt.genSalt(10);
+            const passwordHash = await bcrypt.hash(passwordNueva, salt);
+
+            cambios.push('password = ?');
+            params.push(passwordHash);
+            detalleAuditoria.password_actualizado = true;
+        }
+
+        if (nuevaFotoUrl) {
+            cambios.push('foto_perfil_url = ?');
+            params.push(nuevaFotoUrl);
+            detalleAuditoria.foto_actualizada = true;
+        }
+
+        if (cambios.length > 0) {
+            params.push(req.usuario.id);
+            await pool.query(
+                `UPDATE usuarios
+                 SET ${cambios.join(', ')}
+                 WHERE id = ?`,
+                params
+            );
+
+            if (
+                nuevaFotoUrl &&
+                usuarioActual.foto_perfil_url &&
+                usuarioActual.foto_perfil_url !== nuevaFotoUrl
+            ) {
+                eliminarFotoPerfil(usuarioActual.foto_perfil_url);
+            }
+
+            await registrarEventoSeguridad({
+                usuarioId: req.usuario.id,
+                departamentoId: req.departamento?.id || usuarioActual.departamento_id || null,
+                evento: 'profile_updated',
+                req,
+                detalle: detalleAuditoria
+            });
+        }
+
+        const usuarioActualizado = await obtenerUsuarioConDepartamento(
+            'u.id = ? AND u.activo = TRUE',
+            [req.usuario.id]
+        );
+
+        res.json({
+            error: false,
+            mensaje: cambios.length > 0
+                ? 'Profile updated successfully'
+                : 'There were no changes to save',
+            usuario: construirContextoUsuario(usuarioActualizado)
+        });
+    } catch (error) {
+        eliminarFotoPerfil(nuevaFotoUrl);
+
+        if (esErrorColumnaFoto(error)) {
+            return res.status(500).json({
+                error: true,
+                mensaje: 'Run the profile migration before saving photos.'
+            });
+        }
+
+        console.error('Error updating profile:', error);
+        res.status(500).json({
+            error: true,
+            mensaje: 'Profile could not be updated'
+        });
+    }
+}
+
+router.put('/profile', verificarToken, cargarFotoPerfil, actualizarPerfil);
+router.patch('/profile', verificarToken, cargarFotoPerfil, actualizarPerfil);
 
 router.post('/logout', verificarToken, async (req, res) => {
     try {
         const token = req.authToken;
         const hash = tokenHash(token);
 
-        // Marcar la sesion como inactiva
+        // Mark the session as inactive
         try {
             await pool.query(
                 `UPDATE sesiones
@@ -467,7 +706,7 @@ router.post('/logout', verificarToken, async (req, res) => {
         await registrarEventoSeguridad({
             usuarioId: req.usuario.id,
             departamentoId: req.departamento?.id || null,
-            evento: 'logout_usuario',
+            evento: 'user_logout',
             req
         });
 
@@ -475,12 +714,12 @@ router.post('/logout', verificarToken, async (req, res) => {
 
         res.json({
             error: false,
-            mensaje: 'Sesion cerrada exitosamente'
+            mensaje: 'Session closed successfully'
         });
     } catch (error) {
         res.status(500).json({
             error: true,
-            mensaje: 'Error al cerrar sesion'
+            mensaje: 'Session could not be closed'
         });
     }
 });

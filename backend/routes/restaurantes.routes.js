@@ -18,10 +18,10 @@ router.get('/', verificarToken, checkPermission('view_restaurantes'), async (req
         });
 
     } catch (error) {
-        console.error('Error al listar restaurantes:', error);
+        console.error('Error listing restaurants:', error);
         res.status(500).json({
             error: true,
-            mensaje: 'Error al obtener restaurantes'
+            mensaje: 'Restaurants could not be loaded'
         });
     }
 });
@@ -36,7 +36,7 @@ router.get('/:id', verificarToken, checkPermission('view_restaurantes'), async (
         if (restaurantes.length === 0) {
             return res.status(404).json({
                 error: true,
-                mensaje: 'Restaurante no encontrado'
+                mensaje: 'Restaurant not found'
             });
         }
 
@@ -46,10 +46,10 @@ router.get('/:id', verificarToken, checkPermission('view_restaurantes'), async (
         });
 
     } catch (error) {
-        console.error('Error al obtener restaurante:', error);
+        console.error('Restaurant could not be loaded:', error);
         res.status(500).json({
             error: true,
-            mensaje: 'Error al obtener restaurante'
+            mensaje: 'Restaurant could not be loaded'
         });
     }
 });
@@ -61,7 +61,7 @@ router.post('/', verificarToken, esAdmin, async (req, res) => {
         if (!codigo || !nombre) {
             return res.status(400).json({
                 error: true,
-                mensaje: 'Codigo y nombre son requeridos'
+                mensaje: 'Code and name are required'
             });
         }
 
@@ -73,15 +73,15 @@ router.post('/', verificarToken, esAdmin, async (req, res) => {
 
         res.status(201).json({
             error: false,
-            mensaje: 'Restaurante creado exitosamente',
+            mensaje: 'Restaurant created successfully',
             restauranteId: resultado.insertId
         });
 
     } catch (error) {
-        console.error('Error al crear restaurante:', error);
+        console.error('Restaurant could not be created:', error);
         res.status(500).json({
             error: true,
-            mensaje: 'Error al crear restaurante'
+            mensaje: 'Restaurant could not be created'
         });
     }
 });
@@ -110,14 +110,14 @@ router.put('/:id', verificarToken, esAdmin, async (req, res) => {
 
         res.json({
             error: false,
-            mensaje: 'Restaurante actualizado exitosamente'
+            mensaje: 'Restaurant updated successfully'
         });
 
     } catch (error) {
-        console.error('Error al actualizar restaurante:', error);
+        console.error('Restaurant could not be updated:', error);
         res.status(500).json({
             error: true,
-            mensaje: 'Error al actualizar restaurante'
+            mensaje: 'Restaurant could not be updated'
         });
     }
 });

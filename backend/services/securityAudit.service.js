@@ -47,7 +47,7 @@ async function registrarEventoSeguridad({
         );
     } catch (error) {
         if (!isSchemaError(error)) {
-            console.warn('No se pudo registrar auditoria de seguridad:', error.code || error.message);
+            console.warn('Security audit could not be recorded:', error.code || error.message);
         }
     }
 }
@@ -72,7 +72,7 @@ async function registrarIntentoLogin({
         );
     } catch (error) {
         if (!isSchemaError(error)) {
-            console.warn('No se pudo registrar intento de login:', error.code || error.message);
+            console.warn('Login attempt could not be recorded:', error.code || error.message);
         }
     }
 }
@@ -100,7 +100,7 @@ async function contarIntentosFallidos({
         return Number(rows[0]?.total || 0);
     } catch (error) {
         if (!isSchemaError(error)) {
-            console.warn('No se pudo consultar intentos de login:', error.code || error.message);
+            console.warn('Login attempts could not be queried:', error.code || error.message);
         }
         return 0;
     }

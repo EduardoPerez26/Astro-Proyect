@@ -2,35 +2,35 @@
 import DashboardLayout from "../../layouts/DashboardLayout.astro";
 ---
 
-<DashboardLayout title="Conciliacion">
+<DashboardLayout title="Reconciliation">
     <div class="page-container">
         <!-- Header -->
         <div class="page-header">
             <div class="page-header-info">
-                <h1>Libro de conciliación de ventas</h1>
+                <h1>Sales reconciliation ledger</h1>
                 <p>
-                    Carga fuentes operativas, valida diferencias y prepara el
-                    asiento para revisión contable.
+                    Load operational sources, validate differences, and prepare
+                    the entry for accounting review.
                 </p>
             </div>
         </div>
 
-        <!-- Selector de Restaurante y Template -->
+        <!-- Restaurant and template selector -->
         <div class="conciliacion-config">
             <div class="section-heading">
                 <span class="step-badge">1</span>
                 <div>
-                    <h2>Seleccion</h2>
-                    <p>Define restaurante y template.</p>
+                    <h2>Selection</h2>
+                    <p>Define restaurant and template.</p>
                 </div>
             </div>
             <div class="config-card">
                 <div class="config-row">
                     <div class="form-group">
-                        <label for="selectRestaurante">Restaurante</label>
-                        <select id="selectRestaurante" class="form-select">
+                        <label for="selectRestaurant">Restaurant</label>
+                        <select id="selectRestaurant" class="form-select">
                             <option value=""
-                                >Selecciona un restaurante...</option
+                                >Select a restaurant...</option
                             >
                         </select>
                     </div>
@@ -42,7 +42,7 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
                             disabled
                         >
                             <option value=""
-                                >Selecciona primero un restaurante</option
+                                >Select a restaurant first</option
                             >
                         </select>
                     </div>
@@ -50,16 +50,16 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
             </div>
         </div>
 
-        <!-- Zona de Upload -->
+        <!-- Upload area -->
         <div class="upload-section" id="uploadSection">
             <div class="section-heading">
                 <span class="step-badge">2</span>
                 <div>
-                    <h2>Archivos</h2>
-                    <p>Los campos cambian segun el restaurante seleccionado.</p>
+                    <h2>Files</h2>
+                    <p>Fields change based on the selected restaurant.</p>
                 </div>
                 <span class="mode-badge" id="uploadModeBadge"
-                    >Selecciona restaurante</span
+                    >Select restaurant</span
                 >
             </div>
 
@@ -68,16 +68,16 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
                     <div class="upload-card-title">
                         <span>
                             <i class="fa-solid fa-file-excel"></i>
-                            Archivo principal
+                            Main file
                         </span>
                         <span class="upload-card-actions">
-                            <span class="upload-pill required">Requerido</span>
+                            <span class="upload-pill required">Required</span>
                             <button
                                 class="upload-remove-btn"
                                 id="removeSalesFile"
                                 type="button"
-                                title="Eliminar archivo principal"
-                                aria-label="Eliminar archivo principal"
+                                title="Remove main file"
+                                aria-label="Remove main file"
                                 hidden
                             >
                                 <i class="fa-solid fa-xmark"></i>
@@ -95,7 +95,7 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
                         id="salesDateFilter"
                         class="form-select upload-date-filter"
                     >
-                        <option value="">Todas las fechas</option>
+                        <option value="">All dates</option>
                     </select>
                 </div>
 
@@ -115,8 +115,8 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
                                 class="upload-remove-btn"
                                 id="removeSalesDetailFile"
                                 type="button"
-                                title="Eliminar Sales Detail Export"
-                                aria-label="Eliminar Sales Detail Export"
+                                title="Remove Sales Detail Export"
+                                aria-label="Remove Sales Detail Export"
                                 hidden
                             >
                                 <i class="fa-solid fa-xmark"></i>
@@ -134,7 +134,7 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
                         id="salesDetailDateFilter"
                         class="form-select upload-date-filter"
                     >
-                        <option value="">Todas las fechas</option>
+                        <option value="">All dates</option>
                     </select>
                 </div>
 
@@ -146,16 +146,16 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
                     <div class="upload-card-title">
                         <span>
                             <i class="fa-solid fa-credit-card"></i>
-                            Archivo EBT
+                            EBT file
                         </span>
                         <span class="upload-card-actions">
-                            <span class="upload-pill optional">Opcional</span>
+                            <span class="upload-pill optional">Optional</span>
                             <button
                                 class="upload-remove-btn"
                                 id="removeEbtFile"
                                 type="button"
-                                title="Eliminar archivo EBT"
-                                aria-label="Eliminar archivo EBT"
+                                title="Remove EBT file"
+                                aria-label="Remove EBT file"
                                 hidden
                             >
                                 <i class="fa-solid fa-xmark"></i>
@@ -165,16 +165,49 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
 
                     <input type="file" id="ebtFile" accept=".xlsx,.xls" />
 
+                    <div class="ebt-upload-tools">
+                        <button
+                            type="button"
+                            class="btn btn-secondary btn-sm"
+                            id="btnUploadEbtOnly"
+                        >
+                            <i class="fa-solid fa-cloud-arrow-up"></i>
+                            Save EBT
+                        </button>
+
+                        <button
+                            type="button"
+                            class="btn btn-outline btn-sm"
+                            id="btnRefreshEbtFiles"
+                            title="Refresh saved EBT files"
+                            aria-label="Refresh saved EBT files"
+                        >
+                            <i class="fa-solid fa-rotate"></i>
+                        </button>
+                    </div>
+
+                    <label class="ebt-saved-label" for="savedEbtFileSelect">
+                        Saved EBT files
+                    </label>
+
+                    <select
+                        id="savedEbtFileSelect"
+                        class="form-select ebt-saved-select"
+                        disabled
+                    >
+                        <option value="">Select a saved EBT file...</option>
+                    </select>
+
                     <select
                         id="ebtDateFilter"
                         class="form-select upload-date-filter"
                     >
-                        <option value="">Todas las fechas</option>
+                        <option value="">All dates</option>
                     </select>
                 </div>
             </div>
 
-            <!-- Archivo cargado -->
+            <!-- Loaded file -->
             <div class="file-loaded" id="fileLoaded" style="display: none;">
                 <div class="file-loaded-info">
                     <div class="file-loaded-icon">
@@ -182,7 +215,7 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
                     </div>
                     <div class="file-loaded-details">
                         <span class="file-loaded-name" id="fileName"
-                            >archivo.xlsx</span
+                            >file.xlsx</span
                         >
                         <span class="file-loaded-size" id="fileSize">0 KB</span>
                     </div>
@@ -193,19 +226,19 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
             </div>
         </div>
 
-        <!-- Tabla de Conciliacion -->
+        <!-- Reconciliation table -->
         <div
             class="conciliacion-results"
             id="resultsSection"
             style="display: none;"
         >
-            <!-- Resumen -->
+            <!-- Summary -->
             <div class="section-heading results-heading">
                 <span class="step-badge">3</span>
                 <div>
-                    <h2>Revision</h2>
+                    <h2>Review</h2>
                     <p>
-                        Revisa totales, filtra tiendas y exporta el resultado.
+                        Review totals, filter stores, and export the result.
                     </p>
                 </div>
             </div>
@@ -216,8 +249,8 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
                         <i class="fa-solid fa-list-check"></i>
                     </div>
                     <div class="summary-info">
-                        <span class="summary-value" id="totalConceptos">0</span>
-                        <span class="summary-label">Conceptos</span>
+                        <span class="summary-value" id="totalConcepts">0</span>
+                        <span class="summary-label">Concepts</span>
                     </div>
                 </div>
                 <div class="summary-card success">
@@ -226,7 +259,7 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
                     </div>
                     <div class="summary-info">
                         <span class="summary-value" id="conceptosOk">0</span>
-                        <span class="summary-label">Correctos</span>
+                        <span class="summary-label">Correct</span>
                     </div>
                 </div>
                 <div class="summary-card warning">
@@ -237,16 +270,22 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
                         <span class="summary-value" id="conceptosDiferencia"
                             >0</span
                         >
-                        <span class="summary-label">Con Diferencia</span>
+                        <span class="summary-label">With difference</span>
                     </div>
                 </div>
                 <div class="summary-card status is-clear" id="osStatusCard">
                     <div class="summary-icon">
-                        <i class="fa-solid fa-scale-balanced" id="osStatusIcon"></i>
+                        <i class="fa-solid fa-scale-balanced" id="osStatusIcon"
+                        ></i>
                     </div>
                     <div class="summary-info">
-                        <span class="summary-value summary-status-value" id="osDifferenceStatus">Sin diferencias</span>
-                        <span class="summary-label" id="osDifferenceMeta">O/S balanceado</span>
+                        <span
+                            class="summary-value summary-status-value"
+                            id="osDifferenceStatus">No differences</span
+                        >
+                        <span class="summary-label" id="osDifferenceMeta"
+                            >Balanced O/S</span
+                        >
                     </div>
                 </div>
                 <div class="summary-card danger">
@@ -257,7 +296,7 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
                         <span class="summary-value" id="totalDiferencia"
                             >$0.00</span
                         >
-                        <span class="summary-label">Total Diferencia</span>
+                        <span class="summary-label">Total difference</span>
                     </div>
                 </div>
             </div>
@@ -268,15 +307,18 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
                 data-state="pendiente"
             >
                 <div class="reconciliation-compare-icon">
-                    <i class="fa-solid fa-code-compare" id="conciliationComparisonIcon"></i>
+                    <i
+                        class="fa-solid fa-code-compare"
+                        id="conciliationComparisonIcon"></i>
                 </div>
                 <div class="reconciliation-compare-copy">
-                    <span>CONTROL DE CAMBIOS</span>
+                    <span>CHANGE CONTROL</span>
                     <strong id="conciliationComparisonTitle">
-                        Comparar con la última conciliación
+                        Compare with the latest reconciliation
                     </strong>
                     <p id="conciliationComparisonText">
-                        Busca una referencia del mismo restaurante y fecha antes de guardar.
+                        Find a reference for the same restaurant and date before
+                        saving.
                     </p>
                 </div>
                 <button
@@ -285,26 +327,26 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
                     id="btnCompararConciliacion"
                 >
                     <i class="fa-solid fa-magnifying-glass-chart"></i>
-                    Comparar ahora
+                    Compare now
                 </button>
             </section>
 
             <!-- FILTRO POR TIENDA Y POR NUM DE TIENDA -->
             <div class="filters-container">
                 <div class="form-group">
-                    <label>Tienda</label>
+                    <label>Store</label>
                     <select id="filterStore" class="form-select">
-                        <option value="">Todas las tiendas</option>
+                        <option value="">All stores</option>
                     </select>
                 </div>
 
                 <div class="form-group">
-                    <label>Nombre tienda</label>
+                    <label>Store name</label>
                     <input
                         type="text"
                         id="filterStoreName"
                         class="form-input"
-                        placeholder="Buscar sucursal..."
+                        placeholder="Search branch..."
                     />
                 </div>
             </div>
@@ -400,12 +442,19 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
             >
                 <div class="bk-tax-store-panel-copy">
                     <span>POPEYES</span>
-                    <strong>Tax Rate por tienda</strong>
-                    <small>El Tax Review usa rates locales; CDTFA se actualiza manualmente.</small>
+                    <strong>Tax Rate by store</strong>
+                    <small
+                        >El Tax Review usa rates locales; CDTFA se actualiza
+                        manualmente.</small
+                    >
                 </div>
-                <button class="btn btn-secondary" type="button" id="pyTaxOpenModal">
+                <button
+                    class="btn btn-secondary"
+                    type="button"
+                    id="pyTaxOpenModal"
+                >
                     <i class="fa-solid fa-store"></i>
-                    Administrar tiendas
+                    Manage stores
                 </button>
             </section>
 
@@ -418,23 +467,28 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
                     <header class="bk-tax-store-header">
                         <div>
                             <span>POPEYES</span>
-                            <h3 id="pyTaxStoreDialogTitle">Tiendas y tax rate</h3>
+                            <h3 id="pyTaxStoreDialogTitle">
+                                Stores and tax rate
+                            </h3>
                             <p>
-                                Administra el listado local de tiendas que usa la conciliacion.
-                                CDTFA se actualiza solo cuando presionas el boton de actualizar.
+                                Manage the local store list used by
+                                reconciliation. CDTFA updates only when
+                                you press refresh.
                             </p>
                         </div>
                         <div class="bk-tax-store-meta">
-                            <strong id="pyTaxStoreCount">0 tiendas configuradas</strong>
+                            <strong id="pyTaxStoreCount"
+                                >0 configured stores</strong
+                            >
                             <small id="pyTaxStoreStatus" data-type="info">
-                                Listo para trabajar con rates locales.
+                                Ready to work with local rates.
                             </small>
                         </div>
                         <button
                             type="button"
                             id="pyTaxCloseModal"
                             class="bk-tax-modal-close"
-                            aria-label="Cerrar catálogo de tiendas Popeyes"
+                            aria-label="Close Popeyes store catalog"
                         >
                             <i class="fa-solid fa-xmark"></i>
                         </button>
@@ -442,70 +496,129 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
 
                     <div class="bk-tax-store-form">
                         <div class="bk-tax-form-head">
-                            <strong>Datos de tienda</strong>
-                            <small id="pyTaxFormMode">Nueva tienda</small>
+                            <strong>Store details</strong>
+                            <small id="pyTaxFormMode">New store</small>
                         </div>
 
                         <div class="form-group">
-                            <label for="pyTaxStoreNumber">Tienda</label>
-                            <input id="pyTaxStoreNumber" class="form-input" type="text" placeholder="2902" />
+                            <label for="pyTaxStoreNumber">Store</label>
+                            <input
+                                id="pyTaxStoreNumber"
+                                class="form-input"
+                                type="text"
+                                placeholder="2902"
+                            />
                         </div>
 
                         <div class="form-group">
-                            <label for="pyTaxStoreAddress">Direccion</label>
-                            <input id="pyTaxStoreAddress" class="form-input" type="text" placeholder="Direccion" />
+                            <label for="pyTaxStoreAddress">Address</label>
+                            <input
+                                id="pyTaxStoreAddress"
+                                class="form-input"
+                                type="text"
+                                placeholder="Address"
+                            />
                         </div>
 
                         <div class="form-group">
-                            <label for="pyTaxStoreCity">Ciudad</label>
-                            <input id="pyTaxStoreCity" class="form-input" type="text" placeholder="Ciudad" />
+                            <label for="pyTaxStoreCity">City</label>
+                            <input
+                                id="pyTaxStoreCity"
+                                class="form-input"
+                                type="text"
+                                placeholder="City"
+                            />
                         </div>
 
                         <div class="form-group">
                             <label for="pyTaxStoreZip">Zip</label>
-                            <input id="pyTaxStoreZip" class="form-input" type="text" placeholder="95823" />
+                            <input
+                                id="pyTaxStoreZip"
+                                class="form-input"
+                                type="text"
+                                placeholder="95823"
+                            />
                         </div>
 
                         <div class="form-group bk-tax-coordinates">
-                            <label for="pyTaxStoreCoordinates">Coordenadas</label>
-                            <input id="pyTaxStoreCoordinates" class="form-input" type="text" placeholder="38.494835, -121.427995" />
+                            <label for="pyTaxStoreCoordinates"
+                                >Coordenadas</label
+                            >
+                            <input
+                                id="pyTaxStoreCoordinates"
+                                class="form-input"
+                                type="text"
+                                placeholder="38.494835, -121.427995"
+                            />
                         </div>
 
                         <div class="form-group">
                             <label for="pyTaxStoreRate">Tax Rate</label>
-                            <input id="pyTaxStoreRate" class="form-input" type="text" placeholder="7.75% o 0.0775" />
+                            <input
+                                id="pyTaxStoreRate"
+                                class="form-input"
+                                type="text"
+                                placeholder="7.75% o 0.0775"
+                            />
                         </div>
 
                         <div class="form-group">
-                            <label for="pyTaxStoreJurisdiction">Jurisdiccion</label>
-                            <input id="pyTaxStoreJurisdiction" class="form-input" type="text" placeholder="Opcional" />
+                            <label for="pyTaxStoreJurisdiction"
+                                >Jurisdiction</label
+                            >
+                            <input
+                                id="pyTaxStoreJurisdiction"
+                                class="form-input"
+                                type="text"
+                                placeholder="Optional"
+                            />
                         </div>
 
                         <div class="bk-tax-form-actions">
-                            <button class="btn btn-primary bk-tax-form-action" type="button" id="pyTaxSaveStore">
+                            <button
+                                class="btn btn-primary bk-tax-form-action"
+                                type="button"
+                                id="pyTaxSaveStore"
+                            >
                                 <i class="fa-solid fa-floppy-disk"></i>
-                                Guardar tienda
+                                Save store
                             </button>
 
-                            <button class="btn btn-secondary bk-tax-form-action" type="button" id="pyTaxClearStore">
-                                Cancelar
+                            <button
+                                class="btn btn-secondary bk-tax-form-action"
+                                type="button"
+                                id="pyTaxClearStore"
+                            >
+                                Cancel
                             </button>
                         </div>
                     </div>
 
                     <div class="bk-tax-store-toolbar">
-                        <button class="btn btn-primary bk-tax-add-store" type="button" id="pyTaxAddStore">
+                        <button
+                            class="btn btn-primary bk-tax-add-store"
+                            type="button"
+                            id="pyTaxAddStore"
+                        >
                             <i class="fa-solid fa-plus"></i>
-                            Agregar tienda
+                            Add store
                         </button>
 
-                        <button class="btn btn-secondary" type="button" id="pyTaxRefreshRates">
+                        <button
+                            class="btn btn-secondary"
+                            type="button"
+                            id="pyTaxRefreshRates"
+                        >
                             <i class="fa-solid fa-arrows-rotate"></i>
-                            Actualizar rates CDTFA
+                            Refresh CDTFA rates
                         </button>
 
-                        <button class="btn btn-danger" type="button" id="pyTaxResetStores">
-                            Restaurar catalogo
+                        <button
+                            class="btn btn-danger"
+                            type="button"
+                            id="pyTaxResetStores"
+                        >
+                            Restore catalog
                         </button>
                     </div>
 
@@ -513,13 +626,13 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
                         <table class="data-table">
                             <thead>
                                 <tr>
-                                    <th>Tienda</th>
-                                    <th>Ubicacion</th>
+                                    <th>Store</th>
+                                    <th>Location</th>
                                     <th>Zip</th>
                                     <th>Coordenadas</th>
                                     <th>Override</th>
                                     <th>Tax Rate</th>
-                                    <th>Acciones</th>
+                                    <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="pyTaxStoreBody"></tbody>
@@ -527,9 +640,16 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
                     </div>
 
                     <footer class="bk-tax-store-footer">
-                        <small>Los cambios se guardan en este navegador con localStorage.</small>
-                        <button class="btn btn-primary" type="button" id="pyTaxCloseFooter">
-                            Listo
+                        <small
+                            >Changes are saved in this browser with
+                            localStorage.</small
+                        >
+                        <button
+                            class="btn btn-primary"
+                            type="button"
+                            id="pyTaxCloseFooter"
+                        >
+                            Done
                         </button>
                     </footer>
                 </section>
@@ -542,12 +662,19 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
             >
                 <div class="bk-tax-store-panel-copy">
                     <span>TACO BELL</span>
-                    <strong>Tax Rate por tienda</strong>
-                    <small>CDTFA actualiza tiendas CA; otras tiendas usan rate manual/local.</small>
+                    <strong>Tax Rate by store</strong>
+                    <small
+                        >CDTFA updates CA stores; other stores use
+                        manual/local rates.</small
+                    >
                 </div>
-                <button class="btn btn-secondary" type="button" id="tbTaxOpenModal">
+                <button
+                    class="btn btn-secondary"
+                    type="button"
+                    id="tbTaxOpenModal"
+                >
                     <i class="fa-solid fa-store"></i>
-                    Administrar tiendas
+                    Manage stores
                 </button>
             </section>
 
@@ -560,23 +687,28 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
                     <header class="bk-tax-store-header">
                         <div>
                             <span>TACO BELL</span>
-                            <h3 id="tbTaxStoreDialogTitle">Tiendas y tax rate</h3>
+                            <h3 id="tbTaxStoreDialogTitle">
+                                Stores and tax rate
+                            </h3>
                             <p>
-                                Administra el listado local de tiendas que usa la conciliacion.
-                                CDTFA se actualiza solo cuando presionas el boton de actualizar.
+                                Manage the local store list used by
+                                reconciliation. CDTFA updates only when
+                                you press refresh.
                             </p>
                         </div>
                         <div class="bk-tax-store-meta">
-                            <strong id="tbTaxStoreCount">0 tiendas configuradas</strong>
+                            <strong id="tbTaxStoreCount"
+                                >0 configured stores</strong
+                            >
                             <small id="tbTaxStoreStatus" data-type="info">
-                                Listo para trabajar con rates locales.
+                                Ready to work with local rates.
                             </small>
                         </div>
                         <button
                             type="button"
                             id="tbTaxCloseModal"
                             class="bk-tax-modal-close"
-                            aria-label="Cerrar catálogo de tiendas Taco Bell"
+                            aria-label="Close Taco Bell store catalog"
                         >
                             <i class="fa-solid fa-xmark"></i>
                         </button>
@@ -584,75 +716,139 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
 
                     <div class="bk-tax-store-form">
                         <div class="bk-tax-form-head">
-                            <strong>Datos de tienda</strong>
-                            <small id="tbTaxFormMode">Nueva tienda</small>
+                            <strong>Store details</strong>
+                            <small id="tbTaxFormMode">New store</small>
                         </div>
 
                         <div class="form-group">
-                            <label for="tbTaxStoreNumber">Tienda</label>
-                            <input id="tbTaxStoreNumber" class="form-input" type="text" placeholder="28841" />
+                            <label for="tbTaxStoreNumber">Store</label>
+                            <input
+                                id="tbTaxStoreNumber"
+                                class="form-input"
+                                type="text"
+                                placeholder="28841"
+                            />
                         </div>
 
                         <div class="form-group">
-                            <label for="tbTaxStoreAddress">Direccion</label>
-                            <input id="tbTaxStoreAddress" class="form-input" type="text" placeholder="Direccion" />
+                            <label for="tbTaxStoreAddress">Address</label>
+                            <input
+                                id="tbTaxStoreAddress"
+                                class="form-input"
+                                type="text"
+                                placeholder="Address"
+                            />
                         </div>
 
                         <div class="form-group">
-                            <label for="tbTaxStoreCity">Ciudad</label>
-                            <input id="tbTaxStoreCity" class="form-input" type="text" placeholder="Ciudad" />
+                            <label for="tbTaxStoreCity">City</label>
+                            <input
+                                id="tbTaxStoreCity"
+                                class="form-input"
+                                type="text"
+                                placeholder="City"
+                            />
                         </div>
 
                         <div class="form-group">
-                            <label for="tbTaxStoreState">Estado</label>
-                            <input id="tbTaxStoreState" class="form-input" type="text" placeholder="CA" />
+                            <label for="tbTaxStoreState">Status</label>
+                            <input
+                                id="tbTaxStoreState"
+                                class="form-input"
+                                type="text"
+                                placeholder="CA"
+                            />
                         </div>
 
                         <div class="form-group">
                             <label for="tbTaxStoreZip">Zip</label>
-                            <input id="tbTaxStoreZip" class="form-input" type="text" placeholder="95688" />
+                            <input
+                                id="tbTaxStoreZip"
+                                class="form-input"
+                                type="text"
+                                placeholder="95688"
+                            />
                         </div>
 
                         <div class="form-group bk-tax-coordinates">
-                            <label for="tbTaxStoreCoordinates">Coordenadas</label>
-                            <input id="tbTaxStoreCoordinates" class="form-input" type="text" placeholder="38.363685, -121.968236" />
+                            <label for="tbTaxStoreCoordinates"
+                                >Coordenadas</label
+                            >
+                            <input
+                                id="tbTaxStoreCoordinates"
+                                class="form-input"
+                                type="text"
+                                placeholder="38.363685, -121.968236"
+                            />
                         </div>
 
                         <div class="form-group">
                             <label for="tbTaxStoreRate">Tax Rate</label>
-                            <input id="tbTaxStoreRate" class="form-input" type="text" placeholder="8.125% o 0.08125" />
+                            <input
+                                id="tbTaxStoreRate"
+                                class="form-input"
+                                type="text"
+                                placeholder="8.125% o 0.08125"
+                            />
                         </div>
 
                         <div class="form-group">
-                            <label for="tbTaxStoreJurisdiction">Jurisdiccion</label>
-                            <input id="tbTaxStoreJurisdiction" class="form-input" type="text" placeholder="Opcional" />
+                            <label for="tbTaxStoreJurisdiction"
+                                >Jurisdiction</label
+                            >
+                            <input
+                                id="tbTaxStoreJurisdiction"
+                                class="form-input"
+                                type="text"
+                                placeholder="Optional"
+                            />
                         </div>
 
                         <div class="bk-tax-form-actions">
-                            <button class="btn btn-primary bk-tax-form-action" type="button" id="tbTaxSaveStore">
+                            <button
+                                class="btn btn-primary bk-tax-form-action"
+                                type="button"
+                                id="tbTaxSaveStore"
+                            >
                                 <i class="fa-solid fa-floppy-disk"></i>
-                                Guardar tienda
+                                Save store
                             </button>
 
-                            <button class="btn btn-secondary bk-tax-form-action" type="button" id="tbTaxClearStore">
-                                Cancelar
+                            <button
+                                class="btn btn-secondary bk-tax-form-action"
+                                type="button"
+                                id="tbTaxClearStore"
+                            >
+                                Cancel
                             </button>
                         </div>
                     </div>
 
                     <div class="bk-tax-store-toolbar">
-                        <button class="btn btn-primary bk-tax-add-store" type="button" id="tbTaxAddStore">
+                        <button
+                            class="btn btn-primary bk-tax-add-store"
+                            type="button"
+                            id="tbTaxAddStore"
+                        >
                             <i class="fa-solid fa-plus"></i>
-                            Agregar tienda
+                            Add store
                         </button>
 
-                        <button class="btn btn-secondary" type="button" id="tbTaxRefreshRates">
+                        <button
+                            class="btn btn-secondary"
+                            type="button"
+                            id="tbTaxRefreshRates"
+                        >
                             <i class="fa-solid fa-arrows-rotate"></i>
-                            Actualizar rates CDTFA
+                            Refresh CDTFA rates
                         </button>
 
-                        <button class="btn btn-danger" type="button" id="tbTaxResetStores">
-                            Restaurar catalogo
+                        <button
+                            class="btn btn-danger"
+                            type="button"
+                            id="tbTaxResetStores"
+                        >
+                            Restore catalog
                         </button>
                     </div>
 
@@ -660,14 +856,14 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
                         <table class="data-table">
                             <thead>
                                 <tr>
-                                    <th>Tienda</th>
-                                    <th>Ubicacion</th>
-                                    <th>Estado</th>
+                                    <th>Store</th>
+                                    <th>Location</th>
+                                    <th>Status</th>
                                     <th>Zip</th>
                                     <th>Coordenadas</th>
                                     <th>Override</th>
                                     <th>Tax Rate</th>
-                                    <th>Acciones</th>
+                                    <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="tbTaxStoreBody"></tbody>
@@ -675,9 +871,16 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
                     </div>
 
                     <footer class="bk-tax-store-footer">
-                        <small>Los cambios se guardan en este navegador con localStorage.</small>
-                        <button class="btn btn-primary" type="button" id="tbTaxCloseFooter">
-                            Listo
+                        <small
+                            >Los cambios se guardan en este navegador con
+                            localStorage.</small
+                        >
+                        <button
+                            class="btn btn-primary"
+                            type="button"
+                            id="tbTaxCloseFooter"
+                        >
+                            Done
                         </button>
                     </footer>
                 </section>
@@ -690,12 +893,19 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
             >
                 <div class="bk-tax-store-panel-copy">
                     <span>BURGER KING</span>
-                    <strong>Tax Rate por tienda</strong>
-                    <small>La conciliación usa rates locales. CDTFA solo se actualiza manualmente.</small>
+                    <strong>Tax Rate by store</strong>
+                    <small
+                        >Reconciliation uses local rates. CDTFA updates only
+                        when refreshed manually.</small
+                    >
                 </div>
-                <button class="btn btn-secondary" type="button" id="bkTaxOpenModal">
+                <button
+                    class="btn btn-secondary"
+                    type="button"
+                    id="bkTaxOpenModal"
+                >
                     <i class="fa-solid fa-store"></i>
-                    Administrar tiendas
+                    Manage stores
                 </button>
             </section>
 
@@ -708,23 +918,28 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
                     <header class="bk-tax-store-header">
                         <div>
                             <span>BURGER KING</span>
-                            <h3 id="bkTaxStoreDialogTitle">Tiendas y tax rate</h3>
+                            <h3 id="bkTaxStoreDialogTitle">
+                                Stores and tax rate
+                            </h3>
                             <p>
-                                Administra el listado local de tiendas que usa la conciliacion.
-                                CDTFA se actualiza solo cuando presionas el boton de actualizar.
+                                Manage the local store list used by
+                                reconciliation. CDTFA updates only when
+                                you press refresh.
                             </p>
                         </div>
                         <div class="bk-tax-store-meta">
-                            <strong id="bkTaxStoreCount">0 tiendas configuradas</strong>
+                            <strong id="bkTaxStoreCount"
+                                >0 configured stores</strong
+                            >
                             <small id="bkTaxStoreStatus" data-type="info">
-                                Listo para trabajar con rates locales.
+                                Ready to work with local rates.
                             </small>
                         </div>
                         <button
                             type="button"
                             id="bkTaxCloseModal"
                             class="bk-tax-modal-close"
-                            aria-label="Cerrar catálogo de tiendas"
+                            aria-label="Close store catalog"
                         >
                             <i class="fa-solid fa-xmark"></i>
                         </button>
@@ -732,12 +947,12 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
 
                     <div class="bk-tax-store-form">
                         <div class="bk-tax-form-head">
-                            <strong>Datos de tienda</strong>
-                            <small id="bkTaxFormMode">Nueva tienda</small>
+                            <strong>Store details</strong>
+                            <small id="bkTaxFormMode">New store</small>
                         </div>
 
                         <div class="form-group">
-                            <label for="bkTaxStoreNumber">Tienda</label>
+                            <label for="bkTaxStoreNumber">Store</label>
                             <input
                                 id="bkTaxStoreNumber"
                                 class="form-input"
@@ -747,22 +962,22 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
                         </div>
 
                         <div class="form-group">
-                            <label for="bkTaxStoreAddress">Direccion</label>
+                            <label for="bkTaxStoreAddress">Address</label>
                             <input
                                 id="bkTaxStoreAddress"
                                 class="form-input"
                                 type="text"
-                                placeholder="Direccion"
+                                placeholder="Address"
                             />
                         </div>
 
                         <div class="form-group">
-                            <label for="bkTaxStoreCity">Ciudad</label>
+                            <label for="bkTaxStoreCity">City</label>
                             <input
                                 id="bkTaxStoreCity"
                                 class="form-input"
                                 type="text"
-                                placeholder="Ciudad"
+                                placeholder="City"
                             />
                         </div>
 
@@ -777,7 +992,9 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
                         </div>
 
                         <div class="form-group bk-tax-coordinates">
-                            <label for="bkTaxStoreCoordinates">Coordenadas</label>
+                            <label for="bkTaxStoreCoordinates"
+                                >Coordenadas</label
+                            >
                             <input
                                 id="bkTaxStoreCoordinates"
                                 class="form-input"
@@ -797,40 +1014,62 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
                         </div>
 
                         <div class="form-group">
-                            <label for="bkTaxStoreJurisdiction">Jurisdiccion</label>
+                            <label for="bkTaxStoreJurisdiction"
+                                >Jurisdiction</label
+                            >
                             <input
                                 id="bkTaxStoreJurisdiction"
                                 class="form-input"
                                 type="text"
-                                placeholder="Opcional"
+                                placeholder="Optional"
                             />
                         </div>
 
                         <div class="bk-tax-form-actions">
-                            <button class="btn btn-primary bk-tax-form-action" type="button" id="bkTaxSaveStore">
+                            <button
+                                class="btn btn-primary bk-tax-form-action"
+                                type="button"
+                                id="bkTaxSaveStore"
+                            >
                                 <i class="fa-solid fa-floppy-disk"></i>
-                                Guardar tienda
+                                Save store
                             </button>
 
-                            <button class="btn btn-secondary bk-tax-form-action" type="button" id="bkTaxClearStore">
-                                Cancelar
+                            <button
+                                class="btn btn-secondary bk-tax-form-action"
+                                type="button"
+                                id="bkTaxClearStore"
+                            >
+                                Cancel
                             </button>
                         </div>
                     </div>
 
                     <div class="bk-tax-store-toolbar">
-                        <button class="btn btn-primary bk-tax-add-store" type="button" id="bkTaxAddStore">
+                        <button
+                            class="btn btn-primary bk-tax-add-store"
+                            type="button"
+                            id="bkTaxAddStore"
+                        >
                             <i class="fa-solid fa-plus"></i>
-                            Agregar tienda
+                            Add store
                         </button>
 
-                        <button class="btn btn-secondary" type="button" id="bkTaxRefreshRates">
+                        <button
+                            class="btn btn-secondary"
+                            type="button"
+                            id="bkTaxRefreshRates"
+                        >
                             <i class="fa-solid fa-arrows-rotate"></i>
-                            Actualizar rates CDTFA
+                            Refresh CDTFA rates
                         </button>
 
-                        <button class="btn btn-danger" type="button" id="bkTaxResetStores">
-                            Restaurar catalogo
+                        <button
+                            class="btn btn-danger"
+                            type="button"
+                            id="bkTaxResetStores"
+                        >
+                            Restore catalog
                         </button>
                     </div>
 
@@ -838,13 +1077,13 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
                         <table class="data-table">
                             <thead>
                                 <tr>
-                                    <th>Tienda</th>
-                                    <th>Ubicacion</th>
+                                    <th>Store</th>
+                                    <th>Location</th>
                                     <th>Zip</th>
                                     <th>Coordenadas</th>
                                     <th>Override</th>
                                     <th>Tax Rate</th>
-                                    <th>Acciones</th>
+                                    <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="bkTaxStoreBody"></tbody>
@@ -852,23 +1091,30 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
                     </div>
 
                     <footer class="bk-tax-store-footer">
-                        <small>Los cambios se guardan en este navegador con localStorage.</small>
-                        <button class="btn btn-primary" type="button" id="bkTaxCloseFooter">
-                            Listo
+                        <small
+                            >Changes are saved in this browser with
+                            localStorage.</small
+                        >
+                        <button
+                            class="btn btn-primary"
+                            type="button"
+                            id="bkTaxCloseFooter"
+                        >
+                            Done
                         </button>
                     </footer>
                 </section>
             </dialog>
 
-            <!-- Tabla -->
+            <!-- Table -->
             <div class="table-container">
                 <div class="table-header">
-                    <h3>Detalle de Conciliacion</h3>
+                    <h3>Reconciliation detail</h3>
                 </div>
                 <div class="table-responsive">
                     <table class="data-table conciliacion-table">
                         <thead id="conciliacionTableHead">
-                            <!-- JS generará las columnas -->
+                            <!-- JS generates the columns -->
                         </thead>
 
                         <tbody id="conciliacionBody"></tbody>
@@ -881,11 +1127,11 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
                 <div class="conciliacion-actions">
                     <button class="btn btn-secondary" id="btnExportCsv">
                         <i class="fa-solid fa-file-csv"></i>
-                        Exportar CSV Intacct
+                        Export Intacct CSV
                     </button>
-                    <button class="btn btn-primary" id="btnGuardar">
+                    <button class="btn btn-primary" id="btnSave">
                         <i class="fa-solid fa-floppy-disk"></i>
-                        Guardar conciliacion
+                        Save reconciliation
                     </button>
                 </div>
             </div>
@@ -899,15 +1145,17 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
             <section class="file-comparison-window">
                 <header class="file-comparison-window-header">
                     <div>
-                        <span>CONTROL DE CONCILIACIONES</span>
-                        <h2 id="fileComparisonTitle">Comparación contable</h2>
-                        <p>Revisa los montos guardados y los nuevos antes de continuar.</p>
+                        <span>RECONCILIATION CONTROL</span>
+                        <h2 id="fileComparisonTitle">Accounting comparison</h2>
+                        <p>
+                            Review saved and new amounts before continuing.
+                        </p>
                     </div>
                     <button
                         type="button"
                         id="fileComparisonClose"
                         class="file-comparison-close"
-                        aria-label="Cerrar comparación"
+                        aria-label="Close comparison"
                     >
                         <i class="fa-solid fa-xmark"></i>
                     </button>
@@ -916,12 +1164,13 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
                 <div
                     id="fileComparisonContent"
                     class="file-comparison-window-content"
-                ></div>
+                >
+                </div>
 
                 <footer class="file-comparison-window-footer">
                     <p id="fileComparisonHelpText">
                         <i class="fa-solid fa-circle-info"></i>
-                        Esta consulta no modifica ni reemplaza archivos.
+                        This check does not modify or replace files.
                     </p>
                     <div>
                         <button
@@ -929,14 +1178,14 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
                             id="fileComparisonCancel"
                             class="btn btn-secondary"
                         >
-                            Elegir otro archivo
+                            Choose another file
                         </button>
                         <button
                             type="button"
                             id="fileComparisonConfirm"
                             class="btn btn-primary"
                         >
-                            Usar este archivo
+                            Use this file
                         </button>
                     </div>
                 </footer>
@@ -965,70 +1214,70 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
 
                 const configs = [
                     {
-                        dialogId: 'popeyesTaxStoreDialog',
-                        addId: 'pyTaxAddStore',
-                        saveId: 'pyTaxSaveStore',
-                        clearId: 'pyTaxClearStore',
-                        numberId: 'pyTaxStoreNumber',
-                        formModeId: 'pyTaxFormMode',
-                        editSelector: '[data-py-tax-edit]',
-                        editDataset: 'pyTaxEdit',
-                        clearFn: 'limpiarFormularioTiendaTaxPopeyes',
-                        loadFn: 'cargarFormularioTiendaTaxPopeyes',
-                        readFn: 'leerFormularioTiendaTaxPopeyes',
-                        upsertFn: 'upsertTiendaTaxPopeyes',
-                        renderFn: 'renderTiendasTaxPopeyes',
-                        statusFn: 'mostrarEstadoTaxPopeyes',
-                        recalcFn: 'recalcularTaxReviewPopeyesSiAplica'
+                        dialogId: "popeyesTaxStoreDialog",
+                        addId: "pyTaxAddStore",
+                        saveId: "pyTaxSaveStore",
+                        clearId: "pyTaxClearStore",
+                        numberId: "pyTaxStoreNumber",
+                        formModeId: "pyTaxFormMode",
+                        editSelector: "[data-py-tax-edit]",
+                        editDataset: "pyTaxEdit",
+                        clearFn: "limpiarFormularioStoreTaxPopeyes",
+                        loadFn: "cargarFormularioStoreTaxPopeyes",
+                        readFn: "leerFormularioStoreTaxPopeyes",
+                        upsertFn: "upsertStoreTaxPopeyes",
+                        renderFn: "renderStoresTaxPopeyes",
+                        statusFn: "mostrarStatusTaxPopeyes",
+                        recalcFn: "recalcularTaxReviewPopeyesSiAplica",
                     },
                     {
-                        dialogId: 'tacoBellTaxStoreDialog',
-                        addId: 'tbTaxAddStore',
-                        saveId: 'tbTaxSaveStore',
-                        clearId: 'tbTaxClearStore',
-                        numberId: 'tbTaxStoreNumber',
-                        formModeId: 'tbTaxFormMode',
-                        editSelector: '[data-tb-tax-edit]',
-                        editDataset: 'tbTaxEdit',
-                        clearFn: 'limpiarFormularioTiendaTaxTacoBell',
-                        loadFn: 'cargarFormularioTiendaTaxTacoBell',
-                        readFn: 'leerFormularioTiendaTaxTacoBell',
-                        upsertFn: 'upsertTiendaTaxTacoBell',
-                        renderFn: 'renderTiendasTaxTacoBell',
-                        statusFn: 'mostrarEstadoTaxTacoBell',
-                        recalcFn: 'recalcularTaxReviewTacoBellSiAplica'
+                        dialogId: "tacoBellTaxStoreDialog",
+                        addId: "tbTaxAddStore",
+                        saveId: "tbTaxSaveStore",
+                        clearId: "tbTaxClearStore",
+                        numberId: "tbTaxStoreNumber",
+                        formModeId: "tbTaxFormMode",
+                        editSelector: "[data-tb-tax-edit]",
+                        editDataset: "tbTaxEdit",
+                        clearFn: "limpiarFormularioStoreTaxTacoBell",
+                        loadFn: "cargarFormularioStoreTaxTacoBell",
+                        readFn: "leerFormularioStoreTaxTacoBell",
+                        upsertFn: "upsertStoreTaxTacoBell",
+                        renderFn: "renderStoresTaxTacoBell",
+                        statusFn: "mostrarStatusTaxTacoBell",
+                        recalcFn: "recalcularTaxReviewTacoBellSiAplica",
                     },
                     {
-                        dialogId: 'burgerKingTaxStoreDialog',
-                        addId: 'bkTaxAddStore',
-                        saveId: 'bkTaxSaveStore',
-                        clearId: 'bkTaxClearStore',
-                        numberId: 'bkTaxStoreNumber',
-                        formModeId: 'bkTaxFormMode',
-                        editSelector: '[data-bk-tax-edit]',
-                        editDataset: 'bkTaxEdit',
-                        clearFn: 'limpiarFormularioTiendaTaxBurgerKing',
-                        loadFn: 'cargarFormularioTiendaTaxBurgerKing',
-                        readFn: 'leerFormularioTiendaTaxBurgerKing',
-                        upsertFn: 'upsertTiendaTaxBurgerKing',
-                        renderFn: 'renderTiendasTaxBurgerKing',
-                        statusFn: 'mostrarEstadoTaxBurgerKing'
-                    }
+                        dialogId: "burgerKingTaxStoreDialog",
+                        addId: "bkTaxAddStore",
+                        saveId: "bkTaxSaveStore",
+                        clearId: "bkTaxClearStore",
+                        numberId: "bkTaxStoreNumber",
+                        formModeId: "bkTaxFormMode",
+                        editSelector: "[data-bk-tax-edit]",
+                        editDataset: "bkTaxEdit",
+                        clearFn: "limpiarFormularioStoreTaxBurgerKing",
+                        loadFn: "cargarFormularioStoreTaxBurgerKing",
+                        readFn: "leerFormularioStoreTaxBurgerKing",
+                        upsertFn: "upsertStoreTaxBurgerKing",
+                        renderFn: "renderStoresTaxBurgerKing",
+                        statusFn: "mostrarStatusTaxBurgerKing",
+                    },
                 ];
 
                 const callTaxFn = (name, ...args) => {
                     const fn = window[name];
-                    return typeof fn === 'function' ? fn(...args) : undefined;
+                    return typeof fn === "function" ? fn(...args) : undefined;
                 };
 
                 const setTaxFormOpen = (config, isOpen) => {
                     const dialog = document.getElementById(config.dialogId);
-                    const form = dialog?.querySelector('.bk-tax-store-form');
+                    const form = dialog?.querySelector(".bk-tax-store-form");
 
-                    dialog?.classList.toggle('is-form-open', isOpen);
+                    dialog?.classList.toggle("is-form-open", isOpen);
 
                     if (form) {
-                        form.style.display = isOpen ? 'grid' : '';
+                        form.style.display = isOpen ? "grid" : "";
                     }
 
                     if (isOpen) {
@@ -1046,98 +1295,123 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
                     }
                 };
 
-                document.addEventListener('click', event => {
-                    const target =
-                        event.target instanceof Element
-                            ? event.target
-                            : null;
+                document.addEventListener(
+                    "click",
+                    (event) => {
+                        const target =
+                            event.target instanceof Element
+                                ? event.target
+                                : null;
 
-                    if (!target) return;
+                        if (!target) return;
 
-                    for (const config of configs) {
-                        const addButton = target.closest(`#${config.addId}`);
-                        const saveButton = target.closest(`#${config.saveId}`);
-                        const clearButton = target.closest(`#${config.clearId}`);
-                        const editButton = target.closest(config.editSelector);
-
-                        if (!addButton && !saveButton && !clearButton && !editButton) {
-                            continue;
-                        }
-
-                        event.preventDefault();
-                        event.stopPropagation();
-                        event.stopImmediatePropagation();
-
-                        if (addButton) {
-                            callTaxFn(config.clearFn);
-                            setTaxFormMode(config, 'Nueva tienda');
-                            setTaxFormOpen(config, true);
-                            callTaxFn(
-                                config.statusFn,
-                                'Captura los datos de la tienda nueva.'
+                        for (const config of configs) {
+                            const addButton = target.closest(
+                                `#${config.addId}`,
                             );
-                            return;
-                        }
-
-                        if (editButton) {
-                            const store = editButton.dataset[config.editDataset];
-                            callTaxFn(
-                                config.loadFn,
-                                store
+                            const saveButton = target.closest(
+                                `#${config.saveId}`,
                             );
-                            setTaxFormMode(config, `Editando tienda ${store}`);
-                            setTaxFormOpen(config, true);
-                            callTaxFn(
-                                config.statusFn,
-                                'Editando tienda seleccionada.'
+                            const clearButton = target.closest(
+                                `#${config.clearId}`,
                             );
-                            return;
-                        }
+                            const editButton = target.closest(
+                                config.editSelector,
+                            );
 
-                        if (clearButton) {
-                            callTaxFn(config.clearFn);
-                            setTaxFormMode(config, 'Nueva tienda');
-                            setTaxFormOpen(config, false);
-                            callTaxFn(config.statusFn, 'Edicion cancelada.');
-                            return;
-                        }
-
-                        if (saveButton) {
-                            try {
-                                const storeData = callTaxFn(config.readFn);
-                                callTaxFn(config.upsertFn, storeData);
-                                callTaxFn(config.renderFn);
-                                callTaxFn(config.recalcFn);
-                                callTaxFn(
-                                    config.statusFn,
-                                    'Tienda guardada correctamente.',
-                                    'success'
-                                );
-                                callTaxFn(config.clearFn);
-                                setTaxFormMode(config, 'Nueva tienda');
-                                setTaxFormOpen(config, false);
-                            } catch (error) {
-                                callTaxFn(config.statusFn, error.message, 'error');
-
-                                if (window.Swal) {
-                                    Swal.fire(
-                                        'Revisa la tienda',
-                                        error.message,
-                                        'warning'
-                                    );
-                                }
+                            if (
+                                !addButton &&
+                                !saveButton &&
+                                !clearButton &&
+                                !editButton
+                            ) {
+                                continue;
                             }
 
-                            return;
+                            event.preventDefault();
+                            event.stopPropagation();
+                            event.stopImmediatePropagation();
+
+                            if (addButton) {
+                                callTaxFn(config.clearFn);
+                                setTaxFormMode(config, "New store");
+                                setTaxFormOpen(config, true);
+                                callTaxFn(
+                                    config.statusFn,
+                                    "Capture the new store details.",
+                                );
+                                return;
+                            }
+
+                            if (editButton) {
+                                const store =
+                                    editButton.dataset[config.editDataset];
+                                callTaxFn(config.loadFn, store);
+                                setTaxFormMode(
+                                    config,
+                                    `Editing store ${store}`,
+                                );
+                                setTaxFormOpen(config, true);
+                                callTaxFn(
+                                    config.statusFn,
+                                    "Editing the selected store.",
+                                );
+                                return;
+                            }
+
+                            if (clearButton) {
+                                callTaxFn(config.clearFn);
+                                setTaxFormMode(config, "New store");
+                                setTaxFormOpen(config, false);
+                                callTaxFn(
+                                    config.statusFn,
+                                    "Edit cancelled.",
+                                );
+                                return;
+                            }
+
+                            if (saveButton) {
+                                try {
+                                    const storeData = callTaxFn(config.readFn);
+                                    callTaxFn(config.upsertFn, storeData);
+                                    callTaxFn(config.renderFn);
+                                    callTaxFn(config.recalcFn);
+                                    callTaxFn(
+                                        config.statusFn,
+                                        "Store saved successfully.",
+                                        "success",
+                                    );
+                                    callTaxFn(config.clearFn);
+                                    setTaxFormMode(config, "New store");
+                                    setTaxFormOpen(config, false);
+                                } catch (error) {
+                                    callTaxFn(
+                                        config.statusFn,
+                                        error.message,
+                                        "error",
+                                    );
+
+                                    if (window.Swal) {
+                                        Swal.fire(
+                                            "Review the store",
+                                            error.message,
+                                            "warning",
+                                        );
+                                    }
+                                }
+
+                                return;
+                            }
                         }
-                    }
-                }, true);
+                    },
+                    true,
+                );
             })();
         </script>
     </div>
 
     <style>
-        /* Configuracion de conciliacion */
+        /* Reconciliation configuration */
         .conciliacion-config {
             margin-bottom: 24px;
         }
@@ -1375,11 +1649,13 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
         }
 
         .summary-card.status {
-            transition: border-color .2s ease, background .2s ease;
+            transition:
+                border-color 0.2s ease,
+                background 0.2s ease;
         }
 
         .summary-card.status.is-clear {
-            border-color: rgba(21, 128, 61, .22);
+            border-color: rgba(21, 128, 61, 0.22);
             background: linear-gradient(180deg, #fff 0%, #f5fcf7 100%);
         }
 
@@ -1389,7 +1665,7 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
         }
 
         .summary-card.status.has-difference {
-            border-color: rgba(185, 28, 28, .28);
+            border-color: rgba(185, 28, 28, 0.28);
             background: linear-gradient(180deg, #fff 0%, #fff5f5 100%);
         }
 
@@ -1421,7 +1697,7 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
             margin-top: 4px;
         }
 
-        /* Conciliacion Table */
+        /* Reconciliation table */
         .conciliacion-table td {
             padding: 14px 16px;
         }
@@ -1452,12 +1728,14 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
             border-bottom-color: #fecaca;
         }
 
-        .conciliacion-table :global(tbody tr.os-row-difference > td:first-child) {
+        .conciliacion-table
+            :global(tbody tr.os-row-difference > td:first-child) {
             box-shadow: inset 4px 0 0 #dc2626;
             font-weight: 800;
         }
 
-        .conciliacion-table :global(tbody tr.os-row-difference > td.os-difference) {
+        .conciliacion-table
+            :global(tbody tr.os-row-difference > td.os-difference) {
             color: #991b1b !important;
             background: #fee2e2 !important;
             box-shadow: inset 3px 0 0 #dc2626;
@@ -1472,17 +1750,17 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
         }
 
         .valor-excel {
-            font-family: "SF Mono", "Consolas", monospace;
+            font-family: "Inter", sans-serif;
             font-weight: 500;
         }
 
         .valor-esperado {
-            font-family: "SF Mono", "Consolas", monospace;
+            font-family: "Inter", sans-serif;
             color: var(--gray-600);
         }
 
         .valor-diferencia {
-            font-family: "SF Mono", "Consolas", monospace;
+            font-family: "Inter", sans-serif;
             font-weight: 600;
         }
 
@@ -1615,7 +1893,8 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
             background: #f5fbf7;
         }
 
-        .reconciliation-compare-panel[data-state="igual"] .reconciliation-compare-icon {
+        .reconciliation-compare-panel[data-state="igual"]
+            .reconciliation-compare-icon {
             background: #dcf4e5;
             color: #147644;
         }
@@ -1626,7 +1905,8 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
             background: #fff8f8;
         }
 
-        .reconciliation-compare-panel[data-state="cambios"] .reconciliation-compare-icon {
+        .reconciliation-compare-panel[data-state="cambios"]
+            .reconciliation-compare-icon {
             background: #fee2e2;
             color: #b4232f;
         }
@@ -1637,7 +1917,8 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
             background: #fff8f8;
         }
 
-        .reconciliation-compare-panel[data-state="error"] .reconciliation-compare-icon {
+        .reconciliation-compare-panel[data-state="error"]
+            .reconciliation-compare-icon {
             background: #fee2e2;
             color: #b4232f;
         }
@@ -1647,7 +1928,8 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
             background: #fffaf1;
         }
 
-        .reconciliation-compare-panel[data-state="primera"] .reconciliation-compare-icon {
+        .reconciliation-compare-panel[data-state="primera"]
+            .reconciliation-compare-icon {
             background: #fdf0d4;
             color: #925d12;
         }
@@ -1847,6 +2129,49 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
             width: 100%;
         }
 
+        /* INICIO CAMBIO EBT INDEPENDIENTE */
+
+        .ebt-upload-tools{
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .ebt-upload-tools .btn {
+            min-height: 36px;
+            justify-content: center;
+            white-space: nowrap;
+        }
+
+        .ebt-saved-label {
+            display: block;
+            margin-top: 10px;
+            color: var(--gray-600);
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: .04em;
+            text-transform: uppercase;
+        }
+
+        .ebt-saved-select {
+            margin-top: 6px;
+            width: 100%;
+        }
+        
+        @media (max-width: 720px){
+            .ebt-upload-tools{
+                grid-template-columns: 1fr;
+            }
+
+            .ebt-upload-tools .btn {
+                width: 100%;
+            }
+        }
+
+        /* FIN CAMBIO EBT INDEPENDIENTE */
+
+
         .upload-status {
             min-height: 18px;
             margin-top: 10px;
@@ -1931,58 +2256,67 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
         }
 
         .file-comparison-dialog {
-    position: fixed;
-    inset: 0;
-    margin: auto;
+            position: fixed;
+            inset: 0;
+            margin: auto;
 
-    width: min(860px, calc(100vw - 40px));
-    max-width: none;
-    max-height: calc(100vh - 40px);
+            width: min(860px, calc(100vw - 40px));
+            max-width: none;
+            max-height: calc(100vh - 40px);
 
-    padding: 0;
-    overflow: hidden;
+            padding: 0;
+            overflow: hidden;
 
-    border: 1px solid #cbd8e5;
-    border-top: 5px solid #102f4a;
-    border-radius: 12px;
+            border: 1px solid #cbd8e5;
+            border-top: 5px solid #102f4a;
+            border-radius: 12px;
 
-    background: #fff;
-    box-shadow: 0 30px 90px -42px rgba(7, 27, 44, .74);
-}
+            background: #fff;
+            box-shadow: 0 30px 90px -42px rgba(7, 27, 44, 0.74);
+        }
 
         .file-comparison-dialog[data-size="compacto"] {
             width: min(660px, calc(100vw - 40px));
         }
 
-        .file-comparison-dialog[data-size="compacto"] .file-comparison-window-header {
+        .file-comparison-dialog[data-size="compacto"]
+            .file-comparison-window-header {
             padding: 16px 20px 14px;
         }
 
-        .file-comparison-dialog[data-size="compacto"] .file-comparison-window-header h2 {
+        .file-comparison-dialog[data-size="compacto"]
+            .file-comparison-window-header
+            h2 {
             font-size: 23px;
         }
 
-        .file-comparison-dialog[data-size="compacto"] .file-comparison-window-header p {
+        .file-comparison-dialog[data-size="compacto"]
+            .file-comparison-window-header
+            p {
             font-size: 11px;
         }
 
-        .file-comparison-dialog[data-size="compacto"] .file-comparison-window-content {
+        .file-comparison-dialog[data-size="compacto"]
+            .file-comparison-window-content {
             padding: 18px 20px 12px;
         }
 
-        .file-comparison-dialog[data-size="compacto"] .file-comparison-window-footer {
+        .file-comparison-dialog[data-size="compacto"]
+            .file-comparison-window-footer {
             justify-content: flex-end;
             padding: 12px 20px 18px;
             border-top: 0;
             background: #fff;
         }
 
-        .file-comparison-dialog[data-size="compacto"] .file-comparison-window-footer > p {
+        .file-comparison-dialog[data-size="compacto"]
+            .file-comparison-window-footer
+            > p {
             display: none;
         }
 
         .file-comparison-dialog::backdrop {
-            background: rgba(8, 27, 44, .64);
+            background: rgba(8, 27, 44, 0.64);
             backdrop-filter: blur(5px);
         }
 
@@ -2007,13 +2341,13 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
             color: #2c6b9e;
             font-size: 10px;
             font-weight: 900;
-            letter-spacing: .12em;
+            letter-spacing: 0.12em;
         }
 
         .file-comparison-window-header h2 {
             margin: 3px 0 2px;
             color: #102a43;
-            font-family: 'Source Serif 4', Georgia, serif;
+            font-family: "Inter", sans-serif;
             font-size: 25px;
             line-height: 1.05;
         }
@@ -2094,7 +2428,7 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
             color: #fff;
             font-size: 9px;
             font-weight: 900;
-            letter-spacing: .08em;
+            letter-spacing: 0.08em;
         }
 
         :global(.file-comparison-result strong) {
@@ -2111,21 +2445,34 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
             font-size: 12px;
         }
 
-        :global(.file-comparison-view[data-result="igual"] .file-comparison-result) {
+        :global(
+            .file-comparison-view[data-result="igual"] .file-comparison-result
+        ) {
             border-color: #b8dec7;
             background: #f2fbf5;
         }
 
-        :global(.file-comparison-view[data-result="igual"] .file-comparison-result span) {
+        :global(
+            .file-comparison-view[data-result="igual"]
+                .file-comparison-result
+                span
+        ) {
             background: #166534;
         }
 
-        :global(.file-comparison-view[data-result="actualizado"] .file-comparison-result) {
+        :global(
+            .file-comparison-view[data-result="actualizado"]
+                .file-comparison-result
+        ) {
             border-color: #efcf9d;
             background: #fff9ed;
         }
 
-        :global(.file-comparison-view[data-result="actualizado"] .file-comparison-result span) {
+        :global(
+            .file-comparison-view[data-result="actualizado"]
+                .file-comparison-result
+                span
+        ) {
             background: #92400e;
         }
 
@@ -2171,7 +2518,7 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
             color: #60758a;
             font-size: 10px;
             font-weight: 900;
-            letter-spacing: .07em;
+            letter-spacing: 0.07em;
             text-transform: uppercase;
         }
 
@@ -2218,7 +2565,7 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
         :global(.file-compare-card dd) {
             margin: 2px 0 0;
             color: #102a43;
-            font-family: "SF Mono", Consolas, monospace;
+            font-family: "Inter", sans-serif;
             font-size: 14px;
             font-weight: 800;
         }
@@ -2254,7 +2601,7 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
 
         :global(.file-compare-change strong) {
             color: #243b53;
-            font-family: "SF Mono", Consolas, monospace;
+            font-family: "Inter", sans-serif;
             text-align: right;
         }
 
@@ -2302,7 +2649,7 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
 
         :global(.reconciliation-comparison-summary strong) {
             color: #102a43;
-            font-family: "SF Mono", Consolas, monospace;
+            font-family: "Inter", sans-serif;
             font-size: 18px;
         }
 
@@ -2311,7 +2658,7 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
             color: #60758a;
             font-size: 9px;
             font-weight: 800;
-            letter-spacing: .04em;
+            letter-spacing: 0.04em;
             text-transform: uppercase;
         }
 
@@ -2433,7 +2780,10 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
 
         :global(.reconciliation-reading-guide) {
             display: grid;
-            grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr);
+            grid-template-columns: minmax(0, 1fr) auto minmax(
+                    0,
+                    1fr
+                ) auto minmax(0, 1fr);
             align-items: center;
             gap: 9px;
             margin-bottom: 12px;
@@ -2451,7 +2801,7 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
             color: #173f64;
             font-size: 9px;
             font-weight: 900;
-            letter-spacing: .06em;
+            letter-spacing: 0.06em;
         }
 
         :global(.reconciliation-reading-guide p) {
@@ -2489,7 +2839,7 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
             background: #163b59;
             color: #fff;
             font-size: 10px;
-            letter-spacing: .04em;
+            letter-spacing: 0.04em;
             text-align: left;
             text-transform: uppercase;
         }
@@ -2501,7 +2851,7 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
         }
 
         :global(.reconciliation-diff-table td:nth-child(n + 3)) {
-            font-family: "SF Mono", Consolas, monospace;
+            font-family: "Inter", sans-serif;
             text-align: right;
         }
 
@@ -2545,7 +2895,9 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
                 grid-template-columns: 1fr 1fr;
             }
 
-            .file-comparison-dialog[data-size="compacto"] .file-comparison-window-footer > div {
+            .file-comparison-dialog[data-size="compacto"]
+                .file-comparison-window-footer
+                > div {
                 grid-template-columns: 1fr;
                 width: 100%;
             }
@@ -2693,9 +3045,9 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
             white-space: nowrap;
             padding: 14px 16px;
             font-weight: 700;
-            border-right: 1px solid rgba(255, 255, 255, .09);
+            border-right: 1px solid rgba(255, 255, 255, 0.09);
             border-bottom: 2px solid #081f33;
-            letter-spacing: .035em;
+            letter-spacing: 0.035em;
             text-transform: uppercase;
             font-size: 11px;
         }
@@ -2837,7 +3189,9 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
         }
 
         /* Densidad y jerarquia de sistema contable */
-        .conciliacion-config { margin-bottom: 18px; }
+        .conciliacion-config {
+            margin-bottom: 18px;
+        }
         .section-heading {
             gap: 9px;
             margin-bottom: 8px;
@@ -2876,18 +3230,25 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
             box-shadow: none;
         }
 
-        .config-row { gap: 12px; }
-        .form-group { gap: 4px; }
+        .config-row {
+            gap: 12px;
+        }
+        .form-group {
+            gap: 4px;
+        }
         .form-group label {
             color: #52667a;
             font-size: 11px;
             font-weight: 800;
-            letter-spacing: .05em;
+            letter-spacing: 0.05em;
             text-transform: uppercase;
         }
 
         .form-select,
-        .form-input { padding: 7px 10px; font-size: 13px; }
+        .form-input {
+            padding: 7px 10px;
+            font-size: 13px;
+        }
 
         .upload-section {
             margin-bottom: 18px;
@@ -2931,7 +3292,9 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
             font-size: 12px;
         }
 
-        .upload-date-filter { margin-top: 7px; }
+        .upload-date-filter {
+            margin-top: 7px;
+        }
 
         .results-summary {
             gap: 10px;
@@ -2953,13 +3316,17 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
             font-size: 14px;
         }
 
-        .summary-value { font-size: 22px; }
-        .summary-status-value { font-size: 14px; }
+        .summary-value {
+            font-size: 22px;
+        }
+        .summary-status-value {
+            font-size: 14px;
+        }
         .summary-label {
             margin-top: 3px;
             font-size: 10px;
             font-weight: 800;
-            letter-spacing: .04em;
+            letter-spacing: 0.04em;
             text-transform: uppercase;
         }
 
@@ -2970,7 +3337,9 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
             box-shadow: none;
         }
 
-        .sheet-tabs-panel { margin-bottom: 12px; }
+        .sheet-tabs-panel {
+            margin-bottom: 12px;
+        }
 
         .bk-tax-store-panel {
             margin: 0 0 12px;
@@ -2991,7 +3360,7 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
             color: var(--primary);
             font-size: 10px;
             font-weight: 900;
-            letter-spacing: .08em;
+            letter-spacing: 0.08em;
         }
 
         .bk-tax-store-panel-copy strong,
@@ -3011,24 +3380,24 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
         }
 
         .bk-tax-store-dialog {
-    position: fixed;
-    inset: 0;
-    margin: auto;
+            position: fixed;
+            inset: 0;
+            margin: auto;
 
-    width: min(1120px, calc(100vw - 72px));
-    height: min(84vh, 760px);
-    max-height: min(84vh, 760px);
+            width: min(1120px, calc(100vw - 72px));
+            height: min(84vh, 760px);
+            max-height: min(84vh, 760px);
 
-    padding: 0;
-    border: 1px solid rgba(16, 42, 67, .22);
-    border-radius: 12px;
-    background: #eef3f7;
-    box-shadow: 0 34px 80px -32px rgba(8, 31, 51, .78);
-    overflow: hidden;
-}
+            padding: 0;
+            border: 1px solid rgba(16, 42, 67, 0.22);
+            border-radius: 12px;
+            background: #eef3f7;
+            box-shadow: 0 34px 80px -32px rgba(8, 31, 51, 0.78);
+            overflow: hidden;
+        }
 
         .bk-tax-store-dialog::backdrop {
-            background: rgba(16, 42, 67, .58);
+            background: rgba(16, 42, 67, 0.58);
             backdrop-filter: blur(1px);
         }
 
@@ -3050,7 +3419,11 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
             padding: 20px 64px 20px 22px;
             border-bottom: 0;
             background:
-                linear-gradient(120deg, rgba(47, 111, 159, .22), transparent 45%),
+                linear-gradient(
+                    120deg,
+                    rgba(47, 111, 159, 0.22),
+                    transparent 45%
+                ),
                 #102a43;
         }
 
@@ -3060,7 +3433,7 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
             color: #b9d7ee;
             font-size: 10px;
             font-weight: 900;
-            letter-spacing: .12em;
+            letter-spacing: 0.12em;
         }
 
         .bk-tax-store-header h3 {
@@ -3087,26 +3460,26 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
             width: 34px;
             height: 34px;
             place-items: center;
-            border: 1px solid rgba(255, 255, 255, .28);
+            border: 1px solid rgba(255, 255, 255, 0.28);
             border-radius: 8px;
-            background: rgba(255, 255, 255, .12);
+            background: rgba(255, 255, 255, 0.12);
             color: #fff;
             cursor: pointer;
         }
 
         .bk-tax-modal-close:hover {
-            border-color: rgba(255, 255, 255, .48);
-            background: rgba(255, 255, 255, .2);
+            border-color: rgba(255, 255, 255, 0.48);
+            background: rgba(255, 255, 255, 0.2);
         }
 
         .bk-tax-store-meta {
             min-width: 245px;
             align-self: stretch;
             padding: 12px 14px;
-            border: 1px solid rgba(255, 255, 255, .25);
+            border: 1px solid rgba(255, 255, 255, 0.25);
             border-radius: 9px;
-            background: rgba(255, 255, 255, .1);
-            box-shadow: inset 0 1px 0 rgba(255, 255, 255, .1);
+            background: rgba(255, 255, 255, 0.1);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
         }
 
         .bk-tax-store-meta strong,
@@ -3127,15 +3500,33 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
             line-height: 1.35;
         }
 
-        #bkTaxStoreStatus[data-type="success"] { color: var(--success); }
-        #bkTaxStoreStatus[data-type="warning"] { color: var(--warning); }
-        #bkTaxStoreStatus[data-type="error"] { color: var(--danger); }
-        #tbTaxStoreStatus[data-type="success"] { color: var(--success); }
-        #tbTaxStoreStatus[data-type="warning"] { color: var(--warning); }
-        #tbTaxStoreStatus[data-type="error"] { color: var(--danger); }
-        #pyTaxStoreStatus[data-type="success"] { color: var(--success); }
-        #pyTaxStoreStatus[data-type="warning"] { color: var(--warning); }
-        #pyTaxStoreStatus[data-type="error"] { color: var(--danger); }
+        #bkTaxStoreStatus[data-type="success"] {
+            color: var(--success);
+        }
+        #bkTaxStoreStatus[data-type="warning"] {
+            color: var(--warning);
+        }
+        #bkTaxStoreStatus[data-type="error"] {
+            color: var(--danger);
+        }
+        #tbTaxStoreStatus[data-type="success"] {
+            color: var(--success);
+        }
+        #tbTaxStoreStatus[data-type="warning"] {
+            color: var(--warning);
+        }
+        #tbTaxStoreStatus[data-type="error"] {
+            color: var(--danger);
+        }
+        #pyTaxStoreStatus[data-type="success"] {
+            color: var(--success);
+        }
+        #pyTaxStoreStatus[data-type="warning"] {
+            color: var(--warning);
+        }
+        #pyTaxStoreStatus[data-type="error"] {
+            color: var(--danger);
+        }
 
         .bk-tax-store-form {
             display: none;
@@ -3150,7 +3541,7 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
             border: 1px solid #d8e3ec;
             border-radius: 10px;
             background: #fff;
-            box-shadow: 0 14px 30px -28px rgba(16, 42, 67, .52);
+            box-shadow: 0 14px 30px -28px rgba(16, 42, 67, 0.52);
         }
 
         .bk-tax-store-dialog.is-form-open .bk-tax-store-form {
@@ -3197,7 +3588,7 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
             color: #536b80;
             font-size: 10px;
             font-weight: 900;
-            letter-spacing: .07em;
+            letter-spacing: 0.07em;
         }
 
         .bk-tax-store-form .form-input {
@@ -3209,12 +3600,12 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
             background: #ffffff;
             color: #193c5b;
             font-size: 13px;
-            box-shadow: inset 0 1px 0 rgba(16, 42, 67, .03);
+            box-shadow: inset 0 1px 0 rgba(16, 42, 67, 0.03);
         }
 
         .bk-tax-store-form .form-input:focus {
             border-color: #2f6f9f;
-            outline: 2px solid rgba(47, 111, 159, .12);
+            outline: 2px solid rgba(47, 111, 159, 0.12);
             outline-offset: 0;
         }
 
@@ -3249,7 +3640,7 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
             padding: 12px 14px;
             border-bottom: 1px solid #d7e3ed;
             background: #fff;
-            box-shadow: 0 10px 24px -26px rgba(16, 42, 67, .7);
+            box-shadow: 0 10px 24px -26px rgba(16, 42, 67, 0.7);
         }
 
         .bk-tax-store-dialog:not(.is-form-open) .bk-tax-form-action {
@@ -3292,14 +3683,22 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
             border: 1px solid #d8e3ec;
             border-radius: 10px;
             background: #fff;
-            box-shadow: 0 16px 34px -32px rgba(16, 42, 67, .62);
+            box-shadow: 0 16px 34px -32px rgba(16, 42, 67, 0.62);
             scrollbar-width: thin;
             scrollbar-color: #95a9ba #edf3f7;
         }
 
-        .bk-tax-store-table::-webkit-scrollbar { width: 9px; height: 9px; }
-        .bk-tax-store-table::-webkit-scrollbar-track { background: #edf3f7; }
-        .bk-tax-store-table::-webkit-scrollbar-thumb { background: #95a9ba; border-radius: 999px; }
+        .bk-tax-store-table::-webkit-scrollbar {
+            width: 9px;
+            height: 9px;
+        }
+        .bk-tax-store-table::-webkit-scrollbar-track {
+            background: #edf3f7;
+        }
+        .bk-tax-store-table::-webkit-scrollbar-thumb {
+            background: #95a9ba;
+            border-radius: 999px;
+        }
 
         .bk-tax-store-table table {
             width: 100%;
@@ -3316,7 +3715,7 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
             color: #fff;
             background: #102f4c;
             font-size: 10px;
-            letter-spacing: .04em;
+            letter-spacing: 0.04em;
         }
 
         .bk-tax-store-table .data-table td {
@@ -3469,11 +3868,11 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
             border-top: 5px solid #102a43;
             border-radius: 12px;
             background: #ffffff;
-            box-shadow: 0 34px 80px -34px rgba(8, 31, 51, .76);
+            box-shadow: 0 34px 80px -34px rgba(8, 31, 51, 0.76);
         }
 
         .bk-tax-store-dialog::backdrop {
-            background: rgba(16, 42, 67, .50);
+            background: rgba(16, 42, 67, 0.5);
             backdrop-filter: blur(3px);
         }
 
@@ -3490,7 +3889,7 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
             padding: 22px 66px 18px 24px;
             border-bottom: 1px solid #dbe5ef;
             background:
-                linear-gradient(90deg, rgba(16, 42, 67, .08), transparent 46%),
+                linear-gradient(90deg, rgba(16, 42, 67, 0.08), transparent 46%),
                 #ffffff;
         }
 
@@ -3498,12 +3897,12 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
             color: #174f7d;
             font-size: 10px;
             font-weight: 900;
-            letter-spacing: .12em;
+            letter-spacing: 0.12em;
         }
 
         .bk-tax-store-header h3 {
             color: #0b2943;
-            font-family: 'Source Serif 4', Georgia, serif;
+            font-family: "Inter", sans-serif;
             font-size: 25px;
             font-weight: 700;
             line-height: 1.12;
@@ -3613,7 +4012,7 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
             color: #526b82;
             font-size: 10px;
             font-weight: 900;
-            letter-spacing: .06em;
+            letter-spacing: 0.06em;
             text-transform: uppercase;
         }
 
@@ -3640,7 +4039,7 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
             border-bottom: 1px solid #0b2943;
             font-size: 10px;
             font-weight: 900;
-            letter-spacing: .04em;
+            letter-spacing: 0.04em;
         }
 
         .bk-tax-store-table .data-table td {
@@ -3701,7 +4100,10 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
             font-size: 11px;
         }
 
-        .conciliacion-table td { padding: 8px 10px; font-size: 12px; }
+        .conciliacion-table td {
+            padding: 8px 10px;
+            font-size: 12px;
+        }
         .notes-section {
             margin-top: 16px;
             padding: 14px 16px;
@@ -3709,24 +4111,31 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
             box-shadow: none;
         }
 
-        .conciliacion-actions { gap: 8px; margin-top: 0; }
+        .conciliacion-actions {
+            gap: 8px;
+            margin-top: 0;
+        }
 
         @media (max-width: 1180px) {
-            .results-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .results-summary {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
         }
 
         @media (max-width: 720px) {
-            .results-summary { grid-template-columns: 1fr; }
+            .results-summary {
+                grid-template-columns: 1fr;
+            }
         }
 
-        /* Visual redesign v2: modal operativo para tiendas/tax rate */
+        /* Visual redesign v2: operational store and tax-rate modal */
         .bk-tax-store-dialog {
             width: min(1180px, calc(100vw - 36px));
             height: min(86vh, 790px);
             border: 0;
             border-radius: 14px;
             background: #ffffff;
-            box-shadow: 0 36px 90px -34px rgba(8, 31, 51, .82);
+            box-shadow: 0 36px 90px -34px rgba(8, 31, 51, 0.82);
         }
 
         .bk-tax-store-window {
@@ -3748,7 +4157,11 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
             padding: 28px 22px;
             border: 0;
             background:
-                linear-gradient(180deg, rgba(116, 183, 234, .18), transparent 34%),
+                linear-gradient(
+                    180deg,
+                    rgba(116, 183, 234, 0.18),
+                    transparent 34%
+                ),
                 #09243b;
         }
 
@@ -3760,13 +4173,13 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
             color: #8fc7f0;
             font-size: 10px;
             font-weight: 900;
-            letter-spacing: .14em;
+            letter-spacing: 0.14em;
         }
 
         .bk-tax-store-header h3 {
             margin-top: 8px;
             color: #ffffff;
-            font-family: 'Source Serif 4', Georgia, serif;
+            font-family: "Inter", sans-serif;
             font-size: 29px;
             line-height: 1.05;
         }
@@ -3782,9 +4195,9 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
             width: 100%;
             margin-top: auto;
             padding: 14px;
-            border: 1px solid rgba(255, 255, 255, .16);
+            border: 1px solid rgba(255, 255, 255, 0.16);
             border-radius: 10px;
-            background: rgba(255, 255, 255, .09);
+            background: rgba(255, 255, 255, 0.09);
         }
 
         .bk-tax-store-meta strong {
@@ -3818,12 +4231,12 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
         }
 
         .bk-tax-store-toolbar::before {
-            content: "Acciones";
+            content: "Actions";
             margin-right: auto;
             color: #526b82;
             font-size: 11px;
             font-weight: 900;
-            letter-spacing: .08em;
+            letter-spacing: 0.08em;
             text-transform: uppercase;
         }
 
@@ -3928,10 +4341,18 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
                 grid-column: 1;
             }
 
-            .bk-tax-store-toolbar { grid-row: 2; }
-            .bk-tax-store-form { grid-row: 3; }
-            .bk-tax-store-table { grid-row: 4; }
-            .bk-tax-store-footer { grid-row: 5; }
+            .bk-tax-store-toolbar {
+                grid-row: 2;
+            }
+            .bk-tax-store-form {
+                grid-row: 3;
+            }
+            .bk-tax-store-table {
+                grid-row: 4;
+            }
+            .bk-tax-store-footer {
+                grid-row: 5;
+            }
 
             .bk-tax-store-toolbar::before {
                 display: none;

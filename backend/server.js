@@ -48,14 +48,14 @@ app.use(cors({
             return;
         }
 
-        callback(new Error('Origen no permitido por CORS'));
+        callback(new Error('Origin is not allowed by CORS'));
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
-// Para preflight requests
+// Preflight requests
 app.options('*', cors());
 
 app.use((req, res, next) => {
@@ -85,14 +85,14 @@ app.use((req, res, next) => {
     next();
 });
 
-// Parsear JSON y urlencoded
+// Parse JSON and URL-encoded bodies
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({
     extended: true,
     limit: '10mb'
 }));
 
-// Archivos estáticos
+// Static files
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // ============================================
@@ -101,7 +101,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 app.get('/api', (req, res) => {
     res.json({
-        mensaje: 'API del Sistema de Validacion de Excel',
+        mensaje: 'Excel Validation System API',
         version: '1.0.0',
         endpoints: {
             auth: '/api/auth',
@@ -131,16 +131,16 @@ app.use('/api/tax-rates', taxRatesRoutes);
 // MANEJO DE ERRORES
 // ============================================
 
-// Ruta no encontrada
+// Route not found
 app.use((req, res, next) => {
     res.status(404).json({
         error: true,
-        mensaje: 'Ruta no encontrada',
+        mensaje: 'Route not found',
         ruta: req.originalUrl
     });
 });
 
-// Errores generales
+// General errors
 app.use((err, req, res, next) => {
     console.error('Error:', err);
     const status = Number(err.status || err.statusCode) || 500;
@@ -149,8 +149,8 @@ app.use((err, req, res, next) => {
     res.status(status).json({
         error: true,
         mensaje: esContenidoGrande
-            ? 'La conciliación contiene demasiados datos para enviarse al servidor'
-            : 'Error interno del servidor',
+            ? 'The reconciliation contains too much data to send to the server'
+            : 'Internal server error',
         code: err.code || err.type || 'INTERNAL_SERVER_ERROR',
         detalle: process.env.NODE_ENV === 'development' ? err.message : undefined
     });
@@ -163,7 +163,7 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log('============================================');
-    console.log(`Servidor corriendo en http://localhost:${PORT}`);
-    console.log(`API disponible en http://localhost:${PORT}/api`);
+    console.log(`Server running at http://localhost:${PORT}`);
+    console.log(`API available at http://localhost:${PORT}/api`);
     console.log('============================================');
 });

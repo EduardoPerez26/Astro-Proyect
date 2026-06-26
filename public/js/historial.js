@@ -4,13 +4,13 @@ let comparacionesFiltradas = [];
 document.addEventListener('DOMContentLoaded', async () => {
     configurarFiltrosComparaciones();
     await Promise.all([
-        cargarRestaurantesHistorial(),
+        cargarRestaurantsHistorial(),
         cargarComparaciones()
     ]);
 });
 
 function configurarFiltrosComparaciones() {
-    ['searchInput', 'filterRestaurante', 'filterEstado', 'filterDesde', 'filterHasta']
+    ['searchInput', 'filterRestaurant', 'filterStatus', 'filterDesde', 'filterHasta']
         .forEach(id => {
             const element = document.getElementById(id);
             if (!element) return;
@@ -18,9 +18,9 @@ function configurarFiltrosComparaciones() {
         });
 }
 
-async function cargarRestaurantesHistorial() {
+async function cargarRestaurantsHistorial() {
     const token = localStorage.getItem('token');
-    const select = document.getElementById('filterRestaurante');
+    const select = document.getElementById('filterRestaurant');
     if (!token || !select) return;
 
     try {
@@ -35,7 +35,7 @@ async function cargarRestaurantesHistorial() {
             `<option value="${restaurante.id}">${escapeHistoryHtml(restaurante.nombre)}</option>`
         ).join(''));
     } catch (error) {
-        console.warn('No se pudieron cargar los restaurantes del filtro:', error);
+        console.warn('Filter restaurants could not be loaded:', error);
     }
 }
 
@@ -59,14 +59,14 @@ async function cargarComparaciones() {
         const data = await response.json().catch(() => ({}));
 
         if (!response.ok || !data.success) {
-            throw new Error(data.message || data.mensaje || 'No se pudo cargar el historial');
+            throw new Error(data.message || data.mensaje || 'History could not be loaded');
         }
 
         comparaciones = data.comparaciones || [];
         renderEstadisticasComparaciones(data.estadisticas || {});
         aplicarFiltrosComparaciones();
     } catch (error) {
-        console.error('Error cargando comparaciones:', error);
+        console.error('Error loading comparisons:', error);
         comparaciones = [];
         renderGruposComparaciones([]);
         if (errorBox) {
@@ -80,8 +80,8 @@ async function cargarComparaciones() {
 
 function aplicarFiltrosComparaciones() {
     const search = document.getElementById('searchInput')?.value.trim().toLowerCase() || '';
-    const restaurante = document.getElementById('filterRestaurante')?.value || '';
-    const estado = document.getElementById('filterEstado')?.value || '';
+    const restaurante = document.getElementById('filterRestaurant')?.value || '';
+    const estado = document.getElementById('filterStatus')?.value || '';
     const desde = document.getElementById('filterDesde')?.value || '';
     const hasta = document.getElementById('filterHasta')?.value || '';
 
@@ -109,7 +109,7 @@ function renderEstadisticasComparaciones(stats) {
     setHistoryText('statTotal', stats.total || 0);
     setHistoryText('statCambios', stats.con_cambios || 0);
     setHistoryText('statSinCambios', stats.sin_cambios || 0);
-    setHistoryText('statTiendas', stats.tiendas_con_diferencias || 0);
+    setHistoryText('statStores', stats.tiendas_con_diferencias || 0);
 }
 
 function renderGruposComparaciones(items) {
@@ -135,10 +135,10 @@ function renderGruposComparaciones(items) {
             <header class="comparison-date-header">
                 <div class="comparison-date-icon"><i class="fa-solid fa-calendar-day"></i></div>
                 <div>
-                    <span>FECHA DE COMPARACION</span>
+                    <span>COMPARISON DATE</span>
                     <h2>${formatearDiaHistorial(fecha)}</h2>
                 </div>
-                <strong>${registros.length} ${registros.length === 1 ? 'comparacion' : 'comparaciones'}</strong>
+                <strong>${registros.length} ${registros.length === 1 ? 'comparison' : 'comparisons'}</strong>
             </header>
             <div class="comparison-date-list">
                 ${registros.map(renderComparacionItem).join('')}
@@ -148,11 +148,11 @@ function renderGruposComparaciones(items) {
 }
 
 function renderComparacionItem(item) {
-    const estado = getEstadoComparacion(item.estado);
-    const deleteButton = puedeEliminarComparaciones()
-        ? `<button class="comparison-delete-button" type="button" onclick="eliminarComparacion(${item.id})" title="Eliminar comparación">
+    const estado = getStatusComparacion(item.estado);
+    const deleteButton = puedeDeleteComparaciones()
+        ? `<button class="comparison-delete-button" type="button" onclick="eliminarComparacion(${item.id})" title="Delete comparison">
                 <i class="fa-solid fa-trash"></i>
-                Eliminar
+                Delete
            </button>`
         : '';
     return `
@@ -163,19 +163,19 @@ function renderComparacionItem(item) {
                     <h3>${escapeHistoryHtml(item.restaurante_nombre)}</h3>
                     <span class="comparison-status ${estado.clase}">${estado.texto}</span>
                 </div>
-                <p>Periodo operativo: <strong>${formatearFechaCorta(item.fecha_operacion)}</strong></p>
-                <small>${escapeHistoryHtml(item.usuario_nombre || 'Usuario eliminado')} / ${formatearHoraHistorial(item.fecha_comparacion)}</small>
+                <p>Operating period: <strong>${formatearFechaCorta(item.fecha_operacion)}</strong></p>
+                <small>${escapeHistoryHtml(item.usuario_nombre || 'Deleted user')} / ${formatearHoraHistorial(item.fecha_comparacion)}</small>
             </div>
             <div class="comparison-metrics">
-                <div><strong>${item.tiendas_comparadas}</strong><span>Tiendas revisadas</span></div>
-                <div><strong>${item.tiendas_con_diferencias}</strong><span>Tiendas con cambios</span></div>
-                <div><strong>${item.total_diferencias}</strong><span>Diferencias</span></div>
-                <div><strong>${formatHistoryMoney(item.monto_diferencia_absoluta)}</strong><span>Variacion absoluta</span></div>
+                <div><strong>${item.tiendas_comparadas}</strong><span>Stores reviewed</span></div>
+                <div><strong>${item.tiendas_con_diferencias}</strong><span>Stores with changes</span></div>
+                <div><strong>${item.total_diferencias}</strong><span>Differences</span></div>
+                <div><strong>${formatHistoryMoney(item.monto_diferencia_absoluta)}</strong><span>Absolute variance</span></div>
             </div>
             <div class="comparison-item-actions">
                 <button class="comparison-detail-button" type="button" onclick="verComparacion(${item.id})">
                     <i class="fa-solid fa-arrow-right"></i>
-                    Ver detalle
+                    View details
                 </button>
                 ${deleteButton}
             </div>
@@ -183,7 +183,7 @@ function renderComparacionItem(item) {
     `;
 }
 
-function puedeEliminarComparaciones() {
+function puedeDeleteComparaciones() {
     try {
         return JSON.parse(localStorage.getItem('usuario') || '{}').rol === 'admin';
     } catch {
@@ -197,11 +197,11 @@ async function eliminarComparacion(id) {
 
     const confirmation = await Swal.fire({
         icon: 'warning',
-        title: 'Eliminar comparación',
-        html: `Se eliminará el registro de <strong>${escapeHistoryHtml(comparison.restaurante_nombre)}</strong> y todas sus diferencias.<br><small>Esta acción no elimina el archivo ni la conciliación.</small>`,
+        title: 'Delete comparison',
+        html: `The record for <strong>${escapeHistoryHtml(comparison.restaurante_nombre)}</strong> and all its differences will be deleted.<br><small>This action does not delete the file or the reconciliation.</small>`,
         showCancelButton: true,
-        confirmButtonText: 'Sí, eliminar',
-        cancelButtonText: 'Cancelar',
+        confirmButtonText: 'Yes, delete',
+        cancelButtonText: 'Cancel',
         confirmButtonColor: '#b4232f'
     });
     if (!confirmation.isConfirmed) return;
@@ -213,18 +213,18 @@ async function eliminarComparacion(id) {
         });
         const data = await response.json().catch(() => ({}));
         if (!response.ok || !data.success) {
-            throw new Error(data.message || data.mensaje || 'No se pudo eliminar la comparación');
+            throw new Error(data.message || data.mensaje || 'The comparison could not be deleted');
         }
 
         await cargarComparaciones();
         await Swal.fire({
             icon: 'success',
-            title: 'Comparación eliminada',
+            title: 'Comparison deleted',
             timer: 1500,
             showConfirmButton: false
         });
     } catch (error) {
-        await Swal.fire({ icon: 'error', title: 'No se pudo eliminar', text: error.message });
+        await Swal.fire({ icon: 'error', title: 'Could not delete', text: error.message });
     }
 }
 
@@ -235,7 +235,7 @@ async function verComparacion(id) {
     if (!token || !modal || !body) return;
 
     modal.classList.add('active');
-    body.innerHTML = '<div class="comparison-detail-loading"><i class="fa-solid fa-spinner fa-spin"></i><p>Cargando diferencias...</p></div>';
+    body.innerHTML = '<div class="comparison-detail-loading"><i class="fa-solid fa-spinner fa-spin"></i><p>Loading differences...</p></div>';
 
     try {
         const response = await fetch(`${window.API_URL}/comparaciones/${id}`, {
@@ -243,7 +243,7 @@ async function verComparacion(id) {
         });
         const data = await response.json().catch(() => ({}));
         if (!response.ok || !data.success) {
-            throw new Error(data.message || 'No se pudo cargar el detalle');
+            throw new Error(data.message || 'The detail could not be loaded');
         }
 
         renderDetalleComparacion(data.comparacion, data.diferencias || []);
@@ -256,37 +256,37 @@ function renderDetalleComparacion(comparacion, diferencias) {
     const body = document.getElementById('comparisonDetailBody');
     const title = document.getElementById('comparisonDetailTitle');
     const subtitle = document.getElementById('comparisonDetailSubtitle');
-    const estado = getEstadoComparacion(comparacion.estado);
+    const estado = getStatusComparacion(comparacion.estado);
     if (!body) return;
 
     if (title) title.textContent = `${comparacion.restaurante_nombre} / ${formatearFechaCorta(comparacion.fecha_operacion)}`;
-    if (subtitle) subtitle.textContent = `${formatearFechaCompleta(comparacion.fecha_comparacion)} / ${comparacion.usuario_nombre || 'Usuario eliminado'}`;
+    if (subtitle) subtitle.textContent = `${formatearFechaCompleta(comparacion.fecha_comparacion)} / ${comparacion.usuario_nombre || 'Deleted user'}`;
 
     const resumen = `
         <div class="comparison-detail-summary">
-            <div><span>Resultado</span><strong class="comparison-status ${estado.clase}">${estado.texto}</strong></div>
-            <div><span>Tiendas comparadas</span><strong>${comparacion.tiendas_comparadas || 0}</strong></div>
-            <div><span>Tiendas con cambios</span><strong>${comparacion.tiendas_con_diferencias || 0}</strong></div>
-            <div><span>Diferencias</span><strong>${comparacion.total_diferencias || 0}</strong></div>
+            <div><span>Result</span><strong class="comparison-status ${estado.clase}">${estado.texto}</strong></div>
+            <div><span>Stores compared</span><strong>${comparacion.tiendas_comparadas || 0}</strong></div>
+            <div><span>Stores with changes</span><strong>${comparacion.tiendas_con_diferencias || 0}</strong></div>
+            <div><span>Differences</span><strong>${comparacion.total_diferencias || 0}</strong></div>
         </div>
     `;
 
     if (!diferencias.length) {
-        body.innerHTML = `${resumen}<div class="comparison-detail-empty"><i class="fa-solid fa-circle-check"></i><p>No se detectaron diferencias de montos en esta comparacion.</p></div>`;
+        body.innerHTML = `${resumen}<div class="comparison-detail-empty"><i class="fa-solid fa-circle-check"></i><p>No amount differences were detected in this comparison.</p></div>`;
         return;
     }
 
     body.innerHTML = `${resumen}
         <div class="comparison-detail-table-wrap">
             <table class="comparison-detail-table">
-                <thead><tr><th>Tienda</th><th>Concepto</th><th>Anterior</th><th>Nuevo</th><th>Diferencia</th></tr></thead>
+                <thead><tr><th>Store</th><th>Concept</th><th>Previous</th><th>New</th><th>Difference</th></tr></thead>
                 <tbody>${diferencias.map(item => `
                     <tr>
                         <td>${escapeHistoryHtml(item.tienda)}</td>
                         <td>${escapeHistoryHtml(etiquetaDiferencia(item))}</td>
-                        <td>${item.valor_anterior === null ? '—' : formatHistoryMoney(item.valor_anterior)}</td>
-                        <td>${item.valor_nuevo === null ? '—' : formatHistoryMoney(item.valor_nuevo)}</td>
-                        <td class="${Number(item.diferencia) < 0 ? 'negative' : 'positive'}">${item.diferencia === null ? '—' : formatHistorySignedMoney(item.diferencia)}</td>
+                        <td>${item.valor_anterior === null ? '--' : formatHistoryMoney(item.valor_anterior)}</td>
+                        <td>${item.valor_nuevo === null ? '--' : formatHistoryMoney(item.valor_nuevo)}</td>
+                        <td class="${Number(item.diferencia) < 0 ? 'negative' : 'positive'}">${item.diferencia === null ? '--' : formatHistorySignedMoney(item.diferencia)}</td>
                     </tr>
                 `).join('')}</tbody>
             </table>
@@ -298,7 +298,7 @@ function cerrarDetalleComparacion() {
 }
 
 function limpiarFiltros() {
-    ['searchInput', 'filterRestaurante', 'filterEstado', 'filterDesde', 'filterHasta']
+    ['searchInput', 'filterRestaurant', 'filterStatus', 'filterDesde', 'filterHasta']
         .forEach(id => {
             const element = document.getElementById(id);
             if (element) element.value = '';
@@ -308,7 +308,7 @@ function limpiarFiltros() {
 
 function exportarHistorial() {
     if (!comparacionesFiltradas.length) {
-        Swal.fire({ icon: 'warning', title: 'Sin comparaciones', text: 'No hay datos para exportar.' });
+        Swal.fire({ icon: 'warning', title: 'No comparisons', text: 'There is no data to export.' });
         return;
     }
 
@@ -317,14 +317,14 @@ function exportarHistorial() {
         item.fecha_comparacion,
         item.restaurante_nombre,
         item.fecha_operacion,
-        getEstadoComparacion(item.estado).texto,
+        getStatusComparacion(item.estado).texto,
         item.tiendas_comparadas,
         item.tiendas_con_diferencias,
         item.total_diferencias,
         item.monto_diferencia_absoluta,
         item.usuario_nombre || ''
     ]);
-    const headers = ['ID', 'Fecha comparacion', 'Restaurante', 'Fecha operativa', 'Resultado', 'Tiendas comparadas', 'Tiendas con cambios', 'Diferencias', 'Variacion absoluta', 'Usuario'];
+    const headers = ['ID', 'Comparison date', 'Restaurant', 'Operating date', 'Result', 'Stores compared', 'Stores with changes', 'Differences', 'Absolute variance', 'User'];
     const csv = [headers, ...rows]
         .map(row => row.map(value => `"${String(value ?? '').replaceAll('"', '""')}"`).join(','))
         .join('\r\n');
@@ -332,18 +332,18 @@ function exportarHistorial() {
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement('a');
     anchor.href = url;
-    anchor.download = `historial-comparaciones-${new Date().toISOString().slice(0, 10)}.csv`;
+    anchor.download = `comparison-history-${new Date().toISOString().slice(0, 10)}.csv`;
     anchor.click();
     URL.revokeObjectURL(url);
 }
 
-function getEstadoComparacion(estado) {
+function getStatusComparacion(estado) {
     return {
-        primera_carga: { texto: 'Primera carga', clase: 'first' },
-        sin_cambios: { texto: 'Sin cambios', clase: 'equal' },
-        con_cambios: { texto: 'Con diferencias', clase: 'changed' },
-        referencia_incompatible: { texto: 'Referencia incompatible', clase: 'warning' }
-    }[estado] || { texto: estado || 'Registrada', clase: 'neutral' };
+        primera_carga: { texto: 'First upload', clase: 'first' },
+        sin_cambios: { texto: 'No changes', clase: 'equal' },
+        con_cambios: { texto: 'With differences', clase: 'changed' },
+        referencia_incompatible: { texto: 'Incompatible reference', clase: 'warning' }
+    }[estado] || { texto: estado || 'Recorded', clase: 'neutral' };
 }
 
 function getRestaurantIcon(codigo) {
@@ -355,9 +355,9 @@ function getRestaurantIcon(codigo) {
 }
 
 function etiquetaDiferencia(item) {
-    if (item.tipo === 'tienda_nueva') return 'Tienda agregada al archivo';
-    if (item.tipo === 'tienda_eliminada') return 'Tienda retirada del archivo';
-    return String(item.campo || 'Monto')
+    if (item.tipo === 'tienda_nueva') return 'Store added to the file';
+    if (item.tipo === 'tienda_eliminada') return 'Store removed from the file';
+    return String(item.campo || 'Amount')
         .replace(/([a-z])([A-Z])/g, '$1 $2')
         .replaceAll('_', ' ')
         .replace(/^./, letra => letra.toUpperCase());
@@ -373,20 +373,20 @@ function normalizarFechaHistorial(value) {
 
 function formatearDiaHistorial(value) {
     const date = new Date(`${value}T12:00:00`);
-    return date.toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    return date.toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 }
 
 function formatearHoraHistorial(value) {
-    return new Date(value).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+    return new Date(value).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 }
 
 function formatearFechaCompleta(value) {
-    return new Date(value).toLocaleString('es-MX', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    return new Date(value).toLocaleString('en-US', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 }
 
 function formatearFechaCorta(value) {
-    if (!value) return 'Sin fecha';
-    return new Date(`${String(value).slice(0, 10)}T12:00:00`).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' });
+    if (!value) return 'No date';
+    return new Date(`${String(value).slice(0, 10)}T12:00:00`).toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
 function formatHistoryMoney(value) {

@@ -17,7 +17,7 @@ function aplanarDiferencias(resultado, fechaOperacion) {
     return (resultado?.diferencias || []).flatMap(diferencia => {
         if (diferencia.tipo !== 'montos_diferentes') {
             return [{
-                tienda: diferencia.tienda || 'Sin tienda',
+                tienda: diferencia.tienda || 'No store',
                 fechaOperacion: diferencia.fecha || fechaOperacion,
                 tipo: diferencia.tipo,
                 campo: null,
@@ -28,7 +28,7 @@ function aplanarDiferencias(resultado, fechaOperacion) {
         }
 
         return (diferencia.cambios || []).map(cambio => ({
-            tienda: diferencia.tienda || 'Sin tienda',
+            tienda: diferencia.tienda || 'No store',
             fechaOperacion: diferencia.fecha || fechaOperacion,
             tipo: diferencia.tipo,
             campo: cambio.campo,
@@ -171,7 +171,7 @@ async function registrarComparacion({
     } catch (error) {
         if (connection) await connection.rollback();
         if (['ER_NO_SUCH_TABLE', 'ER_BAD_FIELD_ERROR'].includes(error.code)) {
-            console.warn('Historial de comparaciones no instalado:', error.code);
+            console.warn('Comparison history is not installed:', error.code);
             return null;
         }
         throw error;

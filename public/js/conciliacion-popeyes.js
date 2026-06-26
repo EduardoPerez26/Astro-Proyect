@@ -258,7 +258,7 @@ function parsearCoordenadasPopeyes(valor) {
     };
 }
 
-function normalizarTiendaTaxPopeyes(tienda) {
+function normalizarStoreTaxPopeyes(tienda) {
     const store = normalizarStoreNumberPopeyes(tienda.store);
 
     return {
@@ -284,7 +284,7 @@ function normalizarTiendaTaxPopeyes(tienda) {
     };
 }
 
-function cargarTiendasTaxPopeyes() {
+function cargarStoresTaxPopeyes() {
     try {
         const guardadas = JSON.parse(
             localStorage.getItem(POPEYES_TAX_STORE_STORAGE_KEY) || 'null'
@@ -292,21 +292,21 @@ function cargarTiendasTaxPopeyes() {
 
         if (Array.isArray(guardadas)) {
             return guardadas
-                .map(normalizarTiendaTaxPopeyes)
+                .map(normalizarStoreTaxPopeyes)
                 .filter(tienda => tienda.store);
         }
     } catch (error) {
-        console.warn('No se pudo leer el catalogo local de tiendas Popeyes:', error);
+        console.warn('The local Popeyes store catalog could not be read:', error);
     }
 
     return (window.POPEYES_DEFAULT_TAX_STORES || [])
-        .map(normalizarTiendaTaxPopeyes)
+        .map(normalizarStoreTaxPopeyes)
         .filter(tienda => tienda.store);
 }
 
-function guardarTiendasTaxPopeyes(tiendas) {
+function guardarStoresTaxPopeyes(tiendas) {
     const limpias = tiendas
-        .map(normalizarTiendaTaxPopeyes)
+        .map(normalizarStoreTaxPopeyes)
         .filter(tienda => tienda.store)
         .sort((a, b) => a.store - b.store);
 
@@ -318,18 +318,18 @@ function guardarTiendasTaxPopeyes(tiendas) {
     return limpias;
 }
 
-function buscarTiendaTaxPopeyes(store) {
+function buscarStoreTaxPopeyes(store) {
     const numeroStore = normalizarStoreNumberPopeyes(store);
 
-    return cargarTiendasTaxPopeyes()
+    return cargarStoresTaxPopeyes()
         .find(tienda => tienda.store === numeroStore) || null;
 }
 
-function upsertTiendaTaxPopeyes(tienda) {
-    const normalizada = normalizarTiendaTaxPopeyes(tienda);
+function upsertStoreTaxPopeyes(tienda) {
+    const normalizada = normalizarStoreTaxPopeyes(tienda);
 
     if (!normalizada.store) {
-        throw new Error('La tienda debe tener un numero valido');
+        throw new Error('The store must have a valid number');
     }
 
     const tieneCoordenadas =
@@ -337,14 +337,14 @@ function upsertTiendaTaxPopeyes(tienda) {
         Number.isFinite(normalizada.longitude);
 
     if (!tieneCoordenadas && !normalizada.taxRate) {
-        throw new Error('Agrega coordenadas validas o captura un tax rate manual.');
+        throw new Error('Add valid coordinates or enter a manual tax rate.');
     }
 
-    const tiendas = cargarTiendasTaxPopeyes()
+    const tiendas = cargarStoresTaxPopeyes()
         .filter(item => item.store !== normalizada.store);
 
     tiendas.push(normalizada);
-    return guardarTiendasTaxPopeyes(tiendas);
+    return guardarStoresTaxPopeyes(tiendas);
 }
 
 function asegurarSweetAlertSobreModalPopeyes() {
@@ -394,13 +394,13 @@ function swalPopeyesModal(opciones) {
     });
 }
 
-async function eliminarTiendaTaxPopeyes(store) {
+async function eliminarStoreTaxPopeyes(store) {
     const numeroStore = normalizarStoreNumberPopeyes(store);
-    const tiendas = cargarTiendasTaxPopeyes();
+    const tiendas = cargarStoresTaxPopeyes();
     const tienda = tiendas.find(item => item.store === numeroStore);
 
     if (!numeroStore || !tienda) {
-        mostrarEstadoTaxPopeyes('No se encontró la tienda seleccionada.', 'warning');
+        mostrarStatusTaxPopeyes('The selected store was not found.', 'warning');
         return false;
     }
 
@@ -409,15 +409,15 @@ async function eliminarTiendaTaxPopeyes(store) {
     if (window.Swal) {
         const resultado = await swalPopeyesModal({
             icon: 'warning',
-            title: 'Eliminar tienda',
+            title: 'Delete store',
             html: `
-                <p>¿Seguro que quieres eliminar la tienda <strong>${tienda.store}</strong>?</p>
+                <p>Are you sure you want to delete store <strong>${tienda.store}</strong>?</p>
                 <p><strong>${tienda.city || ''}</strong> ${tienda.address || ''}</p>
-                <p>Esta acción solo elimina la tienda del catálogo local de este navegador.</p>
+                <p>This only removes the store from this browser's local catalog.</p>
             `,
             showCancelButton: true,
-            confirmButtonText: 'Sí, eliminar',
-            cancelButtonText: 'Cancelar',
+            confirmButtonText: 'Yes, delete',
+            cancelButtonText: 'Cancel',
             confirmButtonColor: '#c01818',
             cancelButtonColor: '#6c757d',
             reverseButtons: true,
@@ -427,22 +427,22 @@ async function eliminarTiendaTaxPopeyes(store) {
         confirmado = resultado.isConfirmed;
     } else {
         confirmado = confirm(
-            `¿Seguro que quieres eliminar la tienda ${tienda.store}?
+            `Are you sure you want to delete store ${tienda.store}?
 
 ` +
             `${tienda.city || ''} ${tienda.address || ''}
 
 ` +
-            `Esta acción solo elimina la tienda del catálogo local de este navegador.`
+            `This only removes the store from this browser's local catalog.`
         );
     }
 
     if (!confirmado) {
-        mostrarEstadoTaxPopeyes('Eliminación cancelada.');
+        mostrarStatusTaxPopeyes('Deletion canceled.');
         return false;
     }
 
-    guardarTiendasTaxPopeyes(
+    guardarStoresTaxPopeyes(
         tiendas.filter(item => item.store !== numeroStore)
     );
 
@@ -456,9 +456,9 @@ async function eliminarTiendaTaxPopeyes(store) {
 
     guardarCacheTaxRatePopeyes(cache);
 
-    renderTiendasTaxPopeyes();
+    renderStoresTaxPopeyes();
     recalcularTaxReviewPopeyesSiAplica();
-    mostrarEstadoTaxPopeyes(`Tienda ${numeroStore} eliminada.`, 'success');
+    mostrarStatusTaxPopeyes(`Store ${numeroStore} deleted.`, 'success');
 
     return true;
 }
@@ -502,7 +502,7 @@ function obtenerCacheTaxRatePopeyes(store, latitude, longitude) {
     return item;
 }
 
-function guardarCacheTiendaTaxRatePopeyes(store, latitude, longitude, data) {
+function guardarCacheStoreTaxRatePopeyes(store, latitude, longitude, data) {
     const cache = cargarCacheTaxRatePopeyes();
 
     cache[crearClaveCacheTaxRatePopeyes(store, latitude, longitude)] = {
@@ -560,7 +560,7 @@ function normalizarRespuestaBackendTaxRatePopeyes(data) {
     if (!data?.success) {
         return {
             success: false,
-            error: data?.error || 'No se pudo consultar CDTFA'
+            error: data?.error || 'CDTFA could not be queried'
         };
     }
 
@@ -586,7 +586,7 @@ async function consultarTaxRateCDTFAPopeyes(location) {
     if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
         return {
             success: false,
-            error: 'La tienda no tiene coordenadas validas'
+            error: 'The store does not have valid coordinates'
         };
     }
 
@@ -627,7 +627,7 @@ async function consultarTaxRateCDTFAPopeyes(location) {
             } catch (error) {
                 if (error?.name === 'AbortError') throw error;
                 console.warn(
-                    'No se pudo consultar CDTFA via backend para Popeyes:',
+                    'CDTFA could not be queried through the backend for Popeyes:',
                     error
                 );
             }
@@ -680,7 +680,7 @@ async function consultarTaxRateCDTFAPopeyes(location) {
             success: false,
             error: error?.name === 'AbortError'
                 ? 'Tiempo de espera agotado consultando CDTFA'
-                : 'No se pudo consultar CDTFA'
+                : 'CDTFA could not be queried'
         };
     } finally {
         clearTimeout(timeout);
@@ -691,7 +691,7 @@ function obtenerTaxRateLocalPopeyes(store) {
     const numeroStore = normalizarStoreNumberPopeyes(store);
     if (!numeroStore) return 0;
 
-    const tienda = buscarTiendaTaxPopeyes(numeroStore);
+    const tienda = buscarStoreTaxPopeyes(numeroStore);
 
     if (
         tienda &&
@@ -720,14 +720,14 @@ function estadoTaxRateDesdeCachePopeyes(tienda) {
     );
 
     if (cache?.rate) {
-        return `${formatoPorcentajePopeyes(cache.rate)} · CDTFA`;
+        return `${formatoPorcentajePopeyes(cache.rate)} / CDTFA`;
     }
 
     if (tienda.taxRate) {
-        return `${formatoPorcentajePopeyes(tienda.taxRate)} · local`;
+        return `${formatoPorcentajePopeyes(tienda.taxRate)} / local`;
     }
 
-    return 'Pendiente';
+    return 'Pending';
 }
 
 function actualizarPanelTaxPopeyes(codigo = '') {
@@ -736,7 +736,7 @@ function actualizarPanelTaxPopeyes(codigo = '') {
 
     const codigoActual = codigo ||
         document
-            .getElementById('selectRestaurante')
+            .getElementById('selectRestaurant')
             ?.selectedOptions?.[0]
             ?.dataset?.codigo ||
         '';
@@ -744,11 +744,11 @@ function actualizarPanelTaxPopeyes(codigo = '') {
     panel.style.display = codigoActual === 'popeyes' ? '' : 'none';
 
     if (codigoActual === 'popeyes') {
-        renderTiendasTaxPopeyes();
+        renderStoresTaxPopeyes();
     }
 }
 
-function limpiarFormularioTiendaTaxPopeyes() {
+function limpiarFormularioStoreTaxPopeyes() {
     [
         'pyTaxStoreNumber',
         'pyTaxStoreAddress',
@@ -763,11 +763,11 @@ function limpiarFormularioTiendaTaxPopeyes() {
     });
 
     const formMode = document.getElementById('pyTaxFormMode');
-    if (formMode) formMode.textContent = 'Nueva tienda';
+    if (formMode) formMode.textContent = 'New store';
 }
 
-function cargarFormularioTiendaTaxPopeyes(store) {
-    const tienda = buscarTiendaTaxPopeyes(store);
+function cargarFormularioStoreTaxPopeyes(store) {
+    const tienda = buscarStoreTaxPopeyes(store);
     if (!tienda) return;
 
     const valores = {
@@ -791,10 +791,10 @@ function cargarFormularioTiendaTaxPopeyes(store) {
     });
 
     const formMode = document.getElementById('pyTaxFormMode');
-    if (formMode) formMode.textContent = `Editando tienda ${tienda.store}`;
+    if (formMode) formMode.textContent = `Editing store ${tienda.store}`;
 }
 
-function leerFormularioTiendaTaxPopeyes() {
+function leerFormularioStoreTaxPopeyes() {
     const coords = parsearCoordenadasPopeyes(
         document.getElementById('pyTaxStoreCoordinates')?.value
     );
@@ -813,7 +813,7 @@ function leerFormularioTiendaTaxPopeyes() {
     };
 }
 
-function mostrarEstadoTaxPopeyes(texto, tipo = 'info') {
+function mostrarStatusTaxPopeyes(texto, tipo = 'info') {
     const status = document.getElementById('pyTaxStoreStatus');
     if (!status) return;
 
@@ -821,16 +821,16 @@ function mostrarEstadoTaxPopeyes(texto, tipo = 'info') {
     status.dataset.type = tipo;
 }
 
-function renderTiendasTaxPopeyes() {
+function renderStoresTaxPopeyes() {
     const tbody = document.getElementById('pyTaxStoreBody');
     const count = document.getElementById('pyTaxStoreCount');
 
     if (!tbody) return;
 
-    const tiendas = cargarTiendasTaxPopeyes();
+    const tiendas = cargarStoresTaxPopeyes();
 
     if (count) {
-        count.textContent = `${tiendas.length} tiendas configuradas`;
+        count.textContent = `${tiendas.length} configured stores`;
     }
 
     tbody.innerHTML = tiendas.map(tienda => `
@@ -849,11 +849,11 @@ function renderTiendasTaxPopeyes() {
             <td>${tienda.preferredJurisdiction || '-'}</td>
             <td>${estadoTaxRateDesdeCachePopeyes(tienda)}</td>
             <td class="bk-tax-store-actions">
-                <button type="button" class="btn btn-outline btn-sm" data-py-tax-edit="${tienda.store}" title="Editar tienda ${tienda.store}">
+                <button type="button" class="btn btn-outline btn-sm" data-py-tax-edit="${tienda.store}" title="Edit store ${tienda.store}">
                     <i class="fa-solid fa-pen"></i>
-                    Editar
+                    Edit
                 </button>
-                <button type="button" class="btn btn-danger btn-sm" data-py-tax-delete="${tienda.store}" title="Quitar tienda ${tienda.store}">
+                <button type="button" class="btn btn-danger btn-sm" data-py-tax-delete="${tienda.store}" title="Remove store ${tienda.store}">
                     <i class="fa-solid fa-trash"></i>
                     Quitar
                 </button>
@@ -865,7 +865,7 @@ function renderTiendasTaxPopeyes() {
         tbody.innerHTML = `
             <tr>
                 <td colspan="7" class="bk-tax-empty">
-                    No hay tiendas configuradas.
+                    No stores configured.
                 </td>
             </tr>
         `;
@@ -883,10 +883,10 @@ function recalcularTaxReviewPopeyesSiAplica() {
 }
 
 async function refrescarTaxRatesPopeyes() {
-    const tiendas = cargarTiendasTaxPopeyes();
+    const tiendas = cargarStoresTaxPopeyes();
 
     if (!tiendas.length) {
-        mostrarEstadoTaxPopeyes('No hay tiendas para actualizar.', 'warning');
+        mostrarStatusTaxPopeyes('There are no stores to refresh.', 'warning');
         return;
     }
 
@@ -895,11 +895,11 @@ async function refrescarTaxRatesPopeyes() {
     if (window.Swal) {
         const resultado = await swalPopeyesModal({
             icon: 'question',
-            title: 'Actualizar rates CDTFA',
-            text: `Se actualizarán ${tiendas.length} tiendas configuradas, incluyendo las tiendas nuevas agregadas manualmente.`,
+            title: 'Refresh CDTFA rates',
+            text: `${tiendas.length} configured stores will be refreshed, including manually added stores.`,
             showCancelButton: true,
-            confirmButtonText: 'Actualizar',
-            cancelButtonText: 'Cancelar',
+            confirmButtonText: 'Refresh',
+            cancelButtonText: 'Cancel',
             confirmButtonColor: '#0b2d4d',
             cancelButtonColor: '#6c757d',
             reverseButtons: true,
@@ -909,27 +909,27 @@ async function refrescarTaxRatesPopeyes() {
         confirmado = resultado.isConfirmed;
     } else {
         confirmado = confirm(
-            `Se actualizarán ${tiendas.length} tiendas configuradas.
+            `${tiendas.length} configured stores will be refreshed.
 
-¿Deseas continuar?`
+Do you want to continue?`
         );
     }
 
     if (!confirmado) {
-        mostrarEstadoTaxPopeyes('Actualización cancelada.');
+        mostrarStatusTaxPopeyes('Refresh canceled.');
         return;
     }
 
-    const botonActualizar = document.getElementById('pyTaxRefreshRates');
+    const botonRefresh = document.getElementById('pyTaxRefreshRates');
 
-    if (botonActualizar) {
-        botonActualizar.disabled = true;
-        botonActualizar.dataset.originalText = botonActualizar.textContent;
-        botonActualizar.textContent = 'Actualizando...';
+    if (botonRefresh) {
+        botonRefresh.disabled = true;
+        botonRefresh.dataset.originalText = botonRefresh.textContent;
+        botonRefresh.textContent = 'Refreshing...';
     }
 
-    mostrarEstadoTaxPopeyes(
-        `Actualizando 0/${tiendas.length} desde CDTFA.`
+    mostrarStatusTaxPopeyes(
+        `Refreshing 0/${tiendas.length} from CDTFA.`
     );
 
     let ok = 0;
@@ -948,11 +948,11 @@ async function refrescarTaxRatesPopeyes() {
                 fallos += 1;
 
                 console.warn(
-                    `Tienda Popeyes ${tienda.store} sin coordenadas válidas. No se puede consultar CDTFA.`
+                    `Popeyes store ${tienda.store} has no valid coordinates. CDTFA cannot be queried.`
                 );
 
-                mostrarEstadoTaxPopeyes(
-                    `Actualizando ${i + 1}/${tiendas.length} desde CDTFA... OK: ${ok}, sin coordenadas: ${sinCoordenadas}, fallas: ${fallos}`,
+                mostrarStatusTaxPopeyes(
+                    `Refreshing ${i + 1}/${tiendas.length} from CDTFA... OK: ${ok}, missing coordinates: ${sinCoordenadas}, failures: ${fallos}`,
                     'warning'
                 );
 
@@ -962,14 +962,14 @@ async function refrescarTaxRatesPopeyes() {
             const result = await consultarTaxRateCDTFAPopeyes(tienda);
 
             if (result.success) {
-                guardarCacheTiendaTaxRatePopeyes(
+                guardarCacheStoreTaxRatePopeyes(
                     tienda.store,
                     tienda.latitude,
                     tienda.longitude,
                     result
                 );
 
-                upsertTiendaTaxPopeyes({
+                upsertStoreTaxPopeyes({
                     ...tienda,
                     taxRate: result.rate
                 });
@@ -978,29 +978,29 @@ async function refrescarTaxRatesPopeyes() {
             } else {
                 fallos += 1;
                 console.warn(
-                    `No se pudo actualizar CDTFA para Popeyes ${tienda.store}:`,
+                    `CDTFA could not be refreshed for Popeyes ${tienda.store}:`,
                     result.error
                 );
             }
 
-            mostrarEstadoTaxPopeyes(
-                `Actualizando ${i + 1}/${tiendas.length} desde CDTFA... OK: ${ok}, sin coordenadas: ${sinCoordenadas}, fallas: ${fallos}`,
+            mostrarStatusTaxPopeyes(
+                `Refreshing ${i + 1}/${tiendas.length} from CDTFA... OK: ${ok}, missing coordinates: ${sinCoordenadas}, failures: ${fallos}`,
                 fallos ? 'warning' : 'info'
             );
         }
 
-        renderTiendasTaxPopeyes();
+        renderStoresTaxPopeyes();
         recalcularTaxReviewPopeyesSiAplica();
 
-        mostrarEstadoTaxPopeyes(
-            `Actualización terminada. CDTFA OK: ${ok}. Sin coordenadas: ${sinCoordenadas}. Fallas: ${fallos}.`,
+        mostrarStatusTaxPopeyes(
+            `Refresh complete. CDTFA OK: ${ok}. Missing coordinates: ${sinCoordenadas}. Failures: ${fallos}.`,
             fallos ? 'warning' : 'success'
         );
     } finally {
-        if (botonActualizar) {
-            botonActualizar.disabled = false;
-            botonActualizar.textContent =
-                botonActualizar.dataset.originalText || 'Actualizar rates CDTFA';
+        if (botonRefresh) {
+            botonRefresh.disabled = false;
+            botonRefresh.textContent =
+                botonRefresh.dataset.originalText || 'Refresh CDTFA rates';
         }
     }
 }
@@ -1010,8 +1010,8 @@ function abrirModalTaxPopeyes() {
     if (!dialog) return;
 
     dialog.classList.remove('is-form-open');
-    renderTiendasTaxPopeyes();
-    mostrarEstadoTaxPopeyes('Catalogo listo. Popeyes usara estos rates locales.');
+    renderStoresTaxPopeyes();
+    mostrarStatusTaxPopeyes('Catalogo listo. Popeyes usara estos rates locales.');
 
     if (typeof dialog.showModal === 'function') {
         dialog.showModal();
@@ -1053,9 +1053,9 @@ function inicializarPanelTaxRatesPopeyes() {
         ?.addEventListener('click', () => {
             const dialog = document.getElementById('popeyesTaxStoreDialog');
 
-            limpiarFormularioTiendaTaxPopeyes();
+            limpiarFormularioStoreTaxPopeyes();
             dialog?.classList.add('is-form-open');
-            mostrarEstadoTaxPopeyes('Captura los datos de la tienda nueva.');
+            mostrarStatusTaxPopeyes('Capture the new store details.');
             document.getElementById('pyTaxStoreNumber')?.focus();
         });
 
@@ -1063,24 +1063,24 @@ function inicializarPanelTaxRatesPopeyes() {
         .getElementById('pyTaxSaveStore')
         ?.addEventListener('click', () => {
             try {
-                upsertTiendaTaxPopeyes(
-                    leerFormularioTiendaTaxPopeyes()
+                upsertStoreTaxPopeyes(
+                    leerFormularioStoreTaxPopeyes()
                 );
 
-                renderTiendasTaxPopeyes();
+                renderStoresTaxPopeyes();
                 recalcularTaxReviewPopeyesSiAplica();
-                mostrarEstadoTaxPopeyes('Tienda guardada correctamente.', 'success');
-                limpiarFormularioTiendaTaxPopeyes();
+                mostrarStatusTaxPopeyes('Store saved successfully.', 'success');
+                limpiarFormularioStoreTaxPopeyes();
                 document
                     .getElementById('popeyesTaxStoreDialog')
                     ?.classList.remove('is-form-open');
             } catch (error) {
-                mostrarEstadoTaxPopeyes(error.message, 'error');
+                mostrarStatusTaxPopeyes(error.message, 'error');
 
                 if (window.Swal) {
                     swalPopeyesModal({
                         icon: 'warning',
-                        title: 'Revisa la tienda',
+                        title: 'Review the store',
                         text: error.message,
                         confirmButtonText: 'Entendido'
                     });
@@ -1091,11 +1091,11 @@ function inicializarPanelTaxRatesPopeyes() {
     document
         .getElementById('pyTaxClearStore')
         ?.addEventListener('click', () => {
-            limpiarFormularioTiendaTaxPopeyes();
+            limpiarFormularioStoreTaxPopeyes();
             document
                 .getElementById('popeyesTaxStoreDialog')
                 ?.classList.remove('is-form-open');
-            mostrarEstadoTaxPopeyes('Edicion cancelada.');
+            mostrarStatusTaxPopeyes('Edit canceled.');
         });
 
     document
@@ -1109,11 +1109,11 @@ function inicializarPanelTaxRatesPopeyes() {
         ?.addEventListener('click', async () => {
             const confirmar = !window.Swal || (await swalPopeyesModal({
                 icon: 'warning',
-                title: 'Restaurar tiendas Popeyes',
-                text: 'Se borrarán los cambios guardados localmente y volverá el catálogo inicial.',
+                title: 'Restore Popeyes stores',
+                text: 'Locally saved changes will be cleared and the initial catalog will be restored.',
                 showCancelButton: true,
-                confirmButtonText: 'Restaurar',
-                cancelButtonText: 'Cancelar',
+                confirmButtonText: 'Restore',
+                cancelButtonText: 'Cancel',
                 confirmButtonColor: '#c01818',
                 cancelButtonColor: '#6c757d',
                 reverseButtons: true,
@@ -1123,13 +1123,13 @@ function inicializarPanelTaxRatesPopeyes() {
             if (!confirmar) return;
 
             localStorage.removeItem(POPEYES_TAX_STORE_STORAGE_KEY);
-            renderTiendasTaxPopeyes();
+            renderStoresTaxPopeyes();
             recalcularTaxReviewPopeyesSiAplica();
-            limpiarFormularioTiendaTaxPopeyes();
+            limpiarFormularioStoreTaxPopeyes();
             document
                 .getElementById('popeyesTaxStoreDialog')
                 ?.classList.remove('is-form-open');
-            mostrarEstadoTaxPopeyes('Catalogo inicial restaurado.', 'success');
+            mostrarStatusTaxPopeyes('Catalogo inicial restaurado.', 'success');
         });
 
     document
@@ -1139,13 +1139,13 @@ function inicializarPanelTaxRatesPopeyes() {
             const deleteButton = event.target.closest('[data-py-tax-delete]');
 
             if (editButton) {
-                cargarFormularioTiendaTaxPopeyes(
+                cargarFormularioStoreTaxPopeyes(
                     editButton.dataset.pyTaxEdit
                 );
                 document
                     .getElementById('popeyesTaxStoreDialog')
                     ?.classList.add('is-form-open');
-                mostrarEstadoTaxPopeyes('Editando tienda seleccionada.');
+                mostrarStatusTaxPopeyes('Editing the selected store.');
                 document.getElementById('pyTaxStoreNumber')?.focus();
                 return;
             }
@@ -1154,7 +1154,7 @@ function inicializarPanelTaxRatesPopeyes() {
                 event.preventDefault();
 
                 const store = deleteButton.dataset.pyTaxDelete;
-                await eliminarTiendaTaxPopeyes(store);
+                await eliminarStoreTaxPopeyes(store);
             }
         });
 
@@ -1278,14 +1278,14 @@ function obtenerStoreDatesDesdeWorkbookPopeyes(salesPosRows) {
         ];
     }
 
-    const nombresPorTienda =
+    const nombresPorStore =
         new Map();
 
     salesPosRows.forEach(row => {
         const store =
             Number(row['Unit Number']) || 0;
-        if (store && !nombresPorTienda.has(store)) {
-            nombresPorTienda.set(
+        if (store && !nombresPorStore.has(store)) {
+            nombresPorStore.set(
                 store,
                 row['Unit Name'] || ''
             );
@@ -1299,7 +1299,7 @@ function obtenerStoreDatesDesdeWorkbookPopeyes(salesPosRows) {
             storeDates.push({
                 store,
                 unitName:
-                    nombresPorTienda.get(store) || '',
+                    nombresPorStore.get(store) || '',
                 date,
                 formattedDate: date
             });
@@ -2207,7 +2207,7 @@ function procesarPopeyes() {
         if (!salesPosRows.length) {
             Swal.fire(
                 'Error',
-                'No hay datos Sales POS cargados',
+                'No Sales POS data loaded',
                 'error'
             );
             return false;
@@ -2220,23 +2220,23 @@ function procesarPopeyes() {
                 salesPosRows
             );
 
-        if (fechaSalesSeleccionada) {
-            const fechaSeleccionada =
+        if (selectedSalesDate) {
+            const selectedDate =
                 fechaClavePopeyes(
-                    fechaSalesSeleccionada
+                    selectedSalesDate
                 );
 
             storeDates =
                 storeDates.filter(row =>
                     fechaClavePopeyes(row.date) ===
-                    fechaSeleccionada
+                    selectedDate
                 );
         }
 
         if (!storeDates.length) {
             Swal.fire(
                 'Error',
-                'No se encontraron tiendas/fechas para Popeyes',
+                'No stores/dates were found for Popeyes',
                 'error'
             );
             return false;
@@ -2276,7 +2276,7 @@ function procesarPopeyes() {
             resultsSection.style.display = 'block';
         }
 
-        llenarFiltroTiendas();
+        llenarFiltroStores();
         actualizarResumen();
         actualizarTotales();
         renderActiveTab();
@@ -2316,7 +2316,7 @@ function renderTaxReview() {
 
     const codigo =
         document
-            .getElementById('selectRestaurante')
+            .getElementById('selectRestaurant')
             ?.selectedOptions?.[0]
             ?.dataset?.codigo;
 
@@ -2484,7 +2484,7 @@ function renderArrayToMainTable(
                 if (tieneDiferencia) {
                     td.title = 'Diferencia O/S detectada';
                     tr.classList.add('os-row-difference');
-                    tr.title = 'Esta tienda tiene una diferencia en O/S';
+                    tr.title = 'This store has an O/S difference';
                 }
             }
 

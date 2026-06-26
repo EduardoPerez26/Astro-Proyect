@@ -15,11 +15,11 @@ const PERMISOS_ADMIN = {
     permisos: true,
     historial: true,
     usuarios: true,
-    controlRestaurantes: true,
+    controlRestaurants: true,
     paginaInicio: 'dashboardAdmin'
 };
 
-function normalizarPermisosUsuario(permisos, rol) {
+function normalizarPermissionsUser(permisos, rol) {
     if (rol === 'admin') {
         return {
             ...PERMISOS_ADMIN,
@@ -36,7 +36,7 @@ function normalizarPermisosUsuario(permisos, rol) {
         perfil: true,
         permisos: false,
         usuarios: false,
-        controlRestaurantes: false
+        controlRestaurants: false
     };
     const disponibles = VENTANAS_OPERATIVAS.filter(codigo => normalizados[codigo]);
 
@@ -47,7 +47,7 @@ function normalizarPermisosUsuario(permisos, rol) {
     return normalizados;
 }
 
-function esErrorEsquemaDepartamentos(error) {
+function esErrorEsquemaDepartments(error) {
     const detalle = [
         error.sqlMessage,
         error.message,
@@ -58,7 +58,7 @@ function esErrorEsquemaDepartamentos(error) {
         && /departamento|departamentos/i.test(detalle);
 }
 
-function formatearUsuarios(usuarios) {
+function formatearUsers(usuarios) {
     return usuarios.map(u => {
         let permisos = {};
         if (u.permisos) {
@@ -96,13 +96,13 @@ router.get('/', verificarToken, esAdmin, async (req, res) => {
         res.json({
             error: false,
             success: true,
-            usuarios: formatearUsuarios(usuarios)
+            usuarios: formatearUsers(usuarios)
         });
 
     } catch (error) {
-        console.error('Error al listar usuarios:', error);
+        console.error('Error listing users:', error);
 
-        if (esErrorEsquemaDepartamentos(error)) {
+        if (esErrorEsquemaDepartments(error)) {
             const [usuarios] = await pool.query(
                 `SELECT u.id,
                         u.username,
@@ -125,14 +125,14 @@ router.get('/', verificarToken, esAdmin, async (req, res) => {
                 error: false,
                 success: true,
                 modo_compatibilidad: true,
-                usuarios: formatearUsuarios(usuarios)
+                usuarios: formatearUsers(usuarios)
             });
         }
 
         res.status(500).json({
             error: true,
             success: false,
-            mensaje: 'Error al obtener usuarios',
+            mensaje: 'Users could not be loaded',
             code: error.code
         });
     }
@@ -140,12 +140,12 @@ router.get('/', verificarToken, esAdmin, async (req, res) => {
 
 router.get('/:id', verificarToken, async (req, res) => {
     try {
-        // Solo admin puede ver otros usuarios
+        // Only admins can view other users.
         if (req.usuario.rol !== 'admin' && req.usuario.id !== parseInt(req.params.id)) {
             return res.status(403).json({
                 error: true,
                 success: false,
-                mensaje: 'No tienes permiso para ver este usuario'
+                mensaje: 'You do not have permission to view this user'
             });
         }
 
@@ -174,7 +174,7 @@ router.get('/:id', verificarToken, async (req, res) => {
             return res.status(404).json({
                 error: true,
                 success: false,
-                mensaje: 'Usuario no encontrado'
+                mensaje: 'User not found'
             });
         }
 
@@ -194,22 +194,22 @@ router.get('/:id', verificarToken, async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Error al obtener usuario:', error);
+        console.error('User could not be loaded:', error);
         res.status(500).json({
             error: true,
             success: false,
-            mensaje: 'Error al obtener usuario'
+            mensaje: 'User could not be loaded'
         });
     }
 });
 
 router.put('/:id', verificarToken, async (req, res) => {
     try {
-        // Solo admin puede editar otros usuarios
+        // Only admins can edit other users.
         if (req.usuario.rol !== 'admin' && req.usuario.id !== parseInt(req.params.id)) {
             return res.status(403).json({
                 error: true,
-                mensaje: 'No tienes permiso para editar este usuario'
+                mensaje: 'You do not have permission to edit this user'
             });
         }
 
@@ -235,7 +235,7 @@ router.put('/:id', verificarToken, async (req, res) => {
             params.push(email);
         }
 
-        // Solo admin puede cambiar rol y estado
+        // Only admins can change role and status.
         if (req.usuario.rol === 'admin') {
             if (rol) {
                 updates.push('rol = ?');
@@ -257,7 +257,7 @@ router.put('/:id', verificarToken, async (req, res) => {
                     if (!departamentos.length) {
                         return res.status(400).json({
                             error: true,
-                            message: 'El departamento seleccionado no existe o esta inactivo'
+                            message: 'The selected department does not exist or is inactive'
                         });
                     }
                 }
@@ -282,7 +282,7 @@ router.put('/:id', verificarToken, async (req, res) => {
         if (updates.length === 0) {
             return res.status(400).json({
                 error: true,
-                mensaje: 'No hay datos para actualizar'
+                mensaje: 'There is no data to update'
             });
         }
 
@@ -294,14 +294,14 @@ router.put('/:id', verificarToken, async (req, res) => {
         res.json({
             success: true,
             error: false,
-            message: 'Usuario actualizado exitosamente'
+            message: 'User updated successfully'
         });
 
     } catch (error) {
-        console.error('Error al actualizar usuario:', error);
+        console.error('User could not be updated:', error);
         res.status(500).json({
             error: true,
-            mensaje: 'Error al actualizar usuario'
+            mensaje: 'User could not be updated'
         });
     }
 });
@@ -315,7 +315,7 @@ router.delete('/:id', verificarToken, esAdmin, async (req, res) => {
         if (req.usuario.id === usuarioId) {
             return res.status(400).json({
                 error: true,
-                message: 'No puedes eliminar tu propia cuenta'
+                message: 'You cannot delete your own account'
             });
         }
 
@@ -327,7 +327,7 @@ router.delete('/:id', verificarToken, esAdmin, async (req, res) => {
         if (!usuarios.length) {
             return res.status(404).json({
                 error: true,
-                message: 'Usuario no encontrado'
+                message: 'User not found'
             });
         }
 
@@ -364,7 +364,7 @@ router.delete('/:id', verificarToken, esAdmin, async (req, res) => {
         );
 
         if (result.affectedRows === 0) {
-            throw new Error('El usuario no pudo eliminarse');
+            throw new Error('The user could not be deleted');
         }
 
         await connection.commit();
@@ -372,19 +372,19 @@ router.delete('/:id', verificarToken, esAdmin, async (req, res) => {
         res.json({
             success: true,
             error: false,
-            message: 'Usuario eliminado definitivamente',
+            message: 'User permanently deleted',
             registrosReasignados
         });
 
     } catch (error) {
         await connection.rollback();
-        console.error('Error al eliminar usuario:', error);
+        console.error('User could not be deleted:', error);
 
         res.status(500).json({
             error: true,
             success: false,
             message: error.code === 'ER_ROW_IS_REFERENCED_2'
-                ? 'No se pudo eliminar porque existen registros relacionados no contemplados.'
+                ? 'The record could not be deleted because there are related records not covered by this cleanup.'
                 : error.message
         });
     } finally {
@@ -394,11 +394,11 @@ router.delete('/:id', verificarToken, esAdmin, async (req, res) => {
 
 router.get('/:id/permisos', verificarToken, async (req, res) => {
     try {
-        // Solo admin puede ver permisos de otros usuarios
+        // Only admins can view permissions for other users.
         if (req.usuario.rol !== 'admin' && req.usuario.id !== parseInt(req.params.id)) {
             return res.status(403).json({
                 success: false,
-                message: 'No tienes permiso para ver estos permisos'
+                message: 'You do not have permission to view these permissions'
             });
         }
 
@@ -410,7 +410,7 @@ router.get('/:id/permisos', verificarToken, async (req, res) => {
         if (rows.length === 0) {
             return res.status(404).json({
                 success: false,
-                message: 'Usuario no encontrado'
+                message: 'User not found'
             });
         }
 
@@ -429,10 +429,10 @@ router.get('/:id/permisos', verificarToken, async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Error al obtener permisos:', error);
+        console.error('Permissions could not be loaded:', error);
         res.status(500).json({
             success: false,
-            message: 'Error al obtener permisos'
+            message: 'Permissions could not be loaded'
         });
     }
 });
@@ -444,11 +444,11 @@ router.put('/:id/permisos', verificarToken, esAdmin, async (req, res) => {
         if (!permisos || typeof permisos !== 'object') {
             return res.status(400).json({
                 success: false,
-                message: 'Formato de permisos invalido'
+                message: 'Invalid permissions format'
             });
         }
 
-        // Verificar que el usuario existe
+        // Verify that the user exists.
         const [usuarios] = await pool.query(
             'SELECT id, rol FROM usuarios WHERE id = ?',
             [req.params.id]
@@ -457,11 +457,11 @@ router.put('/:id/permisos', verificarToken, esAdmin, async (req, res) => {
         if (usuarios.length === 0) {
             return res.status(404).json({
                 success: false,
-                message: 'Usuario no encontrado'
+                message: 'User not found'
             });
         }
 
-        const permisosNormalizados = normalizarPermisosUsuario(
+        const permisosNormalizados = normalizarPermissionsUser(
             permisos,
             usuarios[0].rol
         );
@@ -472,7 +472,7 @@ router.put('/:id/permisos', verificarToken, esAdmin, async (req, res) => {
         ) {
             return res.status(400).json({
                 success: false,
-                message: 'El usuario debe tener al menos una ventana habilitada'
+                message: 'The user must have at least one enabled screen'
             });
         }
 
@@ -483,15 +483,15 @@ router.put('/:id/permisos', verificarToken, esAdmin, async (req, res) => {
 
         res.json({
             success: true,
-            message: 'Permisos y ventana inicial actualizados correctamente',
+            message: 'Permissions and start screen updated successfully',
             permisos: permisosNormalizados
         });
 
     } catch (error) {
-        console.error('Error al actualizar permisos:', error);
+        console.error('Permissions could not be updated:', error);
         res.status(500).json({
             success: false,
-            message: 'Error al actualizar permisos'
+            message: 'Permissions could not be updated'
         });
     }
 });
@@ -500,15 +500,15 @@ router.post('/', verificarToken, esAdmin, async (req, res) => {
     try {
         const { nombre, email, username, password, rol, estado, departamento_id } = req.body;
 
-        // Validaciones
+        // Validations.
         if (!nombre || !email || !username || !password) {
             return res.status(400).json({
                 success: false,
-                message: 'Faltan campos requeridos'
+                message: 'Required fields are missing'
             });
         }
 
-        // Verificar que el username no exista
+        // Verify that the username does not already exist.
         const [existing] = await pool.query(
             'SELECT id FROM usuarios WHERE username = ? OR email = ?',
             [username, email]
@@ -517,7 +517,7 @@ router.post('/', verificarToken, esAdmin, async (req, res) => {
         if (existing.length > 0) {
             return res.status(400).json({
                 success: false,
-                message: 'El usuario o email ya existe'
+                message: 'The username or email already exists'
             });
         }
 
@@ -535,19 +535,19 @@ router.post('/', verificarToken, esAdmin, async (req, res) => {
             if (!departamentos.length) {
                 return res.status(400).json({
                     success: false,
-                    message: 'El departamento seleccionado no existe o esta inactivo'
+                    message: 'The selected department does not exist or is inactive'
                 });
             }
         }
 
-        // Permisos por defecto segun rol
-        const defaultPermisos = {
+        // Permissions por defecto segun rol
+        const defaultPermissions = {
             'admin': { ...PERMISOS_ADMIN },
-            'supervisor': { tiendas: true, documentos: true, perfil: true, permisos: false, historial: true, usuarios: false, controlRestaurantes: false, paginaInicio: 'tiendas' },
-            'usuario': { tiendas: true, documentos: true, perfil: true, permisos: false, historial: false, usuarios: false, controlRestaurantes: false, paginaInicio: 'tiendas' }
+            'supervisor': { tiendas: true, documentos: true, perfil: true, permisos: false, historial: true, usuarios: false, controlRestaurants: false, paginaInicio: 'tiendas' },
+            'usuario': { tiendas: true, documentos: true, perfil: true, permisos: false, historial: false, usuarios: false, controlRestaurants: false, paginaInicio: 'tiendas' }
         };
 
-        // Insertar usuario
+        // Insert user.
         const [result] = await pool.query(
             `INSERT INTO usuarios
              (username, password, nombre_completo, email, rol, departamento_id, activo, permisos)
@@ -560,13 +560,13 @@ router.post('/', verificarToken, esAdmin, async (req, res) => {
                 rol || 'usuario',
                 departamentoId,
                 estado !== 'inactivo',
-                JSON.stringify(defaultPermisos[rol] || defaultPermisos['usuario'])
+                JSON.stringify(defaultPermissions[rol] || defaultPermissions['usuario'])
             ]
         );
 
         res.status(201).json({
             success: true,
-            message: 'Usuario creado exitosamente',
+            message: 'User created successfully',
             usuario: {
                 id: result.insertId,
                 nombre,
@@ -577,10 +577,10 @@ router.post('/', verificarToken, esAdmin, async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Error al crear usuario:', error);
+        console.error('User could not be created:', error);
         res.status(500).json({
             success: false,
-            message: 'Error al crear usuario'
+            message: 'User could not be created'
         });
     }
 });

@@ -19,7 +19,7 @@ async function testConnection() {
         connection.release();
         return true;
     } catch (error) {
-        console.error('Error conectando a MySQL:', error.message);
+        console.error('Error connecting to MySQL:', error.message);
         return false;
     }
 }

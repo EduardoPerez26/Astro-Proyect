@@ -1,5 +1,5 @@
--- Elimina intentos duplicados ya registrados y evita que vuelvan a crearse.
--- Ejecutar después de 2026-06-20_historial_comparaciones.sql.
+-- Removes duplicate attempts that were already registered and prevents new ones.
+-- Run after 2026-06-20_historial_comparaciones.sql.
 
 DELETE duplicada
 FROM comparaciones_archivos duplicada
