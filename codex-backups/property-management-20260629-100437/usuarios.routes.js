@@ -5,7 +5,7 @@ const bcrypt = require('bcryptjs');
 const { pool } = require('../config/database');
 const { verificarToken, esAdmin } = require('../middleware/auth.middleware');
 
-const VENTANAS_OPERATIVAS = ['tiendas', 'documentos', 'historial', 'propertyManagement'];
+const VENTANAS_OPERATIVAS = ['tiendas', 'documentos', 'historial'];
 const VENTANAS_ADMIN = ['dashboardAdmin', ...VENTANAS_OPERATIVAS];
 const PERMISOS_ADMIN = {
     dashboardAdmin: true,
@@ -16,7 +16,6 @@ const PERMISOS_ADMIN = {
     historial: true,
     usuarios: true,
     controlRestaurants: true,
-    propertyManagement: true,
     paginaInicio: 'dashboardAdmin'
 };
 
@@ -34,7 +33,6 @@ function normalizarPermissionsUser(permisos, rol) {
         tiendas: permisos.tiendas === true,
         documentos: permisos.documentos === true,
         historial: permisos.historial === true,
-        propertyManagement: permisos.propertyManagement === true,
         perfil: true,
         permisos: false,
         usuarios: false,
@@ -545,8 +543,8 @@ router.post('/', verificarToken, esAdmin, async (req, res) => {
         // Permissions por defecto segun rol
         const defaultPermissions = {
             'admin': { ...PERMISOS_ADMIN },
-            'supervisor': { tiendas: true, documentos: true, perfil: true, permisos: false, historial: true, usuarios: false, controlRestaurants: false, propertyManagement: false, paginaInicio: 'tiendas' },
-            'usuario': { tiendas: true, documentos: true, perfil: true, permisos: false, historial: false, usuarios: false, controlRestaurants: false, propertyManagement: false, paginaInicio: 'tiendas' }
+            'supervisor': { tiendas: true, documentos: true, perfil: true, permisos: false, historial: true, usuarios: false, controlRestaurants: false, paginaInicio: 'tiendas' },
+            'usuario': { tiendas: true, documentos: true, perfil: true, permisos: false, historial: false, usuarios: false, controlRestaurants: false, paginaInicio: 'tiendas' }
         };
 
         // Insert user.

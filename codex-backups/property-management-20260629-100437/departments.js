@@ -25,14 +25,6 @@ const DEPARTMENT_CATALOG = {
         paginaInicio: 'tiendas',
         modulos: ['tiendas', 'documentos']
     },
-    'property-management': {
-        codigo: 'property-management',
-        label: 'PM',
-        nombre: 'Property Management',
-        descripcion: 'Property procedures, requests, approvals, and follow-up.',
-        paginaInicio: 'propertyManagement',
-        modulos: ['propertyManagement', 'documentos', 'historial']
-    },
     hr: {
         codigo: 'hr',
         label: 'HR',

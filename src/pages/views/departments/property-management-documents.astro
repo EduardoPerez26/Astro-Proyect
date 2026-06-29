@@ -1,0 +1,459 @@
+---
+import DashboardLayout from '../../../layouts/DashboardLayout.astro';
+---
+
+<DashboardLayout title="Property Documents" includeSheetJS={true}>
+    <div class="page-container property-documents-page">
+        <div class="page-header">
+            <div class="page-header-info">
+                <h1>Property Documents</h1>
+                <p>Schedules and source files saved for Property Management.</p>
+            </div>
+
+            <div class="page-header-actions property-documents-actions">
+                <a class="btn btn-primary" href="/views/departments/property-management">
+                    <i class="fa-solid fa-table-list" aria-hidden="true"></i>
+                    Schedule builder
+                </a>
+                <button type="button" class="btn btn-secondary" id="pmDocsRefreshBtn">
+                    <i class="fa-solid fa-arrows-rotate" aria-hidden="true"></i>
+                    Refresh
+                </button>
+            </div>
+        </div>
+
+        <div class="filters-bar documents-filters property-documents-filters">
+            <div class="filter-group search-filter">
+                <label for="pmDocumentSearchInput">Search document</label>
+                <div class="search-field">
+                    <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+                    <input
+                        type="search"
+                        id="pmDocumentSearchInput"
+                        placeholder="Schedule, file, type, or period..."
+                        autocomplete="off"
+                    />
+                </div>
+            </div>
+
+            <div class="filter-group">
+                <label for="pmDocumentKindFilter">Category:</label>
+                <select id="pmDocumentKindFilter">
+                    <option value="">All</option>
+                    <option value="schedule">Schedules</option>
+                    <option value="source">Source files</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label for="pmFileTypeFilter">File type:</label>
+                <select id="pmFileTypeFilter">
+                    <option value="">All types</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label for="pmDateFromFilter">From:</label>
+                <input type="date" id="pmDateFromFilter" />
+            </div>
+
+            <div class="filter-group">
+                <label for="pmDateToFilter">To:</label>
+                <input type="date" id="pmDateToFilter" />
+            </div>
+
+            <button type="button" class="btn btn-secondary btn-sm clear-filters" id="pmClearFiltersBtn">
+                <i class="fa-solid fa-times" aria-hidden="true"></i>
+                Clear
+            </button>
+        </div>
+
+        <div class="documents-type-tabs property-documents-tabs" role="tablist" aria-label="Property Management document categories">
+            <button
+                type="button"
+                class="documents-type-tab active"
+                data-pm-document-tab=""
+                role="tab"
+                aria-selected="true"
+            >
+                <span class="documents-type-icon">
+                    <i class="fa-solid fa-folder-open" aria-hidden="true"></i>
+                </span>
+                <span class="documents-type-copy">
+                    <strong>All department documents</strong>
+                    <small>Schedules and uploaded source files</small>
+                </span>
+                <span class="documents-type-count" id="pmAllDocumentsCount">0</span>
+            </button>
+
+            <button
+                type="button"
+                class="documents-type-tab"
+                data-pm-document-tab="schedule"
+                role="tab"
+                aria-selected="false"
+            >
+                <span class="documents-type-icon">
+                    <i class="fa-solid fa-file-pen" aria-hidden="true"></i>
+                </span>
+                <span class="documents-type-copy">
+                    <strong>Editable schedules</strong>
+                    <small>Saved Sales Tax Payable schedules</small>
+                </span>
+                <span class="documents-type-count" id="pmSchedulesCount">0</span>
+            </button>
+
+            <button
+                type="button"
+                class="documents-type-tab"
+                data-pm-document-tab="source"
+                role="tab"
+                aria-selected="false"
+            >
+                <span class="documents-type-icon">
+                    <i class="fa-solid fa-file-excel" aria-hidden="true"></i>
+                </span>
+                <span class="documents-type-copy">
+                    <strong>Source files</strong>
+                    <small>General Ledger and Dimension Balance reports</small>
+                </span>
+                <span class="documents-type-count" id="pmSourceFilesCount">0</span>
+            </button>
+        </div>
+        
+        <div class="table-container">
+            <div class="table-header">
+                <h3 id="pmDocumentsTableTitle">All department documents</h3>
+                <div class="table-actions">
+                    <button type="button" class="btn btn-secondary btn-sm" id="pmTableRefreshBtn">
+                        <i class="fa-solid fa-arrows-rotate" aria-hidden="true"></i>
+                        Refresh
+                    </button>
+                </div>
+            </div>
+
+            <table class="data-table" id="pmDocumentsTable">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Document</th>
+                        <th>Category</th>
+                        <th>Period</th>
+                        <th>Details</th>
+                        <th>Status</th>
+                        <th>Updated</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="pmUnifiedDocumentsBody">
+                    <tr>
+                        <td colspan="8">Loading documents...</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div id="pmDocsEmptyState" class="empty-state" style="display: none;">
+                <i class="fa-solid fa-folder-open" aria-hidden="true"></i>
+                <h4>No Property Management documents</h4>
+                <p>No schedules or source files match the selected filters.</p>
+            </div>
+
+            <div id="pmDocsLoadingState" class="empty-state">
+                <i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i>
+                <h4>Loading...</h4>
+                <p>Fetching Property Management documents from the server.</p>
+            </div>
+
+            <div class="pagination" id="pmDocsPagination" style="display: none;">
+                <div class="pagination-info">
+                    Showing <span id="pmShowingFrom">1</span> - <span id="pmShowingTo">10</span>
+                    of <span id="pmTotalItems">0</span> department documents
+                </div>
+                <div class="pagination-buttons">
+                    <button class="pagination-btn" type="button" id="pmDocsPrevBtn">
+                        <i class="fa-solid fa-chevron-left" aria-hidden="true"></i>
+                    </button>
+                    <span class="pagination-btn active" id="pmDocsCurrentPage">1</span>
+                    <button class="pagination-btn" type="button" id="pmDocsNextBtn">
+                        <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/config.js" is:inline></script>
+    <script is:inline src="/js/departments/property-management-documents.js?v=20260629-actions-fixed"></script>
+</DashboardLayout>
+
+<style>
+    .property-documents-page {
+        max-width: 1560px;
+    }
+
+    .property-documents-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .documents-filters.property-documents-filters {
+        display: grid;
+        grid-template-columns:
+            minmax(260px, 1.6fr) repeat(4, minmax(130px, 0.72fr))
+            auto;
+        gap: 12px;
+        align-items: end;
+        margin-bottom: 18px;
+        padding: 14px;
+        border: 1px solid #cfd9e3;
+        border-radius: 5px;
+        background: #fff;
+        box-shadow: none;
+    }
+
+    .property-documents-filters .filter-group {
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .property-documents-filters label {
+        color: #52667a;
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 0.045em;
+        text-transform: uppercase;
+    }
+
+    .search-field {
+        position: relative;
+        width: 100%;
+    }
+
+    .search-field i {
+        position: absolute;
+        top: 50%;
+        left: 12px;
+        z-index: 1;
+        transform: translateY(-50%);
+        color: #718096;
+        font-size: 13px;
+        pointer-events: none;
+    }
+
+    .search-field input,
+    .property-documents-filters select,
+    .property-documents-filters input[type="date"] {
+        width: 100%;
+        height: 40px;
+        min-height: 40px;
+        border: 1px solid #cbd6e1;
+        border-radius: 4px;
+        color: #243b53;
+        background: #fff;
+        font-size: 13px;
+    }
+
+    .search-field input {
+        padding: 0 12px 0 36px;
+    }
+
+    .property-documents-filters select,
+    .property-documents-filters input[type="date"] {
+        padding: 0 10px;
+    }
+
+    .search-field input:focus,
+    .property-documents-filters select:focus,
+    .property-documents-filters input[type="date"]:focus {
+        outline: 0;
+        border-color: #174a75;
+        box-shadow: 0 0 0 3px rgba(23, 74, 117, 0.11);
+    }
+
+    .clear-filters {
+        height: 40px;
+        white-space: nowrap;
+    }
+
+    .documents-type-tabs.property-documents-tabs {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 12px;
+        margin-bottom: 16px;
+    }
+
+    .documents-type-tab {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 12px;
+        min-height: 78px;
+        padding: 13px 15px;
+        border: 1px solid #cfd9e3;
+        border-radius: 7px;
+        background: #fff;
+        color: #173a59;
+        text-align: left;
+        cursor: pointer;
+        transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+    }
+
+    .documents-type-tab:hover,
+    .documents-type-tab:focus-visible {
+        border-color: #174a75;
+        outline: 0;
+        box-shadow: 0 12px 26px -24px rgba(8, 31, 51, 0.75);
+    }
+
+    .documents-type-tab.active {
+        border-color: #102a43;
+        background: #f8fbfd;
+        box-shadow: inset 0 0 0 1px #102a43;
+    }
+
+    .documents-type-icon {
+        display: grid;
+        width: 42px;
+        height: 42px;
+        place-items: center;
+        border-radius: 7px;
+        background: #e8eff5;
+        color: #123b5e;
+        font-size: 16px;
+    }
+
+    .documents-type-tab.active .documents-type-icon {
+        background: #102a43;
+        color: #fff;
+    }
+
+    .documents-type-copy {
+        min-width: 0;
+    }
+
+    .documents-type-copy strong {
+        display: block;
+        color: #082033;
+        font-size: 15px;
+        font-weight: 850;
+        line-height: 1.2;
+    }
+
+    .documents-type-copy small {
+        display: block;
+        margin-top: 4px;
+        color: #4f667a;
+        font-size: 12px;
+        font-weight: 650;
+        line-height: 1.3;
+    }
+
+    .documents-type-count {
+        display: inline-flex;
+        min-width: 34px;
+        height: 30px;
+        align-items: center;
+        justify-content: center;
+        padding: 0 9px;
+        border: 1px solid #cbd6e1;
+        border-radius: 999px;
+        background: #fff;
+        color: #102a43;
+        font-size: 13px;
+        font-weight: 850;
+    }
+
+    .documents-type-tab.active .documents-type-count {
+        border-color: #102a43;
+        background: #102a43;
+        color: #fff;
+    }
+
+    .property-documents-status {
+        margin-bottom: 16px;
+        padding: 12px 14px;
+        border: 1px solid #d7e2ec;
+        border-radius: 6px;
+        background: #fbfdff;
+        color: #415a70;
+        font-size: 13px;
+        font-weight: 750;
+    }
+
+    .property-documents-status.is-success {
+        border-color: #b7ded6;
+        background: #f0fbf7;
+        color: #0f665f;
+    }
+
+    .property-documents-status.is-error {
+        border-color: #f0c9c9;
+        background: #fff8f8;
+        color: #9f1d1d;
+    }
+
+    :global(.property-docs-file-icon) {
+        background: rgba(16, 185, 129, 0.1);
+        color: #10b981;
+    }
+
+    :global(.property-docs-schedule-icon) {
+        background: #e8eff5;
+        color: #102a43;
+    }
+
+    :global(.property-docs-detail) {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        min-width: 150px;
+    }
+
+    :global(.property-docs-detail strong) {
+        color: #082033;
+        font-weight: 750;
+    }
+
+    :global(.property-docs-detail span) {
+        color: #52667a;
+        font-size: 12px;
+        font-weight: 650;
+    }
+
+    :global(.status-badge.saved),
+    :global(.status-badge.loaded),
+    :global(.status-badge.ready) {
+        background: rgba(16, 185, 129, 0.1);
+        color: #059669;
+    }
+
+    :global(.status-badge.draft) {
+        background: rgba(59, 130, 246, 0.1);
+        color: #2563eb;
+    }
+
+    @media (max-width: 1120px) {
+        .documents-filters.property-documents-filters,
+        .documents-type-tabs.property-documents-tabs {
+            grid-template-columns: 1fr 1fr;
+        }
+    }
+
+    @media (max-width: 760px) {
+        .documents-filters.property-documents-filters,
+        .documents-type-tabs.property-documents-tabs {
+            grid-template-columns: 1fr;
+        }
+
+        .property-documents-actions {
+            width: 100%;
+        }
+
+        .property-documents-actions .btn {
+            flex: 1 1 180px;
+        }
+    }
+</style>

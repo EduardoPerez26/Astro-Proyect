@@ -339,7 +339,6 @@ function aplicarPermissions(opciones = {}) {
 
 // Get user permissions.
 function obtenerPermissions(usuario) {
-    const esPropertyManagement = usuario.departamento?.codigo === 'property-management';
     const defaultPermissions = {
         'admin': {
             dashboardAdmin: true,
@@ -349,8 +348,7 @@ function obtenerPermissions(usuario) {
             permisos: true,
             historial: true,
             usuarios: true,
-            controlRestaurants: true,
-            propertyManagement: true
+            controlRestaurants: true
         },
         'supervisor': {
             tiendas: true,
@@ -359,8 +357,7 @@ function obtenerPermissions(usuario) {
             permisos: false,
             historial: true,
             usuarios: false,
-            controlRestaurants: false,
-            propertyManagement: false
+            controlRestaurants: false
         },
         'usuario': {
             tiendas: true,
@@ -369,8 +366,7 @@ function obtenerPermissions(usuario) {
             permisos: false,
             historial: false,
             usuarios: false,
-            controlRestaurants: false,
-            propertyManagement: false
+            controlRestaurants: false
         }
     };
 
@@ -385,36 +381,26 @@ function obtenerPermissions(usuario) {
     const savedPermissions = JSON.parse(localStorage.getItem('userPermissions') || '{}');
 
     if (usuario.id && savedPermissions[usuario.id]) {
-        const permisosGuardados = savedPermissions[usuario.id];
         return {
-            ...permisosGuardados,
+            ...savedPermissions[usuario.id],
             perfil: true,
             usuarios: false,
             permisos: false,
-            controlRestaurants: false,
-            propertyManagement: permisosGuardados.propertyManagement === true ||
-                (permisosGuardados.propertyManagement === undefined && esPropertyManagement)
+            controlRestaurants: false
         };
     }
 
     // Use permissions from the user object when available.
     if (usuario.permisos) {
-        const permisosGuardados = usuario.permisos;
-        const tienePropertyManagement =
-            permisosGuardados.propertyManagement === true ||
-            (permisosGuardados.propertyManagement === undefined && esPropertyManagement);
         return {
             tiendas: false,
             documentos: false,
             historial: false,
-            ...permisosGuardados,
+            ...usuario.permisos,
             perfil: true,
             usuarios: false,
             permisos: false,
-            controlRestaurants: false,
-            propertyManagement: tienePropertyManagement,
-            paginaInicio: permisosGuardados.paginaInicio ||
-                (tienePropertyManagement ? 'propertyManagement' : undefined)
+            controlRestaurants: false
         };
     }
     
@@ -434,9 +420,7 @@ function verificarAccesoPagina(permisos) {
         '/views/permisos': 'permisos',
         '/views/historial': 'historial',
         '/views/usuarios': 'usuarios',
-        '/views/restaurantes': 'controlRestaurants',
-        '/views/departments/property-management': 'propertyManagement',
-        '/views/departments/property-management-documents': 'propertyManagement'
+        '/views/restaurantes': 'controlRestaurants'
     };
     
     const requiredPermission = routePermissions[currentPath];
@@ -464,8 +448,7 @@ function verificarAccesoPagina(permisos) {
                 dashboardAdmin: '/views/dashboard-admin',
                 tiendas: '/views/tiendas',
                 documentos: '/views/documentos',
-                historial: '/views/historial',
-                propertyManagement: '/views/departments/property-management'
+                historial: '/views/historial'
             };
             const paginaConfigurada = permisos.paginaInicio;
             const destinoConfigurado = paginaConfigurada && permisos[paginaConfigurada]
@@ -477,11 +460,9 @@ function verificarAccesoPagina(permisos) {
                     ? '/views/documentos'
                     : permisos.historial
                         ? '/views/historial'
-                        : permisos.propertyManagement
-                            ? '/views/departments/property-management'
-                            : usuario.rol === 'admin' && permisos.dashboardAdmin
-                                ? '/views/dashboard-admin'
-                                : '/');
+                        : usuario.rol === 'admin' && permisos.dashboardAdmin
+                            ? '/views/dashboard-admin'
+                            : '/');
             window.location.href = destino;
         });
     }

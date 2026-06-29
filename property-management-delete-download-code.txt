@@ -1,0 +1,362 @@
+PROPERTY MANAGEMENT - DELETE AND DOWNLOAD BUTTONS
+================================================
+
+This file has the code to add:
+- Download button for saved schedules.
+- Delete button for saved schedules.
+- Delete button for uploaded source files.
+
+You already have source-file download working, so this keeps it and adds the missing actions.
+
+
+1) BACKEND: add DELETE route for source files
+--------------------------------------------
+
+File:
+backend/routes/propertyManagement.routes.js
+
+Where to paste it:
+Paste this code right AFTER the existing route:
+router.get('/documents/:id/download', ...access, async (req, res) => { ... });
+
+Code:
+
+router.delete('/documents/:id', ...access, async (req, res) => {
+    try {
+        const [result] = await pool.query(
+            `DELETE FROM property_management_documentos
+             WHERE id = ?`,
+            [req.params.id]
+        );
+
+        if (!result.affectedRows) {
+            return res.status(404).json({ success: false, message: 'Document not found' });
+        }
+
+        res.json({ success: true, message: 'Document deleted successfully' });
+    } catch (error) {
+        console.error('Property Management document could not be deleted:', error);
+        if (tableSetupMessage(error, res)) return;
+        res.status(500).json({ success: false, message: 'Document could not be deleted' });
+    }
+});
+
+
+2) BACKEND: add DELETE route for schedules
+------------------------------------------
+
+File:
+backend/routes/propertyManagement.routes.js
+
+Where to paste it:
+Paste this code BEFORE this final line:
+module.exports = router;
+
+Code:
+
+router.delete('/schedules/:id', ...access, async (req, res) => {
+    const connection = await pool.getConnection();
+
+    try {
+        await connection.beginTransaction();
+
+        await connection.query(
+            `DELETE FROM property_management_schedule_documentos
+             WHERE schedule_id = ?`,
+            [req.params.id]
+        );
+
+        const [result] = await connection.query(
+            `DELETE FROM property_management_schedules
+             WHERE id = ?`,
+            [req.params.id]
+        );
+
+        if (!result.affectedRows) {
+            await connection.rollback();
+            return res.status(404).json({ success: false, message: 'Schedule not found' });
+        }
+
+        await connection.commit();
+        res.json({ success: true, message: 'Schedule deleted successfully' });
+    } catch (error) {
+        await connection.rollback();
+        console.error('Property Management schedule could not be deleted:', error);
+        if (tableSetupMessage(error, res)) return;
+        res.status(500).json({ success: false, message: 'Schedule could not be deleted' });
+    } finally {
+        connection.release();
+    }
+});
+
+
+3) FRONTEND: replace renderDocumentRow
+--------------------------------------
+
+File:
+public/js/departments/property-management-documents.js
+
+Where to paste it:
+Find this function:
+function renderDocumentRow(item) { ... }
+
+Replace the complete function with this one:
+
+function renderDocumentRow(item) {
+    const iconClass = item.kind === 'schedule'
+        ? 'property-docs-schedule-icon'
+        : 'property-docs-file-icon';
+    const icon = item.kind === 'schedule' ? 'fa-file-pen' : 'fa-file-excel';
+    const actions = item.kind === 'schedule'
+        ? `
+            <button class="action-btn edit" type="button" data-schedule-edit="${escapeHtml(item.rawId)}" title="Edit schedule">
+                <i class="fa-solid fa-pen-to-square" aria-hidden="true"></i>
+            </button>
+            <button class="action-btn download" type="button" data-schedule-download="${escapeHtml(item.rawId)}" title="Download schedule">
+                <i class="fa-solid fa-download" aria-hidden="true"></i>
+            </button>
+            <button class="action-btn delete" type="button" data-schedule-delete="${escapeHtml(item.rawId)}" title="Delete schedule">
+                <i class="fa-solid fa-trash" aria-hidden="true"></i>
+            </button>
+        `
+        : `
+            <button class="action-btn view" type="button" data-document-view="${escapeHtml(item.rawId)}" title="Preview file">
+                <i class="fa-solid fa-eye" aria-hidden="true"></i>
+            </button>
+            <button class="action-btn download" type="button" data-document-download="${escapeHtml(item.rawId)}" title="Download">
+                <i class="fa-solid fa-download" aria-hidden="true"></i>
+            </button>
+            <button class="action-btn delete" type="button" data-document-delete="${escapeHtml(item.rawId)}" title="Delete file">
+                <i class="fa-solid fa-trash" aria-hidden="true"></i>
+            </button>
+        `;
+
+    return `
+        <tr>
+            <td>${escapeHtml(item.displayId)}</td>
+            <td>
+                <div class="file-cell">
+                    <div class="file-icon ${iconClass}">
+                        <i class="fa-solid ${icon}" aria-hidden="true"></i>
+                    </div>
+                    <div class="file-info">
+                        <span class="file-name">${escapeHtml(item.name)}</span>
+                        <span class="file-meta">${escapeHtml(item.meta)}</span>
+                    </div>
+                </div>
+            </td>
+            <td>${escapeHtml(item.category)}</td>
+            <td>${escapeHtml(item.period)}</td>
+            <td>
+                <div class="property-docs-detail">
+                    <strong>${escapeHtml(item.detailsPrimary)}</strong>
+                    <span>${escapeHtml(item.detailsSecondary)}</span>
+                </div>
+            </td>
+            <td><span class="status-badge ${escapeHtml(item.statusClass)}">${escapeHtml(item.statusLabel)}</span></td>
+            <td>${escapeHtml(formatDateTime(item.date))}</td>
+            <td>
+                <div class="action-buttons">${actions}</div>
+            </td>
+        </tr>
+    `;
+}
+
+
+4) FRONTEND: replace handleTableAction
+--------------------------------------
+
+File:
+public/js/departments/property-management-documents.js
+
+Where to paste it:
+Find this function:
+async function handleTableAction(event) { ... }
+
+Replace the complete function with this one:
+
+async function handleTableAction(event) {
+    const scheduleButton = event.target.closest('[data-schedule-edit]');
+    const scheduleDownloadButton = event.target.closest('[data-schedule-download]');
+    const scheduleDeleteButton = event.target.closest('[data-schedule-delete]');
+    const viewButton = event.target.closest('[data-document-view]');
+    const downloadButton = event.target.closest('[data-document-download]');
+    const documentDeleteButton = event.target.closest('[data-document-delete]');
+
+    if (scheduleButton) {
+        const id = scheduleButton.dataset.scheduleEdit;
+        if (id) {
+            window.location.href = `/views/departments/property-management?schedule=${encodeURIComponent(id)}`;
+        }
+        return;
+    }
+
+    if (scheduleDownloadButton) {
+        await downloadSchedule(scheduleDownloadButton.dataset.scheduleDownload, scheduleDownloadButton);
+        return;
+    }
+
+    if (scheduleDeleteButton) {
+        await deleteSchedule(scheduleDeleteButton.dataset.scheduleDelete, scheduleDeleteButton);
+        return;
+    }
+
+    if (viewButton) {
+        await viewDocument(viewButton.dataset.documentView, viewButton);
+        return;
+    }
+
+    if (downloadButton) {
+        await downloadDocument(downloadButton.dataset.documentDownload, downloadButton);
+        return;
+    }
+
+    if (documentDeleteButton) {
+        await deleteDocument(documentDeleteButton.dataset.documentDelete, documentDeleteButton);
+    }
+}
+
+
+5) FRONTEND: add the new helper functions
+-----------------------------------------
+
+File:
+public/js/departments/property-management-documents.js
+
+Where to paste it:
+Paste this code right AFTER handleTableAction and BEFORE this function:
+async function downloadDocument(id, button = null) { ... }
+
+Code:
+
+async function downloadSchedule(id, button = null) {
+    if (button) button.disabled = true;
+
+    try {
+        const payload = await apiJson(`/schedules/${encodeURIComponent(id)}`);
+        const schedule = payload.schedule || {};
+        const data = schedule.datos_json || {};
+        const rows = Array.isArray(data.rows) ? data.rows : [];
+        const headers = Array.isArray(data.headers) ? data.headers : [];
+        const filename = `${safeFilename(schedule.nombre || 'Property Management Schedule')}.xlsx`;
+
+        if (!window.XLSX) {
+            const blob = new Blob([JSON.stringify({ schedule, rows }, null, 2)], {
+                type: 'application/json'
+            });
+            downloadBlob(blob, filename.replace(/\.xlsx$/i, '.json'));
+            return;
+        }
+
+        const workbook = window.XLSX.utils.book_new();
+        let worksheet;
+
+        if (rows.length && Array.isArray(rows[0])) {
+            worksheet = window.XLSX.utils.aoa_to_sheet(headers.length ? [headers, ...rows] : rows);
+        } else if (rows.length) {
+            worksheet = window.XLSX.utils.json_to_sheet(rows, headers.length ? { header: headers } : undefined);
+        } else {
+            worksheet = window.XLSX.utils.aoa_to_sheet([
+                ['No rows saved for this schedule']
+            ]);
+        }
+
+        window.XLSX.utils.book_append_sheet(workbook, worksheet, 'Schedule 2026');
+        window.XLSX.writeFile(workbook, filename);
+    } catch (error) {
+        showSwal('error', 'Download failed', error.message || 'Schedule could not be downloaded.');
+    } finally {
+        if (button) button.disabled = false;
+    }
+}
+
+async function deleteSchedule(id, button = null) {
+    const confirmed = await confirmDelete(
+        'Delete schedule?',
+        'This saved schedule will be permanently removed from the server.'
+    );
+
+    if (!confirmed) return;
+    if (button) button.disabled = true;
+
+    try {
+        await apiJson(`/schedules/${encodeURIComponent(id)}`, { method: 'DELETE' });
+        schedules = schedules.filter(schedule => String(schedule.id) !== String(id));
+        renderDocuments();
+        showSwal('success', 'Deleted', 'Schedule deleted successfully.');
+    } catch (error) {
+        showSwal('error', 'Delete failed', error.message || 'Schedule could not be deleted.');
+    } finally {
+        if (button) button.disabled = false;
+    }
+}
+
+async function deleteDocument(id, button = null) {
+    const confirmed = await confirmDelete(
+        'Delete source file?',
+        'This uploaded file will be permanently removed from the server.'
+    );
+
+    if (!confirmed) return;
+    if (button) button.disabled = true;
+
+    try {
+        await apiJson(`/documents/${encodeURIComponent(id)}`, { method: 'DELETE' });
+        documents = documents.filter(document => String(document.id) !== String(id));
+        populateFileTypes();
+        renderDocuments();
+        showSwal('success', 'Deleted', 'Source file deleted successfully.');
+    } catch (error) {
+        showSwal('error', 'Delete failed', error.message || 'Source file could not be deleted.');
+    } finally {
+        if (button) button.disabled = false;
+    }
+}
+
+async function confirmDelete(title, text) {
+    if (!window.Swal) {
+        return window.confirm(`${title}\n${text}`);
+    }
+
+    const result = await window.Swal.fire({
+        icon: 'warning',
+        title,
+        text,
+        showCancelButton: true,
+        confirmButtonText: 'Delete',
+        cancelButtonText: 'Cancel',
+        confirmButtonColor: '#c81e1e',
+        cancelButtonColor: '#102a43'
+    });
+
+    return result.isConfirmed;
+}
+
+function downloadBlob(blob, filename) {
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+}
+
+function safeFilename(value) {
+    return String(value || 'download')
+        .trim()
+        .replace(/[\\/:*?"<>|]+/g, '-')
+        .replace(/\s+/g, ' ')
+        .slice(0, 120);
+}
+
+
+6) CHECK AFTER PASTING
+----------------------
+
+Run:
+npm.cmd run build
+
+Then restart the backend/server if it was already running, because the new DELETE routes are backend changes.

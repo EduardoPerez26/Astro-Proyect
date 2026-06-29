@@ -113,8 +113,7 @@ const PERMISOS_ADMIN = {
     usuarios: true,
     controlRestaurants: true,
     historial: true,
-    documentos: true,
-    propertyManagement: true
+    documentos: true
 };
 
 function parsearJson(valor) {
@@ -134,33 +133,24 @@ function construirContextoUsuario(usuario) {
 
     if (usuario.rol === 'admin') {
         const permisosGuardados = parsearJson(usuario.permisos);
-        const paginaInicio = ['dashboardAdmin', 'tiendas', 'documentos', 'historial', 'propertyManagement'].includes(
+        const paginaInicio = ['dashboardAdmin', 'tiendas', 'documentos', 'historial'].includes(
             permisosGuardados.paginaInicio
         ) ? permisosGuardados.paginaInicio : 'dashboardAdmin';
         permisos = { ...PERMISOS_ADMIN, paginaInicio };
     } else {
-        const permisosGuardados = parsearJson(usuario.permisos);
-        const esPropertyManagement = departamento.codigo === 'property-management';
-        const tienePermisoPropertyManagement =
-            permisosGuardados.propertyManagement === true ||
-            (permisosGuardados.propertyManagement === undefined && esPropertyManagement);
         permisos = {
             tiendas: false,
             documentos: false,
             historial: false,
-            propertyManagement: false,
             perfil: true,
             permisos: false,
             usuarios: false,
             controlRestaurants: false,
-            ...permisosGuardados,
+            ...parsearJson(usuario.permisos),
             perfil: true,
             usuarios: false,
             permisos: false,
-            controlRestaurants: false,
-            propertyManagement: tienePermisoPropertyManagement,
-            paginaInicio: permisosGuardados.paginaInicio ||
-                (tienePermisoPropertyManagement ? 'propertyManagement' : undefined)
+            controlRestaurants: false
         };
     }
 

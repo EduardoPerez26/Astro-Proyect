@@ -69,16 +69,6 @@ const MENU_SECTIONS = [
         initialOption: true
     },
     {
-        id: 'propertyManagement',
-        name: 'Property Management',
-        description: 'Property procedures and departmental requests',
-        icon: 'fa-building-user',
-        iconClass: 'property-management',
-        path: '/views/departments/property-management',
-        required: false,
-        initialOption: true
-    },
-    {
         id: 'usuarios',
         name: 'Users',
         description: 'User administration',
@@ -150,10 +140,10 @@ async function loadUserData() {
         
         // Sample permissions
         const defaultPermissions = {
-            1: { dashboardAdmin: true, tiendas: true, documentos: true, perfil: true, permisos: true, historial: true, usuarios: true, controlRestaurants: true, propertyManagement: true, paginaInicio: 'dashboardAdmin' },
-            2: { tiendas: true, documentos: true, perfil: true, permisos: false, historial: true, usuarios: false, controlRestaurants: false, propertyManagement: false, paginaInicio: 'tiendas' },
-            3: { tiendas: true, documentos: true, perfil: true, permisos: false, historial: false, usuarios: false, controlRestaurants: false, propertyManagement: false, paginaInicio: 'tiendas' },
-            4: { tiendas: true, documentos: false, perfil: true, permisos: false, historial: false, usuarios: false, controlRestaurants: false, propertyManagement: true, paginaInicio: 'propertyManagement' }
+            1: { dashboardAdmin: true, tiendas: true, documentos: true, perfil: true, permisos: true, historial: true, usuarios: true, controlRestaurants: true, paginaInicio: 'dashboardAdmin' },
+            2: { tiendas: true, documentos: true, perfil: true, permisos: false, historial: true, usuarios: false, controlRestaurants: false, paginaInicio: 'tiendas' },
+            3: { tiendas: true, documentos: true, perfil: true, permisos: false, historial: false, usuarios: false, controlRestaurants: false, paginaInicio: 'tiendas' },
+            4: { tiendas: true, documentos: false, perfil: true, permisos: false, historial: false, usuarios: false, controlRestaurants: false, paginaInicio: 'tiendas' }
         };
         
         currentUser.permisos = defaultPermissions[currentUser.id] || {};
@@ -362,7 +352,7 @@ async function savePermissions() {
         await Swal.fire({
             icon: 'warning',
             title: 'Select a window',
-            text: 'The user must have access to at least one operational window.'
+            text: 'The user must have access to at least Stores, Documents, or History.'
         });
         return;
     }

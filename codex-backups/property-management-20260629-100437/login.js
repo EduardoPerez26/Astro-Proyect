@@ -3,13 +3,11 @@ const API_URL = window.API_URL;
 
 function obtenerRutaInicial(usuario) {
     const permisos = usuario?.permisos || {};
-    const esPropertyManagement = usuario?.departamento?.codigo === 'property-management';
     const rutas = {
         dashboardAdmin: '/views/dashboard-admin',
         tiendas: '/views/tiendas',
         documentos: '/views/documentos',
-        historial: '/views/historial',
-        propertyManagement: '/views/departments/property-management'
+        historial: '/views/historial'
     };
     const paginaConfigurada = permisos.paginaInicio;
 
@@ -20,7 +18,6 @@ function obtenerRutaInicial(usuario) {
     if (permisos.tiendas) return '/views/tiendas';
     if (permisos.documentos) return '/views/documentos';
     if (permisos.historial) return '/views/historial';
-    if (permisos.propertyManagement || esPropertyManagement) return '/views/departments/property-management';
     if (usuario?.rol === 'admin' && permisos.dashboardAdmin) return '/views/dashboard-admin';
     return '/';
 }

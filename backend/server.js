@@ -19,6 +19,7 @@ const dashboardRoutes = require('./routes/dashboard.routes');
 const departamentosRoutes = require('./routes/departamentos.routes');
 const comparacionesRoutes = require('./routes/comparaciones.routes');
 const taxRatesRoutes = require('./routes/taxRates.routes');
+const propertyManagementRoutes = require('./routes/propertyManagement.routes');
 
 const app = express();
 app.disable('x-powered-by');
@@ -110,7 +111,8 @@ app.get('/api', (req, res) => {
             restaurantes: '/api/restaurantes',
             validaciones: '/api/validaciones',
             conciliaciones: '/api/conciliaciones',
-            dashboard: '/api/dashboard/resumen'
+            dashboard: '/api/dashboard/resumen',
+            propertyManagement: '/api/property-management'
         }
     });
 });
@@ -126,6 +128,7 @@ app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/departamentos', departamentosRoutes);
 app.use('/api/comparaciones', comparacionesRoutes);
 app.use('/api/tax-rates', taxRatesRoutes);
+app.use('/api/property-management', propertyManagementRoutes);
 
 // ============================================
 // MANEJO DE ERRORES
