@@ -110,6 +110,44 @@ const currentYear = new Date().getFullYear();
                             </button>
                         </form>
 
+                        <form class="login-form login-mfa-form" id="mfaForm" hidden>
+                            <div class="login-mfa-summary">
+                                <span class="login-mfa-icon">
+                                    <i class="fa-solid fa-mobile-screen-button" aria-hidden="true"></i>
+                                </span>
+                                <div>
+                                    <strong>Authenticator required</strong>
+                                    <p>Enter the 6-digit code from Microsoft Authenticator.</p>
+                                </div>
+                            </div>
+
+                            <div class="login-field">
+                                <label for="mfaCode">Authentication code</label>
+                                <div class="login-input-wrap">
+                                    <i class="fa-solid fa-key" aria-hidden="true"></i>
+                                    <input
+                                        type="text"
+                                        id="mfaCode"
+                                        name="mfaCode"
+                                        placeholder="000000"
+                                        autocomplete="one-time-code"
+                                        inputmode="numeric"
+                                        maxlength="6"
+                                        pattern="[0-9]{6}"
+                                    />
+                                </div>
+                            </div>
+
+                            <button type="submit" id="mfaBtn" class="login-submit">
+                                <span>Verify code</span>
+                                <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
+                            </button>
+
+                            <button type="button" id="mfaBackBtn" class="login-secondary-action">
+                                Use another account
+                            </button>
+                        </form>
+
                         <div class="login-security-note">
                             <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
                             <span>Your access is logged for internal audit.</span>
@@ -125,5 +163,5 @@ const currentYear = new Date().getFullYear();
     </main>
 
     <script src="/js/config.js" is:inline></script>
-    <script src="/js/login.js" is:inline></script>
+    <script src="/js/login.js?v=20260627-mfa" is:inline></script>
 </BaseLayout>

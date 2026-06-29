@@ -177,9 +177,15 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
 
     <!-- Create/edit user modal -->
     <div class="modal-overlay" id="userModal">
-        <div class="modal">
+        <div class="modal admin-form-modal admin-user-modal">
             <div class="modal-header">
+                <span class="admin-modal-kicker">Account</span>
                 <h3 id="modalTitle">New user</h3>
+                <p class="admin-modal-summary">Identity, credentials, role, and department access.</p>
+                <div class="admin-modal-badge">
+                    <i class="fa-solid fa-user-shield"></i>
+                    <span>User access</span>
+                </div>
                 <button class="modal-close" onclick="closeUserModal()">
                     <i class="fa-solid fa-xmark"></i>
                 </button>
@@ -249,9 +255,15 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
     </div>
 
     <div class="modal-overlay" id="departmentModal">
-        <div class="modal department-modal">
+        <div class="modal department-modal admin-form-modal admin-department-modal">
             <div class="modal-header">
+                <span class="admin-modal-kicker">Department</span>
                 <h3 id="departmentModalTitle">New department</h3>
+                <p class="admin-modal-summary">Group users and control visible work areas.</p>
+                <div class="admin-modal-badge">
+                    <i class="fa-solid fa-building"></i>
+                    <span>Workspace group</span>
+                </div>
                 <button class="modal-close" onclick="closeDepartmentModal()">
                     <i class="fa-solid fa-xmark"></i>
                 </button>
@@ -390,6 +402,236 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
 
         .department-modal { max-width: 720px; }
 
+        #userModal.modal-overlay,
+        #departmentModal.modal-overlay {
+            padding: 24px;
+            background: rgba(8, 31, 51, .6);
+            backdrop-filter: blur(7px);
+        }
+
+        #userModal .admin-form-modal,
+        #departmentModal .admin-form-modal {
+            position: relative;
+            display: grid;
+            grid-template-columns: minmax(270px, 315px) minmax(0, 1fr);
+            grid-template-rows: minmax(0, 1fr) auto;
+            width: min(1040px, calc(100vw - 48px));
+            max-width: none;
+            max-height: min(86vh, 820px);
+            overflow: hidden;
+            border: 1px solid #c8d7e4;
+            border-radius: 16px;
+            background: #eef3f7;
+            box-shadow: 0 34px 90px -34px rgba(8, 31, 51, .86);
+        }
+
+        #departmentModal .admin-form-modal {
+            width: min(1060px, calc(100vw - 48px));
+        }
+
+        #userModal .admin-form-modal .modal-header,
+        #departmentModal .admin-form-modal .modal-header {
+            grid-column: 1;
+            grid-row: 1 / 3;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            justify-content: flex-start;
+            gap: 12px;
+            padding: 28px 22px;
+            border: 0;
+            background:
+                linear-gradient(180deg, rgba(143, 199, 240, .22), transparent 38%),
+                #09243b !important;
+            color: #ffffff !important;
+        }
+
+        .admin-modal-kicker {
+            color: #b9dcf8;
+            font-size: 10px;
+            font-weight: 900;
+            letter-spacing: .14em;
+            text-transform: uppercase;
+        }
+
+        #userModal .admin-form-modal .modal-header h3,
+        #departmentModal .admin-form-modal .modal-header h3 {
+            margin: 0;
+            color: #ffffff !important;
+            font-size: 28px;
+            font-weight: 900;
+            line-height: 1.08;
+        }
+
+        .admin-modal-summary {
+            margin: 0;
+            color: #dcecf7;
+            font-size: 13px;
+            line-height: 1.5;
+            font-weight: 650;
+        }
+
+        .admin-modal-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: auto;
+            width: 100%;
+            min-height: 48px;
+            padding: 0 12px;
+            border: 1px solid rgba(255, 255, 255, .28);
+            border-radius: 12px;
+            background: rgba(255, 255, 255, .16);
+            color: #ffffff;
+            font-size: 13px;
+            font-weight: 850;
+        }
+
+        .admin-modal-badge i {
+            display: grid;
+            width: 30px;
+            height: 30px;
+            place-items: center;
+            border-radius: 8px;
+            background: rgba(143, 199, 240, .24);
+            color: #d2ecff;
+        }
+
+        #userModal .admin-form-modal .modal-close,
+        #departmentModal .admin-form-modal .modal-close {
+            position: absolute;
+            top: 18px;
+            right: 18px;
+            z-index: 2;
+            width: 38px;
+            height: 38px;
+            border: 1px solid #cbd9e6;
+            border-radius: 10px;
+            background: #fff;
+            color: #173a59;
+            box-shadow: 0 12px 26px -24px rgba(8, 31, 51, .75);
+        }
+
+        #userModal .admin-form-modal .modal-close:hover,
+        #departmentModal .admin-form-modal .modal-close:hover,
+        #userModal .admin-form-modal .modal-close:focus-visible,
+        #departmentModal .admin-form-modal .modal-close:focus-visible {
+            border-color: #9fb4c7;
+            background: #eef4f9;
+            color: #09243b;
+        }
+
+        #userModal .admin-form-modal .modal-body,
+        #departmentModal .admin-form-modal .modal-body {
+            grid-column: 2;
+            grid-row: 1;
+            min-height: 0;
+            overflow: auto;
+            padding: 58px 30px 24px;
+            background: #fff;
+        }
+
+        #userForm,
+        #departmentForm {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 16px;
+        }
+
+        #departmentForm {
+            grid-template-columns: 1fr;
+        }
+
+        #userForm > .form-row,
+        #departmentForm > .form-row {
+            display: grid;
+            grid-column: 1 / -1;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 16px;
+        }
+
+        #userForm > .form-group:last-child,
+        #departmentForm > .form-group {
+            grid-column: 1 / -1;
+        }
+
+        #userModal .admin-form-modal .form-group,
+        #departmentModal .admin-form-modal .form-group {
+            min-width: 0;
+            margin: 0;
+        }
+
+        #userModal .admin-form-modal .form-label,
+        #departmentModal .admin-form-modal .form-label {
+            margin-bottom: 7px;
+            color: #344f67;
+            font-size: 10px;
+            font-weight: 900;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+        }
+
+        #userModal .admin-form-modal .form-control,
+        #departmentModal .admin-form-modal .form-control {
+            min-height: 42px;
+            border: 1px solid #cbd9e6;
+            border-radius: 9px;
+            background: #fff;
+            color: #0d2f4c;
+            font-size: 14px;
+            box-shadow: inset 0 1px 0 rgba(8, 31, 51, .03);
+        }
+
+        #departmentDescription.form-control {
+            min-height: 104px;
+            resize: vertical;
+        }
+
+        #userModal .admin-form-modal .form-control:focus,
+        #departmentModal .admin-form-modal .form-control:focus {
+            border-color: #2f6f9f;
+            outline: 3px solid rgba(47, 111, 159, .14);
+            outline-offset: 0;
+        }
+
+        #userModal .admin-form-modal .form-control::placeholder,
+        #departmentModal .admin-form-modal .form-control::placeholder {
+            color: #687f94;
+            opacity: 1;
+        }
+
+        #userModal .admin-form-modal .form-text,
+        #departmentModal .admin-form-modal .form-text {
+            display: block;
+            margin-top: 7px;
+            color: #415a70;
+            font-size: 12px;
+            font-weight: 650;
+            line-height: 1.35;
+        }
+
+        #userModal .admin-form-modal .modal-footer,
+        #departmentModal .admin-form-modal .modal-footer {
+            grid-column: 2;
+            grid-row: 2;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            padding: 16px 28px;
+            border: 0;
+            border-top: 1px solid #d7e2ec;
+            background: #f8fbfd;
+        }
+
+        #userModal .admin-form-modal .modal-footer .btn,
+        #departmentModal .admin-form-modal .modal-footer .btn {
+            min-height: 38px;
+            min-width: 120px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 850;
+        }
+
         :global(.action-btn.department-state.is-disable) { color: #a46612; }
         :global(.action-btn.department-state.is-disable:hover) { background: #fff1d6; color: #7c4a08; }
         :global(.action-btn.department-state.is-enable) { color: #16834b; }
@@ -416,6 +658,57 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
             .department-intro { align-items: flex-start; flex-direction: column; }
             .admin-view-tabs { display: flex; }
             .admin-view-tab { flex: 1; justify-content: center; }
+
+            #userModal.modal-overlay,
+            #departmentModal.modal-overlay {
+                padding: 10px;
+            }
+
+            #userModal .admin-form-modal,
+            #departmentModal .admin-form-modal {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto minmax(0, 1fr) auto;
+                width: calc(100vw - 20px);
+                max-height: calc(100vh - 20px);
+            }
+
+            #userModal .admin-form-modal .modal-header,
+            #departmentModal .admin-form-modal .modal-header {
+                grid-column: 1;
+                grid-row: 1;
+                padding: 22px 58px 20px 18px;
+            }
+
+            .admin-modal-badge {
+                margin-top: 4px;
+            }
+
+            #userModal .admin-form-modal .modal-body,
+            #departmentModal .admin-form-modal .modal-body {
+                grid-column: 1;
+                grid-row: 2;
+                padding: 20px 18px;
+            }
+
+            #userForm,
+            #departmentForm,
+            #userForm > .form-row,
+            #departmentForm > .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            #userModal .admin-form-modal .modal-footer,
+            #departmentModal .admin-form-modal .modal-footer {
+                grid-column: 1;
+                grid-row: 3;
+                flex-direction: column-reverse;
+                padding: 14px 18px;
+            }
+
+            #userModal .admin-form-modal .modal-footer .btn,
+            #departmentModal .admin-form-modal .modal-footer .btn {
+                width: 100%;
+            }
         }
     </style>
 

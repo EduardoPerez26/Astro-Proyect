@@ -1,0 +1,22 @@
+---
+import BaseLayout from './BaseLayout.astro';
+import Sidebar from '../components/Sidebar.astro';
+import Topbar from '../components/Topbar.astro';
+
+interface Props {
+  title: string;
+  includeSheetJS?: boolean;
+}
+
+const { title, includeSheetJS = false } = Astro.props;
+---
+
+<BaseLayout title={title} includeSheetJS={includeSheetJS}>
+    <Sidebar />
+    <main class="main" id="mainContent">
+        <Topbar title={title} />
+        <slot />
+    </main>
+    <script is:inline src="/js/department-context.js"></script>
+    <script is:inline src="/js/sidebar-loader.js?v=20260626-profile-settings"></script>
+</BaseLayout>

@@ -10,12 +10,29 @@ let paginaActual = 1;
 const porPagina = 10;
 const ITEMS_POR_PAGINA = 10;
 let selectedDocument = null;
+let categoriaDocumentoActual = 'reconciliations';
+
+const DOCUMENT_CATEGORIES = {
+    reconciliations: {
+        title: 'Reconciliation files',
+        emptyTitle: 'No reconciliation files',
+        emptyText: 'No reconciliation files match the selected filters',
+        paginationLabel: 'reconciliation files'
+    },
+    ebt: {
+        title: 'EBT files',
+        emptyTitle: 'No EBT files',
+        emptyText: 'No EBT files match the selected filters',
+        paginationLabel: 'EBT files'
+    }
+};
 
 // ============================================
 // INICIALIZACION
 // ============================================
 
 document.addEventListener('DOMContentLoaded', () => {
+    configurarTabsDocumentos();
     cargarDocumentos();
     configurarFiltros();
 });
@@ -78,6 +95,104 @@ async function cargarDocumentos() {
 // MOSTRAR DOCUMENTOS EN TABLA
 // ============================================
 
+function leerNotasDocumento(doc = {}) {
+    if (!doc?.notas) return {};
+
+    if (typeof doc.notas === 'object') {
+        return doc.notas;
+    }
+
+    try {
+        return JSON.parse(doc.notas);
+    } catch {
+        return {};
+    }
+}
+
+function normalizarCategoriaTexto(value) {
+    return String(value || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .trim();
+}
+
+function obtenerCategoriaDocumento(doc = {}) {
+    const notas = leerNotasDocumento(doc);
+    const nombre = String(doc.nombre_original || doc.nombreOriginal || '');
+    const tipo = normalizarCategoriaTexto(notas.tipo);
+    const fuente = normalizarCategoriaTexto(notas.fuente);
+    const tipoDocumento = normalizarCategoriaTexto(notas.tipoDocumento || notas.tipo_documento);
+    const categoria = normalizarCategoriaTexto(notas.categoria);
+    const nombreNormalizado = normalizarCategoriaTexto(nombre);
+
+    const esEbt = (
+        tipoDocumento === 'ebt' ||
+        fuente === 'ebt' ||
+        categoria === 'ebt' ||
+        tipo.includes('ebt') ||
+        /(^|[_\s-])ebt([_.\s-]|$)/i.test(nombre) ||
+        /(^|[_\s-])ebt([_.\s-]|$)/i.test(nombreNormalizado)
+    );
+
+    return esEbt ? 'ebt' : 'reconciliations';
+}
+
+function obtenerConfigCategoriaDocumento() {
+    return DOCUMENT_CATEGORIES[categoriaDocumentoActual] || DOCUMENT_CATEGORIES.reconciliations;
+}
+
+function filtrarPorCategoriaDocumento(docs) {
+    return docs.filter(doc => obtenerCategoriaDocumento(doc) === categoriaDocumentoActual);
+}
+
+function actualizarResumenCategorias(docsBase) {
+    const counts = docsBase.reduce((acc, doc) => {
+        const categoria = obtenerCategoriaDocumento(doc);
+        acc[categoria] = (acc[categoria] || 0) + 1;
+        return acc;
+    }, { reconciliations: 0, ebt: 0 });
+
+    const reconciliationCount = document.getElementById('reconciliationFilesCount');
+    const ebtCount = document.getElementById('ebtFilesCount');
+
+    if (reconciliationCount) reconciliationCount.textContent = counts.reconciliations || 0;
+    if (ebtCount) ebtCount.textContent = counts.ebt || 0;
+}
+
+function actualizarVistaCategoriaDocumento() {
+    const config = obtenerConfigCategoriaDocumento();
+
+    document.querySelectorAll('[data-document-tab]').forEach(tab => {
+        const active = tab.dataset.documentTab === categoriaDocumentoActual;
+        tab.classList.toggle('active', active);
+        tab.setAttribute('aria-selected', active ? 'true' : 'false');
+    });
+
+    const tableTitle = document.getElementById('documentsTableTitle');
+    const emptyTitle = document.getElementById('documentsEmptyTitle');
+    const emptyText = document.getElementById('documentsEmptyText');
+    const paginationItemsLabel = document.getElementById('paginationItemsLabel');
+
+    if (tableTitle) tableTitle.textContent = config.title;
+    if (emptyTitle) emptyTitle.textContent = config.emptyTitle;
+    if (emptyText) emptyText.textContent = config.emptyText;
+    if (paginationItemsLabel) paginationItemsLabel.textContent = config.paginationLabel;
+}
+
+function configurarTabsDocumentos() {
+    document.querySelectorAll('[data-document-tab]').forEach(tab => {
+        tab.addEventListener('click', () => {
+            const categoria = tab.dataset.documentTab;
+            if (!DOCUMENT_CATEGORIES[categoria] || categoria === categoriaDocumentoActual) return;
+
+            categoriaDocumentoActual = categoria;
+            paginaActual = 1;
+            mostrarDocumentos();
+        });
+    });
+}
+
 function obtenerInfoReviewFuente(documento = '') {
     const doc = typeof documento === 'object'
         ? documento
@@ -89,9 +204,7 @@ function obtenerInfoReviewFuente(documento = '') {
     };
 
     try {
-        const notas = typeof doc.notas === 'string'
-            ? JSON.parse(doc.notas)
-            : doc.notas;
+        const notas = leerNotasDocumento(doc);
 
         if (notas?.tipo === 'referencia_comparacion') {
             return {
@@ -137,7 +250,10 @@ function mostrarDocumentos() {
     const table = document.getElementById('documentosTable');
 
     // Aplicar filtros
-    documentosFiltrados = aplicarFiltros(documentos);
+    const documentosBaseFiltrados = aplicarFiltrosBase(documentos);
+    actualizarResumenCategorias(documentosBaseFiltrados);
+    actualizarVistaCategoriaDocumento();
+    documentosFiltrados = filtrarPorCategoriaDocumento(documentosBaseFiltrados);
 
     // Paginacion
     const total = documentosFiltrados.length;
@@ -157,10 +273,11 @@ function mostrarDocumentos() {
 
     tbody.innerHTML = paginados.map(doc => {
         const revision = obtenerInfoReviewFuente(doc);
+        const categoria = obtenerCategoriaDocumento(doc);
         const nombreVisible = revision?.nombreOriginal || doc.nombre_original;
         let metaVisible = revision
             ? `${revision.etiqueta} - Revision V${String(revision.version).padStart(3, '0')}`
-            : `${doc.numero_hojas || 1} sheet(s)`;
+            : (categoria === 'ebt' ? 'EBT file' : `${doc.numero_hojas || 1} sheet(s)`);
 
         if (revision) {
             metaVisible = revision.esReferenciaActual
@@ -194,7 +311,7 @@ function mostrarDocumentos() {
             <td>${formatearFecha(doc.fecha_subida)}</td>
             <td>
                 <div class="action-buttons">
-                    <button class="action-btn view" onclick="previsualizarConciliacion(${doc.id})" title="View reconciliation">
+                    <button class="action-btn view" onclick="previsualizarConciliacion(${doc.id})" title="Preview file">
     <i class="fa-solid fa-eye"></i>
 </button>
 
@@ -244,7 +361,7 @@ function configurarFiltros() {
     });
 }
 
-function aplicarFiltros(docs) {
+function aplicarFiltrosBase(docs) {
     const normalizar = value => String(value || '')
         .normalize('NFD')
         .replace(/[\u0300-\u036f]/g, '')
@@ -307,6 +424,10 @@ function aplicarFiltros(docs) {
     });
 }
 
+function aplicarFiltros(docs) {
+    return filtrarPorCategoriaDocumento(aplicarFiltrosBase(docs));
+}
+
 function limpiarFiltros() {
     document.getElementById('searchInput').value = '';
     document.getElementById('filterRestaurant').value = '';
@@ -365,6 +486,7 @@ function verDetalles(id) {
     const modalBody = document.getElementById('modalBody');
     const modalTitulo = document.getElementById('modalTitulo');
     const revision = obtenerInfoReviewFuente(doc);
+    const categoria = obtenerCategoriaDocumento(doc);
     const nombreVisible = revision?.nombreOriginal || doc.nombre_original;
     const nombreSeguro = escapeDocumentoHtml(nombreVisible);
     const restaurante = escapeDocumentoHtml(doc.restaurante_nombre || doc.restaurante || 'No restaurant');
@@ -373,7 +495,8 @@ function verDetalles(id) {
     const estado = escapeDocumentoHtml(formatearStatus(doc.estado));
     const uso = revision
         ? `${revision.esReferenciaActual ? 'Comparison reference' : 'Previous reference'} / ${revision.etiqueta}`
-        : 'Operational file';
+        : (categoria === 'ebt' ? 'EBT file' : 'Reconciliation file');
+    const notasVisibles = obtenerNotasVisiblesDocumento(doc);
 
     modalTitulo.textContent = 'Document detail';
     modalBody.innerHTML = `
@@ -402,10 +525,10 @@ function verDetalles(id) {
                 <div><dt>Included sheets</dt><dd>${hojas}</dd></div>
             </dl>
         </section>
-        ${doc.notas && !revision ? `
+        ${notasVisibles && !revision ? `
         <section class="document-detail-note">
             <i class="fa-solid fa-note-sticky"></i>
-            <div><span>NOTES</span><p>${escapeDocumentoHtml(doc.notas)}</p></div>
+            <div><span>NOTES</span><p>${escapeDocumentoHtml(notasVisibles)}</p></div>
         </section>` : ''}
     `;
 
@@ -430,6 +553,22 @@ function escapeDocumentoHtml(value) {
         .replaceAll("'", '&#039;');
 }
 
+function obtenerNotasVisiblesDocumento(doc = {}) {
+    if (!doc.notas) return '';
+
+    if (typeof doc.notas !== 'string') return '';
+
+    const notas = doc.notas.trim();
+    if (!notas) return '';
+
+    try {
+        JSON.parse(notas);
+        return '';
+    } catch {
+        return notas;
+    }
+}
+
 async function descargarArchivo(id) {
     const token = localStorage.getItem('token');
     const modoOffline = localStorage.getItem('modoOffline');
@@ -437,7 +576,7 @@ async function descargarArchivo(id) {
     if (modoOffline) {
         Swal.fire({
             icon: 'info',
-            title: 'Modo offline',
+            title: 'Offline mode',
             text: 'Download is not available in offline mode'
         });
         return;
@@ -580,6 +719,23 @@ function generarDatosEjemplo() {
         },
         {
             id: 2,
+            nombre_original: 'Daily_Sales_Taco_Bell_2026-05-26_EBT.xlsx',
+            restaurante: 'Taco Bell',
+            restaurante_nombre: 'Taco Bell',
+            numero_hojas: 1,
+            nombres_hojas: 'EBT',
+            tamano_bytes: 14336,
+            estado: 'pendiente',
+            subido_por: 'Administrator',
+            fecha_subida: '2026-05-28T08:10:00',
+            notas: JSON.stringify({
+                tipo: 'archivo_ebt_independiente',
+                tipoDocumento: 'ebt',
+                fuente: 'ebt'
+            })
+        },
+        {
+            id: 3,
             nombre_original: 'Conciliation BK May 2026.xlsx',
             restaurante: 'Burger King',
             restaurante_nombre: 'Burger King',
@@ -591,7 +747,7 @@ function generarDatosEjemplo() {
             fecha_subida: '2026-05-25T14:15:00'
         },
         {
-            id: 3,
+            id: 4,
             nombre_original: 'Popeyes Weekly Report.xlsx',
             restaurante: 'Popeyes',
             restaurante_nombre: 'Popeyes',
@@ -604,7 +760,7 @@ function generarDatosEjemplo() {
             notas: 'Review errors in week 3'
         },
         {
-            id: 4,
+            id: 5,
             nombre_original: 'KFC Monthly Sales.xlsx',
             restaurante: 'KFC',
             restaurante_nombre: 'KFC',
@@ -627,7 +783,7 @@ async function previsualizarConciliacion(id) {
     if (modoOffline) {
         Swal.fire({
             icon: 'info',
-            title: 'Modo offline',
+            title: 'Offline mode',
             text: 'Preview is not available in offline mode'
         });
         return;
@@ -649,7 +805,7 @@ async function previsualizarConciliacion(id) {
 
     try {
         Swal.fire({
-            title: 'Opening reconciliation...',
+            title: `Opening ${obtenerCategoriaDocumento(doc) === 'ebt' ? 'EBT file' : 'reconciliation'}...`,
             text: 'Reading the Excel file',
             allowOutsideClick: false,
             didOpen: () => Swal.showLoading()
@@ -759,7 +915,7 @@ function renderPreviewSheet(sheetName) {
         head.innerHTML = '';
         body.innerHTML = `
             <tr>
-                <td>Esta hoja no tiene datos para mostrar.</td>
+                <td>This sheet has no data to display.</td>
             </tr>
         `;
         return;
@@ -789,7 +945,7 @@ function renderPreviewSheet(sheetName) {
         body.innerHTML += `
             <tr>
                 <td colspan="${maxColumns}">
-                    Mostrando las primeras 500 filas de ${rows.length.toLocaleString('es-MX')}.
+                    Showing the first 500 rows of ${rows.length.toLocaleString('en-US')}.
                 </td>
             </tr>
         `;

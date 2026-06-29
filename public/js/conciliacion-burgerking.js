@@ -2590,7 +2590,7 @@ function renderStoresTaxBurgerKing() {
                 </button>
                 <button type="button" class="btn btn-danger btn-sm" data-bk-tax-delete="${tienda.store}" title="Remove store ${tienda.store}">
                     <i class="fa-solid fa-trash"></i>
-                    Quitar
+                    Remove
                 </button>
             </td>
         </tr>

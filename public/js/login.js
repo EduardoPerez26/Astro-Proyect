@@ -31,10 +31,16 @@ function limpiarSesionLocal() {
 
 document.addEventListener('DOMContentLoaded', function () {
     const loginForm = document.getElementById('loginForm');
+    const mfaForm = document.getElementById('mfaForm');
     const loginBtn = document.getElementById('loginBtn');
+    const mfaBtn = document.getElementById('mfaBtn');
+    const mfaBackBtn = document.getElementById('mfaBackBtn');
     const usernameInput = document.getElementById('username');
     const passwordInput = document.getElementById('password');
+    const mfaCodeInput = document.getElementById('mfaCode');
     const passwordToggle = document.getElementById('passwordToggle');
+    let pendingMfaToken = '';
+    let pendingMfaUser = null;
 
     const token = localStorage.getItem('token');
     if (token) {
@@ -96,6 +102,126 @@ document.addEventListener('DOMContentLoaded', function () {
                 );
             }
 
+            if (data.mfa_required) {
+                mostrarPasoMfa(data);
+                return;
+            }
+
+            completarInicioSesion(data);
+        } catch (error) {
+            console.error('Login error:', error);
+
+            await Swal.fire({
+                icon: 'error',
+                title: 'We could not sign you in',
+                text: error.message || 'Your credentials could not be validated.',
+                confirmButtonColor: '#102A43'
+            });
+        } finally {
+            setLoading(false);
+        }
+    });
+
+    if (mfaForm) {
+        mfaForm.addEventListener('submit', async function (event) {
+            event.preventDefault();
+
+            const code = String(mfaCodeInput?.value || '').replace(/\D/g, '');
+
+            if (!/^\d{6}$/.test(code)) {
+                await Swal.fire({
+                    icon: 'warning',
+                    title: 'Enter the code',
+                    text: 'Type the 6-digit code from Microsoft Authenticator.',
+                    confirmButtonColor: '#102A43'
+                });
+                return;
+            }
+
+            setMfaLoading(true);
+
+            try {
+                const response = await fetch(`${API_URL}/auth/mfa/login`, {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        mfaToken: pendingMfaToken,
+                        code
+                    })
+                });
+                const data = await response.json().catch(() => ({}));
+
+                if (!response.ok || data.error) {
+                    throw new Error(
+                        data.message ||
+                        data.mensaje ||
+                        'The authenticator code is not valid.'
+                    );
+                }
+
+                completarInicioSesion(data);
+            } catch (error) {
+                console.error('MFA login error:', error);
+
+                await Swal.fire({
+                    icon: 'error',
+                    title: 'Code could not be verified',
+                    text: error.message || 'Try again with a new code.',
+                    confirmButtonColor: '#102A43'
+                });
+            } finally {
+                setMfaLoading(false);
+            }
+        });
+    }
+
+    if (mfaBackBtn) {
+        mfaBackBtn.addEventListener('click', function () {
+            pendingMfaToken = '';
+            pendingMfaUser = null;
+            if (mfaCodeInput) mfaCodeInput.value = '';
+            if (passwordInput) passwordInput.value = '';
+            loginForm.hidden = false;
+            if (mfaForm) mfaForm.hidden = true;
+            usernameInput?.focus();
+        });
+    }
+
+    if (mfaCodeInput) {
+        mfaCodeInput.addEventListener('input', function () {
+            mfaCodeInput.value = String(mfaCodeInput.value || '')
+                .replace(/\D/g, '')
+                .slice(0, 6);
+        });
+    }
+
+    function mostrarPasoMfa(data) {
+        pendingMfaToken = data.mfaToken || '';
+        pendingMfaUser = data.usuario || null;
+        loginForm.hidden = true;
+        if (mfaForm) mfaForm.hidden = false;
+        if (mfaCodeInput) {
+            mfaCodeInput.value = '';
+            mfaCodeInput.focus();
+        }
+
+        Swal.fire({
+            icon: 'info',
+            title: 'Authenticator required',
+            text: `Enter the Microsoft Authenticator code${pendingMfaUser?.nombre ? ` for ${pendingMfaUser.nombre}` : ''}.`,
+            timer: 1600,
+            showConfirmButton: false
+        });
+    }
+
+    async function completarInicioSesion(data) {
+        if (!data.token || !data.usuario) {
+            throw new Error('The sign-in response was incomplete.');
+        }
+
             localStorage.setItem('token', data.token);
             localStorage.setItem('usuario', JSON.stringify(data.usuario));
             localStorage.setItem('isLoggedIn', 'true');
@@ -112,19 +238,7 @@ document.addEventListener('DOMContentLoaded', function () {
             });
 
             window.location.href = rutaInicial;
-        } catch (error) {
-            console.error('Login error:', error);
-
-            await Swal.fire({
-                icon: 'error',
-                title: 'We could not sign you in',
-                text: error.message || 'Your credentials could not be validated.',
-                confirmButtonColor: '#102A43'
-            });
-        } finally {
-            setLoading(false);
-        }
-    });
+    }
 
     function setLoading(isLoading) {
         loginBtn.disabled = isLoading;
@@ -132,6 +246,16 @@ document.addEventListener('DOMContentLoaded', function () {
         loginBtn.innerHTML = isLoading
             ? '<i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i><span>Verifying...</span>'
             : '<span>Enter the hub</span><i class="fa-solid fa-arrow-right" aria-hidden="true"></i>';
+    }
+
+    function setMfaLoading(isLoading) {
+        if (!mfaBtn || !mfaForm) return;
+
+        mfaBtn.disabled = isLoading;
+        mfaForm.setAttribute('aria-busy', String(isLoading));
+        mfaBtn.innerHTML = isLoading
+            ? '<i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i><span>Checking...</span>'
+            : '<span>Verify code</span><i class="fa-solid fa-shield-halved" aria-hidden="true"></i>';
     }
 });
 

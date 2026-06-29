@@ -21,6 +21,8 @@ let salesRows = [];
 let salesDetailRows = [];
 let selectedEbtDate = '';
 let selectedServerEbtId = '';
+let tbSavedReconciliationBase = null;
+let tbSavedReconciliationsDisponibles = [];
 let ebtDocumentosDisponibles = [];
 let selectedSalesDetailDate = '';
 
@@ -1090,6 +1092,7 @@ function eliminarArchivoIndividual(tipo) {
         salesRows = [];
         workbook = null;
         selectedSalesDate = null;
+        limpiarBaseConciliacionTacoBellGuardada();
 
         const input =
             document.getElementById('salesFile');
@@ -1155,6 +1158,11 @@ function eliminarArchivoIndividual(tipo) {
         }
 
         setUploadCardStatus('ebtFile');
+
+        if (tbSavedReconciliationBase?.datosOriginales?.length) {
+            recalcularTacoBellGuardadaConEbtSiAplica();
+            return;
+        }
     }
 
     if (
@@ -1213,6 +1221,7 @@ function limpiarFilesExtraTacoBell() {
 
     setUploadCardStatus('salesDetailFile');
     setUploadCardStatus('ebtFile');
+    limpiarBaseConciliacionTacoBellGuardada();
 }
 
 function actualizarUploadsPorRestaurant(codigo) {
@@ -1222,7 +1231,7 @@ function actualizarUploadsPorRestaurant(codigo) {
         document.getElementById('uploadModeBadge');
 
     document
-        .querySelectorAll('.taco-bell-extra-upload')
+        .querySelectorAll('.taco-bell-extra-upload, .taco-bell-extra-control')
         .forEach(card => {
             card.style.display = mostrarExtras ? '' : 'none';
         });
@@ -1315,6 +1324,7 @@ function initEventListeners() {
                 if (!file) return;
 
                 salesFile = file;
+                limpiarBaseConciliacionTacoBellGuardada();
 
                 try {
 
@@ -1782,6 +1792,31 @@ function initEventListeners() {
         );
 
     document
+        .getElementById('btnRefreshTbReconciliations')
+        ?.addEventListener(
+            'click',
+            () => cargarConciliacionesTacoBellGuardadas()
+        );
+
+    document
+        .getElementById('btnLoadTbReconciliation')
+        ?.addEventListener(
+            'click',
+            cargarConciliacionTacoBellSeleccionada
+        );
+
+    document
+        .getElementById('savedTbReconciliationSelect')
+        ?.addEventListener(
+            'change',
+            event => {
+                if (event.target.value) {
+                    cargarConciliacionTacoBellSeleccionada();
+                }
+            }
+        );
+
+    document
         .getElementById(
             'btnSave'
         )
@@ -1867,10 +1902,12 @@ function initEventListeners() {
 
                 procesarEBT();
 
+                if (recalcularTacoBellGuardadaConEbtSiAplica()) {
+                    return;
+                }
+
                 if (salesWorkbook) {
-
                     generarConciliacionDesdeTemplate();
-
                 }
 
             }
@@ -2097,6 +2134,7 @@ async function onRestaurantChange() {
     actualizarUploadsPorRestaurant(codigo);
 
     await cargarFilesEbtGuardados();
+    await cargarConciliacionesTacoBellGuardadas();
 
     const tacoTabs =
         document.getElementById(
@@ -2336,6 +2374,7 @@ function removerArchivo() {
     selectedEbtDate = '';
     selectedSalesDetailDate = '';
     selectedServerEbtId = '';
+    limpiarBaseConciliacionTacoBellGuardada();
 
     const dropZone =
         document.getElementById('dropZone');
@@ -4142,11 +4181,16 @@ async function registrarConciliacionEnBD() {
 
 async function saveConciliacion() {
 
-    if (!workbook) {
+    const permiteBaseGuardadaTacoBell =
+        obtenerCodigoRestaurantActual() === 'taco-bell' &&
+        tbSavedReconciliationBase?.datosOriginales?.length &&
+        datosExtraidos.length;
+
+    if (!workbook && !permiteBaseGuardadaTacoBell) {
         Swal.fire({
             icon: 'warning',
             title: 'No data',
-            text: 'Upload a file first'
+            text: 'Upload a file first or load a saved Taco Bell reconciliation'
         });
         return;
     }
@@ -4480,10 +4524,13 @@ async function cargarEbtDesdeArchivo(file, opciones = {}) {
 
     procesarEBT();
 
+    if (recalcularTacoBellGuardadaConEbtSiAplica()) {
+        return rows;
+    }
+
     if (salesWorkbook && currentRestaurantConfig) {
         generarConciliacionDesdeTemplate();
     }
-
     return rows;
 }
 
@@ -4565,6 +4612,534 @@ async function loadSelectedSavedEbt() {
             icon: 'error',
             title: 'The EBT file could not be loaded',
             text: error.message || 'Try another EBT file.'
+        });
+    }
+}
+
+function limpiarBaseConciliacionTacoBellGuardada() {
+    tbSavedReconciliationBase = null;
+    tbSavedReconciliationsDisponibles = [];
+
+    const select = document.getElementById('savedTbReconciliationSelect');
+    if (select) {
+        select.disabled = true;
+        select.value = '';
+        select.innerHTML = '<option value="">Select a saved reconciliation...</option>';
+    }
+}
+
+function obtenerNombreArchivoConciliacionGuardada(archivo = {}) {
+    return String(
+        archivo.nombre_original ||
+        archivo.nombreOriginal ||
+        archivo.nombre_servidor ||
+        ''
+    ).trim();
+}
+
+function obtenerFechaArchivoConciliacionGuardada(archivo = {}) {
+    const notas = leerNotasConciliacion(archivo);
+    const nombre = obtenerNombreArchivoConciliacionGuardada(archivo);
+    const fechaEnNombre = nombre.match(/\d{4}-\d{2}-\d{2}/)?.[0] || '';
+
+    return (
+        normalizarFechaIsoEbt(notas.fecha) ||
+        normalizarFechaIsoEbt(notas.fecha_conciliacion) ||
+        normalizarFechaIsoEbt(archivo.periodo_fecha) ||
+        normalizarFechaIsoEbt(fechaEnNombre) ||
+        ''
+    );
+}
+
+function esArchivoConciliacionTacoBellGuardado(archivo = {}, restaurante = {}) {
+    const notas = leerNotasConciliacion(archivo);
+    const nombre = obtenerNombreArchivoConciliacionGuardada(archivo);
+    const codigo = restaurante.codigo || restaurante;
+    const restauranteId = restaurante.id || '';
+
+    const mismoRestaurant =
+        String(archivo.restaurante_id || '') === String(restauranteId || '') ||
+        archivo.restaurante_codigo === codigo ||
+        archivo.codigo === codigo ||
+        String(archivo.restaurante || '').toLowerCase().includes(
+            String(codigo || '').replace('-', ' ').toLowerCase()
+        );
+
+    const esEbt =
+        notas.tipoDocumento === 'ebt' ||
+        notas.fuente === 'ebt' ||
+        /_EBT\./i.test(nombre);
+
+    const esConciliacion =
+        notas.tipoDocumento === 'conciliacion' ||
+        /_(Conciliacion|Reconciliation)\./i.test(nombre);
+
+    return (
+        mismoRestaurant &&
+        esConciliacion &&
+        !esEbt &&
+        archivo.archivoExiste !== false
+    );
+}
+
+function buscarConciliacionParaArchivoTacoBell(archivo, conciliaciones) {
+    const notas = leerNotasConciliacion(archivo);
+    const conciliacionId =
+        notas.conciliacionId ||
+        notas.conciliacion_id ||
+        notas.conciliacionID ||
+        notas.conciliacion;
+
+    if (conciliacionId) {
+        const porId = conciliaciones.find(item =>
+            String(item.id) === String(conciliacionId)
+        );
+
+        if (porId) return porId;
+    }
+
+    const fechaArchivo = obtenerFechaArchivoConciliacionGuardada(archivo);
+
+    return conciliaciones
+        .filter(item => {
+            const fechaConciliacion =
+                normalizarFechaIsoEbt(item.fecha_conciliacion) ||
+                normalizarFechaIsoEbt(item.periodo_inicio);
+
+            return fechaConciliacion === fechaArchivo;
+        })
+        .sort((a, b) => Number(b.id) - Number(a.id))[0] || null;
+}
+
+async function cargarArchivosConciliacionTacoBellGuardados(token, restaurante) {
+    try {
+        const response = await fetch(`${window.API_URL}/archivos`, {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
+
+        if (!response.ok) return [];
+
+        const data = await response.json().catch(() => []);
+        const archivos = Array.isArray(data) ? data : (data.archivos || []);
+
+        return archivos
+            .filter(archivo =>
+                esArchivoConciliacionTacoBellGuardado(archivo, restaurante)
+            )
+            .sort((a, b) => {
+                const fechaA = obtenerFechaArchivoConciliacionGuardada(a);
+                const fechaB = obtenerFechaArchivoConciliacionGuardada(b);
+
+                return (
+                    new Date(fechaB || 0) - new Date(fechaA || 0) ||
+                    Number(b.id) - Number(a.id)
+                );
+            });
+    } catch (error) {
+        console.error('Saved Taco Bell reconciliation files could not be loaded:', error);
+        return [];
+    }
+}
+
+function textoOptionConciliacionTacoBellGuardada(conciliacion) {
+    const fecha =
+        obtenerFechaArchivoConciliacionGuardada(conciliacion.archivoConciliacion) ||
+        normalizarFechaIsoEbt(conciliacion.fecha_conciliacion) ||
+        'no date';
+
+    const nombreArchivo =
+        obtenerNombreArchivoConciliacionGuardada(conciliacion.archivoConciliacion) ||
+        `Reconciliation #${conciliacion.id}`;
+
+    return `${nombreArchivo} (${fecha})`;
+}
+
+async function cargarConciliacionesTacoBellGuardadas(seleccionarId = '') {
+    const select = document.getElementById('savedTbReconciliationSelect');
+    if (!select) return;
+
+
+    const token = localStorage.getItem('token');
+    const restaurante = getSelectedEbtRestaurant();
+
+    select.disabled = true;
+    select.innerHTML = '<option value="">Select a saved reconciliation...</option>';
+    tbSavedReconciliationsDisponibles = [];
+
+    if (!token || restaurante.codigo !== 'taco-bell' || !restaurante.id) {
+        return;
+    }
+
+    try {
+        const response = await fetch(
+            `${window.API_URL}/conciliaciones?restaurante_id=${encodeURIComponent(restaurante.id)}`,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            }
+        );
+
+        const data = await response.json().catch(() => ({}));
+
+        if (!response.ok) {
+            throw new Error(data.message || 'Saved reconciliations could not be loaded');
+        }
+
+        const conciliaciones = (data.conciliaciones || [])
+            .filter(item =>
+                Array.isArray(item.datos_extraidos) &&
+                item.datos_extraidos.length > 0
+            )
+            .sort((a, b) => {
+                const fechaA = normalizarFechaIsoEbt(a.fecha_conciliacion);
+                const fechaB = normalizarFechaIsoEbt(b.fecha_conciliacion);
+
+                return (
+                    new Date(fechaB || 0) - new Date(fechaA || 0) ||
+                    Number(b.id) - Number(a.id)
+                );
+            });
+
+        const archivosConciliacion =
+            await cargarArchivosConciliacionTacoBellGuardados(token, restaurante);
+
+        tbSavedReconciliationsDisponibles = archivosConciliacion
+            .map(archivo => {
+                const conciliacion =
+                    buscarConciliacionParaArchivoTacoBell(archivo, conciliaciones);
+
+                if (!conciliacion) return null;
+
+                return {
+                    ...conciliacion,
+                    archivoConciliacion: archivo,
+                    selectorValue: `${conciliacion.id}:${archivo.id || ''}`
+                };
+            })
+            .filter(Boolean);
+
+        if (!tbSavedReconciliationsDisponibles.length) {
+            select.innerHTML = '<option value="">No saved Taco Bell reconciliation files found</option>';
+            select.disabled = true;
+            return;
+        }
+
+        tbSavedReconciliationsDisponibles.forEach(item => {
+            const option = document.createElement('option');
+            option.value = item.selectorValue || String(item.id);
+            option.dataset.conciliacionId = String(item.id);
+            option.dataset.archivoId = String(item.archivoConciliacion?.id || '');
+            option.textContent = textoOptionConciliacionTacoBellGuardada(item);
+            select.appendChild(option);
+        });
+
+        select.disabled = tbSavedReconciliationsDisponibles.length === 0;
+
+        if (seleccionarId) {
+            const option = Array.from(select.options).find(item =>
+                item.value === String(seleccionarId) ||
+                item.dataset.conciliacionId === String(seleccionarId)
+            );
+
+            if (option) select.value = option.value;
+        }
+    } catch (error) {
+        console.error(error);
+        select.innerHTML = '<option value="">Saved reconciliations could not be loaded</option>';
+    }
+}
+
+function normalizarFilaConciliacionTacoBellGuardada(row = {}) {
+    const leer = (...claves) => {
+        for (const clave of claves) {
+            if (row[clave] !== undefined && row[clave] !== null && row[clave] !== '') {
+                return row[clave];
+            }
+        }
+
+        return '';
+    };
+
+    const numero = (...claves) => Number(leer(...claves)) || 0;
+    const deposit1 = numero('deposit1', 'Deposit 1');
+    const deposit2 = numero('deposit2', 'Deposit 2');
+    const deposit3 = numero('deposit3', 'Deposit 3');
+    const depositsFromParts = deposit1 + deposit2 + deposit3;
+    const mastercard = numero('mastercard', 'Mastercard');
+    const visa = numero('visa', 'Visa');
+    const discover = numero('discover', 'Discover');
+    const debit = numero('debit', 'Debit');
+    const ccTotalsFromParts = mastercard + visa + discover + debit;
+    const acctCash = numero('acctCash', 'Acct Cash', 'cashExpected', 'Cash Expected');
+    const ebt = numero('ebt', 'EBT');
+
+    return {
+        ...row,
+        store: String(leer('store', 'Store', 'locationId', 'LOCATION_ID')).trim(),
+        date: leer('date', 'Date', 'accountingDate', 'Accounting Date') || fechaConciliacionActual,
+        salesTax: numero('salesTax', 'Sales TAX', 'Sales Tax'),
+        grossSalesPos: numero('grossSalesPos', 'Gross Sales POS'),
+        discounts: numero('discounts', 'Discounts'),
+        promo: numero('promo', 'Promo'),
+        donations: numero('donations', 'Donation', 'Donations'),
+        netSales: numero('netSales', 'Net Sales'),
+        gcSold: numero('gcSold', 'GC Sold'),
+        paidOut: numero('paidOut', 'Paid Out'),
+        paidIn: numero('paidIn', 'Paid In'),
+        donation: numero('donation', 'Donation', 'Donations'),
+        totalRevenue: numero('totalRevenue', 'Total Revenue'),
+        mastercard,
+        visa,
+        discover,
+        amex: numero('amex', 'Amex', 'AMEX'),
+        debit,
+        ebt,
+        gcRedeem: numero('gcRedeem', 'GC Redeem'),
+        acctCash,
+        deposit1,
+        deposit2,
+        deposit3,
+        deposits: Math.abs(depositsFromParts) >= 0.005
+            ? depositsFromParts
+            : numero('deposits', 'Deposits'),
+        gh: numero('gh', 'GH'),
+        uber: numero('uber', 'Uber'),
+        dd: numero('dd', 'DD'),
+        ccTotals: Math.abs(ccTotalsFromParts) >= 0.005
+            ? ccTotalsFromParts
+            : numero('ccTotals', 'CC Totals'),
+        paymentsTotal: numero('paymentsTotal', 'Payments Total'),
+        os: numero('os', 'OS'),
+        oS: numero('oS', 'O/S', 'osSlash'),
+        cashPlusMinus: numero('cashPlusMinus', 'Cash +/-'),
+        cashExpected: numero('cashExpected', 'Cash Expected') || acctCash,
+        difference: numero('difference', 'Difference')
+    };
+}
+
+function aplicarEbtASavedTacoBellBase() {
+    if (!tbSavedReconciliationBase?.datosOriginales?.length) return false;
+
+    datosExtraidos = tbSavedReconciliationBase.datosOriginales.map(baseRow => {
+        const row = normalizarFilaConciliacionTacoBellGuardada(baseRow);
+        const store = row.store;
+        const ebtAnterior = Number(row.ebt || 0);
+        const ebtNuevo = limpiarDecimal(obtenerEBTPorStore(store) || 0);
+        const acctCashAntesDeEbt =
+            Number(row.acctCash || row.cashExpected || 0) + ebtAnterior;
+        const acctCash = limpiarDecimal(acctCashAntesDeEbt - ebtNuevo);
+        const cashExpected = acctCash;
+        const ccTotals = limpiarDecimal(
+            Number(row.mastercard || 0) +
+            Number(row.visa || 0) +
+            Number(row.discover || 0) +
+            Number(row.debit || 0)
+        );
+        const deposits = limpiarDecimal(
+            Math.abs(Number(row.deposit1 || 0) + Number(row.deposit2 || 0) + Number(row.deposit3 || 0)) >= 0.005
+                ? Number(row.deposit1 || 0) + Number(row.deposit2 || 0) + Number(row.deposit3 || 0)
+                : Number(row.deposits || 0)
+        );
+        const totalRevenue = limpiarDecimal(
+            Number(row.netSales || 0) +
+            Number(row.salesTax || 0) +
+            Number(row.gcSold || 0) +
+            Number(row.donations || row.donation || 0) +
+            Number(row.paidIn || 0) -
+            Number(row.paidOut || 0)
+        );
+        const paymentsTotal = limpiarDecimal(
+            Number(row.mastercard || 0) +
+            Number(row.visa || 0) +
+            Number(row.discover || 0) +
+            Number(row.amex || 0) +
+            Number(row.debit || 0) +
+            Number(row.gcRedeem || 0) +
+            acctCash +
+            Number(row.gh || 0) +
+            Number(row.uber || 0) +
+            Number(row.dd || 0) +
+            ebtNuevo
+        );
+        const oS = limpiarDecimal(totalRevenue - paymentsTotal);
+        const difference = limpiarDecimal(
+            cashExpected -
+            deposits +
+            Number(row.cashPlusMinus || 0) +
+            ebtNuevo
+        );
+
+        return {
+            ...row,
+            ebt: ebtNuevo,
+            acctCash,
+            cashExpected,
+            ccTotals,
+            deposits,
+            totalRevenue,
+            paymentsTotal,
+            oS,
+            difference
+        };
+    });
+
+    return true;
+}
+
+function regenerarSalidasTacoBellDesdeDatosGuardados() {
+    if (!Array.isArray(datosExtraidos) || !datosExtraidos.length) return;
+
+    const results = document.getElementById('resultsSection');
+    if (results) results.style.display = 'block';
+
+    if (!activeTab) activeTab = 'dailySales';
+
+    generarTaxReviewTacoBell();
+    generarStatisticalDelivery();
+    generarDailySalesRED();
+    generarDailySales0314();
+    generarDailySales0310();
+    generarExpectedDepositsTacoBell();
+    asegurarPestanaExpectedDepositsTacoBell();
+    llenarFiltroStores();
+    actualizarResumen();
+    actualizarTotales();
+    invalidarComparacionConciliacion();
+    renderActiveTab();
+}
+
+function recalcularTacoBellGuardadaConEbtSiAplica() {
+    if (
+        obtenerCodigoRestaurantActual() !== 'taco-bell' ||
+        !tbSavedReconciliationBase?.datosOriginales?.length
+    ) {
+        return false;
+    }
+
+    if (!aplicarEbtASavedTacoBellBase()) return false;
+
+    regenerarSalidasTacoBellDesdeDatosGuardados();
+    setUploadCardStatus(
+        'salesFile',
+        'loaded',
+        `Saved reconciliation #${tbSavedReconciliationBase.id} loaded (${datosExtraidos.length} rows)`
+    );
+
+    return true;
+}
+
+async function cargarConciliacionTacoBellSeleccionada() {
+    const select = document.getElementById('savedTbReconciliationSelect');
+    const id = String(select?.value || '').split(':')[0];
+
+    if (!id) {
+        await Swal.fire({
+            icon: 'warning',
+            title: 'Reconciliation required',
+            text: 'Select a saved Taco Bell reconciliation first.'
+        });
+        return;
+    }
+
+    await cargarConciliacionTacoBellPorId(id);
+}
+
+async function cargarConciliacionTacoBellPorId(id) {
+    const token = localStorage.getItem('token');
+
+    if (!token) {
+        await Swal.fire({
+            icon: 'error',
+            title: 'Session expired'
+        });
+        return;
+    }
+
+    try {
+        Swal.fire({
+            title: 'Loading reconciliation...',
+            text: 'Reading the saved Taco Bell reconciliation',
+            allowOutsideClick: false,
+            didOpen: () => Swal.showLoading()
+        });
+
+        const response = await fetch(`${window.API_URL}/conciliaciones/${id}`, {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
+        const data = await response.json().catch(() => ({}));
+
+        if (!response.ok) {
+            throw new Error(data.message || 'The saved reconciliation could not be loaded');
+        }
+
+        const conciliacion = data.conciliacion || {};
+        const rows = Array.isArray(conciliacion.datos_extraidos)
+            ? conciliacion.datos_extraidos
+            : [];
+
+        if (!rows.length) {
+            throw new Error('The saved reconciliation does not contain rows');
+        }
+
+        const fecha =
+            normalizarFechaIsoEbt(conciliacion.fecha_conciliacion) ||
+            normalizarFechaIsoEbt(conciliacion.periodo_inicio) ||
+            '';
+
+        fechaConciliacionActual = fecha;
+
+        if (conciliacion.template_id) {
+            const templateSelect = document.getElementById('selectTemplate');
+            if (templateSelect) templateSelect.value = String(conciliacion.template_id);
+            templateActual =
+                templates.find(t => String(t.id) === String(conciliacion.template_id)) ||
+                templateActual;
+        }
+
+        salesFile = null;
+        salesWorkbook = null;
+        salesRows = [];
+        salesDetailFile = null;
+        salesDetailWorkbook = null;
+        salesDetailRows = [];
+        workbook = null;
+
+        datosExtraidos = rows.map(normalizarFilaConciliacionTacoBellGuardada);
+        tbSavedReconciliationBase = {
+            id: String(id),
+            fecha,
+            datosOriginales: datosExtraidos.map(row => ({ ...row }))
+        };
+
+        setUploadCardStatus(
+            'salesFile',
+            'loaded',
+            `Saved reconciliation #${id} loaded (${datosExtraidos.length} rows)`
+        );
+        setUploadCardStatus('salesDetailFile');
+
+        if (ebtWorkbook) {
+            recalcularTacoBellGuardadaConEbtSiAplica();
+        } else {
+            regenerarSalidasTacoBellDesdeDatosGuardados();
+        }
+
+        Swal.fire({
+            icon: 'success',
+            title: 'Reconciliation loaded',
+            text: 'You can now load or select the EBT file and save again without uploading Sales or Sales Detail.'
+        });
+    } catch (error) {
+        console.error(error);
+        Swal.fire({
+            icon: 'error',
+            title: 'The reconciliation could not be loaded',
+            text: error.message || 'Try another saved reconciliation.'
         });
     }
 }
@@ -5440,7 +6015,11 @@ function renderActiveTab() {
             break;
 
         case 'taxReview':
-            renderTaxReview();
+            if (typeof renderTacoBellTaxReview === 'function') {
+                renderTacoBellTaxReview();
+            } else if (typeof renderTaxReview === 'function') {
+                renderTaxReview();
+            }
             break;
 
         case 'statisticalDelivery':
@@ -5453,6 +6032,12 @@ function renderActiveTab() {
 
         case 'dailySales0310':
             renderDailySales0310();
+            break;
+
+        case 'ebtCashExpected':
+        case 'expectedDeposits':
+        case 'cashExpected':
+            renderExpectedDepositsTacoBell();
             break;
     }
 }

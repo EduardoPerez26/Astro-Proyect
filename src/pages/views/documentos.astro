@@ -70,10 +70,46 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
             </button>
         </div>
 
+        <div class="documents-type-tabs" role="tablist" aria-label="Document categories">
+            <button
+                type="button"
+                class="documents-type-tab active"
+                data-document-tab="reconciliations"
+                role="tab"
+                aria-selected="true"
+            >
+                <span class="documents-type-icon">
+                    <i class="fa-solid fa-file-circle-check" aria-hidden="true"></i>
+                </span>
+                <span class="documents-type-copy">
+                    <strong>Reconciliation files</strong>
+                    <small>Generated and uploaded reconciliation documents</small>
+                </span>
+                <span class="documents-type-count" id="reconciliationFilesCount">0</span>
+            </button>
+
+            <button
+                type="button"
+                class="documents-type-tab"
+                data-document-tab="ebt"
+                role="tab"
+                aria-selected="false"
+            >
+                <span class="documents-type-icon">
+                    <i class="fa-solid fa-credit-card" aria-hidden="true"></i>
+                </span>
+                <span class="documents-type-copy">
+                    <strong>EBT files</strong>
+                    <small>EBT documents kept apart for later use</small>
+                </span>
+                <span class="documents-type-count" id="ebtFilesCount">0</span>
+            </button>
+        </div>
+
         <!-- Documents table -->
         <div class="table-container">
             <div class="table-header">
-                <h3>Document list</h3>
+                <h3 id="documentsTableTitle">Reconciliation files</h3>
                 <div class="table-actions">
                     <button
                         class="btn btn-secondary btn-sm"
@@ -105,9 +141,9 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
 
             <div id="emptyState" class="empty-state" style="display: none;">
                 <i class="fa-solid fa-folder-open"></i>
-                <h4>No documents</h4>
+                <h4 id="documentsEmptyTitle">No reconciliation files</h4>
                 <p>
-                    No documents match the selected filters
+                    <span id="documentsEmptyText">No reconciliation files match the selected filters</span>
                 </p>
             </div>
 
@@ -122,7 +158,7 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
                 <div class="pagination-info">
                     Showing <span id="showingFrom">1</span> - <span
                         id="showingTo">10</span
-                    > of <span id="totalItems">0</span> documents
+                    > of <span id="totalItems">0</span> <span id="paginationItemsLabel">reconciliation files</span>
                 </div>
                 <div class="pagination-buttons">
                     <button
@@ -219,7 +255,7 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
 
    <script is:inline src="/js/vendor/xlsx.full.min.js"></script>
 
-    <script is:inline src="/js/documentos.js"></script>
+    <script is:inline src="/js/documentos.js?v=20260627-document-tabs"></script>
 
     <style is:inline>
         .documents-filters {
@@ -302,6 +338,100 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
             white-space: nowrap;
         }
 
+        .documents-type-tabs {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .documents-type-tab {
+            display: grid;
+            grid-template-columns: auto minmax(0, 1fr) auto;
+            align-items: center;
+            gap: 12px;
+            min-height: 78px;
+            padding: 13px 15px;
+            border: 1px solid #cfd9e3;
+            border-radius: 7px;
+            background: #fff;
+            color: #173a59;
+            text-align: left;
+            cursor: pointer;
+            transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+        }
+
+        .documents-type-tab:hover,
+        .documents-type-tab:focus-visible {
+            border-color: #174a75;
+            outline: 0;
+            box-shadow: 0 12px 26px -24px rgba(8, 31, 51, 0.75);
+        }
+
+        .documents-type-tab.active {
+            border-color: #102a43;
+            background: #f8fbfd;
+            box-shadow: inset 0 0 0 1px #102a43;
+        }
+
+        .documents-type-icon {
+            display: grid;
+            width: 42px;
+            height: 42px;
+            place-items: center;
+            border-radius: 7px;
+            background: #e8eff5;
+            color: #123b5e;
+            font-size: 16px;
+        }
+
+        .documents-type-tab.active .documents-type-icon {
+            background: #102a43;
+            color: #fff;
+        }
+
+        .documents-type-copy {
+            min-width: 0;
+        }
+
+        .documents-type-copy strong {
+            display: block;
+            color: #082033;
+            font-size: 15px;
+            font-weight: 850;
+            line-height: 1.2;
+        }
+
+        .documents-type-copy small {
+            display: block;
+            margin-top: 4px;
+            color: #4f667a;
+            font-size: 12px;
+            font-weight: 650;
+            line-height: 1.3;
+        }
+
+        .documents-type-count {
+            display: inline-flex;
+            min-width: 34px;
+            height: 30px;
+            align-items: center;
+            justify-content: center;
+            padding: 0 9px;
+            border: 1px solid #cbd6e1;
+            border-radius: 999px;
+            background: #fff;
+            color: #102a43;
+            font-size: 13px;
+            font-weight: 850;
+        }
+
+        .documents-type-tab.active .documents-type-count {
+            border-color: #102a43;
+            background: #102a43;
+            color: #fff;
+        }
+
         .document-detail-modal {
             max-width: 780px !important;
             border-radius: 10px;
@@ -314,7 +444,7 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
             background: linear-gradient(115deg, #0b2943, #174d78);
         }
         .document-detail-modal-header > div > span {
-            color: #a9d5f4;
+            color: #d2ecff;
             font-size: 9px;
             font-weight: 800;
             letter-spacing: 0.1em;
@@ -327,8 +457,9 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
         }
         .document-detail-modal-header p {
             margin: 0;
-            color: #cbdfea;
+            color: #e2eff7;
             font-size: 11px;
+            font-weight: 650;
         }
         .document-detail-modal-header .modal-close {
             color: #fff;
@@ -368,7 +499,7 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
             min-width: 0;
         }
         .document-detail-file-copy > span {
-            color: #718598;
+            color: #465f75;
             font-size: 9px;
             font-weight: 800;
             letter-spacing: 0.07em;
@@ -383,8 +514,9 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
         }
         .document-detail-file-copy p {
             margin: 0;
-            color: #738598;
+            color: #4f667a;
             font-size: 10px;
+            font-weight: 650;
         }
         .document-detail-status {
             align-self: flex-start;
@@ -421,7 +553,7 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
         }
         .document-detail-grid small {
             display: block;
-            color: #718598;
+            color: #465f75;
             font-size: 8px;
             font-weight: 800;
             text-transform: uppercase;
@@ -447,7 +579,7 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
             background: #f8fafb;
         }
         .document-detail-section > header span {
-            color: #728598;
+            color: #465f75;
             font-size: 8px;
             font-weight: 800;
             letter-spacing: 0.07em;
@@ -471,14 +603,15 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
             border-bottom: 0;
         }
         .document-detail-list dt {
-            color: #667b8e;
+            color: #415a70;
             font-size: 10px;
-            font-weight: 700;
+            font-weight: 800;
         }
         .document-detail-list dd {
             margin: 0;
-            color: #24445f;
+            color: #173a59;
             font-size: 10px;
+            font-weight: 650;
             text-align: right;
             overflow-wrap: anywhere;
         }
@@ -513,6 +646,9 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
 
         @media (max-width: 760px) {
             .documents-filters {
+                grid-template-columns: 1fr;
+            }
+            .documents-type-tabs {
                 grid-template-columns: 1fr;
             }
             .search-filter {

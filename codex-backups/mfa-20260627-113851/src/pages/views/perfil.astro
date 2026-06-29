@@ -1,0 +1,313 @@
+﻿---
+import DashboardLayout from '../../layouts/DashboardLayout.astro';
+---
+
+<DashboardLayout title="Profile">
+    <div class="page-container profile-page">
+        <header class="profile-settings-hero">
+            <div class="profile-hero-copy">
+                <span class="profile-eyebrow">Account settings</span>
+                <h1>Profile settings</h1>
+                <p>Manage your personal information, profile photo, and password from one simple place.</p>
+            </div>
+            <div class="profile-hero-meta" aria-label="Profile status">
+                <span>
+                    <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
+                    Secure account
+                </span>
+                <span>
+                    <i class="fa-solid fa-image" aria-hidden="true"></i>
+                    Photo enabled
+                </span>
+            </div>
+        </header>
+
+        <section class="profile-shell" aria-labelledby="profileTitle">
+            <aside class="profile-summary-card">
+                <div class="profile-summary-top">
+                    <span class="profile-card-kicker">Account owner</span>
+                    <div class="profile-photo-frame">
+                        <div class="profile-avatar-preview" id="profileAvatarPreview">--</div>
+                        <label class="profile-photo-action" for="profilePhoto">
+                            <i class="fa-solid fa-camera" aria-hidden="true"></i>
+                            <span>Change photo</span>
+                        </label>
+                        <input
+                            type="file"
+                            id="profilePhoto"
+                            name="foto"
+                            accept="image/png,image/jpeg,image/webp"
+                            hidden
+                        />
+                    </div>
+                </div>
+
+                <div class="profile-summary-text">
+                    <h2 id="profileDisplayName">Loading...</h2>
+                    <p id="profileDisplayEmail">---</p>
+                </div>
+
+                <div class="profile-account-state" aria-label="Account status">
+                    <span>
+                        <i class="fa-solid fa-circle-check" aria-hidden="true"></i>
+                        Active profile
+                    </span>
+                    <span>
+                        <i class="fa-solid fa-lock" aria-hidden="true"></i>
+                        Protected access
+                    </span>
+                </div>
+
+                <dl class="profile-facts">
+                    <div>
+                        <dt>Role</dt>
+                        <dd id="profileRoleLabel">---</dd>
+                    </div>
+                    <div>
+                        <dt>Department</dt>
+                        <dd id="profileDepartmentLabel">---</dd>
+                    </div>
+                    <div>
+                        <dt>Username</dt>
+                        <dd id="profileUsernameLabel">---</dd>
+                    </div>
+                </dl>
+            </aside>
+
+            <form class="profile-form-grid" id="profileForm" autocomplete="off">
+                <div class="profile-form-intro">
+                    <div>
+                        <span>Settings</span>
+                        <h2 id="profileTitle">Profile preferences</h2>
+                    </div>
+                    <p>Select what you want to update.</p>
+                </div>
+
+                <div class="profile-settings-tabs" role="tablist" aria-label="Profile settings tabs">
+                    <button
+                        type="button"
+                        class="profile-settings-tab is-active"
+                        id="profileConfigTab"
+                        data-profile-tab-target="profileConfigPanel"
+                        role="tab"
+                        aria-selected="true"
+                        aria-controls="profileConfigPanel"
+                    >
+                        <i class="fa-solid fa-user-gear" aria-hidden="true"></i>
+                        <span>Configuration</span>
+                    </button>
+                    <button
+                        type="button"
+                        class="profile-settings-tab"
+                        id="profilePasswordTab"
+                        data-profile-tab-target="profilePasswordPanel"
+                        role="tab"
+                        aria-selected="false"
+                        aria-controls="profilePasswordPanel"
+                    >
+                        <i class="fa-solid fa-lock" aria-hidden="true"></i>
+                        <span>Change password</span>
+                    </button>
+                </div>
+
+                <div class="profile-settings-tab-panels">
+                    <section
+                        class="profile-panel profile-tab-panel profile-panel-identity is-active"
+                        id="profileConfigPanel"
+                        data-profile-tab-panel
+                        role="tabpanel"
+                        aria-labelledby="profileConfigTab"
+                    >
+                        <header class="profile-panel-header">
+                            <div>
+                                <span>Identity</span>
+                                <h2>Account details</h2>
+                            </div>
+                            <i class="fa-solid fa-id-card" aria-hidden="true"></i>
+                        </header>
+
+                        <div class="profile-panel-body">
+                            <div class="profile-form-row">
+                                <div class="form-group">
+                                    <label class="form-label" for="profileName">Full name</label>
+                                    <input
+                                        type="text"
+                                        id="profileName"
+                                        class="form-control"
+                                        maxlength="100"
+                                        required
+                                    />
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label" for="profileEmail">Email</label>
+                                    <input
+                                        type="email"
+                                        id="profileEmail"
+                                        class="form-control profile-readonly"
+                                        readonly
+                                    />
+                                </div>
+                            </div>
+
+                            <div class="profile-form-row">
+                                <div class="form-group">
+                                    <label class="form-label" for="profileUsername">Username</label>
+                                    <input
+                                        type="text"
+                                        id="profileUsername"
+                                        class="form-control profile-readonly"
+                                        readonly
+                                    />
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label" for="profileDepartment">Department</label>
+                                    <input
+                                        type="text"
+                                        id="profileDepartment"
+                                        class="form-control profile-readonly"
+                                        readonly
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section
+                        class="profile-panel profile-tab-panel profile-panel-security"
+                        id="profilePasswordPanel"
+                        data-profile-tab-panel
+                        role="tabpanel"
+                        aria-labelledby="profilePasswordTab"
+                        hidden
+                    >
+                        <header class="profile-panel-header">
+                            <div>
+                                <span>Security</span>
+                                <h2>Password change</h2>
+                            </div>
+                            <i class="fa-solid fa-lock" aria-hidden="true"></i>
+                        </header>
+
+                        <div class="profile-panel-body">
+                            <div class="profile-form-row">
+                                <div class="form-group">
+                                    <label class="form-label" for="currentPassword">Current password</label>
+                                    <input
+                                        type="password"
+                                        id="currentPassword"
+                                        class="form-control"
+                                        autocomplete="current-password"
+                                    />
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label" for="newPassword">New password</label>
+                                    <input
+                                        type="password"
+                                        id="newPassword"
+                                        class="form-control"
+                                        autocomplete="new-password"
+                                        minlength="6"
+                                    />
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" for="confirmPassword">Confirm new password</label>
+                                <input
+                                    type="password"
+                                    id="confirmPassword"
+                                    class="form-control"
+                                    autocomplete="new-password"
+                                    minlength="6"
+                                />
+                            </div>
+                        </div>
+                    </section>
+                </div>
+
+                <div class="profile-actions">
+                    <button class="btn btn-secondary" type="button" id="profileResetBtn">
+                        <i class="fa-solid fa-rotate-left" aria-hidden="true"></i>
+                        Reset
+                    </button>
+                    <button class="btn btn-primary" type="submit" id="profileSaveBtn">
+                        <i class="fa-solid fa-floppy-disk" aria-hidden="true"></i>
+                        Save changes
+                    </button>
+                </div>
+            </form>
+        </section>
+
+        <div
+            class="profile-crop-modal"
+            id="profileCropPanel"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="profileCropTitle"
+            hidden
+        >
+            <button
+                type="button"
+                class="profile-crop-backdrop"
+                id="profileCropBackdrop"
+                aria-label="Cancel photo framing"
+            ></button>
+
+            <div class="profile-crop-dialog">
+                <header class="profile-crop-header">
+                    <div>
+                        <span>Photo</span>
+                        <strong id="profileCropTitle">Framing</strong>
+                    </div>
+                    <button
+                        type="button"
+                        class="profile-crop-close"
+                        id="profileCropCancelBtn"
+                        aria-label="Cancel photo framing"
+                    >
+                        <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                    </button>
+                </header>
+
+                <div
+                    class="profile-crop-stage"
+                    id="profileCropStage"
+                    aria-label="Profile photo framing area"
+                >
+                    <img id="profileCropImage" alt="" />
+                    <span class="profile-crop-ring" aria-hidden="true"></span>
+                </div>
+
+                <div class="profile-crop-controls">
+                    <label for="profileCropZoom">Zoom</label>
+                    <input
+                        type="range"
+                        id="profileCropZoom"
+                        min="1"
+                        max="3"
+                        step="0.01"
+                        value="1"
+                    />
+                </div>
+
+                <div class="profile-crop-actions">
+                    <button class="btn btn-secondary btn-sm" type="button" id="profileCropResetBtn">
+                        <i class="fa-solid fa-arrows-rotate" aria-hidden="true"></i>
+                        Reset
+                    </button>
+                    <button class="btn btn-primary btn-sm" type="button" id="profileCropApplyBtn">
+                        <i class="fa-solid fa-check" aria-hidden="true"></i>
+                        Use framing
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/config.js" is:inline></script>
+    <script src="/js/perfil.js?v=20260627-profile-tabs" is:inline></script>
+</DashboardLayout>
+

@@ -14,6 +14,14 @@ const {
     registrarIntentoLogin,
     contarIntentosFallidos
 } = require('../services/securityAudit.service');
+const {
+    cifrarSecreto,
+    descifrarSecreto,
+    crearOtpauthUrl,
+    crearQrDataUrl,
+    generarSecretoAuthenticator,
+    verificarCodigoTotp
+} = require('../services/mfa.service');
 
 const PROFILE_UPLOAD_DIR = path.join(__dirname, '..', 'uploads', 'perfiles');
 const PROFILE_PHOTO_EXTENSIONS = {
@@ -152,6 +160,7 @@ function construirContextoUsuario(usuario) {
         nombre: usuario.nombre_completo,
         email: usuario.email,
         foto_perfil_url: usuario.foto_perfil_url || null,
+        mfa_enabled: Boolean(usuario.mfa_enabled),
         rol: usuario.rol,
         permisos,
         departamento
@@ -277,6 +286,60 @@ function opcionesCookieAuth(req) {
     };
 }
 
+function crearTokenSesion(usuario, contextoUsuario) {
+    return jwt.sign(
+        {
+            id: usuario.id,
+            username: usuario.username,
+            rol: usuario.rol,
+            departamento: contextoUsuario.departamento.codigo
+        },
+        process.env.JWT_SECRET,
+        {
+            expiresIn: process.env.JWT_EXPIRES_IN || '24h'
+        }
+    );
+}
+
+async function finalizarLogin({ req, res, usuario, detalle = 'login_success' }) {
+    const contextoUsuario = construirContextoUsuario(usuario);
+    const token = crearTokenSesion(usuario, contextoUsuario);
+
+    await registrarSesion(usuario.id, token, req);
+    await registrarIntentoLogin({
+        username: usuario.username,
+        req,
+        exitoso: true,
+        detalle
+    });
+    await registrarEventoSeguridad({
+        usuarioId: usuario.id,
+        departamentoId: contextoUsuario.departamento.id,
+        evento: detalle,
+        req,
+        detalle: { departamento: contextoUsuario.departamento.codigo }
+    });
+
+    res.cookie('auth_token', token, opcionesCookieAuth(req));
+
+    return res.json({
+        error: false,
+        mensaje: 'Login successful',
+        token,
+        usuario: contextoUsuario
+    });
+}
+
+function esErrorColumnasMfa(error) {
+    const detalle = [
+        error.sqlMessage,
+        error.message,
+        error.sql
+    ].filter(Boolean).join(' ');
+
+    return error.code === 'ER_BAD_FIELD_ERROR' && /mfa_/i.test(detalle);
+}
+
 router.post('/login', async (req, res) => {
     try {
         const { username, password } = req.body;
@@ -367,44 +430,43 @@ router.post('/login', async (req, res) => {
             });
         }
 
-        const contextoUsuario = construirContextoUsuario(usuario);
+        if (usuario.mfa_enabled && usuario.mfa_secret_encrypted) {
+            const mfaToken = jwt.sign(
+                {
+                    id: usuario.id,
+                    username: usuario.username,
+                    purpose: 'mfa-login'
+                },
+                process.env.JWT_SECRET,
+                { expiresIn: '5m' }
+            );
 
-        const token = jwt.sign(
-            {
-                id: usuario.id,
-                username: usuario.username,
-                rol: usuario.rol,
-                departamento: contextoUsuario.departamento.codigo
-            },
-            process.env.JWT_SECRET,
-            {
-                expiresIn: process.env.JWT_EXPIRES_IN || '24h'
-            }
-        );
+            await registrarEventoSeguridad({
+                usuarioId: usuario.id,
+                departamentoId: usuario.departamento_id || null,
+                evento: 'login_mfa_required',
+                req
+            });
 
+            return res.json({
+                error: false,
+                mfa_required: true,
+                mensaje: 'Authenticator code required',
+                mfaToken,
+                usuario: {
+                    id: usuario.id,
+                    username: usuario.username,
+                    nombre: usuario.nombre_completo,
+                    email: usuario.email
+                }
+            });
+        }
 
-        await registrarSesion(usuario.id, token, req);
-        await registrarIntentoLogin({
-            username: usernameNormalizado,
+        return finalizarLogin({
             req,
-            exitoso: true,
+            res,
+            usuario,
             detalle: 'login_success'
-        });
-        await registrarEventoSeguridad({
-            usuarioId: usuario.id,
-            departamentoId: contextoUsuario.departamento.id,
-            evento: 'login_success',
-            req,
-            detalle: { departamento: contextoUsuario.departamento.codigo }
-        });
-
-        res.cookie('auth_token', token, opcionesCookieAuth(req));
-
-        res.json({
-            error: false,
-            mensaje: 'Login successful',
-            token,
-            usuario: contextoUsuario
         });
 
     } catch (error) {
@@ -414,6 +476,280 @@ router.post('/login', async (req, res) => {
             error: true,
             mensaje: 'Sign-in failed',
             code: error.code
+        });
+    }
+});
+
+router.post('/mfa/login', async (req, res) => {
+    try {
+        const { mfaToken, code } = req.body;
+
+        if (!mfaToken || !code) {
+            return res.status(400).json({
+                error: true,
+                mensaje: 'Authenticator code is required'
+            });
+        }
+
+        const decoded = jwt.verify(mfaToken, process.env.JWT_SECRET);
+
+        if (decoded.purpose !== 'mfa-login') {
+            return res.status(401).json({
+                error: true,
+                mensaje: 'The authenticator session is invalid'
+            });
+        }
+
+        const usuario = await obtenerUsuarioConDepartamento(
+            'u.id = ? AND u.activo = TRUE',
+            [decoded.id]
+        );
+
+        if (!usuario || !usuario.mfa_enabled || !usuario.mfa_secret_encrypted) {
+            return res.status(401).json({
+                error: true,
+                mensaje: 'Authenticator verification is not available'
+            });
+        }
+
+        const secret = descifrarSecreto(usuario.mfa_secret_encrypted);
+        const codeValido = verificarCodigoTotp(secret, code);
+
+        if (!codeValido) {
+            await registrarIntentoLogin({
+                username: usuario.username,
+                req,
+                exitoso: false,
+                detalle: 'mfa_invalid_code'
+            });
+            await registrarEventoSeguridad({
+                usuarioId: usuario.id,
+                departamentoId: usuario.departamento_id || null,
+                evento: 'mfa_invalid_code',
+                req
+            });
+
+            return res.status(401).json({
+                error: true,
+                mensaje: 'The authenticator code is not valid'
+            });
+        }
+
+        return finalizarLogin({
+            req,
+            res,
+            usuario,
+            detalle: 'login_success_mfa'
+        });
+    } catch (error) {
+        console.error('MFA login error:', error);
+
+        res.status(401).json({
+            error: true,
+            mensaje: 'Authenticator verification failed'
+        });
+    }
+});
+
+router.post('/mfa/setup', verificarToken, async (req, res) => {
+    try {
+        const usuario = await obtenerUsuarioConDepartamento(
+            'u.id = ? AND u.activo = TRUE',
+            [req.usuario.id]
+        );
+
+        if (!usuario) {
+            return res.status(404).json({
+                error: true,
+                mensaje: 'User not found'
+            });
+        }
+
+        const secret = generarSecretoAuthenticator();
+        const encryptedSecret = cifrarSecreto(secret);
+        const accountName = usuario.email || usuario.username;
+        const otpauthUrl = crearOtpauthUrl({ secret, accountName });
+        const qrDataUrl = await crearQrDataUrl(otpauthUrl);
+
+        await pool.query(
+            `UPDATE usuarios
+             SET mfa_pending_secret_encrypted = ?
+             WHERE id = ?`,
+            [encryptedSecret, usuario.id]
+        );
+
+        await registrarEventoSeguridad({
+            usuarioId: usuario.id,
+            departamentoId: usuario.departamento_id || null,
+            evento: 'mfa_setup_started',
+            req
+        });
+
+        res.json({
+            error: false,
+            mensaje: 'Authenticator setup started',
+            secret,
+            otpauthUrl,
+            qrDataUrl,
+            alreadyEnabled: Boolean(usuario.mfa_enabled)
+        });
+    } catch (error) {
+        console.error('MFA setup error:', error);
+
+        res.status(500).json({
+            error: true,
+            mensaje: esErrorColumnasMfa(error)
+                ? 'Run the Microsoft Authenticator MFA migration first.'
+                : 'Authenticator setup could not be started'
+        });
+    }
+});
+
+router.post('/mfa/confirm', verificarToken, async (req, res) => {
+    try {
+        const { code } = req.body;
+        const usuario = await obtenerUsuarioConDepartamento(
+            'u.id = ? AND u.activo = TRUE',
+            [req.usuario.id]
+        );
+
+        if (!usuario) {
+            return res.status(404).json({
+                error: true,
+                mensaje: 'User not found'
+            });
+        }
+
+        if (!usuario.mfa_pending_secret_encrypted) {
+            return res.status(400).json({
+                error: true,
+                mensaje: 'Start authenticator setup before confirming it'
+            });
+        }
+
+        const secret = descifrarSecreto(usuario.mfa_pending_secret_encrypted);
+
+        if (!verificarCodigoTotp(secret, code)) {
+            return res.status(400).json({
+                error: true,
+                mensaje: 'The authenticator code is not valid'
+            });
+        }
+
+        await pool.query(
+            `UPDATE usuarios
+             SET mfa_enabled = TRUE,
+                 mfa_secret_encrypted = mfa_pending_secret_encrypted,
+                 mfa_pending_secret_encrypted = NULL,
+                 mfa_enabled_at = NOW()
+             WHERE id = ?`,
+            [usuario.id]
+        );
+
+        await registrarEventoSeguridad({
+            usuarioId: usuario.id,
+            departamentoId: usuario.departamento_id || null,
+            evento: 'mfa_enabled',
+            req
+        });
+
+        const usuarioActualizado = await obtenerUsuarioConDepartamento(
+            'u.id = ? AND u.activo = TRUE',
+            [req.usuario.id]
+        );
+
+        res.json({
+            error: false,
+            mensaje: 'Microsoft Authenticator is now enabled',
+            usuario: construirContextoUsuario(usuarioActualizado)
+        });
+    } catch (error) {
+        console.error('MFA confirm error:', error);
+
+        res.status(500).json({
+            error: true,
+            mensaje: esErrorColumnasMfa(error)
+                ? 'Run the Microsoft Authenticator MFA migration first.'
+                : 'Authenticator could not be enabled'
+        });
+    }
+});
+
+router.post('/mfa/disable', verificarToken, async (req, res) => {
+    try {
+        const { password, code } = req.body;
+        const usuario = await obtenerUsuarioConDepartamento(
+            'u.id = ? AND u.activo = TRUE',
+            [req.usuario.id]
+        );
+
+        if (!usuario) {
+            return res.status(404).json({
+                error: true,
+                mensaje: 'User not found'
+            });
+        }
+
+        if (!usuario.mfa_enabled || !usuario.mfa_secret_encrypted) {
+            return res.status(400).json({
+                error: true,
+                mensaje: 'Microsoft Authenticator is not enabled'
+            });
+        }
+
+        const passwordValido = await bcrypt.compare(String(password || ''), usuario.password);
+
+        if (!passwordValido) {
+            return res.status(400).json({
+                error: true,
+                mensaje: 'The current password is not correct'
+            });
+        }
+
+        const secret = descifrarSecreto(usuario.mfa_secret_encrypted);
+
+        if (!verificarCodigoTotp(secret, code)) {
+            return res.status(400).json({
+                error: true,
+                mensaje: 'The authenticator code is not valid'
+            });
+        }
+
+        await pool.query(
+            `UPDATE usuarios
+             SET mfa_enabled = FALSE,
+                 mfa_secret_encrypted = NULL,
+                 mfa_pending_secret_encrypted = NULL,
+                 mfa_enabled_at = NULL
+             WHERE id = ?`,
+            [usuario.id]
+        );
+
+        await registrarEventoSeguridad({
+            usuarioId: usuario.id,
+            departamentoId: usuario.departamento_id || null,
+            evento: 'mfa_disabled',
+            req
+        });
+
+        const usuarioActualizado = await obtenerUsuarioConDepartamento(
+            'u.id = ? AND u.activo = TRUE',
+            [req.usuario.id]
+        );
+
+        res.json({
+            error: false,
+            mensaje: 'Microsoft Authenticator was disabled',
+            usuario: construirContextoUsuario(usuarioActualizado)
+        });
+    } catch (error) {
+        console.error('MFA disable error:', error);
+
+        res.status(500).json({
+            error: true,
+            mensaje: esErrorColumnasMfa(error)
+                ? 'Run the Microsoft Authenticator MFA migration first.'
+                : 'Authenticator could not be disabled'
         });
     }
 });
