@@ -1,0 +1,222 @@
+/* =============================================================
+   CLEAN REFINEMENT LAYER
+   Reduce visual noise across the whole project while keeping
+   every existing color. This file is loaded LAST so it wins
+   the cascade. It only flattens decoration:
+   - gradients / radial glows -> solid colors (same hues)
+   - busy grid / pattern backgrounds -> removed
+   - heavy shadows -> subtle, consistent shadows
+   - oversized font weights (800/850/900) -> calmer 600/700
+   - hover lift transforms -> none
+   - excessive blur -> reduced
+   No color tokens are changed.
+============================================================= */
+
+/* ---------- App background: flat, no gradients ---------- */
+html,
+body {
+    background: var(--modern-page) !important;
+}
+
+.main {
+    background: var(--modern-page) !important;
+}
+
+/* ---------- Typography: calmer weights, less shouting ---------- */
+.topbar-title,
+.page-header-info h1,
+.card-title,
+.table-header h3,
+.sidebar-logo-text,
+.sidebar .logo span,
+.data-table th,
+.pm-schedule-table th,
+.pm-documents-table th,
+.preview-excel-table th,
+.bk-tax-store-table .data-table th {
+    font-weight: 700 !important;
+}
+
+.btn,
+.login-submit,
+.pm-table-action,
+.pm-document-download,
+.action-btn,
+.pagination-btn,
+.profile-photo-action,
+.profile-settings-tab,
+.login-secondary-action,
+.sidebar-menu-link,
+.nav-btn,
+.sidebar-logout,
+.sidebar-action,
+.status-badge,
+label,
+.filter-group label,
+.login-field label,
+.profile-panel .form-label,
+.pm-field span,
+.pm-form label span {
+    font-weight: 600 !important;
+}
+
+/* ---------- Topbar / header: flat surface, gentle border ---------- */
+.topbar,
+.header,
+html body .main > .topbar,
+html body .main > .header {
+    background: var(--modern-surface, #ffffff) !important;
+    backdrop-filter: none !important;
+    box-shadow: none !important;
+    border-bottom: 1px solid var(--modern-border, #d7e3ef) !important;
+}
+
+/* Remove decorative bars/overlays on top of the header */
+html body .main > .topbar::before,
+html body .main > .header::before {
+    display: none !important;
+}
+
+/* ---------- Sidebar: single solid dark surface, no glow ---------- */
+.sidebar {
+    background: var(--nav-bg, #101122) !important;
+    box-shadow: none !important;
+    border-right: 1px solid rgba(255, 255, 255, 0.07) !important;
+}
+
+/* Remove pattern/grid overlays inside the sidebar */
+.sidebar::before,
+.sidebar::after,
+.sidebar-nav::before,
+.sidebar-nav::after {
+    display: none !important;
+    background: none !important;
+}
+
+html body .sidebar-menu-link::before,
+html body .sidebar-profile-link::before,
+html body .sidebar-logout::before,
+html body .sidebar-menu-link.active::before,
+html body .sidebar-profile-link.active::before {
+    display: none !important;
+}
+
+/* ---------- Decorative hero accent bars: removed ---------- */
+.page-header::before,
+.pm-hero::before,
+.profile-settings-hero::before,
+.dashboard-hero::before,
+.admin-hero::before {
+    display: none !important;
+}
+
+/* ---------- Cards & surfaces: subtle, consistent shadow ---------- */
+.page-header,
+.pm-hero,
+.profile-settings-hero,
+.dashboard-hero,
+.admin-hero,
+.table-container,
+.filters-bar,
+.filters-panel,
+.card,
+.dashboard-card,
+.document-card,
+.stat-card,
+.card-mini,
+.pm-schedule-panel,
+.pm-upload-card,
+.pm-builder-card,
+.pm-manager-card,
+.pm-table-toolbar,
+.pm-documents-panel,
+.profile-summary-card,
+.profile-panel,
+.profile-form-intro,
+.profile-mfa-card,
+.documents-type-tab,
+.property-documents-status,
+.steps-container,
+.upload-section,
+.results-section,
+.validation-results,
+.restaurant-card,
+.store-card,
+.req-card {
+    box-shadow: 0 1px 2px rgba(7, 31, 52, 0.05) !important;
+}
+
+/* Flatten gradient surfaces that are not meant to be decorative */
+.page-header,
+.pm-hero,
+.profile-settings-hero,
+.dashboard-hero,
+.admin-hero,
+.profile-photo-frame {
+    background: var(--modern-surface, #ffffff) !important;
+}
+
+/* ---------- Remove hover lift / motion noise ---------- */
+.btn:hover,
+.btn-primary:hover,
+.primary-btn:hover,
+.login-submit:hover:not(:disabled),
+.pm-table-action.is-primary:hover,
+.topbar-shortcut:hover,
+.card:hover,
+.stat-card:hover,
+.documents-type-tab:hover,
+.pm-upload-card:hover,
+.req-card:hover,
+.action-btn:hover {
+    transform: none !important;
+}
+
+/* Keep a calm, consistent hover for cards (border only) */
+.card:hover,
+.stat-card:hover,
+.req-card:hover,
+.document-card:hover {
+    box-shadow: 0 1px 2px rgba(7, 31, 52, 0.05) !important;
+    border-color: #b8d2e9 !important;
+}
+
+/* ---------- Login: flat background, no grid pattern ---------- */
+.login-screen {
+    background: var(--modern-page, #edf4fb) !important;
+    background-size: auto !important;
+}
+
+.login-shell {
+    box-shadow: 0 8px 24px -16px rgba(7, 31, 52, 0.35) !important;
+}
+
+.login-brand-panel {
+    background: #0c1224 !important;
+}
+
+.login-brand-panel::before {
+    display: none !important;
+}
+
+.login-access-card {
+    box-shadow: 0 1px 2px rgba(7, 31, 52, 0.05) !important;
+}
+
+/* ---------- Modals / SweetAlert: lighter blur & shadow ---------- */
+.modal-overlay,
+.profile-crop-modal {
+    backdrop-filter: blur(3px) !important;
+}
+
+.modal,
+.profile-crop-dialog,
+.swal2-popup {
+    box-shadow: 0 16px 48px -28px rgba(6, 29, 51, 0.55) !important;
+}
+
+/* ---------- Editable table cell highlight: calmer ---------- */
+.pm-schedule-table td.is-editable {
+    background-image: none !important;
+    background: #f5f9fd !important;
+}
