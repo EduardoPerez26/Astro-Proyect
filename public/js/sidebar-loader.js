@@ -7,6 +7,34 @@ document.addEventListener('DOMContentLoaded', async function() {
     const topbarSidebarToggle = document.getElementById('topbarSidebarToggle');
     const logoutBtn = document.getElementById('logoutBtn');
     const mainContent = document.getElementById('mainContent');
+    const sidebarSearchInput = document.getElementById('sidebarSearch');
+
+    function isDesktopSidebar() {
+        return !window.matchMedia || !window.matchMedia('(max-width: 1024px)').matches;
+    }
+
+    function setSidebarCollapsedState(collapsed, options = {}) {
+        if (!sidebar) return;
+
+        if (!isDesktopSidebar()) {
+            sidebar.classList.remove('collapsed');
+            mainContent?.classList.remove('sidebar-collapsed');
+            document.body.classList.remove('sidebar-collapsed');
+            document.documentElement.classList.remove('sidebar-collapsed-preset');
+            return;
+        }
+
+        sidebar.classList.toggle('collapsed', collapsed);
+        mainContent?.classList.toggle('sidebar-collapsed', collapsed);
+        document.body.classList.toggle('sidebar-collapsed', collapsed);
+        document.documentElement.classList.toggle('sidebar-collapsed-preset', collapsed);
+
+        if (options.persist) {
+            localStorage.setItem('sidebarCollapsed', String(collapsed));
+        }
+    }
+
+    setSidebarCollapsedState(localStorage.getItem('sidebarCollapsed') === 'true');
 
     // Verify authentication.
     verificarAutenticacion();
@@ -20,16 +48,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     cargarInfoUser();
     aplicarPermissions({ verificarPagina: true });
 
-    // Restore sidebar state.
-    const sidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
-    if (sidebarCollapsed && sidebar) {
-        sidebar.classList.add('collapsed');
-        if (mainContent) {
-            mainContent.classList.add('sidebar-collapsed');
-        }
-        document.body.classList.add('sidebar-collapsed');
-    }
-
     function toggleSidebar(e) {
         e.preventDefault();
         e.stopPropagation();
@@ -41,17 +59,8 @@ document.addEventListener('DOMContentLoaded', async function() {
             sidebar.classList.toggle('open');
             return;
         }
-            
-        sidebar.classList.toggle('collapsed');
-            
-        // Sync with the main content.
-        if (mainContent) {
-            mainContent.classList.toggle('sidebar-collapsed');
-        }
-        document.body.classList.toggle('sidebar-collapsed');
-            
-        // Save state.
-        localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
+
+        setSidebarCollapsedState(!sidebar.classList.contains('collapsed'), { persist: true });
     }
 
     // Toggle sidebar
@@ -64,15 +73,63 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
 
     // Mark the active link from the current URL.
-    const currentPath = window.location.pathname;
-    const menuLinks = document.querySelectorAll('.sidebar-menu-link');
-    
+    const currentPath = window.location.pathname.replace(/\/+$/, '') || '/';
+    const menuLinks = Array.from(document.querySelectorAll('.sidebar-menu-link'));
+    let activeLink = null;
+    let activeHrefLength = -1;
+
     menuLinks.forEach(link => {
-        const href = link.getAttribute('href');
-        if (href && currentPath.includes(href)) {
-            link.classList.add('active');
+        const href = String(link.getAttribute('href') || '').replace(/\/+$/, '') || '/';
+        const isMatch = currentPath === href || currentPath.startsWith(`${href}/`);
+
+        link.classList.remove('active');
+
+        if (isMatch && href.length > activeHrefLength) {
+            activeLink = link;
+            activeHrefLength = href.length;
         }
     });
+
+    activeLink?.classList.add('active');
+
+    menuLinks.forEach(link => {
+        link.addEventListener('click', function () {
+            if (isDesktopSidebar() && sidebar?.classList.contains('collapsed')) {
+                localStorage.setItem('sidebarCollapsed', 'true');
+                document.documentElement.classList.add('sidebar-collapsed-preset');
+            }
+        });
+    });
+
+    function applySidebarSearch() {
+        const term = String(sidebarSearchInput?.value || '').trim().toLowerCase();
+        const sections = document.querySelectorAll('.sidebar-section');
+
+        sections.forEach(section => {
+            let hasVisibleItem = false;
+
+            section.querySelectorAll('.sidebar-menu-item').forEach(item => {
+                const text = String(item.textContent || '').trim().toLowerCase();
+                const isPermissionHidden = item.classList.contains('hidden');
+                const isSearchHidden = Boolean(term && !text.includes(term));
+
+                item.classList.toggle('sidebar-search-hidden', isSearchHidden);
+
+                if (!isPermissionHidden && !isSearchHidden) {
+                    hasVisibleItem = true;
+                }
+            });
+
+            section.style.display = hasVisibleItem ? '' : 'none';
+        });
+    }
+
+    window.applySidebarSearch = applySidebarSearch;
+
+    if (sidebarSearchInput) {
+        sidebarSearchInput.addEventListener('input', applySidebarSearch);
+        applySidebarSearch();
+    }
 
     // Logout
     if (logoutBtn) {
@@ -211,6 +268,18 @@ function resolverUrlFotoPerfil(url) {
         : `${apiOrigin}/${value}`;
 }
 
+function obtenerFotoPerfilUsuario(usuario = {}) {
+    return usuario.foto_perfil_url ||
+        usuario.fotoPerfilUrl ||
+        usuario.foto_perfil ||
+        usuario.foto ||
+        usuario.avatar_url ||
+        usuario.avatarUrl ||
+        usuario.profile_photo_url ||
+        usuario.photo_url ||
+        '';
+}
+
 function aplicarAvatarUser(element, nombre, fotoUrl) {
     if (!element) return;
 
@@ -219,7 +288,10 @@ function aplicarAvatarUser(element, nombre, fotoUrl) {
     if (fotoResuelta) {
         element.textContent = '';
         element.classList.add('has-image');
-        element.style.backgroundImage = `url("${fotoResuelta}")`;
+        element.style.setProperty('background-image', `url("${fotoResuelta}")`, 'important');
+        element.style.setProperty('background-size', 'cover', 'important');
+        element.style.setProperty('background-position', 'center', 'important');
+        element.style.setProperty('background-repeat', 'no-repeat', 'important');
         return;
     }
 
@@ -228,7 +300,10 @@ function aplicarAvatarUser(element, nombre, fotoUrl) {
         : '--';
 
     element.classList.remove('has-image');
-    element.style.backgroundImage = '';
+    element.style.removeProperty('background-image');
+    element.style.removeProperty('background-size');
+    element.style.removeProperty('background-position');
+    element.style.removeProperty('background-repeat');
     element.textContent = iniciales;
 }
 
@@ -268,8 +343,9 @@ function cargarInfoUser() {
         headerUserRole.textContent = etiquetaContexto;
     }
     if (avatars.length > 0) {
+        const fotoPerfil = obtenerFotoPerfilUsuario(usuario);
         avatars.forEach((avatar) => {
-            aplicarAvatarUser(avatar, usuario.nombre, usuario.foto_perfil_url);
+            aplicarAvatarUser(avatar, usuario.nombre, fotoPerfil);
         });
     }
     
@@ -281,7 +357,7 @@ function cargarInfoUser() {
         sidebarUserRole.textContent = etiquetaContexto;
     }
     if (sidebarUserAvatar) {
-        aplicarAvatarUser(sidebarUserAvatar, usuario.nombre, usuario.foto_perfil_url);
+        aplicarAvatarUser(sidebarUserAvatar, usuario.nombre, obtenerFotoPerfilUsuario(usuario));
     }
 
     // Mostrar indicador de modo offline
@@ -296,6 +372,8 @@ function cargarInfoUser() {
         }
     }
 }
+
+window.cargarInfoUser = cargarInfoUser;
 
 // Apply permissions to the sidebar menu.
 function aplicarPermissions(opciones = {}) {
@@ -330,6 +408,8 @@ function aplicarPermissions(opciones = {}) {
     document
         .getElementById('sidebar')
         ?.classList.remove('sidebar-permissions-pending');
+
+    window.applySidebarSearch?.();
     
     // Check access to the current page.
     if (opciones.verificarPagina !== false) {
@@ -350,7 +430,8 @@ function obtenerPermissions(usuario) {
             historial: true,
             usuarios: true,
             controlRestaurants: true,
-            propertyManagement: true
+            propertyManagement: true,
+            propertyManagementDocuments: true
         },
         'supervisor': {
             tiendas: true,
@@ -360,7 +441,8 @@ function obtenerPermissions(usuario) {
             historial: true,
             usuarios: false,
             controlRestaurants: false,
-            propertyManagement: false
+            propertyManagement: false,
+            propertyManagementDocuments: false
         },
         'usuario': {
             tiendas: true,
@@ -370,7 +452,8 @@ function obtenerPermissions(usuario) {
             historial: false,
             usuarios: false,
             controlRestaurants: false,
-            propertyManagement: false
+            propertyManagement: false,
+            propertyManagementDocuments: false
         }
     };
 
@@ -386,14 +469,18 @@ function obtenerPermissions(usuario) {
 
     if (usuario.id && savedPermissions[usuario.id]) {
         const permisosGuardados = savedPermissions[usuario.id];
+        const tienePropertyManagement =
+            permisosGuardados.propertyManagement === true ||
+            (permisosGuardados.propertyManagement === undefined && esPropertyManagement);
         return {
             ...permisosGuardados,
             perfil: true,
             usuarios: false,
             permisos: false,
             controlRestaurants: false,
-            propertyManagement: permisosGuardados.propertyManagement === true ||
-                (permisosGuardados.propertyManagement === undefined && esPropertyManagement)
+            propertyManagement: tienePropertyManagement,
+            propertyManagementDocuments: permisosGuardados.propertyManagementDocuments === true ||
+                (permisosGuardados.propertyManagementDocuments === undefined && tienePropertyManagement)
         };
     }
 
@@ -403,6 +490,9 @@ function obtenerPermissions(usuario) {
         const tienePropertyManagement =
             permisosGuardados.propertyManagement === true ||
             (permisosGuardados.propertyManagement === undefined && esPropertyManagement);
+        const tienePropertyManagementDocuments =
+            permisosGuardados.propertyManagementDocuments === true ||
+            (permisosGuardados.propertyManagementDocuments === undefined && tienePropertyManagement);
         return {
             tiendas: false,
             documentos: false,
@@ -413,6 +503,7 @@ function obtenerPermissions(usuario) {
             permisos: false,
             controlRestaurants: false,
             propertyManagement: tienePropertyManagement,
+            propertyManagementDocuments: tienePropertyManagementDocuments,
             paginaInicio: permisosGuardados.paginaInicio ||
                 (tienePropertyManagement ? 'propertyManagement' : undefined)
         };
@@ -436,7 +527,7 @@ function verificarAccesoPagina(permisos) {
         '/views/usuarios': 'usuarios',
         '/views/restaurantes': 'controlRestaurants',
         '/views/departments/property-management': 'propertyManagement',
-        '/views/departments/property-management-documents': 'propertyManagement'
+        '/views/departments/property-management-documents': 'propertyManagementDocuments'
     };
     
     const requiredPermission = routePermissions[currentPath];
@@ -465,7 +556,8 @@ function verificarAccesoPagina(permisos) {
                 tiendas: '/views/tiendas',
                 documentos: '/views/documentos',
                 historial: '/views/historial',
-                propertyManagement: '/views/departments/property-management'
+                propertyManagement: '/views/departments/property-management',
+                propertyManagementDocuments: '/views/departments/property-management-documents'
             };
             const paginaConfigurada = permisos.paginaInicio;
             const destinoConfigurado = paginaConfigurada && permisos[paginaConfigurada]
@@ -479,9 +571,11 @@ function verificarAccesoPagina(permisos) {
                         ? '/views/historial'
                         : permisos.propertyManagement
                             ? '/views/departments/property-management'
-                            : usuario.rol === 'admin' && permisos.dashboardAdmin
-                                ? '/views/dashboard-admin'
-                                : '/');
+                            : permisos.propertyManagementDocuments
+                                ? '/views/departments/property-management-documents'
+                                : usuario.rol === 'admin' && permisos.dashboardAdmin
+                                    ? '/views/dashboard-admin'
+                                    : '/');
             window.location.href = destino;
         });
     }

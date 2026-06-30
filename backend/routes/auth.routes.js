@@ -114,7 +114,8 @@ const PERMISOS_ADMIN = {
     controlRestaurants: true,
     historial: true,
     documentos: true,
-    propertyManagement: true
+    propertyManagement: true,
+    propertyManagementDocuments: true
 };
 
 function parsearJson(valor) {
@@ -134,7 +135,7 @@ function construirContextoUsuario(usuario) {
 
     if (usuario.rol === 'admin') {
         const permisosGuardados = parsearJson(usuario.permisos);
-        const paginaInicio = ['dashboardAdmin', 'tiendas', 'documentos', 'historial', 'propertyManagement'].includes(
+        const paginaInicio = ['dashboardAdmin', 'tiendas', 'documentos', 'historial', 'propertyManagement', 'propertyManagementDocuments'].includes(
             permisosGuardados.paginaInicio
         ) ? permisosGuardados.paginaInicio : 'dashboardAdmin';
         permisos = { ...PERMISOS_ADMIN, paginaInicio };
@@ -144,11 +145,15 @@ function construirContextoUsuario(usuario) {
         const tienePermisoPropertyManagement =
             permisosGuardados.propertyManagement === true ||
             (permisosGuardados.propertyManagement === undefined && esPropertyManagement);
+        const tienePermisoPropertyManagementDocuments =
+            permisosGuardados.propertyManagementDocuments === true ||
+            (permisosGuardados.propertyManagementDocuments === undefined && tienePermisoPropertyManagement);
         permisos = {
             tiendas: false,
             documentos: false,
             historial: false,
             propertyManagement: false,
+            propertyManagementDocuments: false,
             perfil: true,
             permisos: false,
             usuarios: false,
@@ -159,8 +164,13 @@ function construirContextoUsuario(usuario) {
             permisos: false,
             controlRestaurants: false,
             propertyManagement: tienePermisoPropertyManagement,
+            propertyManagementDocuments: tienePermisoPropertyManagementDocuments,
             paginaInicio: permisosGuardados.paginaInicio ||
-                (tienePermisoPropertyManagement ? 'propertyManagement' : undefined)
+                (tienePermisoPropertyManagement
+                    ? 'propertyManagement'
+                    : tienePermisoPropertyManagementDocuments
+                        ? 'propertyManagementDocuments'
+                        : undefined)
         };
     }
 

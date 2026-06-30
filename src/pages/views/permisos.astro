@@ -77,10 +77,52 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
         }
 
         .permissions-grid {
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-            gap: 14px;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 18px;
             padding: 20px;
             background: #f8fafc;
+        }
+
+        .permission-group {
+            overflow: hidden;
+            border: 1px solid #d8e3ec;
+            border-radius: 12px;
+            background: #ffffff;
+        }
+
+        .permission-group-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 15px 16px;
+            border-bottom: 1px solid #e1e9f1;
+            background: #f8fbff;
+        }
+
+        .permission-group-header span {
+            color: #102f4c;
+            font-size: 13px;
+            font-weight: 900;
+        }
+
+        .permission-group-header strong {
+            display: grid;
+            width: 28px;
+            height: 28px;
+            place-items: center;
+            border-radius: 999px;
+            background: #edf5ff;
+            color: #0b2f54;
+            font-size: 12px;
+        }
+
+        .permission-group-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 14px;
+            padding: 14px;
         }
 
         .permission-card {
@@ -150,10 +192,11 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
             .permission-start-panel select { grid-column: 1 / -1; }
             .permission-actions { flex-direction: column; }
             .permission-actions .btn { width: 100%; }
-            .permissions-grid { grid-template-columns: 1fr; padding: 14px; }
+            .permissions-grid,
+            .permission-group-grid { grid-template-columns: 1fr; padding: 14px; }
         }
     </style>
 <script src="/js/config.js" is:inline></script>
-    <script is:inline src="/js/permisos.js?v=20260629-property-management"></script>
+    <script is:inline src="/js/permisos.js?v=20260630-permissions-by-department"></script>
 </DashboardLayout>
 

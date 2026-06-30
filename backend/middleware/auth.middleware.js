@@ -211,14 +211,60 @@ const requireDepartment = (allowedDepartments = []) => {
         ? allowedDepartments.map(value => String(value).toLowerCase())
         : [String(allowedDepartments).toLowerCase()];
 
-    return (req, res, next) => {
-        if (req.usuario?.rol === 'admin') return next();
-
-        const departmentCode = String(
+    return async (req, res, next) => {
+        const isAdmin = req.usuario?.rol === 'admin';
+        let departmentCode = String(
             req.departamento?.codigo ||
             req.usuario?.departamento?.codigo ||
             ''
         ).toLowerCase();
+        const hasDepartmentId = Boolean(req.departamento?.id || req.usuario?.departamento_id);
+
+        if (!isAdmin && departmentCode && allowed.includes(departmentCode) && hasDepartmentId) {
+            return next();
+        }
+
+        try {
+            const [rows] = isAdmin
+                ? await pool.query(
+                    `SELECT id AS departamento_id,
+                            codigo AS departamento_codigo,
+                            nombre AS departamento_nombre,
+                            activo AS departamento_activo
+                     FROM departamentos
+                     WHERE LOWER(codigo) IN (?)
+                     LIMIT 1`,
+                    [allowed]
+                )
+                : await pool.query(
+                    `SELECT u.departamento_id,
+                            d.codigo AS departamento_codigo,
+                            d.nombre AS departamento_nombre,
+                            d.activo AS departamento_activo
+                     FROM usuarios u
+                     LEFT JOIN departamentos d ON d.id = u.departamento_id
+                     WHERE u.id = ?
+                     LIMIT 1`,
+                    [req.usuario.id]
+                );
+
+            if (rows.length) {
+                req.departamento = buildDepartmentContext(rows[0]);
+                req.usuario.departamento = req.departamento;
+                req.usuario.departamento_id = rows[0].departamento_id || null;
+                departmentCode = String(req.departamento?.codigo || '').toLowerCase();
+            }
+        } catch (error) {
+            if (!['ER_NO_SUCH_TABLE', 'ER_BAD_FIELD_ERROR'].includes(error.code)) {
+                console.error('Department verification failed:', error);
+                return res.status(500).json({
+                    error: true,
+                    message: 'Department verification failed'
+                });
+            }
+        }
+
+        if (isAdmin) return next();
 
         if (!departmentCode || !allowed.includes(departmentCode)) {
             return res.status(403).json({

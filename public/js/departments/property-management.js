@@ -82,6 +82,22 @@
         11: 30,
         12: 32
     };
+    const IMPORT_REFERENCE_PREFIX = 'Imported monthly GL';
+
+    const PREDEFINED_SCHEDULE_BASE_ROWS = [["YE BALANCE CLEARING ADJUSTMENT","70900N2B","N2B",241000,"YE ADJ","","","",-0.01,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","14218","AI",241000,"","CA","","",-15970.41,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","17484","AI",241000,"","CA","","",-18490.82,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","10341","EB",241000,"","CA","","",-11656.34,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","17592","EB",241000,"","CA","","",-12138.4,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","3684","EF",241000,"","CA","","",-16388.34,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","2495","GCF",241000,"","CA","","",-23589.32,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","2838","GCF",241000,"","CA","","",-13853.87,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","3217","GCF",241000,"","CA","","",-25245.24,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","15906","GGB",241000,"","CA","","",-10638.05,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","21575GS","GSCB",241000,"","CA","","",0.0,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","25533","GSCB",241000,"","CA","","",0.0,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","3917","GVB",241000,"","CA","","",-14118.63,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","16250","HB",241000,"","CA","","",-11251.11,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","9365","HI",241000,"","CA","","",-16478.82,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","1650","II",241000,"","CA","","",-25866.95,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","1803","II",241000,"","CA","","",-18136.87,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","2066","II",241000,"","CA","","",-15866.35,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","2738","II",241000,"","CA","","",-30635.73,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","3179","II",241000,"","CA","","",-25752.05,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","3323","II",241000,"","CA","","",-38732.42,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","3654","II",241000,"","CA","","",-22070.63,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","3866","II",241000,"","CA","","",-11758.95,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","4447","II",241000,"","CA","","",-11946.43,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","5996","II",241000,"","CA","","",-20787.5,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","6054","II",241000,"","CA","","",-15038.13,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","6813","II",241000,"","CA","","",-20872.87,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","8563","II",241000,"","CA","","",-25800.81,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","11063","II",241000,"","CA","","",-28918.66,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","13730","II",241000,"","CA","","",-15058.19,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","15058","II",241000,"","CA","","",-13815.37,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","16078","II",241000,"","CA","","",-24256.28,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","24651","II",241000,"","CA","","",-23294.35,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","25081","II",241000,"","CA","","",-10618.99,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","25944","II",241000,"","CA","","",-6708.13,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","17709","N2B",241000,"","CA","","",-19402.48,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","70900NB","NB",241000,"","CA","","",0.0,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","21575","QE",241000,"","CA","","",-7953.9,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","975","QE",241000,"","CA","","",-17208.47,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","1450","QE",241000,"","CA","","",-13429.72,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","1473","QE",241000,"","CA","","",-13553.42,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","1549","QE",241000,"","CA","","",-19099.72,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","1782","QE",241000,"","CA","","",-18796.25,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","1841","QE",241000,"","CA","","",-27488.3,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","1883","QE",241000,"","CA","","",-16258.42,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","1932","QE",241000,"","CA","","",-27588.72,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","2012","QE",241000,"","CA","","",-30428.58,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","2172","QE",241000,"","CA","","",-15994.04,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","2268","QE",241000,"","CA","","",-27088.83,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","2333","QE",241000,"","CA","","",-17535.87,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","2521","QE",241000,"","CA","","",-15246.43,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","2555","QE",241000,"","CA","","",-7757.26,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","2795","QE",241000,"","CA","","",-21117.8,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","2891","QE",241000,"","CA","","",-13873.29,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","3160","QE",241000,"","CA","","",-16593.94,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","3223","QE",241000,"","CA","","",-17641.86,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","3421","QE",241000,"","CA","","",-15886.58,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","3459","QE",241000,"","CA","","",-10422.89,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","3505","QE",241000,"","CA","","",-31385.88,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","3580","QE",241000,"","CA","","",-15966.4,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","3827","QE",241000,"","CA","","",-28775.3,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","3890","QE",241000,"","CA","","",-18685.56,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","4135","QE",241000,"","CA","","",-25232.33,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","4516","QE",241000,"","CA","","",-16101.4,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","4660","QE",241000,"","CA","","",-17474.27,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","4886","QE",241000,"","CA","","",-22945.23,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","5052","QE",241000,"","CA","","",-16396.41,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","5056","QE",241000,"","CA","","",-17429.02,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","5085","QE",241000,"","CA","","",-25606.93,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","5533","QE",241000,"","CA","","",-13963.75,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","6342","QE",241000,"","CA","","",-16361.27,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","6343","QE",241000,"","CA","","",-16378.01,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","6409","QE",241000,"","CA","","",-17922.52,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","6597","QE",241000,"","CA","","",-21004.8,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","7200","QE",241000,"","CA","","",-16846.46,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","7410","QE",241000,"","CA","","",-20980.14,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","7628","QE",241000,"","CA","","",-9760.49,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","7766","QE",241000,"","CA","","",-15922.5,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","7928","QE",241000,"","CA","","",-12661.59,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","8177","QE",241000,"","CA","","",-15668.24,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","8387","QE",241000,"","CA","","",-18774.83,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","8936","QE",241000,"","CA","","",-11099.31,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","9049","QE",241000,"","CA","","",-13173.57,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","9126","QE",241000,"","CA","","",-9119.74,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","9252","QE",241000,"","CA","","",-17044.22,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","9474","QE",241000,"","CA","","",-23223.29,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","9560","QE",241000,"","CA","","",-18309.04,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","9961","QE",241000,"","CA","","",-15941.74,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","9963","QE",241000,"","CA","","",-10488.28,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","10222","QE",241000,"","CA","","",-15080.8,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","10835","QE",241000,"","CA","","",-14059.54,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","10836","QE",241000,"","CA","","",-20493.12,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","11112","QE",241000,"","CA","","",-14985.74,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","11835","QE",241000,"","CA","","",-17177.0,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","16481","QE",241000,"","CA","","",-18391.98,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","22460","QE",241000,"","CA","","",-25953.99,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","24290","QE",241000,"","CA","","",-13106.42,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","27041","QE",241000,"","CA","","",-14762.97,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","27645","QE",241000,"","CA","","",-18498.71,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","27834","QE",241000,"","CA","","",-22569.3,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","28543","QE",241000,"","CA","","",0.0,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","28985","QE",241000,"","CA","","",-10723.12,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","29311","QE",241000,"","CA","","",-13177.6,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","29317","QE",241000,"","CA","","",-7913.08,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","29847","QE",241000,"","CA","","",-15954.33,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","31404","QE",241000,"","CA","","",-13964.29,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","981","QR",241000,"","CA","","",-28714.58,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","1838","QR",241000,"","CA","","",-12740.94,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","1901","QR",241000,"","CA","","",-19270.22,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","2152","QR",241000,"","CA","","",-23666.06,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","2298","QR",241000,"","CA","","",-15334.77,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","2534","QR",241000,"","CA","","",-21246.59,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","3034","QR",241000,"","CA","","",-17599.11,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","3208","QR",241000,"","CA","","",-13371.5,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","3554","QR",241000,"","CA","","",-28386.5,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","4039","QR",241000,"","CA","","",-21910.14,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","4760","QR",241000,"","CA","","",-28642.99,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","4786","QR",241000,"","CA","","",-38673.65,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","4882","QR",241000,"","CA","","",-17339.86,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","5215","QR",241000,"","CA","","",-34717.59,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","5325","QR",241000,"","CA","","",-19002.17,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","5394","QR",241000,"","CA","","",-22193.56,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","5500","QR",241000,"","CA","","",-33674.48,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","6117","QR",241000,"","CA","","",-13902.4,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","6936","QR",241000,"","CA","","",-16990.06,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","7426","QR",241000,"","CA","","",-24166.64,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","8326","QR",241000,"","CA","","",-13761.22,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","9790","QR",241000,"","CA","","",-18732.29,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","10833","QR",241000,"","CA","","",-20584.09,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","13538","QR",241000,"","CA","","",-20450.22,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","13768","QR",241000,"","CA","","",-21613.11,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","28906","QR",241000,"","CA","","",-11773.23,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","7238QR","QR",241000,"","CA","","",-10549.84,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","7469Q","QR",241000,"","CA","","",-70543.77,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","9878QR","QR",241000,"","CA","","",-8668.1,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","4525","QR",241000,"","CA","","",-11193.64,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","1572","RI",241000,"","CA","","",-14790.03,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","2022","RI",241000,"","CA","","",-14442.29,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","14581","SF",241000,"","CA","","",-8472.39,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","16003","SF",241000,"","CA","","",-7472.71,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","17721","SF",241000,"","CA","","",-13978.79,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","4668","SI",241000,"","CA","","",-12423.1,"","","","","","","","","","","","","","","","","","","","","","","","","","",""],["Sales Tax","5270","SM",241000,"","CA","","",-20364.99,"","","","","","","","","","","","","","","","","","","","","","","","","","",""]];
+
+    function createPredefinedScheduleRows() {
+        return PREDEFINED_SCHEDULE_BASE_ROWS.map(row => {
+            const normalized = emptyScheduleRow();
+
+            for (let index = 0; index < normalized.length; index += 1) {
+                normalized[index] = row[index] ?? '';
+            }
+
+            return normalized;
+        });
+    }
+
     const MONTH_NAMES = [
         '',
         'January',
@@ -170,8 +186,8 @@
             ?.addEventListener('click', handleBoardClick);
 
         document
-            .getElementById('pmBuildScheduleBtn')
-            ?.addEventListener('click', buildScheduleFromFiles);
+            .getElementById('pmLoadDimensionBalancesBtn')
+            ?.addEventListener('click', loadDimensionBalanceSchedule);
 
         document
             .getElementById('pmExportScheduleBtn')
@@ -206,6 +222,10 @@
             ?.addEventListener('click', addMonthlyActivity);
 
         document
+            .getElementById('pmAddMonthlyFileBtn')
+            ?.addEventListener('click', importMonthlyLedgerFile);
+
+        document
             .getElementById('pmAddStoreRowBtn')
             ?.addEventListener('click', addManualStoreRow);
 
@@ -237,9 +257,222 @@
             ?.addEventListener('click', handleDepartmentDocumentsAction);
 
         setDefaultMonthDate();
+        initializePredefinedSchedule({ showStatus: false });
         render();
         refreshPersistedData().finally(openScheduleFromQuery);
     });
+
+
+    function initializePredefinedSchedule(options = {}) {
+        const { showStatus = true } = options;
+
+        scheduleRows = [];
+        scheduleStoreCount = 0;
+        currentScheduleId = null;
+        linkedDocumentIds = [];
+        setDefaultScheduleName();
+        renderSchedulePreview({ rows: [], storeCount: 0, totalBalance: 0 });
+
+        if (showStatus) {
+            setScheduleStatus(
+                'Schedule layout ready. Upload the Dimension Balance report first, then import JAN, FEB, MAR, etc.',
+                'info'
+            );
+        }
+    }
+
+    async function loadDimensionBalanceSchedule() {
+        const input = document.getElementById('pmDimensionBalanceFile');
+        const file = input?.files?.[0];
+
+        if (!file) {
+            setScheduleStatus('Choose the Dimension Balance report first.', 'error');
+            return;
+        }
+
+        setScheduleStatus('Reading Dimension Balance report...', 'info');
+
+        try {
+            if (!window.XLSX) {
+                throw new Error('The spreadsheet library is not available. Refresh the page and try again.');
+            }
+
+            const rows = await readWorkbookRows(input, 'Dimension Balance report');
+            const result = buildScheduleFromDimensionBalance(rows);
+
+            scheduleRows = result.rows;
+            scheduleStoreCount = result.storeCount;
+            currentScheduleId = null;
+            linkedDocumentIds = [];
+            setDefaultScheduleName();
+            recalculateScheduleRows();
+
+            try {
+                const saved = await uploadPropertyDocument(file, 'dimension_balances', {
+                    label: 'Dimension Balance opening balances',
+                    sourceFile: file.name,
+                    account: result.account || '241000',
+                    accountName: result.accountName || 'SALES TAX PAYABLE',
+                    storeCount: result.storeCount,
+                    openingBalanceTotal: result.totalBalance
+                });
+                if (saved?.id) linkedDocumentIds.push(saved.id);
+            } catch (documentError) {
+                console.warn('Dimension Balance document could not be saved:', documentError);
+            }
+
+            renderSchedulePreview(getScheduleResult());
+            setScheduleStatus(
+                `Dimension Balance loaded: ${result.storeCount} stores with opening balances. Now import JAN, FEB, MAR, etc.`,
+                'success'
+            );
+        } catch (error) {
+            console.error('Dimension Balance import error:', error);
+            scheduleRows = [];
+            scheduleStoreCount = 0;
+            currentScheduleId = null;
+            linkedDocumentIds = [];
+            renderSchedulePreview({ rows: [], storeCount: 0, totalBalance: 0 });
+            setScheduleStatus(error.message || 'The Dimension Balance report could not be loaded.', 'error');
+        }
+    }
+
+    function buildScheduleFromDimensionBalance(rows) {
+        const headerIndex = findHeaderRow(rows, ['Account', 'Account name', 'Location', 'Opening balance']);
+
+        if (headerIndex < 0) {
+            throw new Error('The Dimension Balance report must include Account, Account name, Location, and Opening balance (USD).');
+        }
+
+        const headers = rows[headerIndex].map(normalizeHeader);
+        const accountIndex = findHeaderIndex(headers, 'account');
+        const accountNameIndex = findHeaderIndex(headers, 'account name');
+        const locationIndex = findHeaderIndex(headers, 'location');
+        const openingIndex = findHeaderIndex(headers, 'opening balance');
+
+        if ([accountIndex, accountNameIndex, locationIndex, openingIndex].some(index => index < 0)) {
+            throw new Error('The Dimension Balance report is missing one of the required columns: Account, Account name, Location, Opening balance (USD).');
+        }
+
+        const stores = new Map();
+
+        rows.slice(headerIndex + 1).forEach(row => {
+            const account = String(row[accountIndex] ?? '').trim();
+            const accountName = String(row[accountNameIndex] ?? '').trim();
+            const location = cleanLocation(row[locationIndex]);
+            const openingBalance = parseMoney(row[openingIndex]);
+
+            if (!account || !location) return;
+            if (account !== '241000' && !/sales\s+tax\s+payable/i.test(accountName)) return;
+
+            const current = stores.get(location) || {
+                account,
+                accountName,
+                location,
+                openingBalance: 0
+            };
+
+            current.account = current.account || account;
+            current.accountName = current.accountName || accountName;
+            current.openingBalance = roundMoney(current.openingBalance + Number(openingBalance || 0));
+            stores.set(location, current);
+        });
+
+        const dimensionRows = Array.from(stores.values()).sort((a, b) => naturalSort(a.location, b.location));
+
+        if (!dimensionRows.length) {
+            throw new Error('No account 241000 store rows were found in the Dimension Balance report.');
+        }
+
+        const schedule = dimensionRows.map(item => {
+            const row = emptyScheduleRow();
+
+            row[0] = formatDimensionAccountName(item.accountName);
+            row[1] = item.location;
+            row[2] = '';
+            row[3] = normalizeAccountNumber(item.account);
+            row[4] = 'Imported from Dimension Balance';
+            row[5] = '';
+            row[8] = roundMoney(item.openingBalance || 0);
+            row[33] = sumRowBalance(row);
+
+            return row;
+        });
+
+        return {
+            rows: schedule,
+            storeCount: countScheduleStores(schedule),
+            totalBalance: roundMoney(schedule.reduce((sum, row) => sum + Number(row[8] || 0), 0)),
+            account: dimensionRows[0]?.account || '241000',
+            accountName: dimensionRows[0]?.accountName || 'SALES TAX PAYABLE'
+        };
+    }
+
+    function formatDimensionAccountName(accountName) {
+        const text = String(accountName || '').trim();
+        if (/sales\s+tax\s+payable/i.test(text)) return 'Sales Tax';
+        return text || 'Sales Tax';
+    }
+
+    function normalizeAccountNumber(account) {
+        const text = String(account ?? '').trim();
+        return /^\d+$/.test(text) ? Number(text) : text;
+    }
+
+    function parseScheduleTemplateRows(rows) {
+        const headerIndex = findHeaderRow(rows, ['Entry / Payee', 'Location', 'YTD BAL']);
+
+        if (headerIndex < 0) {
+            throw new Error('The selected workbook does not look like the Schedule 2026 template. The header row was not found.');
+        }
+
+        const parsedRows = rows
+            .slice(headerIndex + 1)
+            .filter(row => rowHasScheduleContent(row))
+            .map(row => {
+                const normalized = emptyScheduleRow();
+
+                for (let index = 0; index < normalized.length; index += 1) {
+                    normalized[index] = normalizeLoadedScheduleValue(row[index], index);
+                }
+
+                return normalized;
+            });
+
+        if (!parsedRows.length || !parsedRows.some(row => row[0] === 'Sales Tax' && row[1])) {
+            throw new Error('No store rows were found in the Schedule 2026 template.');
+        }
+
+        parsedRows.forEach(row => {
+            if (!row[3] && row[1]) row[3] = 241000;
+        });
+
+        scheduleRows = parsedRows;
+        recalculateScheduleRows();
+
+        return {
+            rows: scheduleRows,
+            storeCount: countScheduleStores(scheduleRows),
+            totalBalance: getScheduleTotalBalance(scheduleRows)
+        };
+    }
+
+    function rowHasScheduleContent(row) {
+        if (!Array.isArray(row)) return false;
+
+        const entry = String(row[0] ?? '').trim();
+        const location = String(row[1] ?? '').trim();
+        const account = String(row[3] ?? '').trim();
+        const hasNumbers = row.slice(7, 35).some(value => parseMoney(value) !== null);
+
+        if (!entry && !location && !account && !hasNumbers) return false;
+        if (/^entry\s*\/\s*payee$/i.test(entry)) return false;
+        if (/^company name:/i.test(entry)) return false;
+        if (/^gl account/i.test(entry)) return false;
+        if (/^year:/i.test(entry)) return false;
+
+        return Boolean(entry || location || account || hasNumbers);
+    }
 
     async function buildScheduleFromFiles() {
         const generalLedgerInput = document.getElementById('pmGeneralLedgerFile');
@@ -289,6 +522,11 @@
 
     async function readWorkbookRows(input, label) {
         const file = input?.files?.[0];
+
+        return readWorkbookRowsFromFile(file, label);
+    }
+
+    async function readWorkbookRowsFromFile(file, label) {
         if (!file) {
             throw new Error(`${label} is required.`);
         }
@@ -746,16 +984,12 @@
     }
 
     function clearScheduleBuilder() {
-        const generalLedgerInput = document.getElementById('pmGeneralLedgerFile');
-        const dimensionInput = document.getElementById('pmDimensionFile');
+        const dimensionInput = document.getElementById('pmDimensionBalanceFile');
+        const monthlyInput = document.getElementById('pmMonthlyLedgerFile');
 
-        if (generalLedgerInput) generalLedgerInput.value = '';
         if (dimensionInput) dimensionInput.value = '';
+        if (monthlyInput) monthlyInput.value = '';
 
-        scheduleRows = [];
-        scheduleStoreCount = 0;
-        currentScheduleId = null;
-        linkedDocumentIds = [];
         scheduleFilters = {
             search: '',
             store: '',
@@ -766,9 +1000,8 @@
         document.querySelectorAll('[data-pm-filter]').forEach(element => {
             element.value = '';
         });
-        renderSchedulePreview({ rows: [], storeCount: 0, totalBalance: 0 });
-        setDefaultScheduleName();
-        setScheduleStatus('Upload both reports to build the Schedule 2026 table.', 'info');
+
+        initializePredefinedSchedule({ showStatus: true });
     }
 
     async function refreshPersistedData() {
@@ -1575,6 +1808,239 @@
         renderSchedulePreview(getScheduleResult());
         clearMonthInputs();
         setScheduleStatus(`A new row was added inside store ${store}. Save the schedule to keep it in the database.`, 'success');
+    }
+
+    async function importMonthlyLedgerFile() {
+        const input = document.getElementById('pmMonthlyLedgerFile');
+        const files = Array.from(input?.files || []);
+
+        if (!scheduleRows.length) {
+            setScheduleStatus('Load the Dimension Balance report first so the schedule has the store rows and opening balances.', 'error');
+            return;
+        }
+
+        if (!files.length) {
+            setScheduleStatus('Choose one or more monthly files first, for example JAN.xls and FEB.xls.', 'error');
+            return;
+        }
+
+        setScheduleStatus(`Reading ${files.length} monthly file${files.length === 1 ? '' : 's'}...`, 'info');
+
+        const importedResults = [];
+        const failedFiles = [];
+        const documentWarnings = [];
+
+        for (const file of files) {
+            try {
+                const rows = await readWorkbookRowsFromFile(file, file.name || 'Monthly report');
+                const transactions = parseGeneralLedger(rows);
+                const result = applyMonthlyLedgerTransactions(transactions, file.name);
+
+                importedResults.push({ file, result });
+
+                try {
+                    const saved = await uploadPropertyDocument(file, 'general_ledger', {
+                        label: 'Monthly General Ledger update',
+                        sourceFile: file.name,
+                        importedMonths: result.months,
+                        storeCount: result.storeCount,
+                        collectedEntries: result.collectedEntries,
+                        paymentRows: result.paymentRows
+                    });
+                    if (saved?.id) linkedDocumentIds.push(saved.id);
+                } catch (documentError) {
+                    const warning = documentError.message || 'The monthly file was not saved as a source document.';
+                    documentWarnings.push(`${file.name}: ${warning}`);
+                    console.warn('Monthly GL document could not be saved:', documentError);
+                }
+            } catch (fileError) {
+                failedFiles.push(`${file.name}: ${fileError.message || 'could not be imported'}`);
+                console.error(`Monthly GL import error for ${file.name}:`, fileError);
+            }
+        }
+
+        renderSchedulePreview(getScheduleResult());
+        if (input) input.value = '';
+
+        if (!importedResults.length) {
+            setScheduleStatus(
+                failedFiles.length
+                    ? `No monthly files were imported. ${failedFiles.join(' ')}`
+                    : 'No monthly files were imported.',
+                'error'
+            );
+            return;
+        }
+
+        const importedMonthNumbers = Array.from(new Set(
+            importedResults.flatMap(item => item.result.months || [])
+        )).sort((a, b) => a - b);
+        const updatedStoreCount = importedResults.reduce((total, item) => total + (item.result.storeCount || 0), 0);
+        const paymentRowCount = importedResults.reduce((total, item) => total + (item.result.paymentRows || 0), 0);
+        const fileNames = importedResults.map(item => item.file.name).join(', ');
+        const messages = [
+            `${importedResults.length} file${importedResults.length === 1 ? '' : 's'} imported: ${fileNames}.`,
+            importedMonthNumbers.length
+                ? `Months updated: ${importedMonthNumbers.map(month => MONTH_NAMES[month]).join(', ')}.`
+                : '',
+            `${updatedStoreCount} store updates processed, ${paymentRowCount} payment rows added.`,
+            failedFiles.length ? `Some files failed: ${failedFiles.join(' ')}` : '',
+            documentWarnings.length ? `Document warnings: ${documentWarnings.join(' ')}` : '',
+            'Save the schedule to keep the monthly updates.'
+        ].filter(Boolean);
+
+        setScheduleStatus(
+            messages.join(' '),
+            failedFiles.length || documentWarnings.length ? 'warning' : 'success'
+        );
+    }
+
+    function applyMonthlyLedgerTransactions(transactions, sourceName = '') {
+        const usableTransactions = transactions.filter(item =>
+            item?.location && item?.postedDate && (item.debit || item.credit)
+        );
+
+        if (!usableTransactions.length) {
+            throw new Error('The monthly file does not contain usable transactions.');
+        }
+
+        const months = Array.from(new Set(
+            usableTransactions.map(item => item.postedDate.getMonth() + 1)
+        )).sort((a, b) => a - b);
+        const affectedStores = new Set();
+        const collectedByStoreMonth = new Map();
+        const paymentRows = [];
+
+        removeImportedRowsForMonths(months);
+        clearStoreSummaryMonthValues(months);
+
+        usableTransactions.forEach(transaction => {
+            const month = transaction.postedDate.getMonth() + 1;
+            const summaryRow = findOrCreateStoreSummaryRow(transaction);
+            const store = String(transaction.location || '').trim();
+
+            affectedStores.add(store);
+
+            if (transaction.credit) {
+                const key = `${store}|${month}`;
+                const current = Number(collectedByStoreMonth.get(key) || 0);
+                collectedByStoreMonth.set(key, roundMoney(current - Math.abs(transaction.credit)));
+            }
+
+            if (transaction.debit) {
+                paymentRows.push(createImportedPaymentRow(transaction, summaryRow, sourceName));
+            }
+        });
+
+        collectedByStoreMonth.forEach((amount, key) => {
+            const [store, monthText] = key.split('|');
+            const month = Number(monthText);
+            const collectedColumn = COLLECTED_COL_BY_MONTH[month];
+            const summaryRow = findStoreSummaryRow(store);
+
+            if (!summaryRow || collectedColumn === undefined) return;
+            summaryRow[collectedColumn] = roundMoney(amount);
+        });
+
+        paymentRows
+            .sort(compareScheduleRowsForInsert)
+            .forEach(row => insertRowForStore(row[1], row));
+
+        recalculateScheduleRows();
+
+        return {
+            months,
+            storeCount: affectedStores.size,
+            collectedEntries: collectedByStoreMonth.size,
+            paymentRows: paymentRows.length
+        };
+    }
+
+    function findOrCreateStoreSummaryRow(transaction) {
+        const store = String(transaction.location || '').trim();
+        let summaryRow = findStoreSummaryRow(store);
+
+        if (summaryRow) {
+            if (!summaryRow[2]) summaryRow[2] = transaction.entity || inferEntity(transaction.memo, store);
+            if (!summaryRow[5]) summaryRow[5] = transaction.state || '';
+            return summaryRow;
+        }
+
+        summaryRow = emptyScheduleRow();
+        summaryRow[0] = 'Sales Tax';
+        summaryRow[1] = store;
+        summaryRow[2] = transaction.entity || inferEntity(transaction.memo, store);
+        summaryRow[3] = 241000;
+        summaryRow[4] = 'Auto-created from monthly GL';
+        summaryRow[5] = transaction.state || '';
+        summaryRow[8] = 0;
+        summaryRow[33] = sumRowBalance(summaryRow);
+        scheduleRows.push(summaryRow);
+
+        return summaryRow;
+    }
+
+    function createImportedPaymentRow(transaction, summaryRow, sourceName = '') {
+        const row = buildPaymentRow(
+            transaction,
+            summaryRow?.[2] || transaction.entity || '',
+            summaryRow?.[5] || transaction.state || ''
+        );
+        const month = transaction.postedDate.getMonth() + 1;
+
+        row[4] = `${IMPORT_REFERENCE_PREFIX} ${MONTH_NAMES[month]}${sourceName ? ` - ${sourceName}` : ''}`;
+
+        if (PAID_COL_BY_MONTH[month] === undefined && ACCRUAL_COL_BY_MONTH[month] !== undefined) {
+            row[ACCRUAL_COL_BY_MONTH[month]] = roundMoney(transaction.debit);
+            row[33] = sumRowBalance(row);
+        }
+
+        return row;
+    }
+
+    function removeImportedRowsForMonths(months) {
+        const monthSet = new Set(months.map(Number));
+        const originalLength = scheduleRows.length;
+
+        scheduleRows = scheduleRows.filter(row => {
+            const reference = String(row[4] || '');
+            const date = parseDateValue(row[6]);
+            const month = date ? date.getMonth() + 1 : 0;
+            const isImported = reference.startsWith(IMPORT_REFERENCE_PREFIX);
+
+            return !(isImported && monthSet.has(month));
+        });
+
+        return originalLength - scheduleRows.length;
+    }
+
+    function clearStoreSummaryMonthValues(months) {
+        const monthSet = new Set(months.map(Number));
+
+        scheduleRows.forEach(row => {
+            if (row[0] !== 'Sales Tax') return;
+
+            monthSet.forEach(month => {
+                const collectedColumn = COLLECTED_COL_BY_MONTH[month];
+                const accrualColumn = ACCRUAL_COL_BY_MONTH[month];
+
+                if (collectedColumn !== undefined) row[collectedColumn] = '';
+                if (accrualColumn !== undefined) row[accrualColumn] = '';
+            });
+        });
+    }
+
+    function compareScheduleRowsForInsert(a, b) {
+        const storeCompare = naturalSort(a[1], b[1]);
+        if (storeCompare) return storeCompare;
+
+        const dateA = parseDateValue(a[6]);
+        const dateB = parseDateValue(b[6]);
+        const timeA = dateA ? dateA.getTime() : 0;
+        const timeB = dateB ? dateB.getTime() : 0;
+
+        if (timeA !== timeB) return timeA - timeB;
+        return String(a[0] || '').localeCompare(String(b[0] || ''));
     }
 
     function handleScheduleCellEdit(event) {

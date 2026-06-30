@@ -14,6 +14,7 @@ const MENU_SECTIONS = [
         description: 'Sessions, movements, and overall system activity',
         icon: 'fa-chart-line',
         iconClass: 'dashboard',
+        department: 'Information Technology',
         path: '/views/dashboard-admin',
         required: true,
         adminOnly: true,
@@ -25,6 +26,7 @@ const MENU_SECTIONS = [
         description: 'Restaurant and branch operations',
         icon: 'fa-shop',
         iconClass: 'tiendas',
+        department: 'Accounts Receivable',
         path: '/views/tiendas',
         required: false,
         initialOption: true
@@ -35,6 +37,7 @@ const MENU_SECTIONS = [
         description: 'Excel files and validation records',
         icon: 'fa-file-excel',
         iconClass: 'documentos',
+        department: 'Accounts Receivable',
         path: '/views/documentos',
         required: false,
         initialOption: true
@@ -45,6 +48,7 @@ const MENU_SECTIONS = [
         description: 'Personal account settings',
         icon: 'fa-user',
         iconClass: 'perfil',
+        department: 'Account',
         path: '/views/perfil',
         required: true // Siempre visible
     },
@@ -54,6 +58,7 @@ const MENU_SECTIONS = [
         description: 'Access settings',
         icon: 'fa-key',
         iconClass: 'permisos',
+        department: 'Information Technology',
         path: '/views/permisos',
         required: false,
         adminOnly: true
@@ -64,17 +69,30 @@ const MENU_SECTIONS = [
         description: 'Activity and change log',
         icon: 'fa-clock-rotate-left',
         iconClass: 'historial',
+        department: 'Accounts Receivable',
         path: '/views/historial',
         required: false,
         initialOption: true
     },
     {
         id: 'propertyManagement',
-        name: 'Property Management',
-        description: 'Property procedures and departmental requests',
+        name: 'Property schedules',
+        description: 'Sales tax payable schedule builder and saved schedules',
         icon: 'fa-building-user',
         iconClass: 'property-management',
+        department: 'Property Management',
         path: '/views/departments/property-management',
+        required: false,
+        initialOption: true
+    },
+    {
+        id: 'propertyManagementDocuments',
+        name: 'Property documents',
+        description: 'Saved Property Management schedules and source files',
+        icon: 'fa-folder-tree',
+        iconClass: 'property-management-documents',
+        department: 'Property Management',
+        path: '/views/departments/property-management-documents',
         required: false,
         initialOption: true
     },
@@ -84,6 +102,7 @@ const MENU_SECTIONS = [
         description: 'User administration',
         icon: 'fa-users',
         iconClass: 'usuarios',
+        department: 'Information Technology',
         path: '/views/usuarios',
         required: false,
         adminOnly: true
@@ -94,11 +113,32 @@ const MENU_SECTIONS = [
         description: 'Operational availability for maintenance or outages',
         icon: 'fa-screwdriver-wrench',
         iconClass: 'restaurantes',
+        department: 'Information Technology',
         path: '/views/restaurantes',
         required: true,
         adminOnly: true
     }
 ];
+
+const MENU_GROUP_ORDER = [
+    'Accounts Receivable',
+    'Property Management',
+    'Information Technology',
+    'Account'
+];
+
+function normalizeLegacyPermissions(permisos = {}) {
+    const normalized = { ...permisos };
+
+    if (
+        normalized.propertyManagement === true &&
+        normalized.propertyManagementDocuments === undefined
+    ) {
+        normalized.propertyManagementDocuments = true;
+    }
+
+    return normalized;
+}
 
 // Initialize
 document.addEventListener('DOMContentLoaded', function() {
@@ -150,13 +190,13 @@ async function loadUserData() {
         
         // Sample permissions
         const defaultPermissions = {
-            1: { dashboardAdmin: true, tiendas: true, documentos: true, perfil: true, permisos: true, historial: true, usuarios: true, controlRestaurants: true, propertyManagement: true, paginaInicio: 'dashboardAdmin' },
-            2: { tiendas: true, documentos: true, perfil: true, permisos: false, historial: true, usuarios: false, controlRestaurants: false, propertyManagement: false, paginaInicio: 'tiendas' },
-            3: { tiendas: true, documentos: true, perfil: true, permisos: false, historial: false, usuarios: false, controlRestaurants: false, propertyManagement: false, paginaInicio: 'tiendas' },
-            4: { tiendas: true, documentos: false, perfil: true, permisos: false, historial: false, usuarios: false, controlRestaurants: false, propertyManagement: true, paginaInicio: 'propertyManagement' }
+            1: { dashboardAdmin: true, tiendas: true, documentos: true, perfil: true, permisos: true, historial: true, usuarios: true, controlRestaurants: true, propertyManagement: true, propertyManagementDocuments: true, paginaInicio: 'dashboardAdmin' },
+            2: { tiendas: true, documentos: true, perfil: true, permisos: false, historial: true, usuarios: false, controlRestaurants: false, propertyManagement: false, propertyManagementDocuments: false, paginaInicio: 'tiendas' },
+            3: { tiendas: true, documentos: true, perfil: true, permisos: false, historial: false, usuarios: false, controlRestaurants: false, propertyManagement: false, propertyManagementDocuments: false, paginaInicio: 'tiendas' },
+            4: { tiendas: true, documentos: false, perfil: true, permisos: false, historial: false, usuarios: false, controlRestaurants: false, propertyManagement: true, propertyManagementDocuments: true, paginaInicio: 'propertyManagement' }
         };
         
-        currentUser.permisos = defaultPermissions[currentUser.id] || {};
+        currentUser.permisos = normalizeLegacyPermissions(defaultPermissions[currentUser.id] || {});
         originalPermissions = { ...currentUser.permisos };
         
         renderUserInfo();
@@ -181,7 +221,7 @@ async function loadUserData() {
                     currentUser.permisos = {};
                 }
             }
-            currentUser.permisos = currentUser.permisos || {};
+            currentUser.permisos = normalizeLegacyPermissions(currentUser.permisos || {});
             if (currentUser.rol === 'admin') {
                 MENU_SECTIONS.forEach(section => {
                     currentUser.permisos[section.id] = true;
@@ -235,8 +275,8 @@ function renderUserInfo() {
 
 function renderPermissions() {
     const container = document.getElementById('permissionsList');
-    
-    container.innerHTML = MENU_SECTIONS.map(section => {
+
+    const renderCard = (section) => {
         const isRequired = section.required;
         const isAdminSection = section.adminOnly;
         const isEnabled = isAdminSection
@@ -274,6 +314,24 @@ function renderPermissions() {
                     <span class="toggle-slider"></span>
                 </label>
             </div>
+        `;
+    };
+
+    container.innerHTML = MENU_GROUP_ORDER.map(groupName => {
+        const sections = MENU_SECTIONS.filter(section => section.department === groupName);
+
+        if (!sections.length) return '';
+
+        return `
+            <section class="permission-group">
+                <div class="permission-group-header">
+                    <span>${groupName}</span>
+                    <strong>${sections.length}</strong>
+                </div>
+                <div class="permission-group-grid">
+                    ${sections.map(renderCard).join('')}
+                </div>
+            </section>
         `;
     }).join('');
 

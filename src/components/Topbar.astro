@@ -20,12 +20,12 @@ const { title = "Panel", placeholder = "Search..." } = Astro.props;
 
         <div class="topbar-page">
             <span class="topbar-eyebrow">XB Franchise Solutions</span>
-            <h2 class="topbar-title">{title.replace(" - Sistema de Inventario", "")}</h2>
+            <h2 class="topbar-title">{title.replace(" - XBFS Hub", "")}</h2>
         </div>
     </div>
 
         <div class="header-user">
-            <div class="department-pill" title="Department activo">
+            <div class="department-pill" title="Active department">
                 <span>Department</span>
                 <strong data-department-label>AR</strong>
             </div>
@@ -40,29 +40,6 @@ const { title = "Panel", placeholder = "Search..." } = Astro.props;
                 <i class="fa-solid fa-language" aria-hidden="true"></i>
                 <span data-lang-label>EN</span>
             </button>
-            <div class="header-user-profile-wrap">
-                <button
-                    type="button"
-                    class="header-user-profile"
-                    id="userProfileMenuButton"
-                    aria-haspopup="menu"
-                    aria-expanded="false"
-                >
-                    <div class="header-user-info">
-                        <div class="header-user-name">User</div>
-                        <div class="header-user-role">Role</div>
-                    </div>
-                    <div class="avatar" data-profile-avatar>--</div>
-                    <i class="fa-solid fa-chevron-down header-user-chevron" aria-hidden="true"></i>
-                </button>
-
-                <div class="header-user-menu" id="userProfileMenu" role="menu">
-                    <a href="/views/perfil" role="menuitem">
-                        <i class="fa-solid fa-user-gear" aria-hidden="true"></i>
-                        <span>Profile and security</span>
-                    </a>
-                </div>
-            </div>
         </div>
 </header>
 

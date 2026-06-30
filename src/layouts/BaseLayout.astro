@@ -14,8 +14,20 @@ const { title, includeSheetJS = false } = Astro.props;
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{title}</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <script is:inline>
+        try {
+            if (
+                localStorage.getItem('sidebarCollapsed') === 'true' &&
+                (!window.matchMedia || !window.matchMedia('(max-width: 1024px)').matches)
+            ) {
+                document.documentElement.classList.add('sidebar-collapsed-preset');
+            }
+        } catch (error) {
+            document.documentElement.classList.remove('sidebar-collapsed-preset');
+        }
+    </script>
     <link rel="stylesheet" href="/styles/styles.css?v=20260626-profile-settings">
-    <link rel="stylesheet" href="/styles/modern-blue.css?v=20260629-modern-blue">
+    <link rel="stylesheet" href="/styles/modern-blue.css?v=20260630-sidebar-complete">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -28,9 +40,10 @@ const { title, includeSheetJS = false } = Astro.props;
     )}
     <script is:inline src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script is:inline src="/js/i18n.js?v=20260626-enterprise-ui"></script>
-    <script is:inline src="/js/swal-guard.js?v=20260626-enterprise-ui"></script>
+    <script is:inline src="/js/swal-guard.js?v=20260630-toast-cleanup"></script>
 </head>
 <body>
     <slot />
+    <link rel="stylesheet" href="/styles/modern-blue.css?v=20260630-sidebar-complete-body">
 </body>
 </html>

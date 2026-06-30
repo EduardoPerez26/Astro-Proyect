@@ -1,39 +1,16 @@
 ---
 import DashboardLayout from '../../../layouts/DashboardLayout.astro';
-
-const stages = [
-    { id: 'intake', label: 'Intake', icon: 'fa-inbox' },
-    { id: 'review', label: 'Review', icon: 'fa-clipboard-check' },
-    { id: 'approval', label: 'Approval', icon: 'fa-signature' },
-    { id: 'completed', label: 'Completed', icon: 'fa-circle-check' }
-];
 ---
 
 <DashboardLayout title="Property Management" includeSheetJS={true}>
-    <section class="property-management-page" aria-labelledby="propertyManagementTitle">
+    <section class="property-management-page pm-clean-design" aria-labelledby="propertyManagementTitle">
         <div class="pm-hero">
             <div>
                 <span class="pm-eyebrow">
                     <i class="fa-solid fa-building-user" aria-hidden="true"></i>
-                    Department procedure
+                    Department workspace
                 </span>
                 <h1 id="propertyManagementTitle">Property Management</h1>
-                <p>Track property requests from intake through review, approval, and completion.</p>
-            </div>
-
-            <div class="pm-metrics" aria-label="Property Management summary">
-                <div>
-                    <strong id="pmOpenCount">0</strong>
-                    <span>Open requests</span>
-                </div>
-                <div>
-                    <strong id="pmDueCount">0</strong>
-                    <span>Due this week</span>
-                </div>
-                <div>
-                    <strong id="pmCompletedCount">0</strong>
-                    <span>Completed</span>
-                </div>
             </div>
         </div>
 
@@ -45,7 +22,6 @@ const stages = [
                         Schedule 2026 builder
                     </span>
                     <h2 id="pmScheduleTitle">Sales tax payable schedule</h2>
-                    <p>Upload the General Ledger and Dimension Balances reports to build the schedule by store.</p>
                 </div>
 
                 <div class="pm-schedule-actions">
@@ -68,34 +44,69 @@ const stages = [
                 </div>
             </div>
 
-            <div class="pm-upload-grid">
-                <label class="pm-upload-card">
-                    <span class="pm-upload-icon"><i class="fa-solid fa-book" aria-hidden="true"></i></span>
-                    <strong>General Ledger report</strong>
-                    <small>Accepts the exported .xls report from the GL system.</small>
-                    <input id="pmGeneralLedgerFile" type="file" accept=".xls,.xlsx,.html,.htm" />
-                </label>
+            <div class="pm-workflow-grid" aria-label="Property Management imports">
+                <article class="pm-workflow-card">
+                    <div class="pm-workflow-card-head">
+                        <span class="pm-workflow-icon"><i class="fa-solid fa-scale-balanced" aria-hidden="true"></i></span>
+                        <div>
+                            <strong>Dimension Balance report</strong>
+                            <small>Creates the schedule using Account, Account name, Location, and Opening balance.</small>
+                        </div>
+                    </div>
 
-                <label class="pm-upload-card">
-                    <span class="pm-upload-icon"><i class="fa-solid fa-scale-balanced" aria-hidden="true"></i></span>
-                    <strong>Dimension balances report</strong>
-                    <small>Used for the prior year ending balance by store.</small>
-                    <input id="pmDimensionFile" type="file" accept=".xlsx,.xls" />
-                </label>
+                    <label class="pm-dropzone" for="pmDimensionBalanceFile">
+                        <span class="pm-dropzone-icon"><i class="fa-solid fa-cloud-arrow-up" aria-hidden="true"></i></span>
+                        <span class="pm-dropzone-copy">
+                            <strong>Choose Dimension Balance report</strong>
+                            <small>Accepted formats: .xlsx, .xls</small>
+                        </span>
+                        <input id="pmDimensionBalanceFile" type="file" accept=".xlsx,.xls" />
+                    </label>
 
-                <div class="pm-builder-card">
-                    <span>Output format</span>
-                    <strong>Schedule 2026</strong>
-                    <small>Columns match the completed workbook schedule layout.</small>
-                    <button type="button" class="btn btn-primary" id="pmBuildScheduleBtn">
-                        <i class="fa-solid fa-table" aria-hidden="true"></i>
-                        Build table
+                    <button type="button" class="btn btn-primary pm-workflow-action" id="pmLoadDimensionBalancesBtn">
+                        <i class="fa-solid fa-table-list" aria-hidden="true"></i>
+                        Load opening balances
                     </button>
-                </div>
+                </article>
+
+                <article class="pm-workflow-card">
+                    <div class="pm-workflow-card-head">
+                        <span class="pm-workflow-icon"><i class="fa-solid fa-calendar-days" aria-hidden="true"></i></span>
+                        <div>
+                            <strong>Monthly files</strong>
+                            <small>Select one or more monthly GL exports, such as JAN.xls and FEB.xls.</small>
+                        </div>
+                    </div>
+
+                    <label class="pm-dropzone" for="pmMonthlyLedgerFile">
+                        <span class="pm-dropzone-icon"><i class="fa-solid fa-cloud-arrow-up" aria-hidden="true"></i></span>
+                        <span class="pm-dropzone-copy">
+                            <strong>Choose monthly files</strong>
+                            <small>You can select multiple files at once.</small>
+                        </span>
+                        <input id="pmMonthlyLedgerFile" type="file" accept=".xls,.xlsx,.html,.htm" multiple />
+                    </label>
+                </article>
+
+                <article class="pm-workflow-card pm-workflow-card--action">
+                    <div class="pm-workflow-card-head">
+                        <span class="pm-workflow-icon"><i class="fa-solid fa-file-import" aria-hidden="true"></i></span>
+                        <div>
+                            <span class="pm-workflow-kicker">Monthly workflow</span>
+                            <strong>Import selected files</strong>
+                            <small>Send the selected monthly amounts to each matching store row.</small>
+                        </div>
+                    </div>
+
+                    <button type="button" class="btn btn-primary pm-workflow-action" id="pmAddMonthlyFileBtn">
+                        <i class="fa-solid fa-file-import" aria-hidden="true"></i>
+                        Import selected files
+                    </button>
+                </article>
             </div>
 
             <div class="pm-schedule-status" id="pmScheduleStatus">
-                Upload both reports to build the Schedule 2026 table.
+                Upload the Dimension Balance report first, then import one or more monthly files.
             </div>
 
             <div class="pm-alert-stack" id="pmAlertStack" aria-live="polite" aria-atomic="false"></div>
@@ -113,103 +124,24 @@ const stages = [
                             </div>
                         </div>
 
-                        <label class="pm-field">
-                            <span>Schedule name</span>
-                            <input id="pmScheduleName" type="text" value="Schedule 2026" />
-                        </label>
+                        <div class="pm-saved-form">
+                            <label class="pm-field">
+                                <span>Schedule name</span>
+                                <input id="pmScheduleName" type="text" value="Schedule 2026" />
+                            </label>
 
-                        <div class="pm-inline-controls">
-                            <select id="pmSavedScheduleSelect" aria-label="Saved Property Management schedules">
-                                <option value="">No saved schedules loaded</option>
-                            </select>
-                            <button type="button" class="btn btn-secondary" id="pmLoadScheduleBtn">
-                                <i class="fa-solid fa-folder-open" aria-hidden="true"></i>
-                                Open
-                            </button>
-                        </div>
-                    </section>
-
-                    <section class="pm-manager-card" aria-labelledby="pmMonthlyEditorTitle" id="pmMonthEditor" hidden>
-                        <div class="pm-manager-card-header">
-                            <span class="pm-manager-icon">
-                                <i class="fa-solid fa-calendar-plus" aria-hidden="true"></i>
-                            </span>
-                            <div>
-                                <span>Monthly update</span>
-                                <h3 id="pmMonthlyEditorTitle">Add next month by store</h3>
+                            <div class="pm-inline-controls">
+                                <label class="pm-field">
+                                    <span>Saved schedule</span>
+                                    <select id="pmSavedScheduleSelect" aria-label="Saved Property Management schedules">
+                                        <option value="">No saved schedules loaded</option>
+                                    </select>
+                                </label>
+                                <button type="button" class="btn btn-secondary" id="pmLoadScheduleBtn">
+                                    <i class="fa-solid fa-folder-open" aria-hidden="true"></i>
+                                    Open
+                                </button>
                             </div>
-                        </div>
-
-                        <div class="pm-month-grid">
-                            <label class="pm-field">
-                                <span>Store</span>
-                                <select id="pmMonthStoreSelect"></select>
-                            </label>
-
-                            <label class="pm-field">
-                                <span>Month</span>
-                                <select id="pmMonthSelect">
-                                    <option value="1">January</option>
-                                    <option value="2">February</option>
-                                    <option value="3">March</option>
-                                    <option value="4">April</option>
-                                    <option value="5">May</option>
-                                    <option value="6">June</option>
-                                    <option value="7">July</option>
-                                    <option value="8">August</option>
-                                    <option value="9">September</option>
-                                    <option value="10">October</option>
-                                    <option value="11">November</option>
-                                    <option value="12">December</option>
-                                </select>
-                            </label>
-
-                            <label class="pm-field">
-                                <span>Collected amount</span>
-                                <input id="pmMonthCollected" type="number" step="0.01" placeholder="0.00" />
-                            </label>
-
-                            <label class="pm-field">
-                                <span>Paid / accrual amount</span>
-                                <input id="pmMonthPaid" type="number" step="0.01" placeholder="0.00" />
-                            </label>
-
-                            <label class="pm-field">
-                                <span>Date</span>
-                                <input id="pmMonthDate" type="date" />
-                            </label>
-
-                            <label class="pm-field">
-                                <span>Reference</span>
-                                <input id="pmMonthMemo" type="text" placeholder="Monthly update" />
-                            </label>
-                        </div>
-
-                        <div class="pm-editor-actions">
-                            <button type="button" class="btn btn-primary" id="pmAddMonthBtn">
-                                <i class="fa-solid fa-plus" aria-hidden="true"></i>
-                                Add month to store
-                            </button>
-                            <button type="button" class="btn btn-secondary" id="pmAddStoreRowBtn">
-                                <i class="fa-solid fa-table-list" aria-hidden="true"></i>
-                                Add row to store
-                            </button>
-                        </div>
-                    </section>
-
-                    <section class="pm-manager-card" aria-labelledby="pmDocumentsTitle">
-                        <div class="pm-manager-card-header">
-                            <span class="pm-manager-icon">
-                                <i class="fa-solid fa-file-shield" aria-hidden="true"></i>
-                            </span>
-                            <div>
-                                <span>Department files</span>
-                                <h3 id="pmDocumentsTitle">Loaded documents</h3>
-                            </div>
-                        </div>
-
-                        <div class="pm-documents-list" id="pmDocumentsList">
-                            Loading Property Management documents...
                         </div>
                     </section>
                 </div>
@@ -374,7 +306,346 @@ const stages = [
     </section>
 
     <script src="/js/config.js" is:inline></script>
-    <script is:inline src="/js/departments/property-management.js?v=20260629-all-schedule-rows"></script>
+    <script is:inline src="/js/departments/property-management.js?v=20260630-multi-month-import"></script>
+
+    <script is:inline>
+        (function () {
+            const css = `
+                body .main .property-management-page.pm-clean-design {
+                    display: grid !important;
+                    gap: 14px !important;
+                    padding: 18px 4px 28px !important;
+                }
+
+                body .main .property-management-page.pm-clean-design .pm-hero {
+                    min-height: auto !important;
+                    padding: 22px 24px !important;
+                    border: 1px solid #d8e4f0 !important;
+                    border-radius: 14px !important;
+                    background: #ffffff !important;
+                    color: #102033 !important;
+                    box-shadow: none !important;
+                }
+
+                body .main .property-management-page.pm-clean-design .pm-hero h1,
+                body .main .property-management-page.pm-clean-design .pm-schedule-header h2 {
+                    color: #102033 !important;
+                    text-shadow: none !important;
+                }
+
+                body .main .property-management-page.pm-clean-design .pm-hero .pm-eyebrow,
+                body .main .property-management-page.pm-clean-design .pm-schedule-header .pm-eyebrow {
+                    color: #526b82 !important;
+                }
+
+                body .main .property-management-page.pm-clean-design .pm-schedule-panel {
+                    overflow: hidden !important;
+                    display: grid !important;
+                    gap: 0 !important;
+                    padding: 0 !important;
+                    border: 1px solid #d8e4f0 !important;
+                    border-radius: 18px !important;
+                    background: #ffffff !important;
+                    box-shadow: none !important;
+                }
+
+                body .main .property-management-page.pm-clean-design .pm-schedule-header {
+                    display: grid !important;
+                    grid-template-columns: minmax(0, 1fr) auto !important;
+                    align-items: center !important;
+                    gap: 18px !important;
+                    padding: 22px 26px !important;
+                    border-bottom: 1px solid #dbe6f0 !important;
+                    background: #ffffff !important;
+                }
+
+                body .main .property-management-page.pm-clean-design .pm-schedule-actions {
+                    display: flex !important;
+                    flex-wrap: wrap !important;
+                    gap: 8px !important;
+                    align-items: center !important;
+                    justify-content: flex-end !important;
+                }
+
+                body .main .property-management-page.pm-clean-design .pm-schedule-actions .btn,
+                body .main .property-management-page.pm-clean-design .pm-workflow-action {
+                    display: inline-flex !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+                    gap: 8px !important;
+                    min-height: 38px !important;
+                    padding: 0 14px !important;
+                    border-radius: 9px !important;
+                    font-size: 13px !important;
+                    font-weight: 850 !important;
+                    line-height: 1 !important;
+                    white-space: nowrap !important;
+                    box-shadow: none !important;
+                    writing-mode: horizontal-tb !important;
+                }
+
+                body .main .property-management-page.pm-clean-design .btn-primary,
+                body .main .property-management-page.pm-clean-design .pm-workflow-action {
+                    border-color: #111326 !important;
+                    background: #111326 !important;
+                    color: #ffffff !important;
+                }
+
+                body .main .property-management-page.pm-clean-design .btn-secondary {
+                    border-color: #cbdbea !important;
+                    background: #ffffff !important;
+                    color: #0b2f54 !important;
+                }
+
+                body .main .property-management-page.pm-clean-design .pm-workflow-grid {
+                    display: grid !important;
+                    grid-template-columns: minmax(300px, 1fr) minmax(300px, 1fr) minmax(260px, .72fr) !important;
+                    gap: 14px !important;
+                    padding: 22px 26px 18px !important;
+                    border-bottom: 0 !important;
+                    background: #ffffff !important;
+                }
+
+                body .main .property-management-page.pm-clean-design .pm-workflow-card {
+                    position: relative !important;
+                    overflow: hidden !important;
+                    display: flex !important;
+                    flex-direction: column !important;
+                    gap: 14px !important;
+                    min-width: 0 !important;
+                    min-height: 164px !important;
+                    padding: 18px !important;
+                    border: 1px solid #d8e4f0 !important;
+                    border-radius: 14px !important;
+                    background: #fbfdff !important;
+                    box-shadow: none !important;
+                    color: #102033 !important;
+                    writing-mode: horizontal-tb !important;
+                    text-orientation: mixed !important;
+                }
+
+                body .main .property-management-page.pm-clean-design .pm-workflow-card--action {
+                    justify-content: space-between !important;
+                    background: #f8fbff !important;
+                }
+
+                body .main .property-management-page.pm-clean-design .pm-workflow-card-head {
+                    display: grid !important;
+                    grid-template-columns: 42px minmax(0, 1fr) !important;
+                    gap: 12px !important;
+                    align-items: start !important;
+                    width: 100% !important;
+                    min-width: 0 !important;
+                    writing-mode: horizontal-tb !important;
+                }
+
+                body .main .property-management-page.pm-clean-design .pm-workflow-card-head > div {
+                    display: block !important;
+                    width: 100% !important;
+                    min-width: 0 !important;
+                    writing-mode: horizontal-tb !important;
+                }
+
+                body .main .property-management-page.pm-clean-design .pm-workflow-icon,
+                body .main .property-management-page.pm-clean-design .pm-dropzone-icon,
+                body .main .property-management-page.pm-clean-design .pm-manager-icon {
+                    display: grid !important;
+                    width: 42px !important;
+                    height: 42px !important;
+                    min-width: 42px !important;
+                    place-items: center !important;
+                    border-radius: 12px !important;
+                    background: #edf4f9 !important;
+                    color: #0b2f54 !important;
+                    font-size: 15px !important;
+                    flex: 0 0 auto !important;
+                }
+
+                body .main .property-management-page.pm-clean-design .pm-workflow-card :is(strong, small, span, p) {
+                    display: block !important;
+                    max-width: 100% !important;
+                    margin: 0 !important;
+                    white-space: normal !important;
+                    word-break: normal !important;
+                    overflow-wrap: normal !important;
+                    text-transform: none !important;
+                    letter-spacing: 0 !important;
+                    writing-mode: horizontal-tb !important;
+                    text-orientation: mixed !important;
+                }
+
+                body .main .property-management-page.pm-clean-design .pm-workflow-card strong {
+                    color: #102033 !important;
+                    font-size: 15px !important;
+                    font-weight: 900 !important;
+                    line-height: 1.25 !important;
+                }
+
+                body .main .property-management-page.pm-clean-design .pm-workflow-card small {
+                    margin-top: 4px !important;
+                    color: #526b82 !important;
+                    font-size: 12px !important;
+                    font-weight: 700 !important;
+                    line-height: 1.4 !important;
+                }
+
+                body .main .property-management-page.pm-clean-design .pm-workflow-kicker {
+                    margin-bottom: 4px !important;
+                    color: #526b82 !important;
+                    font-size: 10px !important;
+                    font-weight: 900 !important;
+                    line-height: 1.2 !important;
+                    text-transform: uppercase !important;
+                    letter-spacing: .02em !important;
+                }
+
+                body .main .property-management-page.pm-clean-design .pm-dropzone {
+                    position: relative !important;
+                    display: grid !important;
+                    grid-template-columns: 42px minmax(0, 1fr) !important;
+                    gap: 12px !important;
+                    align-items: center !important;
+                    width: 100% !important;
+                    min-height: 76px !important;
+                    margin: 0 !important;
+                    padding: 14px !important;
+                    border: 1px dashed #b8cbe0 !important;
+                    border-radius: 12px !important;
+                    background: #ffffff !important;
+                    cursor: pointer !important;
+                    color: #102033 !important;
+                    writing-mode: horizontal-tb !important;
+                }
+
+                body .main .property-management-page.pm-clean-design .pm-dropzone:hover {
+                    border-color: #8fb2d3 !important;
+                    background: #f8fbff !important;
+                }
+
+                body .main .property-management-page.pm-clean-design .pm-dropzone-copy {
+                    display: block !important;
+                    min-width: 0 !important;
+                    writing-mode: horizontal-tb !important;
+                }
+
+                body .main .property-management-page.pm-clean-design .pm-dropzone input[type="file"] {
+                    position: absolute !important;
+                    inset: 0 !important;
+                    width: 100% !important;
+                    height: 100% !important;
+                    min-height: 0 !important;
+                    padding: 0 !important;
+                    margin: 0 !important;
+                    border: 0 !important;
+                    opacity: 0 !important;
+                    cursor: pointer !important;
+                }
+
+                body .main .property-management-page.pm-clean-design .pm-workflow-action {
+                    width: 100% !important;
+                    min-height: 40px !important;
+                    margin-top: auto !important;
+                }
+
+                body .main .property-management-page.pm-clean-design .pm-schedule-status {
+                    display: flex !important;
+                    align-items: center !important;
+                    gap: 10px !important;
+                    margin: 0 26px 18px !important;
+                    padding: 13px 15px !important;
+                    border: 1px solid #d8e4f0 !important;
+                    border-radius: 12px !important;
+                    background: #f8fbff !important;
+                    color: #40586f !important;
+                    font-size: 13px !important;
+                    font-weight: 800 !important;
+                    line-height: 1.35 !important;
+                    writing-mode: horizontal-tb !important;
+                }
+
+                body .main .property-management-page.pm-clean-design .pm-tab-panel {
+                    display: grid !important;
+                    gap: 16px !important;
+                    padding: 0 26px 22px !important;
+                }
+
+                body .main .property-management-page.pm-clean-design .pm-tab-panel[hidden] {
+                    display: none !important;
+                }
+
+                body .main .property-management-page.pm-clean-design .pm-schedule-management {
+                    display: grid !important;
+                    grid-template-columns: minmax(300px, 460px) minmax(0, 1fr) !important;
+                    gap: 14px !important;
+                    align-items: start !important;
+                }
+
+                body .main .property-management-page.pm-clean-design .pm-manager-card {
+                    overflow: hidden !important;
+                    display: grid !important;
+                    gap: 0 !important;
+                    max-width: 460px !important;
+                    padding: 0 !important;
+                    border: 1px solid #d8e4f0 !important;
+                    border-radius: 14px !important;
+                    background: #ffffff !important;
+                    box-shadow: none !important;
+                }
+
+                body .main .property-management-page.pm-clean-design .pm-manager-card-header {
+                    display: grid !important;
+                    grid-template-columns: 42px minmax(0, 1fr) !important;
+                    gap: 12px !important;
+                    align-items: center !important;
+                    padding: 16px 18px !important;
+                    border-bottom: 1px solid #dbe6f0 !important;
+                    background: #fbfdff !important;
+                }
+
+                body .main .property-management-page.pm-clean-design .pm-saved-form {
+                    display: grid !important;
+                    gap: 14px !important;
+                    padding: 16px 18px 18px !important;
+                }
+
+                body .main .property-management-page.pm-clean-design .pm-inline-controls {
+                    display: grid !important;
+                    grid-template-columns: minmax(0, 1fr) auto !important;
+                    gap: 10px !important;
+                    align-items: end !important;
+                }
+
+                @media (max-width: 1180px) {
+                    body .main .property-management-page.pm-clean-design .pm-schedule-header,
+                    body .main .property-management-page.pm-clean-design .pm-workflow-grid,
+                    body .main .property-management-page.pm-clean-design .pm-schedule-management {
+                        grid-template-columns: 1fr !important;
+                    }
+
+                    body .main .property-management-page.pm-clean-design .pm-schedule-actions {
+                        justify-content: flex-start !important;
+                    }
+
+                    body .main .property-management-page.pm-clean-design .pm-manager-card {
+                        max-width: none !important;
+                    }
+                }
+            `;
+
+            function installPropertyManagementCleanStyles() {
+                const old = document.getElementById('pm-clean-runtime-fix');
+                if (old) old.remove();
+                const style = document.createElement('style');
+                style.id = 'pm-clean-runtime-fix';
+                style.textContent = css;
+                document.head.appendChild(style);
+            }
+
+            installPropertyManagementCleanStyles();
+            document.addEventListener('DOMContentLoaded', installPropertyManagementCleanStyles, { once: true });
+            window.addEventListener('load', installPropertyManagementCleanStyles, { once: true });
+        })();
+    </script>
 </DashboardLayout>
 
 <style>
@@ -556,6 +827,16 @@ const stages = [
     .pm-builder-card {
         display: grid;
         align-content: space-between;
+    }
+
+    .pm-builder-actions {
+        display: grid;
+        gap: 8px;
+    }
+
+    .pm-builder-actions .btn {
+        justify-content: center;
+        width: 100%;
     }
 
     .pm-builder-card span {
@@ -850,6 +1131,14 @@ const stages = [
         justify-content: center;
         min-width: 0;
         width: 100%;
+    }
+
+    .pm-card-note {
+        margin: 0;
+        color: #526b82;
+        font-size: 12px;
+        font-weight: 650;
+        line-height: 1.45;
     }
 
     .pm-documents-list {
@@ -1551,6 +1840,921 @@ const stages = [
 
         .pm-board {
             grid-template-columns: 1fr;
+        }
+    }
+
+
+    /* ============================================
+       CLEAN PROPERTY MANAGEMENT DESIGN
+       Preserves the existing colors, but reduces visual noise.
+    ============================================ */
+    .property-management-page {
+        gap: 22px;
+        padding: 26px 32px 34px;
+        background: #eef4fb;
+    }
+
+    .pm-hero {
+        min-height: 106px;
+        padding: 26px 30px;
+        border: 1px solid #d6e3ef;
+        border-left: 0;
+        border-radius: 14px;
+        background: #ffffff;
+        box-shadow: 0 14px 34px -32px rgba(8, 31, 51, .55);
+    }
+
+    .pm-hero h1 {
+        margin: 10px 0 0;
+        font-size: clamp(28px, 2.2vw, 38px);
+        line-height: 1.04;
+    }
+
+    .pm-eyebrow {
+        gap: 8px;
+        color: #526b82;
+        font-size: 11px;
+        letter-spacing: .02em;
+    }
+
+    .pm-schedule-panel {
+        gap: 0;
+        overflow: hidden;
+        padding: 0;
+        border: 0;
+        border-radius: 18px;
+        background: #ffffff;
+        box-shadow: 0 18px 42px -38px rgba(8, 31, 51, .58);
+    }
+
+    .pm-schedule-header {
+        align-items: center;
+        padding: 30px 28px 28px;
+        border-bottom: 1px solid #dce7f1;
+    }
+
+    .pm-schedule-header h2 {
+        margin: 8px 0 0;
+        font-size: clamp(24px, 1.8vw, 30px);
+        line-height: 1.08;
+    }
+
+    .pm-schedule-actions {
+        align-items: center;
+        justify-content: flex-end;
+        gap: 8px;
+    }
+
+    .pm-schedule-actions .btn {
+        min-height: 40px;
+        padding: 0 14px;
+        border-radius: 10px;
+        font-size: 13px;
+    }
+
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        min-height: 40px;
+        padding: 0 14px;
+        border: 1px solid #cbd9e6;
+        border-radius: 10px;
+        background: #ffffff;
+        color: #102a43;
+        font: inherit;
+        font-size: 13px;
+        font-weight: 850;
+        cursor: pointer;
+        transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease, background .16s ease;
+    }
+
+    .btn:hover:not(:disabled) {
+        border-color: #9fb5c9;
+        box-shadow: 0 12px 24px -24px rgba(8, 31, 51, .55);
+        transform: translateY(-1px);
+    }
+
+    .btn:disabled {
+        cursor: not-allowed;
+        opacity: .58;
+    }
+
+    .btn-primary {
+        border-color: #111326;
+        background: #111326;
+        color: #ffffff;
+        box-shadow: 0 14px 28px -26px rgba(17, 19, 38, .85);
+    }
+
+    .btn-primary:hover:not(:disabled) {
+        border-color: #111326;
+        background: #111326;
+    }
+
+    .btn-secondary {
+        background: #ffffff;
+        color: #102a43;
+    }
+
+    .pm-upload-grid {
+        grid-template-columns: minmax(260px, 1fr) minmax(260px, 1fr) minmax(260px, .78fr);
+        gap: 14px;
+        padding: 20px;
+    }
+
+    .pm-upload-card,
+    .pm-builder-card {
+        min-height: 0;
+        padding: 18px;
+        border: 1px solid #dce7f1;
+        border-radius: 14px;
+        background: #fbfdff;
+        box-shadow: none;
+    }
+
+    .pm-upload-card {
+        align-content: start;
+        cursor: default;
+    }
+
+    .pm-builder-card {
+        display: grid;
+        align-content: space-between;
+        gap: 18px;
+    }
+
+    .pm-card-heading {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
+        gap: 12px;
+        align-items: start;
+    }
+
+    .pm-card-heading div {
+        display: grid;
+        gap: 4px;
+        min-width: 0;
+    }
+
+    .pm-card-heading strong,
+    .pm-upload-card strong,
+    .pm-builder-card strong {
+        color: #082033;
+        font-size: 15px;
+        font-weight: 900;
+        line-height: 1.25;
+    }
+
+    .pm-card-heading small,
+    .pm-upload-card small,
+    .pm-builder-card small {
+        color: #526b82;
+        font-size: 12px;
+        font-weight: 700;
+        line-height: 1.4;
+    }
+
+    .pm-upload-icon,
+    .pm-manager-icon {
+        width: 42px;
+        height: 42px;
+        border-radius: 12px;
+        background: #edf4f9;
+        color: #0e3d68;
+    }
+
+    .pm-file-zone {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
+        gap: 12px;
+        align-items: center;
+        margin-top: 14px;
+        padding: 14px;
+        border: 1px dashed #b8cbe0;
+        border-radius: 12px;
+        background: #ffffff;
+    }
+
+    .pm-file-zone > i {
+        display: grid;
+        width: 34px;
+        height: 34px;
+        place-items: center;
+        border-radius: 10px;
+        background: #edf4f9;
+        color: #0e3d68;
+        font-size: 15px;
+    }
+
+    .pm-file-zone span {
+        display: block;
+        color: #102a43;
+        font-size: 13px;
+        font-weight: 900;
+        line-height: 1.25;
+    }
+
+    .pm-file-zone small {
+        display: block;
+        margin-top: 3px;
+        color: #526b82;
+        font-size: 11px;
+        font-weight: 750;
+    }
+
+    .pm-file-zone input[type="file"] {
+        grid-column: 1 / -1;
+        width: 100%;
+        margin-top: 4px;
+        color: #526b82;
+        font-size: 12px;
+        font-weight: 700;
+    }
+
+    .pm-file-zone input[type="file"]::file-selector-button {
+        margin-right: 10px;
+        padding: 8px 11px;
+        border: 1px solid #cbd9e6;
+        border-radius: 9px;
+        background: #f8fbfd;
+        color: #102a43;
+        font: inherit;
+        font-size: 12px;
+        font-weight: 900;
+        cursor: pointer;
+    }
+
+    .pm-card-action {
+        width: 100%;
+        margin-top: 14px;
+    }
+
+    .pm-builder-card .pm-card-action {
+        margin-top: 0;
+    }
+
+    .pm-schedule-status {
+        margin: 0 20px 20px;
+        padding: 13px 16px;
+        border: 1px solid #d6e3ef;
+        border-radius: 12px;
+        background: #f8fbfd;
+        color: #344f67;
+        box-shadow: none;
+    }
+
+    .pm-alert-stack {
+        padding: 0 20px;
+    }
+
+    .pm-schedule-management {
+        display: block;
+        padding: 0 20px 20px;
+    }
+
+    .pm-manager-card {
+        max-width: 520px;
+        gap: 18px;
+        padding: 22px;
+        border: 1px solid #dce7f1;
+        border-radius: 14px;
+        background: #ffffff;
+        box-shadow: none;
+    }
+
+    .pm-manager-card-header {
+        gap: 12px;
+        padding-bottom: 14px;
+        border-bottom: 1px solid #dce7f1;
+    }
+
+    .pm-manager-card-header h3 {
+        margin-top: 4px;
+        font-size: 16px;
+    }
+
+    .pm-saved-form {
+        display: grid;
+        gap: 14px;
+    }
+
+    .pm-field span {
+        color: #526b82;
+        font-size: 11px;
+        letter-spacing: .01em;
+    }
+
+    .pm-field input,
+    .pm-field select,
+    .pm-inline-controls select {
+        height: 42px;
+        border-color: #cbd9e6;
+        border-radius: 10px;
+        background: #ffffff;
+        color: #102a43;
+        font-size: 13px;
+    }
+
+    .pm-inline-controls {
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 10px;
+    }
+
+    .pm-inline-controls .btn {
+        align-self: end;
+        height: 42px;
+        padding-inline: 15px;
+    }
+
+    .pm-schedule-preview {
+        padding: 0 20px 22px;
+    }
+
+    .pm-preview-summary div,
+    .pm-table-toolbar,
+    .pm-schedule-table-wrap,
+    .pm-documents-panel {
+        border-color: #dce7f1;
+        border-radius: 14px;
+        box-shadow: none;
+    }
+
+    .pm-table-toolbar,
+    .pm-preview-summary div {
+        background: #fbfdff;
+    }
+
+    @media (max-width: 1180px) {
+        .pm-upload-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .pm-schedule-actions {
+            justify-content: flex-start;
+            width: 100%;
+        }
+    }
+
+    @media (max-width: 720px) {
+        .property-management-page {
+            padding: 16px;
+        }
+
+        .pm-hero,
+        .pm-schedule-header,
+        .pm-upload-grid,
+        .pm-schedule-management,
+        .pm-schedule-preview {
+            padding-left: 16px;
+            padding-right: 16px;
+        }
+
+        .pm-hero {
+            min-height: 0;
+        }
+
+        .pm-schedule-header {
+            align-items: flex-start;
+        }
+
+        .pm-schedule-actions {
+            display: grid;
+            grid-template-columns: 1fr;
+        }
+
+        .pm-inline-controls {
+            grid-template-columns: 1fr;
+        }
+
+        .pm-inline-controls .btn {
+            width: 100%;
+        }
+    }
+
+</style>
+
+
+<style is:global>
+    /* Property Management clean layout override
+       Keeps the same palette, but forces the upload workspace to stay horizontal,
+       readable, and low-noise even when modern-blue.css global rules are loaded. */
+    body .main section.property-management-page.pm-clean-design {
+        display: grid !important;
+        gap: 18px !important;
+        max-width: 1680px !important;
+        margin: 0 auto !important;
+        padding: 18px 22px 30px !important;
+        color: #102033 !important;
+    }
+
+    body .main section.property-management-page.pm-clean-design .pm-hero {
+        display: flex !important;
+        align-items: center !important;
+        min-height: 118px !important;
+        padding: 24px 26px !important;
+        border: 1px solid #d8e4f0 !important;
+        border-left: 0 !important;
+        border-radius: 12px !important;
+        background: #ffffff !important;
+        box-shadow: none !important;
+    }
+
+    body .main section.property-management-page.pm-clean-design .pm-hero::before,
+    body .main section.property-management-page.pm-clean-design .pm-hero::after {
+        display: none !important;
+    }
+
+    body .main section.property-management-page.pm-clean-design .pm-hero .pm-eyebrow,
+    body .main section.property-management-page.pm-clean-design .pm-hero .pm-eyebrow * {
+        color: #526b82 !important;
+    }
+
+    body .main section.property-management-page.pm-clean-design .pm-hero h1 {
+        margin: 8px 0 0 !important;
+        color: #102033 !important;
+        font-size: 30px !important;
+        font-weight: 900 !important;
+        line-height: 1.12 !important;
+    }
+
+    body .main section.property-management-page.pm-clean-design .pm-schedule-panel {
+        overflow: hidden !important;
+        display: grid !important;
+        gap: 0 !important;
+        padding: 0 !important;
+        border: 1px solid #d8e4f0 !important;
+        border-radius: 16px !important;
+        background: #ffffff !important;
+        box-shadow: none !important;
+    }
+
+    body .main section.property-management-page.pm-clean-design .pm-schedule-header {
+        display: grid !important;
+        grid-template-columns: minmax(0, 1fr) auto !important;
+        align-items: center !important;
+        gap: 20px !important;
+        padding: 22px 26px !important;
+        border-bottom: 1px solid #dbe6f0 !important;
+        border-radius: 0 !important;
+        background: #ffffff !important;
+    }
+
+    body .main section.property-management-page.pm-clean-design .pm-schedule-header h2 {
+        margin: 7px 0 0 !important;
+        color: #102033 !important;
+        font-size: 24px !important;
+        font-weight: 900 !important;
+        line-height: 1.15 !important;
+    }
+
+    body .main section.property-management-page.pm-clean-design .pm-eyebrow {
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 7px !important;
+        color: #526b82 !important;
+        font-size: 10px !important;
+        font-weight: 900 !important;
+        letter-spacing: .02em !important;
+        text-transform: uppercase !important;
+        line-height: 1.2 !important;
+    }
+
+    body .main section.property-management-page.pm-clean-design .pm-schedule-actions {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        gap: 8px !important;
+        justify-content: flex-end !important;
+        align-items: center !important;
+    }
+
+    body .main section.property-management-page.pm-clean-design .btn {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 8px !important;
+        min-height: 38px !important;
+        padding: 0 14px !important;
+        border-radius: 9px !important;
+        font-size: 13px !important;
+        font-weight: 850 !important;
+        line-height: 1 !important;
+        white-space: nowrap !important;
+        box-shadow: none !important;
+    }
+
+    body .main section.property-management-page.pm-clean-design .btn-primary {
+        border-color: #111326 !important;
+        background: #111326 !important;
+        color: #ffffff !important;
+    }
+
+    body .main section.property-management-page.pm-clean-design .btn-primary:hover:not(:disabled) {
+        border-color: #0b2f54 !important;
+        background: #0b2f54 !important;
+        color: #ffffff !important;
+    }
+
+    body .main section.property-management-page.pm-clean-design .btn-secondary {
+        border-color: #cbdbea !important;
+        background: #ffffff !important;
+        color: #0b2f54 !important;
+    }
+
+    body .main section.property-management-page.pm-clean-design .btn-secondary:hover:not(:disabled) {
+        background: #f2f7fc !important;
+        color: #102033 !important;
+    }
+
+    body .main section.property-management-page.pm-clean-design .pm-upload-grid {
+        display: grid !important;
+        grid-template-columns: minmax(280px, 1fr) minmax(280px, 1fr) minmax(260px, .72fr) !important;
+        gap: 14px !important;
+        padding: 22px 26px 18px !important;
+        border-bottom: 0 !important;
+        background: #ffffff !important;
+    }
+
+    body .main section.property-management-page.pm-clean-design .pm-upload-card,
+    body .main section.property-management-page.pm-clean-design .pm-builder-card {
+        position: relative !important;
+        overflow: hidden !important;
+        display: grid !important;
+        align-content: start !important;
+        grid-template-columns: 1fr !important;
+        gap: 14px !important;
+        min-height: 0 !important;
+        padding: 18px !important;
+        border: 1px solid #d8e4f0 !important;
+        border-radius: 14px !important;
+        background: #fbfdff !important;
+        box-shadow: none !important;
+        cursor: default !important;
+    }
+
+    body .main section.property-management-page.pm-clean-design .pm-builder-card {
+        align-content: space-between !important;
+        background: #f8fbff !important;
+    }
+
+    body .main section.property-management-page.pm-clean-design .pm-card-heading {
+        display: grid !important;
+        grid-template-columns: 42px minmax(0, 1fr) !important;
+        gap: 12px !important;
+        align-items: start !important;
+        min-width: 0 !important;
+        width: 100% !important;
+    }
+
+    body .main section.property-management-page.pm-clean-design .pm-card-heading > div {
+        display: grid !important;
+        gap: 4px !important;
+        min-width: 0 !important;
+        width: 100% !important;
+    }
+
+    body .main section.property-management-page.pm-clean-design .pm-upload-icon,
+    body .main section.property-management-page.pm-clean-design .pm-manager-icon {
+        display: grid !important;
+        flex: 0 0 auto !important;
+        width: 42px !important;
+        height: 42px !important;
+        min-width: 42px !important;
+        place-items: center !important;
+        border-radius: 12px !important;
+        background: #edf4f9 !important;
+        color: #0b2f54 !important;
+        font-size: 15px !important;
+    }
+
+    body .main section.property-management-page.pm-clean-design .pm-card-heading strong,
+    body .main section.property-management-page.pm-clean-design .pm-upload-card strong,
+    body .main section.property-management-page.pm-clean-design .pm-builder-card strong {
+        display: block !important;
+        width: auto !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        color: #102033 !important;
+        font-size: 15px !important;
+        font-weight: 900 !important;
+        line-height: 1.25 !important;
+        white-space: normal !important;
+        overflow-wrap: normal !important;
+        word-break: normal !important;
+        text-transform: none !important;
+        letter-spacing: 0 !important;
+    }
+
+    body .main section.property-management-page.pm-clean-design .pm-card-heading small,
+    body .main section.property-management-page.pm-clean-design .pm-upload-card small,
+    body .main section.property-management-page.pm-clean-design .pm-builder-card small {
+        display: block !important;
+        width: auto !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        color: #526b82 !important;
+        font-size: 12px !important;
+        font-weight: 700 !important;
+        line-height: 1.4 !important;
+        white-space: normal !important;
+        overflow-wrap: normal !important;
+        word-break: normal !important;
+        text-transform: none !important;
+        letter-spacing: 0 !important;
+    }
+
+    body .main section.property-management-page.pm-clean-design .pm-builder-card .pm-card-heading span:not(.pm-upload-icon) {
+        display: block !important;
+        color: #526b82 !important;
+        font-size: 10px !important;
+        font-weight: 900 !important;
+        line-height: 1.25 !important;
+        text-transform: uppercase !important;
+        letter-spacing: .02em !important;
+    }
+
+    body .main section.property-management-page.pm-clean-design .pm-file-zone {
+        position: relative !important;
+        display: grid !important;
+        grid-template-columns: 38px minmax(0, 1fr) !important;
+        gap: 12px !important;
+        align-items: center !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 14px !important;
+        border: 1px dashed #b8cbe0 !important;
+        border-radius: 12px !important;
+        background: #ffffff !important;
+    }
+
+    body .main section.property-management-page.pm-clean-design .pm-file-zone > i {
+        display: grid !important;
+        width: 38px !important;
+        height: 38px !important;
+        place-items: center !important;
+        border-radius: 11px !important;
+        background: #edf4f9 !important;
+        color: #0b2f54 !important;
+        font-size: 15px !important;
+    }
+
+    body .main section.property-management-page.pm-clean-design .pm-file-zone > div {
+        display: grid !important;
+        gap: 3px !important;
+        min-width: 0 !important;
+    }
+
+    body .main section.property-management-page.pm-clean-design .pm-file-zone span {
+        display: block !important;
+        color: #102033 !important;
+        font-size: 13px !important;
+        font-weight: 900 !important;
+        line-height: 1.25 !important;
+        white-space: normal !important;
+        text-transform: none !important;
+    }
+
+    body .main section.property-management-page.pm-clean-design .pm-file-zone small {
+        display: block !important;
+        color: #526b82 !important;
+        font-size: 11px !important;
+        font-weight: 750 !important;
+        line-height: 1.35 !important;
+        white-space: normal !important;
+        text-transform: none !important;
+    }
+
+    body .main section.property-management-page.pm-clean-design .pm-file-zone input[type="file"] {
+        display: block !important;
+        grid-column: 1 / -1 !important;
+        width: 100% !important;
+        min-height: 36px !important;
+        margin: 2px 0 0 !important;
+        padding: 0 !important;
+        border: 0 !important;
+        background: transparent !important;
+        color: #526b82 !important;
+        font-size: 12px !important;
+        font-weight: 700 !important;
+    }
+
+    body .main section.property-management-page.pm-clean-design .pm-file-zone input[type="file"]::file-selector-button {
+        min-height: 32px !important;
+        margin-right: 10px !important;
+        padding: 0 11px !important;
+        border: 1px solid #cbdbea !important;
+        border-radius: 8px !important;
+        background: #f8fbff !important;
+        color: #0b2f54 !important;
+        font: inherit !important;
+        font-size: 12px !important;
+        font-weight: 850 !important;
+        cursor: pointer !important;
+    }
+
+    body .main section.property-management-page.pm-clean-design .pm-card-action {
+        width: 100% !important;
+        margin: 0 !important;
+    }
+
+    body .main section.property-management-page.pm-clean-design .pm-builder-card .pm-card-action {
+        align-self: end !important;
+        min-height: 40px !important;
+    }
+
+    body .main section.property-management-page.pm-clean-design .pm-schedule-status {
+        display: flex !important;
+        align-items: center !important;
+        gap: 10px !important;
+        margin: 0 26px 18px !important;
+        padding: 13px 15px !important;
+        border: 1px solid #d8e4f0 !important;
+        border-radius: 12px !important;
+        background: #f8fbff !important;
+        color: #40586f !important;
+        font-size: 13px !important;
+        font-weight: 800 !important;
+        line-height: 1.35 !important;
+    }
+
+    body .main section.property-management-page.pm-clean-design .pm-schedule-status::before {
+        content: "\f05a" !important;
+        display: grid !important;
+        width: 28px !important;
+        height: 28px !important;
+        min-width: 28px !important;
+        place-items: center !important;
+        border-radius: 9px !important;
+        background: #edf4f9 !important;
+        color: #0b2f54 !important;
+        font-family: "Font Awesome 6 Free" !important;
+        font-weight: 900 !important;
+    }
+
+    body .main section.property-management-page.pm-clean-design .pm-alert-stack {
+        margin: 0 26px 18px !important;
+    }
+
+    body .main section.property-management-page.pm-clean-design .pm-alert-stack:empty {
+        display: none !important;
+    }
+
+    body .main section.property-management-page.pm-clean-design .pm-tab-panel {
+        display: grid !important;
+        gap: 16px !important;
+        padding: 0 26px 22px !important;
+    }
+
+    body .main section.property-management-page.pm-clean-design .pm-tab-panel[hidden] {
+        display: none !important;
+    }
+
+    body .main section.property-management-page.pm-clean-design .pm-schedule-management {
+        display: grid !important;
+        grid-template-columns: minmax(300px, 460px) minmax(0, 1fr) !important;
+        gap: 14px !important;
+        align-items: start !important;
+    }
+
+    body .main section.property-management-page.pm-clean-design .pm-manager-card {
+        overflow: hidden !important;
+        display: grid !important;
+        gap: 0 !important;
+        min-width: 0 !important;
+        max-width: 460px !important;
+        padding: 0 !important;
+        border: 1px solid #d8e4f0 !important;
+        border-radius: 14px !important;
+        background: #ffffff !important;
+        box-shadow: none !important;
+    }
+
+    body .main section.property-management-page.pm-clean-design .pm-manager-card-header {
+        display: grid !important;
+        grid-template-columns: 42px minmax(0, 1fr) !important;
+        gap: 12px !important;
+        align-items: center !important;
+        padding: 16px 18px !important;
+        border-bottom: 1px solid #dbe6f0 !important;
+        border-radius: 0 !important;
+        background: #fbfdff !important;
+    }
+
+    body .main section.property-management-page.pm-clean-design .pm-manager-card-header span:not(.pm-manager-icon) {
+        display: block !important;
+        margin: 0 !important;
+        color: #526b82 !important;
+        font-size: 10px !important;
+        font-weight: 900 !important;
+        letter-spacing: .02em !important;
+        text-transform: uppercase !important;
+    }
+
+    body .main section.property-management-page.pm-clean-design .pm-manager-card-header h3 {
+        margin: 4px 0 0 !important;
+        color: #102033 !important;
+        font-size: 15px !important;
+        font-weight: 900 !important;
+        line-height: 1.25 !important;
+    }
+
+    body .main section.property-management-page.pm-clean-design .pm-saved-form {
+        display: grid !important;
+        gap: 12px !important;
+        padding: 16px 18px 18px !important;
+    }
+
+    body .main section.property-management-page.pm-clean-design .pm-field {
+        display: grid !important;
+        gap: 7px !important;
+        min-width: 0 !important;
+    }
+
+    body .main section.property-management-page.pm-clean-design .pm-field span,
+    body .main section.property-management-page.pm-clean-design .pm-field label {
+        display: block !important;
+        color: #40586f !important;
+        font-size: 11px !important;
+        font-weight: 850 !important;
+        letter-spacing: 0 !important;
+        text-transform: none !important;
+    }
+
+    body .main section.property-management-page.pm-clean-design .pm-field input,
+    body .main section.property-management-page.pm-clean-design .pm-field select,
+    body .main section.property-management-page.pm-clean-design .pm-inline-controls select {
+        width: 100% !important;
+        min-width: 0 !important;
+        height: 40px !important;
+        min-height: 40px !important;
+        padding: 0 12px !important;
+        border: 1px solid #cbdbea !important;
+        border-radius: 9px !important;
+        background: #ffffff !important;
+        color: #102033 !important;
+        font-size: 13px !important;
+        font-weight: 750 !important;
+        box-shadow: none !important;
+    }
+
+    body .main section.property-management-page.pm-clean-design .pm-inline-controls {
+        display: grid !important;
+        grid-template-columns: minmax(0, 1fr) auto !important;
+        gap: 10px !important;
+        align-items: end !important;
+    }
+
+    body .main section.property-management-page.pm-clean-design .pm-inline-controls .btn {
+        min-width: 86px !important;
+        height: 40px !important;
+    }
+
+    body .main section.property-management-page.pm-clean-design .pm-schedule-preview {
+        padding: 0 0 22px !important;
+    }
+
+    @media (max-width: 1180px) {
+        body .main section.property-management-page.pm-clean-design .pm-schedule-header,
+        body .main section.property-management-page.pm-clean-design .pm-upload-grid,
+        body .main section.property-management-page.pm-clean-design .pm-schedule-management {
+            grid-template-columns: 1fr !important;
+        }
+
+        body .main section.property-management-page.pm-clean-design .pm-schedule-actions {
+            justify-content: flex-start !important;
+        }
+
+        body .main section.property-management-page.pm-clean-design .pm-manager-card {
+            max-width: none !important;
+        }
+    }
+
+    @media (max-width: 720px) {
+        body .main section.property-management-page.pm-clean-design {
+            padding: 14px !important;
+        }
+
+        body .main section.property-management-page.pm-clean-design .pm-hero,
+        body .main section.property-management-page.pm-clean-design .pm-schedule-header,
+        body .main section.property-management-page.pm-clean-design .pm-upload-grid,
+        body .main section.property-management-page.pm-clean-design .pm-tab-panel {
+            padding-left: 16px !important;
+            padding-right: 16px !important;
+        }
+
+        body .main section.property-management-page.pm-clean-design .pm-schedule-actions {
+            display: grid !important;
+            grid-template-columns: 1fr !important;
+        }
+
+        body .main section.property-management-page.pm-clean-design .pm-schedule-actions .btn,
+        body .main section.property-management-page.pm-clean-design .pm-inline-controls .btn {
+            width: 100% !important;
+        }
+
+        body .main section.property-management-page.pm-clean-design .pm-inline-controls {
+            grid-template-columns: 1fr !important;
         }
     }
 </style>

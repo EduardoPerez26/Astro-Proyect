@@ -173,6 +173,18 @@
         return `${origin}/${value}`;
     }
 
+    function obtenerFotoPerfil(usuario = {}) {
+        return usuario.foto_perfil_url ||
+            usuario.fotoPerfilUrl ||
+            usuario.foto_perfil ||
+            usuario.foto ||
+            usuario.avatar_url ||
+            usuario.avatarUrl ||
+            usuario.profile_photo_url ||
+            usuario.photo_url ||
+            '';
+    }
+
     function obtenerIniciales(nombre) {
         return String(nombre || '')
             .trim()
@@ -317,17 +329,23 @@
         const avatar = document.getElementById('profileAvatarPreview');
         if (!avatar) return;
 
-        const fotoUrl = resolverUrlFoto(usuario?.foto_perfil_url);
+        const fotoUrl = resolverUrlFoto(obtenerFotoPerfil(usuario));
 
         if (fotoUrl) {
             avatar.textContent = '';
             avatar.classList.add('has-image');
-            avatar.style.backgroundImage = `url("${fotoUrl}")`;
+            avatar.style.setProperty('background-image', `url("${fotoUrl}")`, 'important');
+            avatar.style.setProperty('background-size', 'cover', 'important');
+            avatar.style.setProperty('background-position', 'center', 'important');
+            avatar.style.setProperty('background-repeat', 'no-repeat', 'important');
             return;
         }
 
         avatar.classList.remove('has-image');
-        avatar.style.backgroundImage = '';
+        avatar.style.removeProperty('background-image');
+        avatar.style.removeProperty('background-size');
+        avatar.style.removeProperty('background-position');
+        avatar.style.removeProperty('background-repeat');
         avatar.textContent = obtenerIniciales(usuario?.nombre);
     }
 

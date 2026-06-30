@@ -3,7 +3,7 @@ VALUES (
     'property-management',
     'Property Management',
     'Property procedures, requests, approvals, and follow-up.',
-    JSON_OBJECT('propertyManagement', true, 'documentos', true, 'historial', true),
+    JSON_OBJECT('propertyManagement', true, 'propertyManagementDocuments', true, 'historial', true),
     'propertyManagement',
     TRUE
 )

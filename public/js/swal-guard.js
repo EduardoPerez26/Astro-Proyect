@@ -90,6 +90,17 @@
         if (options.toast) {
             options.backdrop = false;
             options.heightAuto = false;
+            options.position = options.position || 'top-end';
+            options.customClass = Object.assign({}, options.customClass || {}, {
+                container: [
+                    options.customClass && options.customClass.container,
+                    'xbfs-toast-container'
+                ].filter(Boolean).join(' '),
+                popup: [
+                    options.customClass && options.customClass.popup,
+                    'xbfs-toast-popup'
+                ].filter(Boolean).join(' ')
+            });
             if (options.allowOutsideClick === undefined) {
                 options.allowOutsideClick = true;
             }

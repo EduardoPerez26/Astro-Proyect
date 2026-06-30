@@ -711,6 +711,163 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
             }
         }
     </style>
+    <style is:inline>
+        #userModal.modal-overlay,
+        #departmentModal.modal-overlay {
+            padding: 34px !important;
+            background: rgba(12, 31, 50, .48) !important;
+            backdrop-filter: blur(8px) !important;
+        }
+
+        #userModal .admin-form-modal,
+        #departmentModal .admin-form-modal {
+            display: flex !important;
+            flex-direction: column !important;
+            grid-template-columns: none !important;
+            grid-template-rows: none !important;
+            width: min(920px, calc(100vw - 68px)) !important;
+            max-width: min(920px, calc(100vw - 68px)) !important;
+            max-height: calc(100vh - 68px) !important;
+            overflow: hidden !important;
+            border: 0 !important;
+            border-radius: 24px !important;
+            background: #ffffff !important;
+            box-shadow: 0 34px 90px -50px rgba(8, 28, 46, .88) !important;
+            animation: appModalLift .22s cubic-bezier(.2, .8, .2, 1) both;
+        }
+
+        #departmentModal .admin-form-modal {
+            width: min(980px, calc(100vw - 68px)) !important;
+            max-width: min(980px, calc(100vw - 68px)) !important;
+        }
+
+        #userModal .admin-form-modal .modal-header,
+        #departmentModal .admin-form-modal .modal-header {
+            position: relative !important;
+            grid-column: auto !important;
+            grid-row: auto !important;
+            display: block !important;
+            padding: 34px 92px 18px 34px !important;
+            border: 0 !important;
+            background: #ffffff !important;
+            color: #0d2238 !important;
+        }
+
+        #userModal .admin-form-modal .modal-header::after,
+        #departmentModal .admin-form-modal .modal-header::after {
+            content: "" !important;
+            position: absolute !important;
+            right: 34px !important;
+            bottom: 0 !important;
+            left: 34px !important;
+            height: 1px !important;
+            background: #e3ecf5 !important;
+        }
+
+        #userModal .admin-form-modal .modal-header h3,
+        #departmentModal .admin-form-modal .modal-header h3 {
+            margin: 8px 0 0 !important;
+            color: #0d2238 !important;
+            font-size: 27px !important;
+            font-weight: 900 !important;
+            line-height: 1.08 !important;
+        }
+
+        #userModal .admin-modal-kicker,
+        #departmentModal .admin-modal-kicker {
+            color: #0b5f97 !important;
+            font-size: 10px !important;
+            font-weight: 900 !important;
+            letter-spacing: .12em !important;
+        }
+
+        #userModal .admin-modal-summary,
+        #departmentModal .admin-modal-summary {
+            max-width: 460px !important;
+            margin: 12px 0 0 !important;
+            color: #60768d !important;
+            font-size: 14px !important;
+            font-weight: 600 !important;
+            line-height: 1.55 !important;
+        }
+
+        #userModal .admin-modal-badge,
+        #departmentModal .admin-modal-badge {
+            display: none !important;
+        }
+
+        #userModal .admin-form-modal .modal-close,
+        #departmentModal .admin-form-modal .modal-close {
+            position: absolute !important;
+            top: 24px !important;
+            right: 24px !important;
+            z-index: 5 !important;
+            width: 42px !important;
+            height: 42px !important;
+            border: 1px solid #d7e3ef !important;
+            border-radius: 13px !important;
+            background: #f7fbff !important;
+            color: #0d2238 !important;
+            box-shadow: none !important;
+        }
+
+        #userModal .admin-form-modal .modal-body,
+        #departmentModal .admin-form-modal .modal-body {
+            grid-column: auto !important;
+            grid-row: auto !important;
+            flex: 1 1 auto !important;
+            min-height: 0 !important;
+            overflow: auto !important;
+            padding: 24px 34px 30px !important;
+            background: #ffffff !important;
+        }
+
+        #userModal #userForm,
+        #departmentModal #departmentForm {
+            display: grid !important;
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            gap: 18px !important;
+        }
+
+        #departmentModal #departmentForm {
+            grid-template-columns: 1fr !important;
+        }
+
+        #userModal #userForm > .form-row,
+        #departmentModal #departmentForm > .form-row {
+            display: grid !important;
+            grid-column: 1 / -1 !important;
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            gap: 18px !important;
+        }
+
+        #userModal #userForm > .form-group:last-child,
+        #departmentModal #departmentForm > .form-group {
+            grid-column: 1 / -1 !important;
+        }
+
+        #userModal .admin-form-modal .form-control,
+        #departmentModal .admin-form-modal .form-control {
+            min-height: 44px !important;
+            border: 0 !important;
+            border-radius: 14px !important;
+            background: #f8fbff !important;
+            color: #0d2238 !important;
+            box-shadow: inset 0 0 0 1px #cad8e6 !important;
+        }
+
+        #userModal .admin-form-modal .modal-footer,
+        #departmentModal .admin-form-modal .modal-footer {
+            grid-column: auto !important;
+            grid-row: auto !important;
+            display: flex !important;
+            justify-content: flex-end !important;
+            gap: 12px !important;
+            padding: 22px 34px 30px !important;
+            border-top: 1px solid #e3ecf5 !important;
+            background: #ffffff !important;
+        }
+    </style>
 
 <script src="/js/config.js" is:inline></script>
     <script is:inline src="/js/usuarios.js"></script>

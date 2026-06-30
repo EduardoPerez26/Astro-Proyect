@@ -9,7 +9,8 @@ function obtenerRutaInicial(usuario) {
         tiendas: '/views/tiendas',
         documentos: '/views/documentos',
         historial: '/views/historial',
-        propertyManagement: '/views/departments/property-management'
+        propertyManagement: '/views/departments/property-management',
+        propertyManagementDocuments: '/views/departments/property-management-documents'
     };
     const paginaConfigurada = permisos.paginaInicio;
 
@@ -20,7 +21,9 @@ function obtenerRutaInicial(usuario) {
     if (permisos.tiendas) return '/views/tiendas';
     if (permisos.documentos) return '/views/documentos';
     if (permisos.historial) return '/views/historial';
-    if (permisos.propertyManagement || esPropertyManagement) return '/views/departments/property-management';
+    if (permisos.propertyManagement) return '/views/departments/property-management';
+    if (permisos.propertyManagementDocuments) return '/views/departments/property-management-documents';
+    if (esPropertyManagement) return '/views/departments/property-management';
     if (usuario?.rol === 'admin' && permisos.dashboardAdmin) return '/views/dashboard-admin';
     return '/';
 }

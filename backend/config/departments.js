@@ -31,7 +31,7 @@ const DEPARTMENT_CATALOG = {
         nombre: 'Property Management',
         descripcion: 'Property procedures, requests, approvals, and follow-up.',
         paginaInicio: 'propertyManagement',
-        modulos: ['propertyManagement', 'documentos', 'historial']
+        modulos: ['propertyManagement', 'propertyManagementDocuments', 'historial']
     },
     hr: {
         codigo: 'hr',

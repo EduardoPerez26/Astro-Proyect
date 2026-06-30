@@ -14,9 +14,28 @@ const { title, includeSheetJS = false } = Astro.props;
 <BaseLayout title={title} includeSheetJS={includeSheetJS}>
     <Sidebar />
     <main class="main" id="mainContent">
+        <script is:inline>
+            (function () {
+                try {
+                    var isDesktop = !window.matchMedia || !window.matchMedia('(max-width: 1024px)').matches;
+                    if (!isDesktop || localStorage.getItem('sidebarCollapsed') !== 'true') return;
+
+                    document.documentElement.classList.add('sidebar-collapsed-preset');
+                    document.body.classList.add('sidebar-collapsed');
+
+                    var main = document.getElementById('mainContent');
+                    if (main) {
+                        main.classList.add('sidebar-collapsed');
+                        main.style.transition = 'none';
+                    }
+                } catch (error) {
+                    document.documentElement.classList.remove('sidebar-collapsed-preset');
+                }
+            })();
+        </script>
         <Topbar title={title} />
         <slot />
     </main>
     <script is:inline src="/js/department-context.js"></script>
-    <script is:inline src="/js/sidebar-loader.js?v=20260629-property-documents"></script>
+    <script is:inline src="/js/sidebar-loader.js?v=20260630-property-doc-permission"></script>
 </BaseLayout>
