@@ -781,17 +781,18 @@
             <tr class="${isSummary ? 'is-store-summary' : ''}">
                 ${row.map((value, index) => {
                     const isNumber = typeof value === 'number';
+                    const isGeneralNumber = index === 3; // GL Acct should not look like an amount
                     const editable = isEditableScheduleColumn(index);
                     const display = value instanceof Date
                         ? formatDateForDisplay(value)
                         : isNumber
-                            ? formatNumber(value)
+                            ? (isGeneralNumber ? formatGeneralNumber(value) : formatNumber(value))
                             : value;
 
                     return `
                         <td
                             class="${[
-                                isNumber ? 'is-number' : '',
+                                isNumber && !isGeneralNumber ? 'is-number' : '',
                                 editable ? 'is-editable' : ''
                             ].filter(Boolean).join(' ')}"
                             ${editable ? 'contenteditable="true"' : ''}
@@ -953,6 +954,33 @@
         return Boolean(Number(row[7] || 0));
     }
 
+    function applyScheduleNumberFormats(worksheet, rowCount) {
+        const numberFormat = '#,##0.00;(#,##0.00);-';
+
+        for (let rowIndex = 7; rowIndex < rowCount; rowIndex += 1) {
+            const glAccountAddress = window.XLSX.utils.encode_cell({
+                r: rowIndex,
+                c: 3
+            });
+            const glAccountCell = worksheet[glAccountAddress];
+
+            if (glAccountCell && typeof glAccountCell.v === 'number') {
+                glAccountCell.z = 'General';
+            }
+
+            for (let columnIndex = 7; columnIndex <= 35; columnIndex += 1) {
+                const cellAddress = window.XLSX.utils.encode_cell({
+                    r: rowIndex,
+                    c: columnIndex
+                });
+                const cell = worksheet[cellAddress];
+
+                if (!cell || typeof cell.v !== 'number') continue;
+                cell.z = numberFormat;
+            }
+        }
+    }
+
     function exportScheduleWorkbook() {
         if (!scheduleRows.length || !window.XLSX) return;
 
@@ -980,6 +1008,7 @@
             { wch: 14 }, { wch: 16 }, { wch: 16 }
         ];
         worksheet['!autofilter'] = { ref: `A7:AJ${aoa.length}` };
+        applyScheduleNumberFormats(worksheet, aoa.length);
 
         window.XLSX.utils.book_append_sheet(workbook, worksheet, 'Schedule 2026');
         window.XLSX.writeFile(workbook, `Property Management - Schedule 2026 ${timestampForFile()}.xlsx`);
@@ -2566,18 +2595,38 @@
         return Math.round((Number(value || 0) + Number.EPSILON) * 100) / 100;
     }
 
+    function formatAccountingNumber(value, options = {}) {
+        const number = Number(value || 0);
+        const rounded = Math.round(number * 100) / 100;
+        const isNegative = rounded < 0;
+        const formatter = new Intl.NumberFormat('en-US', {
+            ...(options.currency ? {
+                style: 'currency',
+                currency: 'USD'
+            } : {}),
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+        const formatted = formatter.format(Math.abs(rounded || 0));
+
+        return isNegative ? `(${formatted})` : formatted;
+    }
+
     function formatCurrency(value) {
-        return new Intl.NumberFormat('en-US', {
-            style: 'currency',
-            currency: 'USD'
-        }).format(Number(value || 0));
+        return formatAccountingNumber(value, { currency: true });
     }
 
     function formatNumber(value) {
-        return new Intl.NumberFormat('en-US', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
-        }).format(Number(value || 0));
+        return formatAccountingNumber(value);
+    }
+
+    function formatGeneralNumber(value) {
+        const number = Number(value);
+
+        if (!Number.isFinite(number)) return String(value ?? '');
+        if (Number.isInteger(number)) return String(number);
+
+        return String(number).replace(/\.0+$/, '');
     }
 
     function formatDateForDisplay(value) {

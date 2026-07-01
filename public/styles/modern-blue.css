@@ -6777,9 +6777,9 @@ html body .main .property-management-page #pmUploadSection > .multi-upload-conta
     height: auto !important;
     padding: 18px !important;
     overflow: hidden !important;
-    border: 1px solid #dce7f2 !important;
+    border: 1px solid #f2f4f5  !important;
     border-radius: 16px !important;
-    background: #f8fbff !important;
+    background: #ffffff  !important;
     box-shadow: none !important;
     box-sizing: border-box !important;
 }
@@ -6940,7 +6940,7 @@ html body .main .property-management-page #pmUploadSection .pm-manager-card {
     width: 100% !important;
     max-width: 456px !important;
     padding: 20px !important;
-    border: 1px solid #dce7f2 !important;
+    border: 1px solid #f2f4f5 !important;
     border-radius: 16px !important;
     background: #ffffff !important;
     box-shadow: none !important;
