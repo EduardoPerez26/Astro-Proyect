@@ -1225,29 +1225,43 @@ function limpiarFilesExtraTacoBell() {
 }
 
 function actualizarUploadsPorRestaurant(codigo) {
+    const codigoNormalizado = String(codigo || '').toLowerCase().trim();
     const mostrarExtras =
-        codigo === 'taco-bell';
+        codigoNormalizado === 'taco-bell';
     const badge =
         document.getElementById('uploadModeBadge');
+    const uploadContainer =
+        document.querySelector('.multi-upload-container');
+
+    if (uploadContainer) {
+        uploadContainer.classList.toggle('has-taco-bell-files', mostrarExtras);
+        uploadContainer.classList.toggle('single-restaurant-file', !mostrarExtras);
+    }
 
     document
         .querySelectorAll('.taco-bell-extra-upload, .taco-bell-extra-control')
         .forEach(card => {
-            card.style.display = mostrarExtras ? '' : 'none';
+            card.hidden = !mostrarExtras;
+
+            if (mostrarExtras) {
+                card.style.removeProperty('display');
+            } else {
+                card.style.display = 'none';
+            }
         });
 
     if (badge) {
         const texto =
-            codigo === 'taco-bell'
+            codigoNormalizado === 'taco-bell'
                 ? 'Taco Bell: 3 files + Tax Rate'
-                : codigo === 'popeyes'
+                : codigoNormalizado === 'popeyes'
                     ? 'Popeyes: 1 file + Tax Rate'
-                    : codigo === 'burger-king'
+                    : codigoNormalizado === 'burger-king'
                         ? 'Burger King: 1 file + Tax Rate'
                         : 'Select restaurant';
 
         badge.textContent = texto;
-        badge.dataset.mode = codigo || 'empty';
+        badge.dataset.mode = codigoNormalizado || 'empty';
     }
 
     if (!mostrarExtras) {

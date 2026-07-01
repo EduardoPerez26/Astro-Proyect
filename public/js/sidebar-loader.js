@@ -419,7 +419,8 @@ function aplicarPermissions(opciones = {}) {
 
 // Get user permissions.
 function obtenerPermissions(usuario) {
-    const esPropertyManagement = usuario.departamento?.codigo === 'property-management';
+    const departmentCode = String(usuario.departamento?.codigo || '').toLowerCase();
+    const esPropertyManagement = departmentCode === 'property-management' || departmentCode === 'pm';
     const defaultPermissions = {
         'admin': {
             dashboardAdmin: true,

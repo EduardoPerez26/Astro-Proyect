@@ -1,4 +1,10 @@
 const DEFAULT_DEPARTMENT_CODE = 'ar';
+const DEPARTMENT_CODE_ALIASES = {
+    pm: 'property-management',
+    property: 'property-management',
+    propertymanagement: 'property-management',
+    'property-management': 'property-management'
+};
 
 const DEPARTMENT_CATALOG = {
     ar: {
@@ -60,7 +66,8 @@ function normalizeDepartmentCode(value) {
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/^-+|-+$/g, '');
 
-    return code || DEFAULT_DEPARTMENT_CODE;
+    const compactCode = code.replace(/-/g, '');
+    return DEPARTMENT_CODE_ALIASES[code] || DEPARTMENT_CODE_ALIASES[compactCode] || code || DEFAULT_DEPARTMENT_CODE;
 }
 
 function getDepartmentByCode(value) {

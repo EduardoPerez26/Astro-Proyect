@@ -559,7 +559,8 @@
 
     async function confirmDelete(title, text) {
         if (!window.Swal) {
-            return window.confirm(`${title}\n${text}`);
+            showSwal('warning', title, text);
+            return false;
         }
 
         const result = await window.Swal.fire({
@@ -835,6 +836,14 @@
         status.textContent = message;
         status.classList.toggle('is-success', type === 'success');
         status.classList.toggle('is-error', type === 'error');
+
+        if (type === 'success' || type === 'error') {
+            showSwalToast(
+                type === 'success' ? 'success' : 'error',
+                type === 'success' ? 'Documents loaded' : 'Action needed',
+                message
+            );
+        }
     }
 
     function showSwal(icon, title, text) {
@@ -844,7 +853,23 @@
             icon,
             title,
             text,
+            confirmButtonText: 'OK',
             confirmButtonColor: '#102a43'
+        });
+    }
+
+    function showSwalToast(icon, title, text) {
+        if (!window.Swal || !text) return;
+
+        window.Swal.fire({
+            toast: true,
+            position: 'top-end',
+            icon,
+            title,
+            text,
+            showConfirmButton: false,
+            timer: 4500,
+            timerProgressBar: true
         });
     }
 

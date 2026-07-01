@@ -28,6 +28,22 @@ const DOCUMENT_CATEGORIES = {
 };
 
 // ============================================
+// UTILIDADES DE SEGURIDAD
+// ============================================
+
+/**
+ * Escapa texto HTML para evitar XSS
+ * @param {string} text - Texto a escapar
+ * @returns {string} Texto escapado seguro
+ */
+function escapeDocumentoHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// ============================================
 // INICIALIZACION
 // ============================================
 

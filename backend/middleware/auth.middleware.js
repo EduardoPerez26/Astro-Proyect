@@ -210,6 +210,12 @@ const requireDepartment = (allowedDepartments = []) => {
     const allowed = Array.isArray(allowedDepartments)
         ? allowedDepartments.map(value => String(value).toLowerCase())
         : [String(allowedDepartments).toLowerCase()];
+    const lookupCodes = Array.from(new Set(
+        allowed.flatMap(value => value === 'property-management'
+            ? ['property-management', 'pm']
+            : [value]
+        )
+    ));
 
     return async (req, res, next) => {
         const isAdmin = req.usuario?.rol === 'admin';
@@ -234,7 +240,7 @@ const requireDepartment = (allowedDepartments = []) => {
                      FROM departamentos
                      WHERE LOWER(codigo) IN (?)
                      LIMIT 1`,
-                    [allowed]
+                    [lookupCodes]
                 )
                 : await pool.query(
                     `SELECT u.departamento_id,

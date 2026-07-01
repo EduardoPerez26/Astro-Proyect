@@ -3,7 +3,7 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
 ---
 
 <DashboardLayout title="Documents">
-    <div class="page-container">
+    <div class="page-container documents-page">
         <!-- Header -->
         <div class="page-header">
             <div class="page-header-info">
@@ -255,7 +255,7 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
 
    <script is:inline src="/js/vendor/xlsx.full.min.js"></script>
 
-    <script is:inline src="/js/documentos.js?v=20260627-document-tabs"></script>
+    <script is:inline src="/js/documentos.js?v=20260701-compact-document-tables"></script>
 
     <style is:inline>
         .documents-filters {
@@ -271,6 +271,20 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
             border-radius: 5px;
             background: #fff;
             box-shadow: none;
+        }
+
+        @media (max-width: 1024px) {
+            .documents-filters {
+                grid-template-columns: repeat(2, 1fr) auto;
+                gap: 10px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .documents-filters {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
         }
 
         .documents-filters .filter-group {

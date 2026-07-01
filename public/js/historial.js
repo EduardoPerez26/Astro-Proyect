@@ -152,7 +152,7 @@ function renderComparacionItem(item) {
     const deleteButton = puedeDeleteComparaciones()
         ? `<button class="comparison-delete-button" type="button" onclick="eliminarComparacion(${item.id})" title="Delete comparison">
                 <i class="fa-solid fa-trash"></i>
-                Delete
+                
            </button>`
         : '';
     return `
@@ -174,8 +174,8 @@ function renderComparacionItem(item) {
             </div>
             <div class="comparison-item-actions">
                 <button class="comparison-detail-button" type="button" onclick="verComparacion(${item.id})">
-                    <i class="fa-solid fa-arrow-right"></i>
-                    View details
+                    <i class="fa-solid fa-eye"></i>
+                    
                 </button>
                 ${deleteButton}
             </div>

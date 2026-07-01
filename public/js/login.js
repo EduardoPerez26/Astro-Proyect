@@ -3,7 +3,8 @@ const API_URL = window.API_URL;
 
 function obtenerRutaInicial(usuario) {
     const permisos = usuario?.permisos || {};
-    const esPropertyManagement = usuario?.departamento?.codigo === 'property-management';
+    const departmentCode = String(usuario?.departamento?.codigo || '').toLowerCase();
+    const esPropertyManagement = departmentCode === 'property-management' || departmentCode === 'pm';
     const rutas = {
         dashboardAdmin: '/views/dashboard-admin',
         tiendas: '/views/tiendas',
