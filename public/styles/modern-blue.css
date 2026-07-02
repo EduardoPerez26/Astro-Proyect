@@ -2985,8 +2985,8 @@ body .main :is(
     .pm-table-action,
     .pm-card-action
 ) {
-    border-color: var(--minimal-border-strong) !important;
-    background: var(--cle) !important;
+    border-color: var(--minimal-nav) !important;
+    background: var(--minimal-nav) !important;
     color: #ffffff !important;
 }
 
