@@ -338,13 +338,9 @@ function generarConciliacionTacoBell() {
     );
 
     document.getElementById('resultsSection').style.display = 'block';
-    console.log(
-        'datosExtraidos[0]',
-        datosExtraidos[0]
-    );
+
     generarTaxReviewTacoBell();
 
-    console.table(taxReviewData.slice(0, 3));
     generarStatisticalDelivery();
     generarDailySalesRED();
     generarDailySales0314();
@@ -457,10 +453,6 @@ function generarTaxReviewTacoBell() {
         };
 
     });
-
-    console.table(
-        taxReviewData.slice(0, 5)
-    );
 
 }
 
