@@ -1,8 +1,16 @@
-﻿document.addEventListener('DOMContentLoaded', () => {
+﻿let adminActivityLogRows = [];
+
+document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('refreshAdminDashboard')
         ?.addEventListener('click', loadAdminDashboard);
     document.getElementById('adminSessionsList')
         ?.addEventListener('click', onAdminSessionListClick);
+    document.getElementById('adminDatabaseTables')
+        ?.addEventListener('input', onAdminActivityLogFilterChange);
+    document.getElementById('adminDatabaseTables')
+        ?.addEventListener('change', onAdminActivityLogFilterChange);
+    document.getElementById('adminDatabaseTables')
+        ?.addEventListener('click', onAdminActivityLogClick);
     loadAdminDashboard();
 });
 
@@ -38,7 +46,7 @@ async function loadAdminDashboard() {
         renderAdminMovements(data.movimientos || []);
         renderAdminSessions(data.sesiones_recientes || [], data.modo_compatibilidad);
         renderAdminUserActivity(data.actividad_usuarios || []);
-        renderAdminDatabaseTables(data.tablas_base_datos || []);
+        renderAdminDatabaseTables(data.tablas_base_datos || [], data.movimientos || []);
         document.getElementById('adminDashboardUpdated').textContent = data.modo_compatibilidad
             ? `Compatibility summary / ${formatAdminDate(data.generado_en, true)}`
             : `Updated ${formatAdminDate(data.generado_en, true)}`;
@@ -120,6 +128,8 @@ async function loadCompatibleAdminDashboard(token) {
             accion: 'File saved',
             usuario_nombre: item.usuario_nombre || 'System',
             username: '',
+            departamento_nombre: item.departamento_nombre || 'No department',
+            ip_address: item.ip_address || null,
             fecha: item.fecha_subida,
             detalle: [item.nombre_original, item.restaurante_nombre].filter(Boolean).join(' / '),
             estado: item.estado || 'registrado'
@@ -305,43 +315,379 @@ function renderAdminUserActivity(users) {
     `).join('');
 }
 
-function renderAdminDatabaseTables(tables) {
+function renderAdminDatabaseTables(tables, movements = []) {
     const container = document.getElementById('adminDatabaseTables');
     if (!container) return;
 
-    if (!tables.length) {
-        container.innerHTML = '<div class="admin-loading">No audit information was received. Update the backend to inspect the database.</div>';
+    adminActivityLogRows = buildAdminActivityLogRows(tables, movements);
+
+    container.innerHTML = renderAdminActivityLogShell(adminActivityLogRows);
+    renderAdminActivityLogRows();
+}
+
+function buildAdminActivityLogRows(tables, movements) {
+    const auditTable = (tables || []).find(table => table.nombre === 'auditoria_seguridad') || null;
+    const movementRows = normalizeAdminMovementRows(movements || []);
+    const auditRows = normalizeAdminAuditRows(auditTable);
+    const hasSessionMovements = movementRows.some(row => row.tipo === 'sesion');
+
+    const filteredAuditRows = auditRows.filter(row => {
+        const event = String(row.evento || '').toLowerCase();
+        return !(hasSessionMovements && ['login_success', 'sign_in', 'signin'].includes(event));
+    });
+
+    const uniqueRows = new Map();
+
+    [...movementRows, ...filteredAuditRows].forEach(row => {
+        const key = [row.fuente, row.id, row.usuario_nombre, row.movimiento, row.fecha].join('|');
+        if (!uniqueRows.has(key)) {
+            uniqueRows.set(key, row);
+        }
+    });
+
+    return Array.from(uniqueRows.values())
+        .sort((a, b) => adminDateValue(b.fecha) - adminDateValue(a.fecha))
+        .slice(0, 200);
+}
+
+function normalizeAdminMovementRows(movements) {
+    return movements.map((item, index) => {
+        const movement = item.accion || item.movimiento || item.evento || 'Movement';
+        const ip = item.ip_address || getAdminIpFromDetail(item.detalle) || '-';
+
+        return {
+            id: item.id || `movement-${index}`,
+            fuente: 'movimientos',
+            tipo: item.tipo || 'movimiento',
+            evento: movement,
+            movimiento: movement,
+            usuario_nombre: item.usuario_nombre || item.nombre_usuario || 'System',
+            username: item.username || item.usuario_username || 'system',
+            departamento_nombre: formatAdminAuditDepartment(item.departamento_nombre || item.departamento || item.departamento_id),
+            detalle: formatAdminLogDetail(item),
+            ip_address: ip,
+            estado: item.estado || item.status || 'registered',
+            fecha: item.fecha || item.fecha_creacion
+        };
+    });
+}
+
+function normalizeAdminAuditRows(auditTable) {
+    if (!auditTable || auditTable.existe !== true) return [];
+
+    const rows = Array.isArray(auditTable.registros) ? auditTable.registros : [];
+
+    return rows.map((row, index) => {
+        const event = row.evento || row.movimiento || 'system_event';
+
+        return {
+            id: row.id || `audit-${index}`,
+            fuente: 'auditoria',
+            tipo: 'auditoria',
+            evento: event,
+            movimiento: formatAdminAuditEvent(event),
+            usuario_nombre: row.usuario_nombre || row.nombre_usuario || 'System',
+            username: row.username || row.usuario_username || 'system',
+            departamento_nombre: formatAdminAuditDepartment(row.departamento_nombre || row.departamento || row.departamento_id),
+            detalle: formatAdminAuditDetail(row.detalle, event),
+            ip_address: row.ip_address || row.ip || '-',
+            estado: row.estado || row.status || 'registered',
+            fecha: row.fecha_creacion || row.fecha
+        };
+    });
+}
+
+function renderAdminActivityLogShell(rows) {
+    const filters = getAdminActivityFilters();
+    const users = getUniqueAdminOptions(rows, row => row.usuario_nombre || 'System');
+    const departments = getUniqueAdminOptions(rows, row => row.departamento_nombre || 'No department');
+    const movements = getUniqueAdminOptions(rows, row => row.movimiento || 'Movement');
+    const statuses = getUniqueAdminOptions(rows, row => formatAdminStateLabel(row.estado || 'registered'));
+
+    return `
+        <div class="admin-log-toolbar">
+            <div class="admin-log-filters" id="adminActivityLogFilters">
+                <label class="admin-log-filter admin-log-filter-search">
+                    <span>Search</span>
+                    <input id="adminLogSearch" data-admin-log-filter type="search" value="${escapeAdminHtml(filters.search)}" placeholder="User, movement, detail, IP...">
+                </label>
+                <label class="admin-log-filter">
+                    <span>User</span>
+                    <select id="adminLogUserFilter" data-admin-log-filter>
+                        <option value="">All users</option>
+                        ${renderAdminOptions(users, filters.user)}
+                    </select>
+                </label>
+                <label class="admin-log-filter">
+                    <span>Department</span>
+                    <select id="adminLogDepartmentFilter" data-admin-log-filter>
+                        <option value="">All departments</option>
+                        ${renderAdminOptions(departments, filters.department)}
+                    </select>
+                </label>
+                <label class="admin-log-filter">
+                    <span>Movement</span>
+                    <select id="adminLogMovementFilter" data-admin-log-filter>
+                        <option value="">All movements</option>
+                        ${renderAdminOptions(movements, filters.movement)}
+                    </select>
+                </label>
+                <label class="admin-log-filter">
+                    <span>Status</span>
+                    <select id="adminLogStatusFilter" data-admin-log-filter>
+                        <option value="">All statuses</option>
+                        ${renderAdminOptions(statuses, filters.status)}
+                    </select>
+                </label>
+                <label class="admin-log-filter admin-log-filter-date">
+                    <span>From</span>
+                    <input id="adminLogDateFrom" data-admin-log-filter type="date" value="${escapeAdminHtml(filters.from)}">
+                </label>
+                <label class="admin-log-filter admin-log-filter-date">
+                    <span>To</span>
+                    <input id="adminLogDateTo" data-admin-log-filter type="date" value="${escapeAdminHtml(filters.to)}">
+                </label>
+                <button class="admin-log-clear" id="adminLogClearFilters" type="button">
+                    <i class="fa-solid fa-filter-circle-xmark"></i>
+                    Clear
+                </button>
+            </div>
+            <div class="admin-log-summary" id="adminLogSummary">${rows.length} movements</div>
+        </div>
+        <div class="admin-table-wrap security-audit-table-wrap">
+            <table class="admin-table security-audit-table">
+                <thead>
+                    <tr>
+                        <th>User</th>
+                        <th>Department</th>
+                        <th>Movement</th>
+                        <th>Detail</th>
+                        <th>IP</th>
+                        <th>Status</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody id="adminActivityLogBody">
+                    <tr><td colspan="7" class="admin-loading">Loading activity log...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    `;
+}
+
+function renderAdminActivityLogRows() {
+    const tbody = document.getElementById('adminActivityLogBody');
+    if (!tbody) return;
+
+    const rows = applyAdminActivityFilters(adminActivityLogRows);
+    const summary = document.getElementById('adminLogSummary');
+
+    if (summary) {
+        summary.textContent = `${rows.length} of ${adminActivityLogRows.length} movements`;
+    }
+
+    if (!adminActivityLogRows.length) {
+        tbody.innerHTML = '<tr><td colspan="7" class="admin-loading">No activity registered yet.</td></tr>';
         return;
     }
 
-    container.innerHTML = tables.map(table => {
-        const exists = table.existe === true;
-        const columns = Array.isArray(table.columnas_muestra) && table.columnas_muestra.length
-            ? table.columnas_muestra
-            : (table.columnas || []).map(column => column.nombre);
-        const rows = Array.isArray(table.registros) ? table.registros : [];
-        const columnsMeta = Array.isArray(table.columnas) ? table.columnas : [];
-        const created = table.fecha_creacion ? formatAdminDate(table.fecha_creacion) : 'Pending';
+    if (!rows.length) {
+        tbody.innerHTML = '<tr><td colspan="7" class="admin-loading">No movements match the selected filters.</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = rows.map(row => {
+        const icon = getAdminActivityIcon(row);
+        const status = row.estado || 'registered';
 
         return `
-            <article class="admin-db-card ${exists ? '' : 'is-missing'}">
-                <header class="admin-db-card-head">
-                    <span class="admin-db-icon"><i class="fa-solid ${escapeAdminHtml(table.icono || 'fa-table')}"></i></span>
-                    <div class="admin-db-title">
-                        <strong>${escapeAdminHtml(table.titulo || table.nombre)}</strong>
-                        <span>${escapeAdminHtml(table.descripcion || table.nombre)}</span>
-                    </div>
-                    <span class="admin-db-count">${exists ? Number(table.total || 0).toLocaleString('en-US') : '-'}</span>
-                </header>
-                <div class="admin-db-meta">
-                    <span>${exists ? 'Available' : 'SQL pending'}</span>
-                    <span>${columnsMeta.length} columns</span>
-                    <span>Created: ${escapeAdminHtml(created)}</span>
-                </div>
-                ${renderAdminDatabasePreview(table, columns, rows)}
-            </article>
+            <tr>
+                <td data-label="User" class="admin-user-cell"><strong>${escapeAdminHtml(row.usuario_nombre || 'System')}</strong><small>@${escapeAdminHtml(row.username || 'system')}</small></td>
+                <td data-label="Department">${escapeAdminHtml(row.departamento_nombre || 'No department')}</td>
+                <td data-label="Movement"><span class="admin-movement"><span class="admin-movement-icon"><i class="fa-solid ${icon}"></i></span>${escapeAdminHtml(row.movimiento || 'Movement')}</span></td>
+                <td data-label="Detail"><span class="admin-detail-cell" title="${escapeAdminHtml(row.detalle || '-')}">${escapeAdminHtml(row.detalle || '-')}</span></td>
+                <td data-label="IP"><span class="admin-detail-cell">${escapeAdminHtml(row.ip_address || '-')}</span></td>
+                <td data-label="Status"><span class="admin-state ${adminStateClass(status)}">${escapeAdminHtml(formatAdminStateLabel(status))}</span></td>
+                <td data-label="Date" class="admin-date-cell">${formatAdminDate(row.fecha)}</td>
+            </tr>
         `;
     }).join('');
+}
+
+function onAdminActivityLogFilterChange(event) {
+    if (!event.target.closest('[data-admin-log-filter]')) return;
+    renderAdminActivityLogRows();
+}
+
+function onAdminActivityLogClick(event) {
+    const clearButton = event.target.closest('#adminLogClearFilters');
+    if (!clearButton) return;
+
+    ['adminLogSearch', 'adminLogUserFilter', 'adminLogDepartmentFilter', 'adminLogMovementFilter', 'adminLogStatusFilter', 'adminLogDateFrom', 'adminLogDateTo']
+        .forEach(id => {
+            const input = document.getElementById(id);
+            if (input) input.value = '';
+        });
+
+    renderAdminActivityLogRows();
+}
+
+function applyAdminActivityFilters(rows) {
+    const filters = getAdminActivityFilters();
+    const search = filters.search.toLowerCase();
+
+    return rows.filter(row => {
+        const statusLabel = formatAdminStateLabel(row.estado || 'registered');
+        const rowDate = toAdminDateInputValue(row.fecha);
+
+        if (search) {
+            const searchable = [
+                row.usuario_nombre,
+                row.username,
+                row.departamento_nombre,
+                row.movimiento,
+                row.detalle,
+                row.ip_address,
+                statusLabel,
+                formatAdminDate(row.fecha)
+            ].join(' ').toLowerCase();
+
+            if (!searchable.includes(search)) return false;
+        }
+
+        if (filters.user && row.usuario_nombre !== filters.user) return false;
+        if (filters.department && row.departamento_nombre !== filters.department) return false;
+        if (filters.movement && row.movimiento !== filters.movement) return false;
+        if (filters.status && statusLabel !== filters.status) return false;
+        if (filters.from && rowDate && rowDate < filters.from) return false;
+        if (filters.to && rowDate && rowDate > filters.to) return false;
+
+        return true;
+    });
+}
+
+function getAdminActivityFilters() {
+    return {
+        search: document.getElementById('adminLogSearch')?.value.trim() || '',
+        user: document.getElementById('adminLogUserFilter')?.value || '',
+        department: document.getElementById('adminLogDepartmentFilter')?.value || '',
+        movement: document.getElementById('adminLogMovementFilter')?.value || '',
+        status: document.getElementById('adminLogStatusFilter')?.value || '',
+        from: document.getElementById('adminLogDateFrom')?.value || '',
+        to: document.getElementById('adminLogDateTo')?.value || ''
+    };
+}
+
+function renderAdminOptions(options, selected) {
+    return options.map(option => `
+        <option value="${escapeAdminHtml(option)}" ${option === selected ? 'selected' : ''}>${escapeAdminHtml(option)}</option>
+    `).join('');
+}
+
+function getUniqueAdminOptions(rows, getter) {
+    return Array.from(new Set(rows.map(getter).filter(Boolean)))
+        .sort((a, b) => String(a).localeCompare(String(b)));
+}
+
+function getAdminActivityIcon(row) {
+    const type = String(row.tipo || '').toLowerCase();
+    const event = String(row.evento || row.movimiento || '').toLowerCase();
+
+    if (type === 'archivo' || event.includes('file')) return 'fa-file-arrow-up';
+    if (type === 'validacion' || event.includes('validation')) return 'fa-shield-halved';
+    if (event.includes('logout') || event.includes('sign-out') || event.includes('sign_out')) return 'fa-right-from-bracket';
+    if (event.includes('login') || event.includes('sign-in') || event.includes('sign_in')) return 'fa-right-to-bracket';
+    if (event.includes('mfa') || event.includes('fingerprint')) return 'fa-fingerprint';
+    if (event.includes('password')) return 'fa-key';
+    if (event.includes('permission') || event.includes('permiso')) return 'fa-user-lock';
+
+    return 'fa-user-shield';
+}
+
+function getAdminIpFromDetail(detail) {
+    const firstPart = String(detail || '').split(' | ')[0]?.trim();
+    if (!firstPart) return '';
+    if (firstPart === '::1' || /^[\d.:a-fA-F]+$/.test(firstPart)) return firstPart;
+    return '';
+}
+
+function formatAdminLogDetail(item) {
+    const detail = String(item.detalle || '').trim();
+    if (!detail) return '-';
+
+    if (String(item.tipo || '').toLowerCase() !== 'sesion') {
+        return detail;
+    }
+
+    const [, userAgent = ''] = detail.split(' | ');
+    const browser = userAgent.match(/(?:Edg|Chrome|Firefox|Safari)\/[\d.]+/)?.[0];
+    const system = userAgent.match(/Windows NT [\d.]+|Android [\d.]+|iPhone OS [\d_]+|Mac OS X [\d_]+/)?.[0];
+
+    return [browser, system].filter(Boolean).join(' / ') || userAgent || '-';
+}
+
+function formatAdminAuditDetail(detail, event) {
+    if (detail === null || detail === undefined || detail === '') return '-';
+
+    const text = String(detail).trim();
+    if (!text || text === '{}') return '-';
+
+    try {
+        const parsed = JSON.parse(text);
+        const parts = Object.entries(parsed)
+            .filter(([key]) => !['departamento', 'department'].includes(String(key).toLowerCase()))
+            .map(([key, value]) => `${String(key).replaceAll('_', ' ')}: ${String(value)}`);
+
+        return parts.length ? truncateAdminText(parts.join(' / '), 120) : '-';
+    } catch {
+        return truncateAdminText(text, 120);
+    }
+}
+
+function formatAdminAuditEvent(event) {
+    const labels = {
+        login_success: 'Sign-in',
+        login_failed: 'Failed sign-in',
+        user_logout: 'Sign-out',
+        logout: 'Sign-out',
+        mfa_setup_started: 'MFA setup started',
+        mfa_setup_completed: 'MFA setup completed',
+        mfa_verified: 'MFA verified',
+        mfa_failed: 'MFA failed',
+        password_changed: 'Password changed',
+        permissions_updated: 'Permissions updated',
+        system_event: 'System event'
+    };
+    const key = String(event || '').toLowerCase();
+
+    if (labels[key]) return labels[key];
+
+    return String(event || 'System event')
+        .replaceAll('_', ' ')
+        .replace(/\b\w/g, letter => letter.toUpperCase());
+}
+
+function formatAdminAuditDepartment(value) {
+    const text = String(value ?? '').trim();
+
+    if (!text || text === '-' || text.toLowerCase() === 'null') return 'No department';
+
+    return text;
+}
+
+function adminDateValue(value) {
+    const date = new Date(value || 0);
+    return Number.isNaN(date.getTime()) ? 0 : date.getTime();
+}
+
+function toAdminDateInputValue(value) {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return '';
+
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
 }
 
 function renderAdminDatabasePreview(table, columns, rows) {
@@ -482,6 +828,7 @@ function formatAdminStateLabel(value) {
         inactivo: 'Inactive',
         pendiente: 'Pending',
         registrado: 'Registered',
+        registered: 'Registered',
         validado: 'Validated',
         procesado: 'Processed',
         exitoso: 'Successful',

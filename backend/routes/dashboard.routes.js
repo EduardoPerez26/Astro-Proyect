@@ -98,6 +98,85 @@ function tablaPendiente(config) {
     };
 }
 
+
+function expresionColumnaAuditoria(nombresColumnas, columna) {
+    return nombresColumnas.has(columna)
+        ? `a.${escaparIdentificador(columna)}`
+        : 'NULL';
+}
+
+async function obtenerRegistrosAuditoriaSeguridad(nombresColumnas) {
+    const usuarioId = expresionColumnaAuditoria(nombresColumnas, 'usuario_id');
+    const departamentoId = expresionColumnaAuditoria(nombresColumnas, 'departamento_id');
+    const evento = expresionColumnaAuditoria(nombresColumnas, 'evento');
+    const ipAddress = expresionColumnaAuditoria(nombresColumnas, 'ip_address');
+    const detalle = expresionColumnaAuditoria(nombresColumnas, 'detalle');
+    const fechaCreacion = expresionColumnaAuditoria(nombresColumnas, 'fecha_creacion');
+    const columnaOrden = nombresColumnas.has('fecha_creacion')
+        ? 'a.`fecha_creacion` DESC'
+        : (nombresColumnas.has('id') ? 'a.`id` DESC' : '1');
+
+    return consultaSegura(
+        `SELECT COALESCE(
+                    NULLIF(u.nombre_completo, ''),
+                    CASE WHEN ${usuarioId} IS NULL THEN NULL ELSE CONCAT('User #', ${usuarioId}) END,
+                    'System'
+                ) AS usuario_nombre,
+                COALESCE(
+                    NULLIF(u.username, ''),
+                    CASE WHEN ${usuarioId} IS NULL THEN 'system' ELSE CONCAT('user', ${usuarioId}) END,
+                    'system'
+                ) AS username,
+                COALESCE(
+                    NULLIF(d.nombre, ''),
+                    NULLIF(
+                        CASE
+                            WHEN JSON_VALID(${detalle})
+                            THEN JSON_UNQUOTE(JSON_EXTRACT(${detalle}, '$.departamento'))
+                            ELSE NULL
+                        END,
+                        ''
+                    ),
+                    CASE
+                        WHEN ${departamentoId} IS NULL THEN 'No department'
+                        ELSE CONCAT('Dept. ', ${departamentoId})
+                    END
+                ) AS departamento_nombre,
+                COALESCE(NULLIF(${evento}, ''), 'system_event') AS evento,
+                COALESCE(NULLIF(${ipAddress}, ''), '-') AS ip_address,
+                ${detalle} AS detalle,
+                CASE
+                    WHEN LOWER(COALESCE(${evento}, '')) IN ('user_logout', 'logout', 'sign_out')
+                      OR LOWER(COALESCE(${evento}, '')) LIKE '%logout%'
+                    THEN 'cerrado'
+                    WHEN LOWER(COALESCE(${evento}, '')) IN ('login_success', 'sign_in', 'signin')
+                      AND EXISTS (
+                            SELECT 1
+                            FROM sesiones s2
+                            WHERE s2.usuario_id = ${usuarioId}
+                              AND s2.activa = TRUE
+                              AND s2.fecha_expiracion > NOW()
+                              AND (${ipAddress} IS NULL OR s2.ip_address = ${ipAddress})
+                              AND ABS(TIMESTAMPDIFF(SECOND, s2.fecha_creacion, ${fechaCreacion})) <= 10
+                            LIMIT 1
+                        )
+                    THEN 'activo'
+                    WHEN LOWER(COALESCE(${evento}, '')) LIKE '%login%'
+                      OR LOWER(COALESCE(${evento}, '')) LIKE '%sign_in%'
+                    THEN 'cerrado'
+                    ELSE 'registrado'
+                END AS estado,
+                ${fechaCreacion} AS fecha_creacion
+         FROM ${escaparIdentificador('auditoria_seguridad')} a
+         LEFT JOIN usuarios u ON u.id = ${usuarioId}
+         LEFT JOIN departamentos d ON d.id = COALESCE(${departamentoId}, u.departamento_id)
+         ORDER BY ${columnaOrden}
+         LIMIT 200`,
+        [],
+        []
+    );
+}
+
 async function obtenerTablasBaseDatosAdmin() {
     const nombres = TABLAS_ADMIN_BASE_DATOS.map(tabla => tabla.nombre);
 
@@ -163,6 +242,41 @@ async function obtenerTablasBaseDatosAdmin() {
                 [],
                 [{ total: 0 }]
             );
+            const columnasMetadata = columnas.map(columna => ({
+                nombre: columna.nombre,
+                tipo: columna.tipo,
+                llave: columna.llave,
+                nullable: columna.nullable === 'YES'
+            }));
+
+            if (config.nombre === 'auditoria_seguridad') {
+                const registrosAuditoria = await obtenerRegistrosAuditoriaSeguridad(nombresColumnas);
+
+                return {
+                    nombre: config.nombre,
+                    titulo: config.titulo,
+                    descripcion: config.descripcion,
+                    icono: config.icono,
+                    existe: true,
+                    total: numero(conteoRows[0]?.total),
+                    filas_estimadas: numero(metadata.filas_estimadas),
+                    fecha_creacion: normalizarValorTabla(metadata.fecha_creacion),
+                    fecha_actualizacion: normalizarValorTabla(metadata.fecha_actualizacion),
+                    columnas: columnasMetadata,
+                    columnas_muestra: [
+                        'usuario_nombre',
+                        'username',
+                        'departamento_nombre',
+                        'evento',
+                        'ip_address',
+                        'detalle',
+                        'estado',
+                        'fecha_creacion'
+                    ],
+                    registros: registrosAuditoria.map(normalizarFilaTabla)
+                };
+            }
+
             const registros = selectMuestra
                 ? await consultaSegura(
                     `SELECT ${selectMuestra}
@@ -184,12 +298,7 @@ async function obtenerTablasBaseDatosAdmin() {
                 filas_estimadas: numero(metadata.filas_estimadas),
                 fecha_creacion: normalizarValorTabla(metadata.fecha_creacion),
                 fecha_actualizacion: normalizarValorTabla(metadata.fecha_actualizacion),
-                columnas: columnas.map(columna => ({
-                    nombre: columna.nombre,
-                    tipo: columna.tipo,
-                    llave: columna.llave,
-                    nullable: columna.nullable === 'YES'
-                })),
+                columnas: columnasMetadata,
                 columnas_muestra: columnasMuestra,
                 registros: registros.map(normalizarFilaTabla)
             };
@@ -274,6 +383,8 @@ async function obtenerDashboardAdminBasico(tokenActual) {
                        'Sign-in' AS accion,
                        u.nombre_completo AS usuario_nombre,
                        u.username,
+                       NULL AS departamento_nombre,
+                       s.ip_address AS ip_address,
                        s.fecha_creacion AS fecha,
                        CONCAT_WS(' | ', s.ip_address, LEFT(s.user_agent, 90)) AS detalle,
                        IF(s.activa = TRUE AND s.fecha_expiracion > NOW(), 'activo', 'cerrado') AS estado
@@ -287,6 +398,8 @@ async function obtenerDashboardAdminBasico(tokenActual) {
                        'File saved' AS accion,
                        u.nombre_completo AS usuario_nombre,
                        u.username,
+                       NULL AS departamento_nombre,
+                       NULL AS ip_address,
                        a.fecha_subida AS fecha,
                        CONCAT_WS(' | ', a.nombre_original, r.nombre) AS detalle,
                        a.estado AS estado
@@ -295,7 +408,7 @@ async function obtenerDashboardAdminBasico(tokenActual) {
                 LEFT JOIN restaurantes r ON r.id = a.restaurante_id
              ) movimientos
              ORDER BY movimientos.fecha DESC
-             LIMIT 30`,
+             LIMIT 200`,
             [],
             []
         ),
@@ -601,11 +714,14 @@ router.get('/admin', verificarToken, esAdmin, async (req, res) => {
                            'Sign-in' AS accion,
                            u.nombre_completo AS usuario_nombre,
                            u.username,
+                           d.nombre AS departamento_nombre,
+                           s.ip_address AS ip_address,
                            s.fecha_creacion AS fecha,
                            CONCAT_WS(' | ', s.ip_address, LEFT(s.user_agent, 90)) AS detalle,
                            IF(s.activa = TRUE AND s.fecha_expiracion > NOW(), 'activo', 'cerrado') AS estado
                     FROM sesiones s
                     JOIN usuarios u ON u.id = s.usuario_id
+                    LEFT JOIN departamentos d ON d.id = u.departamento_id
 
                     UNION ALL
 
@@ -614,11 +730,14 @@ router.get('/admin', verificarToken, esAdmin, async (req, res) => {
                            'File saved' AS accion,
                            u.nombre_completo AS usuario_nombre,
                            u.username,
+                           d.nombre AS departamento_nombre,
+                           NULL AS ip_address,
                            a.fecha_subida AS fecha,
                            CONCAT_WS(' | ', a.nombre_original, r.nombre) AS detalle,
                            a.estado AS estado
                     FROM archivos_excel a
                     LEFT JOIN usuarios u ON u.id = a.usuario_id
+                    LEFT JOIN departamentos d ON d.id = u.departamento_id
                     LEFT JOIN restaurantes r ON r.id = a.restaurante_id
 
                     UNION ALL
@@ -628,14 +747,17 @@ router.get('/admin', verificarToken, esAdmin, async (req, res) => {
                            'Validation executed' AS accion,
                            u.nombre_completo AS usuario_nombre,
                            u.username,
+                           d.nombre AS departamento_nombre,
+                           NULL AS ip_address,
                            hv.fecha_validacion AS fecha,
                            CONCAT(hv.tipo_validacion, ' | ', hv.total_errores, ' error(s)') AS detalle,
                            hv.resultado AS estado
                     FROM historial_validaciones hv
                     LEFT JOIN usuarios u ON u.id = hv.usuario_id
+                    LEFT JOIN departamentos d ON d.id = u.departamento_id
                  ) movimientos
                  ORDER BY movimientos.fecha DESC
-                 LIMIT 30`
+                 LIMIT 200`
             ),
             pool.query(
                 `SELECT u.id,

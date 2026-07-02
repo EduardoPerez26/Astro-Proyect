@@ -44,8 +44,8 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
 
         <section class="admin-dashboard-panel database-tables-panel">
             <header class="admin-panel-header">
-                <div><span>AUDIT</span><h2>Security audit table</h2></div>
-                <i class="fa-solid fa-user-shield"></i>
+                <div><span>TRACEABILITY</span><h2>Activity log</h2></div>
+                <i class="fa-solid fa-list-check"></i>
             </header>
             <div class="admin-database-tables" id="adminDatabaseTables">
                 <div class="admin-loading">Loading security audit...</div>
@@ -53,19 +53,6 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
         </section>
 
         <div class="admin-dashboard-grid">
-            <section class="admin-dashboard-panel movements-panel">
-                <header class="admin-panel-header">
-                    <div><span>TRACEABILITY</span><h2>Recent movements</h2></div>
-                    <i class="fa-solid fa-wave-square"></i>
-                </header>
-                <div class="admin-table-wrap">
-                    <table class="admin-table">
-                        <thead><tr><th>Movement</th><th>User</th><th>Detail</th><th>Status</th><th>Date</th></tr></thead>
-                        <tbody id="adminMovementsBody"><tr><td colspan="5" class="admin-loading">Loading movements...</td></tr></tbody>
-                    </table>
-                </div>
-            </section>
-
             <section class="admin-dashboard-panel sessions-panel">
                 <header class="admin-panel-header">
                     <div><span>SECURITY</span><h2>Logins</h2></div>
@@ -120,7 +107,7 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
         .admin-metric-card span:not(.admin-metric-icon) { display: block; margin-top: 1px; font-weight: 700; font-size: 12px; }
         .admin-metric-card small { display: block; margin-top: 5px; color: #728497; font-size: 10px; }
 
-        .admin-dashboard-grid { display: grid; grid-template-columns: minmax(0, 1.75fr) minmax(300px, .75fr); gap: 16px; margin-bottom: 16px; }
+        .admin-dashboard-grid { display: grid; grid-template-columns: 1fr; gap: 16px; margin-bottom: 16px; }
         .admin-dashboard-panel { overflow: hidden; border: 1px solid #d4dee8; border-radius: 8px; background: #fff; }
         .admin-panel-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 18px; border-bottom: 1px solid #dde5ed; background: #f7f9fb; }
         .admin-panel-header span { color: #6b7f92; font-size: 10px; font-weight: 800; letter-spacing: .09em; }
@@ -205,11 +192,103 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
 
         .database-tables-panel { margin-bottom: 16px; }
         .admin-database-tables {
+            display: block;
+            padding: 0;
+            background: #fff;
+        }
+        .admin-log-toolbar {
             display: grid;
-            grid-template-columns: 1fr;
-            gap: 14px;
-            padding: 16px;
-            background: #f4f7fa;
+            gap: 10px;
+            padding: 14px;
+            border-bottom: 1px solid #e2e9f0;
+            background: #f7f9fb;
+        }
+        .admin-log-filters {
+            display: grid;
+            grid-template-columns: minmax(220px, 1.4fr) repeat(4, minmax(145px, 1fr)) repeat(2, minmax(128px, .7fr)) auto;
+            gap: 10px;
+            align-items: end;
+        }
+        .admin-log-filter {
+            display: grid;
+            gap: 5px;
+            min-width: 0;
+        }
+        .admin-log-filter span {
+            color: #60758a;
+            font-size: 9px;
+            font-weight: 900;
+            letter-spacing: .07em;
+            text-transform: uppercase;
+        }
+        .admin-log-filter input,
+        .admin-log-filter select {
+            width: 100%;
+            min-height: 36px;
+            padding: 8px 10px;
+            border: 1px solid #d4dee8;
+            border-radius: 7px;
+            outline: none;
+            background: #fff;
+            color: #173f67;
+            font-size: 12px;
+        }
+        .admin-log-filter input:focus,
+        .admin-log-filter select:focus {
+            border-color: #8eb3d2;
+            box-shadow: 0 0 0 3px rgba(49, 93, 130, .12);
+        }
+        .admin-log-clear {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+            min-height: 36px;
+            padding: 0 12px;
+            border: 1px solid #d4dee8;
+            border-radius: 7px;
+            background: #fff;
+            color: #315d82;
+            font-size: 12px;
+            font-weight: 800;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .admin-log-clear:hover {
+            background: #edf3f8;
+        }
+        .admin-log-summary {
+            color: #60758a;
+            font-size: 11px;
+            font-weight: 800;
+        }
+        .security-audit-table-wrap {
+            max-height: 475px;
+            overflow: auto;
+            scrollbar-width: thin;
+            scrollbar-color: #9fb1c2 #edf2f6;
+        }
+        .security-audit-table-wrap::-webkit-scrollbar { width: 8px; height: 8px; }
+        .security-audit-table-wrap::-webkit-scrollbar-track { background: #edf2f6; }
+        .security-audit-table-wrap::-webkit-scrollbar-thumb { background: #9fb1c2; border-radius: 999px; }
+        .security-audit-table {
+            table-layout: fixed;
+        }
+        .security-audit-table th {
+            position: sticky;
+            top: 0;
+            z-index: 2;
+            box-shadow: 0 1px 0 #dce5ed;
+        }
+        .security-audit-table th:nth-child(1) { width: 17%; }
+        .security-audit-table th:nth-child(2) { width: 15%; }
+        .security-audit-table th:nth-child(3) { width: 16%; }
+        .security-audit-table th:nth-child(4) { width: auto; }
+        .security-audit-table th:nth-child(5) { width: 11%; }
+        .security-audit-table th:nth-child(6) { width: 10%; }
+        .security-audit-table th:nth-child(7) { width: 14%; }
+        .security-audit-table tbody tr:nth-child(even) {
+            background: #f7f9fb;
         }
         .admin-db-card {
             min-width: 0;
@@ -418,6 +497,8 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
 
         @media (max-width: 1180px) {
             .admin-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+            .admin-log-filters { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+            .admin-log-filter-search { grid-column: 1 / -1; }
             .admin-dashboard-grid { grid-template-columns: 1fr; }
             .admin-session-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); max-height: 390px; }
             .admin-session-item:nth-child(odd) { border-right: 1px solid #e6edf3; }
@@ -433,18 +514,31 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
             .movements-panel .admin-table td[data-label="Detalle"] { grid-column: 1 / -1; }
             .movements-panel .admin-table td.admin-loading { grid-column: 1 / -1; }
             .admin-detail-cell { white-space: normal; overflow-wrap: anywhere; }
+
+            .admin-log-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .admin-log-clear { width: 100%; }
+            .security-audit-table-wrap { max-height: 560px; }
+            .security-audit-table { table-layout: auto; }
+            .security-audit-table thead { display: none; }
+            .security-audit-table tbody { display: grid; gap: 10px; padding: 12px; background: #f3f6f9; }
+            .security-audit-table tr { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px 14px; padding: 13px; border: 1px solid #d6e0e9; border-radius: 8px; background: #fff; }
+            .security-audit-table td { display: block; min-width: 0; padding: 0; border: 0; }
+            .security-audit-table td::before { display: block; margin-bottom: 4px; color: #74879a; content: attr(data-label); font-size: 9px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+            .security-audit-table td.admin-loading { grid-column: 1 / -1; }
         }
         @media (max-width: 720px) {
             .admin-dashboard-header { align-items: flex-start; flex-direction: column; padding: 20px; }
             .admin-dashboard-header-actions { width: 100%; justify-content: space-between; }
             .admin-metrics { grid-template-columns: 1fr; }
-            .admin-database-tables { grid-template-columns: 1fr; padding: 12px; }
+            .admin-database-tables { grid-template-columns: 1fr; padding: 0; }
+            .admin-log-filters { grid-template-columns: 1fr; }
             .admin-db-card-head { grid-template-columns: auto minmax(0, 1fr); }
             .admin-db-count { grid-column: 1 / -1; justify-self: start; }
             .admin-session-list { grid-template-columns: 1fr; }
             .admin-session-item:nth-child(odd) { border-right: 0; }
             .movements-panel .admin-table tr { grid-template-columns: 1fr; }
             .movements-panel .admin-table td[data-label="Detalle"] { grid-column: auto; }
+            .security-audit-table tr { grid-template-columns: 1fr; }
         }
     </style>
 

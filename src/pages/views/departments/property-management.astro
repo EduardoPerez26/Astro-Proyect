@@ -129,6 +129,8 @@ import DashboardLayout from '../../../layouts/DashboardLayout.astro';
                         <div><strong id="pmScheduleBalance">$0.00</strong><span>YTD balance</span></div>
                     </div>
 
+                    <div class="pm-quarter-grid" id="pmQuarterReviewCards" aria-label="Quarterly tax payment differences"></div>
+
                     <div class="pm-table-toolbar" aria-label="Schedule filters">
                         <div class="pm-table-toolbar-head">
                             <div>
@@ -282,7 +284,7 @@ import DashboardLayout from '../../../layouts/DashboardLayout.astro';
     </section>
 
     <script src="/js/config.js" is:inline></script>
-    <script is:inline src="/js/departments/property-management.js?v=20260701-schedule-table-restore"></script>
+    <script is:inline src="/js/departments/property-management.js?v=20260702-multi-file-fix"></script>
 </DashboardLayout>
 
 <style>
@@ -931,6 +933,82 @@ import DashboardLayout from '../../../layouts/DashboardLayout.astro';
         text-transform: uppercase;
     }
 
+    .pm-quarter-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(190px, 1fr));
+        gap: 10px;
+    }
+
+    :global(.pm-quarter-card) {
+        display: grid;
+        gap: 12px;
+        min-width: 0;
+        padding: 14px;
+        border: 1px solid #d7e2ec;
+        border-left: 4px solid #60758a;
+        border-radius: 8px;
+        background: #ffffff;
+    }
+
+    :global(.pm-quarter-card.is-balanced) {
+        border-left-color: #0f766e;
+    }
+
+    :global(.pm-quarter-card.is-open) {
+        border-left-color: #b7791f;
+    }
+
+    :global(.pm-quarter-head) {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+    }
+
+    :global(.pm-quarter-head span) {
+        color: #344f67;
+        font-size: 11px;
+        font-weight: 900;
+        text-transform: uppercase;
+    }
+
+    :global(.pm-quarter-head strong) {
+        color: #082033;
+        font-size: 16px;
+        font-weight: 900;
+        text-align: right;
+    }
+
+    :global(.pm-quarter-card dl) {
+        display: grid;
+        gap: 7px;
+        margin: 0;
+    }
+
+    :global(.pm-quarter-card div:not(.pm-quarter-head)) {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+    }
+
+    :global(.pm-quarter-card dt),
+    :global(.pm-quarter-card dd) {
+        margin: 0;
+        font-size: 12px;
+        font-weight: 800;
+    }
+
+    :global(.pm-quarter-card dt) {
+        color: #526b82;
+    }
+
+    :global(.pm-quarter-card dd) {
+        color: #173a59;
+        font-variant-numeric: tabular-nums;
+        text-align: right;
+    }
+
     .pm-table-toolbar {
         display: grid;
         gap: 13px;
@@ -1484,6 +1562,7 @@ import DashboardLayout from '../../../layouts/DashboardLayout.astro';
         .pm-form-row,
         .pm-upload-grid,
         .pm-schedule-management,
+        .pm-quarter-grid,
         .pm-filter-grid,
         .pm-preview-summary {
             grid-template-columns: 1fr;

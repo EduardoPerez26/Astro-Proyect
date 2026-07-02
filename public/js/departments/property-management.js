@@ -58,13 +58,12 @@
         'Balance as of selected period',
         ''
     ];
-    const PAID_COL_BY_MONTH = { 1: 9, 2: 11, 3: 13, 4: 15, 5: 17 };
-    const COLLECTED_COL_BY_MONTH = {
-        1: 10,
-        2: 12,
-        3: 14,
-        4: 16,
-        5: 18,
+    const PAID_COL_BY_MONTH = {
+        1: 9,
+        2: 11,
+        3: 13,
+        4: 15,
+        5: 17,
         6: 19,
         7: 21,
         8: 23,
@@ -73,7 +72,12 @@
         11: 29,
         12: 31
     };
-    const ACCRUAL_COL_BY_MONTH = {
+    const COLLECTED_COL_BY_MONTH = {
+        1: 10,
+        2: 12,
+        3: 14,
+        4: 16,
+        5: 18,
         6: 20,
         7: 22,
         8: 24,
@@ -82,7 +86,28 @@
         11: 30,
         12: 32
     };
+    const ACCRUAL_COL_BY_MONTH = {};
     const IMPORT_REFERENCE_PREFIX = 'Imported monthly GL';
+    const MONTH_ALIASES = [
+        [1, ['JANUARY', 'JAN']],
+        [2, ['FEBRUARY', 'FEB']],
+        [3, ['MARCH', 'MAR']],
+        [4, ['APRIL', 'APR']],
+        [5, ['MAY']],
+        [6, ['JUNE', 'JUN']],
+        [7, ['JULY', 'JUL']],
+        [8, ['AUGUST', 'AUG']],
+        [9, ['SEPTEMBER', 'SEPT', 'SEP']],
+        [10, ['OCTOBER', 'OCT']],
+        [11, ['NOVEMBER', 'NOV']],
+        [12, ['DECEMBER', 'DEC']]
+    ];
+    const QUARTER_MONTHS = {
+        1: [1, 2, 3],
+        2: [4, 5, 6],
+        3: [7, 8, 9],
+        4: [10, 11, 12]
+    };
 
 
     function createPredefinedScheduleRows() {
@@ -608,6 +633,8 @@
             const memo = String(row[indexes.memo] || row[indexes.doc] || '').trim();
             const debit = parseMoney(row[indexes.debit]);
             const credit = parseMoney(row[indexes.credit]);
+            const taxPeriodMonth = inferTaxPeriodMonth(memo, postedDate);
+            const paymentMonth = inferPaymentMonth(memo, postedDate, taxPeriodMonth);
 
             if (!location || !postedDate || (!debit && !credit)) return;
             if (/total|grand total/i.test(location) || /total|grand total/i.test(memo)) return;
@@ -619,6 +646,8 @@
                 memo: memo || 'Sales Tax',
                 debit: debit || 0,
                 credit: credit || 0,
+                taxPeriodMonth,
+                paymentMonth,
                 entity: inferEntity(memo, location),
                 state: /CALIFORNIA| CA /i.test(` ${memo} `) || credit ? 'CA' : ''
             });
@@ -659,7 +688,7 @@
             storeTransactions
                 .filter(item => item.credit)
                 .forEach(item => {
-                    const month = item.postedDate.getMonth() + 1;
+                    const month = getTransactionTaxPeriodMonth(item);
                     const collectedColumn = COLLECTED_COL_BY_MONTH[month];
 
                     if (collectedColumn === undefined) return;
@@ -677,11 +706,7 @@
             const totalRow = groupRows[groupRows.length - 1];
 
             totalRow[34] = storeTotal;
-            groupRows.forEach(row => {
-                if (String(row[0] || '').includes('Q1 RETURN')) {
-                    row[35] = roundMoney(storeTotal - (summary[16] || 0));
-                }
-            });
+            applyQuarterReviewToGroup(groupRows, summary);
 
             rows.push(...groupRows);
         });
@@ -695,7 +720,7 @@
 
     function buildPaymentRow(transaction, fallbackEntity, fallbackState) {
         const row = emptyScheduleRow();
-        const month = transaction.postedDate.getMonth() + 1;
+        const month = getTransactionPaymentMonth(transaction);
         const paidColumn = PAID_COL_BY_MONTH[month];
 
         row[0] = transaction.memo;
@@ -712,6 +737,167 @@
 
         row[33] = sumRowBalance(row);
         return row;
+    }
+
+    function getTransactionTaxPeriodMonth(transaction) {
+        const month = normalizeScheduleMonth(transaction?.taxPeriodMonth);
+        if (month) return month;
+
+        return getDateMonth(transaction?.postedDate);
+    }
+
+    function getTransactionPaymentMonth(transaction) {
+        const month = normalizeScheduleMonth(transaction?.paymentMonth);
+        if (month) return month;
+
+        return getDateMonth(transaction?.postedDate) || getNextMonth(getTransactionTaxPeriodMonth(transaction));
+    }
+
+    function inferTaxPeriodMonth(memo, fallbackDate = null) {
+        const text = normalizeMemoForMonthParsing(memo);
+        const periodMatch = text.match(/\b20\d{2}\s*[.\-/]\s*(0?[1-9]|1[0-2])\b/);
+
+        if (periodMatch) return normalizeScheduleMonth(periodMatch[1]);
+
+        const monthMention = findMonthMentions(text)
+            .find(mention => !isPaidMonthMention(text, mention));
+
+        if (monthMention) return monthMention.month;
+
+        const quarterMatch = text.match(/\bQ([1-4])\s+RETURN\b/);
+        if (quarterMatch) return Number(quarterMatch[1]) * 3;
+
+        return getDateMonth(fallbackDate);
+    }
+
+    function inferPaymentMonth(memo, fallbackDate = null, taxPeriodMonth = null) {
+        const text = normalizeMemoForMonthParsing(memo);
+        const paidMention = findMonthMentions(text)
+            .find(mention => isPaidMonthMention(text, mention));
+
+        if (paidMention) return paidMention.month;
+
+        return getDateMonth(fallbackDate) || getNextMonth(taxPeriodMonth);
+    }
+
+    function normalizeMemoForMonthParsing(value) {
+        return String(value || '')
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .toUpperCase();
+    }
+
+    function findMonthMentions(text) {
+        const mentions = [];
+
+        MONTH_ALIASES.forEach(([month, aliases]) => {
+            aliases.forEach(alias => {
+                const regex = new RegExp(`\\b${escapeRegExp(alias)}\\b`, 'g');
+                let match = regex.exec(text);
+
+                while (match) {
+                    mentions.push({
+                        month,
+                        index: match.index,
+                        end: match.index + match[0].length,
+                        length: match[0].length
+                    });
+                    match = regex.exec(text);
+                }
+            });
+        });
+
+        return mentions.sort((a, b) => a.index - b.index || b.length - a.length);
+    }
+
+    function isPaidMonthMention(text, mention) {
+        const after = text.slice(mention.end, mention.end + 24);
+        return /^\s*(?:\)|-|:)?\s*(?:PAID|PAYMENT)\b/.test(after);
+    }
+
+    function normalizeScheduleMonth(value) {
+        const month = Number(value);
+        return Number.isInteger(month) && month >= 1 && month <= 12 ? month : null;
+    }
+
+    function getDateMonth(value) {
+        const date = value instanceof Date ? value : parseDateValue(value);
+        return date ? date.getMonth() + 1 : null;
+    }
+
+    function getNextMonth(month) {
+        const normalized = normalizeScheduleMonth(month);
+        if (!normalized) return null;
+        return normalized === 12 ? 1 : normalized + 1;
+    }
+
+    function escapeRegExp(value) {
+        return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+
+    function applyQuarterReviewToGroup(groupRows, summaryRow) {
+        if (!summaryRow) return;
+
+        Object.keys(QUARTER_MONTHS).forEach(quarterText => {
+            const quarter = Number(quarterText);
+            const targetRow = findQuarterReviewTargetRow(groupRows, quarter);
+
+            if (!targetRow) return;
+
+            targetRow[35] = calculateQuarterReviewBalance(groupRows, summaryRow, quarter);
+        });
+    }
+
+    function findQuarterReviewTargetRow(groupRows, quarter) {
+        const quarterReturnPattern = new RegExp(`\\bQ${quarter}\\s+RETURN\\b`, 'i');
+        const quarterEndMonth = quarter * 3;
+
+        return groupRows.find(row => quarterReturnPattern.test(String(row[0] || ''))) ||
+            groupRows.find(row => getScheduleRowTaxPeriodMonth(row) === quarterEndMonth) ||
+            null;
+    }
+
+    function calculateQuarterReviewBalance(groupRows, summaryRow, quarter) {
+        return getQuarterGroupTotals(groupRows, summaryRow, quarter).difference;
+    }
+
+    function getQuarterGroupTotals(groupRows, summaryRow, quarter) {
+        const months = QUARTER_MONTHS[quarter] || [];
+        const collectedTotal = months.reduce((sum, month) => {
+            const column = COLLECTED_COL_BY_MONTH[month];
+            return column === undefined ? sum : sum + Number(summaryRow[column] || 0);
+        }, 0);
+        const paidTotal = groupRows.reduce((sum, row) => {
+            if (row === summaryRow) return sum;
+
+            const taxPeriodMonth = getScheduleRowTaxPeriodMonth(row);
+            if (!months.includes(taxPeriodMonth)) return sum;
+
+            return sum + getScheduleRowPaymentAmount(row);
+        }, 0);
+
+        return {
+            collected: roundMoney(collectedTotal),
+            paid: roundMoney(paidTotal),
+            difference: roundMoney(collectedTotal + paidTotal)
+        };
+    }
+
+    function getScheduleRowTaxPeriodMonth(row) {
+        return inferTaxPeriodMonth(row?.[0], row?.[6]);
+    }
+
+    function getScheduleRowPaymentMonth(row) {
+        const taxPeriodMonth = getScheduleRowTaxPeriodMonth(row);
+        return inferPaymentMonth(row?.[0], row?.[6], taxPeriodMonth);
+    }
+
+    function getScheduleRowPaymentAmount(row) {
+        const amountPaid = parseMoney(row?.[7]);
+        if (amountPaid) return amountPaid;
+
+        return Object.values(PAID_COL_BY_MONTH).reduce((sum, column) =>
+            sum + Number(row?.[column] || 0), 0);
     }
 
     function emptyScheduleRow() {
@@ -743,6 +929,7 @@
             setText('pmScheduleRows', 0);
             setText('pmScheduleBalance', formatCurrency(0));
             setText('pmScheduleFilterCount', 'Showing all rows');
+            renderQuarterReviewCards([]);
             populateScheduleFilterOptions([]);
             updateMonthEditor();
             return;
@@ -754,6 +941,7 @@
         setText('pmScheduleStores', result.storeCount);
         setText('pmScheduleRows', result.rows.length);
         setText('pmScheduleBalance', formatCurrency(result.totalBalance));
+        renderQuarterReviewCards(result.rows);
         populateScheduleFilterOptions(result.rows);
 
         const filtered = getFilteredScheduleRows(result.rows);
@@ -772,6 +960,93 @@
             </tbody>
         `;
         updateMonthEditor();
+    }
+
+    function renderQuarterReviewCards(rows) {
+        const container = document.getElementById('pmQuarterReviewCards');
+        if (!container) return;
+
+        const cards = getQuarterReviewCards(rows);
+
+        container.innerHTML = cards.map(card => `
+            <article class="pm-quarter-card ${Math.abs(card.difference) <= 0.01 ? 'is-balanced' : 'is-open'}">
+                <div class="pm-quarter-head">
+                    <span>${escapeHtml(card.label)}</span>
+                    <strong>${escapeHtml(formatCurrency(card.difference))}</strong>
+                </div>
+                <dl>
+                    <div>
+                        <dt>Collected</dt>
+                        <dd>${escapeHtml(formatCurrency(card.collected))}</dd>
+                    </div>
+                    <div>
+                        <dt>Paid next month</dt>
+                        <dd>${escapeHtml(formatCurrency(card.paid))}</dd>
+                    </div>
+                    <div>
+                        <dt>Stores off</dt>
+                        <dd>${escapeHtml(`${card.openStores}/${card.activeStores}`)}</dd>
+                    </div>
+                </dl>
+            </article>
+        `).join('');
+    }
+
+    function getQuarterReviewCards(rows) {
+        const groups = groupScheduleRowsByStore(rows);
+
+        return Object.keys(QUARTER_MONTHS).map(quarterText => {
+            const quarter = Number(quarterText);
+            const totals = {
+                collected: 0,
+                paid: 0,
+                difference: 0,
+                activeStores: 0,
+                openStores: 0
+            };
+
+            groups.forEach(groupRows => {
+                const summaryRow = groupRows.find(row => row[0] === 'Sales Tax');
+                if (!summaryRow) return;
+
+                const groupTotals = getQuarterGroupTotals(groupRows, summaryRow, quarter);
+                const hasActivity = Boolean(groupTotals.collected || groupTotals.paid);
+
+                totals.collected = roundMoney(totals.collected + groupTotals.collected);
+                totals.paid = roundMoney(totals.paid + groupTotals.paid);
+                totals.difference = roundMoney(totals.difference + groupTotals.difference);
+
+                if (hasActivity) totals.activeStores += 1;
+                if (hasActivity && Math.abs(groupTotals.difference) > 0.01) totals.openStores += 1;
+            });
+
+            return {
+                quarter,
+                label: `Q${quarter} ${getQuarterLabel(quarter)}`,
+                ...totals
+            };
+        });
+    }
+
+    function groupScheduleRowsByStore(rows) {
+        const groups = new Map();
+
+        rows.forEach(row => {
+            const store = String(row[1] || '').trim();
+            if (!store) return;
+            if (!groups.has(store)) groups.set(store, []);
+            groups.get(store).push(row);
+        });
+
+        return groups;
+    }
+
+    function getQuarterLabel(quarter) {
+        const months = QUARTER_MONTHS[quarter] || [];
+        const first = MONTH_NAMES[months[0]]?.slice(0, 3) || '';
+        const last = MONTH_NAMES[months[months.length - 1]]?.slice(0, 3) || '';
+
+        return first && last ? `${first}-${last}` : '';
     }
 
     function renderScheduleTableRow(row, rowIndex) {
@@ -1940,18 +2215,30 @@
             throw new Error('The monthly file does not contain usable transactions.');
         }
 
-        const months = Array.from(new Set(
-            usableTransactions.map(item => item.postedDate.getMonth() + 1)
-        )).sort((a, b) => a - b);
+        const summaryMonths = new Set();
+        const paymentMonths = new Set();
+        const paymentTaxPeriodMonths = new Set();
         const affectedStores = new Set();
         const collectedByStoreMonth = new Map();
         const paymentRows = [];
 
-        removeImportedRowsForMonths(months);
-        clearStoreSummaryMonthValues(months);
+        usableTransactions.forEach(transaction => {
+            const taxPeriodMonth = getTransactionTaxPeriodMonth(transaction);
+            const paymentMonth = getTransactionPaymentMonth(transaction);
+
+            if (transaction.credit && taxPeriodMonth) summaryMonths.add(taxPeriodMonth);
+
+            if (transaction.debit && paymentMonth) {
+                paymentMonths.add(paymentMonth);
+                if (taxPeriodMonth) paymentTaxPeriodMonths.add(taxPeriodMonth);
+            }
+        });
+
+        removeImportedRowsForMonths(Array.from(paymentTaxPeriodMonths));
+        clearStoreSummaryMonthValues(Array.from(summaryMonths));
 
         usableTransactions.forEach(transaction => {
-            const month = transaction.postedDate.getMonth() + 1;
+            const month = getTransactionTaxPeriodMonth(transaction);
             const summaryRow = findOrCreateStoreSummaryRow(transaction);
             const store = String(transaction.location || '').trim();
 
@@ -1985,7 +2272,9 @@
         recalculateScheduleRows();
 
         return {
-            months,
+            months: Array.from(new Set([...summaryMonths, ...paymentMonths])).sort((a, b) => a - b),
+            taxPeriodMonths: Array.from(summaryMonths).sort((a, b) => a - b),
+            paymentMonths: Array.from(paymentMonths).sort((a, b) => a - b),
             storeCount: affectedStores.size,
             collectedEntries: collectedByStoreMonth.size,
             paymentRows: paymentRows.length
@@ -2022,14 +2311,14 @@
             summaryRow?.[2] || transaction.entity || '',
             summaryRow?.[5] || transaction.state || ''
         );
-        const month = transaction.postedDate.getMonth() + 1;
+        const taxPeriodMonth = getTransactionTaxPeriodMonth(transaction);
+        const paymentMonth = getTransactionPaymentMonth(transaction);
+        const taxPeriodLabel = MONTH_NAMES[taxPeriodMonth] || MONTH_NAMES[paymentMonth] || 'Monthly';
+        const paymentLabel = paymentMonth && paymentMonth !== taxPeriodMonth
+            ? ` paid in ${MONTH_NAMES[paymentMonth]}`
+            : '';
 
-        row[4] = `${IMPORT_REFERENCE_PREFIX} ${MONTH_NAMES[month]}${sourceName ? ` - ${sourceName}` : ''}`;
-
-        if (PAID_COL_BY_MONTH[month] === undefined && ACCRUAL_COL_BY_MONTH[month] !== undefined) {
-            row[ACCRUAL_COL_BY_MONTH[month]] = roundMoney(transaction.debit);
-            row[33] = sumRowBalance(row);
-        }
+        row[4] = `${IMPORT_REFERENCE_PREFIX} ${taxPeriodLabel}${paymentLabel}${sourceName ? ` - ${sourceName}` : ''}`;
 
         return row;
     }
@@ -2040,11 +2329,10 @@
 
         scheduleRows = scheduleRows.filter(row => {
             const reference = String(row[4] || '');
-            const date = parseDateValue(row[6]);
-            const month = date ? date.getMonth() + 1 : 0;
+            const taxPeriodMonth = getScheduleRowTaxPeriodMonth(row);
             const isImported = reference.startsWith(IMPORT_REFERENCE_PREFIX);
 
-            return !(isImported && monthSet.has(month));
+            return !(isImported && monthSet.has(taxPeriodMonth));
         });
 
         return originalLength - scheduleRows.length;
@@ -2177,15 +2465,11 @@
                 0
             ));
             const lastIndex = indexes[indexes.length - 1];
-            const summary = indexes.map(index => scheduleRows[index]).find(row => row[0] === 'Sales Tax');
+            const groupRows = indexes.map(index => scheduleRows[index]);
+            const summary = groupRows.find(row => row[0] === 'Sales Tax');
 
             scheduleRows[lastIndex][34] = total;
-            indexes.forEach(index => {
-                const row = scheduleRows[index];
-                if (String(row[0] || '').includes('Q1 RETURN')) {
-                    row[35] = roundMoney(total - Number(summary?.[16] || 0));
-                }
-            });
+            applyQuarterReviewToGroup(groupRows, summary);
         });
 
         scheduleStoreCount = groups.size;
