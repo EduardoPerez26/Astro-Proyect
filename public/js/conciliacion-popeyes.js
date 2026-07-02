@@ -106,7 +106,16 @@ const POPEYES_WL_TIP_ACCOUNTS = [
     'Payment Tips - WL Discovery',
     'Payment Tips - WL GiftCard',
     'Payment Tips - WL Amex',
+    'Payment Tips - WL Paypal',
+    'Tips & Service Charges',
+    'Delivery Tips',
+    'Delivery Tips ',
     'Delivery Tips Net'
+];
+
+const POPEYES_DELIVERY_FEE_ACCOUNTS = [
+    'Delivery Fees Net',
+    'Delivery Fee'
 ];
 
 const POPEYES_KIOSK_ACCOUNTS = [
@@ -1451,7 +1460,7 @@ function generarSalesPopeyes(
                     salesPosRows,
                     store,
                     date,
-                    'Delivery Fees Net'
+                    POPEYES_DELIVERY_FEE_ACCOUNTS
                 );
 
             const deliveryTips =
@@ -1459,16 +1468,11 @@ function generarSalesPopeyes(
                     salesPosRows,
                     store,
                     date,
-                    'Delivery Tips '
+                    POPEYES_WL_TIP_ACCOUNTS
                 );
 
             const wlTips =
-                debitPopeyes(
-                    salesPosRows,
-                    store,
-                    date,
-                    POPEYES_WL_TIP_ACCOUNTS
-                );
+                deliveryTips;
 
             const salesTax =
                 debitPopeyes(
@@ -1850,9 +1854,11 @@ function generarSalesPopeyes(
                 serviceFee: redondearPopeyes(serviceFee),
                 salesOther: redondearPopeyes(sourceOther + serviceFee),
                 deliveryFee: redondearPopeyes(deliveryFee),
+                deliveryFeeNet: redondearPopeyes(deliveryFee),
                 deliveryTips: redondearPopeyes(deliveryTips),
+                deliveryTipsNet: redondearPopeyes(deliveryTips),
                 wlTips: redondearPopeyes(wlTips),
-                totalTips: redondearPopeyes(wlTips),
+                totalTips: redondearPopeyes(deliveryTips),
                 discounts: redondearPopeyes(discounts),
                 discountsPromo: redondearPopeyes(discountsPromo),
                 discountEmployee: redondearPopeyes(discountEmployee),

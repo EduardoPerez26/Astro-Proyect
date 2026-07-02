@@ -1056,8 +1056,26 @@ function setUploadCardStatus(inputId, type = '', message = '') {
         card.appendChild(status);
     }
 
-    card.dataset.status = type;
-    status.textContent = message;
+    if (type) {
+        card.dataset.status = type;
+    } else {
+        delete card.dataset.status;
+    }
+
+    const fullMessage = String(message || '');
+    const visibleMessage =
+        fullMessage.length > 72
+            ? `${fullMessage.slice(0, 69)}...`
+            : fullMessage;
+
+    status.textContent = visibleMessage;
+    if (fullMessage) {
+        status.title = fullMessage;
+        status.setAttribute('aria-label', fullMessage);
+    } else {
+        status.removeAttribute('title');
+        status.removeAttribute('aria-label');
+    }
 
     if (!type) {
         setComparisonCardStatus(inputId);

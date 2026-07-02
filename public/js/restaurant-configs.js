@@ -283,8 +283,8 @@ window.RestaurantConfigs = {
             { key: 'serviceFee', label: 'Service Fee' },
             { key: 'salesOther', label: 'Sales Other' },
 
-            { key: 'deliveryFee', label: 'Delivery Fee' },
-            { key: 'deliveryTips', label: 'Delivery Tips' },
+            { key: 'deliveryFee', label: 'Delivery Fees Net' },
+            { key: 'deliveryTips', label: 'Delivery Tips Net' },
             { key: 'totalTips', label: 'Total Tips' },
 
             { key: 'discounts', label: 'Discounts' },
@@ -379,8 +379,8 @@ window.RestaurantConfigs = {
             { key: 'serviceFee', label: 'Service Fee' },
             { key: 'salesOther', label: 'Sales Other' },
 
-            { key: 'deliveryFee', label: 'Delivery Fee' },
-            { key: 'deliveryTips', label: 'Delivery Tips' },
+            { key: 'deliveryFee', label: 'Delivery Fees Net' },
+            { key: 'deliveryTips', label: 'Delivery Tips Net' },
             { key: 'totalTips', label: 'Total  Tips' },
 
             { key: 'discounts', label: 'Discounts' },
