@@ -177,6 +177,11 @@
     let scheduleStoreCount = 0;
     let currentScheduleId = null;
     let linkedDocumentIds = [];
+    let pendingSourceDocuments = [];
+
+    let isLoadingDimensionBalance = false;
+    let isImportingMonthlyFiles = false;
+
     let savedSchedules = [];
     let propertyDocuments = [];
     let selectedQuarterReview = 1;
@@ -274,16 +279,24 @@
             ?.addEventListener('click', handleBoardClick);
 
         document
-            .getElementById('pmLoadDimensionBalancesBtn')
-            ?.addEventListener('click', loadDimensionBalanceSchedule);
+            .getElementById('pmDimensionBalanceFile')
+            ?.addEventListener('change', handleDimensionBalanceFileChange);
 
         document
-            .getElementById('pmExportScheduleBtn')
-            ?.addEventListener('click', exportScheduleWorkbook);
+            .getElementById('pmMonthlyLedgerFile')
+            ?.addEventListener('change', handleMonthlyLedgerFileChange);
 
         document
-            .getElementById('pmClearScheduleBtn')
-            ?.addEventListener('click', clearScheduleBuilder);
+            .getElementById('pmClearDimensionBalanceFileBtn')
+            ?.addEventListener('click', clearDimensionBalanceFile);
+
+        document
+            .getElementById('pmClearMonthlyLedgerFileBtn')
+            ?.addEventListener('click', clearMonthlyLedgerFiles);
+
+
+
+
 
         document
             .getElementById('pmSaveScheduleBtn')
@@ -293,9 +306,6 @@
             .getElementById('pmLoadScheduleBtn')
             ?.addEventListener('click', loadSelectedSchedule);
 
-        document
-            .getElementById('pmRefreshSavedBtn')
-            ?.addEventListener('click', refreshPersistedData);
 
         document
             .getElementById('pmDocsRefreshBtn')
@@ -309,9 +319,6 @@
             .getElementById('pmAddMonthBtn')
             ?.addEventListener('click', addMonthlyActivity);
 
-        document
-            .getElementById('pmAddMonthlyFileBtn')
-            ?.addEventListener('click', importMonthlyLedgerFile);
 
         document
             .getElementById('pmAddStoreRowBtn')
@@ -426,6 +433,18 @@
 
         initializeUploadDropzone('pmDimensionBalanceFile', 'label[for="pmDimensionBalanceFile"]');
         initializeUploadDropzone('pmMonthlyLedgerFile', 'label[for="pmMonthlyLedgerFile"]');
+
+        updateUploadFileLabel(
+            'pmDimensionBalanceFile',
+            'pmDimensionBalanceFileName',
+            'pmClearDimensionBalanceFileBtn'
+        );
+
+        updateUploadFileLabel(
+            'pmMonthlyLedgerFile',
+            'pmMonthlyLedgerFileName',
+            'pmClearMonthlyLedgerFileBtn'
+        );
 
         setDefaultMonthDate();
         initializePredefinedSchedule({ showStatus: false });
@@ -779,6 +798,7 @@
         scheduleStoreCount = 0;
         currentScheduleId = null;
         linkedDocumentIds = [];
+        pendingSourceDocuments = [];
         setDefaultScheduleName();
         renderSchedulePreview({ rows: [], storeCount: 0, totalBalance: 0 });
 
@@ -790,7 +810,177 @@
         }
     }
 
-    async function loadDimensionBalanceSchedule() {
+    function updateUploadFileLabel(inputId, labelId, clearButtonId) {
+        const input = document.getElementById(inputId);
+        const label = document.getElementById(labelId);
+        const button = document.getElementById(clearButtonId);
+        const files = Array.from(input?.files || []);
+
+        if (label) {
+            if (!files.length) {
+                label.innerHTML = `<span class="pm-upload-file-empty">No ${input?.multiple ? 'files' : 'file'} selected</span>`;
+            } else {
+                const visibleFiles = files.slice(0, 3);
+                const hiddenCount = Math.max(files.length - visibleFiles.length, 0);
+                const fileChips = visibleFiles.map(file => `
+                    <span class="pm-upload-file-chip" title="${escapeHtml(file.name)}">
+                        <i class="fa-solid fa-file-excel" aria-hidden="true"></i>
+                        <span>${escapeHtml(file.name)}</span>
+                    </span>
+                `).join('');
+                const countBadge = files.length > 1
+                    ? `<span class="pm-upload-file-count">
+                        <i class="fa-solid fa-layer-group" aria-hidden="true"></i>
+                        ${files.length} files selected
+                    </span>`
+                    : '';
+                const moreBadge = hiddenCount
+                    ? `<span class="pm-upload-file-more">+${hiddenCount} more</span>`
+                    : '';
+
+                label.innerHTML = `${countBadge}${fileChips}${moreBadge}`;
+            }
+        }
+
+        if (button) {
+            button.disabled = !files.length;
+        }
+    }
+
+    async function handleDimensionBalanceFileChange() {
+        updateUploadFileLabel(
+            'pmDimensionBalanceFile',
+            'pmDimensionBalanceFileName',
+            'pmClearDimensionBalanceFileBtn'
+        );
+
+        const input = document.getElementById('pmDimensionBalanceFile');
+
+        if (!input?.files?.length) return;
+
+        await loadDimensionBalanceSchedule();
+    }
+
+    async function handleMonthlyLedgerFileChange() {
+        updateUploadFileLabel(
+            'pmMonthlyLedgerFile',
+            'pmMonthlyLedgerFileName',
+            'pmClearMonthlyLedgerFileBtn'
+        );
+
+        const input = document.getElementById('pmMonthlyLedgerFile');
+
+        if (!input?.files?.length) return;
+
+        if (!scheduleRows.length) {
+            setScheduleStatus(
+                'Monthly files selected. Upload the Dimension Balance report first.',
+                'warning'
+            );
+            return;
+        }
+
+        await importMonthlyLedgerFile();
+    }
+
+    async function importPendingMonthlyFilesAfterDimension() {
+        const monthlyInput = document.getElementById('pmMonthlyLedgerFile');
+
+        if (!monthlyInput?.files?.length) return;
+        if (!scheduleRows.length) return;
+
+        await importMonthlyLedgerFile();
+    }
+
+    function clearDimensionBalanceFile() {
+        const dimensionInput = document.getElementById('pmDimensionBalanceFile');
+        const monthlyInput = document.getElementById('pmMonthlyLedgerFile');
+
+        if (dimensionInput) dimensionInput.value = '';
+        if (monthlyInput) monthlyInput.value = '';
+
+        updateUploadFileLabel(
+            'pmDimensionBalanceFile',
+            'pmDimensionBalanceFileName',
+            'pmClearDimensionBalanceFileBtn'
+        );
+
+        updateUploadFileLabel(
+            'pmMonthlyLedgerFile',
+            'pmMonthlyLedgerFileName',
+            'pmClearMonthlyLedgerFileBtn'
+        );
+
+        scheduleRows = [];
+        scheduleStoreCount = 0;
+        currentScheduleId = null;
+        linkedDocumentIds = [];
+        pendingSourceDocuments = [];
+
+        scheduleFilters = {
+            search: '',
+            store: '',
+            entity: '',
+            month: '',
+            rowType: ''
+        };
+
+        document.querySelectorAll('[data-pm-filter]').forEach(element => {
+            element.value = '';
+        });
+
+        renderSchedulePreview({
+            rows: [],
+            storeCount: 0,
+            totalBalance: 0
+        });
+
+        setDefaultScheduleName();
+
+        setScheduleStatus(
+            'Dimension Balance file removed. Upload it again to generate the schedule.',
+            'info'
+        );
+    }
+
+    async function clearMonthlyLedgerFiles() {
+        const monthlyInput = document.getElementById('pmMonthlyLedgerFile');
+
+        if (monthlyInput) monthlyInput.value = '';
+
+        updateUploadFileLabel(
+            'pmMonthlyLedgerFile',
+            'pmMonthlyLedgerFileName',
+            'pmClearMonthlyLedgerFileBtn'
+        );
+
+        pendingSourceDocuments = pendingSourceDocuments.filter(item =>
+            item.type !== 'monthly_ledger' &&
+            item.type !== 'monthly_ledger_files'
+        );
+
+        const dimensionInput = document.getElementById('pmDimensionBalanceFile');
+
+        if (dimensionInput?.files?.length) {
+            await loadDimensionBalanceSchedule({
+                importMonthlyFiles: false
+            });
+
+            setScheduleStatus(
+                'Monthly files removed. Schedule rebuilt using only the Dimension Balance report.',
+                'info'
+            );
+
+            return;
+        }
+
+        setScheduleStatus('Monthly files removed.', 'info');
+    }
+
+    async function loadDimensionBalanceSchedule(options = {}) {
+        if (isLoadingDimensionBalance) return;
+
+        const { importMonthlyFiles = true } = options;
         const input = document.getElementById('pmDimensionBalanceFile');
         const file = input?.files?.[0];
 
@@ -798,6 +988,8 @@
             setScheduleStatus('Choose the Dimension Balance report first.', 'error');
             return;
         }
+
+        isLoadingDimensionBalance = true;
 
         showPmLoading('Reading Dimension Balance report...');
         setScheduleStatus('Reading Dimension Balance report...', 'info');
@@ -814,37 +1006,33 @@
             scheduleStoreCount = result.storeCount;
             currentScheduleId = null;
             linkedDocumentIds = [];
+            pendingSourceDocuments = [];
+
             setDefaultScheduleName();
             recalculateScheduleRows();
 
-            try {
-                const saved = await uploadPropertyDocument(file, 'dimension_balances', {
-                    label: 'Dimension Balance opening balances',
-                    sourceFile: file.name,
-                    account: result.account || '241000',
-                    accountName: result.accountName || 'SALES TAX PAYABLE',
-                    storeCount: result.storeCount,
-                    openingBalanceTotal: result.totalBalance
-                });
-                if (saved?.id) linkedDocumentIds.push(saved.id);
-            } catch (documentError) {
-                console.warn('Dimension Balance document could not be saved:', documentError);
-            }
-
             renderSchedulePreview(getScheduleResult());
             setScheduleStatus(
-                `Dimension Balance loaded: ${result.storeCount} stores with opening balances. Now import JAN, FEB, MAR, etc.`,
+                `Dimension Balance loaded: ${result.storeCount} stores with opening balances.`,
                 'success'
             );
+
+            if (importMonthlyFiles) {
+                await importPendingMonthlyFilesAfterDimension();
+            }
         } catch (error) {
             console.error('Dimension Balance import error:', error);
+
             scheduleRows = [];
             scheduleStoreCount = 0;
             currentScheduleId = null;
             linkedDocumentIds = [];
+            pendingSourceDocuments = [];
+
             renderSchedulePreview({ rows: [], storeCount: 0, totalBalance: 0 });
             setScheduleStatus(error.message || 'The Dimension Balance report could not be loaded.', 'error');
         } finally {
+            isLoadingDimensionBalance = false;
             hidePmLoading();
         }
     }
@@ -1660,11 +1848,11 @@
         const exportButton = document.getElementById('pmExportScheduleBtn');
         const saveButton = document.getElementById('pmSaveScheduleBtn');
 
-        if (!preview || !table || !exportButton) return;
+        if (!preview || !table) return;
 
         if (!result.rows.length) {
             preview.hidden = true;
-            exportButton.disabled = true;
+            if (exportButton) exportButton.disabled = true;
             if (saveButton) saveButton.disabled = true;
             table.innerHTML = '';
             setText('pmScheduleStores', 0);
@@ -1679,7 +1867,7 @@
         }
 
         preview.hidden = false;
-        exportButton.disabled = false;
+        if (exportButton) exportButton.disabled = false;
         if (saveButton) saveButton.disabled = false;
         setText('pmScheduleStores', result.storeCount);
         setText('pmScheduleRows', result.rows.length);
@@ -2419,6 +2607,7 @@
                 r: rowIndex,
                 c: 3
             });
+
             const glAccountCell = worksheet[glAccountAddress];
 
             if (glAccountCell && typeof glAccountCell.v === 'number') {
@@ -2430,10 +2619,17 @@
                     r: rowIndex,
                     c: columnIndex
                 });
+
                 const cell = worksheet[cellAddress];
 
                 if (!cell || typeof cell.v !== 'number') continue;
+
                 cell.z = numberFormat;
+
+                cell.s = {
+                    ...(cell.s || {}),
+                    numFmt: numberFormat
+                };
             }
         }
     }
@@ -2445,8 +2641,14 @@
         const entities = Array.from(
             new Set(scheduleRows.map(row => row[2]).filter(Boolean))
         ).sort();
+
         const aoa = [
-            ['COMPANY NAME: Quikserve Burger King', 'Prepared by:', 'Property Management'],
+            [
+                'COMPANY NAME: Quikserve Burger King',
+                '',
+                'Prepared by:',
+                'Properties Dpmt / Property Management'
+            ],
             [`COMPANY: ${entities.join(', ') || 'Property Management'}`],
             ['GL ACCOUNT NAME: SALES TAX PAYABLE'],
             ['GL ACCOUNT #: 241000'],
@@ -2455,21 +2657,471 @@
             SCHEDULE_HEADERS,
             ...scheduleRows
         ];
-        const worksheet = window.XLSX.utils.aoa_to_sheet(aoa);
+
+        const worksheet = window.XLSX.utils.aoa_to_sheet(aoa, {
+            cellDates: true
+        });
+
         const workbook = window.XLSX.utils.book_new();
 
         worksheet['!cols'] = [
-            { wch: 72 }, { wch: 13 }, { wch: 10 }, { wch: 10 }, { wch: 16 }, { wch: 9 },
-            { wch: 12 }, { wch: 13 }, { wch: 18 },
-            ...Array.from({ length: 24 }, () => ({ wch: 14 })),
-            { wch: 14 }, { wch: 16 }, { wch: 16 }
+            { wch: 72 },
+            { wch: 13 },
+            { wch: 10 },
+            { wch: 10 },
+            { wch: 18 },
+            { wch: 9 },
+            { wch: 12 },
+            { wch: 13 },
+            { wch: 18 },
+            ...Array.from({ length: 24 }, () => ({ wch: 15 })),
+            { wch: 14 },
+            { wch: 18 },
+            { wch: 18 }
         ];
-        worksheet['!autofilter'] = { ref: `A7:AJ${aoa.length}` };
-        applyScheduleNumberFormats(worksheet, aoa.length);
+
+        worksheet['!rows'] = [
+            { hpt: 15 },
+            { hpt: 15 },
+            { hpt: 15 },
+            { hpt: 18 },
+            { hpt: 15 },
+            { hpt: 55 },
+            { hpt: 110 },
+            ...Array.from({ length: Math.max(aoa.length - 7, 1) }, () => ({ hpt: 18 }))
+        ];
+
+        worksheet['!merges'] = [
+            {
+                s: { r: 3, c: 0 },
+                e: { r: 3, c: 4 }
+            }
+        ];
+
+        worksheet['!autofilter'] = {
+            ref: `A7:AJ${aoa.length}`
+        };
+
+        applyCompletedScheduleWorkbookStyle(worksheet, aoa.length);
 
         window.XLSX.utils.book_append_sheet(workbook, worksheet, 'Schedule 2026');
-        window.XLSX.writeFile(workbook, `Property Management - Schedule 2026 ${timestampForFile()}.xlsx`);
+
+        window.XLSX.writeFile(
+            workbook,
+            `Property Management - Schedule 2026 ${timestampForFile()}.xlsx`,
+            {
+                cellStyles: true,
+                bookType: 'xlsx'
+            }
+        );
     }
+
+    function applyCompletedScheduleWorkbookStyle(worksheet, rowCount) {
+        const lastColumn = SCHEDULE_HEADERS.length - 1;
+        const latestMonth = getLatestScheduleMonth(scheduleRows);
+
+        const colors = {
+            dark: '3F3F3F',
+            black: '000000',
+            white: 'FFFFFF',
+            yellow: 'FFFF00',
+            paleYellow: 'FFFDE9',
+            paleGreen: 'E2F0D9',
+            blue: '4472C4',
+            lightBlue: 'DDEBF7',
+            gridBlue: '00B0F0',
+            gridLight: 'D9EAF7',
+            dataGray: 'D9D9D9',
+            magenta: 'C000C0',
+            text: '000000'
+        };
+
+        const thinBlueBorder = createBorder(colors.gridBlue);
+        const thinLightBorder = createBorder(colors.gridLight);
+
+        const metaStyle = {
+            font: {
+                name: 'Arial',
+                sz: 8,
+                bold: true,
+                color: { rgb: colors.black }
+            },
+            alignment: {
+                vertical: 'center'
+            }
+        };
+
+        const glAccountStyle = {
+            fill: {
+                patternType: 'solid',
+                fgColor: { rgb: colors.yellow }
+            },
+            font: {
+                name: 'Arial',
+                sz: 11,
+                bold: true,
+                color: { rgb: colors.black }
+            },
+            alignment: {
+                vertical: 'center'
+            }
+        };
+
+        const monthHeaderStyle = {
+            fill: {
+                patternType: 'solid',
+                fgColor: { rgb: colors.dark }
+            },
+            font: {
+                name: 'Arial',
+                sz: 8,
+                color: { rgb: colors.white }
+            },
+            alignment: {
+                horizontal: 'center',
+                vertical: 'center',
+                wrapText: true
+            }
+        };
+
+        const columnHeaderStyle = {
+            fill: {
+                patternType: 'solid',
+                fgColor: { rgb: colors.dark }
+            },
+            font: {
+                name: 'Arial',
+                sz: 8,
+                bold: true,
+                color: { rgb: colors.white }
+            },
+            alignment: {
+                horizontal: 'center',
+                vertical: 'center',
+                wrapText: true
+            },
+            border: thinBlueBorder
+        };
+
+        const leftDataStyle = {
+            fill: {
+                patternType: 'solid',
+                fgColor: { rgb: colors.dataGray }
+            },
+            font: {
+                name: 'Arial',
+                sz: 8,
+                color: { rgb: colors.black }
+            },
+            alignment: {
+                vertical: 'center',
+                wrapText: false
+            },
+            border: thinBlueBorder
+        };
+
+        const amountDataStyle = {
+            fill: {
+                patternType: 'solid',
+                fgColor: { rgb: colors.white }
+            },
+            font: {
+                name: 'Arial',
+                sz: 8,
+                color: { rgb: colors.black }
+            },
+            alignment: {
+                horizontal: 'right',
+                vertical: 'center'
+            },
+            border: thinLightBorder
+        };
+
+        const selectedMonthDataStyle = {
+            ...amountDataStyle,
+            fill: {
+                patternType: 'solid',
+                fgColor: { rgb: colors.paleYellow }
+            }
+        };
+
+        const ytdStyle = {
+            fill: {
+                patternType: 'solid',
+                fgColor: { rgb: colors.dark }
+            },
+            font: {
+                name: 'Arial',
+                sz: 8,
+                bold: true,
+                color: { rgb: colors.white }
+            },
+            alignment: {
+                horizontal: 'right',
+                vertical: 'center'
+            },
+            border: thinBlueBorder
+        };
+
+        const ytdPerStoreHeaderStyle = {
+            fill: {
+                patternType: 'solid',
+                fgColor: { rgb: colors.blue }
+            },
+            font: {
+                name: 'Arial',
+                sz: 8,
+                bold: true,
+                color: { rgb: colors.white }
+            },
+            alignment: {
+                horizontal: 'center',
+                vertical: 'center',
+                wrapText: true
+            },
+            border: thinBlueBorder
+        };
+
+        const ytdPerStoreDataStyle = {
+            fill: {
+                patternType: 'solid',
+                fgColor: { rgb: colors.paleGreen }
+            },
+            font: {
+                name: 'Arial',
+                sz: 8,
+                color: { rgb: colors.black }
+            },
+            alignment: {
+                horizontal: 'right',
+                vertical: 'center'
+            },
+            border: thinBlueBorder
+        };
+
+        const quarterStyle = {
+            fill: {
+                patternType: 'solid',
+                fgColor: { rgb: colors.paleGreen }
+            },
+            font: {
+                name: 'Arial',
+                sz: 8,
+                color: { rgb: colors.black }
+            },
+            alignment: {
+                horizontal: 'center',
+                vertical: 'center',
+                wrapText: true
+            },
+            border: thinLightBorder
+        };
+
+        // Top metadata rows
+        setRangeStyle(worksheet, 0, 0, 4, lastColumn, metaStyle);
+
+        // GL account yellow row
+        setRangeStyle(worksheet, 3, 0, 3, 4, glAccountStyle);
+
+        // Month row, equivalent to row 6 in Excel
+        setRangeStyle(worksheet, 5, 0, 5, 8, {
+            fill: {
+                patternType: 'solid',
+                fgColor: { rgb: colors.white }
+            },
+            font: {
+                name: 'Arial',
+                sz: 8,
+                color: { rgb: colors.black }
+            }
+        });
+
+        setRangeStyle(worksheet, 5, 9, 5, 32, monthHeaderStyle);
+        setRangeStyle(worksheet, 5, 33, 5, 33, ytdStyle);
+        setRangeStyle(worksheet, 5, 34, 5, 34, ytdPerStoreHeaderStyle);
+        setRangeStyle(worksheet, 5, 35, 5, 35, quarterStyle);
+
+        // Header row, equivalent to row 7 in Excel
+        setRangeStyle(worksheet, 6, 0, 6, 33, columnHeaderStyle);
+        setRangeStyle(worksheet, 6, 34, 6, 34, ytdPerStoreHeaderStyle);
+        setRangeStyle(worksheet, 6, 35, 6, 35, quarterStyle);
+
+        // Data rows
+        for (let rowIndex = 7; rowIndex < rowCount; rowIndex += 1) {
+            const entryCell = getWorksheetCell(worksheet, rowIndex, 0);
+            const entry = String(entryCell?.v || '');
+
+            const isSummaryRow = entry === 'Sales Tax';
+
+            for (let columnIndex = 0; columnIndex <= lastColumn; columnIndex += 1) {
+                let styleToApply = amountDataStyle;
+
+                if (columnIndex <= 8) {
+                    styleToApply = leftDataStyle;
+                }
+
+                if (columnIndex === 33) {
+                    styleToApply = ytdStyle;
+                }
+
+                if (columnIndex === 34) {
+                    styleToApply = ytdPerStoreDataStyle;
+                }
+
+                if (columnIndex === 35) {
+                    styleToApply = quarterStyle;
+                }
+
+                if (
+                    latestMonth &&
+                    (
+                        columnIndex === PAID_COL_BY_MONTH[latestMonth] ||
+                        columnIndex === COLLECTED_COL_BY_MONTH[latestMonth]
+                    )
+                ) {
+                    styleToApply = selectedMonthDataStyle;
+                }
+
+                setCellStyle(worksheet, rowIndex, columnIndex, styleToApply);
+
+                if (isSummaryRow) {
+                    applyCellStylePatch(worksheet, rowIndex, columnIndex, {
+                        font: {
+                            name: 'Arial',
+                            sz: 8,
+                            bold: true,
+                            color: {
+                                rgb: columnIndex === 33
+                                    ? colors.white
+                                    : colors.black
+                            }
+                        }
+                    });
+                }
+            }
+
+            // Entity and GL Account magenta, like the completed workbook
+            applyCellStylePatch(worksheet, rowIndex, 2, {
+                font: {
+                    name: 'Arial',
+                    sz: 8,
+                    bold: true,
+                    color: { rgb: colors.magenta }
+                }
+            });
+
+            applyCellStylePatch(worksheet, rowIndex, 3, {
+                font: {
+                    name: 'Arial',
+                    sz: 8,
+                    bold: true,
+                    color: { rgb: colors.magenta }
+                }
+            });
+        }
+
+        applyScheduleNumberFormats(worksheet, rowCount);
+    }
+
+    function createBorder(rgb) {
+        return {
+            top: {
+                style: 'thin',
+                color: { rgb }
+            },
+            bottom: {
+                style: 'thin',
+                color: { rgb }
+            },
+            left: {
+                style: 'thin',
+                color: { rgb }
+            },
+            right: {
+                style: 'thin',
+                color: { rgb }
+            }
+        };
+    }
+
+    function getWorksheetCell(worksheet, rowIndex, columnIndex) {
+        const address = window.XLSX.utils.encode_cell({
+            r: rowIndex,
+            c: columnIndex
+        });
+
+        return worksheet[address];
+    }
+
+    function ensureWorksheetCell(worksheet, rowIndex, columnIndex) {
+        const address = window.XLSX.utils.encode_cell({
+            r: rowIndex,
+            c: columnIndex
+        });
+
+        if (!worksheet[address]) {
+            worksheet[address] = {
+                t: 's',
+                v: ''
+            };
+        }
+
+        return worksheet[address];
+    }
+
+    function setCellStyle(worksheet, rowIndex, columnIndex, style) {
+        const cell = ensureWorksheetCell(worksheet, rowIndex, columnIndex);
+        cell.s = cloneExcelStyle(style);
+    }
+
+    function applyCellStylePatch(worksheet, rowIndex, columnIndex, patch) {
+        const cell = ensureWorksheetCell(worksheet, rowIndex, columnIndex);
+
+        cell.s = deepMergeExcelStyle(
+            cell.s || {},
+            cloneExcelStyle(patch)
+        );
+    }
+
+    function setRangeStyle(worksheet, startRow, startCol, endRow, endCol, style) {
+        for (let rowIndex = startRow; rowIndex <= endRow; rowIndex += 1) {
+            for (let columnIndex = startCol; columnIndex <= endCol; columnIndex += 1) {
+                setCellStyle(worksheet, rowIndex, columnIndex, style);
+            }
+        }
+    }
+
+    function cloneExcelStyle(style) {
+        return JSON.parse(JSON.stringify(style || {}));
+    }
+
+    function deepMergeExcelStyle(target, source) {
+        const output = {
+            ...target
+        };
+
+        Object.keys(source || {}).forEach(key => {
+            const sourceValue = source[key];
+            const targetValue = output[key];
+
+            if (
+                sourceValue &&
+                typeof sourceValue === 'object' &&
+                !Array.isArray(sourceValue) &&
+                targetValue &&
+                typeof targetValue === 'object' &&
+                !Array.isArray(targetValue)
+            ) {
+                output[key] = deepMergeExcelStyle(targetValue, sourceValue);
+            } else {
+                output[key] = sourceValue;
+            }
+        });
+
+        return output;
+    }
+
+
 
     function clearScheduleBuilder() {
         const dimensionInput = document.getElementById('pmDimensionBalanceFile');
@@ -2530,70 +3182,86 @@
         }
     }
 
-    async function saveUploadedScheduleDocuments(result) {
-        const generalLedgerInput = document.getElementById('pmGeneralLedgerFile');
-        const dimensionInput = document.getElementById('pmDimensionFile');
-        const files = [
-            {
-                input: generalLedgerInput,
-                type: 'general_ledger',
-                label: 'General Ledger report'
-            },
-            {
-                input: dimensionInput,
-                type: 'dimension_balances',
-                label: 'Dimension balances report'
-            }
-        ];
-        const ids = [];
+    async function saveUploadedScheduleDocuments() {
+    return {
+        ids: [],
+        warning: ''
+    };
+}
 
-        try {
-            for (const item of files) {
-                const file = item.input?.files?.[0];
-                if (!file) continue;
+    function addPendingSourceDocument(file, type, metadata = {}) {
+        if (!file) return;
 
-                const saved = await uploadPropertyDocument(file, item.type, {
-                    label: item.label,
-                    storeCount: result.storeCount,
-                    rowCount: result.rows.length,
-                    totalBalance: result.totalBalance
-                });
+        const key = [
+            type,
+            file.name,
+            file.size,
+            file.lastModified
+        ].join('|');
 
-                if (saved?.id) ids.push(saved.id);
-            }
+        const exists = pendingSourceDocuments.some(item => item.key === key);
 
-            await loadPropertyDocuments();
-            return { ids, warning: '' };
-        } catch (error) {
-            console.warn('Property Management source documents were not saved:', error);
-            return {
-                ids,
-                warning: error.message || 'The server could not store the documents'
-            };
-        }
-    }
+        if (exists) return;
 
-    async function uploadPropertyDocument(file, type, metadata) {
-        const formData = new FormData();
-
-        formData.append('document', file);
-        formData.append('tipo_documento', type);
-        formData.append('periodo_anio', String(getScheduleYear(scheduleRows)));
-        formData.append('periodo_mes', String(getLatestScheduleMonth(scheduleRows) || ''));
-        formData.append('metadata_json', JSON.stringify(metadata || {}));
-
-        const response = await apiFetch('/documents', {
-            method: 'POST',
-            body: formData
+        pendingSourceDocuments.push({
+            key,
+            file,
+            type,
+            metadata
         });
-        const payload = await readJsonResponse(response);
+    }
 
-        if (!response.ok || payload.success === false) {
-            throw new Error(payload.message || 'Document could not be saved');
+    async function uploadPendingSourceDocuments() {
+        const uploadedIds = [];
+
+        for (const item of pendingSourceDocuments) {
+            const saved = await uploadPropertyDocument(item.file, item.type, item.metadata);
+
+            if (saved?.id) {
+                uploadedIds.push(saved.id);
+            }
         }
 
-        return payload.document || null;
+        pendingSourceDocuments = [];
+
+        if (uploadedIds.length) {
+            linkedDocumentIds.push(...uploadedIds);
+            linkedDocumentIds = Array.from(new Set(linkedDocumentIds.map(Number).filter(Boolean)));
+        }
+
+        return uploadedIds;
     }
+
+    async function askScheduleSaveDestination() {
+        if (window.Swal) {
+            const result = await Swal.fire({
+                title: '¿Qué quieres hacer?',
+                text: 'Puedes descargar el Excel sin guardar archivos en servidor, o subir el schedule y sus archivos a la base de datos.',
+                icon: 'question',
+                showCancelButton: true,
+                showDenyButton: true,
+                confirmButtonText: 'Subir a servidor',
+                denyButtonText: 'Descargar Excel',
+                cancelButtonText: 'Cancelar',
+                reverseButtons: true
+            });
+
+            if (result.isConfirmed) return 'server';
+            if (result.isDenied) return 'download';
+
+            return 'cancel';
+        }
+
+        const upload = confirm(
+            'Aceptar = Subir a servidor\nCancelar = Descargar Excel'
+        );
+
+        return upload ? 'server' : 'download';
+    }
+
+    async function uploadPropertyDocument() {
+    throw new Error('Source file uploads are disabled for Property Management. Only schedules are saved.');
+}
 
     async function loadPropertyDocuments() {
         const list = document.getElementById('pmDocumentsList');
@@ -3109,6 +3777,35 @@
             renderDepartmentDocumentsTab();
         }
     }
+    async function askScheduleSaveAction() {
+        if (window.Swal) {
+            const result = await Swal.fire({
+                title: '¿Qué quieres hacer?',
+                text: 'Puedes descargar el Excel o guardar solo el schedule en el servidor. Los archivos fuente no se subirán.',
+                icon: 'question',
+                showDenyButton: true,
+                showCancelButton: true,
+                confirmButtonText: 'Subir schedule',
+                denyButtonText: 'Descargar Excel',
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#102a43',
+                denyButtonColor: '#244c6b',
+                cancelButtonColor: '#64748b',
+                reverseButtons: true
+            });
+
+            if (result.isConfirmed) return 'server';
+            if (result.isDenied) return 'download';
+
+            return 'cancel';
+        }
+
+        const saveServer = confirm(
+            'Aceptar = Subir solo el schedule al servidor\nCancelar = Descargar Excel'
+        );
+
+        return saveServer ? 'server' : 'download';
+    }
 
     async function saveCurrentSchedule() {
         if (!scheduleRows.length) {
@@ -3116,47 +3813,82 @@
             return;
         }
 
+        const action = await askScheduleSaveAction();
+
+        if (action === 'cancel') {
+            setScheduleStatus('Save cancelled.', 'info');
+            return;
+        }
+
+        if (action === 'download') {
+            exportScheduleWorkbook();
+            setScheduleStatus(
+                'Schedule downloaded. Nothing was uploaded to the server.',
+                'success'
+            );
+            return;
+        }
+
         const saveButton = document.getElementById('pmSaveScheduleBtn');
         const result = getScheduleResult();
-        const payload = {
-            nombre: getScheduleName(),
-            periodo_anio: getScheduleYear(scheduleRows),
-            periodo_mes: getLatestScheduleMonth(scheduleRows),
-            rows: serializeScheduleRows(scheduleRows),
-            headers: SCHEDULE_HEADERS,
-            total_tiendas: result.storeCount,
-            total_filas: result.rows.length,
-            balance_total: result.totalBalance,
-            estado: 'draft',
-            documentIds: linkedDocumentIds
-        };
 
         if (saveButton) saveButton.disabled = true;
-        setScheduleStatus('Saving Property Management schedule...', 'info');
-        showServerLoading('Saving schedule', 'Property Management data is being saved on the server.');
+
+        setScheduleStatus('Saving schedule on server. Source files will not be uploaded.', 'info');
+
+        showServerLoading(
+            'Saving schedule',
+            'Only the schedule data will be saved. Source files will not be uploaded.'
+        );
 
         try {
+            const payload = {
+                nombre: getScheduleName(),
+                periodo_anio: getScheduleYear(scheduleRows),
+                periodo_mes: getLatestScheduleMonth(scheduleRows),
+                rows: serializeScheduleRows(scheduleRows),
+                headers: SCHEDULE_HEADERS,
+                total_tiendas: result.storeCount,
+                total_filas: result.rows.length,
+                balance_total: result.totalBalance,
+                estado: 'draft',
+                documentIds: []
+            };
+
             const path = currentScheduleId
                 ? `/schedules/${encodeURIComponent(currentScheduleId)}`
                 : '/schedules';
+
             const method = currentScheduleId ? 'PUT' : 'POST';
+
             const response = await apiJson(path, {
                 method,
                 body: payload
             });
 
             currentScheduleId = response.schedule?.id || currentScheduleId;
+            linkedDocumentIds = [];
+
             await loadSavedSchedules();
-            renderDepartmentDocumentsTab();
-            setScheduleStatus('Schedule saved in Property Management database tables.', 'success');
+
+            setScheduleStatus(
+                'Schedule saved on server. No source files were uploaded.',
+                'success'
+            );
+
             showServerResult(
                 'success',
-                'Saved on server',
-                'The schedule was saved in the Property Management database.'
+                'Schedule saved',
+                'Only the schedule was saved on the server. Source files were not uploaded.'
             );
         } catch (error) {
             setScheduleStatus(error.message || 'Schedule could not be saved.', 'error');
-            showServerResult('error', 'Save failed', error.message || 'Schedule could not be saved.');
+
+            showServerResult(
+                'error',
+                'Save failed',
+                error.message || 'Schedule could not be saved.'
+            );
         } finally {
             if (saveButton) saveButton.disabled = !scheduleRows.length;
         }
@@ -3299,6 +4031,8 @@
     }
 
     async function importMonthlyLedgerFile() {
+        if (isImportingMonthlyFiles) return;
+
         const input = document.getElementById('pmMonthlyLedgerFile');
         const files = Array.from(input?.files || []);
 
@@ -3312,12 +4046,13 @@
             return;
         }
 
+        isImportingMonthlyFiles = true;
+
         showPmLoading(`Reading ${files.length} monthly file${files.length === 1 ? '' : 's'}...`);
         setScheduleStatus(`Reading ${files.length} monthly file${files.length === 1 ? '' : 's'}...`, 'info');
 
         const importedResults = [];
         const failedFiles = [];
-        const documentWarnings = [];
 
         try {
             for (const file of files) {
@@ -3328,21 +4063,6 @@
 
                     importedResults.push({ file, result });
 
-                    try {
-                        const saved = await uploadPropertyDocument(file, 'general_ledger', {
-                            label: 'Monthly General Ledger update',
-                            sourceFile: file.name,
-                            importedMonths: result.months,
-                            storeCount: result.storeCount,
-                            collectedEntries: result.collectedEntries,
-                            paymentRows: result.paymentRows
-                        });
-                        if (saved?.id) linkedDocumentIds.push(saved.id);
-                    } catch (documentError) {
-                        const warning = documentError.message || 'The monthly file was not saved as a source document.';
-                        documentWarnings.push(`${file.name}: ${warning}`);
-                        console.warn('Monthly GL document could not be saved:', documentError);
-                    }
                 } catch (fileError) {
                     failedFiles.push(`${file.name}: ${fileError.message || 'could not be imported'}`);
                     console.error(`Monthly GL import error for ${file.name}:`, fileError);
@@ -3350,8 +4070,6 @@
             }
 
             renderSchedulePreview(getScheduleResult());
-            if (input) input.value = '';
-
             if (!importedResults.length) {
                 setScheduleStatus(
                     failedFiles.length
@@ -3362,6 +4080,7 @@
                 return;
             }
         } finally {
+            isImportingMonthlyFiles = false;
             hidePmLoading();
         }
 
@@ -3378,8 +4097,10 @@
                 : '',
             `${updatedStoreCount} store updates processed, ${paymentRowCount} payment rows added.`,
             failedFiles.length ? `Some files failed: ${failedFiles.join(' ')}` : '',
-            documentWarnings.length ? `Document warnings: ${documentWarnings.join(' ')}` : '',
-            'Save the schedule to keep the monthly updates.'
+            pendingSourceDocuments.length
+                ? `${pendingSourceDocuments.length} source file(s) pending. They will only be uploaded if you choose "Subir a servidor".`
+                : '',
+            'Save the schedule to download or upload it.'
         ].filter(Boolean);
 
         setScheduleStatus(
