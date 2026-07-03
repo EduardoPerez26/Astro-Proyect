@@ -107,6 +107,7 @@ const POPEYES_WL_TIP_ACCOUNTS = [
     'Payment Tips - WL GiftCard',
     'Payment Tips - WL Amex',
     'Payment Tips - WL Paypal',
+    'Payment Tips - WL Venmo',
     'Tips & Service Charges',
     'Delivery Tips',
     'Delivery Tips ',
@@ -850,11 +851,10 @@ function renderStoresTaxPopeyes() {
                 <small>${tienda.address || ''}</small>
             </td>
             <td>${tienda.zip || '-'}</td>
-            <td>${
-                tienda.latitude !== null && tienda.longitude !== null
-                    ? `${tienda.latitude.toFixed(6)}, ${tienda.longitude.toFixed(6)}`
-                    : '-'
-            }</td>
+            <td>${tienda.latitude !== null && tienda.longitude !== null
+            ? `${tienda.latitude.toFixed(6)}, ${tienda.longitude.toFixed(6)}`
+            : '-'
+        }</td>
             <td>${tienda.preferredJurisdiction || '-'}</td>
             <td>${estadoTaxRateDesdeCachePopeyes(tienda)}</td>
             <td class="bk-tax-store-actions">
