@@ -167,6 +167,9 @@
         ['HARSHRAJ', 'HI']
     ];
 
+    let orgChartEntityByLocation = new Map();
+    let propertyEntities = [];
+    let editingEntityId = null;
     let requests = [];
     let searchTerm = '';
     let stageFilter = '';
@@ -177,6 +180,13 @@
     let savedSchedules = [];
     let propertyDocuments = [];
     let selectedQuarterReview = 1;
+    let quarterStoreModalState = {
+        storeKey: '',
+        quarter: '',
+        search: '',
+        entity: '',
+        status: ''
+    };
     let scheduleFilters = {
         search: '',
         store: '',
@@ -338,6 +348,82 @@
             .getElementById('pmQuarterReviewCards')
             ?.addEventListener('click', handleQuarterReviewCardClick);
 
+        document
+            .getElementById('pmManageEntitiesBtn')
+            ?.addEventListener('click', openEntitiesModal);
+
+        document
+            .querySelectorAll('[data-pm-close-entities]')
+            .forEach(button => button.addEventListener('click', closeEntitiesModal));
+
+        document
+            .getElementById('pmImportEntitiesBtn')
+            ?.addEventListener('click', importEntitiesFromFile);
+
+        document
+            .getElementById('pmEntityForm')
+            ?.addEventListener('submit', saveEntityFromForm);
+
+        document
+            .getElementById('pmClearEntityFormBtn')
+            ?.addEventListener('click', clearEntityForm);
+
+        document
+            .getElementById('pmEntitiesTableBody')
+            ?.addEventListener('click', handleEntityTableAction);
+
+        document
+            .getElementById('pmChooseEntitiesFileBtn')
+            ?.addEventListener('click', function () {
+                document.getElementById('pmEntitiesImportFile')?.click();
+            });
+
+        document
+            .getElementById('pmEntitiesImportFile')
+            ?.addEventListener('change', updateSelectedEntitiesFileName);
+
+        document
+            .getElementById('pmToggleEntityFormBtn')
+            ?.addEventListener('click', function () {
+                showEntityForm('add');
+            });
+
+        document
+            .getElementById('pmCancelEntityFormBtn')
+            ?.addEventListener('click', function () {
+                clearEntityForm();
+                hideEntityForm();
+            });
+
+        document
+            .getElementById('pmStoreQuarterOverview')
+            ?.addEventListener('click', handleStoreQuarterOverviewClick);
+
+        document
+            .querySelectorAll('[data-pm-close-quarter-store]')
+            .forEach(button => button.addEventListener('click', closeQuarterStoreModal));
+
+        document
+            .getElementById('pmQuarterModalSearch')
+            ?.addEventListener('input', handleQuarterModalFilterChange);
+
+        document
+            .getElementById('pmQuarterModalQuarter')
+            ?.addEventListener('change', handleQuarterModalFilterChange);
+
+        document
+            .getElementById('pmQuarterModalEntity')
+            ?.addEventListener('change', handleQuarterModalFilterChange);
+
+        document
+            .getElementById('pmQuarterModalStatus')
+            ?.addEventListener('change', handleQuarterModalFilterChange);
+
+        document
+            .getElementById('pmQuarterModalClearFiltersBtn')
+            ?.addEventListener('click', clearQuarterModalFilters);
+
+
         initializeUploadDropzone('pmDimensionBalanceFile', 'label[for="pmDimensionBalanceFile"]');
         initializeUploadDropzone('pmMonthlyLedgerFile', 'label[for="pmMonthlyLedgerFile"]');
 
@@ -345,7 +431,345 @@
         initializePredefinedSchedule({ showStatus: false });
         render();
         refreshPersistedData().finally(openScheduleFromQuery);
+        loadPropertyEntities();
     });
+
+    function updateEntitiesImportVisibility() {
+        const importCard = document.getElementById('pmEntitiesImportCard');
+
+        if (!importCard) return;
+
+        importCard.hidden = propertyEntities.length > 0;
+    }
+
+    function updateEntitiesCountLabel() {
+        const label = document.getElementById('pmEntitiesCountLabel');
+
+        if (!label) return;
+
+        label.textContent = propertyEntities.length
+            ? `${propertyEntities.length} entities loaded.`
+            : 'No entities loaded.';
+    }
+
+    function showEntityForm(mode = 'add') {
+        const card = document.getElementById('pmEntityFormCard');
+        const title = document.getElementById('pmEntityFormTitle');
+
+        if (!card) return;
+
+        card.hidden = false;
+
+        if (title) {
+            title.textContent = mode === 'edit'
+                ? 'Edit entity'
+                : 'Add entity';
+        }
+
+        card.scrollIntoView({
+            behavior: 'smooth',
+            block: 'nearest'
+        });
+    }
+
+    function hideEntityForm() {
+        const card = document.getElementById('pmEntityFormCard');
+
+        if (!card) return;
+
+        card.hidden = true;
+    }
+
+    function updateSelectedEntitiesFileName() {
+        const input = document.getElementById('pmEntitiesImportFile');
+        const label = document.getElementById('pmEntitiesImportFileName');
+        const file = input?.files?.[0];
+
+        if (!label) return;
+
+        label.textContent = file
+            ? file.name
+            : 'No file selected';
+    }
+
+    async function loadPropertyEntities() {
+        try {
+            const payload = await apiJson('/entities');
+            propertyEntities = payload.entities || [];
+
+            orgChartEntityByLocation = new Map(
+                propertyEntities.map(item => [
+                    String(item.location || '').trim(),
+                    String(item.entity_code || '').trim().toUpperCase()
+                ])
+            );
+
+            renderEntitiesModalTable();
+            updateEntitiesImportVisibility();
+            updateEntitiesCountLabel();
+
+            applyOrgChartEntitiesToScheduleRows();
+            renderSchedulePreview(getScheduleResult());
+        } catch (error) {
+            console.warn('Property entities could not be loaded:', error);
+            propertyEntities = [];
+            orgChartEntityByLocation = new Map();
+
+            renderEntitiesModalTable();
+            updateEntitiesImportVisibility();
+            updateEntitiesCountLabel();
+        }
+    }
+
+    function openEntitiesModal() {
+        document.body.classList.add('pm-modal-open');
+        document.getElementById('pmEntitiesModal')?.removeAttribute('hidden');
+        hideEntityForm();
+        renderEntitiesModalTable();
+        updateEntitiesImportVisibility();
+        updateEntitiesCountLabel();
+    }
+
+    function closeEntitiesModal() {
+        document.body.classList.remove('pm-modal-open');
+        document.getElementById('pmEntitiesModal')?.setAttribute('hidden', '');
+    }
+
+    function renderEntitiesModalTable() {
+        const tbody = document.getElementById('pmEntitiesTableBody');
+        if (!tbody) return;
+
+        if (!propertyEntities.length) {
+            tbody.innerHTML = `
+            <tr>
+                <td colspan="6" class="pm-entities-empty">
+                    No entities loaded.
+                </td>
+            </tr>
+        `;
+            return;
+        }
+
+        tbody.innerHTML = propertyEntities.map(entity => `
+        <tr>
+            <td>
+                <strong>${escapeHtml(entity.location || '')}</strong>
+            </td>
+            <td>
+                <span class="pm-entity-chip">${escapeHtml(entity.entity_code || '')}</span>
+            </td>
+            <td>${escapeHtml(entity.brand || '')}</td>
+            <td>${escapeHtml(entity.entity_legal_name || '')}</td>
+            <td>${escapeHtml(entity.other_id || '')}</td>
+            <td>
+    <div class="pm-entity-row-actions">
+        <button
+            type="button"
+            class="pm-icon-btn"
+            data-pm-edit-entity="${escapeHtml(entity.id)}"
+            title="Edit"
+            aria-label="Edit entity"
+        >
+            <i class="fa-solid fa-pen" aria-hidden="true"></i>
+        </button>
+
+        <button
+            type="button"
+            class="pm-icon-btn is-danger"
+            data-pm-delete-entity="${escapeHtml(entity.id)}"
+            title="Delete"
+            aria-label="Delete entity"
+        >
+            <i class="fa-solid fa-trash" aria-hidden="true"></i>
+        </button>
+    </div>
+</td>
+        </tr>
+    `).join('');
+    }
+
+    function updateSelectedEntitiesFileName() {
+        const input = document.getElementById('pmEntitiesImportFile');
+        const label = document.getElementById('pmEntitiesImportFileName');
+        const file = input?.files?.[0];
+
+        if (!label) return;
+
+        label.textContent = file
+            ? file.name
+            : 'No file selected';
+    }
+
+    async function importEntitiesFromFile() {
+        const input = document.getElementById('pmEntitiesImportFile');
+        const file = input?.files?.[0];
+
+        if (!file) {
+            setScheduleStatus('Choose the ENTITIES ORG CHART file first.', 'error');
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('orgChart', file);
+
+        setScheduleStatus('Importing entities...', 'info');
+
+        try {
+            const response = await apiFetch('/entities/import', {
+                method: 'POST',
+                body: formData
+            });
+
+            const payload = await readJsonResponse(response);
+
+            if (!response.ok || payload.success === false) {
+                throw new Error(payload.message || 'Entities could not be imported');
+            }
+
+            if (input) input.value = '';
+            updateSelectedEntitiesFileName();
+
+            await loadPropertyEntities();
+            hideEntityForm();
+
+            setScheduleStatus(`Entities imported: ${payload.imported}`, 'success');
+        } catch (error) {
+            setScheduleStatus(error.message || 'Entities could not be imported.', 'error');
+        }
+    }
+
+    async function saveEntityFromForm(event) {
+        event.preventDefault();
+
+        const id = document.getElementById('pmEntityId')?.value || '';
+        const payload = {
+            location: document.getElementById('pmEntityLocation')?.value || '',
+            entity_code: document.getElementById('pmEntityCode')?.value || '',
+            brand: document.getElementById('pmEntityBrand')?.value || '',
+            entity_legal_name: document.getElementById('pmEntityLegalName')?.value || '',
+            entity_short_name: document.getElementById('pmEntityShortName')?.value || '',
+            other_id: document.getElementById('pmEntityOtherId')?.value || ''
+        };
+
+        const path = id ? `/entities/${encodeURIComponent(id)}` : '/entities';
+        const method = id ? 'PUT' : 'POST';
+
+        try {
+            await apiJson(path, {
+                method,
+                body: payload
+            });
+
+            clearEntityForm();
+            await loadPropertyEntities();
+            hideEntityForm();
+
+            setScheduleStatus('Entity saved.', 'success');
+        } catch (error) {
+            setScheduleStatus(error.message || 'Entity could not be saved.', 'error');
+        }
+    }
+
+    function clearEntityForm() {
+        editingEntityId = null;
+
+        [
+            'pmEntityId',
+            'pmEntityLocation',
+            'pmEntityCode',
+            'pmEntityBrand',
+            'pmEntityLegalName',
+            'pmEntityShortName',
+            'pmEntityOtherId'
+        ].forEach(id => {
+            const input = document.getElementById(id);
+            if (input) input.value = '';
+        });
+
+        const title = document.getElementById('pmEntityFormTitle');
+
+        if (title) {
+            title.textContent = 'Add entity';
+        }
+    }
+    async function handleEntityTableAction(event) {
+        const editButton = event.target.closest('[data-pm-edit-entity]');
+        const deleteButton = event.target.closest('[data-pm-delete-entity]');
+
+        if (editButton) {
+            const entity = propertyEntities.find(item =>
+                String(item.id) === String(editButton.dataset.pmEditEntity)
+            );
+
+            if (!entity) return;
+
+            editingEntityId = entity.id;
+
+            document.getElementById('pmEntityId').value = entity.id;
+            document.getElementById('pmEntityLocation').value = entity.location || '';
+            document.getElementById('pmEntityCode').value = entity.entity_code || '';
+            document.getElementById('pmEntityBrand').value = entity.brand || '';
+            document.getElementById('pmEntityLegalName').value = entity.entity_legal_name || '';
+            document.getElementById('pmEntityShortName').value = entity.entity_short_name || '';
+            document.getElementById('pmEntityOtherId').value = entity.other_id || '';
+
+            showEntityForm('edit');
+
+            return;
+        }
+
+        if (deleteButton) {
+            const id = deleteButton.dataset.pmDeleteEntity;
+
+            if (!confirm('Delete this entity mapping?')) return;
+
+            try {
+                await apiJson(`/entities/${encodeURIComponent(id)}`, {
+                    method: 'DELETE'
+                });
+
+                await loadPropertyEntities();
+                setScheduleStatus('Entity deleted.', 'success');
+            } catch (error) {
+                setScheduleStatus(error.message || 'Entity could not be deleted.', 'error');
+            }
+        }
+    }
+
+    function getEntityByLocation(location, fallback = '') {
+        const clean = String(location || '').trim();
+
+        if (!clean) {
+            return normalizeEntityCode(fallback);
+        }
+
+        const fromDatabase = orgChartEntityByLocation.get(clean);
+
+        if (fromDatabase) {
+            return normalizeEntityCode(fromDatabase);
+        }
+
+        const fallbackEntity = normalizeEntityCode(fallback);
+
+        if (fallbackEntity) {
+            return fallbackEntity;
+        }
+
+        return normalizeEntityCode(clean.slice(-2));
+    }
+
+    function applyOrgChartEntitiesToScheduleRows() {
+        if (!scheduleRows.length) return;
+
+        scheduleRows.forEach(row => {
+            const location = String(row[1] || '').trim();
+            if (!location) return;
+
+            row[2] = getEntityByLocation(location, row[2]);
+        });
+
+        recalculateScheduleRows();
+    }
 
 
     function initializePredefinedSchedule(options = {}) {
@@ -672,30 +1096,66 @@
 
     function parseGeneralLedger(rows) {
         const headerIndex = findHeaderRow(rows, ['Posted dt.', 'Location', 'Debit', 'Credit']);
+
         if (headerIndex < 0) {
             throw new Error('The General Ledger report does not have the expected headers.');
         }
 
         const headers = rows[headerIndex].map(normalizeHeader);
+
         const indexes = {
-            posted: findHeaderIndex(headers, 'posted dt'),
-            docDate: findHeaderIndex(headers, 'doc dt'),
-            doc: findHeaderIndex(headers, 'doc'),
-            memo: findHeaderIndex(headers, 'memo description'),
-            location: findHeaderIndex(headers, 'location'),
-            debit: findHeaderIndex(headers, 'debit'),
-            credit: findHeaderIndex(headers, 'credit')
+            posted: findAnyHeaderIndex(headers, ['posted dt', 'posted date', 'date']),
+            docDate: findAnyHeaderIndex(headers, ['doc dt', 'doc date']),
+            doc: findAnyHeaderIndex(headers, ['doc', 'document']),
+            memo: findAnyHeaderIndex(headers, [
+                'memo description',
+                'memo/description',
+                'memo',
+                'description',
+                'entry / payee',
+                'entry payee'
+            ]),
+            location: findAnyHeaderIndex(headers, ['location', 'store']),
+            account: findAnyHeaderIndex(headers, ['gl acct', 'gl account', 'account']),
+            debit: findAnyHeaderIndex(headers, ['debit']),
+            credit: findAnyHeaderIndex(headers, ['credit'])
         };
+
         const transactions = [];
 
         rows.slice(headerIndex + 1).forEach(row => {
-            const location = cleanLocation(row[indexes.location]);
-            const postedDate = parseDateValue(row[indexes.posted]);
-            const memo = String(row[indexes.memo] || row[indexes.doc] || '').trim();
-            const debit = parseMoney(row[indexes.debit]);
-            const credit = parseMoney(row[indexes.credit]);
-            const taxPeriodMonth = inferTaxPeriodMonth(memo, postedDate);
-            const paymentMonth = inferPaymentMonth(memo, postedDate, taxPeriodMonth);
+            const location = cleanLocation(getRowValue(row, indexes.location));
+            const postedDate = parseDateValue(getRowValue(row, indexes.posted));
+
+            const memo = String(
+                getRowValue(row, indexes.memo) ||
+                getRowValue(row, indexes.doc) ||
+                ''
+            ).trim();
+
+            const account = getRowValue(row, indexes.account);
+
+            let debit = parseMoney(getRowValue(row, indexes.debit));
+            let credit = parseMoney(getRowValue(row, indexes.credit));
+
+            const normalizedPayment = normalizeSalesTaxReturnPayment({
+                memo,
+                account,
+                debit,
+                credit,
+                postedDate
+            });
+
+            debit = normalizedPayment.debit;
+            credit = normalizedPayment.credit;
+
+            const taxPeriodMonth =
+                normalizedPayment.taxPeriodMonth ||
+                inferTaxPeriodMonth(memo, postedDate);
+
+            const paymentMonth =
+                normalizedPayment.paymentMonth ||
+                inferPaymentMonth(memo, postedDate, taxPeriodMonth);
 
             if (!location || !postedDate || (!debit && !credit)) return;
             if (/total|grand total/i.test(location) || /total|grand total/i.test(memo)) return;
@@ -703,7 +1163,7 @@
             transactions.push({
                 location,
                 postedDate,
-                docDate: parseDateValue(row[indexes.docDate]) || postedDate,
+                docDate: parseDateValue(getRowValue(row, indexes.docDate)) || postedDate,
                 memo: memo || 'Sales Tax',
                 debit: debit || 0,
                 credit: credit || 0,
@@ -715,6 +1175,74 @@
         });
 
         return transactions;
+    }
+
+    function normalizeSalesTaxReturnPayment(transaction) {
+        const memo = normalizeMemoForMonthParsing(transaction.memo);
+        const account = String(transaction.account || '').replace(/[^\d]/g, '');
+
+        const debit = Number(transaction.debit || 0);
+        const credit = Number(transaction.credit || 0);
+
+        const isSalesTax =
+            account === '241000' ||
+            memo.includes('SALES TAX');
+
+        const isPayment =
+            /\bQ[1-4]\s+RETURN\b/.test(memo) ||
+            /\bRETURN\s+PAYMENT\b/.test(memo) ||
+            /\bMONTHLY\s+PREPAYMENT\b/.test(memo) ||
+            /\bPREPAYMENT\b/.test(memo) ||
+            /\b\(\s*(JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|SEPT|OCT|NOV|DEC)[A-Z]*\s+PAID\s*\)/.test(memo);
+
+        if (!isSalesTax || !isPayment) {
+            return transaction;
+        }
+
+        const taxPeriodMonth = inferTaxPeriodMonth(transaction.memo, transaction.postedDate);
+        const paymentMonth = inferPaymentMonth(transaction.memo, transaction.postedDate, taxPeriodMonth);
+
+        if (debit) {
+            return {
+                ...transaction,
+                debit: Math.abs(debit),
+                credit: 0,
+                taxPeriodMonth,
+                paymentMonth
+            };
+        }
+
+        if (credit) {
+            return {
+                ...transaction,
+                debit: Math.abs(credit),
+                credit: 0,
+                taxPeriodMonth,
+                paymentMonth
+            };
+        }
+
+        return {
+            ...transaction,
+            taxPeriodMonth,
+            paymentMonth
+        };
+    }
+
+    function findAnyHeaderIndex(headers, labels) {
+        for (const label of labels) {
+            const index = findHeaderIndex(headers, label);
+
+            if (index >= 0) {
+                return index;
+            }
+        }
+
+        return -1;
+    }
+
+    function getRowValue(row, index) {
+        return index >= 0 ? row[index] : '';
     }
 
     function buildScheduleRows(transactions, dimensionByStore) {
@@ -892,6 +1420,58 @@
         return normalized === 12 ? 1 : normalized + 1;
     }
 
+    function normalizeMonthlyLedgerTransaction(transaction, sourceName = '') {
+        if (!transaction?.debit) return transaction;
+
+        const sourcePaymentMonth = getPaymentMonthFromMonthlySource(sourceName);
+        if (!sourcePaymentMonth) return transaction;
+
+        const memoHasTaxPeriod = hasExplicitTaxPeriodMonth(transaction.memo);
+
+        if (memoHasTaxPeriod) {
+            return transaction;
+        }
+
+        const taxPeriodMonth = getPreviousMonth(sourcePaymentMonth);
+
+        if (!taxPeriodMonth) return transaction;
+
+        return {
+            ...transaction,
+            taxPeriodMonth,
+            paymentMonth: sourcePaymentMonth
+        };
+    }
+
+    function getPaymentMonthFromMonthlySource(sourceName = '') {
+        const text = normalizeMemoForMonthParsing(sourceName);
+
+        const numericMonth = text.match(
+            /\b(?:20\d{2}[-_.\s]*)?(0?[1-9]|1[0-2])\s*[-_.\s]*(?:JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|SEPT|OCT|NOV|DEC|JANUARY|FEBRUARY|MARCH|APRIL|JUNE|JULY|AUGUST|SEPTEMBER|OCTOBER|NOVEMBER|DECEMBER)\b/
+        );
+
+        if (numericMonth) {
+            return normalizeScheduleMonth(numericMonth[1]);
+        }
+
+        const mentions = findMonthMentions(text);
+
+        return mentions.length
+            ? mentions[mentions.length - 1].month
+            : null;
+    }
+
+    function hasExplicitTaxPeriodMonth(memo = '') {
+        const text = normalizeMemoForMonthParsing(memo);
+
+        if (/\b20\d{2}\s*[.\-/]\s*(0?[1-9]|1[0-2])\b/.test(text)) {
+            return true;
+        }
+
+        return findMonthMentions(text)
+            .some(mention => !isPaidMonthMention(text, mention));
+    }
+
     function escapeRegExp(value) {
         return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     }
@@ -941,40 +1521,40 @@
         };
     }
 
-  function getPaidForTaxMonth(groupRows, summaryRow, taxMonth) {
-    return roundMoney(groupRows.reduce((sum, row) => {
-        if (!row || row === summaryRow || row[0] === 'Sales Tax') return sum;
+    function getPaidForTaxMonth(groupRows, summaryRow, taxMonth) {
+        return roundMoney(groupRows.reduce((sum, row) => {
+            if (!row || row === summaryRow || row[0] === 'Sales Tax') return sum;
 
-        const rowTaxMonth = getScheduleRowTaxPeriodMonth(row);
+            const rowTaxMonth = getScheduleRowTaxPeriodMonth(row);
 
-        // Lo importante es el periodo fiscal, no la columna visible.
-        // Si la fila corresponde a marzo fiscal, entra en APR PAID (MAR).
-        if (rowTaxMonth !== taxMonth) return sum;
+            // Lo importante es el periodo fiscal, no la columna visible.
+            // Si la fila corresponde a marzo fiscal, entra en APR PAID (MAR).
+            if (rowTaxMonth !== taxMonth) return sum;
 
-        return sum + getScheduleRowPaymentAmountForTaxMonth(row, taxMonth);
-    }, 0));
-}
+            return sum + getScheduleRowPaymentAmountForTaxMonth(row, taxMonth);
+        }, 0));
+    }
 
-function getScheduleRowPaymentAmountForTaxMonth(row, taxMonth) {
-    const amountPaid = parseMoney(row?.[7]);
+    function getScheduleRowPaymentAmountForTaxMonth(row, taxMonth) {
+        const amountPaid = parseMoney(row?.[7]);
 
-    // Prioridad 1: Amount Paid.
-    // Esta es la fuente más confiable para el detalle.
-    if (amountPaid !== null) return amountPaid;
+        // Prioridad 1: Amount Paid.
+        // Esta es la fuente más confiable para el detalle.
+        if (amountPaid !== null) return amountPaid;
 
-    // Prioridad 2: columna del mes pagado esperado.
-    // Ejemplo: taxMonth 3 = March, expected paid month = April.
-    const expectedPaidMonth = getNextMonth(taxMonth);
-    const expectedPaidColumn = PAID_COL_BY_MONTH[expectedPaidMonth];
-    const expectedColumnAmount = parseMoney(row?.[expectedPaidColumn]);
+        // Prioridad 2: columna del mes pagado esperado.
+        // Ejemplo: taxMonth 3 = March, expected paid month = April.
+        const expectedPaidMonth = getNextMonth(taxMonth);
+        const expectedPaidColumn = PAID_COL_BY_MONTH[expectedPaidMonth];
+        const expectedColumnAmount = parseMoney(row?.[expectedPaidColumn]);
 
-    if (expectedColumnAmount !== null) return expectedColumnAmount;
+        if (expectedColumnAmount !== null) return expectedColumnAmount;
 
-    // Prioridad 3: cualquier columna PAID de la fila.
-    return Object.values(PAID_COL_BY_MONTH).reduce((sum, column) => {
-        return sum + Number(row?.[column] || 0);
-    }, 0);
-}
+        // Prioridad 3: cualquier columna PAID de la fila.
+        return Object.values(PAID_COL_BY_MONTH).reduce((sum, column) => {
+            return sum + Number(row?.[column] || 0);
+        }, 0);
+    }
 
     function getScheduleRowPaymentAmountFromColumn(row, paidColumn) {
         const columnAmount = parseMoney(row?.[paidColumn]);
@@ -1092,6 +1672,7 @@ function getScheduleRowPaymentAmountForTaxMonth(row, taxMonth) {
             setText('pmScheduleBalance', formatCurrency(0));
             setText('pmScheduleFilterCount', 'Showing all rows');
             renderQuarterReviewCards([]);
+            renderStoreQuarterOverview([]);
             populateScheduleFilterOptions([]);
             updateMonthEditor();
             return;
@@ -1104,6 +1685,7 @@ function getScheduleRowPaymentAmountForTaxMonth(row, taxMonth) {
         setText('pmScheduleRows', result.rows.length);
         setText('pmScheduleBalance', formatCurrency(result.totalBalance));
         renderQuarterReviewCards(result.rows);
+        renderStoreQuarterOverview(result.rows);
         populateScheduleFilterOptions(result.rows);
 
         const filtered = getFilteredScheduleRows(result.rows);
@@ -1126,16 +1708,11 @@ function getScheduleRowPaymentAmountForTaxMonth(row, taxMonth) {
 
     function renderQuarterReviewCards(rows) {
         const container = document.getElementById('pmQuarterReviewCards');
-        const detailContainer = document.getElementById('pmQuarterReviewDetail');
 
         if (!container) return;
 
         if (!rows || !rows.length) {
             container.innerHTML = '';
-            if (detailContainer) {
-                detailContainer.hidden = true;
-                detailContainer.innerHTML = '';
-            }
             return;
         }
 
@@ -1143,23 +1720,14 @@ function getScheduleRowPaymentAmountForTaxMonth(row, taxMonth) {
 
         if (!cards.some(card => card.activeStores > 0)) {
             container.innerHTML = '';
-            if (detailContainer) {
-                detailContainer.hidden = true;
-                detailContainer.innerHTML = '';
-            }
             return;
-        }
-
-        if (!cards.some(card => card.quarter === selectedQuarterReview && card.activeStores > 0)) {
-            selectedQuarterReview = cards.find(card => card.activeStores > 0)?.quarter || 1;
         }
 
         container.innerHTML = cards.map(card => {
             const isBalanced = Math.abs(card.difference) <= 0.01;
-            const isActive = card.quarter === selectedQuarterReview;
 
             return `
-            <article class="pm-quarter-card ${isBalanced ? 'is-balanced' : 'is-open'} ${isActive ? 'is-selected' : ''}">
+            <article class="pm-quarter-card ${isBalanced ? 'is-balanced' : 'is-open'}">
                 <div class="pm-quarter-head">
                     <span>${escapeHtml(card.label)}</span>
                     <strong>${escapeHtml(formatCurrency(card.difference))}</strong>
@@ -1185,109 +1753,344 @@ function getScheduleRowPaymentAmountForTaxMonth(row, taxMonth) {
                     class="pm-quarter-detail-button"
                     data-quarter-review="${escapeHtml(card.quarter)}"
                 >
-                    View detail
+                    View stores
                 </button>
             </article>
         `;
         }).join('');
-
-        renderQuarterReviewDetail(rows, selectedQuarterReview);
     }
 
     function handleQuarterReviewCardClick(event) {
         const button = event.target.closest('[data-quarter-review]');
         if (!button) return;
 
-        selectedQuarterReview = Number(button.dataset.quarterReview || 1);
-        renderQuarterReviewCards(scheduleRows);
+        const quarter = Number(button.dataset.quarterReview || 0);
+
+        openQuarterStoreModal({
+            quarter,
+            storeKey: ''
+        });
     }
 
-    function renderQuarterReviewDetail(rows, quarter) {
-        const container = document.getElementById('pmQuarterReviewDetail');
-        if (!container) return;
+    function renderStoreQuarterOverview(rows) {
+        const tbody = document.getElementById('pmStoreQuarterOverview');
+        if (!tbody) return;
 
-        const detailRows = getQuarterReviewDetailRows(rows, quarter);
-        const months = QUARTER_MONTHS[quarter] || [];
-        const card = getQuarterReviewCards(rows).find(item => item.quarter === quarter);
+        const storeRows = getStoreQuarterOverviewRows(rows);
 
-        if (!detailRows.length || !card) {
-            container.hidden = false;
-            container.innerHTML = `
-            <div class="pm-quarter-detail-empty">
-                No activity found for Q${escapeHtml(quarter)}.
-            </div>
+        if (!storeRows.length) {
+            tbody.innerHTML = `
+            <tr>
+                <td colspan="8" class="pm-table-empty">
+                    No quarter data loaded.
+                </td>
+            </tr>
         `;
             return;
         }
 
-        const collectedMonthTotals = months.map((month, monthIndex) =>
-            roundMoney(detailRows.reduce((sum, row) => sum + Number(row.collectedByMonth[monthIndex] || 0), 0))
-        );
+        tbody.innerHTML = storeRows.map(item => {
+            const status = item.quarters.some(quarter => Math.abs(quarter.difference) > 0.01)
+                ? 'Needs Review'
+                : 'Balanced';
 
-        const paidMonthTotals = months.map((month, monthIndex) =>
-            roundMoney(detailRows.reduce((sum, row) => sum + Number(row.paidByMonth[monthIndex] || 0), 0))
-        );
-
-        const totalCollected = roundMoney(detailRows.reduce((sum, row) => sum + row.collected, 0));
-        const totalPaid = roundMoney(detailRows.reduce((sum, row) => sum + row.paid, 0));
-        const totalDifference = roundMoney(detailRows.reduce((sum, row) => sum + row.difference, 0));
-
-        container.hidden = false;
-        container.innerHTML = `
-        <section class="pm-quarter-detail">
-            <div class="pm-quarter-detail-header">
-                <div>
-                    <span class="pm-eyebrow">
-                        <i class="fa-solid fa-calculator" aria-hidden="true"></i>
-                        Quarter source detail
+            return `
+            <tr>
+                <td><strong>${escapeHtml(item.store)}</strong></td>
+                <td>${escapeHtml(item.entity || '')}</td>
+                ${item.quarters.map(quarter => `
+                    <td class="${Math.abs(quarter.difference) > 0.01 ? 'is-open' : 'is-balanced'}">
+                        ${escapeHtml(formatCurrency(quarter.difference))}
+                    </td>
+                `).join('')}
+                <td>
+                    <span class="pm-quarter-status ${status === 'Balanced' ? 'is-balanced' : 'is-open'}">
+                        ${escapeHtml(status)}
                     </span>
-                    <h3>Q${escapeHtml(quarter)} ${escapeHtml(getQuarterLabel(quarter))}</h3>
-                    <p>
-                        This table shows where the card totals come from: collected by fiscal month,
-                        paid by related tax period, and the difference by store.
-                    </p>
-                </div>
+                </td>
+                <td>
+                    <button
+                        type="button"
+                        class="pm-store-detail-button"
+                        data-store-quarter-key="${escapeHtml(item.key)}"
+                    >
+                        Details
+                    </button>
+                </td>
+            </tr>
+        `;
+        }).join('');
+    }
 
-                <div class="pm-quarter-detail-total ${Math.abs(card.difference) <= 0.01 ? 'is-balanced' : 'is-open'}">
-                    <span>Quarter difference</span>
-                    <strong>${escapeHtml(formatCurrency(card.difference))}</strong>
-                </div>
-            </div>
+    function getStoreQuarterOverviewRows(rows) {
+        const groups = groupScheduleRowsByStore(rows);
+        const result = [];
 
-            <div class="pm-quarter-detail-table-wrap">
-                <table class="pm-quarter-detail-table">
-                    <thead>
-                        <tr>
-                            <th>Store</th>
-                            <th>Entity</th>
-                            ${months.map(month => `<th>${escapeHtml(getShortMonthName(month))} Collected</th>`).join('')}
-                            ${months.map(month => `<th>${escapeHtml(getPaidHeaderForTaxMonth(month))}</th>`).join('')}                           
-                            <th>Total Collected</th>
-                            <th>Total Paid</th>
-                            <th>Difference</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
+        groups.forEach((groupRows, key) => {
+            const summaryRow = groupRows.find(row => row[0] === 'Sales Tax');
 
-                    <tbody>
-                        ${detailRows.map(row => renderQuarterReviewDetailRow(row, months)).join('')}
-                    </tbody>
+            if (!summaryRow) return;
 
-                    <tfoot>
-                        <tr>
-                            <th colspan="2">Total</th>
-                            ${collectedMonthTotals.map(value => renderQuarterMoneyFooter(value)).join('')}
-                            ${paidMonthTotals.map(value => renderQuarterMoneyFooter(value)).join('')}
-                            ${renderQuarterMoneyFooter(totalCollected)}
-                            ${renderQuarterMoneyFooter(totalPaid)}
-                            ${renderQuarterMoneyFooter(totalDifference)}
-                            <th>${Math.abs(totalDifference) <= 0.01 ? 'Balanced' : 'Needs Review'}</th>
-                        </tr>
-                    </tfoot>
-                </table>
-            </div>
-        </section>
-    `;
+            const store = String(summaryRow[1] || '').trim();
+            const entity = getScheduleRowEntity(summaryRow) || String(summaryRow[2] || '').trim();
+
+            const quarters = Object.keys(QUARTER_MONTHS).map(quarterText => {
+                const quarter = Number(quarterText);
+                const totals = getQuarterGroupTotals(groupRows, summaryRow, quarter);
+
+                return {
+                    quarter,
+                    label: `Q${quarter} ${getQuarterLabel(quarter)}`,
+                    collected: totals.collected,
+                    paid: totals.paid,
+                    difference: totals.difference,
+                    hasActivity: Boolean(totals.collected || totals.paid)
+                };
+            });
+
+            const hasAnyActivity = quarters.some(quarter => quarter.hasActivity);
+
+            if (!hasAnyActivity) return;
+
+            result.push({
+                key,
+                store,
+                entity,
+                quarters,
+                totalDifference: roundMoney(
+                    quarters.reduce((sum, quarter) => sum + Number(quarter.difference || 0), 0)
+                )
+            });
+        });
+
+        return result.sort((a, b) =>
+            naturalSort(a.store, b.store) || naturalSort(a.entity, b.entity)
+        );
+    }
+
+    function handleStoreQuarterOverviewClick(event) {
+        const button = event.target.closest('[data-store-quarter-key]');
+        if (!button) return;
+
+        openQuarterStoreModal({
+            storeKey: button.dataset.storeQuarterKey || '',
+            quarter: ''
+        });
+    }
+
+    function openQuarterStoreModal(options = {}) {
+        quarterStoreModalState = {
+            storeKey: options.storeKey || '',
+            quarter: options.quarter ? String(options.quarter) : '',
+            search: '',
+            entity: '',
+            status: ''
+        };
+
+        document.body.classList.add('pm-modal-open');
+        document.getElementById('pmQuarterStoreModal')?.removeAttribute('hidden');
+
+        syncQuarterModalFilterInputs();
+        populateQuarterModalEntityFilter();
+        renderQuarterStoreModal();
+    }
+
+    function closeQuarterStoreModal() {
+        document.body.classList.remove('pm-modal-open');
+        document.getElementById('pmQuarterStoreModal')?.setAttribute('hidden', '');
+    }
+
+    function handleQuarterModalFilterChange() {
+        quarterStoreModalState.search = document.getElementById('pmQuarterModalSearch')?.value || '';
+        quarterStoreModalState.quarter = document.getElementById('pmQuarterModalQuarter')?.value || '';
+        quarterStoreModalState.entity = document.getElementById('pmQuarterModalEntity')?.value || '';
+        quarterStoreModalState.status = document.getElementById('pmQuarterModalStatus')?.value || '';
+
+        renderQuarterStoreModal();
+    }
+
+    function clearQuarterModalFilters() {
+        quarterStoreModalState = {
+            ...quarterStoreModalState,
+            search: '',
+            quarter: quarterStoreModalState.storeKey ? '' : '',
+            entity: '',
+            status: ''
+        };
+
+        syncQuarterModalFilterInputs();
+        renderQuarterStoreModal();
+    }
+
+    function syncQuarterModalFilterInputs() {
+        const searchInput = document.getElementById('pmQuarterModalSearch');
+        const quarterSelect = document.getElementById('pmQuarterModalQuarter');
+        const entitySelect = document.getElementById('pmQuarterModalEntity');
+        const statusSelect = document.getElementById('pmQuarterModalStatus');
+
+        if (searchInput) searchInput.value = quarterStoreModalState.search || '';
+        if (quarterSelect) quarterSelect.value = quarterStoreModalState.quarter || '';
+        if (entitySelect) entitySelect.value = quarterStoreModalState.entity || '';
+        if (statusSelect) statusSelect.value = quarterStoreModalState.status || '';
+    }
+
+    function populateQuarterModalEntityFilter() {
+        const select = document.getElementById('pmQuarterModalEntity');
+        if (!select) return;
+
+        const rows = getStoreQuarterOverviewRows(scheduleRows);
+        const entities = Array.from(
+            new Set(rows.map(row => row.entity).filter(Boolean))
+        ).sort(naturalSort);
+
+        select.innerHTML = [
+            '<option value="">All entities</option>',
+            ...entities.map(entity => `
+            <option value="${escapeHtml(entity)}">${escapeHtml(entity)}</option>
+        `)
+        ].join('');
+
+        select.value = entities.includes(quarterStoreModalState.entity)
+            ? quarterStoreModalState.entity
+            : '';
+    }
+
+    function renderQuarterStoreModal() {
+        const title = document.getElementById('pmQuarterStoreTitle');
+        const subtitle = document.getElementById('pmQuarterStoreSubtitle');
+        const summary = document.getElementById('pmQuarterModalSummary');
+        const tbody = document.getElementById('pmQuarterModalTableBody');
+
+        if (!tbody) return;
+
+        const rows = getFilteredQuarterStoreModalRows();
+
+        const selectedStore = getStoreQuarterOverviewRows(scheduleRows)
+            .find(row => row.key === quarterStoreModalState.storeKey);
+
+        if (title) {
+            title.textContent = selectedStore
+                ? `Store ${selectedStore.store} / ${selectedStore.entity || ''}`
+                : 'Quarter review by store';
+        }
+
+        if (subtitle) {
+            subtitle.textContent = selectedStore
+                ? 'Review all quarter activity for this store.'
+                : 'Review quarter activity across all stores.';
+        }
+
+        const totalCollected = roundMoney(rows.reduce((sum, row) => sum + Number(row.collected || 0), 0));
+        const totalPaid = roundMoney(rows.reduce((sum, row) => sum + Number(row.paid || 0), 0));
+        const totalDifference = roundMoney(rows.reduce((sum, row) => sum + Number(row.difference || 0), 0));
+        const openCount = rows.filter(row => Math.abs(row.difference) > 0.01).length;
+
+        if (summary) {
+            summary.innerHTML = `
+            <article>
+                <span>Rows</span>
+                <strong>${escapeHtml(rows.length)}</strong>
+            </article>
+            <article>
+                <span>Collected</span>
+                <strong>${escapeHtml(formatCurrency(totalCollected))}</strong>
+            </article>
+            <article>
+                <span>Paid next month</span>
+                <strong>${escapeHtml(formatCurrency(totalPaid))}</strong>
+            </article>
+            <article class="${Math.abs(totalDifference) > 0.01 ? 'is-open' : 'is-balanced'}">
+                <span>Difference</span>
+                <strong>${escapeHtml(formatCurrency(totalDifference))}</strong>
+            </article>
+            <article>
+                <span>Needs Review</span>
+                <strong>${escapeHtml(openCount)}</strong>
+            </article>
+        `;
+        }
+
+        if (!rows.length) {
+            tbody.innerHTML = `
+            <tr>
+                <td colspan="7" class="pm-table-empty">
+                    No rows match the selected filters.
+                </td>
+            </tr>
+        `;
+            return;
+        }
+
+        tbody.innerHTML = rows.map(row => {
+            const isOpen = Math.abs(row.difference) > 0.01;
+
+            return `
+            <tr>
+                <td><strong>${escapeHtml(row.store)}</strong></td>
+                <td>${escapeHtml(row.entity || '')}</td>
+                <td>${escapeHtml(row.label)}</td>
+                <td>${escapeHtml(formatCurrency(row.collected))}</td>
+                <td>${escapeHtml(formatCurrency(row.paid))}</td>
+                <td class="${isOpen ? 'is-open' : 'is-balanced'}">
+                    ${escapeHtml(formatCurrency(row.difference))}
+                </td>
+                <td>
+                    <span class="pm-quarter-status ${isOpen ? 'is-open' : 'is-balanced'}">
+                        ${isOpen ? 'Needs Review' : 'Balanced'}
+                    </span>
+                </td>
+            </tr>
+        `;
+        }).join('');
+    }
+
+    function getFilteredQuarterStoreModalRows() {
+        const search = normalize(quarterStoreModalState.search);
+        const quarterFilter = Number(quarterStoreModalState.quarter || 0);
+        const entityFilter = quarterStoreModalState.entity;
+        const statusFilter = quarterStoreModalState.status;
+        const storeKeyFilter = quarterStoreModalState.storeKey;
+
+        const storeRows = getStoreQuarterOverviewRows(scheduleRows);
+        const rows = [];
+
+        storeRows.forEach(storeRow => {
+            if (storeKeyFilter && storeRow.key !== storeKeyFilter) return;
+            if (entityFilter && storeRow.entity !== entityFilter) return;
+
+            const searchText = normalize([
+                storeRow.store,
+                storeRow.entity
+            ].join(' '));
+
+            if (search && !searchText.includes(search)) return;
+
+            storeRow.quarters.forEach(quarter => {
+                const isOpen = Math.abs(quarter.difference) > 0.01;
+
+                if (!quarter.hasActivity) return;
+                if (quarterFilter && quarter.quarter !== quarterFilter) return;
+                if (statusFilter === 'open' && !isOpen) return;
+                if (statusFilter === 'balanced' && isOpen) return;
+
+                rows.push({
+                    key: storeRow.key,
+                    store: storeRow.store,
+                    entity: storeRow.entity,
+                    quarter: quarter.quarter,
+                    label: quarter.label,
+                    collected: quarter.collected,
+                    paid: quarter.paid,
+                    difference: quarter.difference
+                });
+            });
+        });
+
+        return rows.sort((a, b) =>
+            naturalSort(a.store, b.store) ||
+            naturalSort(a.entity, b.entity) ||
+            a.quarter - b.quarter
+        );
     }
 
     function getQuarterReviewDetailRows(rows, quarter) {
@@ -1337,24 +2140,6 @@ function getScheduleRowPaymentAmountForTaxMonth(row, taxMonth) {
         });
     }
 
-    function renderQuarterReviewDetailRow(row, months) {
-        return `
-        <tr class="${Math.abs(row.difference) <= 0.01 ? 'is-balanced' : 'is-open'}">
-            <td>${escapeHtml(row.store)}</td>
-            <td>${escapeHtml(row.entity || '-')}</td>
-            ${row.collectedByMonth.map(value => renderQuarterMoneyCell(value)).join('')}
-            ${row.paidByMonth.map(value => renderQuarterMoneyCell(value)).join('')}
-            ${renderQuarterMoneyCell(row.collected)}
-            ${renderQuarterMoneyCell(row.paid)}
-            ${renderQuarterMoneyCell(row.difference)}
-            <td>
-                <span class="pm-quarter-status ${Math.abs(row.difference) <= 0.01 ? 'is-balanced' : 'is-open'}">
-                    ${escapeHtml(row.status)}
-                </span>
-            </td>
-        </tr>
-    `;
-    }
 
     function renderQuarterMoneyCell(value) {
         const number = Number(value || 0);
@@ -1366,31 +2151,21 @@ function getScheduleRowPaymentAmountForTaxMonth(row, taxMonth) {
     `;
     }
 
-    function renderQuarterMoneyFooter(value) {
-        const number = Number(value || 0);
-
-        return `
-        <th class="is-number ${number < -0.01 ? 'is-negative' : number > 0.01 ? 'is-positive' : ''}">
-            ${escapeHtml(formatCurrency(number))}
-        </th>
-    `;
-    }
-
     function getShortMonthName(month) {
         return MONTH_NAMES[month]?.slice(0, 3) || `M${month}`;
     }
 
     function getPaidHeaderForTaxMonth(taxMonth) {
-    const paidMonth = getNextMonth(taxMonth);
-    const taxLabel = getShortMonthName(taxMonth).toUpperCase();
-    const paidLabel = getShortMonthName(paidMonth).toUpperCase();
+        const paidMonth = getNextMonth(taxMonth);
+        const taxLabel = getShortMonthName(taxMonth).toUpperCase();
+        const paidLabel = getShortMonthName(paidMonth).toUpperCase();
 
-    if (taxMonth === 12) {
-        return `${paidLabel} PAID NEXT YEAR (${taxLabel})`;
+        if (taxMonth === 12) {
+            return `${paidLabel} PAID NEXT YEAR (${taxLabel})`;
+        }
+
+        return `${paidLabel} PAID (${taxLabel})`;
     }
-
-    return `${paidLabel} PAID (${taxLabel})`;
-}
 
     function getQuarterReviewCards(rows) {
         const groups = groupScheduleRowsByStore(rows);
@@ -1433,9 +2208,16 @@ function getScheduleRowPaymentAmountForTaxMonth(row, taxMonth) {
 
         rows.forEach(row => {
             const store = String(row[1] || '').trim();
+
             if (!store) return;
-            if (!groups.has(store)) groups.set(store, []);
-            groups.get(store).push(row);
+
+            const key = getScheduleRowGroupKey(row);
+
+            if (!groups.has(key)) {
+                groups.set(key, []);
+            }
+
+            groups.get(key).push(row);
         });
 
         return groups;
@@ -2607,63 +3389,112 @@ function getScheduleRowPaymentAmountForTaxMonth(row, taxMonth) {
     }
 
     function applyMonthlyLedgerTransactions(transactions, sourceName = '') {
-        const usableTransactions = transactions.filter(item =>
-            item?.location && item?.postedDate && (item.debit || item.credit)
-        );
+        const usableTransactions = transactions
+            .filter(item =>
+                item?.location && item?.postedDate && (item.debit || item.credit)
+            )
+            .map(transaction =>
+                normalizeMonthlyLedgerTransaction(transaction, sourceName)
+            );
 
         if (!usableTransactions.length) {
             throw new Error('The monthly file does not contain usable transactions.');
         }
 
+        const entityByStore = buildMonthlyEntityByStore(usableTransactions);
+
+        const normalizedTransactions = usableTransactions.map(transaction => {
+            const store = String(transaction.location || '').trim();
+            const explicitEntity = getTransactionEntity(transaction);
+            const resolvedEntity = explicitEntity || entityByStore.get(store) || '';
+
+            return resolvedEntity
+                ? { ...transaction, entity: resolvedEntity }
+                : transaction;
+        });
+
         const summaryMonths = new Set();
         const paymentMonths = new Set();
-        const paymentTaxPeriodMonths = new Set();
         const affectedStores = new Set();
         const collectedByStoreMonth = new Map();
         const paymentRows = [];
+        const paymentRemovalKeys = new Set();
+        const summaryClearKeys = new Set();
 
-        usableTransactions.forEach(transaction => {
+        normalizedTransactions.forEach(transaction => {
             const taxPeriodMonth = getTransactionTaxPeriodMonth(transaction);
             const paymentMonth = getTransactionPaymentMonth(transaction);
+            const store = String(transaction.location || '').trim();
+            const entity = getTransactionEntity(transaction);
+            const storeEntityKey = getStoreEntityKey(store, entity);
 
-            if (transaction.credit && taxPeriodMonth) summaryMonths.add(taxPeriodMonth);
+            if (transaction.credit && taxPeriodMonth) {
+                summaryMonths.add(taxPeriodMonth);
+                summaryClearKeys.add(`${storeEntityKey}||${taxPeriodMonth}`);
+            }
 
             if (transaction.debit && paymentMonth) {
                 paymentMonths.add(paymentMonth);
-                if (taxPeriodMonth) paymentTaxPeriodMonths.add(taxPeriodMonth);
             }
         });
 
-        removeImportedRowsForMonths(Array.from(paymentTaxPeriodMonths));
-        clearStoreSummaryMonthValues(Array.from(summaryMonths));
+        clearStoreSummaryMonthValuesForKeys(summaryClearKeys);
 
-        usableTransactions.forEach(transaction => {
+        normalizedTransactions.forEach(transaction => {
             const month = getTransactionTaxPeriodMonth(transaction);
             const summaryRow = findOrCreateStoreSummaryRow(transaction);
             const store = String(transaction.location || '').trim();
+            const entity = getTransactionEntity(transaction) || getScheduleRowEntity(summaryRow);
+            const storeEntityKey = getStoreEntityKey(store, entity);
 
-            affectedStores.add(store);
+            affectedStores.add(storeEntityKey);
 
             if (transaction.credit) {
-                const key = `${store}|${month}`;
+                const key = `${storeEntityKey}||${month}`;
                 const current = Number(collectedByStoreMonth.get(key) || 0);
-                collectedByStoreMonth.set(key, roundMoney(current - Math.abs(transaction.credit)));
+
+                collectedByStoreMonth.set(
+                    key,
+                    roundMoney(current - Math.abs(transaction.credit))
+                );
             }
 
             if (transaction.debit) {
-                paymentRows.push(createImportedPaymentRow(transaction, summaryRow, sourceName));
+                const paymentRow = createImportedPaymentRow(
+                    {
+                        ...transaction,
+                        entity
+                    },
+                    summaryRow,
+                    sourceName
+                );
+
+                paymentRows.push(paymentRow);
+
+                const paymentTaxMonth = getScheduleRowTaxPeriodMonth(paymentRow);
+                const paymentEntity = getScheduleRowEntity(paymentRow) || entity;
+                const paymentKey = getImportedPaymentKey(
+                    paymentRow[1],
+                    paymentEntity,
+                    paymentTaxMonth
+                );
+
+                paymentRemovalKeys.add(paymentKey);
             }
         });
 
         collectedByStoreMonth.forEach((amount, key) => {
-            const [store, monthText] = key.split('|');
+            const [store, entity, monthText] = key.split('||');
             const month = Number(monthText);
             const collectedColumn = COLLECTED_COL_BY_MONTH[month];
-            const summaryRow = findStoreSummaryRow(store);
+            const summaryRow = findStoreSummaryRow(store, entity);
 
             if (!summaryRow || collectedColumn === undefined) return;
+
             summaryRow[collectedColumn] = roundMoney(amount);
         });
+
+        removeImportedRowsForPaymentKeys(paymentRemovalKeys);
 
         paymentRows
             .sort(compareScheduleRowsForInsert)
@@ -2681,25 +3512,126 @@ function getScheduleRowPaymentAmountForTaxMonth(row, taxMonth) {
         };
     }
 
+    function buildMonthlyEntityByStore(transactions) {
+        const entityByStore = new Map();
+        const mixedStores = new Set();
+
+        transactions.forEach(transaction => {
+            const store = String(transaction.location || '').trim();
+            const entity = getTransactionEntity(transaction);
+
+            if (!store || !entity) return;
+
+            const current = entityByStore.get(store);
+
+            if (!current) {
+                entityByStore.set(store, entity);
+                return;
+            }
+
+            if (current !== entity) {
+                mixedStores.add(store);
+            }
+        });
+
+        mixedStores.forEach(store => {
+            entityByStore.delete(store);
+            console.warn(
+                `Store ${store} has multiple entities in the same monthly file. Sales Tax rows without entity cannot be assigned automatically.`
+            );
+        });
+
+        return entityByStore;
+    }
+
+    function clearStoreSummaryMonthValuesForKeys(keys) {
+        if (!keys || !keys.size) return 0;
+
+        let cleared = 0;
+
+        keys.forEach(key => {
+            const [store, entity, monthText] = key.split('||');
+            const month = Number(monthText);
+            const summaryRow = findStoreSummaryRow(store, entity);
+
+            if (!summaryRow) return;
+
+            const collectedColumn = COLLECTED_COL_BY_MONTH[month];
+            const accrualColumn = ACCRUAL_COL_BY_MONTH[month];
+
+            if (collectedColumn !== undefined) {
+                summaryRow[collectedColumn] = '';
+                cleared += 1;
+            }
+
+            if (accrualColumn !== undefined) {
+                summaryRow[accrualColumn] = '';
+            }
+        });
+
+        return cleared;
+    }
+
+    function getImportedPaymentKey(store, entity, taxPeriodMonth) {
+        return [
+            String(store || '').trim(),
+            normalizeEntityCode(entity || ''),
+            Number(taxPeriodMonth || 0)
+        ].join('||');
+    }
+
+    function removeImportedRowsForPaymentKeys(paymentKeys) {
+        if (!paymentKeys || !paymentKeys.size) return 0;
+
+        const originalLength = scheduleRows.length;
+
+        scheduleRows = scheduleRows.filter(row => {
+            const reference = String(row[4] || '');
+            const isImported = reference.startsWith(IMPORT_REFERENCE_PREFIX);
+
+            if (!isImported) return true;
+
+            const store = String(row[1] || '').trim();
+            const entity = getScheduleRowEntity(row);
+            const taxPeriodMonth = getScheduleRowTaxPeriodMonth(row);
+            const key = getImportedPaymentKey(store, entity, taxPeriodMonth);
+
+            return !paymentKeys.has(key);
+        });
+
+        return originalLength - scheduleRows.length;
+    }
+
+
+
     function findOrCreateStoreSummaryRow(transaction) {
         const store = String(transaction.location || '').trim();
-        let summaryRow = findStoreSummaryRow(store);
+        const entity = getTransactionEntity(transaction);
+
+        let summaryRow = findStoreSummaryRow(store, entity);
 
         if (summaryRow) {
-            if (!summaryRow[2]) summaryRow[2] = transaction.entity || inferEntity(transaction.memo, store);
-            if (!summaryRow[5]) summaryRow[5] = transaction.state || '';
+            if (!summaryRow[2] && entity) {
+                summaryRow[2] = entity;
+            }
+
+            if (!summaryRow[5]) {
+                summaryRow[5] = transaction.state || '';
+            }
+
             return summaryRow;
         }
 
         summaryRow = emptyScheduleRow();
         summaryRow[0] = 'Sales Tax';
         summaryRow[1] = store;
-        summaryRow[2] = transaction.entity || inferEntity(transaction.memo, store);
+        summaryRow[2] = entity || transaction.entity || inferEntity(transaction.memo, store);
         summaryRow[3] = 241000;
         summaryRow[4] = 'Auto-created from monthly GL';
         summaryRow[5] = transaction.state || '';
         summaryRow[8] = 0;
         summaryRow[33] = sumRowBalance(summaryRow);
+
         scheduleRows.push(summaryRow);
 
         return summaryRow;
@@ -2721,6 +3653,36 @@ function getScheduleRowPaymentAmountForTaxMonth(row, taxMonth) {
         row[4] = `${IMPORT_REFERENCE_PREFIX} ${taxPeriodLabel}${paymentLabel}${sourceName ? ` - ${sourceName}` : ''}`;
 
         return row;
+    }
+
+    function getImportedPaymentKey(store, entity, taxPeriodMonth) {
+        return [
+            String(store || '').trim(),
+            normalizeEntityCode(entity || ''),
+            Number(taxPeriodMonth || 0)
+        ].join('||');
+    }
+
+    function removeImportedRowsForPaymentKeys(paymentKeys) {
+        if (!paymentKeys || !paymentKeys.size) return 0;
+
+        const originalLength = scheduleRows.length;
+
+        scheduleRows = scheduleRows.filter(row => {
+            const reference = String(row[4] || '');
+            const isImported = reference.startsWith(IMPORT_REFERENCE_PREFIX);
+
+            if (!isImported) return true;
+
+            const store = String(row[1] || '').trim();
+            const entity = getScheduleRowEntity(row);
+            const taxPeriodMonth = getScheduleRowTaxPeriodMonth(row);
+            const key = getImportedPaymentKey(store, entity, taxPeriodMonth);
+
+            return !paymentKeys.has(key);
+        });
+
+        return originalLength - scheduleRows.length;
     }
 
     function removeImportedRowsForMonths(months) {
@@ -2814,27 +3776,99 @@ function getScheduleRowPaymentAmountForTaxMonth(row, taxMonth) {
     }
 
     function insertRowForStore(store, row) {
-        const lastStoreIndex = findLastStoreRowIndex(store);
+        const entity = getScheduleRowEntity(row);
+        const lastStoreIndex = findLastStoreRowIndex(store, entity);
         const insertAt = lastStoreIndex >= 0 ? lastStoreIndex + 1 : scheduleRows.length;
 
         scheduleRows.splice(insertAt, 0, row);
     }
 
-    function findLastStoreRowIndex(store) {
-        const normalizedStore = String(store || '');
+    function findLastStoreRowIndex(store, entity = '') {
+        const normalizedStore = String(store || '').trim();
+        const normalizedEntity = normalizeEntityCode(entity);
 
         for (let index = scheduleRows.length - 1; index >= 0; index -= 1) {
-            if (String(scheduleRows[index][1] || '') === normalizedStore) return index;
+            const row = scheduleRows[index];
+            const rowStore = String(row[1] || '').trim();
+            const rowEntity = getScheduleRowEntity(row);
+
+            if (rowStore !== normalizedStore) continue;
+
+            if (!normalizedEntity || rowEntity === normalizedEntity) {
+                return index;
+            }
         }
 
         return -1;
     }
 
-    function findStoreSummaryRow(store) {
+    function findStoreSummaryRow(store, entity = '') {
+        const normalizedStore = String(store || '').trim();
+        const normalizedEntity = normalizeEntityCode(entity);
+
+        if (!normalizedStore) return null;
+
+        if (normalizedEntity) {
+            const exactRow = scheduleRows.find(row =>
+                row[0] === 'Sales Tax' &&
+                String(row[1] || '').trim() === normalizedStore &&
+                getScheduleRowEntity(row) === normalizedEntity
+            );
+
+            if (exactRow) return exactRow;
+
+            const emptyEntityRow = scheduleRows.find(row =>
+                row[0] === 'Sales Tax' &&
+                String(row[1] || '').trim() === normalizedStore &&
+                !getScheduleRowEntity(row)
+            );
+
+            if (emptyEntityRow) return emptyEntityRow;
+
+            return null;
+        }
+
         return scheduleRows.find(row =>
             row[0] === 'Sales Tax' &&
-            String(row[1] || '') === String(store || '')
-        );
+            String(row[1] || '').trim() === normalizedStore
+        ) || null;
+    }
+
+    function recalculateScheduleRows() {
+        const groups = new Map();
+
+        scheduleRows.forEach((row, index) => {
+            const store = String(row[1] || '').trim();
+
+            if (!store) return;
+
+            const key = getScheduleRowGroupKey(row);
+
+            if (!groups.has(key)) {
+                groups.set(key, []);
+            }
+
+            groups.get(key).push(index);
+            row[33] = sumRowBalance(row);
+            row[34] = '';
+            row[35] = '';
+        });
+
+        groups.forEach(indexes => {
+            const total = roundMoney(indexes.reduce(
+                (sum, index) => sum + Number(scheduleRows[index][33] || 0),
+                0
+            ));
+
+            const lastIndex = indexes[indexes.length - 1];
+            const groupRows = indexes.map(index => scheduleRows[index]);
+            const summary = groupRows.find(row => row[0] === 'Sales Tax');
+
+            scheduleRows[lastIndex][34] = total;
+            applyQuarterReviewToGroup(groupRows, summary);
+        });
+
+        scheduleStoreCount = groups.size;
     }
 
     function getScheduleResult() {
@@ -2846,34 +3880,7 @@ function getScheduleRowPaymentAmountForTaxMonth(row, taxMonth) {
         };
     }
 
-    function recalculateScheduleRows() {
-        const groups = new Map();
 
-        scheduleRows.forEach((row, index) => {
-            const store = String(row[1] || '').trim();
-            if (!store) return;
-            if (!groups.has(store)) groups.set(store, []);
-            groups.get(store).push(index);
-            row[33] = sumRowBalance(row);
-            row[34] = '';
-            row[35] = '';
-        });
-
-        groups.forEach(indexes => {
-            const total = roundMoney(indexes.reduce(
-                (sum, index) => sum + Number(scheduleRows[index][33] || 0),
-                0
-            ));
-            const lastIndex = indexes[indexes.length - 1];
-            const groupRows = indexes.map(index => scheduleRows[index]);
-            const summary = groupRows.find(row => row[0] === 'Sales Tax');
-
-            scheduleRows[lastIndex][34] = total;
-            applyQuarterReviewToGroup(groupRows, summary);
-        });
-
-        scheduleStoreCount = groups.size;
-    }
 
     function countScheduleStores(rows) {
         return new Set(rows.map(row => String(row[1] || '').trim()).filter(Boolean)).size;
@@ -3209,46 +4216,46 @@ function getScheduleRowPaymentAmountForTaxMonth(row, taxMonth) {
         return negative ? -number : number;
     }
 
-   function parseDateValue(value) {
-    if (value instanceof Date && !Number.isNaN(value.getTime())) return value;
+    function parseDateValue(value) {
+        if (value instanceof Date && !Number.isNaN(value.getTime())) return value;
 
-    if (typeof value === 'number') {
-        const parsed = window.XLSX?.SSF?.parse_date_code?.(value);
-        if (parsed) return new Date(parsed.y, parsed.m - 1, parsed.d);
-    }
-
-    const text = String(value || '').trim();
-    if (!text) return null;
-
-    const iso = text.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
-    if (iso) {
-        return new Date(Number(iso[1]), Number(iso[2]) - 1, Number(iso[3]));
-    }
-
-    const slash = text.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-    if (slash) {
-        const first = Number(slash[1]);
-        const second = Number(slash[2]);
-        const year = Number(slash[3]);
-
-        // DD/MM/YYYY: 30/04/2026
-        if (first > 12 && second <= 12) {
-            return new Date(year, second - 1, first);
+        if (typeof value === 'number') {
+            const parsed = window.XLSX?.SSF?.parse_date_code?.(value);
+            if (parsed) return new Date(parsed.y, parsed.m - 1, parsed.d);
         }
 
-        // MM/DD/YYYY: 04/30/2026
-        if (second > 12 && first <= 12) {
+        const text = String(value || '').trim();
+        if (!text) return null;
+
+        const iso = text.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+        if (iso) {
+            return new Date(Number(iso[1]), Number(iso[2]) - 1, Number(iso[3]));
+        }
+
+        const slash = text.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+        if (slash) {
+            const first = Number(slash[1]);
+            const second = Number(slash[2]);
+            const year = Number(slash[3]);
+
+            // DD/MM/YYYY: 30/04/2026
+            if (first > 12 && second <= 12) {
+                return new Date(year, second - 1, first);
+            }
+
+            // MM/DD/YYYY: 04/30/2026
+            if (second > 12 && first <= 12) {
+                return new Date(year, first - 1, second);
+            }
+
+            // Caso ambiguo: 02/03/2026.
+            // Mantengo formato US porque muchas fechas de Excel salen MM/DD/YYYY.
             return new Date(year, first - 1, second);
         }
 
-        // Caso ambiguo: 02/03/2026.
-        // Mantengo formato US porque muchas fechas de Excel salen MM/DD/YYYY.
-        return new Date(year, first - 1, second);
+        const date = new Date(text);
+        return Number.isNaN(date.getTime()) ? null : date;
     }
-
-    const date = new Date(text);
-    return Number.isNaN(date.getTime()) ? null : date;
-}
 
     function cleanLocation(value) {
         const text = String(value ?? '').trim();
@@ -3288,6 +4295,35 @@ function getScheduleRowPaymentAmountForTaxMonth(row, taxMonth) {
             GSC: 'GSCB'
         };
         return aliases[normalized] || normalized;
+    }
+
+    function getTransactionEntity(transaction) {
+        const location = transaction?.location;
+        const fallback =
+            transaction?.entity ||
+            inferEntity(transaction?.memo, transaction?.location);
+
+        return getEntityByLocation(location, fallback);
+    }
+
+    function getScheduleRowEntity(row) {
+        const location = row?.[1];
+        const fallback =
+            row?.[2] ||
+            inferEntity(`${row?.[0] || ''} ${row?.[4] || ''}`, row?.[1]);
+
+        return getEntityByLocation(location, fallback);
+    }
+
+    function getStoreEntityKey(store, entity) {
+        return [
+            String(store || '').trim(),
+            normalizeEntityCode(entity || '')
+        ].join('||');
+    }
+
+    function getScheduleRowGroupKey(row) {
+        return getStoreEntityKey(row?.[1], getScheduleRowEntity(row));
     }
 
     function naturalSort(a, b) {

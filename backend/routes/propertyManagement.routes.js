@@ -1,6 +1,7 @@
 const express = require('express');
 const multer = require('multer');
 const crypto = require('crypto');
+const XLSX = require('xlsx');
 const { pool } = require('../config/database');
 const { verificarToken, requireDepartment } = require('../middleware/auth.middleware');
 
@@ -522,6 +523,276 @@ router.delete('/schedules/:id', ...access, async (req, res) => {
         res.status(500).json({ success: false, message: 'Schedule could not be deleted' });
     } finally {
         connection.release();
+    }
+});
+
+function normalizeEntityText(value) {
+    return String(value ?? '').trim();
+}
+
+function normalizeEntityCodeValue(value) {
+    return String(value ?? '').trim().toUpperCase();
+}
+
+function normalizeLocationValue(value) {
+    return String(value ?? '').trim();
+}
+
+function parseOrgChartWorkbook(buffer) {
+    const workbook = XLSX.read(buffer, {
+        type: 'buffer',
+        cellDates: true,
+        raw: true
+    });
+
+    const sheetName = workbook.SheetNames.find(name =>
+        String(name || '').trim().toUpperCase() === 'STORES'
+    ) || workbook.SheetNames[0];
+
+    const sheet = workbook.Sheets[sheetName];
+
+    if (!sheet) {
+        throw new Error('The ORG CHART does not contain a readable STORES sheet.');
+    }
+
+    const rows = XLSX.utils.sheet_to_json(sheet, {
+        header: 1,
+        defval: '',
+        raw: true
+    });
+
+    const entities = [];
+
+    rows.forEach((row, index) => {
+        if (index < 2) return;
+
+        const brand = normalizeEntityText(row[0]);
+        const entityLegalName = normalizeEntityText(row[1]);
+        const entityShortName = normalizeEntityText(row[2]);
+        const entityCode = normalizeEntityCodeValue(row[3]);
+        const otherId = normalizeEntityText(row[4]);
+        const location = normalizeLocationValue(row[5]);
+
+        if (!location || !entityCode) return;
+        if (/location|store/i.test(location)) return;
+        if (/entity|ent/i.test(entityCode)) return;
+
+        entities.push({
+            brand,
+            entity_legal_name: entityLegalName,
+            entity_short_name: entityShortName,
+            entity_code: entityCode,
+            other_id: otherId,
+            location
+        });
+    });
+
+    return entities;
+}
+
+router.get('/entities', ...access, async (req, res) => {
+    try {
+        const [rows] = await pool.query(
+            `SELECT id,
+                    brand,
+                    entity_legal_name,
+                    entity_short_name,
+                    entity_code,
+                    other_id,
+                    location,
+                    is_active,
+                    created_at,
+                    updated_at
+             FROM property_management_entities
+             WHERE is_active = 1
+             ORDER BY location + 0, location`
+        );
+
+        res.json({
+            success: true,
+            entities: rows
+        });
+    } catch (error) {
+        console.error('Property Management entities could not be loaded:', error);
+        if (tableSetupMessage(error, res)) return;
+        res.status(500).json({ success: false, message: 'Entities could not be loaded' });
+    }
+});
+
+router.post('/entities/import', ...access, upload.single('orgChart'), async (req, res) => {
+    const connection = await pool.getConnection();
+
+    try {
+        if (!req.file) {
+            return res.status(400).json({ success: false, message: 'No ORG CHART file was received' });
+        }
+
+        const entities = parseOrgChartWorkbook(req.file.buffer);
+
+        if (!entities.length) {
+            return res.status(400).json({
+                success: false,
+                message: 'No Location / Entity rows were found in the ORG CHART file'
+            });
+        }
+
+        await connection.beginTransaction();
+
+        for (const item of entities) {
+            await connection.query(
+                `INSERT INTO property_management_entities
+                 (brand, entity_legal_name, entity_short_name, entity_code, other_id, location, is_active)
+                 VALUES (?, ?, ?, ?, ?, ?, 1)
+                 ON DUPLICATE KEY UPDATE
+                    brand = VALUES(brand),
+                    entity_legal_name = VALUES(entity_legal_name),
+                    entity_short_name = VALUES(entity_short_name),
+                    entity_code = VALUES(entity_code),
+                    other_id = VALUES(other_id),
+                    is_active = 1`,
+                [
+                    item.brand,
+                    item.entity_legal_name,
+                    item.entity_short_name,
+                    item.entity_code,
+                    item.other_id,
+                    item.location
+                ]
+            );
+        }
+
+        await connection.commit();
+
+        res.json({
+            success: true,
+            imported: entities.length,
+            message: `${entities.length} entities imported successfully`
+        });
+    } catch (error) {
+        await connection.rollback();
+        console.error('Property Management entities import failed:', error);
+        if (tableSetupMessage(error, res)) return;
+        res.status(500).json({ success: false, message: error.message || 'Entities could not be imported' });
+    } finally {
+        connection.release();
+    }
+});
+
+router.post('/entities', ...access, async (req, res) => {
+    try {
+        const location = normalizeLocationValue(req.body.location);
+        const entityCode = normalizeEntityCodeValue(req.body.entity_code);
+
+        if (!location || !entityCode) {
+            return res.status(400).json({
+                success: false,
+                message: 'Location and Entity are required'
+            });
+        }
+
+        const [result] = await pool.query(
+            `INSERT INTO property_management_entities
+             (brand, entity_legal_name, entity_short_name, entity_code, other_id, location, is_active)
+             VALUES (?, ?, ?, ?, ?, ?, 1)`,
+            [
+                normalizeEntityText(req.body.brand),
+                normalizeEntityText(req.body.entity_legal_name),
+                normalizeEntityText(req.body.entity_short_name),
+                entityCode,
+                normalizeEntityText(req.body.other_id),
+                location
+            ]
+        );
+
+        res.status(201).json({
+            success: true,
+            entity: { id: result.insertId }
+        });
+    } catch (error) {
+        console.error('Property Management entity could not be created:', error);
+
+        if (error.code === 'ER_DUP_ENTRY') {
+            return res.status(409).json({
+                success: false,
+                message: 'That Location already exists'
+            });
+        }
+
+        if (tableSetupMessage(error, res)) return;
+        res.status(500).json({ success: false, message: 'Entity could not be created' });
+    }
+});
+
+router.put('/entities/:id', ...access, async (req, res) => {
+    try {
+        const location = normalizeLocationValue(req.body.location);
+        const entityCode = normalizeEntityCodeValue(req.body.entity_code);
+
+        if (!location || !entityCode) {
+            return res.status(400).json({
+                success: false,
+                message: 'Location and Entity are required'
+            });
+        }
+
+        const [result] = await pool.query(
+            `UPDATE property_management_entities
+             SET brand = ?,
+                 entity_legal_name = ?,
+                 entity_short_name = ?,
+                 entity_code = ?,
+                 other_id = ?,
+                 location = ?
+             WHERE id = ?`,
+            [
+                normalizeEntityText(req.body.brand),
+                normalizeEntityText(req.body.entity_legal_name),
+                normalizeEntityText(req.body.entity_short_name),
+                entityCode,
+                normalizeEntityText(req.body.other_id),
+                location,
+                req.params.id
+            ]
+        );
+
+        if (!result.affectedRows) {
+            return res.status(404).json({ success: false, message: 'Entity not found' });
+        }
+
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Property Management entity could not be updated:', error);
+
+        if (error.code === 'ER_DUP_ENTRY') {
+            return res.status(409).json({
+                success: false,
+                message: 'That Location already exists'
+            });
+        }
+
+        if (tableSetupMessage(error, res)) return;
+        res.status(500).json({ success: false, message: 'Entity could not be updated' });
+    }
+});
+
+router.delete('/entities/:id', ...access, async (req, res) => {
+    try {
+        const [result] = await pool.query(
+            `UPDATE property_management_entities
+             SET is_active = 0
+             WHERE id = ?`,
+            [req.params.id]
+        );
+
+        if (!result.affectedRows) {
+            return res.status(404).json({ success: false, message: 'Entity not found' });
+        }
+
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Property Management entity could not be deleted:', error);
+        if (tableSetupMessage(error, res)) return;
+        res.status(500).json({ success: false, message: 'Entity could not be deleted' });
     }
 });
 
