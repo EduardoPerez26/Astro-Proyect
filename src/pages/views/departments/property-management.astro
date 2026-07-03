@@ -1,42 +1,67 @@
 ---
-import DashboardLayout from '../../../layouts/DashboardLayout.astro';
+import DashboardLayout from "../../../layouts/DashboardLayout.astro";
 ---
 
 <DashboardLayout title="Property Management" includeSheetJS={true}>
-<section class="property-management-page page-container" aria-labelledby="propertyManagementTitle">
+    <section
+        class="property-management-page page-container"
+        aria-labelledby="propertyManagementTitle"
+    >
         <div class="page-header">
             <div class="page-header-info">
-                <span class="pm-eyebrow">
-                    Department workspace
-                </span>
+                <span class="pm-eyebrow"> Department workspace </span>
                 <h1 id="propertyManagementTitle">Property Management</h1>
             </div>
         </div>
 
-        <section id="pmUploadSection" class="upload-section pm-upload-section" aria-labelledby="pmScheduleTitle">
+        <section
+            id="pmUploadSection"
+            class="upload-section pm-upload-section"
+            aria-labelledby="pmScheduleTitle"
+        >
             <div class="section-heading">
                 <span class="step-badge">1</span>
                 <div>
                     <h2 id="pmScheduleTitle">Sales tax payable schedule</h2>
-                    <p>Upload the source reports once, then keep adding monthly activity to the saved schedule.</p>
+                    <p>
+                        Upload the source reports once, then keep adding monthly
+                        activity to the saved schedule.
+                    </p>
                 </div>
-
             </div>
 
             <div class="pm-schedule-actions">
-                <button type="button" class="btn btn-secondary" id="pmRefreshSavedBtn">
+                <button
+                    type="button"
+                    class="btn btn-secondary"
+                    id="pmRefreshSavedBtn"
+                >
                     <i class="fa-solid fa-arrows-rotate" aria-hidden="true"></i>
                     Refresh saved
                 </button>
-                <button type="button" class="btn btn-secondary" id="pmSaveScheduleBtn" disabled>
+                <button
+                    type="button"
+                    class="btn btn-secondary"
+                    id="pmSaveScheduleBtn"
+                    disabled
+                >
                     <i class="fa-solid fa-floppy-disk" aria-hidden="true"></i>
                     Save
                 </button>
-                <button type="button" class="btn btn-secondary" id="pmClearScheduleBtn">
+                <button
+                    type="button"
+                    class="btn btn-secondary"
+                    id="pmClearScheduleBtn"
+                >
                     <i class="fa-solid fa-rotate-left" aria-hidden="true"></i>
                     Reset
                 </button>
-                <button type="button" class="btn btn-primary" id="pmExportScheduleBtn" disabled>
+                <button
+                    type="button"
+                    class="btn btn-primary"
+                    id="pmExportScheduleBtn"
+                    disabled
+                >
                     <i class="fa-solid fa-download" aria-hidden="true"></i>
                     Export Schedule 2026
                 </button>
@@ -53,14 +78,30 @@ import DashboardLayout from '../../../layouts/DashboardLayout.astro';
                             <span class="upload-pill required">Required</span>
                         </span>
                     </div>
-                    <label class="reconciliation-dropzone" for="pmDimensionBalanceFile">
+                    <label
+                        class="reconciliation-dropzone"
+                        for="pmDimensionBalanceFile"
+                    >
                         <i class="fa-solid fa-cloud-arrow-up"></i>
-                        <strong>Drag & drop Dimension Balance report here</strong>
+                        <strong
+                            >Drag & drop Dimension Balance report here</strong
+                        >
                         <span>or click to browse</span>
                     </label>
-                    <small class="upload-format-hint">Accepted formats: .xlsx, .xls</small>
-                    <input id="pmDimensionBalanceFile" type="file" accept=".xlsx,.xls" class="reconciliation-file-input" />
-                    <button type="button" class="btn btn-primary" id="pmLoadDimensionBalancesBtn">
+                    <small class="upload-format-hint"
+                        >Accepted formats: .xlsx, .xls</small
+                    >
+                    <input
+                        id="pmDimensionBalanceFile"
+                        type="file"
+                        accept=".xlsx,.xls"
+                        class="reconciliation-file-input"
+                    />
+                    <button
+                        type="button"
+                        class="btn btn-primary"
+                        id="pmLoadDimensionBalancesBtn"
+                    >
                         <i class="fa-solid fa-table-list"></i>
                         Load opening balances
                     </button>
@@ -76,46 +117,95 @@ import DashboardLayout from '../../../layouts/DashboardLayout.astro';
                             <span class="upload-pill">Optional</span>
                         </span>
                     </div>
-                    <label class="reconciliation-dropzone" for="pmMonthlyLedgerFile">
+                    <label
+                        class="reconciliation-dropzone"
+                        for="pmMonthlyLedgerFile"
+                    >
                         <i class="fa-solid fa-cloud-arrow-up"></i>
                         <strong>Drag & drop monthly files here</strong>
                         <span>or click to browse</span>
                     </label>
-                    <small class="upload-format-hint">Select one or more monthly GL exports. The system fills each store automatically.</small>
-                    <input id="pmMonthlyLedgerFile" type="file" accept=".xls,.xlsx,.html,.htm" multiple class="reconciliation-file-input" />
-                    <button type="button" class="btn btn-primary" id="pmAddMonthlyFileBtn">
+                    <small class="upload-format-hint"
+                        >Select one or more monthly GL exports. The system fills
+                        each store automatically.</small
+                    >
+                    <input
+                        id="pmMonthlyLedgerFile"
+                        type="file"
+                        accept=".xls,.xlsx,.html,.htm"
+                        multiple
+                        class="reconciliation-file-input"
+                    />
+                    <button
+                        type="button"
+                        class="btn btn-primary"
+                        id="pmAddMonthlyFileBtn"
+                    >
                         <i class="fa-solid fa-file-import"></i>
                         Import selected files
                     </button>
                 </div>
             </div>
 
-            <div class="pm-alert-stack" id="pmAlertStack" aria-live="polite" aria-atomic="false"></div>
+            <div
+                class="pm-alert-stack"
+                id="pmAlertStack"
+                aria-live="polite"
+                aria-atomic="false"
+            >
+            </div>
 
-            <div class="pm-tab-panel is-active" id="pmEditorTab" role="tabpanel" aria-labelledby="pmEditorTabButton">
+            <div
+                class="pm-tab-panel is-active"
+                id="pmEditorTab"
+                role="tabpanel"
+                aria-labelledby="pmEditorTabButton"
+            >
                 <div class="pm-schedule-management">
-                    <section class="pm-manager-card summary-card" aria-labelledby="pmSavedScheduleTitle">
+                    <section
+                        class="pm-manager-card summary-card"
+                        aria-labelledby="pmSavedScheduleTitle"
+                    >
                         <div class="pm-manager-card-header">
                             <span class="pm-manager-icon">
-                                <i class="fa-solid fa-database" aria-hidden="true"></i>
+                                <i
+                                    class="fa-solid fa-database"
+                                    aria-hidden="true"></i>
                             </span>
                             <div>
                                 <span>Saved work</span>
-                                <h3 id="pmSavedScheduleTitle">Property Management schedules</h3>
+                                <h3 id="pmSavedScheduleTitle">
+                                    Property Management schedules
+                                </h3>
                             </div>
                         </div>
 
                         <label class="pm-field">
                             <span>Schedule name</span>
-                            <input id="pmScheduleName" type="text" value="Schedule 2026" />
+                            <input
+                                id="pmScheduleName"
+                                type="text"
+                                value="Schedule 2026"
+                            />
                         </label>
 
                         <div class="pm-inline-controls">
-                            <select id="pmSavedScheduleSelect" aria-label="Saved Property Management schedules">
-                                <option value="">No saved schedules loaded</option>
+                            <select
+                                id="pmSavedScheduleSelect"
+                                aria-label="Saved Property Management schedules"
+                            >
+                                <option value=""
+                                    >No saved schedules loaded</option
+                                >
                             </select>
-                            <button type="button" class="btn btn-secondary" id="pmLoadScheduleBtn">
-                                <i class="fa-solid fa-folder-open" aria-hidden="true"></i>
+                            <button
+                                type="button"
+                                class="btn btn-secondary"
+                                id="pmLoadScheduleBtn"
+                            >
+                                <i
+                                    class="fa-solid fa-folder-open"
+                                    aria-hidden="true"></i>
                                 Open
                             </button>
                         </div>
@@ -124,23 +214,49 @@ import DashboardLayout from '../../../layouts/DashboardLayout.astro';
 
                 <div class="pm-schedule-preview" id="pmSchedulePreview" hidden>
                     <div class="pm-preview-summary">
-                        <div><strong id="pmScheduleStores">0</strong><span>Stores</span></div>
-                        <div><strong id="pmScheduleRows">0</strong><span>Rows</span></div>
-                        <div><strong id="pmScheduleBalance">$0.00</strong><span>YTD balance</span></div>
+                        <div>
+                            <strong id="pmScheduleStores">0</strong><span
+                                >Stores</span>
+                        </div>
+                        <div>
+                            <strong id="pmScheduleRows">0</strong><span
+                                >Rows</span>
+                        </div>
+                        <div>
+                            <strong id="pmScheduleBalance">$0.00</strong><span
+                                >YTD balance</span>
+                        </div>
                     </div>
 
-                    <div class="pm-quarter-grid" id="pmQuarterReviewCards" aria-label="Quarterly tax payment differences"></div>
+                    <div
+                        class="pm-quarter-grid"
+                        id="pmQuarterReviewCards"
+                        aria-label="Quarterly tax payment differences"
+                    >
+                    </div>
+
+                    <div
+                        class="pm-quarter-detail-panel"
+                        id="pmQuarterReviewDetail"
+                        aria-label="Quarterly review detail"
+                        hidden
+                    >
+                    </div>
 
                     <div class="pm-table-toolbar" aria-label="Schedule filters">
                         <div class="pm-table-toolbar-head">
                             <div>
                                 <span class="pm-eyebrow">
-                                    <i class="fa-solid fa-filter" aria-hidden="true"></i>
+                                    <i
+                                        class="fa-solid fa-filter"
+                                        aria-hidden="true"></i>
                                     Working view
                                 </span>
                                 <h3>Schedule filters</h3>
                             </div>
-                            <strong id="pmScheduleFilterCount">Showing all rows</strong>
+                            <strong id="pmScheduleFilterCount"
+                                >Showing all rows</strong
+                            >
                         </div>
 
                         <div class="pm-filter-grid">
@@ -156,21 +272,30 @@ import DashboardLayout from '../../../layouts/DashboardLayout.astro';
 
                             <label class="pm-field">
                                 <span>Store</span>
-                                <select id="pmScheduleStoreFilter" data-pm-filter="store">
+                                <select
+                                    id="pmScheduleStoreFilter"
+                                    data-pm-filter="store"
+                                >
                                     <option value="">All stores</option>
                                 </select>
                             </label>
 
                             <label class="pm-field">
                                 <span>Entity</span>
-                                <select id="pmScheduleEntityFilter" data-pm-filter="entity">
+                                <select
+                                    id="pmScheduleEntityFilter"
+                                    data-pm-filter="entity"
+                                >
                                     <option value="">All entities</option>
                                 </select>
                             </label>
 
                             <label class="pm-field">
                                 <span>Month</span>
-                                <select id="pmScheduleMonthFilter" data-pm-filter="month">
+                                <select
+                                    id="pmScheduleMonthFilter"
+                                    data-pm-filter="month"
+                                >
                                     <option value="">All months</option>
                                     <option value="1">January</option>
                                     <option value="2">February</option>
@@ -189,41 +314,73 @@ import DashboardLayout from '../../../layouts/DashboardLayout.astro';
 
                             <label class="pm-field">
                                 <span>Rows</span>
-                                <select id="pmScheduleRowTypeFilter" data-pm-filter="rowType">
+                                <select
+                                    id="pmScheduleRowTypeFilter"
+                                    data-pm-filter="rowType"
+                                >
                                     <option value="">All rows</option>
-                                    <option value="summary">Store summaries</option>
+                                    <option value="summary"
+                                        >Store summaries</option
+                                    >
                                     <option value="detail">Detail rows</option>
                                     <option value="manual">Manual rows</option>
-                                    <option value="activity">Rows with activity</option>
+                                    <option value="activity"
+                                        >Rows with activity</option
+                                    >
                                 </select>
                             </label>
 
-                            <button type="button" class="btn btn-secondary pm-filter-reset" id="pmClearScheduleFiltersBtn">
-                                <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                            <button
+                                type="button"
+                                class="btn btn-secondary pm-filter-reset"
+                                id="pmClearScheduleFiltersBtn"
+                            >
+                                <i class="fa-solid fa-xmark" aria-hidden="true"
+                                ></i>
                                 Clear filters
                             </button>
                         </div>
                     </div>
 
                     <div class="pm-schedule-table-wrap">
-                        <table class="pm-schedule-table" id="pmScheduleTable"></table>
+                        <table class="pm-schedule-table" id="pmScheduleTable">
+                        </table>
                     </div>
                 </div>
             </div>
 
-            <div class="pm-tab-panel" id="pmDepartmentDocumentsTab" role="tabpanel" aria-labelledby="pmDocumentsTabButton" hidden>
+            <div
+                class="pm-tab-panel"
+                id="pmDepartmentDocumentsTab"
+                role="tabpanel"
+                aria-labelledby="pmDocumentsTabButton"
+                hidden
+            >
                 <div class="pm-documents-workspace">
-                    <section class="pm-documents-panel" aria-labelledby="pmSavedDocsTitle">
+                    <section
+                        class="pm-documents-panel"
+                        aria-labelledby="pmSavedDocsTitle"
+                    >
                         <div class="pm-documents-panel-header">
                             <div>
                                 <span class="pm-eyebrow">
-                                    <i class="fa-solid fa-file-pen" aria-hidden="true"></i>
+                                    <i
+                                        class="fa-solid fa-file-pen"
+                                        aria-hidden="true"></i>
                                     Editable schedules
                                 </span>
-                                <h3 id="pmSavedDocsTitle">Department schedules</h3>
+                                <h3 id="pmSavedDocsTitle">
+                                    Department schedules
+                                </h3>
                             </div>
-                            <button type="button" class="btn btn-secondary" id="pmDocsRefreshBtn">
-                                <i class="fa-solid fa-arrows-rotate" aria-hidden="true"></i>
+                            <button
+                                type="button"
+                                class="btn btn-secondary"
+                                id="pmDocsRefreshBtn"
+                            >
+                                <i
+                                    class="fa-solid fa-arrows-rotate"
+                                    aria-hidden="true"></i>
                                 Refresh
                             </button>
                         </div>
@@ -242,20 +399,31 @@ import DashboardLayout from '../../../layouts/DashboardLayout.astro';
                                     </tr>
                                 </thead>
                                 <tbody id="pmDepartmentSchedulesTable">
-                                    <tr><td colspan="7">Loading schedules...</td></tr>
+                                    <tr
+                                        ><td colspan="7"
+                                            >Loading schedules...</td
+                                        ></tr
+                                    >
                                 </tbody>
                             </table>
                         </div>
                     </section>
 
-                    <section class="pm-documents-panel" aria-labelledby="pmSourceDocsTitle">
+                    <section
+                        class="pm-documents-panel"
+                        aria-labelledby="pmSourceDocsTitle"
+                    >
                         <div class="pm-documents-panel-header">
                             <div>
                                 <span class="pm-eyebrow">
-                                    <i class="fa-solid fa-file-shield" aria-hidden="true"></i>
+                                    <i
+                                        class="fa-solid fa-file-shield"
+                                        aria-hidden="true"></i>
                                     Source files
                                 </span>
-                                <h3 id="pmSourceDocsTitle">Uploaded department documents</h3>
+                                <h3 id="pmSourceDocsTitle">
+                                    Uploaded department documents
+                                </h3>
                             </div>
                         </div>
 
@@ -271,7 +439,11 @@ import DashboardLayout from '../../../layouts/DashboardLayout.astro';
                                     </tr>
                                 </thead>
                                 <tbody id="pmDepartmentFilesTable">
-                                    <tr><td colspan="5">Loading documents...</td></tr>
+                                    <tr
+                                        ><td colspan="5"
+                                            >Loading documents...</td
+                                        ></tr
+                                    >
                                 </tbody>
                             </table>
                         </div>
@@ -279,12 +451,10 @@ import DashboardLayout from '../../../layouts/DashboardLayout.astro';
                 </div>
             </div>
         </section>
-
-        
     </section>
 
     <script src="/js/config.js" is:inline></script>
-    <script is:inline src="/js/departments/property-management.js?v=20260702-multi-file-fix"></script>
+    <script is:inline src="/js/departments/property-management.js?v=20260702-paid-detail-fix"></script>
 </DashboardLayout>
 
 <style>
@@ -304,7 +474,7 @@ import DashboardLayout from '../../../layouts/DashboardLayout.astro';
         border-left: 4px solid #0f766e;
         border-radius: 8px;
         background: #ffffff;
-        box-shadow: 0 18px 44px -38px rgba(8, 31, 51, .55);
+        box-shadow: 0 18px 44px -38px rgba(8, 31, 51, 0.55);
     }
 
     .pm-eyebrow {
@@ -378,7 +548,7 @@ import DashboardLayout from '../../../layouts/DashboardLayout.astro';
         border: 1px solid #cfdae5;
         border-radius: 8px;
         background: #ffffff;
-        box-shadow: 0 18px 44px -40px rgba(8, 31, 51, .62);
+        box-shadow: 0 18px 44px -40px rgba(8, 31, 51, 0.62);
     }
 
     .pm-schedule-header {
@@ -579,7 +749,7 @@ import DashboardLayout from '../../../layouts/DashboardLayout.astro';
         border-radius: 8px;
         background: #ffffff;
         color: #173a59;
-        box-shadow: 0 14px 32px -30px rgba(8, 31, 51, .55);
+        box-shadow: 0 14px 32px -30px rgba(8, 31, 51, 0.55);
     }
 
     :global(.pm-alert > i) {
@@ -684,7 +854,7 @@ import DashboardLayout from '../../../layouts/DashboardLayout.astro';
         border-color: #cbd9e6;
         background: #ffffff;
         color: #082033;
-        box-shadow: 0 10px 24px -22px rgba(8, 31, 51, .65);
+        box-shadow: 0 10px 24px -22px rgba(8, 31, 51, 0.65);
     }
 
     .pm-tab-panel {
@@ -698,7 +868,10 @@ import DashboardLayout from '../../../layouts/DashboardLayout.astro';
 
     .pm-schedule-management {
         display: grid;
-        grid-template-columns: minmax(270px, .95fr) minmax(360px, 1.35fr) minmax(270px, 1fr);
+        grid-template-columns: minmax(270px, 0.95fr) minmax(
+                360px,
+                1.35fr
+            ) minmax(270px, 1fr);
         gap: 12px;
         align-items: stretch;
     }
@@ -785,7 +958,7 @@ import DashboardLayout from '../../../layouts/DashboardLayout.astro';
     .pm-inline-controls select:focus {
         border-color: #174a75;
         outline: 0;
-        box-shadow: 0 0 0 3px rgba(23, 74, 117, .12);
+        box-shadow: 0 0 0 3px rgba(23, 74, 117, 0.12);
     }
 
     .pm-inline-controls {
@@ -1048,7 +1221,10 @@ import DashboardLayout from '../../../layouts/DashboardLayout.astro';
 
     .pm-filter-grid {
         display: grid;
-        grid-template-columns: minmax(220px, 1.4fr) repeat(4, minmax(140px, 1fr)) auto;
+        grid-template-columns: minmax(220px, 1.4fr) repeat(
+                4,
+                minmax(140px, 1fr)
+            ) auto;
         gap: 10px;
         align-items: end;
     }
@@ -1100,7 +1276,11 @@ import DashboardLayout from '../../../layouts/DashboardLayout.astro';
     }
 
     .pm-schedule-table td.is-editable {
-        background-image: linear-gradient(0deg, rgba(15, 118, 110, .08), rgba(15, 118, 110, .08));
+        background-image: linear-gradient(
+            0deg,
+            rgba(15, 118, 110, 0.08),
+            rgba(15, 118, 110, 0.08)
+        );
         cursor: text;
     }
 
@@ -1248,7 +1428,7 @@ import DashboardLayout from '../../../layouts/DashboardLayout.astro';
         border: 1px solid #cfdae5;
         border-radius: 8px;
         background: #ffffff;
-        box-shadow: 0 18px 44px -40px rgba(8, 31, 51, .62);
+        box-shadow: 0 18px 44px -40px rgba(8, 31, 51, 0.62);
     }
 
     .pm-intake-panel {
@@ -1330,7 +1510,7 @@ import DashboardLayout from '../../../layouts/DashboardLayout.astro';
     .pm-toolbar select:focus {
         border-color: #174a75;
         outline: 0;
-        box-shadow: 0 0 0 3px rgba(23, 74, 117, .12);
+        box-shadow: 0 0 0 3px rgba(23, 74, 117, 0.12);
     }
 
     .pm-form-row {

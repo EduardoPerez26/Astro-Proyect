@@ -7179,7 +7179,10 @@ html body .main .reconciliation-page #uploadSection .reconciliation-dropzone {
     box-sizing: border-box !important;
 }
 
-html body .main .reconciliation-page #uploadSection .reconciliation-dropzone:hover {
+html body .main .reconciliation-page #uploadSection .reconciliation-dropzone:hover,
+html body .main .property-management-page #pmUploadSection .reconciliation-dropzone:hover,
+html body .main .reconciliation-page #uploadSection .reconciliation-dropzone.is-dragover,
+html body .main .property-management-page #pmUploadSection .reconciliation-dropzone.is-dragover {
     border-color: #0b3a67 !important;
     background: #e8f2ff !important;
 }

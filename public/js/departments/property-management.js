@@ -176,6 +176,7 @@
     let linkedDocumentIds = [];
     let savedSchedules = [];
     let propertyDocuments = [];
+    let selectedQuarterReview = 1;
     let scheduleFilters = {
         search: '',
         store: '',
@@ -183,6 +184,59 @@
         month: '',
         rowType: ''
     };
+
+    function initializeUploadDropzone(inputId, dropzoneSelector) {
+        const input = document.getElementById(inputId);
+        const dropzone = document.querySelector(dropzoneSelector);
+
+        if (!input || !dropzone) return;
+
+        const setDragState = (isDragging) => {
+            dropzone.classList.toggle('is-dragover', isDragging);
+        };
+
+        dropzone.addEventListener('dragenter', (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            setDragState(true);
+        });
+
+        dropzone.addEventListener('dragover', (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            setDragState(true);
+
+            if (event.dataTransfer) {
+                event.dataTransfer.dropEffect = 'copy';
+            }
+        });
+
+        dropzone.addEventListener('dragleave', (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+
+            if (event.relatedTarget && dropzone.contains(event.relatedTarget)) {
+                return;
+            }
+
+            setDragState(false);
+        });
+
+        dropzone.addEventListener('drop', (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            setDragState(false);
+
+            const files = event.dataTransfer?.files;
+            if (!files?.length) return;
+
+            const dataTransfer = new DataTransfer();
+            Array.from(files).forEach(file => dataTransfer.items.add(file));
+
+            input.files = dataTransfer.files;
+            input.dispatchEvent(new Event('change', { bubbles: true }));
+        });
+    }
 
     document.addEventListener('DOMContentLoaded', function () {
         requests = loadRequests();
@@ -279,6 +333,13 @@
         document
             .getElementById('pmDepartmentDocumentsTab')
             ?.addEventListener('click', handleDepartmentDocumentsAction);
+
+        document
+            .getElementById('pmQuarterReviewCards')
+            ?.addEventListener('click', handleQuarterReviewCardClick);
+
+        initializeUploadDropzone('pmDimensionBalanceFile', 'label[for="pmDimensionBalanceFile"]');
+        initializeUploadDropzone('pmMonthlyLedgerFile', 'label[for="pmMonthlyLedgerFile"]');
 
         setDefaultMonthDate();
         initializePredefinedSchedule({ showStatus: false });
@@ -863,17 +924,14 @@
 
     function getQuarterGroupTotals(groupRows, summaryRow, quarter) {
         const months = QUARTER_MONTHS[quarter] || [];
+
         const collectedTotal = months.reduce((sum, month) => {
             const column = COLLECTED_COL_BY_MONTH[month];
             return column === undefined ? sum : sum + Number(summaryRow[column] || 0);
         }, 0);
-        const paidTotal = groupRows.reduce((sum, row) => {
-            if (row === summaryRow) return sum;
 
-            const taxPeriodMonth = getScheduleRowTaxPeriodMonth(row);
-            if (!months.includes(taxPeriodMonth)) return sum;
-
-            return sum + getScheduleRowPaymentAmount(row);
+        const paidTotal = months.reduce((sum, taxMonth) => {
+            return sum + getPaidForTaxMonth(groupRows, summaryRow, taxMonth);
         }, 0);
 
         return {
@@ -883,8 +941,112 @@
         };
     }
 
+  function getPaidForTaxMonth(groupRows, summaryRow, taxMonth) {
+    return roundMoney(groupRows.reduce((sum, row) => {
+        if (!row || row === summaryRow || row[0] === 'Sales Tax') return sum;
+
+        const rowTaxMonth = getScheduleRowTaxPeriodMonth(row);
+
+        // Lo importante es el periodo fiscal, no la columna visible.
+        // Si la fila corresponde a marzo fiscal, entra en APR PAID (MAR).
+        if (rowTaxMonth !== taxMonth) return sum;
+
+        return sum + getScheduleRowPaymentAmountForTaxMonth(row, taxMonth);
+    }, 0));
+}
+
+function getScheduleRowPaymentAmountForTaxMonth(row, taxMonth) {
+    const amountPaid = parseMoney(row?.[7]);
+
+    // Prioridad 1: Amount Paid.
+    // Esta es la fuente más confiable para el detalle.
+    if (amountPaid !== null) return amountPaid;
+
+    // Prioridad 2: columna del mes pagado esperado.
+    // Ejemplo: taxMonth 3 = March, expected paid month = April.
+    const expectedPaidMonth = getNextMonth(taxMonth);
+    const expectedPaidColumn = PAID_COL_BY_MONTH[expectedPaidMonth];
+    const expectedColumnAmount = parseMoney(row?.[expectedPaidColumn]);
+
+    if (expectedColumnAmount !== null) return expectedColumnAmount;
+
+    // Prioridad 3: cualquier columna PAID de la fila.
+    return Object.values(PAID_COL_BY_MONTH).reduce((sum, column) => {
+        return sum + Number(row?.[column] || 0);
+    }, 0);
+}
+
+    function getScheduleRowPaymentAmountFromColumn(row, paidColumn) {
+        const columnAmount = parseMoney(row?.[paidColumn]);
+
+        if (columnAmount) return columnAmount;
+
+        return getScheduleRowPaymentAmount(row);
+    }
+
     function getScheduleRowTaxPeriodMonth(row) {
-        return inferTaxPeriodMonth(row?.[0], row?.[6]);
+        const explicitMonth = inferTaxPeriodMonthFromMemo(row?.[0]);
+        if (explicitMonth) return explicitMonth;
+
+        const fallbackMonth = inferTaxPeriodMonthFromMemo(row?.[4]);
+        if (fallbackMonth) return fallbackMonth;
+
+        if (isSchedulePaymentRow(row)) {
+            const paidMonth = getScheduleRowPaidMonth(row);
+            const postedMonth = getDateMonth(row?.[6]);
+
+            if (paidMonth && postedMonth && paidMonth === postedMonth) {
+                return paidMonth;
+            }
+
+            return getPreviousMonth(paidMonth);
+        }
+
+        return getDateMonth(row?.[6]);
+    }
+
+    function inferTaxPeriodMonthFromMemo(memo) {
+        const text = normalizeMemoForMonthParsing(memo);
+
+        const periodMatch = text.match(/\b20\d{2}\s*[.\-/]\s*(0?[1-9]|1[0-2])\b/);
+        if (periodMatch) return normalizeScheduleMonth(periodMatch[1]);
+
+        const monthMention = findMonthMentions(text)
+            .find(mention => !isPaidMonthMention(text, mention));
+
+        if (monthMention) return monthMention.month;
+
+        const quarterMatch = text.match(/\bQ([1-4])\s+RETURN\b/);
+        if (quarterMatch) return Number(quarterMatch[1]) * 3;
+
+        return null;
+    }
+
+    function isSchedulePaymentRow(row) {
+        if (!row || row[0] === 'Sales Tax') return false;
+
+        const amountPaid = parseMoney(row?.[7]);
+        if (amountPaid) return true;
+
+        return Object.values(PAID_COL_BY_MONTH).some(column =>
+            Number(row?.[column] || 0)
+        );
+    }
+
+    function getScheduleRowPaidMonth(row) {
+        for (const [monthText, column] of Object.entries(PAID_COL_BY_MONTH)) {
+            if (Number(row?.[column] || 0)) return Number(monthText);
+        }
+
+        return getDateMonth(row?.[6]);
+    }
+
+    function getPreviousMonth(month) {
+        const normalized = normalizeScheduleMonth(month);
+
+        if (!normalized) return null;
+
+        return normalized === 1 ? 12 : normalized - 1;
     }
 
     function getScheduleRowPaymentMonth(row) {
@@ -955,8 +1117,8 @@
             </thead>
             <tbody>
                 ${visibleRows.length
-                    ? visibleRows.map(item => renderScheduleTableRow(item.row, item.index)).join('')
-                    : renderEmptyScheduleRows()}
+                ? visibleRows.map(item => renderScheduleTableRow(item.row, item.index)).join('')
+                : renderEmptyScheduleRows()}
             </tbody>
         `;
         updateMonthEditor();
@@ -964,16 +1126,45 @@
 
     function renderQuarterReviewCards(rows) {
         const container = document.getElementById('pmQuarterReviewCards');
+        const detailContainer = document.getElementById('pmQuarterReviewDetail');
+
         if (!container) return;
+
+        if (!rows || !rows.length) {
+            container.innerHTML = '';
+            if (detailContainer) {
+                detailContainer.hidden = true;
+                detailContainer.innerHTML = '';
+            }
+            return;
+        }
 
         const cards = getQuarterReviewCards(rows);
 
-        container.innerHTML = cards.map(card => `
-            <article class="pm-quarter-card ${Math.abs(card.difference) <= 0.01 ? 'is-balanced' : 'is-open'}">
+        if (!cards.some(card => card.activeStores > 0)) {
+            container.innerHTML = '';
+            if (detailContainer) {
+                detailContainer.hidden = true;
+                detailContainer.innerHTML = '';
+            }
+            return;
+        }
+
+        if (!cards.some(card => card.quarter === selectedQuarterReview && card.activeStores > 0)) {
+            selectedQuarterReview = cards.find(card => card.activeStores > 0)?.quarter || 1;
+        }
+
+        container.innerHTML = cards.map(card => {
+            const isBalanced = Math.abs(card.difference) <= 0.01;
+            const isActive = card.quarter === selectedQuarterReview;
+
+            return `
+            <article class="pm-quarter-card ${isBalanced ? 'is-balanced' : 'is-open'} ${isActive ? 'is-selected' : ''}">
                 <div class="pm-quarter-head">
                     <span>${escapeHtml(card.label)}</span>
                     <strong>${escapeHtml(formatCurrency(card.difference))}</strong>
                 </div>
+
                 <dl>
                     <div>
                         <dt>Collected</dt>
@@ -988,9 +1179,218 @@
                         <dd>${escapeHtml(`${card.openStores}/${card.activeStores}`)}</dd>
                     </div>
                 </dl>
+
+                <button
+                    type="button"
+                    class="pm-quarter-detail-button"
+                    data-quarter-review="${escapeHtml(card.quarter)}"
+                >
+                    View detail
+                </button>
             </article>
-        `).join('');
+        `;
+        }).join('');
+
+        renderQuarterReviewDetail(rows, selectedQuarterReview);
     }
+
+    function handleQuarterReviewCardClick(event) {
+        const button = event.target.closest('[data-quarter-review]');
+        if (!button) return;
+
+        selectedQuarterReview = Number(button.dataset.quarterReview || 1);
+        renderQuarterReviewCards(scheduleRows);
+    }
+
+    function renderQuarterReviewDetail(rows, quarter) {
+        const container = document.getElementById('pmQuarterReviewDetail');
+        if (!container) return;
+
+        const detailRows = getQuarterReviewDetailRows(rows, quarter);
+        const months = QUARTER_MONTHS[quarter] || [];
+        const card = getQuarterReviewCards(rows).find(item => item.quarter === quarter);
+
+        if (!detailRows.length || !card) {
+            container.hidden = false;
+            container.innerHTML = `
+            <div class="pm-quarter-detail-empty">
+                No activity found for Q${escapeHtml(quarter)}.
+            </div>
+        `;
+            return;
+        }
+
+        const collectedMonthTotals = months.map((month, monthIndex) =>
+            roundMoney(detailRows.reduce((sum, row) => sum + Number(row.collectedByMonth[monthIndex] || 0), 0))
+        );
+
+        const paidMonthTotals = months.map((month, monthIndex) =>
+            roundMoney(detailRows.reduce((sum, row) => sum + Number(row.paidByMonth[monthIndex] || 0), 0))
+        );
+
+        const totalCollected = roundMoney(detailRows.reduce((sum, row) => sum + row.collected, 0));
+        const totalPaid = roundMoney(detailRows.reduce((sum, row) => sum + row.paid, 0));
+        const totalDifference = roundMoney(detailRows.reduce((sum, row) => sum + row.difference, 0));
+
+        container.hidden = false;
+        container.innerHTML = `
+        <section class="pm-quarter-detail">
+            <div class="pm-quarter-detail-header">
+                <div>
+                    <span class="pm-eyebrow">
+                        <i class="fa-solid fa-calculator" aria-hidden="true"></i>
+                        Quarter source detail
+                    </span>
+                    <h3>Q${escapeHtml(quarter)} ${escapeHtml(getQuarterLabel(quarter))}</h3>
+                    <p>
+                        This table shows where the card totals come from: collected by fiscal month,
+                        paid by related tax period, and the difference by store.
+                    </p>
+                </div>
+
+                <div class="pm-quarter-detail-total ${Math.abs(card.difference) <= 0.01 ? 'is-balanced' : 'is-open'}">
+                    <span>Quarter difference</span>
+                    <strong>${escapeHtml(formatCurrency(card.difference))}</strong>
+                </div>
+            </div>
+
+            <div class="pm-quarter-detail-table-wrap">
+                <table class="pm-quarter-detail-table">
+                    <thead>
+                        <tr>
+                            <th>Store</th>
+                            <th>Entity</th>
+                            ${months.map(month => `<th>${escapeHtml(getShortMonthName(month))} Collected</th>`).join('')}
+                            ${months.map(month => `<th>${escapeHtml(getPaidHeaderForTaxMonth(month))}</th>`).join('')}                           
+                            <th>Total Collected</th>
+                            <th>Total Paid</th>
+                            <th>Difference</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        ${detailRows.map(row => renderQuarterReviewDetailRow(row, months)).join('')}
+                    </tbody>
+
+                    <tfoot>
+                        <tr>
+                            <th colspan="2">Total</th>
+                            ${collectedMonthTotals.map(value => renderQuarterMoneyFooter(value)).join('')}
+                            ${paidMonthTotals.map(value => renderQuarterMoneyFooter(value)).join('')}
+                            ${renderQuarterMoneyFooter(totalCollected)}
+                            ${renderQuarterMoneyFooter(totalPaid)}
+                            ${renderQuarterMoneyFooter(totalDifference)}
+                            <th>${Math.abs(totalDifference) <= 0.01 ? 'Balanced' : 'Needs Review'}</th>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </section>
+    `;
+    }
+
+    function getQuarterReviewDetailRows(rows, quarter) {
+        const groups = groupScheduleRowsByStore(rows);
+        const months = QUARTER_MONTHS[quarter] || [];
+        const detailRows = [];
+
+        groups.forEach((groupRows, store) => {
+            const summaryRow = groupRows.find(row => row[0] === 'Sales Tax');
+            if (!summaryRow) return;
+
+            const entity = String(summaryRow[2] || groupRows.find(row => row[2])?.[2] || '').trim();
+
+            const collectedByMonth = months.map(month => {
+                const column = COLLECTED_COL_BY_MONTH[month];
+                return column === undefined ? 0 : roundMoney(Number(summaryRow[column] || 0));
+            });
+
+            const paidByMonth = months.map(month =>
+                getPaidForTaxMonth(groupRows, summaryRow, month)
+            );
+
+            const collected = roundMoney(collectedByMonth.reduce((sum, value) => sum + Number(value || 0), 0));
+            const paid = roundMoney(paidByMonth.reduce((sum, value) => sum + Number(value || 0), 0));
+            const difference = roundMoney(collected + paid);
+            const hasActivity = Boolean(collected || paid);
+
+            if (!hasActivity) return;
+
+            detailRows.push({
+                store,
+                entity,
+                collectedByMonth,
+                paidByMonth,
+                collected,
+                paid,
+                difference,
+                status: Math.abs(difference) <= 0.01 ? 'Balanced' : 'Needs Review'
+            });
+        });
+
+        return detailRows.sort((a, b) => {
+            const differenceCompare = Math.abs(b.difference) - Math.abs(a.difference);
+            if (differenceCompare) return differenceCompare;
+
+            return naturalSort(a.store, b.store);
+        });
+    }
+
+    function renderQuarterReviewDetailRow(row, months) {
+        return `
+        <tr class="${Math.abs(row.difference) <= 0.01 ? 'is-balanced' : 'is-open'}">
+            <td>${escapeHtml(row.store)}</td>
+            <td>${escapeHtml(row.entity || '-')}</td>
+            ${row.collectedByMonth.map(value => renderQuarterMoneyCell(value)).join('')}
+            ${row.paidByMonth.map(value => renderQuarterMoneyCell(value)).join('')}
+            ${renderQuarterMoneyCell(row.collected)}
+            ${renderQuarterMoneyCell(row.paid)}
+            ${renderQuarterMoneyCell(row.difference)}
+            <td>
+                <span class="pm-quarter-status ${Math.abs(row.difference) <= 0.01 ? 'is-balanced' : 'is-open'}">
+                    ${escapeHtml(row.status)}
+                </span>
+            </td>
+        </tr>
+    `;
+    }
+
+    function renderQuarterMoneyCell(value) {
+        const number = Number(value || 0);
+
+        return `
+        <td class="is-number ${number < -0.01 ? 'is-negative' : number > 0.01 ? 'is-positive' : ''}">
+            ${escapeHtml(formatCurrency(number))}
+        </td>
+    `;
+    }
+
+    function renderQuarterMoneyFooter(value) {
+        const number = Number(value || 0);
+
+        return `
+        <th class="is-number ${number < -0.01 ? 'is-negative' : number > 0.01 ? 'is-positive' : ''}">
+            ${escapeHtml(formatCurrency(number))}
+        </th>
+    `;
+    }
+
+    function getShortMonthName(month) {
+        return MONTH_NAMES[month]?.slice(0, 3) || `M${month}`;
+    }
+
+    function getPaidHeaderForTaxMonth(taxMonth) {
+    const paidMonth = getNextMonth(taxMonth);
+    const taxLabel = getShortMonthName(taxMonth).toUpperCase();
+    const paidLabel = getShortMonthName(paidMonth).toUpperCase();
+
+    if (taxMonth === 12) {
+        return `${paidLabel} PAID NEXT YEAR (${taxLabel})`;
+    }
+
+    return `${paidLabel} PAID (${taxLabel})`;
+}
 
     function getQuarterReviewCards(rows) {
         const groups = groupScheduleRowsByStore(rows);
@@ -1055,27 +1455,27 @@
         return `
             <tr class="${isSummary ? 'is-store-summary' : ''}">
                 ${row.map((value, index) => {
-                    const isNumber = typeof value === 'number';
-                    const isGeneralNumber = index === 3; // GL Acct should not look like an amount
-                    const editable = isEditableScheduleColumn(index);
-                    const display = value instanceof Date
-                        ? formatDateForDisplay(value)
-                        : isNumber
-                            ? (isGeneralNumber ? formatGeneralNumber(value) : formatNumber(value))
-                            : value;
+            const isNumber = typeof value === 'number';
+            const isGeneralNumber = index === 3; // GL Acct should not look like an amount
+            const editable = isEditableScheduleColumn(index);
+            const display = value instanceof Date
+                ? formatDateForDisplay(value)
+                : isNumber
+                    ? (isGeneralNumber ? formatGeneralNumber(value) : formatNumber(value))
+                    : value;
 
-                    return `
+            return `
                         <td
                             class="${[
-                                isNumber && !isGeneralNumber ? 'is-number' : '',
-                                editable ? 'is-editable' : ''
-                            ].filter(Boolean).join(' ')}"
+                    isNumber && !isGeneralNumber ? 'is-number' : '',
+                    editable ? 'is-editable' : ''
+                ].filter(Boolean).join(' ')}"
                             ${editable ? 'contenteditable="true"' : ''}
                             data-row-index="${rowIndex}"
                             data-column-index="${index}"
                         >${escapeHtml(display)}</td>
                     `;
-                }).join('')}
+        }).join('')}
             </tr>
         `;
     }
@@ -1447,10 +1847,10 @@
                     <div>
                         <strong title="${escapeHtml(document.nombre_original)}">${escapeHtml(document.nombre_original)}</strong>
                         <small>${escapeHtml([
-                            document.tipo_label || document.tipo_documento,
-                            uploadedAt,
-                            size
-                        ].filter(Boolean).join(' - '))}</small>
+                document.tipo_label || document.tipo_documento,
+                uploadedAt,
+                size
+            ].filter(Boolean).join(' - '))}</small>
                         <span>${escapeHtml(document.tipo_label || document.tipo_documento)} · ${escapeHtml(uploadedAt)} · ${escapeHtml(size)}</span>
                     </div>
                     <div class="pm-table-actions">
@@ -1599,9 +1999,9 @@
                             ${rows.map((row, rowIndex) => `
                                 <tr>
                                     ${Array.from({ length: maxColumns }, (_, index) => {
-                                        const tag = rowIndex === 0 ? 'th' : 'td';
-                                        return `<${tag}>${escapeHtml(row[index] ?? '')}</${tag}>`;
-                                    }).join('')}
+                const tag = rowIndex === 0 ? 'th' : 'td';
+                return `<${tag}>${escapeHtml(row[index] ?? '')}</${tag}>`;
+            }).join('')}
                                 </tr>
                             `).join('')}
                         </tbody>
@@ -2809,24 +3209,46 @@
         return negative ? -number : number;
     }
 
-    function parseDateValue(value) {
-        if (value instanceof Date && !Number.isNaN(value.getTime())) return value;
-        if (typeof value === 'number') {
-            const parsed = window.XLSX?.SSF?.parse_date_code?.(value);
-            if (parsed) return new Date(parsed.y, parsed.m - 1, parsed.d);
-        }
+   function parseDateValue(value) {
+    if (value instanceof Date && !Number.isNaN(value.getTime())) return value;
 
-        const text = String(value || '').trim();
-        if (!text) return null;
-
-        const parts = text.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-        if (parts) {
-            return new Date(Number(parts[3]), Number(parts[1]) - 1, Number(parts[2]));
-        }
-
-        const date = new Date(text);
-        return Number.isNaN(date.getTime()) ? null : date;
+    if (typeof value === 'number') {
+        const parsed = window.XLSX?.SSF?.parse_date_code?.(value);
+        if (parsed) return new Date(parsed.y, parsed.m - 1, parsed.d);
     }
+
+    const text = String(value || '').trim();
+    if (!text) return null;
+
+    const iso = text.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+    if (iso) {
+        return new Date(Number(iso[1]), Number(iso[2]) - 1, Number(iso[3]));
+    }
+
+    const slash = text.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+    if (slash) {
+        const first = Number(slash[1]);
+        const second = Number(slash[2]);
+        const year = Number(slash[3]);
+
+        // DD/MM/YYYY: 30/04/2026
+        if (first > 12 && second <= 12) {
+            return new Date(year, second - 1, first);
+        }
+
+        // MM/DD/YYYY: 04/30/2026
+        if (second > 12 && first <= 12) {
+            return new Date(year, first - 1, second);
+        }
+
+        // Caso ambiguo: 02/03/2026.
+        // Mantengo formato US porque muchas fechas de Excel salen MM/DD/YYYY.
+        return new Date(year, first - 1, second);
+    }
+
+    const date = new Date(text);
+    return Number.isNaN(date.getTime()) ? null : date;
+}
 
     function cleanLocation(value) {
         const text = String(value ?? '').trim();
@@ -3170,3 +3592,5 @@
             .replaceAll("'", '&#039;');
     }
 })();
+
+

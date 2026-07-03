@@ -1309,6 +1309,56 @@ document.addEventListener('DOMContentLoaded', async () => {
     initEventListeners();
 });
 
+function initializeFileDropzone(dropzone, input) {
+    if (!dropzone || !input) return;
+
+    const setDragState = (isDragging) => {
+        dropzone.classList.toggle('is-dragover', isDragging);
+    };
+
+    dropzone.addEventListener('dragenter', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        setDragState(true);
+    });
+
+    dropzone.addEventListener('dragover', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        setDragState(true);
+
+        if (event.dataTransfer) {
+            event.dataTransfer.dropEffect = 'copy';
+        }
+    });
+
+    dropzone.addEventListener('dragleave', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+
+        if (event.relatedTarget && dropzone.contains(event.relatedTarget)) {
+            return;
+        }
+
+        setDragState(false);
+    });
+
+    dropzone.addEventListener('drop', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        setDragState(false);
+
+        const files = event.dataTransfer?.files;
+        if (!files?.length) return;
+
+        const dataTransfer = new DataTransfer();
+        Array.from(files).forEach(file => dataTransfer.items.add(file));
+
+        input.files = dataTransfer.files;
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+}
+
 function initEventListeners() {
 
     const restauranteSelect =
@@ -1708,69 +1758,12 @@ function initEventListeners() {
 
     }
 
-    const dropZone =
-        document.getElementById(
-            'dropZone'
-        );
+    document.querySelectorAll('.reconciliation-dropzone').forEach((dropzone) => {
+        const inputId = dropzone.getAttribute('for');
+        const input = inputId ? document.getElementById(inputId) : null;
 
-    if (dropZone && salesInput) {
-
-        dropZone.addEventListener(
-            'click',
-            () => salesInput.click()
-        );
-
-        dropZone.addEventListener(
-            'dragover',
-            (e) => {
-
-                e.preventDefault();
-
-                dropZone.classList.add(
-                    'dragover'
-                );
-
-            }
-        );
-
-        dropZone.addEventListener(
-            'dragleave',
-            () => {
-
-                dropZone.classList.remove(
-                    'dragover'
-                );
-
-            }
-        );
-
-        dropZone.addEventListener(
-            'drop',
-            async (e) => {
-
-                e.preventDefault();
-
-                dropZone.classList.remove(
-                    'dragover'
-                );
-
-                const file =
-                    e.dataTransfer.files[0];
-
-                if (!file)
-                    return;
-
-                salesInput.files =
-                    e.dataTransfer.files;
-
-                salesInput.dispatchEvent(
-                    new Event('change')
-                );
-
-            }
-        );
-
-    }
+        initializeFileDropzone(dropzone, input);
+    });
 
     document
         .getElementById(
