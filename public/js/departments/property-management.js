@@ -516,12 +516,16 @@
             const payload = await apiJson('/entities');
             propertyEntities = payload.entities || [];
 
-            orgChartEntityByLocation = new Map(
-                propertyEntities.map(item => [
-                    String(item.location || '').trim(),
-                    String(item.entity_code || '').trim().toUpperCase()
-                ])
-            );
+            orgChartEntityByLocation = new Map();
+
+            propertyEntities.forEach(item => {
+                const locationKey = normalizeLocationKey(item.location);
+                const entityCode = normalizeEntityCode(item.entity_code);
+
+                if (locationKey && entityCode) {
+                    orgChartEntityByLocation.set(locationKey, entityCode);
+                }
+            });
 
             renderEntitiesModalTable();
             updateEntitiesImportVisibility();
@@ -755,26 +759,66 @@
         }
     }
 
-    function getEntityByLocation(location, fallback = '') {
-        const clean = String(location || '').trim();
+    function normalizeLocationKey(value) {
+        return cleanLocation(value)
+            .toUpperCase()
+            .replace(/\s+/g, '')
+            .replace(/\.0$/, '');
+    }
 
-        if (!clean) {
+    function getEntityFromLocationSuffix(location) {
+        const text = normalizeLocationKey(location);
+
+        if (!text) return '';
+
+        if (text.endsWith('GSCB')) return 'GSCB';
+        if (text.endsWith('GS')) return 'GSCB';
+        if (text.endsWith('N2B')) return 'N2B';
+        if (text.endsWith('QE')) return 'QE';
+        if (text.endsWith('QR')) return 'QR';
+        if (text.endsWith('EB')) return 'EB';
+        if (text.endsWith('AI')) return 'AI';
+        if (text.endsWith('II')) return 'II';
+        if (text.endsWith('RI')) return 'RI';
+        if (text.endsWith('SI')) return 'SI';
+        if (text.endsWith('GGB')) return 'GGB';
+        if (text.endsWith('GCF')) return 'GCF';
+        if (text.endsWith('GCE')) return 'GCE';
+        if (text.endsWith('GVB')) return 'GVB';
+        if (text.endsWith('HB')) return 'HB';
+        if (text.endsWith('NB')) return 'NB';
+        if (text.endsWith('EF')) return 'EF';
+        if (text.endsWith('SM')) return 'SM';
+        if (text.endsWith('SF')) return 'SF';
+        if (text.endsWith('HI')) return 'HI';
+
+        return '';
+    }
+
+    function getEntityByLocation(location, fallback = '') {
+        const locationKey = normalizeLocationKey(location);
+
+        if (!locationKey) {
             return normalizeEntityCode(fallback);
         }
 
-        const fromDatabase = orgChartEntityByLocation.get(clean);
+        // 1. Primero manda el catálogo / Org Chart.
+        const fromDatabase = orgChartEntityByLocation.get(locationKey);
 
         if (fromDatabase) {
             return normalizeEntityCode(fromDatabase);
         }
 
-        const fallbackEntity = normalizeEntityCode(fallback);
+        // 2. Después manda el suffix del Location.
+        // Ejemplo: 21575GS debe ser GSCB aunque el memo diga QE.
+        const fromLocationSuffix = getEntityFromLocationSuffix(locationKey);
 
-        if (fallbackEntity) {
-            return fallbackEntity;
+        if (fromLocationSuffix) {
+            return normalizeEntityCode(fromLocationSuffix);
         }
 
-        return normalizeEntityCode(clean.slice(-2));
+        // 3. Al final usa el memo/fallback.
+        return normalizeEntityCode(fallback);
     }
 
     function applyOrgChartEntitiesToScheduleRows() {
@@ -1089,7 +1133,7 @@
 
             row[0] = formatDimensionAccountName(item.accountName);
             row[1] = item.location;
-            row[2] = '';
+            row[2] = getEntityByLocation(item.location, '');
             row[3] = normalizeAccountNumber(item.account);
             row[4] = 'Imported from Dimension Balance';
             row[5] = '';
@@ -1357,7 +1401,7 @@
                 credit: credit || 0,
                 taxPeriodMonth,
                 paymentMonth,
-                entity: inferEntity(memo, location),
+                entity: getEntityByLocation(location, inferEntity(memo, location)),
                 state: /CALIFORNIA| CA /i.test(` ${memo} `) || credit ? 'CA' : ''
             });
         });
@@ -1913,36 +1957,61 @@
 
         container.innerHTML = cards.map(card => {
             const isBalanced = Math.abs(card.difference) <= 0.01;
+            const statusClass = isBalanced ? 'is-balanced' : 'is-open';
+            const statusLabel = isBalanced ? 'Balanced' : 'Review';
+            const balancedStores = Math.max(0, card.activeStores - card.openStores);
 
             return `
-            <article class="pm-quarter-card ${isBalanced ? 'is-balanced' : 'is-open'}">
-                <div class="pm-quarter-head">
-                    <span>${escapeHtml(card.label)}</span>
-                    <strong>${escapeHtml(formatCurrency(card.difference))}</strong>
+            <article class="pm-qc-card ${statusClass}">
+                <div class="pm-qc-header">
+                    <span class="pm-qc-quarter">${escapeHtml(card.label)}</span>
+
+                    <span class="pm-qc-status ${statusClass}">
+                        ${isBalanced
+                    ? '<i class="fa-solid fa-check" aria-hidden="true"></i>'
+                    : '<i class="fa-solid fa-exclamation" aria-hidden="true"></i>'
+                }
+                        ${escapeHtml(statusLabel)}
+                    </span>
                 </div>
 
-                <dl>
+                <div class="pm-qc-value-row">
                     <div>
-                        <dt>Collected</dt>
-                        <dd>${escapeHtml(formatCurrency(card.collected))}</dd>
+                        <span class="pm-qc-label">Difference</span>
+                        <strong class="pm-qc-value">
+                            ${escapeHtml(formatCurrency(card.difference))}
+                        </strong>
                     </div>
-                    <div>
-                        <dt>Paid next month</dt>
-                        <dd>${escapeHtml(formatCurrency(card.paid))}</dd>
-                    </div>
-                    <div>
-                        <dt>Stores off</dt>
-                        <dd>${escapeHtml(`${card.openStores}/${card.activeStores}`)}</dd>
-                    </div>
-                </dl>
 
-                <button
-                    type="button"
-                    class="pm-quarter-detail-button"
-                    data-quarter-review="${escapeHtml(card.quarter)}"
-                >
-                    View stores
-                </button>
+                    <button
+                        type="button"
+                        class="pm-qc-button"
+                        data-quarter-review="${escapeHtml(card.quarter)}"
+                    >
+                        <i class="fa-solid fa-circle-info"></i>
+                    </button>
+                </div>
+
+                <div class="pm-qc-metrics">
+                    <div>
+                        <span>Collected</span>
+                        <strong>${escapeHtml(formatCurrency(card.collected))}</strong>
+                    </div>
+
+                    <div>
+                        <span>Paid</span>
+                        <strong>${escapeHtml(formatCurrency(card.paid))}</strong>
+                    </div>
+
+                    <div>
+                        <span>Stores</span>
+                        <strong>${escapeHtml(`${card.openStores}/${card.activeStores}`)}</strong>
+                    </div>
+                </div>
+
+                <div class="pm-qc-footer">
+                    ${escapeHtml(`${balancedStores} balanced · ${card.activeStores} active stores`)}
+                </div>
             </article>
         `;
         }).join('');
@@ -3183,11 +3252,11 @@
     }
 
     async function saveUploadedScheduleDocuments() {
-    return {
-        ids: [],
-        warning: ''
-    };
-}
+        return {
+            ids: [],
+            warning: ''
+        };
+    }
 
     function addPendingSourceDocument(file, type, metadata = {}) {
         if (!file) return;
@@ -3260,8 +3329,8 @@
     }
 
     async function uploadPropertyDocument() {
-    throw new Error('Source file uploads are disabled for Property Management. Only schedules are saved.');
-}
+        throw new Error('Source file uploads are disabled for Property Management. Only schedules are saved.');
+    }
 
     async function loadPropertyDocuments() {
         const list = document.getElementById('pmDocumentsList');
@@ -4991,18 +5060,24 @@
     }
 
     function inferEntity(memo, location) {
-        const text = String(memo || '').toUpperCase();
-        const q1Match = text.match(/Q1 RETURN\s+([A-Z0-9]{2,5})\b/);
+        // El Location debe tener prioridad sobre el memo.
+        // Si Location es 21575GS, debe clasificar como GSCB aunque el memo diga QE.
+        const entityFromLocation = getEntityFromLocationSuffix(location);
 
-        if (q1Match) return normalizeEntityCode(q1Match[1]);
-
-        for (const [keyword, entity] of ENTITY_KEYWORDS) {
-            if (text.includes(keyword)) return entity;
+        if (entityFromLocation) {
+            return normalizeEntityCode(entityFromLocation);
         }
 
-        const locationText = String(location || '').toUpperCase();
-        if (locationText.endsWith('GS')) return 'GSCB';
-        if (locationText.endsWith('N2B')) return 'N2B';
+        const text = String(memo || '').toUpperCase();
+        const qReturnMatch = text.match(/\bQ[1-4]\s+RETURN\s+([A-Z0-9]{2,5})\b/);
+
+        if (qReturnMatch) {
+            return normalizeEntityCode(qReturnMatch[1]);
+        }
+
+        for (const [keyword, entity] of ENTITY_KEYWORDS) {
+            if (text.includes(keyword)) return normalizeEntityCode(entity);
+        }
 
         return '';
     }

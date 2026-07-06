@@ -71,11 +71,18 @@ import DashboardLayout from "../../../layouts/DashboardLayout.astro";
                     <div class="pm-upload-file-actions">
                         <div class="pm-upload-file-summary">
                             <span class="pm-upload-file-label">
-                                <i class="fa-solid fa-paperclip" aria-hidden="true"></i>
+                                <i
+                                    class="fa-solid fa-paperclip"
+                                    aria-hidden="true"></i>
                                 Selected file
                             </span>
-                            <div class="pm-upload-file-name" id="pmDimensionBalanceFileName">
-                                <span class="pm-upload-file-empty">No file selected</span>
+                            <div
+                                class="pm-upload-file-name"
+                                id="pmDimensionBalanceFileName"
+                            >
+                                <span class="pm-upload-file-empty"
+                                    >No file selected</span
+                                >
                             </div>
                         </div>
 
@@ -86,7 +93,6 @@ import DashboardLayout from "../../../layouts/DashboardLayout.astro";
                             disabled
                         >
                             <i class="fa-solid fa-trash" aria-hidden="true"></i>
-                            
                         </button>
                     </div>
                 </div>
@@ -127,11 +133,18 @@ import DashboardLayout from "../../../layouts/DashboardLayout.astro";
                     <div class="pm-upload-file-actions">
                         <div class="pm-upload-file-summary">
                             <span class="pm-upload-file-label">
-                                <i class="fa-solid fa-paperclip" aria-hidden="true"></i>
+                                <i
+                                    class="fa-solid fa-paperclip"
+                                    aria-hidden="true"></i>
                                 Selected files
                             </span>
-                            <div class="pm-upload-file-name" id="pmMonthlyLedgerFileName">
-                                <span class="pm-upload-file-empty">No files selected</span>
+                            <div
+                                class="pm-upload-file-name"
+                                id="pmMonthlyLedgerFileName"
+                            >
+                                <span class="pm-upload-file-empty"
+                                    >No files selected</span
+                                >
                             </div>
                         </div>
 
@@ -142,11 +155,8 @@ import DashboardLayout from "../../../layouts/DashboardLayout.astro";
                             disabled
                         >
                             <i class="fa-solid fa-trash" aria-hidden="true"></i>
-                            
                         </button>
                     </div>
-
-                   
                 </div>
 
                 <section
@@ -224,22 +234,48 @@ import DashboardLayout from "../../../layouts/DashboardLayout.astro";
                         </div>
                     </div>
 
-                    <div class="pm-preview-summary">
-                        <div>
-                            <strong id="pmScheduleStores">0</strong><span
-                                >Stores</span
+                    <div class="pm-preview-summary pm-simple-stats-grid">
+                        <article class="pm-simple-stat-card">
+                            <span
+                                class="pm-simple-stat-icon"
+                                aria-hidden="true"
                             >
-                        </div>
-                        <div>
-                            <strong id="pmScheduleRows">0</strong><span
-                                >Rows</span
+                                <i class="fa-solid fa-store"></i>
+                            </span>
+
+                            <div class="pm-simple-stat-copy">
+                                <strong id="pmScheduleStores">0</strong>
+                                <span>Stores</span>
+                            </div>
+                        </article>
+
+                        <article class="pm-simple-stat-card">
+                            <span
+                                class="pm-simple-stat-icon"
+                                aria-hidden="true"
                             >
-                        </div>
-                        <div>
-                            <strong id="pmScheduleBalance">$0.00</strong><span
-                                >YTD balance</span
+                                <i class="fa-solid fa-table-list"></i>
+                            </span>
+
+                            <div class="pm-simple-stat-copy">
+                                <strong id="pmScheduleRows">0</strong>
+                                <span>Rows</span>
+                            </div>
+                        </article>
+
+                        <article class="pm-simple-stat-card">
+                            <span
+                                class="pm-simple-stat-icon"
+                                aria-hidden="true"
                             >
-                        </div>
+                                <i class="fa-solid fa-scale-balanced"></i>
+                            </span>
+
+                            <div class="pm-simple-stat-copy">
+                                <strong id="pmScheduleBalance">$0.00</strong>
+                                <span>YTD balance</span>
+                            </div>
+                        </article>
                     </div>
 
                     <section
@@ -1515,109 +1551,232 @@ import DashboardLayout from "../../../layouts/DashboardLayout.astro";
         gap: 14px;
     }
 
-    .pm-preview-summary {
+    .pm-preview-summary.pm-simple-stats-grid {
         display: grid;
         grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 10px;
+        gap: 12px;
     }
 
-    .pm-preview-summary div {
-        padding: 14px;
-        border: 1px solid #d7e2ec;
-        border-radius: 8px;
-        background: #f8fbfd;
+    .pm-simple-stat-card {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        min-width: 0;
+        min-height: 82px;
+        padding: 16px 18px;
+        border: 1px solid #d7e3ef;
+        border-radius: 12px;
+        background: #ffffff;
+        box-shadow: 0 10px 28px -26px rgba(7, 31, 52, 0.45);
     }
 
-    .pm-preview-summary strong {
+    .pm-simple-stat-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 42px;
+        height: 42px;
+        min-width: 42px;
+        border-radius: 11px;
+        background: #eef5fc;
+        color: #0b3a67;
+    }
+
+    .pm-simple-stat-icon i {
+        font-size: 15px;
+    }
+
+    .pm-simple-stat-copy {
+        display: grid;
+        gap: 2px;
+        min-width: 0;
+    }
+
+    .pm-simple-stat-copy strong {
         display: block;
-        color: #09243b;
-        font-size: 22px;
+        color: #082033;
+        font-size: 24px;
+        line-height: 1;
+        font-weight: 950;
+        letter-spacing: -0.03em;
+        font-variant-numeric: tabular-nums;
+        word-break: break-word;
+    }
+
+    .pm-simple-stat-copy span {
+        display: block;
+        color: #102a43;
+        font-size: 12px;
         font-weight: 900;
+        text-transform: none;
     }
 
-    .pm-preview-summary span {
+    .pm-simple-stat-copy small {
         display: block;
-        margin-top: 5px;
-        color: #415a70;
+        color: #6b8094;
         font-size: 11px;
-        font-weight: 850;
-        text-transform: uppercase;
+        font-weight: 700;
     }
 
     .pm-quarter-grid {
         display: grid;
-        grid-template-columns: repeat(4, minmax(190px, 1fr));
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 12px;
+    }
+
+    :global(.pm-qc-card) {
+        display: grid;
         gap: 10px;
-    }
-
-    :global(.pm-quarter-card) {
-        display: grid;
-        gap: 12px;
         min-width: 0;
-        padding: 14px;
-        border: 1px solid #d7e2ec;
-        border-left: 4px solid #60758a;
-        border-radius: 8px;
+        padding: 14px 16px;
+        border: 1px solid #d7e3ef;
+        border-radius: 12px;
         background: #ffffff;
+        box-shadow: 0 10px 28px -26px rgba(7, 31, 52, 0.45);
     }
 
-    :global(.pm-quarter-card.is-balanced) {
-        border-left-color: #0f766e;
-    }
-
-    :global(.pm-quarter-card.is-open) {
-        border-left-color: #b7791f;
-    }
-
-    :global(.pm-quarter-head) {
-        display: flex;
-        align-items: flex-start;
-        justify-content: space-between;
-        gap: 12px;
-    }
-
-    :global(.pm-quarter-head span) {
-        color: #344f67;
-        font-size: 11px;
-        font-weight: 900;
-        text-transform: uppercase;
-    }
-
-    :global(.pm-quarter-head strong) {
-        color: #082033;
-        font-size: 16px;
-        font-weight: 900;
-        text-align: right;
-    }
-
-    :global(.pm-quarter-card dl) {
-        display: grid;
-        gap: 7px;
-        margin: 0;
-    }
-
-    :global(.pm-quarter-card div:not(.pm-quarter-head)) {
+    :global(.pm-qc-header) {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: 10px;
+        gap: 8px;
     }
 
-    :global(.pm-quarter-card dt),
-    :global(.pm-quarter-card dd) {
-        margin: 0;
-        font-size: 12px;
-        font-weight: 800;
-    }
-
-    :global(.pm-quarter-card dt) {
-        color: #526b82;
-    }
-
-    :global(.pm-quarter-card dd) {
+    :global(.pm-qc-quarter) {
         color: #173a59;
+        font-size: 12px;
+        font-weight: 900;
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+    }
+
+    :global(.pm-qc-status) {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        min-height: 24px;
+        padding: 0 8px;
+        border-radius: 999px;
+        font-size: 10px;
+        font-weight: 900;
+        text-transform: uppercase;
+        white-space: nowrap;
+    }
+
+    :global(.pm-qc-status.is-open) {
+        background: #fff4e5;
+        color: #946200;
+    }
+
+    :global(.pm-qc-status.is-balanced) {
+        background: #e8f7f3;
+        color: #0f665f;
+    }
+
+    :global(.pm-qc-status i) {
+        font-size: 9px;
+    }
+
+    :global(.pm-qc-value-row) {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+    }
+
+    :global(.pm-qc-label) {
+        display: block;
+        margin-bottom: 3px;
+        color: #6b8094;
+        font-size: 10px;
+        font-weight: 850;
+        text-transform: uppercase;
+    }
+
+    :global(.pm-qc-value) {
+        display: block;
+        color: #082033;
+        font-size: 18px;
+        line-height: 1.05;
+        font-weight: 950;
+        letter-spacing: -0.03em;
         font-variant-numeric: tabular-nums;
-        text-align: right;
+    }
+
+    :global(.pm-qc-card.is-open .pm-qc-value) {
+        color: #8a5a00;
+    }
+
+    :global(.pm-qc-card.is-balanced .pm-qc-value) {
+        color: #0f665f;
+    }
+
+    :global(.pm-qc-button) {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 62px;
+        min-height: 36px;
+        padding: 0 14px;
+        border: 1px solid #bfd2e3;
+        border-radius: 10px;
+        background: #f8fbfe;
+        color: #0b3a67;
+        font-size: 12px;
+        font-weight: 900;
+        cursor: pointer;
+        transition:
+            background 0.18s ease,
+            border-color 0.18s ease;
+    }
+
+    :global(.pm-qc-button:hover) {
+        background: #edf5fc;
+        border-color: #9fbad3;
+    }
+
+    :global(.pm-qc-metrics) {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        border: 1px solid #dfe9f2;
+        border-radius: 10px;
+        overflow: hidden;
+        background: #f8fbfe;
+    }
+
+    :global(.pm-qc-metrics div) {
+        display: grid;
+        gap: 4px;
+        min-width: 0;
+        padding: 10px 10px;
+        border-right: 1px solid #dfe9f2;
+    }
+
+    :global(.pm-qc-metrics div:last-child) {
+        border-right: 0;
+    }
+
+    :global(.pm-qc-metrics span) {
+        color: #6b8094;
+        font-size: 10px;
+        font-weight: 800;
+        text-transform: uppercase;
+    }
+
+    :global(.pm-qc-metrics strong) {
+        overflow: hidden;
+        color: #173a59;
+        font-size: 12px;
+        font-weight: 900;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-variant-numeric: tabular-nums;
+    }
+
+    :global(.pm-qc-footer) {
+        color: #6b8094;
+        font-size: 11px;
+        font-weight: 700;
     }
 
     .pm-table-toolbar {
@@ -3056,399 +3215,465 @@ import DashboardLayout from "../../../layouts/DashboardLayout.astro";
         }
     }
 
-
-/* =========================================================
+    /* =========================================================
    PROPERTY MANAGEMENT - FINAL VISUAL FIX V2
    No depende de wrappers nuevos. Separa visualmente:
    1) Files and schedule
    2) Review
    ========================================================= */
 
-.property-management-page #pmUploadSection.upload-section.pm-upload-section {
-    display: grid !important;
-    gap: 0 !important;
-    padding: 0 !important;
-    border: 0 !important;
-    border-radius: 0 !important;
-    background: transparent !important;
-    box-shadow: none !important;
-}
+    .property-management-page
+        #pmUploadSection.upload-section.pm-upload-section {
+        display: grid !important;
+        gap: 0 !important;
+        padding: 0 !important;
+        border: 0 !important;
+        border-radius: 0 !important;
+        background: transparent !important;
+        box-shadow: none !important;
+    }
 
-.property-management-page #pmUploadSection > .section-heading {
-    display: flex !important;
-    align-items: flex-start !important;
-    gap: 12px !important;
-    margin: 0 !important;
-    padding: 24px 24px 8px !important;
-    border: 1px solid #d7e2ec !important;
-    border-bottom: 0 !important;
-    border-radius: 18px 18px 0 0 !important;
-    background: #ffffff !important;
-    box-shadow: 0 18px 44px -40px rgba(8, 31, 51, 0.62) !important;
-}
+    .property-management-page #pmUploadSection > .section-heading {
+        display: flex !important;
+        align-items: flex-start !important;
+        gap: 12px !important;
+        margin: 0 !important;
+        padding: 24px 24px 8px !important;
+        border: 1px solid #d7e2ec !important;
+        border-bottom: 0 !important;
+        border-radius: 18px 18px 0 0 !important;
+        background: #ffffff !important;
+        box-shadow: 0 18px 44px -40px rgba(8, 31, 51, 0.62) !important;
+    }
 
-.property-management-page #pmUploadSection > .section-heading + .multi-upload-container.pm-intake-grid {
-    display: grid !important;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(320px, 420px) !important;
-    grid-template-areas: "dimension monthly saved" !important;
-    gap: 18px !important;
-    align-items: stretch !important;
-    width: 100% !important;
-    max-width: none !important;
-    margin: 0 !important;
-    padding: 18px 24px 24px !important;
-    border: 1px solid #d7e2ec !important;
-    border-top: 0 !important;
-    border-radius: 0 0 18px 18px !important;
-    background: #ffffff !important;
-    box-shadow: 0 18px 44px -40px rgba(8, 31, 51, 0.62) !important;
-}
+    .property-management-page
+        #pmUploadSection
+        > .section-heading
+        + .multi-upload-container.pm-intake-grid {
+        display: grid !important;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(
+                320px,
+                420px
+            ) !important;
+        grid-template-areas: "dimension monthly saved" !important;
+        gap: 18px !important;
+        align-items: stretch !important;
+        width: 100% !important;
+        max-width: none !important;
+        margin: 0 !important;
+        padding: 18px 24px 24px !important;
+        border: 1px solid #d7e2ec !important;
+        border-top: 0 !important;
+        border-radius: 0 0 18px 18px !important;
+        background: #ffffff !important;
+        box-shadow: 0 18px 44px -40px rgba(8, 31, 51, 0.62) !important;
+    }
 
-.property-management-page #salesUploadCard {
-    grid-area: dimension !important;
-}
+    .property-management-page #salesUploadCard {
+        grid-area: dimension !important;
+    }
 
-.property-management-page #salesDetailUploadCard {
-    grid-area: monthly !important;
-}
-
-.property-management-page .pm-saved-work-card {
-    grid-area: saved !important;
-    grid-column: auto !important;
-    grid-row: auto !important;
-}
-
-.property-management-page #salesUploadCard,
-.property-management-page #salesDetailUploadCard,
-.property-management-page .pm-saved-work-card {
-    width: 100% !important;
-    min-width: 0 !important;
-    min-height: 315px !important;
-    box-sizing: border-box !important;
-}
-
-.property-management-page #salesUploadCard,
-.property-management-page #salesDetailUploadCard {
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 12px !important;
-    align-content: normal !important;
-    padding: 18px !important;
-    border: 1px solid #e1ebf3 !important;
-    border-radius: 16px !important;
-    background: #ffffff !important;
-}
-
-.property-management-page #salesUploadCard .reconciliation-dropzone,
-.property-management-page #salesDetailUploadCard .reconciliation-dropzone {
-    display: grid !important;
-    flex: 1 1 auto !important;
-    min-height: 150px !important;
-    place-items: center !important;
-    margin: 0 !important;
-}
-
-.property-management-page #salesUploadCard .upload-format-hint,
-.property-management-page #salesDetailUploadCard .upload-format-hint {
-    display: block !important;
-    margin: 0 !important;
-}
-
-.property-management-page #salesUploadCard > .btn,
-.property-management-page #salesDetailUploadCard > .btn {
-    width: auto !important;
-    max-width: max-content !important;
-    justify-content: center !important;
-    margin-top: 2px !important;
-}
-
-.property-management-page .pm-saved-work-card {
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 18px !important;
-    padding: 24px !important;
-    border: 1px solid #e1ebf3 !important;
-    border-radius: 16px !important;
-    background: #ffffff !important;
-}
-
-.property-management-page .pm-saved-work-card .pm-manager-card-header {
-    padding-bottom: 16px !important;
-    border-bottom: 1px solid #d7e2ec !important;
-}
-
-.property-management-page .pm-saved-work-card .pm-inline-controls {
-    margin-top: auto !important;
-    align-self: stretch !important;
-}
-
-.property-management-page #pmAlertStack {
-    margin-top: 14px !important;
-}
-
-.property-management-page #pmEditorTab.pm-tab-panel {
-    display: grid !important;
-    gap: 0 !important;
-    margin-top: 22px !important;
-}
-
-.property-management-page #pmEditorTab.pm-tab-panel[hidden] {
-    display: none !important;
-}
-
-.property-management-page #pmSchedulePreview.pm-schedule-preview {
-    display: grid !important;
-    gap: 16px !important;
-    width: 100% !important;
-    padding: 24px !important;
-    border: 1px solid #d7e2ec !important;
-    border-radius: 18px !important;
-    background: #ffffff !important;
-    box-shadow: 0 18px 44px -40px rgba(8, 31, 51, 0.62) !important;
-}
-
-.property-management-page #pmSchedulePreview.pm-schedule-preview[hidden] {
-    display: none !important;
-}
-
-.property-management-page #pmSchedulePreview > .section-heading.pm-review-heading {
-    display: flex !important;
-    align-items: flex-start !important;
-    gap: 12px !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    border: 0 !important;
-    background: transparent !important;
-    box-shadow: none !important;
-}
-
-.property-management-page .pm-preview-summary {
-    display: grid !important;
-    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-    gap: 10px !important;
-}
-
-.property-management-page .pm-schedule-actions-bottom {
-    display: flex !important;
-    justify-content: flex-end !important;
-    align-items: center !important;
-    gap: 9px !important;
-    margin-top: 0 !important;
-    padding-top: 14px !important;
-    border-top: 1px solid #d7e2ec !important;
-}
-
-@media (max-width: 1180px) {
-    .property-management-page #pmUploadSection > .section-heading + .multi-upload-container.pm-intake-grid {
-        grid-template-columns: 1fr !important;
-        grid-template-areas:
-            "dimension"
-            "monthly"
-            "saved" !important;
+    .property-management-page #salesDetailUploadCard {
+        grid-area: monthly !important;
     }
 
     .property-management-page .pm-saved-work-card {
+        grid-area: saved !important;
+        grid-column: auto !important;
+        grid-row: auto !important;
+    }
+
+    .property-management-page #salesUploadCard,
+    .property-management-page #salesDetailUploadCard,
+    .property-management-page .pm-saved-work-card {
+        width: 100% !important;
+        min-width: 0 !important;
+        min-height: 315px !important;
+        box-sizing: border-box !important;
+    }
+
+    .property-management-page #salesUploadCard,
+    .property-management-page #salesDetailUploadCard {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 12px !important;
+        align-content: normal !important;
+        padding: 18px !important;
+        border: 1px solid #e1ebf3 !important;
+        border-radius: 16px !important;
+        background: #ffffff !important;
+    }
+
+    .property-management-page #salesUploadCard .reconciliation-dropzone,
+    .property-management-page #salesDetailUploadCard .reconciliation-dropzone {
+        display: grid !important;
+        flex: 1 1 auto !important;
+        min-height: 150px !important;
+        place-items: center !important;
+        margin: 0 !important;
+    }
+
+    .property-management-page #salesUploadCard .upload-format-hint,
+    .property-management-page #salesDetailUploadCard .upload-format-hint {
+        display: block !important;
+        margin: 0 !important;
+    }
+
+    .property-management-page #salesUploadCard > .btn,
+    .property-management-page #salesDetailUploadCard > .btn {
+        width: auto !important;
+        max-width: max-content !important;
+        justify-content: center !important;
+        margin-top: 2px !important;
+    }
+
+    .property-management-page .pm-saved-work-card {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 18px !important;
+        padding: 24px !important;
+        border: 1px solid #e1ebf3 !important;
+        border-radius: 16px !important;
+        background: #ffffff !important;
+    }
+
+    .property-management-page .pm-saved-work-card .pm-manager-card-header {
+        padding-bottom: 16px !important;
+        border-bottom: 1px solid #d7e2ec !important;
+    }
+
+    .property-management-page .pm-saved-work-card .pm-inline-controls {
+        margin-top: auto !important;
+        align-self: stretch !important;
+    }
+
+    .property-management-page #pmAlertStack {
+        margin-top: 14px !important;
+    }
+
+    .property-management-page #pmEditorTab.pm-tab-panel {
+        display: grid !important;
+        gap: 0 !important;
+        margin-top: 22px !important;
+    }
+
+    .property-management-page #pmEditorTab.pm-tab-panel[hidden] {
+        display: none !important;
+    }
+
+    .property-management-page #pmSchedulePreview.pm-schedule-preview {
+        display: grid !important;
+        gap: 16px !important;
+        width: 100% !important;
+        padding: 24px !important;
+        border: 1px solid #d7e2ec !important;
+        border-radius: 18px !important;
+        background: #ffffff !important;
+        box-shadow: 0 18px 44px -40px rgba(8, 31, 51, 0.62) !important;
+    }
+
+    .property-management-page #pmSchedulePreview.pm-schedule-preview[hidden] {
+        display: none !important;
+    }
+
+    .property-management-page
+        #pmSchedulePreview
+        > .section-heading.pm-review-heading {
+        display: flex !important;
+        align-items: flex-start !important;
+        gap: 12px !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: 0 !important;
+        background: transparent !important;
+        box-shadow: none !important;
+    }
+
+    .property-management-page .pm-preview-summary.pm-simple-stats-grid {
+        display: grid !important;
+        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+        gap: 12px !important;
+    }
+
+    .property-management-page .pm-schedule-actions-bottom {
+        display: flex !important;
+        justify-content: flex-end !important;
+        align-items: center !important;
+        gap: 9px !important;
+        margin-top: 0 !important;
+        padding-top: 14px !important;
+        border-top: 1px solid #d7e2ec !important;
+    }
+
+    @media (max-width: 1180px) {
+        .property-management-page
+            #pmUploadSection
+            > .section-heading
+            + .multi-upload-container.pm-intake-grid {
+            grid-template-columns: 1fr !important;
+            grid-template-areas:
+                "dimension"
+                "monthly"
+                "saved" !important;
+        }
+
+        .property-management-page .pm-saved-work-card {
+            min-width: 0 !important;
+        }
+    }
+
+    @media (max-width: 760px) {
+        .property-management-page #pmUploadSection > .section-heading,
+        .property-management-page
+            #pmUploadSection
+            > .section-heading
+            + .multi-upload-container.pm-intake-grid,
+        .property-management-page #pmSchedulePreview.pm-schedule-preview {
+            padding-left: 16px !important;
+            padding-right: 16px !important;
+        }
+
+        .property-management-page .pm-preview-summary {
+            grid-template-columns: 1fr !important;
+        }
+
+        .property-management-page .pm-schedule-actions-bottom {
+            flex-direction: column !important;
+            align-items: stretch !important;
+            justify-content: stretch !important;
+        }
+
+        .property-management-page .pm-schedule-actions-bottom .btn {
+            width: 100% !important;
+            justify-content: center !important;
+        }
+    }
+
+    @media (max-width: 760px) {
+        .property-management-page .pm-upload-file-actions {
+            grid-template-columns: 1fr !important;
+        }
+
+        .property-management-page .pm-remove-file-btn,
+        .property-management-page .pm-schedule-actions-bottom .btn {
+            width: 100% !important;
+            justify-content: center !important;
+        }
+
+        .property-management-page .pm-schedule-actions-bottom {
+            flex-direction: column !important;
+            align-items: stretch !important;
+        }
+
+        .property-management-page .pm-preview-summary.pm-simple-stats-grid {
+            grid-template-columns: 1fr !important;
+        }
+
+        .pm-simple-stat-card {
+            min-height: 76px;
+            padding: 14px;
+        }
+
+        .pm-simple-stat-icon {
+            width: 38px;
+            height: 38px;
+            min-width: 38px;
+        }
+
+        .pm-simple-stat-copy strong {
+            font-size: 22px;
+        }
+
+        :global(.pm-qc-card) {
+            padding: 13px;
+        }
+
+        :global(.pm-qc-value-row) {
+            align-items: flex-start;
+            flex-direction: column;
+        }
+
+        :global(.pm-qc-button) {
+            width: 100%;
+        }
+
+        :global(.pm-qc-metrics) {
+            grid-template-columns: 1fr;
+        }
+
+        :global(.pm-qc-metrics div) {
+            border-right: 0;
+            border-bottom: 1px solid #dfe9f2;
+        }
+
+        :global(.pm-qc-metrics div:last-child) {
+            border-bottom: 0;
+        }
+    }
+
+    /* =========================================================
+   PROPERTY MANAGEMENT - SELECTED FILES CLEAN DESIGN
+   ========================================================= */
+
+    :global(.property-management-page .pm-upload-file-actions) {
+        display: grid !important;
+        grid-template-columns: minmax(0, 1fr) 38px !important;
+        align-items: center !important;
+        gap: 12px !important;
+        margin-top: 12px !important;
+        padding: 12px !important;
+        border: 1px solid #d7e3ef !important;
+        border-radius: 14px !important;
+        background: #f8fbfe !important;
+    }
+
+    :global(.property-management-page .pm-upload-file-summary) {
+        display: grid !important;
+        gap: 8px !important;
         min-width: 0 !important;
     }
-}
 
-@media (max-width: 760px) {
-    .property-management-page #pmUploadSection > .section-heading,
-    .property-management-page #pmUploadSection > .section-heading + .multi-upload-container.pm-intake-grid,
-    .property-management-page #pmSchedulePreview.pm-schedule-preview {
-        padding-left: 16px !important;
-        padding-right: 16px !important;
+    :global(.property-management-page .pm-upload-file-label) {
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 7px !important;
+        width: fit-content !important;
+        color: #526b82 !important;
+        font-size: 10px !important;
+        font-weight: 900 !important;
+        line-height: 1 !important;
+        letter-spacing: 0.04em !important;
+        text-transform: uppercase !important;
     }
 
-    .property-management-page .pm-preview-summary {
-        grid-template-columns: 1fr !important;
+    :global(.property-management-page .pm-upload-file-label i) {
+        color: #0b3a67 !important;
+        font-size: 11px !important;
     }
 
-    .property-management-page .pm-schedule-actions-bottom {
-        flex-direction: column !important;
-        align-items: stretch !important;
-        justify-content: stretch !important;
+    :global(.property-management-page .pm-upload-file-name) {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        align-items: center !important;
+        gap: 6px !important;
+        min-width: 0 !important;
+        max-height: 64px !important;
+        overflow: auto !important;
     }
 
-    .property-management-page .pm-schedule-actions-bottom .btn {
-        width: 100% !important;
+    :global(.property-management-page .pm-upload-file-empty) {
+        display: inline-flex !important;
+        align-items: center !important;
+        min-height: 28px !important;
+        padding: 0 10px !important;
+        border: 1px dashed #cbd9e6 !important;
+        border-radius: 999px !important;
+        background: #ffffff !important;
+        color: #60758a !important;
+        font-size: 12px !important;
+        font-weight: 800 !important;
+    }
+
+    :global(.property-management-page .pm-upload-file-chip) {
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 7px !important;
+        max-width: 210px !important;
+        min-height: 28px !important;
+        padding: 0 10px !important;
+        border: 1px solid #d7e3ef !important;
+        border-radius: 999px !important;
+        background: #ffffff !important;
+        color: #102a43 !important;
+        font-size: 12px !important;
+        font-weight: 850 !important;
+        line-height: 1 !important;
+    }
+
+    :global(.property-management-page .pm-upload-file-chip i) {
+        flex: 0 0 auto !important;
+        color: #0b3a67 !important;
+        font-size: 11px !important;
+    }
+
+    :global(.property-management-page .pm-upload-file-chip span) {
+        display: block !important;
+        min-width: 0 !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        white-space: nowrap !important;
+    }
+
+    :global(.property-management-page .pm-upload-file-count) {
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 7px !important;
+        min-height: 28px !important;
+        padding: 0 10px !important;
+        border: 1px solid #cce7de !important;
+        border-radius: 999px !important;
+        background: #eefaf6 !important;
+        color: #0f665f !important;
+        font-size: 12px !important;
+        font-weight: 900 !important;
+        line-height: 1 !important;
+    }
+
+    :global(.property-management-page .pm-upload-file-count i) {
+        color: #0f665f !important;
+        font-size: 11px !important;
+    }
+
+    :global(.property-management-page .pm-upload-file-more) {
+        display: inline-flex !important;
+        align-items: center !important;
+        min-height: 28px !important;
+        padding: 0 10px !important;
+        border: 1px solid #d7e3ef !important;
+        border-radius: 999px !important;
+        background: #edf4f9 !important;
+        color: #344f67 !important;
+        font-size: 12px !important;
+        font-weight: 850 !important;
+        line-height: 1 !important;
+    }
+
+    :global(.property-management-page .pm-remove-file-btn) {
+        display: inline-flex !important;
+        align-items: center !important;
         justify-content: center !important;
-    }
-}
-
-
-
-/* =========================================================
-   PROPERTY MANAGEMENT - FILE SELECTION DESIGN
-   Polished selected-file panel for auto-upload cards.
-   ========================================================= */
-.property-management-page .pm-upload-file-actions {
-    display: grid !important;
-    grid-template-columns: minmax(0, 1fr) auto !important;
-    align-items: center !important;
-    gap: 12px !important;
-    margin-top: auto !important;
-    padding: 12px !important;
-    border: 1px solid #d7e2ec !important;
-    border-radius: 12px !important;
-    background: #f8fbfd !important;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72) !important;
-}
-
-.property-management-page .pm-upload-file-summary {
-    display: grid !important;
-    gap: 7px !important;
-    min-width: 0 !important;
-}
-
-.property-management-page .pm-upload-file-label {
-    display: inline-flex !important;
-    align-items: center !important;
-    gap: 7px !important;
-    color: #526b82 !important;
-    font-size: 10px !important;
-    font-weight: 900 !important;
-    line-height: 1 !important;
-    letter-spacing: .02em !important;
-    text-transform: uppercase !important;
-}
-
-.property-management-page .pm-upload-file-label i {
-    color: #174a75 !important;
-    font-size: 11px !important;
-}
-
-.property-management-page .pm-upload-file-name {
-    display: flex !important;
-    flex-wrap: wrap !important;
-    align-items: center !important;
-    gap: 6px !important;
-    min-width: 0 !important;
-    max-height: 68px !important;
-    overflow: auto !important;
-    padding-right: 2px !important;
-}
-
-.property-management-page .pm-upload-file-empty {
-    display: inline-flex !important;
-    align-items: center !important;
-    gap: 7px !important;
-    min-height: 28px !important;
-    padding: 0 10px !important;
-    border: 1px dashed #cbd9e6 !important;
-    border-radius: 999px !important;
-    background: #ffffff !important;
-    color: #60758a !important;
-    font-size: 12px !important;
-    font-weight: 800 !important;
-}
-
-.property-management-page .pm-upload-file-chip {
-    display: inline-flex !important;
-    align-items: center !important;
-    gap: 7px !important;
-    max-width: 100% !important;
-    min-height: 30px !important;
-    padding: 0 10px !important;
-    border: 1px solid #cbd9e6 !important;
-    border-radius: 999px !important;
-    background: #ffffff !important;
-    color: #102a43 !important;
-    font-size: 12px !important;
-    font-weight: 850 !important;
-    box-shadow: 0 8px 20px -20px rgba(8, 31, 51, 0.45) !important;
-}
-
-.property-management-page .pm-upload-file-chip i {
-    flex: 0 0 auto !important;
-    color: #0f665f !important;
-    font-size: 12px !important;
-}
-
-.property-management-page .pm-upload-file-chip span {
-    display: block !important;
-    min-width: 0 !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-    white-space: nowrap !important;
-}
-
-.property-management-page .pm-upload-file-count {
-    display: inline-flex !important;
-    align-items: center !important;
-    gap: 7px !important;
-    min-height: 30px !important;
-    padding: 0 10px !important;
-    border: 1px solid #b7ded6 !important;
-    border-radius: 999px !important;
-    background: #f0fbf7 !important;
-    color: #0f665f !important;
-    font-size: 12px !important;
-    font-weight: 900 !important;
-}
-
-.property-management-page .pm-upload-file-more {
-    display: inline-flex !important;
-    align-items: center !important;
-    min-height: 30px !important;
-    padding: 0 10px !important;
-    border: 1px solid #d7e2ec !important;
-    border-radius: 999px !important;
-    background: #edf4f9 !important;
-    color: #344f67 !important;
-    font-size: 12px !important;
-    font-weight: 900 !important;
-}
-
-.property-management-page .pm-remove-file-btn {
-    flex: 0 0 auto !important;
-    min-height: 38px !important;
-    padding: 0 13px !important;
-    white-space: nowrap !important;
-    border-color: #f0c9c9 !important;
-    background: #fff8f8 !important;
-    color: #9f1d1d !important;
-}
-
-.property-management-page .pm-remove-file-btn:hover:not(:disabled) {
-    border-color: #e8b4b4 !important;
-    background: #fee4e2 !important;
-    color: #7f1d1d !important;
-}
-
-.property-management-page .pm-remove-file-btn:disabled {
-    opacity: 0.55 !important;
-    cursor: not-allowed !important;
-    border-color: #d7e2ec !important;
-    background: #ffffff !important;
-    color: #60758a !important;
-}
-
-.property-management-page .pm-schedule-actions-bottom {
-    display: flex !important;
-    justify-content: flex-end !important;
-    align-items: center !important;
-    gap: 9px !important;
-    margin-top: 0 !important;
-    padding-top: 14px !important;
-    border-top: 1px solid #d7e2ec !important;
-}
-
-@media (max-width: 760px) {
-    .property-management-page .pm-upload-file-actions {
-        grid-template-columns: 1fr !important;
+        width: 38px !important;
+        height: 38px !important;
+        min-width: 38px !important;
+        padding: 0 !important;
+        border: 1px solid #f0c9c9 !important;
+        border-radius: 10px !important;
+        background: #fff8f8 !important;
+        color: #b42318 !important;
+        box-shadow: none !important;
     }
 
-    .property-management-page .pm-remove-file-btn,
-    .property-management-page .pm-schedule-actions-bottom .btn {
-        width: 100% !important;
-        justify-content: center !important;
+    :global(
+        .property-management-page .pm-remove-file-btn:hover:not(:disabled)
+    ) {
+        background: #fee4e2 !important;
+        border-color: #e8a7a7 !important;
+        color: #9f1d1d !important;
     }
 
-    .property-management-page .pm-schedule-actions-bottom {
-        flex-direction: column !important;
-        align-items: stretch !important;
+    :global(.property-management-page .pm-remove-file-btn:disabled) {
+        opacity: 0.45 !important;
+        cursor: not-allowed !important;
     }
-}
 
+    @media (max-width: 760px) {
+        :global(.property-management-page .pm-upload-file-actions) {
+            grid-template-columns: 1fr !important;
+        }
+
+        :global(.property-management-page .pm-remove-file-btn) {
+            width: 100% !important;
+            min-width: 0 !important;
+        }
+    }
 </style>

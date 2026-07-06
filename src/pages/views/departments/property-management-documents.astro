@@ -1,5 +1,5 @@
 ---
-import DashboardLayout from '../../../layouts/DashboardLayout.astro';
+import DashboardLayout from "../../../layouts/DashboardLayout.astro";
 ---
 
 <DashboardLayout title="Property Documents" includeSheetJS={true}>
@@ -11,11 +11,11 @@ import DashboardLayout from '../../../layouts/DashboardLayout.astro';
             </div>
 
             <div class="page-header-actions property-documents-actions">
-                <a class="btn btn-primary" href="/views/departments/property-management">
-                    <i class="fa-solid fa-table-list" aria-hidden="true"></i>
-                    Schedule builder
-                </a>
-                <button type="button" class="btn btn-secondary" id="pmDocsRefreshBtn">
+                <button
+                    type="button"
+                    class="btn btn-secondary"
+                    id="pmDocsRefreshBtn"
+                >
                     <i class="fa-solid fa-arrows-rotate" aria-hidden="true"></i>
                     Refresh
                 </button>
@@ -26,7 +26,8 @@ import DashboardLayout from '../../../layouts/DashboardLayout.astro';
             <div class="filter-group search-filter">
                 <label for="pmDocumentSearchInput">Search document</label>
                 <div class="search-field">
-                    <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+                    <i class="fa-solid fa-magnifying-glass" aria-hidden="true"
+                    ></i>
                     <input
                         type="search"
                         id="pmDocumentSearchInput"
@@ -62,13 +63,21 @@ import DashboardLayout from '../../../layouts/DashboardLayout.astro';
                 <input type="date" id="pmDateToFilter" />
             </div>
 
-            <button type="button" class="btn btn-secondary btn-sm clear-filters" id="pmClearFiltersBtn">
+            <button
+                type="button"
+                class="btn btn-secondary btn-sm clear-filters"
+                id="pmClearFiltersBtn"
+            >
                 <i class="fa-solid fa-times" aria-hidden="true"></i>
                 Clear
             </button>
         </div>
 
-        <div class="documents-type-tabs property-documents-tabs" role="tablist" aria-label="Property Management document categories">
+        <div
+            class="documents-type-tabs property-documents-tabs"
+            role="tablist"
+            aria-label="Property Management document categories"
+        >
             <button
                 type="button"
                 class="documents-type-tab active"
@@ -83,50 +92,23 @@ import DashboardLayout from '../../../layouts/DashboardLayout.astro';
                     <strong>All department documents</strong>
                     <small>Schedules and uploaded source files</small>
                 </span>
-                <span class="documents-type-count" id="pmAllDocumentsCount">0</span>
-            </button>
-
-            <button
-                type="button"
-                class="documents-type-tab"
-                data-pm-document-tab="schedule"
-                role="tab"
-                aria-selected="false"
-            >
-                <span class="documents-type-icon">
-                    <i class="fa-solid fa-file-pen" aria-hidden="true"></i>
-                </span>
-                <span class="documents-type-copy">
-                    <strong>Editable schedules</strong>
-                    <small>Saved Sales Tax Payable schedules</small>
-                </span>
-                <span class="documents-type-count" id="pmSchedulesCount">0</span>
-            </button>
-
-            <button
-                type="button"
-                class="documents-type-tab"
-                data-pm-document-tab="source"
-                role="tab"
-                aria-selected="false"
-            >
-                <span class="documents-type-icon">
-                    <i class="fa-solid fa-file-excel" aria-hidden="true"></i>
-                </span>
-                <span class="documents-type-copy">
-                    <strong>Source files</strong>
-                    <small>General Ledger and Dimension Balance reports</small>
-                </span>
-                <span class="documents-type-count" id="pmSourceFilesCount">0</span>
+                <span class="documents-type-count" id="pmAllDocumentsCount"
+                    >0</span
+                >
             </button>
         </div>
-        
+
         <div class="table-container">
             <div class="table-header">
                 <h3 id="pmDocumentsTableTitle">All department documents</h3>
                 <div class="table-actions">
-                    <button type="button" class="btn btn-secondary btn-sm" id="pmTableRefreshBtn">
-                        <i class="fa-solid fa-arrows-rotate" aria-hidden="true"></i>
+                    <button
+                        type="button"
+                        class="btn btn-secondary btn-sm"
+                        id="pmTableRefreshBtn"
+                    >
+                        <i class="fa-solid fa-arrows-rotate" aria-hidden="true"
+                        ></i>
                         Refresh
                     </button>
                 </div>
@@ -152,7 +134,11 @@ import DashboardLayout from '../../../layouts/DashboardLayout.astro';
                 </tbody>
             </table>
 
-            <div id="pmDocsEmptyState" class="empty-state" style="display: none;">
+            <div
+                id="pmDocsEmptyState"
+                class="empty-state"
+                style="display: none;"
+            >
                 <i class="fa-solid fa-folder-open" aria-hidden="true"></i>
                 <h4>No Property Management documents</h4>
                 <p>No schedules or source files match the selected filters.</p>
@@ -164,18 +150,36 @@ import DashboardLayout from '../../../layouts/DashboardLayout.astro';
                 <p>Fetching Property Management documents from the server.</p>
             </div>
 
-            <div class="pagination" id="pmDocsPagination" style="display: none;">
+            <div
+                class="pagination"
+                id="pmDocsPagination"
+                style="display: none;"
+            >
                 <div class="pagination-info">
-                    Showing <span id="pmShowingFrom">1</span> - <span id="pmShowingTo">10</span>
+                    Showing <span id="pmShowingFrom">1</span> - <span
+                        id="pmShowingTo">10</span
+                    >
                     of <span id="pmTotalItems">0</span> department documents
                 </div>
                 <div class="pagination-buttons">
-                    <button class="pagination-btn" type="button" id="pmDocsPrevBtn">
-                        <i class="fa-solid fa-chevron-left" aria-hidden="true"></i>
+                    <button
+                        class="pagination-btn"
+                        type="button"
+                        id="pmDocsPrevBtn"
+                    >
+                        <i class="fa-solid fa-chevron-left" aria-hidden="true"
+                        ></i>
                     </button>
-                    <span class="pagination-btn active" id="pmDocsCurrentPage">1</span>
-                    <button class="pagination-btn" type="button" id="pmDocsNextBtn">
-                        <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
+                    <span class="pagination-btn active" id="pmDocsCurrentPage"
+                        >1</span
+                    >
+                    <button
+                        class="pagination-btn"
+                        type="button"
+                        id="pmDocsNextBtn"
+                    >
+                        <i class="fa-solid fa-chevron-right" aria-hidden="true"
+                        ></i>
                     </button>
                 </div>
             </div>
@@ -183,7 +187,10 @@ import DashboardLayout from '../../../layouts/DashboardLayout.astro';
     </div>
 
     <script src="/js/config.js" is:inline></script>
-    <script is:inline src="/js/departments/property-management-documents.js?v=20260701-compact-document-tables"></script>
+    <script
+        is:inline
+        src="/js/departments/property-management-documents.js?v=20260701-compact-document-tables"
+    ></script>
 </DashboardLayout>
 
 <style>
@@ -280,7 +287,7 @@ import DashboardLayout from '../../../layouts/DashboardLayout.astro';
 
     .documents-type-tabs.property-documents-tabs {
         display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
+        grid-template-columns: 1fr;
         gap: 12px;
         margin-bottom: 16px;
     }
@@ -298,7 +305,10 @@ import DashboardLayout from '../../../layouts/DashboardLayout.astro';
         color: #173a59;
         text-align: left;
         cursor: pointer;
-        transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+        transition:
+            border-color 0.18s ease,
+            box-shadow 0.18s ease,
+            background 0.18s ease;
     }
 
     .documents-type-tab:hover,

@@ -2557,12 +2557,6 @@ body .main :is(.btn, button, input, select, textarea) {
     gap: 10px !important;
 }
 
-.property-management-page .pm-preview-summary > div {
-    min-height: 78px !important;
-    border-radius: 8px !important;
-    background: #ffffff !important;
-}
-
 .property-management-page .pm-table-toolbar {
     margin-top: 14px !important;
     padding: 14px !important;
