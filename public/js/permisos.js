@@ -117,6 +117,17 @@ const MENU_SECTIONS = [
         path: '/views/restaurantes',
         required: true,
         adminOnly: true
+    },
+    {
+        id: 'chat',
+        name: 'Chat',
+        description: 'Internal user messaging',
+        icon: 'fa-comments',
+        iconClass: 'chat',
+        department: 'Information Technology',
+        path: '/views/chat',
+        required: false,
+        initialOption: true
     }
 ];
 
@@ -141,11 +152,11 @@ function normalizeLegacyPermissions(permisos = {}) {
 }
 
 // Initialize
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     // Read userId from the URL.
     const urlParams = new URLSearchParams(window.location.search);
     currentUserId = urlParams.get('userId');
-    
+
     if (!currentUserId) {
         Swal.fire({
             icon: 'error',
@@ -156,7 +167,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         return;
     }
-    
+
     loadUserData();
 });
 
@@ -166,7 +177,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 async function loadUserData() {
     const token = localStorage.getItem('token');
-    
+
     // Offline mode sample data
     if (!token || localStorage.getItem('modoOffline')) {
         const users = [
@@ -175,9 +186,9 @@ async function loadUserData() {
             { id: 3, nombre: 'Maria Garcia', email: 'maria@empresa.com', username: 'mgarcia', rol: 'usuario' },
             { id: 4, nombre: 'Carlos Lopez', email: 'carlos@empresa.com', username: 'clopez', rol: 'usuario' }
         ];
-        
+
         currentUser = users.find(u => u.id === parseInt(currentUserId));
-        
+
         if (!currentUser) {
             Swal.fire({
                 icon: 'error',
@@ -187,7 +198,7 @@ async function loadUserData() {
             });
             return;
         }
-        
+
         // Sample permissions
         const defaultPermissions = {
             1: { dashboardAdmin: true, tiendas: true, documentos: true, perfil: true, permisos: true, historial: true, usuarios: true, controlRestaurants: true, propertyManagement: true, propertyManagementDocuments: true, paginaInicio: 'dashboardAdmin' },
@@ -195,24 +206,24 @@ async function loadUserData() {
             3: { tiendas: true, documentos: true, perfil: true, permisos: false, historial: false, usuarios: false, controlRestaurants: false, propertyManagement: false, propertyManagementDocuments: false, paginaInicio: 'tiendas' },
             4: { tiendas: true, documentos: false, perfil: true, permisos: false, historial: false, usuarios: false, controlRestaurants: false, propertyManagement: true, propertyManagementDocuments: true, paginaInicio: 'propertyManagement' }
         };
-        
+
         currentUser.permisos = normalizeLegacyPermissions(defaultPermissions[currentUser.id] || {});
         originalPermissions = { ...currentUser.permisos };
-        
+
         renderUserInfo();
         renderPermissions();
         return;
     }
-    
+
     try {
         const response = await fetch(`${window.API_URL}/usuarios/${currentUserId}`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
-        
+
         if (response.ok) {
             const data = await response.json();
             currentUser = data.usuario || data;
-            
+
             // Ensure permissions are an object.
             if (typeof currentUser.permisos === 'string') {
                 try {
@@ -228,7 +239,7 @@ async function loadUserData() {
                 });
             }
             originalPermissions = { ...currentUser.permisos };
-            
+
             renderUserInfo();
             renderPermissions();
         } else {
@@ -253,16 +264,16 @@ async function loadUserData() {
 
 function renderUserInfo() {
     if (!currentUser) return;
-    
+
     const avatarEl = document.getElementById('userAvatar');
     const nameEl = document.getElementById('permUserName');
     const emailEl = document.getElementById('permUserEmail');
     const roleEl = document.getElementById('permUserRole');
-    
+
     if (avatarEl) avatarEl.textContent = getInitials(currentUser.nombre || '');
     if (nameEl) nameEl.textContent = currentUser.nombre || 'No name';
     if (emailEl) emailEl.textContent = currentUser.email || '';
-    
+
     if (roleEl) {
         roleEl.textContent = getRoleLabel(currentUser.rol);
         roleEl.className = `status-badge ${currentUser.rol || 'usuario'}`;
@@ -287,7 +298,7 @@ function renderPermissions() {
             isRequired ? 'Required' : '',
             isAdminSection ? 'Admin only' : ''
         ].filter(Boolean);
-        
+
         return `
             <div class="permission-card">
                 <div class="permission-info">
@@ -384,7 +395,7 @@ function togglePermission(sectionId, enabled) {
 function resetPermissions() {
     currentUser.permisos = { ...originalPermissions };
     renderPermissions();
-    
+
     Swal.fire({
         icon: 'info',
         title: 'Permissions reset',
@@ -400,7 +411,7 @@ function resetPermissions() {
 
 async function savePermissions() {
     const token = localStorage.getItem('token');
-    
+
     // Collect current permissions.
     const permissions = {};
     MENU_SECTIONS.forEach(section => {
@@ -428,16 +439,16 @@ async function savePermissions() {
     permissions.paginaInicio = enabledWindows.some(section => section.id === initialWindow)
         ? initialWindow
         : enabledWindows[0]?.id || 'tiendas';
-    
+
     // Offline mode
     if (!token || localStorage.getItem('modoOffline')) {
         // Save to localStorage to simulate persistence.
         const savedPermissions = JSON.parse(localStorage.getItem('userPermissions') || '{}');
         savedPermissions[currentUserId] = permissions;
         localStorage.setItem('userPermissions', JSON.stringify(savedPermissions));
-        
+
         originalPermissions = { ...permissions };
-        
+
         Swal.fire({
             icon: 'success',
             title: 'Permissions saved',
@@ -447,7 +458,7 @@ async function savePermissions() {
         });
         return;
     }
-    
+
     try {
         const response = await fetch(`${window.API_URL}/usuarios/${currentUserId}/permisos`, {
             method: 'PUT',
@@ -457,14 +468,14 @@ async function savePermissions() {
             },
             body: JSON.stringify({ permisos: permissions })
         });
-        
+
         const data = await response.json();
-        
+
         if (response.ok && data.success) {
             currentUser.permisos = { ...(data.permisos || permissions) };
             originalPermissions = { ...currentUser.permisos };
             renderPermissions();
-            
+
             Swal.fire({
                 icon: 'success',
                 title: 'Permissions saved',

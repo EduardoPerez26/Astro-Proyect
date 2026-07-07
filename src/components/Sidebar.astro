@@ -7,13 +7,23 @@
         <div class="sidebar-logo">
             <span class="sidebar-logo-text">XBFS</span>
         </div>
-        <button class="sidebar-toggle" id="sidebarToggle" aria-label="Open or close menu">
+        <button
+            class="sidebar-toggle"
+            id="sidebarToggle"
+            aria-label="Open or close menu"
+        >
             <i class="fa-solid fa-bars"></i>
         </button>
     </div>
     <div class="sidebar-search" role="search">
         <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
-        <input id="sidebarSearch" type="search" placeholder="Search..." autocomplete="off" aria-label="Search menu">
+        <input
+            id="sidebarSearch"
+            type="search"
+            placeholder="Search..."
+            autocomplete="off"
+            aria-label="Search menu"
+        />
     </div>
     <nav class="sidebar-nav">
         <!-- GENERAL -->
@@ -45,38 +55,62 @@
         <div class="sidebar-section">
             <div class="sidebar-section-title">Property Management</div>
             <ul class="sidebar-menu" id="menuDepartments">
-                <li class="sidebar-menu-item" data-permission="propertyManagement">
-                    <a class="sidebar-menu-link" href="/views/departments/dashboard-property">
+                <li
+                    class="sidebar-menu-item"
+                    data-permission="propertyManagement"
+                >
+                    <a
+                        class="sidebar-menu-link"
+                        href="/views/departments/dashboard-property"
+                    >
                         <i class="fa-solid fa-building-user"></i>
                         <span>Schedules</span>
                     </a>
                 </li>
-                <li class="sidebar-menu-item" data-permission="propertyManagementDocuments">
-                    <a class="sidebar-menu-link" href="/views/departments/property-management-documents">
+                <li
+                    class="sidebar-menu-item"
+                    data-permission="propertyManagementDocuments"
+                >
+                    <a
+                        class="sidebar-menu-link"
+                        href="/views/departments/property-management-documents"
+                    >
                         <i class="fa-solid fa-folder-tree"></i>
                         <span>Documents</span>
                     </a>
                 </li>
             </ul>
         </div>
-        
+
         <!-- ADMINISTRACION -->
         <div class="sidebar-section" id="sectionAdmin">
             <div class="sidebar-section-title">Information Technology</div>
             <ul class="sidebar-menu">
-                <li class="sidebar-menu-item" data-permission="dashboardAdmin" data-admin-only>
+                <li
+                    class="sidebar-menu-item"
+                    data-permission="dashboardAdmin"
+                    data-admin-only
+                >
                     <a class="sidebar-menu-link" href="/views/dashboard-admin">
                         <i class="fa-solid fa-chart-line"></i>
                         <span>Dashboard</span>
                     </a>
                 </li>
-                <li class="sidebar-menu-item" data-permission="usuarios" data-admin-only>
+                <li
+                    class="sidebar-menu-item"
+                    data-permission="usuarios"
+                    data-admin-only
+                >
                     <a class="sidebar-menu-link" href="/views/usuarios">
                         <i class="fa-solid fa-users"></i>
                         <span>Users</span>
                     </a>
                 </li>
-                <li class="sidebar-menu-item" data-permission="controlRestaurants" data-admin-only>
+                <li
+                    class="sidebar-menu-item"
+                    data-permission="controlRestaurants"
+                    data-admin-only
+                >
                     <a class="sidebar-menu-link" href="/views/restaurantes">
                         <i class="fa-solid fa-screwdriver-wrench"></i>
                         <span>Restaurant control</span>
@@ -90,9 +124,24 @@
             <div class="sidebar-section-title">Account</div>
             <ul class="sidebar-menu">
                 <li class="sidebar-menu-item" data-permission="perfil">
-                    <a class="sidebar-menu-link sidebar-profile-link" href="/views/perfil" aria-label="Profile and security">
+                    <a
+                        class="sidebar-menu-link sidebar-profile-link"
+                        href="/views/perfil"
+                        aria-label="Profile and security"
+                    >
                         <i class="fa-solid fa-user-gear"></i>
                         <span>Profile and security</span>
+                    </a>
+                </li>
+                <li class="sidebar-menu-item" data-permission="chat">
+                    <a href="/views/chat" class="sidebar-menu-link">
+                        <i class="fa-solid fa-comments"></i>
+                        <span>Chat</span>
+                        <span
+                            class="sidebar-chat-badge"
+                            id="chatUnreadBadge"
+                            hidden>0</span
+                        >
                     </a>
                 </li>
             </ul>
@@ -101,7 +150,9 @@
 
     <div class="sidebar-footer">
         <div class="sidebar-user-card">
-            <span class="avatar sidebar-user-avatar" id="sidebarUserAvatar">--</span>
+            <span class="avatar sidebar-user-avatar" id="sidebarUserAvatar"
+                >--</span
+            >
             <span class="sidebar-user-copy">
                 <strong id="sidebarUserName">User</strong>
                 <small id="sidebarUserRole">Role</small>
@@ -113,22 +164,56 @@
         </button>
     </div>
 </aside>
+
+<style>
+    .sidebar-menu-link {
+        position: relative;
+    }
+
+    .sidebar-chat-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 20px;
+        height: 20px;
+        margin-left: auto;
+        padding: 0 6px;
+        border-radius: 999px;
+        background: #ef4444;
+        color: #ffffff;
+        font-size: 11px;
+        font-weight: 900;
+        line-height: 1;
+    }
+
+    .sidebar-chat-badge[hidden] {
+        display: none !important;
+    }
+</style>
 <script is:inline>
     (function () {
         try {
-            var isDesktop = !window.matchMedia || !window.matchMedia('(max-width: 1024px)').matches;
-            if (!isDesktop || localStorage.getItem('sidebarCollapsed') !== 'true') return;
+            var isDesktop =
+                !window.matchMedia ||
+                !window.matchMedia("(max-width: 1024px)").matches;
+            if (
+                !isDesktop ||
+                localStorage.getItem("sidebarCollapsed") !== "true"
+            )
+                return;
 
-            document.documentElement.classList.add('sidebar-collapsed-preset');
-            document.body.classList.add('sidebar-collapsed');
+            document.documentElement.classList.add("sidebar-collapsed-preset");
+            document.body.classList.add("sidebar-collapsed");
 
-            var sidebar = document.getElementById('sidebar');
+            var sidebar = document.getElementById("sidebar");
             if (sidebar) {
-                sidebar.classList.add('collapsed');
-                sidebar.style.transition = 'none';
+                sidebar.classList.add("collapsed");
+                sidebar.style.transition = "none";
             }
         } catch (error) {
-            document.documentElement.classList.remove('sidebar-collapsed-preset');
+            document.documentElement.classList.remove(
+                "sidebar-collapsed-preset",
+            );
         }
     })();
 </script>

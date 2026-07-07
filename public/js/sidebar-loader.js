@@ -1,7 +1,7 @@
 // Sidebar loader adapted for Astro, backend data, and permission control.
 window.API_URL
 
-document.addEventListener('DOMContentLoaded', async function() {
+document.addEventListener('DOMContentLoaded', async function () {
     const sidebar = document.getElementById('sidebar');
     const sidebarToggle = document.getElementById('sidebarToggle');
     const topbarSidebarToggle = document.getElementById('topbarSidebarToggle');
@@ -133,14 +133,14 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     // Logout
     if (logoutBtn) {
-        logoutBtn.addEventListener('click', function(e) {
+        logoutBtn.addEventListener('click', function (e) {
             e.preventDefault();
             e.stopPropagation();
-            
+
             cerrarSesion();
         });
     }
-
+    iniciarContadorChat();
     configurarMenuPerfil();
 });
 
@@ -178,7 +178,7 @@ function configurarMenuPerfil() {
 // Close the current session.
 async function cerrarSesion() {
     const token = localStorage.getItem('token');
-    
+
     // Confirm logout.
     const result = await Swal.fire({
         title: 'Log out',
@@ -190,9 +190,9 @@ async function cerrarSesion() {
         confirmButtonText: 'Yes, log out',
         cancelButtonText: 'Cancel'
     });
-    
+
     if (!result.isConfirmed) return;
-    
+
     // Try to close the session on the server.
     if (window.API_URL && !localStorage.getItem('modoOffline')) {
         try {
@@ -214,7 +214,7 @@ async function cerrarSesion() {
     localStorage.removeItem('isLoggedIn');
     localStorage.removeItem('modoOffline');
     localStorage.removeItem('sidebarCollapsed');
-    
+
     // Redirigir al login
     window.location.href = '/';
 }
@@ -314,12 +314,12 @@ function cargarInfoUser() {
         label: 'AR',
         nombre: 'Accounts Receivable'
     };
-    
+
     // Header elements
     const headerUserName = document.querySelector('.header-user-name');
     const headerUserRole = document.querySelector('.header-user-role');
     const avatars = document.querySelectorAll('.avatar');
-    
+
     // Sidebar elements
     const sidebarUserName = document.getElementById('sidebarUserName');
     const sidebarUserRole = document.getElementById('sidebarUserRole');
@@ -348,7 +348,7 @@ function cargarInfoUser() {
             aplicarAvatarUser(avatar, usuario.nombre, fotoPerfil);
         });
     }
-    
+
     // Refresh sidebar
     if (sidebarUserName) {
         sidebarUserName.textContent = usuario.nombre || 'User';
@@ -379,14 +379,14 @@ window.cargarInfoUser = cargarInfoUser;
 function aplicarPermissions(opciones = {}) {
     const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
     const permisos = obtenerPermissions(usuario);
-    
+
     // Get all menu items with data-permission.
     const menuItems = document.querySelectorAll('[data-permission]');
-    
+
     menuItems.forEach(item => {
         const permiso = item.getAttribute('data-permission');
         const soloAdmin = item.hasAttribute('data-admin-only');
-        
+
         // Check whether the user has the permission.
         if (!permisos[permiso] || (soloAdmin && usuario.rol !== 'admin')) {
             item.classList.add('hidden');
@@ -394,7 +394,7 @@ function aplicarPermissions(opciones = {}) {
             item.classList.remove('hidden');
         }
     });
-    
+
     // Ocultar secciones vacias
     const sections = document.querySelectorAll('.sidebar-section');
     sections.forEach(section => {
@@ -410,7 +410,7 @@ function aplicarPermissions(opciones = {}) {
         ?.classList.remove('sidebar-permissions-pending');
 
     window.applySidebarSearch?.();
-    
+
     // Check access to the current page.
     if (opciones.verificarPagina !== false) {
         verificarAccesoPagina(permisos);
@@ -432,7 +432,8 @@ function obtenerPermissions(usuario) {
             usuarios: true,
             controlRestaurants: true,
             propertyManagement: true,
-            propertyManagementDocuments: true
+            propertyManagementDocuments: true,
+            chat: true
         },
         'supervisor': {
             tiendas: true,
@@ -443,7 +444,9 @@ function obtenerPermissions(usuario) {
             usuarios: false,
             controlRestaurants: false,
             propertyManagement: false,
-            propertyManagementDocuments: false
+            propertyManagementDocuments: false,
+            chat: true
+
         },
         'usuario': {
             tiendas: true,
@@ -454,7 +457,8 @@ function obtenerPermissions(usuario) {
             usuarios: false,
             controlRestaurants: false,
             propertyManagement: false,
-            propertyManagementDocuments: false
+            propertyManagementDocuments: false,
+            chat: false
         }
     };
 
@@ -509,14 +513,14 @@ function obtenerPermissions(usuario) {
                 (tienePropertyManagement ? 'propertyManagement' : undefined)
         };
     }
-    
+
     return defaultPermissions[usuario.rol] || defaultPermissions['usuario'];
 }
 
 // Check whether the user can access the current page.
 function verificarAccesoPagina(permisos) {
     const currentPath = window.location.pathname.replace(/\/+$/, '') || '/';
-    
+
     // Route-to-permission map.
     const routePermissions = {
         '/views/tiendas': 'tiendas',
@@ -528,11 +532,12 @@ function verificarAccesoPagina(permisos) {
         '/views/usuarios': 'usuarios',
         '/views/restaurantes': 'controlRestaurants',
         '/views/departments/property-management': 'propertyManagement',
-        '/views/departments/property-management-documents': 'propertyManagementDocuments'
+        '/views/departments/property-management-documents': 'propertyManagementDocuments',
+        '/views/chat': 'chat'
     };
-    
+
     const requiredPermission = routePermissions[currentPath];
-    
+
     // If the page requires a permission and the user does not have it.
     const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
     const requiereAdmin = [
@@ -558,7 +563,8 @@ function verificarAccesoPagina(permisos) {
                 documentos: '/views/documentos',
                 historial: '/views/historial',
                 propertyManagement: '/views/departments/property-management',
-                propertyManagementDocuments: '/views/departments/property-management-documents'
+                propertyManagementDocuments: '/views/departments/property-management-documents',
+                chat: '/views/chat'
             };
             const paginaConfigurada = permisos.paginaInicio;
             const destinoConfigurado = paginaConfigurada && permisos[paginaConfigurada]
@@ -581,4 +587,67 @@ function verificarAccesoPagina(permisos) {
         });
     }
 }
+
+let chatUnreadInterval = null;
+let previousChatUnreadTotal = null;
+
+async function actualizarContadorChat() {
+    const badge = document.getElementById('chatUnreadBadge');
+    const token = localStorage.getItem('token');
+
+    if (!badge || !window.API_URL || !token) return;
+
+    try {
+        const response = await fetch(`${window.API_URL}/chat/no-leidos`, {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
+
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+            throw new Error(data.message || 'No se pudo cargar el contador de chat');
+        }
+
+        const total = Number(data.total || 0);
+
+        badge.hidden = total <= 0;
+        badge.textContent = total > 99 ? '99+' : String(total);
+
+        const currentPath = window.location.pathname;
+
+        if (
+            previousChatUnreadTotal !== null &&
+            total > previousChatUnreadTotal &&
+            currentPath !== '/views/chat'
+        ) {
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: 'info',
+                title: 'New chat message',
+                showConfirmButton: false,
+                timer: 2500,
+                timerProgressBar: true
+            });
+        }
+
+        previousChatUnreadTotal = total;
+    } catch (error) {
+        console.warn('Chat unread counter error:', error);
+    }
+}
+
+function iniciarContadorChat() {
+    if (chatUnreadInterval) return;
+
+    actualizarContadorChat();
+
+    chatUnreadInterval = setInterval(() => {
+        actualizarContadorChat();
+    }, 15000);
+}
+
+window.actualizarContadorChat = actualizarContadorChat;
 

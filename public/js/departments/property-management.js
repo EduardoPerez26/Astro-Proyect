@@ -2734,19 +2734,19 @@
         const workbook = window.XLSX.utils.book_new();
 
         worksheet['!cols'] = [
-            { wch: 72 },
+            { wch: 72 }, // Entry / Payee
+            { wch: 10 }, // Location
+            { wch: 7 },  // Entity
+            { wch: 9 },  // GL Acct
+            { wch: 18 }, // Reference Info.
+            { wch: 6 },  // STATE
+            { wch: 11 }, // Date
+            { wch: 12 }, // Amount Paid
+            { wch: 16 }, // Prior Yr End Balance Forward
+            ...Array.from({ length: 24 }, () => ({ wch: 13 })),
             { wch: 13 },
-            { wch: 10 },
-            { wch: 10 },
-            { wch: 18 },
-            { wch: 9 },
-            { wch: 12 },
-            { wch: 13 },
-            { wch: 18 },
-            ...Array.from({ length: 24 }, () => ({ wch: 15 })),
-            { wch: 14 },
-            { wch: 18 },
-            { wch: 18 }
+            { wch: 16 },
+            { wch: 16 }
         ];
 
         worksheet['!rows'] = [
@@ -2755,9 +2755,14 @@
             { hpt: 15 },
             { hpt: 18 },
             { hpt: 15 },
-            { hpt: 55 },
-            { hpt: 110 },
-            ...Array.from({ length: Math.max(aoa.length - 7, 1) }, () => ({ hpt: 18 }))
+
+            // Fila de meses: January, February, March...
+            { hpt: 22 },
+
+            // Fila de encabezados: Entry / Payee, Location, etc.
+            { hpt: 34 },
+
+            ...Array.from({ length: Math.max(aoa.length - 7, 1) }, () => ({ hpt: 13 }))
         ];
 
         worksheet['!merges'] = [
@@ -2797,16 +2802,18 @@
             paleYellow: 'FFFDE9',
             paleGreen: 'E2F0D9',
             blue: '4472C4',
-            lightBlue: 'DDEBF7',
-            gridBlue: '00B0F0',
-            gridLight: 'D9EAF7',
+            lightBlue: 'EEF4FA',
+
+            gridBlue: '000000',
+            gridLight: '000000',
             dataGray: 'D9D9D9',
+            lightGray: 'E6E6E6',
             magenta: 'C000C0',
             text: '000000'
         };
 
-        const thinBlueBorder = createBorder(colors.gridBlue);
-        const thinLightBorder = createBorder(colors.gridLight);
+        const thinBlueBorder = createBorder('000000');
+        const thinLightBorder = createBorder('000000');
 
         const metaStyle = {
             font: {
@@ -2843,14 +2850,16 @@
             },
             font: {
                 name: 'Arial',
-                sz: 8,
+                sz: 10,
+                bold: true,
                 color: { rgb: colors.white }
             },
             alignment: {
                 horizontal: 'center',
                 vertical: 'center',
                 wrapText: true
-            }
+            },
+            border: thinLightBorder
         };
 
         const columnHeaderStyle = {
@@ -2860,14 +2869,15 @@
             },
             font: {
                 name: 'Arial',
-                sz: 8,
+                sz: 10,
                 bold: true,
                 color: { rgb: colors.white }
             },
             alignment: {
                 horizontal: 'center',
                 vertical: 'center',
-                wrapText: true
+                wrapText: true,
+                shrinkToFit: true
             },
             border: thinBlueBorder
         };
@@ -2875,7 +2885,7 @@
         const leftDataStyle = {
             fill: {
                 patternType: 'solid',
-                fgColor: { rgb: colors.dataGray }
+                fgColor: { rgb: colors.white }
             },
             font: {
                 name: 'Arial',
@@ -2883,10 +2893,12 @@
                 color: { rgb: colors.black }
             },
             alignment: {
+                horizontal: 'left',
                 vertical: 'center',
-                wrapText: false
+                wrapText: false,
+                shrinkToFit: false
             },
-            border: thinBlueBorder
+            border: thinLightBorder
         };
 
         const amountDataStyle = {
@@ -2901,17 +2913,30 @@
             },
             alignment: {
                 horizontal: 'right',
-                vertical: 'center'
+                vertical: 'center',
+                wrapText: false,
+                shrinkToFit: false
             },
             border: thinLightBorder
         };
 
         const selectedMonthDataStyle = {
-            ...amountDataStyle,
             fill: {
                 patternType: 'solid',
-                fgColor: { rgb: colors.paleYellow }
-            }
+                fgColor: { rgb: colors.dataGray }
+            },
+            font: {
+                name: 'Arial',
+                sz: 8,
+                color: { rgb: colors.black }
+            },
+            alignment: {
+                horizontal: 'right',
+                vertical: 'center',
+                wrapText: false,
+                shrinkToFit: false
+            },
+            border: thinLightBorder
         };
 
         const ytdStyle = {
@@ -2929,7 +2954,7 @@
                 horizontal: 'right',
                 vertical: 'center'
             },
-            border: thinBlueBorder
+            border: thinLightBorder
         };
 
         const ytdPerStoreHeaderStyle = {
@@ -2939,16 +2964,17 @@
             },
             font: {
                 name: 'Arial',
-                sz: 8,
+                sz: 6,
                 bold: true,
                 color: { rgb: colors.white }
             },
             alignment: {
                 horizontal: 'center',
                 vertical: 'center',
-                wrapText: true
+                wrapText: true,
+                shrinkToFit: true
             },
-            border: thinBlueBorder
+            border: thinLightBorder
         };
 
         const ytdPerStoreDataStyle = {
@@ -2965,7 +2991,7 @@
                 horizontal: 'right',
                 vertical: 'center'
             },
-            border: thinBlueBorder
+            border: thinLightBorder
         };
 
         const quarterStyle = {
@@ -2975,13 +3001,15 @@
             },
             font: {
                 name: 'Arial',
-                sz: 8,
-                color: { rgb: colors.black }
+                sz: 6,
+                bold: true,
+                color: { rgb: colors.white }
             },
             alignment: {
                 horizontal: 'center',
                 vertical: 'center',
-                wrapText: true
+                wrapText: true,
+                shrinkToFit: true
             },
             border: thinLightBorder
         };

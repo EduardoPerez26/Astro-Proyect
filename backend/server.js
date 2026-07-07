@@ -20,6 +20,7 @@ const departamentosRoutes = require('./routes/departamentos.routes');
 const comparacionesRoutes = require('./routes/comparaciones.routes');
 const taxRatesRoutes = require('./routes/taxRates.routes');
 const propertyManagementRoutes = require('./routes/propertyManagement.routes');
+const chatRoutes = require('./routes/chat.routes');
 
 const app = express();
 app.disable('x-powered-by');
@@ -129,6 +130,8 @@ app.use('/api/departamentos', departamentosRoutes);
 app.use('/api/comparaciones', comparacionesRoutes);
 app.use('/api/tax-rates', taxRatesRoutes);
 app.use('/api/property-management', propertyManagementRoutes);
+app.use('/api/chat', chatRoutes);
+
 
 // ============================================
 // MANEJO DE ERRORES
