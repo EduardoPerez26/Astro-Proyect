@@ -78,14 +78,22 @@ router.get('/conversaciones', async (req, res) => {
             WHERE m.conversacion_id = c.id
             ORDER BY m.id DESC
             LIMIT 1
-        ) AS ultimo_mensaje_fecha
+        ) AS ultimo_mensaje_fecha,
+
+        (
+            SELECT COUNT(m.id)
+            FROM chat_mensajes m
+            WHERE m.conversacion_id = c.id
+              AND m.usuario_id <> ?
+              AND m.id > COALESCE(cu.ultimo_mensaje_leido_id, 0)
+        ) AS mensajes_no_leidos
 
     FROM chat_conversaciones c
     INNER JOIN chat_conversaciones_usuarios cu
         ON cu.conversacion_id = c.id
     WHERE cu.usuario_id = ?
     ORDER BY COALESCE(ultimo_mensaje_fecha, c.created_at) DESC
-`, [usuarioId, usuarioId, usuarioId]);
+`, [usuarioId, usuarioId, usuarioId, usuarioId]);
 
         const conversaciones = rows.map(row => ({
             ...row,
@@ -245,26 +253,72 @@ router.get('/conversaciones/:id/mensajes', async (req, res) => {
             });
         }
 
+        const receiptsOnly = req.query.receipts_only === '1';
+        const selectColumns = receiptsOnly
+            ? `
+                m.id,
+                m.conversacion_id,
+                m.usuario_id,
+                m.created_at
+            `
+            : `
+                m.id,
+                m.conversacion_id,
+                m.usuario_id,
+                m.mensaje,
+                m.created_at,
+                COALESCE(u.nombre_completo, u.username, u.email, 'User') AS usuario_nombre,
+                u.foto_perfil_url AS usuario_foto
+            `;
+
+        const ownMessageFilter = receiptsOnly ? 'AND m.usuario_id = ?' : '';
+        const queryParams = receiptsOnly
+            ? [conversacionId, afterId, usuarioId]
+            : [conversacionId, afterId];
+
         const [rows] = await pool.query(`
-    SELECT 
-        m.id,
-        m.conversacion_id,
-        m.usuario_id,
-        m.mensaje,
-        m.created_at,
-        COALESCE(u.nombre_completo, u.username, u.email, 'User') AS usuario_nombre,
-        u.foto_perfil_url AS usuario_foto
-    FROM chat_mensajes m
-    INNER JOIN usuarios u ON u.id = m.usuario_id
-    WHERE m.conversacion_id = ?
-      AND m.id > ?
-    ORDER BY m.id ASC
-    LIMIT 100
-`, [conversacionId, afterId]);
+            SELECT
+                ${selectColumns},
+                COUNT(DISTINCT reader.usuario_id) AS read_by_count,
+                (
+                    SELECT COUNT(*)
+                    FROM chat_conversaciones_usuarios recipient
+                    WHERE recipient.conversacion_id = m.conversacion_id
+                      AND recipient.usuario_id <> m.usuario_id
+                ) AS recipient_count,
+                MAX(reader.ultimo_mensaje_leido_at) AS read_at
+            FROM chat_mensajes m
+            ${receiptsOnly ? '' : 'INNER JOIN usuarios u ON u.id = m.usuario_id'}
+            LEFT JOIN chat_conversaciones_usuarios reader
+                ON reader.conversacion_id = m.conversacion_id
+               AND reader.usuario_id <> m.usuario_id
+               AND reader.ultimo_mensaje_leido_id >= m.id
+            WHERE m.conversacion_id = ?
+              AND m.id > ?
+              ${ownMessageFilter}
+            GROUP BY
+                ${receiptsOnly
+                    ? 'm.id, m.conversacion_id, m.usuario_id, m.created_at'
+                    : 'm.id, m.conversacion_id, m.usuario_id, m.mensaje, m.created_at, usuario_nombre, usuario_foto'}
+            ORDER BY m.id ASC
+            LIMIT 100
+        `, queryParams);
+
+        const mensajes = rows.map(row => {
+            const readByCount = Number(row.read_by_count || 0);
+            const recipientCount = Number(row.recipient_count || 0);
+
+            return {
+                ...row,
+                read_by_count: readByCount,
+                recipient_count: recipientCount,
+                read_by_others: recipientCount > 0 && readByCount >= recipientCount
+            };
+        });
 
         res.json({
             success: true,
-            mensajes: rows
+            mensajes
         });
     } catch (error) {
         console.error('Error cargando mensajes:', error);
@@ -426,7 +480,8 @@ router.put('/conversaciones/:id/leida', async (req, res) => {
 
         await pool.query(`
             UPDATE chat_conversaciones_usuarios
-            SET ultimo_mensaje_leido_id = ?
+            SET ultimo_mensaje_leido_id = ?,
+                ultimo_mensaje_leido_at = NOW()
             WHERE conversacion_id = ? AND usuario_id = ?
         `, [lastMessage.ultimo_id || 0, conversacionId, usuarioId]);
 

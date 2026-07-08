@@ -178,12 +178,14 @@ function renderConversaciones(conversaciones) {
     container.innerHTML = filtered.map(function (conv) {
         const title = conv.otro_usuario_nombre || conv.titulo || `Conversation #${conv.id}`;
         const activeClass = Number(conv.id) === Number(chatState.conversacionActual) ? 'is-active' : '';
+        const unreadCount = Number(conv.mensajes_no_leidos || 0);
+        const unreadClass = unreadCount > 0 ? 'has-unread' : '';
         const lastMessage = conv.ultimo_mensaje || 'No messages yet';
         const time = formatShortDate(conv.ultimo_mensaje_fecha || conv.created_at);
 
         return `
         <button
-            class="chat-conversation ${activeClass}"
+            class="chat-conversation ${activeClass} ${unreadClass}"
             type="button"
             data-title="${escapeAttr(title)}"
             data-photo="${escapeAttr(conv.otro_usuario_foto || '')}"
@@ -194,7 +196,12 @@ function renderConversaciones(conversaciones) {
             <div class="chat-conversation-body">
                 <div class="chat-conversation-top">
                     <strong>${escapeHtml(title)}</strong>
-                    <small class="chat-conversation-time">${escapeHtml(time)}</small>
+                    <span class="chat-conversation-meta">
+                        <small class="chat-conversation-time">${escapeHtml(time)}</small>
+                        ${unreadCount > 0
+                            ? `<span class="chat-conversation-unread">${escapeHtml(unreadCount > 99 ? '99+' : unreadCount)}</span>`
+                            : ''}
+                    </span>
                 </div>
 
                 <span class="chat-last-message">${escapeHtml(lastMessage)}</span>
@@ -284,6 +291,10 @@ async function cargarMensajes(soloNuevos = false) {
         if ((data.mensajes || []).length > 0) {
             await marcarConversacionLeida();
         }
+
+        if (soloNuevos) {
+            await actualizarLecturasConversacion();
+        }
     } catch (error) {
         console.error(error);
     }
@@ -326,13 +337,17 @@ function renderMensajes(mensajes, append = false) {
 
         const row = document.createElement('div');
         row.className = `chat-message-row ${isOwn ? 'is-own' : ''}`;
+        row.dataset.messageId = String(msg.id);
         row.innerHTML = `
             ${renderChatAvatar(userName, photoUrl, 'chat-message-avatar')}
 
             <div class="chat-message">
                 <strong>${escapeHtml(isOwn ? 'You' : userName)}</strong>
                 <p>${escapeHtml(msg.mensaje)}</p>
-                <small>${formatDate(msg.created_at)}</small>
+                <div class="chat-message-meta">
+                    <small class="chat-message-time">${formatDate(msg.created_at)}</small>
+                    ${isOwn ? renderReadReceipt(msg) : ''}
+                </div>
             </div>
         `;
 
@@ -342,6 +357,51 @@ function renderMensajes(mensajes, append = false) {
     if (mensajes.length) {
         container.scrollTop = container.scrollHeight;
     }
+}
+
+async function actualizarLecturasConversacion() {
+    if (!chatState.conversacionActual) return;
+
+    const token = getToken();
+
+    try {
+        const response = await fetch(
+            `${getApiBase()}/chat/conversaciones/${chatState.conversacionActual}/mensajes?after_id=0&receipts_only=1`,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+            throw new Error(data.message || 'Read receipts could not be loaded');
+        }
+
+        actualizarLecturasMensajes(data.mensajes || []);
+    } catch (error) {
+        console.warn('Read receipt status could not be updated:', error);
+    }
+}
+
+function actualizarLecturasMensajes(mensajes) {
+    mensajes.forEach(function (msg) {
+        if (Number(msg.usuario_id) !== Number(chatState.usuario.id)) return;
+
+        const row = Array.from(document.querySelectorAll('.chat-message-row'))
+            .find(element => element.dataset.messageId === String(msg.id));
+        const status = row?.querySelector('.chat-read-status');
+
+        if (!status) return;
+
+        const isRead = Boolean(msg.read_by_others);
+        status.classList.toggle('is-read', isRead);
+        status.classList.toggle('is-unread', !isRead);
+        status.title = getReadReceiptTitle(msg);
+        status.innerHTML = getReadReceiptContent(msg);
+    });
 }
 
 async function enviarMensaje(event) {
@@ -713,6 +773,59 @@ function formatDate(value) {
     } catch {
         return value;
     }
+}
+
+function formatReadDate(value) {
+    if (!value) return '';
+
+    try {
+        const date = new Date(value);
+        const now = new Date();
+        const sameDay = date.toDateString() === now.toDateString();
+
+        return sameDay
+            ? date.toLocaleTimeString([], {
+                hour: '2-digit',
+                minute: '2-digit'
+            })
+            : date.toLocaleString([], {
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+    } catch {
+        return '';
+    }
+}
+
+function getReadReceiptTitle(msg) {
+    if (!msg.read_by_others) return 'Unread by recipient';
+
+    const readDate = formatReadDate(msg.read_at);
+    return readDate ? `Read by recipient at ${readDate}` : 'Read by recipient';
+}
+
+function getReadReceiptContent(msg) {
+    if (!msg.read_by_others) {
+        return '<i class="fa-solid fa-check" aria-hidden="true"></i><span>Unread</span>';
+    }
+
+    const readDate = formatReadDate(msg.read_at);
+    return `<i class="fa-solid fa-check-double" aria-hidden="true"></i><span>${escapeHtml(readDate ? `Read ${readDate}` : 'Read')}</span>`;
+}
+
+function renderReadReceipt(msg) {
+    const isRead = Boolean(msg.read_by_others);
+
+    return `
+        <span
+            class="chat-read-status ${isRead ? 'is-read' : 'is-unread'}"
+            title="${escapeAttr(getReadReceiptTitle(msg))}"
+        >
+            ${getReadReceiptContent(msg)}
+        </span>
+    `;
 }
 
 function getInitials(value) {

@@ -189,6 +189,30 @@
     .sidebar-chat-badge[hidden] {
         display: none !important;
     }
+
+    :global(.sidebar-menu-link.has-unread-chat) {
+        padding-right: 44px;
+    }
+
+    :global(.sidebar.collapsed .sidebar-menu-link.has-unread-chat),
+    :global(html.sidebar-collapsed-preset body .sidebar .sidebar-menu-link.has-unread-chat) {
+        padding-right: 11px !important;
+    }
+
+    :global(.sidebar.collapsed .sidebar-menu-link .sidebar-chat-badge:not([hidden])),
+    :global(html.sidebar-collapsed-preset body .sidebar .sidebar-menu-link .sidebar-chat-badge:not([hidden])) {
+        position: absolute !important;
+        top: 4px !important;
+        right: 5px !important;
+        display: inline-flex !important;
+        min-width: 18px !important;
+        height: 18px !important;
+        padding: 0 5px !important;
+        border: 2px solid #06243e !important;
+        font-size: 10px !important;
+        box-shadow: 0 8px 16px -10px rgba(0, 0, 0, 0.75) !important;
+        z-index: 4 !important;
+    }
 </style>
 <script is:inline>
     (function () {

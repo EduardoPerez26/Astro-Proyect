@@ -656,9 +656,20 @@ async function actualizarContadorChat() {
         }
 
         const total = Number(data.total || 0);
+        const chatLink = badge.closest('.sidebar-menu-link');
 
         badge.hidden = total <= 0;
         badge.textContent = total > 99 ? '99+' : String(total);
+        badge.title = total > 0
+            ? `${total} unread chat message${total === 1 ? '' : 's'}`
+            : '';
+        badge.setAttribute(
+            'aria-label',
+            total > 0
+                ? `${total} unread chat message${total === 1 ? '' : 's'}`
+                : 'No unread chat messages'
+        );
+        chatLink?.classList.toggle('has-unread-chat', total > 0);
 
         const currentPath = window.location.pathname;
 

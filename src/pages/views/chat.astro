@@ -316,6 +316,17 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
                 0 16px 34px -30px rgba(8, 31, 51, 0.9);
         }
 
+        .chat-conversation.has-unread {
+            border-color: rgba(15, 118, 110, 0.32);
+            background: #f2fbf7;
+        }
+
+        .chat-conversation.has-unread .chat-last-message,
+        .chat-conversation.has-unread strong {
+            color: var(--chat-ink);
+            font-weight: 950;
+        }
+
         .chat-conversation-avatar {
             display: grid;
             width: 42px;
@@ -356,6 +367,27 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
             color: #7e92a5;
             font-size: 10px;
             font-weight: 800;
+        }
+
+        .chat-conversation-meta {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            flex: 0 0 auto;
+        }
+
+        .chat-conversation-unread {
+            display: inline-grid;
+            min-width: 20px;
+            height: 20px;
+            padding: 0 6px;
+            place-items: center;
+            border-radius: 999px;
+            background: var(--chat-green);
+            color: #ffffff;
+            font-size: 10px;
+            font-weight: 950;
+            line-height: 1;
         }
 
         .chat-conversation span.chat-last-message {
@@ -567,6 +599,43 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
             font-weight: 700;
             opacity: 0.64;
             text-align: right;
+        }
+
+        .chat-message-meta {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 8px;
+            margin-top: 7px;
+        }
+
+        .chat-message-meta .chat-message-time {
+            margin: 0;
+            opacity: 0.64;
+        }
+
+        .chat-read-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 10px;
+            font-weight: 900;
+            line-height: 1;
+            opacity: 0.78;
+            white-space: nowrap;
+        }
+
+        .chat-read-status i {
+            font-size: 10px;
+        }
+
+        .chat-read-status.is-read {
+            color: #b7f2e6;
+            opacity: 0.94;
+        }
+
+        .chat-read-status.is-unread {
+            color: rgba(255, 255, 255, 0.72);
         }
 
         .chat-form {
@@ -1021,5 +1090,5 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
     </style>
 
     <script src="/js/config.js" is:inline></script>
-    <script src="/js/chat.js?v=20260707-chat-permissions" is:inline></script>
+    <script src="/js/chat.js?v=20260708-read-receipts" is:inline></script>
 </DashboardLayout>

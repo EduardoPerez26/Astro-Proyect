@@ -216,6 +216,7 @@ CREATE TABLE IF NOT EXISTS chat_conversaciones_usuarios (
     conversacion_id BIGINT UNSIGNED NOT NULL,
     usuario_id INT NOT NULL,
     ultimo_mensaje_leido_id BIGINT UNSIGNED NOT NULL DEFAULT 0,
+    ultimo_mensaje_leido_at TIMESTAMP NULL DEFAULT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
     UNIQUE KEY uq_chat_conversacion_usuario (conversacion_id, usuario_id),

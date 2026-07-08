@@ -4220,6 +4220,7 @@
         }
     }
 
+
     function exportScheduleWorkbook() {
         if (!scheduleRows.length || !window.XLSX) return;
 
@@ -4244,6 +4245,11 @@
             ...scheduleRows
         ];
 
+        const scheduleEndExcelRow = aoa.length;
+        const monthlySummaryStartRow = aoa.length + 1;
+
+        appendMonthlyTotalsExportRows(aoa, scheduleRows);
+
         const worksheet = window.XLSX.utils.aoa_to_sheet(aoa, {
             cellDates: true
         });
@@ -4260,7 +4266,7 @@
             { wch: 11 }, // Date
             { wch: 12 }, // Amount Paid
             { wch: 16 }, // Prior Yr End Balance Forward
-            ...Array.from({ length: 24 }, () => ({ wch: 13 })),
+            ...Array.from({ length: 24 }, () => ({ wch: 16 })),
             { wch: 13 },
             { wch: 16 },
             { wch: 16 }
@@ -4272,14 +4278,16 @@
             { hpt: 15 },
             { hpt: 18 },
             { hpt: 15 },
-
-            // Fila de meses: January, February, March...
             { hpt: 22 },
-
-            // Fila de encabezados: Entry / Payee, Location, etc.
             { hpt: 34 },
-
-            ...Array.from({ length: Math.max(aoa.length - 7, 1) }, () => ({ hpt: 13 }))
+            ...Array.from({ length: Math.max(scheduleRows.length, 1) }, () => ({ hpt: 13 })),
+            { hpt: 8 },
+            { hpt: 24 },
+            { hpt: 22 },
+            { hpt: 22 },
+            { hpt: 20 },
+            { hpt: 20 },
+            { hpt: 20 }
         ];
 
         worksheet['!merges'] = [
@@ -4290,10 +4298,11 @@
         ];
 
         worksheet['!autofilter'] = {
-            ref: `A7:AJ${aoa.length}`
+            ref: `A7:AJ${scheduleEndExcelRow}`
         };
 
-        applyCompletedScheduleWorkbookStyle(worksheet, aoa.length);
+        applyCompletedScheduleWorkbookStyle(worksheet, scheduleEndExcelRow);
+        applyMonthlyTotalsExportStyle(worksheet, monthlySummaryStartRow);
 
         window.XLSX.utils.book_append_sheet(workbook, worksheet, 'Schedule 2026');
 
@@ -4305,6 +4314,282 @@
                 bookType: 'xlsx'
             }
         );
+    }
+
+    function appendMonthlyTotalsExportRows(aoa, rows) {
+        const totals = getMonthlyPaidCollectedTotals(rows);
+        const totalCollected = roundMoney(
+            totals.reduce((sum, item) => sum + Number(item.collectedDisplay || 0), 0)
+        );
+        const totalPaid = roundMoney(
+            totals.reduce((sum, item) => sum + Number(item.paid || 0), 0)
+        );
+
+        const blankRow = emptyExportSummaryRow();
+
+        const titleRow = emptyExportSummaryRow();
+        titleRow[0] = 'MONTHLY TOTALS - PAID AND COLLECTED BY MONTH';
+
+        const grandTotalRow = emptyExportSummaryRow();
+        grandTotalRow[0] = 'TOTAL COLLECTED';
+        grandTotalRow[1] = totalCollected;
+        grandTotalRow[3] = 'TOTAL PAID';
+        grandTotalRow[4] = totalPaid;
+
+        const monthRow = emptyExportSummaryRow();
+        const labelRow = emptyExportSummaryRow();
+        const valueRow = emptyExportSummaryRow();
+        const differenceRow = emptyExportSummaryRow();
+
+        totals.forEach(item => {
+            const paidColumn = PAID_COL_BY_MONTH[item.month];
+            const collectedColumn = COLLECTED_COL_BY_MONTH[item.month];
+
+            if (paidColumn === undefined || collectedColumn === undefined) return;
+
+            monthRow[paidColumn] = item.name;
+
+            labelRow[paidColumn] = 'PAID';
+            labelRow[collectedColumn] = 'COLLECTED';
+
+            valueRow[paidColumn] = Number(item.paid || 0);
+            valueRow[collectedColumn] = Number(item.collectedDisplay || 0);
+
+            differenceRow[paidColumn] = 'DIFF.';
+            differenceRow[collectedColumn] = Number(item.difference || 0);
+        });
+
+        aoa.push(
+            blankRow,
+            titleRow,
+            grandTotalRow,
+            monthRow,
+            labelRow,
+            valueRow,
+            differenceRow
+        );
+    }
+
+    function emptyExportSummaryRow() {
+        return Array.from({ length: SCHEDULE_HEADERS.length }, () => '');
+    }
+
+    function applyMonthlyTotalsExportStyle(worksheet, startRow) {
+        const lastColumn = SCHEDULE_HEADERS.length - 1;
+
+        const titleRow = startRow;
+        const grandRow = startRow + 1;
+        const monthRow = startRow + 2;
+        const labelRow = startRow + 3;
+        const valueRow = startRow + 4;
+        const differenceRow = startRow + 5;
+
+        const moneyFormat = '$#,##0.00;($#,##0.00);$0.00';
+
+        const border = createBorder('000000');
+
+        const titleStyle = {
+            font: {
+                name: 'Arial',
+                bold: true,
+                sz: 12,
+                color: { rgb: 'FFFFFF' }
+            },
+            fill: {
+                fgColor: { rgb: '102A43' }
+            },
+            alignment: {
+                horizontal: 'left',
+                vertical: 'center'
+            },
+            border
+        };
+
+        const grandLabelStyle = {
+            font: {
+                name: 'Arial',
+                bold: true,
+                sz: 10,
+                color: { rgb: '102A43' }
+            },
+            fill: {
+                fgColor: { rgb: 'EAF2F8' }
+            },
+            alignment: {
+                horizontal: 'left',
+                vertical: 'center'
+            },
+            border
+        };
+
+        const grandValueStyle = {
+            font: {
+                name: 'Arial',
+                bold: true,
+                sz: 11,
+                color: { rgb: '102A43' }
+            },
+            fill: {
+                fgColor: { rgb: 'FFFFFF' }
+            },
+            alignment: {
+                horizontal: 'right',
+                vertical: 'center'
+            },
+            border,
+            numFmt: moneyFormat
+        };
+
+        const monthStyle = {
+            font: {
+                name: 'Arial',
+                bold: true,
+                sz: 10,
+                color: { rgb: 'FFFFFF' }
+            },
+            fill: {
+                fgColor: { rgb: '102A43' }
+            },
+            alignment: {
+                horizontal: 'center',
+                vertical: 'center'
+            },
+            border
+        };
+
+        const labelStyle = {
+            font: {
+                name: 'Arial',
+                bold: true,
+                sz: 9,
+                color: { rgb: '415A70' }
+            },
+            fill: {
+                fgColor: { rgb: 'F2F6FA' }
+            },
+            alignment: {
+                horizontal: 'center',
+                vertical: 'center'
+            },
+            border
+        };
+
+        const valueStyle = {
+            font: {
+                name: 'Arial',
+                bold: true,
+                sz: 10,
+                color: { rgb: '082033' }
+            },
+            fill: {
+                fgColor: { rgb: 'FFFFFF' }
+            },
+            alignment: {
+                horizontal: 'right',
+                vertical: 'center'
+            },
+            border,
+            numFmt: moneyFormat
+        };
+
+        const diffLabelStyle = {
+            font: {
+                name: 'Arial',
+                bold: true,
+                sz: 9,
+                color: { rgb: '415A70' }
+            },
+            fill: {
+                fgColor: { rgb: 'F2F6FA' }
+            },
+            alignment: {
+                horizontal: 'center',
+                vertical: 'center'
+            },
+            border
+        };
+
+        const diffValueStyle = {
+            font: {
+                name: 'Arial',
+                bold: true,
+                sz: 10,
+                color: { rgb: '9A6400' }
+            },
+            fill: {
+                fgColor: { rgb: 'FFF4E5' }
+            },
+            alignment: {
+                horizontal: 'right',
+                vertical: 'center'
+            },
+            border,
+            numFmt: moneyFormat
+        };
+
+        worksheet['!merges'] = worksheet['!merges'] || [];
+
+        worksheet['!merges'].push({
+            s: { r: titleRow, c: 0 },
+            e: { r: titleRow, c: lastColumn }
+        });
+
+        for (let column = 0; column <= lastColumn; column += 1) {
+            setExportCellStyle(worksheet, titleRow, column, titleStyle);
+        }
+
+        setExportCellStyle(worksheet, grandRow, 0, grandLabelStyle);
+        setExportCellStyle(worksheet, grandRow, 1, grandValueStyle, moneyFormat);
+        setExportCellStyle(worksheet, grandRow, 3, grandLabelStyle);
+        setExportCellStyle(worksheet, grandRow, 4, grandValueStyle, moneyFormat);
+
+        for (let month = 1; month <= 12; month += 1) {
+            const paidColumn = PAID_COL_BY_MONTH[month];
+            const collectedColumn = COLLECTED_COL_BY_MONTH[month];
+
+            if (paidColumn === undefined || collectedColumn === undefined) continue;
+
+            worksheet['!merges'].push({
+                s: { r: monthRow, c: paidColumn },
+                e: { r: monthRow, c: collectedColumn }
+            });
+
+            setExportCellStyle(worksheet, monthRow, paidColumn, monthStyle);
+            setExportCellStyle(worksheet, monthRow, collectedColumn, monthStyle);
+
+            setExportCellStyle(worksheet, labelRow, paidColumn, labelStyle);
+            setExportCellStyle(worksheet, labelRow, collectedColumn, labelStyle);
+
+            setExportCellStyle(worksheet, valueRow, paidColumn, valueStyle, moneyFormat);
+            setExportCellStyle(worksheet, valueRow, collectedColumn, valueStyle, moneyFormat);
+
+            setExportCellStyle(worksheet, differenceRow, paidColumn, diffLabelStyle);
+            setExportCellStyle(worksheet, differenceRow, collectedColumn, diffValueStyle, moneyFormat);
+        }
+    }
+
+    function setExportCellStyle(worksheet, rowIndex, columnIndex, style, numberFormat = '') {
+        const address = window.XLSX.utils.encode_cell({
+            r: rowIndex,
+            c: columnIndex
+        });
+
+        if (!worksheet[address]) {
+            worksheet[address] = {
+                t: 's',
+                v: ''
+            };
+        }
+
+        worksheet[address].s = style;
+
+        if (numberFormat && typeof worksheet[address].v === 'number') {
+            worksheet[address].z = numberFormat;
+            worksheet[address].s = {
+                ...worksheet[address].s,
+                numFmt: numberFormat
+            };
+        }
     }
 
     function applyCompletedScheduleWorkbookStyle(worksheet, rowCount) {
@@ -4402,7 +4687,7 @@
         const leftDataStyle = {
             fill: {
                 patternType: 'solid',
-                fgColor: { rgb: colors.white }
+                fgColor: { rgb: 'F2F2F2' }
             },
             font: {
                 name: 'Arial',
@@ -4421,7 +4706,7 @@
         const amountDataStyle = {
             fill: {
                 patternType: 'solid',
-                fgColor: { rgb: colors.white }
+                fgColor: { rgb: 'F2F2F2' }
             },
             font: {
                 name: 'Arial',
@@ -4440,7 +4725,7 @@
         const selectedMonthDataStyle = {
             fill: {
                 patternType: 'solid',
-                fgColor: { rgb: colors.dataGray }
+                fgColor: { rgb: 'FFF2CC' }
             },
             font: {
                 name: 'Arial',
@@ -6441,16 +6726,21 @@
             return;
         }
 
+        const autoClose = type === 'success';
+
         window.Swal.fire({
             icon: type === 'warning' ? 'warning' : type === 'error' ? 'error' : 'success',
             title,
             text: message,
+            showConfirmButton: !autoClose,
             confirmButtonText: 'OK',
-            confirmButtonColor: '#102a43'
+            confirmButtonColor: '#102a43',
+            timer: autoClose ? 1700 : undefined,
+            timerProgressBar: autoClose
         });
     }
 
-    function showPmAlert({ type = 'info', title = 'Notice', message = '', timeout = 6500 }) {
+    function showPmAlert({ type = 'info', title = 'Notice', message = '', timeout = 4200 }) {
         if (window.Swal && message) {
             window.Swal.fire({
                 toast: true,
@@ -6459,7 +6749,7 @@
                 title,
                 text: message,
                 showConfirmButton: false,
-                timer: timeout || 4500,
+                timer: timeout || 3600,
                 timerProgressBar: true
             });
             return;
