@@ -375,6 +375,28 @@ function cargarInfoUser() {
 
 window.cargarInfoUser = cargarInfoUser;
 
+const START_PERMISSION_ORDER = [
+    'dashboardAdmin',
+    'tiendas',
+    'documentos',
+    'historial',
+    'propertyManagement',
+    'propertyManagementDocuments',
+    'chat'
+];
+
+function resolverPaginaInicioPermitida(permisos, fallback = null) {
+    if (permisos.paginaInicio && permisos[permisos.paginaInicio]) {
+        return permisos.paginaInicio;
+    }
+
+    if (fallback && permisos[fallback]) {
+        return fallback;
+    }
+
+    return START_PERMISSION_ORDER.find(codigo => permisos[codigo]) || null;
+}
+
 // Apply permissions to the sidebar menu.
 function aplicarPermissions(opciones = {}) {
     const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
@@ -445,7 +467,7 @@ function obtenerPermissions(usuario) {
             controlRestaurants: false,
             propertyManagement: false,
             propertyManagementDocuments: false,
-            chat: true
+            chat: false
 
         },
         'usuario': {
@@ -463,10 +485,12 @@ function obtenerPermissions(usuario) {
     };
 
     if (usuario.rol === 'admin') {
-        return {
+        const permisos = {
             ...defaultPermissions.admin,
             paginaInicio: usuario.permisos?.paginaInicio || 'dashboardAdmin'
         };
+        permisos.paginaInicio = resolverPaginaInicioPermitida(permisos, 'dashboardAdmin');
+        return permisos;
     }
 
     // Use permissions saved in localStorage when available.
@@ -477,7 +501,7 @@ function obtenerPermissions(usuario) {
         const tienePropertyManagement =
             permisosGuardados.propertyManagement === true ||
             (permisosGuardados.propertyManagement === undefined && esPropertyManagement);
-        return {
+        const permisos = {
             ...permisosGuardados,
             perfil: true,
             usuarios: false,
@@ -485,8 +509,11 @@ function obtenerPermissions(usuario) {
             controlRestaurants: false,
             propertyManagement: tienePropertyManagement,
             propertyManagementDocuments: permisosGuardados.propertyManagementDocuments === true ||
-                (permisosGuardados.propertyManagementDocuments === undefined && tienePropertyManagement)
+                (permisosGuardados.propertyManagementDocuments === undefined && tienePropertyManagement),
+            chat: permisosGuardados.chat === true
         };
+        permisos.paginaInicio = resolverPaginaInicioPermitida(permisos);
+        return permisos;
     }
 
     // Use permissions from the user object when available.
@@ -498,7 +525,7 @@ function obtenerPermissions(usuario) {
         const tienePropertyManagementDocuments =
             permisosGuardados.propertyManagementDocuments === true ||
             (permisosGuardados.propertyManagementDocuments === undefined && tienePropertyManagement);
-        return {
+        const permisos = {
             tiendas: false,
             documentos: false,
             historial: false,
@@ -509,9 +536,15 @@ function obtenerPermissions(usuario) {
             controlRestaurants: false,
             propertyManagement: tienePropertyManagement,
             propertyManagementDocuments: tienePropertyManagementDocuments,
+            chat: permisosGuardados.chat === true,
             paginaInicio: permisosGuardados.paginaInicio ||
                 (tienePropertyManagement ? 'propertyManagement' : undefined)
         };
+        permisos.paginaInicio = resolverPaginaInicioPermitida(
+            permisos,
+            tienePropertyManagement ? 'propertyManagement' : null
+        );
+        return permisos;
     }
 
     return defaultPermissions[usuario.rol] || defaultPermissions['usuario'];
@@ -531,6 +564,7 @@ function verificarAccesoPagina(permisos) {
         '/views/historial': 'historial',
         '/views/usuarios': 'usuarios',
         '/views/restaurantes': 'controlRestaurants',
+        '/views/departments/dashboard-property': 'propertyManagement',
         '/views/departments/property-management': 'propertyManagement',
         '/views/departments/property-management-documents': 'propertyManagementDocuments',
         '/views/chat': 'chat'
@@ -562,7 +596,7 @@ function verificarAccesoPagina(permisos) {
                 tiendas: '/views/tiendas',
                 documentos: '/views/documentos',
                 historial: '/views/historial',
-                propertyManagement: '/views/departments/property-management',
+                propertyManagement: '/views/departments/dashboard-property',
                 propertyManagementDocuments: '/views/departments/property-management-documents',
                 chat: '/views/chat'
             };
@@ -577,12 +611,14 @@ function verificarAccesoPagina(permisos) {
                     : permisos.historial
                         ? '/views/historial'
                         : permisos.propertyManagement
-                            ? '/views/departments/property-management'
+                            ? '/views/departments/dashboard-property'
                             : permisos.propertyManagementDocuments
                                 ? '/views/departments/property-management-documents'
-                                : usuario.rol === 'admin' && permisos.dashboardAdmin
-                                    ? '/views/dashboard-admin'
-                                    : '/');
+                                : permisos.chat
+                                    ? '/views/chat'
+                                    : usuario.rol === 'admin' && permisos.dashboardAdmin
+                                        ? '/views/dashboard-admin'
+                                        : '/');
             window.location.href = destino;
         });
     }
@@ -596,6 +632,15 @@ async function actualizarContadorChat() {
     const token = localStorage.getItem('token');
 
     if (!badge || !window.API_URL || !token) return;
+
+    const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
+    const permisos = obtenerPermissions(usuario);
+
+    if (!permisos.chat) {
+        badge.hidden = true;
+        previousChatUnreadTotal = null;
+        return;
+    }
 
     try {
         const response = await fetch(`${window.API_URL}/chat/no-leidos`, {

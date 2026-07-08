@@ -2,15 +2,33 @@ const express = require('express');
 const router = express.Router();
 
 const { pool } = require('../config/database');
-const { verificarToken } = require('../middleware/auth.middleware');
+const { verificarToken, checkPermission } = require('../middleware/auth.middleware');
+
+router.use(verificarToken, checkPermission('chat'));
 
 function getUsuarioId(req) {
     return req.usuario?.id || req.user?.id || req.usuario?.userId || null;
 }
 
+function parseJson(value) {
+    if (!value) return {};
+    if (typeof value === 'object') return value;
+
+    try {
+        return JSON.parse(value);
+    } catch {
+        return {};
+    }
+}
+
+function tienePermisoChat(usuario = {}) {
+    if (usuario.rol === 'admin') return true;
+    return parseJson(usuario.permisos).chat === true;
+}
+
 // Obtener conversaciones del usuario
 // Obtener conversaciones del usuario
-router.get('/conversaciones', verificarToken, async (req, res) => {
+router.get('/conversaciones', async (req, res) => {
     try {
         const usuarioId = req.usuario?.id || req.user?.id;
 
@@ -90,7 +108,7 @@ router.get('/conversaciones', verificarToken, async (req, res) => {
 });
 
 // Crear o abrir conversación directa con otro usuario
-router.post('/directa', verificarToken, async (req, res) => {
+router.post('/directa', async (req, res) => {
     const connection = await pool.getConnection();
 
     try {
@@ -121,9 +139,9 @@ router.post('/directa', verificarToken, async (req, res) => {
         await connection.beginTransaction();
 
         const [[usuarioDestino]] = await connection.query(`
-            SELECT id
+            SELECT id, rol, permisos
             FROM usuarios
-            WHERE id = ?
+            WHERE id = ? AND activo = TRUE
             LIMIT 1
         `, [usuarioDestinoId]);
 
@@ -132,6 +150,14 @@ router.post('/directa', verificarToken, async (req, res) => {
             return res.status(404).json({
                 success: false,
                 message: 'Usuario destino no encontrado'
+            });
+        }
+
+        if (!tienePermisoChat(usuarioDestino)) {
+            await connection.rollback();
+            return res.status(403).json({
+                success: false,
+                message: 'El usuario destino no tiene permiso para usar el chat'
             });
         }
 
@@ -192,7 +218,7 @@ router.post('/directa', verificarToken, async (req, res) => {
 });
 
 // Obtener mensajes de una conversación
-router.get('/conversaciones/:id/mensajes', verificarToken, async (req, res) => {
+router.get('/conversaciones/:id/mensajes', async (req, res) => {
     try {
         const usuarioId = getUsuarioId(req);
         const conversacionId = Number(req.params.id);
@@ -250,7 +276,7 @@ router.get('/conversaciones/:id/mensajes', verificarToken, async (req, res) => {
 });
 
 // Enviar mensaje
-router.post('/conversaciones/:id/mensajes', verificarToken, async (req, res) => {
+router.post('/conversaciones/:id/mensajes', async (req, res) => {
     try {
         const usuarioId = getUsuarioId(req);
         const conversacionId = Number(req.params.id);
@@ -303,7 +329,7 @@ router.post('/conversaciones/:id/mensajes', verificarToken, async (req, res) => 
 });
 
 // Usuarios disponibles para iniciar chat
-router.get('/usuarios', verificarToken, async (req, res) => {
+router.get('/usuarios', async (req, res) => {
     try {
         const usuarioId = getUsuarioId(req);
 
@@ -320,15 +346,20 @@ router.get('/usuarios', verificarToken, async (req, res) => {
                 nombre_completo AS nombre,
                 email,
                 username,
-                rol
+                rol,
+                permisos,
+                foto_perfil_url
             FROM usuarios
             WHERE id <> ?
+              AND activo = TRUE
             ORDER BY nombre_completo ASC
         `, [usuarioId]);
 
         res.json({
             success: true,
             usuarios: rows
+                .filter(tienePermisoChat)
+                .map(({ permisos, ...usuario }) => usuario)
         });
     } catch (error) {
         console.error('Error cargando usuarios:', error);
@@ -340,7 +371,7 @@ router.get('/usuarios', verificarToken, async (req, res) => {
 });
 
 // Contador total de mensajes no leídos
-router.get('/no-leidos', verificarToken, async (req, res) => {
+router.get('/no-leidos', async (req, res) => {
     try {
         const usuarioId = req.usuario.id;
 
@@ -368,7 +399,7 @@ router.get('/no-leidos', verificarToken, async (req, res) => {
 });
 
 // Marcar conversación como leída
-router.put('/conversaciones/:id/leida', verificarToken, async (req, res) => {
+router.put('/conversaciones/:id/leida', async (req, res) => {
     try {
         const usuarioId = req.usuario.id;
         const conversacionId = Number(req.params.id);
@@ -413,7 +444,7 @@ router.put('/conversaciones/:id/leida', verificarToken, async (req, res) => {
 });
 
 // Actualizar estado "escribiendo"
-router.put('/conversaciones/:id/typing', verificarToken, async (req, res) => {
+router.put('/conversaciones/:id/typing', async (req, res) => {
     try {
         const usuarioId = req.usuario?.id || req.user?.id;
         const conversacionId = Number(req.params.id);
@@ -466,7 +497,7 @@ router.put('/conversaciones/:id/typing', verificarToken, async (req, res) => {
 });
 
 // Consultar quién está escribiendo
-router.get('/conversaciones/:id/typing', verificarToken, async (req, res) => {
+router.get('/conversaciones/:id/typing', async (req, res) => {
     try {
         const usuarioId = req.usuario?.id || req.user?.id;
         const conversacionId = Number(req.params.id);

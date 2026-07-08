@@ -179,6 +179,9 @@ const checkPermission = (permiso) => {
 
                 view_permisos: 'permisos',
 
+                view_chat: 'chat',
+                send_chat: 'chat',
+
                 view_restaurantes: 'tiendas',
                 manage_restaurantes: 'tiendas',
 

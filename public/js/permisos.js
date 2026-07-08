@@ -81,7 +81,7 @@ const MENU_SECTIONS = [
         icon: 'fa-building-user',
         iconClass: 'property-management',
         department: 'Property Management',
-        path: '/views/departments/property-management',
+        path: '/views/departments/dashboard-property',
         required: false,
         initialOption: true
     },
@@ -201,10 +201,10 @@ async function loadUserData() {
 
         // Sample permissions
         const defaultPermissions = {
-            1: { dashboardAdmin: true, tiendas: true, documentos: true, perfil: true, permisos: true, historial: true, usuarios: true, controlRestaurants: true, propertyManagement: true, propertyManagementDocuments: true, paginaInicio: 'dashboardAdmin' },
-            2: { tiendas: true, documentos: true, perfil: true, permisos: false, historial: true, usuarios: false, controlRestaurants: false, propertyManagement: false, propertyManagementDocuments: false, paginaInicio: 'tiendas' },
-            3: { tiendas: true, documentos: true, perfil: true, permisos: false, historial: false, usuarios: false, controlRestaurants: false, propertyManagement: false, propertyManagementDocuments: false, paginaInicio: 'tiendas' },
-            4: { tiendas: true, documentos: false, perfil: true, permisos: false, historial: false, usuarios: false, controlRestaurants: false, propertyManagement: true, propertyManagementDocuments: true, paginaInicio: 'propertyManagement' }
+            1: { dashboardAdmin: true, tiendas: true, documentos: true, perfil: true, permisos: true, historial: true, usuarios: true, controlRestaurants: true, propertyManagement: true, propertyManagementDocuments: true, chat: true, paginaInicio: 'dashboardAdmin' },
+            2: { tiendas: true, documentos: true, perfil: true, permisos: false, historial: true, usuarios: false, controlRestaurants: false, propertyManagement: false, propertyManagementDocuments: false, chat: false, paginaInicio: 'tiendas' },
+            3: { tiendas: true, documentos: true, perfil: true, permisos: false, historial: false, usuarios: false, controlRestaurants: false, propertyManagement: false, propertyManagementDocuments: false, chat: false, paginaInicio: 'tiendas' },
+            4: { tiendas: true, documentos: false, perfil: true, permisos: false, historial: false, usuarios: false, controlRestaurants: false, propertyManagement: true, propertyManagementDocuments: true, chat: false, paginaInicio: 'propertyManagement' }
         };
 
         currentUser.permisos = normalizeLegacyPermissions(defaultPermissions[currentUser.id] || {});

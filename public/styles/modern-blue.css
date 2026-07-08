@@ -7600,3 +7600,75 @@ html body .main .reconciliation-page #uploadSection .ebt-upload-tools .btn {
         grid-template-columns: minmax(0, 1fr) !important;
     }
 }
+/* =============================================
+   SWEETALERT2 SUCCESS ICON - FINAL FIX
+   Quita el doble circulo/artefactos internos del icono success.
+   Mantener este bloque al final del CSS.
+============================================= */
+html body .swal2-container .swal2-popup.swal2-modal:not(.swal2-toast) .swal2-icon.swal2-success,
+html body .swal2-container .swal2-popup:not(.swal2-toast) .swal2-icon.swal2-success {
+    position: relative !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 58px !important;
+    height: 58px !important;
+    min-width: 58px !important;
+    min-height: 58px !important;
+    margin: 30px auto 18px !important;
+    border: 3px solid rgba(15, 118, 110, 0.28) !important;
+    border-radius: 999px !important;
+    color: #0f766e !important;
+    line-height: 58px !important;
+    transform: none !important;
+    transform-origin: center !important;
+    overflow: hidden !important;
+    animation: none !important;
+    box-sizing: border-box !important;
+}
+
+html body .swal2-container .swal2-popup.swal2-modal:not(.swal2-toast) .swal2-icon.swal2-success [class^="swal2-success-circular-line"],
+html body .swal2-container .swal2-popup.swal2-modal:not(.swal2-toast) .swal2-icon.swal2-success .swal2-success-ring,
+html body .swal2-container .swal2-popup.swal2-modal:not(.swal2-toast) .swal2-icon.swal2-success .swal2-success-fix,
+html body .swal2-container .swal2-popup:not(.swal2-toast) .swal2-icon.swal2-success [class^="swal2-success-circular-line"],
+html body .swal2-container .swal2-popup:not(.swal2-toast) .swal2-icon.swal2-success .swal2-success-ring,
+html body .swal2-container .swal2-popup:not(.swal2-toast) .swal2-icon.swal2-success .swal2-success-fix {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    width: 0 !important;
+    height: 0 !important;
+    border: 0 !important;
+    background: transparent !important;
+    animation: none !important;
+}
+
+html body .swal2-container .swal2-popup.swal2-modal:not(.swal2-toast) .swal2-icon.swal2-success .swal2-success-line-tip,
+html body .swal2-container .swal2-popup.swal2-modal:not(.swal2-toast) .swal2-icon.swal2-success .swal2-success-line-long,
+html body .swal2-container .swal2-popup:not(.swal2-toast) .swal2-icon.swal2-success .swal2-success-line-tip,
+html body .swal2-container .swal2-popup:not(.swal2-toast) .swal2-icon.swal2-success .swal2-success-line-long {
+    position: absolute !important;
+    display: block !important;
+    height: 4px !important;
+    border-radius: 999px !important;
+    background-color: #0f766e !important;
+    z-index: 2 !important;
+    animation: none !important;
+}
+
+html body .swal2-container .swal2-popup.swal2-modal:not(.swal2-toast) .swal2-icon.swal2-success .swal2-success-line-tip,
+html body .swal2-container .swal2-popup:not(.swal2-toast) .swal2-icon.swal2-success .swal2-success-line-tip {
+    top: 32px !important;
+    left: 14px !important;
+    width: 18px !important;
+    transform: rotate(45deg) !important;
+}
+
+html body .swal2-container .swal2-popup.swal2-modal:not(.swal2-toast) .swal2-icon.swal2-success .swal2-success-line-long,
+html body .swal2-container .swal2-popup:not(.swal2-toast) .swal2-icon.swal2-success .swal2-success-line-long {
+    top: 27px !important;
+    left: 24px !important;
+    width: 34px !important;
+    transform: rotate(-45deg) !important;
+}
+

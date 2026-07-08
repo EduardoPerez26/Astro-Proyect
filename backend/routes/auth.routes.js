@@ -115,8 +115,11 @@ const PERMISOS_ADMIN = {
     historial: true,
     documentos: true,
     propertyManagement: true,
-    propertyManagementDocuments: true
+    propertyManagementDocuments: true,
+    chat: true
 };
+const VENTANAS_OPERATIVAS = ['tiendas', 'documentos', 'historial', 'propertyManagement', 'propertyManagementDocuments', 'chat'];
+const VENTANAS_ADMIN = ['dashboardAdmin', ...VENTANAS_OPERATIVAS];
 
 function parsearJson(valor) {
     if (!valor) return {};
@@ -135,7 +138,7 @@ function construirContextoUsuario(usuario) {
 
     if (usuario.rol === 'admin') {
         const permisosGuardados = parsearJson(usuario.permisos);
-        const paginaInicio = ['dashboardAdmin', 'tiendas', 'documentos', 'historial', 'propertyManagement', 'propertyManagementDocuments'].includes(
+        const paginaInicio = VENTANAS_ADMIN.includes(
             permisosGuardados.paginaInicio
         ) ? permisosGuardados.paginaInicio : 'dashboardAdmin';
         permisos = { ...PERMISOS_ADMIN, paginaInicio };
@@ -148,12 +151,14 @@ function construirContextoUsuario(usuario) {
         const tienePermisoPropertyManagementDocuments =
             permisosGuardados.propertyManagementDocuments === true ||
             (permisosGuardados.propertyManagementDocuments === undefined && tienePermisoPropertyManagement);
+        const tienePermisoChat = permisosGuardados.chat === true;
         permisos = {
             tiendas: false,
             documentos: false,
             historial: false,
             propertyManagement: false,
             propertyManagementDocuments: false,
+            chat: false,
             perfil: true,
             permisos: false,
             usuarios: false,
@@ -165,13 +170,12 @@ function construirContextoUsuario(usuario) {
             controlRestaurants: false,
             propertyManagement: tienePermisoPropertyManagement,
             propertyManagementDocuments: tienePermisoPropertyManagementDocuments,
-            paginaInicio: permisosGuardados.paginaInicio ||
-                (tienePermisoPropertyManagement
-                    ? 'propertyManagement'
-                    : tienePermisoPropertyManagementDocuments
-                        ? 'propertyManagementDocuments'
-                        : undefined)
+            chat: tienePermisoChat
         };
+        const ventanasDisponibles = VENTANAS_OPERATIVAS.filter(codigo => permisos[codigo]);
+        permisos.paginaInicio = ventanasDisponibles.includes(permisosGuardados.paginaInicio)
+            ? permisosGuardados.paginaInicio
+            : ventanasDisponibles[0] || undefined;
     }
 
     return {

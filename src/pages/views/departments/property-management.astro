@@ -410,6 +410,54 @@ import DashboardLayout from "../../../layouts/DashboardLayout.astro";
                         </table>
                     </div>
 
+                    <section
+                        class="pm-monthly-totals-panel"
+                        aria-labelledby="pmMonthlyTotalsTitle"
+                    >
+                        <div class="pm-monthly-totals-header">
+                            <div>
+                                <span class="pm-eyebrow">
+                                    <i
+                                        class="fa-solid fa-calendar-check"
+                                        aria-hidden="true"></i>
+                                    Monthly totals
+                                </span>
+                                <h3 id="pmMonthlyTotalsTitle">
+                                    Paid and collected by month
+                                </h3>
+                                <p>
+                                    Review the total paid and collected amounts
+                                    for each month separately.
+                                </p>
+                            </div>
+
+                            <div class="pm-monthly-totals-grand">
+                                <div>
+                                    <span>Total collected</span>
+                                    <strong id="pmMonthlyCollectedTotal"
+                                        >$0.00</strong
+                                    >
+                                </div>
+
+                                <div>
+                                    <span>Total paid</span>
+                                    <strong id="pmMonthlyPaidTotal"
+                                        >$0.00</strong
+                                    >
+                                </div>
+                            </div>
+                        </div>
+
+                        <div
+                            class="pm-monthly-totals-strip"
+                            id="pmMonthlyTotalsCards"
+                        >
+                            <article class="pm-month-total-card is-empty">
+                                <span>No monthly totals loaded.</span>
+                            </article>
+                        </div>
+                    </section>
+
                     <div
                         class="pm-schedule-actions pm-schedule-actions-bottom"
                         aria-label="Schedule actions"
@@ -424,6 +472,17 @@ import DashboardLayout from "../../../layouts/DashboardLayout.astro";
                                 class="fa-solid fa-floppy-disk"
                                 aria-hidden="true"></i>
                             Save
+                        </button>
+
+                        <button
+                            type="button"
+                            class="btn btn-secondary"
+                            id="pmOpenMonthReclassBtn"
+                            disabled
+                        >
+                            <i class="fa-solid fa-right-left" aria-hidden="true"
+                            ></i>
+                            Month reclass
                         </button>
 
                         <button
@@ -889,7 +948,7 @@ import DashboardLayout from "../../../layouts/DashboardLayout.astro";
 
 <script
     is:inline
-    src="/js/departments/property-management.js?v=20260703-auto-upload-remove-actions"
+    src="/js/departments/property-management.js?v=20260707-detail-style-reclass-v1"
 ></script>
 
 <style>
@@ -1831,6 +1890,19 @@ import DashboardLayout from "../../../layouts/DashboardLayout.astro";
         white-space: nowrap;
     }
 
+    :global(.pm-month-reclass-modal .pm-field) {
+        margin: 0;
+    }
+
+    :global(.pm-month-reclass-modal .pm-field select),
+    :global(.pm-month-reclass-modal .pm-field input) {
+        width: 100%;
+    }
+
+    :global(.pm-month-reclass-reason) {
+        grid-column: 1 / -1;
+    }
+
     .pm-schedule-table-wrap {
         max-height: 520px;
         overflow: auto;
@@ -2218,7 +2290,7 @@ import DashboardLayout from "../../../layouts/DashboardLayout.astro";
     :global(.pm-request-card) {
         display: grid;
         gap: 10px;
-        padding: 12px;
+        padding: 14px;
         border: 1px solid #d7e2ec;
         border-radius: 8px;
         background: #ffffff;
@@ -2352,6 +2424,11 @@ import DashboardLayout from "../../../layouts/DashboardLayout.astro";
 
         .pm-table-toolbar-head {
             flex-direction: column;
+        }
+
+        :global(.pm-month-reclass-modal) {
+            grid-template-columns: 1fr;
+            min-width: 0;
         }
 
         .pm-schedule-header {
@@ -3674,6 +3751,270 @@ import DashboardLayout from "../../../layouts/DashboardLayout.astro";
         :global(.property-management-page .pm-remove-file-btn) {
             width: 100% !important;
             min-width: 0 !important;
+        }
+    }
+
+    /*    /* ===============================
+       MONTHLY TOTALS - COMPACT STRIP
+       =============================== */
+
+    :global(.pm-monthly-totals-panel) {
+        display: grid;
+        gap: 12px;
+        padding: 14px 16px;
+        border: 1px solid #d7e2ec;
+        border-radius: 14px;
+        background: #fbfdff;
+    }
+
+    :global(.pm-monthly-totals-header) {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 18px;
+    }
+
+    :global(.pm-monthly-totals-header h3) {
+        margin: 4px 0 3px;
+        color: #082033;
+        font-size: 17px;
+        font-weight: 900;
+    }
+
+    :global(.pm-monthly-totals-header p) {
+        margin: 0;
+        color: #526b82;
+        font-size: 12px;
+        font-weight: 700;
+    }
+
+    :global(.pm-monthly-totals-grand) {
+        display: flex;
+        gap: 10px;
+        flex: 0 0 auto;
+    }
+
+    :global(.pm-monthly-totals-grand div) {
+        display: grid;
+        gap: 3px;
+        min-width: 150px;
+        padding: 10px 12px;
+        border: 1px solid #d7e2ec;
+        border-radius: 12px;
+        background: #ffffff;
+    }
+
+    :global(.pm-monthly-totals-grand span) {
+        color: #526b82;
+        font-size: 10px;
+        font-weight: 850;
+        text-transform: uppercase;
+    }
+
+    :global(.pm-monthly-totals-grand strong) {
+        color: #082033;
+        font-size: 17px;
+        font-weight: 950;
+        font-variant-numeric: tabular-nums;
+    }
+
+    :global(.pm-monthly-totals-strip) {
+        display: grid;
+        grid-auto-flow: column;
+        grid-auto-columns: minmax(320px, 340px);
+        gap: 12px;
+        overflow-x: auto;
+        overflow-y: hidden;
+        padding: 2px 2px 10px;
+        scrollbar-color: #9fbad3 #edf4f9;
+        scrollbar-width: thin;
+    }
+
+    :global(.pm-month-mini-values strong) {
+        color: #082033;
+        font-size: 13px;
+        font-weight: 950;
+        white-space: nowrap;
+        font-variant-numeric: tabular-nums;
+    }
+
+    :global(.pm-month-total-mini-card) {
+        display: grid;
+        gap: 10px;
+        min-height: 140px;
+        padding: 14px;
+    }
+
+    :global(.pm-monthly-totals-strip::-webkit-scrollbar) {
+        height: 8px;
+    }
+
+    :global(.pm-monthly-totals-strip::-webkit-scrollbar-track) {
+        border-radius: 999px;
+        background: #edf4f9;
+    }
+
+    :global(.pm-monthly-totals-strip::-webkit-scrollbar-thumb) {
+        border-radius: 999px;
+        background: #9fbad3;
+    }
+
+    :global(.pm-month-total-card) {
+        display: grid;
+        gap: 10px;
+        min-height: 148px;
+        min-width: 0;
+        padding: 14px;
+        border: 1px solid #d7e2ec;
+        border-radius: 13px;
+        background: #ffffff;
+        box-shadow: 0 10px 24px -24px rgba(8, 31, 51, 0.55);
+    }
+
+    :global(.pm-month-total-card.is-zero) {
+        opacity: 0.62;
+    }
+
+    :global(.pm-month-total-card.is-empty) {
+        min-height: 90px;
+        place-items: center;
+        color: #526b82;
+        font-size: 13px;
+        font-weight: 800;
+        text-align: center;
+    }
+
+    :global(.pm-month-total-head) {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+    }
+
+    :global(.pm-month-total-head > div) {
+        display: block;
+        min-width: 0;
+    }
+
+    :global(.pm-month-total-label) {
+        display: none;
+    }
+
+    :global(.pm-month-total-head strong) {
+        display: block;
+        overflow: hidden;
+        color: #082033;
+        font-size: 15px;
+        font-weight: 950;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    :global(.pm-month-total-status) {
+        display: inline-flex;
+        align-items: center;
+        min-height: 22px;
+        padding: 0 8px;
+        border-radius: 999px;
+        font-size: 9px;
+        font-weight: 900;
+        text-transform: uppercase;
+        white-space: nowrap;
+    }
+
+    :global(.pm-month-total-status.is-balanced) {
+        background: #e8f7f3;
+        color: #0f665f;
+    }
+
+    :global(.pm-month-total-status.is-open) {
+        background: #fff4e5;
+        color: #946200;
+    }
+
+    :global(.pm-month-total-grid) {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        overflow: hidden;
+        border: 1px solid #e1ebf3;
+        border-radius: 10px;
+        background: #f8fbfd;
+    }
+
+    :global(.pm-month-total-grid div) {
+        display: grid;
+        gap: 3px;
+        min-width: 0;
+        padding: 9px 10px;
+    }
+
+    :global(.pm-month-total-grid div:first-child) {
+        border-right: 1px solid #e1ebf3;
+    }
+
+    :global(.pm-month-total-grid span),
+    :global(.pm-month-total-difference span) {
+        color: #6b8094;
+        font-size: 9px;
+        font-weight: 850;
+        text-transform: uppercase;
+    }
+
+    :global(.pm-month-total-grid strong) {
+        overflow: visible;
+        color: #082033;
+        font-size: 13px;
+        font-weight: 950;
+        text-overflow: clip;
+        white-space: nowrap;
+        font-variant-numeric: tabular-nums;
+    }
+
+    :global(.pm-month-total-difference) {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        padding-top: 8px;
+        border-top: 1px solid #e1ebf3;
+    }
+
+    :global(.pm-month-total-difference strong) {
+        color: #082033;
+        font-size: 14px;
+        font-weight: 950;
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+    }
+
+    :global(
+        .pm-month-total-card.is-balanced .pm-month-total-difference strong
+    ) {
+        color: #0f665f;
+    }
+
+    :global(.pm-month-total-card.is-open .pm-month-total-difference strong) {
+        color: #946200;
+    }
+
+    @media (max-width: 760px) {
+        :global(.pm-monthly-totals-header) {
+            align-items: flex-start;
+            flex-direction: column;
+        }
+
+        :global(.pm-monthly-totals-grand) {
+            width: 100%;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+        }
+
+        :global(.pm-monthly-totals-grand div) {
+            min-width: 0;
+        }
+
+        :global(.pm-monthly-totals-strip) {
+            grid-auto-columns: minmax(300px, 86vw);
         }
     }
 </style>

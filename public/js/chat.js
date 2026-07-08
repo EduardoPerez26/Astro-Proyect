@@ -5,7 +5,8 @@ let chatState = {
     polling: null,
     typingPolling: null,
     typingTimer: null,
-    isTypingSent: false
+    isTypingSent: false,
+    accessDenied: false
 };
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -47,6 +48,8 @@ document.addEventListener('DOMContentLoaded', function () {
             consultarTyping();
         }
     }, 1500);
+
+    window.addEventListener('beforeunload', limpiarEstadoChat);
 });
 
 function getToken() {
@@ -55,6 +58,60 @@ function getToken() {
 
 function getApiBase() {
     return String(window.API_URL || '').replace(/\/$/, '');
+}
+
+function limpiarEstadoChat() {
+    clearInterval(chatState.polling);
+    clearInterval(chatState.typingPolling);
+    clearTimeout(chatState.typingTimer);
+
+    if (chatState.conversacionActual && chatState.isTypingSent) {
+        enviarTyping(false);
+    }
+}
+
+function obtenerDestinoSeguroChat() {
+    const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
+    const permisos = usuario.permisos || {};
+    const rutas = {
+        dashboardAdmin: '/views/dashboard-admin',
+        tiendas: '/views/tiendas',
+        documentos: '/views/documentos',
+        historial: '/views/historial',
+        propertyManagement: '/views/departments/dashboard-property',
+        propertyManagementDocuments: '/views/departments/property-management-documents',
+        perfil: '/views/perfil'
+    };
+    const orden = [
+        permisos.paginaInicio,
+        'tiendas',
+        'documentos',
+        'historial',
+        'propertyManagement',
+        'propertyManagementDocuments',
+        usuario.rol === 'admin' ? 'dashboardAdmin' : null,
+        'perfil'
+    ].filter(Boolean);
+
+    const destino = orden.find(codigo => permisos[codigo] && rutas[codigo]);
+
+    return destino ? rutas[destino] : '/';
+}
+
+function manejarChatSinPermiso(message) {
+    if (chatState.accessDenied) return;
+
+    chatState.accessDenied = true;
+    limpiarEstadoChat();
+
+    Swal.fire({
+        icon: 'error',
+        title: 'Chat access removed',
+        text: message || 'You no longer have permission to access chat.',
+        confirmButtonColor: '#0b4778'
+    }).then(() => {
+        window.location.href = obtenerDestinoSeguroChat();
+    });
 }
 
 async function cargarConversaciones(showLoading = true) {
@@ -73,6 +130,11 @@ async function cargarConversaciones(showLoading = true) {
         });
 
         const data = await response.json();
+
+        if (response.status === 403) {
+            manejarChatSinPermiso(data.message);
+            return;
+        }
 
         if (!response.ok || !data.success) {
             throw new Error(data.message || 'Could not load conversations');
@@ -209,6 +271,11 @@ async function cargarMensajes(soloNuevos = false) {
 
         const data = await response.json();
 
+        if (response.status === 403) {
+            manejarChatSinPermiso(data.message);
+            return;
+        }
+
         if (!response.ok || !data.success) {
             throw new Error(data.message || 'Could not load messages');
         }
@@ -305,6 +372,11 @@ async function enviarMensaje(event) {
         );
         const data = await response.json();
 
+        if (response.status === 403) {
+            manejarChatSinPermiso(data.message);
+            return;
+        }
+
         if (!response.ok || !data.success) {
             throw new Error(data.message || 'Message could not be sent');
         }
@@ -334,6 +406,11 @@ async function openNewChatModal() {
         });
 
         const data = await response.json();
+
+        if (response.status === 403) {
+            manejarChatSinPermiso(data.message);
+            return;
+        }
 
         if (!response.ok || !data.success) {
             throw new Error(data.message || 'No se pudieron cargar los usuarios');
@@ -554,6 +631,11 @@ async function crearChatDirecto(usuarioId, mensajeInicial = '', usuarioSeleccion
 
     const data = await response.json();
 
+    if (response.status === 403) {
+        manejarChatSinPermiso(data.message);
+        return;
+    }
+
     if (!response.ok || !data.success) {
         throw new Error(data.message || 'No se pudo crear el chat');
     }
@@ -580,6 +662,11 @@ async function crearChatDirecto(usuarioId, mensajeInicial = '', usuarioSeleccion
         );
 
         const messageData = await messageResponse.json();
+
+        if (messageResponse.status === 403) {
+            manejarChatSinPermiso(messageData.message);
+            return;
+        }
 
         if (!messageResponse.ok || !messageData.success) {
             throw new Error(messageData.message || 'No se pudo enviar el mensaje');

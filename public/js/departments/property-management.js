@@ -360,6 +360,10 @@
             ?.addEventListener('click', openEntitiesModal);
 
         document
+            .getElementById('pmOpenMonthReclassBtn')
+            ?.addEventListener('click', openMonthReclassModal);
+
+        document
             .querySelectorAll('[data-pm-close-entities]')
             .forEach(button => button.addEventListener('click', closeEntitiesModal));
 
@@ -1886,11 +1890,123 @@
         return roundMoney(total);
     }
 
+    function getMonthlyPaidCollectedTotals(rows = []) {
+        const totals = [];
+
+        for (let month = 1; month <= 12; month += 1) {
+            const paidColumn = PAID_COL_BY_MONTH[month];
+            const collectedColumn = COLLECTED_COL_BY_MONTH[month];
+
+            let paid = 0;
+            let collected = 0;
+
+            rows.forEach(row => {
+                if (!Array.isArray(row)) return;
+
+                if (paidColumn !== undefined) {
+                    const paidValue = parseMoney(row[paidColumn]);
+                    if (paidValue !== null) {
+                        paid += paidValue;
+                    }
+                }
+
+                if (collectedColumn !== undefined) {
+                    const collectedValue = parseMoney(row[collectedColumn]);
+                    if (collectedValue !== null) {
+                        collected += collectedValue;
+                    }
+                }
+            });
+
+            totals.push({
+                month,
+                name: MONTH_NAMES[month],
+                paid: roundMoney(paid),
+                collected: roundMoney(collected),
+                collectedDisplay: roundMoney(Math.abs(collected)),
+                difference: roundMoney(collected + paid)
+            });
+        }
+
+        return totals;
+    }
+
+    function renderMonthlyPaidCollectedSummary(rows = []) {
+        const container = document.getElementById('pmMonthlyTotalsCards');
+
+        if (!container) return;
+
+        if (!rows.length) {
+            container.innerHTML = `
+                <article class="pm-month-total-card is-empty">
+                    <span>No monthly totals loaded.</span>
+                </article>
+            `;
+
+            setText('pmMonthlyCollectedTotal', formatCurrency(0));
+            setText('pmMonthlyPaidTotal', formatCurrency(0));
+
+            return;
+        }
+
+        const totals = getMonthlyPaidCollectedTotals(rows);
+
+        const totalPaid = roundMoney(
+            totals.reduce((sum, item) => sum + Number(item.paid || 0), 0)
+        );
+
+        const totalCollected = roundMoney(
+            totals.reduce((sum, item) => sum + Number(item.collectedDisplay || 0), 0)
+        );
+
+        container.innerHTML = totals.map(item => {
+            const hasActivity = Boolean(item.collectedDisplay || item.paid);
+            const isBalanced = Math.abs(item.difference) <= 0.01;
+            const statusClass = isBalanced ? 'is-balanced' : 'is-open';
+
+            return `
+                <article class="pm-month-total-card ${statusClass} ${hasActivity ? 'has-activity' : 'is-zero'}">
+                    <div class="pm-month-total-head">
+                        <div>
+                            <span class="pm-month-total-label">Month</span>
+                            <strong>${escapeHtml(item.name)}</strong>
+                        </div>
+
+                        <span class="pm-month-total-status ${statusClass}">
+                            ${isBalanced ? 'Balanced' : 'Open'}
+                        </span>
+                    </div>
+
+                    <div class="pm-month-total-grid">
+                        <div>
+                            <span>Collected</span>
+                            <strong>${escapeHtml(formatCurrency(item.collectedDisplay))}</strong>
+                        </div>
+
+                        <div>
+                            <span>Paid</span>
+                            <strong>${escapeHtml(formatCurrency(item.paid))}</strong>
+                        </div>
+                    </div>
+
+                    <div class="pm-month-total-difference">
+                        <span>Diff.</span>
+                        <strong>${escapeHtml(formatCurrency(item.difference))}</strong>
+                    </div>
+                </article>
+            `;
+        }).join('');
+
+        setText('pmMonthlyCollectedTotal', formatCurrency(totalCollected));
+        setText('pmMonthlyPaidTotal', formatCurrency(totalPaid));
+    }
+
     function renderSchedulePreview(result) {
         const preview = document.getElementById('pmSchedulePreview');
         const table = document.getElementById('pmScheduleTable');
         const exportButton = document.getElementById('pmExportScheduleBtn');
         const saveButton = document.getElementById('pmSaveScheduleBtn');
+        const reclassButton = document.getElementById('pmOpenMonthReclassBtn');
 
         if (!preview || !table) return;
 
@@ -1898,6 +2014,7 @@
             preview.hidden = true;
             if (exportButton) exportButton.disabled = true;
             if (saveButton) saveButton.disabled = true;
+            if (reclassButton) reclassButton.disabled = true;
             table.innerHTML = '';
             setText('pmScheduleStores', 0);
             setText('pmScheduleRows', 0);
@@ -1905,6 +2022,7 @@
             setText('pmScheduleFilterCount', 'Showing all rows');
             renderQuarterReviewCards([]);
             renderStoreQuarterOverview([]);
+            renderMonthlyPaidCollectedSummary([]);
             populateScheduleFilterOptions([]);
             updateMonthEditor();
             return;
@@ -1913,9 +2031,12 @@
         preview.hidden = false;
         if (exportButton) exportButton.disabled = false;
         if (saveButton) saveButton.disabled = false;
+        if (reclassButton) reclassButton.disabled = false;
         setText('pmScheduleStores', result.storeCount);
         setText('pmScheduleRows', result.rows.length);
         setText('pmScheduleBalance', formatCurrency(result.totalBalance));
+
+        renderMonthlyPaidCollectedSummary(result.rows);
         renderQuarterReviewCards(result.rows);
         renderStoreQuarterOverview(result.rows);
         populateScheduleFilterOptions(result.rows);
@@ -2556,6 +2677,1402 @@
             title: 'Filters cleared',
             message: 'The full schedule is visible again.'
         });
+    }
+
+    function getMonthReclassModalStyles() {
+        return `
+            <style>
+                .swal2-popup.pm-reclass-popup {
+                    display: flex !important;
+                    flex-direction: column !important;
+                    width: min(1080px, calc(100vw - 68px)) !important;
+                    max-width: min(1080px, calc(100vw - 68px)) !important;
+                    max-height: calc(100vh - 68px) !important;
+                    padding: 0 !important;
+                    border: 0 !important;
+                    border-radius: 14px !important;
+                    overflow: hidden !important;
+                    background: #ffffff !important;
+                    box-shadow: 0 34px 90px -50px rgba(8, 28, 46, 0.88) !important;
+                }
+
+                .swal2-popup.pm-reclass-popup .swal2-title {
+                    display: none !important;
+                }
+
+                .swal2-popup.pm-reclass-popup .swal2-close {
+                    position: absolute !important;
+                    top: 30px !important;
+                    right: 34px !important;
+                    z-index: 5 !important;
+                    width: 42px !important;
+                    height: 42px !important;
+                    border: 1px solid #d7e3ef !important;
+                    border-radius: 10px !important;
+                    background: #f7fbff !important;
+                    color: #0d2238 !important;
+                    font-size: 24px !important;
+                    font-weight: 500 !important;
+                    line-height: 1 !important;
+                    box-shadow: none !important;
+                }
+
+                .swal2-popup.pm-reclass-popup .swal2-close:hover {
+                    border-color: #b8c9d9 !important;
+                    background: #edf5fb !important;
+                    color: #071a2b !important;
+                }
+
+                .swal2-html-container.pm-reclass-html {
+                    flex: 1 1 auto !important;
+                    width: 100% !important;
+                    max-width: none !important;
+                    min-height: 0 !important;
+                    margin: 0 !important;
+                    padding: 0 !important;
+                    overflow: hidden !important;
+                    box-sizing: border-box !important;
+                }
+
+                .pm-reclass-modal-v2 {
+                    display: flex !important;
+                    flex-direction: column !important;
+                    width: 100% !important;
+                    max-height: calc(100vh - 68px) !important;
+                    min-width: 0 !important;
+                    min-height: 0 !important;
+                    text-align: left !important;
+                    box-sizing: border-box !important;
+                }
+
+                .pm-reclass-modal-header-v2 {
+                    flex: 0 0 auto !important;
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: space-between !important;
+                    gap: 16px !important;
+                    padding: 34px 92px 24px 34px !important;
+                    border-bottom: 1px solid #e3ecf5 !important;
+                    color: #0d2238 !important;
+                    box-sizing: border-box !important;
+                }
+
+                .pm-reclass-eyebrow-v2 {
+                    display: block !important;
+                    margin-bottom: 10px !important;
+                    color: #0b1d31 !important;
+                    font-size: 11px !important;
+                    font-weight: 900 !important;
+                    letter-spacing: 0 !important;
+                    text-transform: uppercase !important;
+                }
+
+                .pm-reclass-modal-header-v2 h2 {
+                    margin: 0 !important;
+                    color: #0d2238 !important;
+                    font-size: 25px !important;
+                    font-weight: 950 !important;
+                    line-height: 1.08 !important;
+                }
+
+                .pm-reclass-modal-header-v2 p {
+                    margin: 10px 0 0 !important;
+                    color: #0d2238 !important;
+                    font-size: 13px !important;
+                    font-weight: 750 !important;
+                }
+
+                .pm-reclass-content-v2 {
+                    flex: 1 1 auto !important;
+                    display: flex !important;
+                    flex-direction: column !important;
+                    gap: 16px !important;
+                    min-height: 0 !important;
+                    padding: 22px 34px !important;
+                    background: #ffffff !important;
+                    box-sizing: border-box !important;
+                    overflow: hidden !important;
+                }
+
+                .pm-reclass-setup-v2,
+                .pm-reclass-results-v2 {
+                    border: 0 !important;
+                    border-radius: 0 !important;
+                    background: #ffffff !important;
+                    box-shadow: none !important;
+                }
+
+                .pm-reclass-setup-v2 {
+                    flex: 0 0 auto !important;
+                    padding: 0 !important;
+                }
+
+                .pm-reclass-results-v2 {
+                    flex: 1 1 auto !important;
+                    display: flex !important;
+                    flex-direction: column !important;
+                    min-height: 220px !important;
+                    overflow: hidden !important;
+                }
+
+                .pm-reclass-grid-v2 {
+                    display: grid !important;
+                    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+                    gap: 10px !important;
+                    width: 100% !important;
+                    box-sizing: border-box !important;
+                }
+
+                .pm-reclass-grid-v2 .pm-field {
+                    display: grid !important;
+                    gap: 8px !important;
+                    margin: 0 !important;
+                    min-width: 0 !important;
+                    min-height: 70px !important;
+                    padding: 12px !important;
+                    border: 1px solid #dfe8f2 !important;
+                    border-radius: 12px !important;
+                    background: #f8fbff !important;
+                    box-sizing: border-box !important;
+                }
+
+                .pm-reclass-grid-v2 .pm-field span {
+                    display: block !important;
+                    margin: 0 !important;
+                    color: #667d93 !important;
+                    font-size: 10px !important;
+                    font-weight: 850 !important;
+                    text-transform: uppercase !important;
+                    letter-spacing: 0 !important;
+                }
+
+                .pm-reclass-grid-v2 .pm-field select,
+                .pm-reclass-grid-v2 .pm-field input {
+                    display: block !important;
+                    width: 100% !important;
+                    min-width: 0 !important;
+                    height: 30px !important;
+                    padding: 0 !important;
+                    border: 1px !important;
+                    border-radius: 9px !important;
+                    background: transparent !important;
+                    color: #0d3d68 !important;
+                    font-size: 15px !important;
+                    font-weight: 850 !important;
+                    box-sizing: border-box !important;
+                    outline: none !important;
+                }
+
+                .pm-reclass-grid-v2 .pm-field select:focus,
+                .pm-reclass-grid-v2 .pm-field input:focus,
+                .pm-reclass-store-list-v2 textarea:focus {
+                    box-shadow: 0 0 0 3px rgba(23, 74, 117, 0.12) !important;
+                }
+
+                .pm-reclass-reason-v2 {
+                    grid-column: span 1 !important;
+                }
+
+                .pm-reclass-concepts-header-v2 {
+                    flex: 0 0 auto !important;
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: space-between !important;
+                    gap: 16px !important;
+                    margin: 0 !important;
+                    padding: 0 0 12px !important;
+                    border: 0 !important;
+                    background: #ffffff !important;
+                }
+
+                .pm-reclass-concepts-header-v2 strong {
+                    display: block !important;
+                    color: #0b2236 !important;
+                    font-size: 18px !important;
+                    font-weight: 900 !important;
+                }
+
+                .pm-reclass-concepts-header-v2 span {
+                    display: block !important;
+                    margin-top: 2px !important;
+                    color: #60768d !important;
+                    font-size: 12px !important;
+                    font-weight: 700 !important;
+                }
+
+                .pm-reclass-select-all-v2 {
+                    display: inline-flex !important;
+                    align-items: center !important;
+                    gap: 8px !important;
+                    min-height: 32px !important;
+                    padding: 0 9px !important;
+                    border: 1px solid #d3e0eb !important;
+                    border-radius: 9px !important;
+                    background: #f8fbff !important;
+                    color: #0d2238 !important;
+                    font-size: 13px !important;
+                    font-weight: 800 !important;
+                    white-space: nowrap !important;
+                    cursor: pointer !important;
+                }
+
+                .pm-reclass-table-wrap-v2 {
+                    display: block !important;
+                    width: 100% !important;
+                    max-width: 100% !important;
+                    flex: 1 1 auto !important;
+                    min-height: 0 !important;
+                    max-height: none !important;
+                    overflow: auto !important;
+                    border: 1px solid #dfe8f2 !important;
+                    border-radius: 12px !important;
+                    background: #ffffff !important;
+                    box-shadow: none !important;
+                }
+
+                .pm-reclass-table-v2 {
+                    width: 100% !important;
+                    min-width: 920px !important;
+                    border-collapse: collapse !important;
+                    table-layout: fixed !important;
+                    font-size: 13px !important;
+                }
+
+                .pm-reclass-table-v2 th {
+                    position: sticky !important;
+                    top: 0 !important;
+                    z-index: 2 !important;
+                    padding: 11px 10px !important;
+                    border-bottom: 1px solid #20233a !important;
+                    background: #101122 !important;
+                    color: #ffffff !important;
+                    font-size: 11px !important;
+                    font-weight: 900 !important;
+                    text-align: left !important;
+                    text-transform: uppercase !important;
+                    letter-spacing: 0 !important;
+                    white-space: nowrap !important;
+                    word-break: normal !important;
+                    writing-mode: horizontal-tb !important;
+                    vertical-align: middle !important;
+                }
+
+                .pm-reclass-table-v2 thead th:first-child,
+                .pm-reclass-table-v2 tbody td:first-child {
+                    padding-left: 12px !important;
+                }
+
+                .pm-reclass-table-v2 thead th:nth-child(6),
+                .pm-reclass-table-v2 thead th:nth-child(7),
+                .pm-reclass-table-v2 tbody td:nth-child(6),
+                .pm-reclass-table-v2 tbody td:nth-child(7) {
+                    text-align: right !important;
+                }
+
+                .pm-reclass-table-v2 thead th:nth-child(7),
+                .pm-reclass-table-v2 tbody td:nth-child(7) {
+                    padding-right: 14px !important;
+                }
+
+                .pm-reclass-table-v2 td {
+                    padding: 10px 11px !important;
+                    border-bottom: 1px solid #e8eef5 !important;
+                    border-right: 1px solid #e8eef5 !important;
+                    color: #0b2236 !important;
+                    vertical-align: middle !important;
+                    white-space: nowrap !important;
+                    word-break: normal !important;
+                }
+
+                .pm-reclass-table-v2 tr:nth-child(even) td {
+                    background: #f8fbfd !important;
+                }
+
+                .pm-reclass-table-v2 tr:hover td {
+                    background: #eef6fc !important;
+                }
+
+                .pm-reclass-table-v2 td:first-child,
+                .pm-reclass-table-v2 th:first-child {
+                    width: 42px !important;
+                    text-align: center !important;
+                }
+
+                .pm-reclass-table-v2 .pm-reclass-concept-v2 {
+                    min-width: 320px !important;
+                    max-width: 420px !important;
+                    white-space: normal !important;
+                    line-height: 1.35 !important;
+                }
+
+                .pm-reclass-table-v2 .is-number {
+                    text-align: right !important;
+                    font-variant-numeric: tabular-nums !important;
+                }
+
+                .pm-reclass-table-v2 input[type="number"] {
+                    width: 108px !important;
+                    height: 34px !important;
+                    padding: 0 8px !important;
+                    border: 1px solid #d2dfec !important;
+                    border-radius: 9px !important;
+                    background: #ffffff !important;
+                    color: #0d3d68 !important;
+                    font-size: 12px !important;
+                    font-weight: 700 !important;
+                    box-sizing: border-box !important;
+                    outline: none !important;
+                }
+
+                .pm-reclass-table-v2 input[type="number"]:focus {
+                    border-color: #174a75 !important;
+                    box-shadow: 0 0 0 3px rgba(23, 74, 117, 0.12) !important;
+                }
+
+                .pm-reclass-type-v2 {
+                    display: inline-flex !important;
+                    align-items: center !important;
+                    border-radius: 999px !important;
+                    padding: 5px 9px !important;
+                    font-size: 11px !important;
+                    font-weight: 900 !important;
+                    text-transform: uppercase !important;
+                    white-space: nowrap !important;
+                }
+
+                .pm-reclass-type-v2.is-paid {
+                    background: #e0f2fe !important;
+                    color: #075985 !important;
+                }
+
+                .pm-reclass-type-v2.is-collected {
+                    background: #dcfce7 !important;
+                    color: #166534 !important;
+                }
+
+                .pm-reclass-selected-summary-v2 {
+                    flex: 0 0 auto !important;
+                    margin: 10px 0 0 !important;
+                    padding: 12px 14px !important;
+                    border: 1px solid #dfe8f2 !important;
+                    border-radius: 12px !important;
+                    background: #f8fbff !important;
+                    color: #0f2b43 !important;
+                    font-size: 13px !important;
+                    font-weight: 850 !important;
+                }
+
+                .pm-reclass-store-list-v2 {
+                    grid-column: span 2 !important;
+                }
+
+                .pm-reclass-store-list-v2 textarea {
+                    width: 100% !important;
+                    min-height: 54px !important;
+                    height: 54px !important;
+                    padding: 8px 10px !important;
+                    border: 1px solid #d2dfec !important;
+                    border-radius: 9px !important;
+                    background: #ffffff !important;
+                    color: #0b2236 !important;
+                    font-size: 12px !important;
+                    font-weight: 700 !important;
+                    resize: vertical !important;
+                    box-sizing: border-box !important;
+                    outline: none !important;
+                    transition:
+                        border-color 0.16s ease,
+                        box-shadow 0.16s ease,
+                        background 0.16s ease !important;
+                }
+
+                .pm-reclass-store-list-v2 small {
+                    margin-top: 0 !important;
+                    color: #60768d !important;
+                    font-size: 11px !important;
+                    font-weight: 700 !important;
+                    line-height: 1.35 !important;
+                }
+
+                .pm-reclass-load-stores-v2 {
+                    display: flex !important;
+                    grid-column: span 1 !important;
+                    align-items: end !important;
+                    min-width: 0 !important;
+                }
+
+                .pm-reclass-load-stores-v2 .pm-reclass-load-btn-v2 {
+                    display: inline-flex !important;
+                    align-items: center !important;
+                    width: 100% !important;
+                    min-width: 0 !important;
+                    height: 70px !important;
+                    justify-content: center !important;
+                    border: 1px solid #101122 !important;
+                    border-radius: 12px !important;
+                    background: #101122 !important;
+                    color: #ffffff !important;
+                    cursor: pointer !important;
+                    font-size: 13px !important;
+                    font-weight: 900 !important;
+                    white-space: nowrap !important;
+                    transition:
+                        background 0.16s ease,
+                        transform 0.16s ease,
+                        box-shadow 0.16s ease !important;
+                }
+
+                .pm-reclass-load-stores-v2 .pm-reclass-load-btn-v2:hover {
+                    background: #173a56 !important;
+                    transform: translateY(-1px) !important;
+                    box-shadow: 0 14px 24px -20px rgba(15, 43, 67, 0.86) !important;
+                }
+
+                .pm-reclass-load-stores-v2 .pm-reclass-load-btn-v2 i {
+                    margin-right: 7px !important;
+                }
+
+                .swal2-popup.pm-reclass-popup .swal2-actions {
+                    flex: 0 0 auto !important;
+                    width: 100% !important;
+                    margin: 0 !important;
+                    padding: 20px 34px 28px !important;
+                    border-top: 1px solid #e3ecf5 !important;
+                    
+                    box-sizing: border-box !important;
+                    gap: 10px !important;
+                    justify-content: flex-end !important;
+                }
+
+                .swal2-popup.pm-reclass-popup .swal2-confirm,
+                .swal2-popup.pm-reclass-popup .swal2-cancel {
+                    min-width: 68px !important;
+                    height: 42px !important;
+                    margin: 0 !important;
+                    border-radius: 10px !important;
+                    font-size: 13px !important;
+                    font-weight: 900 !important;
+                    box-shadow: none !important;
+                }
+
+                .swal2-popup.pm-reclass-popup .swal2-confirm {
+                    min-width: 180px !important;
+                    background: #101122 !important;
+                }
+
+                .swal2-popup.pm-reclass-popup .swal2-cancel {
+                    background: #ffffff !important;
+                    color: #101122 !important;
+                }
+
+                @media (max-width: 900px) {
+                    .pm-reclass-grid-v2 {
+                        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+                    }
+
+                    .pm-reclass-grid-v2 .pm-field,
+                    .pm-reclass-store-list-v2,
+                    .pm-reclass-load-stores-v2,
+                    .pm-reclass-reason-v2 {
+                        grid-column: span 1 !important;
+                    }
+
+                    .pm-reclass-store-list-v2 {
+                        grid-column: span 2 !important;
+                    }
+
+                    .pm-reclass-load-stores-v2 {
+                        grid-column: span 2 !important;
+                    }
+
+                    .pm-reclass-load-stores-v2 .pm-reclass-load-btn-v2 {
+                        height: 46px !important;
+                    }
+                }
+
+                @media (max-width: 640px) {
+                    .swal2-popup.pm-reclass-popup {
+                        width: calc(100vw - 16px) !important;
+                        max-width: calc(100vw - 16px) !important;
+                        max-height: calc(100vh - 16px) !important;
+                    }
+
+                    .pm-reclass-modal-header-v2,
+                    .pm-reclass-content-v2 {
+                        padding-left: 16px !important;
+                        padding-right: 16px !important;
+                    }
+
+                    .pm-reclass-modal-header-v2 {
+                        align-items: flex-start !important;
+                        flex-direction: column !important;
+                    }
+
+                    .pm-reclass-grid-v2 {
+                        grid-template-columns: 1fr !important;
+                    }
+
+                    .pm-reclass-grid-v2 .pm-field,
+                    .pm-reclass-store-list-v2,
+                    .pm-reclass-load-stores-v2,
+                    .pm-reclass-reason-v2 {
+                        grid-column: 1 / -1 !important;
+                    }
+
+                    .pm-reclass-concepts-header-v2 {
+                        align-items: flex-start !important;
+                        flex-direction: column !important;
+                    }
+
+                    .swal2-popup.pm-reclass-popup .swal2-actions {
+                        padding: 14px 16px 18px !important;
+                    }
+
+                    .swal2-popup.pm-reclass-popup .swal2-confirm,
+                    .swal2-popup.pm-reclass-popup .swal2-cancel {
+                        width: 100% !important;
+                    }
+                }
+            </style>
+        `;
+    }
+
+    async function openMonthReclassModal() {
+        if (!scheduleRows.length) {
+            setScheduleStatus('Open a schedule before moving monthly amounts.', 'error');
+            return;
+        }
+
+        if (!window.Swal) {
+            setScheduleStatus('Month reclass needs the dialog library. Refresh the page and try again.', 'error');
+            return;
+        }
+
+        const sourceMonth = normalizeScheduleMonth(scheduleFilters.month) || 4;
+        const targetMonth = getNextMonth(sourceMonth) || 5;
+
+        const hasActiveFilters = Boolean(
+            scheduleFilters.search ||
+            scheduleFilters.store ||
+            scheduleFilters.entity ||
+            scheduleFilters.rowType
+        );
+
+        const result = await Swal.fire({
+            title: '',
+            width: 'min(1080px, calc(100vw - 68px))',
+            customClass: {
+                popup: 'pm-reclass-popup',
+                htmlContainer: 'pm-reclass-html',
+                confirmButton: 'pm-reclass-confirm',
+                cancelButton: 'pm-reclass-cancel'
+            },
+            html: `
+                ${getMonthReclassModalStyles()}
+
+                <div class="pm-reclass-modal-v2">
+                    <div class="pm-reclass-modal-header-v2">
+                        <div>
+                            <span class="pm-reclass-eyebrow-v2">MONTH RECLASS</span>
+                            <h2>${escapeHtml(MONTH_NAMES[sourceMonth])} to ${escapeHtml(MONTH_NAMES[targetMonth])}</h2>
+                            <p>Move paid or collected amounts between accounting months.</p>
+                        </div>
+                    </div>
+
+                    <div class="pm-reclass-content-v2">
+                        <section class="pm-reclass-setup-v2">
+                            <div class="pm-reclass-grid-v2">
+                                <label class="pm-field">
+                                    <span>From month</span>
+                                    <select id="pmReclassFromMonth">
+                                        ${renderMonthOptions(sourceMonth)}
+                                    </select>
+                                </label>
+
+                                <label class="pm-field">
+                                    <span>To month</span>
+                                    <select id="pmReclassToMonth">
+                                        ${renderMonthOptions(targetMonth)}
+                                    </select>
+                                </label>
+
+                                <label class="pm-field">
+                                    <span>Amount type</span>
+                                    <select id="pmReclassAmountType">
+                                        <option value="paid" selected>Paid amounts</option>
+                                        <option value="collected">Collected amounts</option>
+                                        <option value="both">Paid and collected</option>
+                                    </select>
+                                </label>
+
+                                <label class="pm-field">
+                                    <span>Scope</span>
+                                    <select id="pmReclassScope">
+                                        <option value="filtered" ${hasActiveFilters ? 'selected' : ''}>Current filters</option>
+                                        <option value="all" ${hasActiveFilters ? '' : 'selected'}>All rows</option>
+                                    </select>
+                                </label>
+
+                                <label class="pm-field pm-reclass-store-list-v2">
+                                    <span>Stores to reclass</span>
+                                    <textarea
+                                        id="pmReclassStoreList"
+                                        rows="2"
+                                        placeholder="Example: 975, 981, 1450, 70900SM"
+                                    ></textarea>
+                                    <small>Separate stores with comma, space, or new line.</small>
+                                </label>
+
+                                <label class="pm-field pm-reclass-reason-v2">
+                                    <span>Reference note</span>
+                                    <input
+                                        id="pmReclassReason"
+                                        type="text"
+                                        maxlength="120"
+                                        value="Posted in the corrected accounting month"
+                                    />
+                                </label>
+
+                                <div class="pm-reclass-load-stores-v2">
+                                    <button
+                                        type="button"
+                                        class="pm-reclass-load-btn-v2"
+                                        id="pmReclassLoadStoresBtn"
+                                    >
+                                        <i class="fa-solid fa-magnifying-glass"></i>
+                                        Load concepts
+                                    </button>
+                                </div>
+                            </div>
+                        </section>
+
+                        <section class="pm-reclass-results-v2">
+                            <div class="pm-reclass-concepts-header-v2">
+                                <div>
+                                    <strong>Concepts found</strong>
+                                    <span id="pmReclassConceptCount">0 concepts</span>
+                                </div>
+
+                                <label class="pm-reclass-select-all-v2">
+                                    <input type="checkbox" id="pmReclassSelectAll" />
+                                    Select all
+                                </label>
+                            </div>
+
+                            <div class="pm-reclass-table-wrap-v2">
+                                <table class="pm-reclass-table-v2">
+                                    <colgroup>
+                                        <col style="width: 42px;" />
+                                        <col style="width: 78px;" />
+                                        <col style="width: 78px;" />
+                                        <col style="width: 90px;" />
+                                        <col style="width: 350px;" />
+                                        <col style="width: 116px;" />
+                                        <col style="width: 126px;" />
+                                    </colgroup>
+                                    <thead>
+                                        <tr>
+                                            <th></th>
+                                            <th>Store</th>
+                                            <th>Entity</th>
+                                            <th>Type</th>
+                                            <th>Concept</th>
+                                            <th>Available</th>
+                                            <th>Move amount</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="pmReclassConceptsBody">
+                                        <tr>
+                                            <td colspan="7" class="pm-table-empty">
+                                                Write stores, then load concepts.
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div class="pm-reclass-selected-summary-v2" id="pmReclassSelectedSummary">
+                                Selected: 0 concepts - $0.00
+                            </div>
+                        </section>
+                    </div>
+                </div>
+            `,
+            showCancelButton: true,
+            showCloseButton: true,
+            confirmButtonText: 'Move selected amounts',
+            cancelButtonText: 'Cancel',
+            confirmButtonColor: '#102a43',
+            cancelButtonColor: '#64748b',
+            focusConfirm: false,
+            didOpen: (popup) => {
+                forceMonthReclassDialogWidth(popup);
+
+                const controls = [
+                    'pmReclassFromMonth',
+                    'pmReclassToMonth',
+                    'pmReclassAmountType',
+                    'pmReclassScope'
+                ];
+
+                controls.forEach(id => {
+                    document
+                        .getElementById(id)
+                        ?.addEventListener('change', renderMonthReclassConcepts);
+                });
+
+                document
+                    .getElementById('pmReclassLoadStoresBtn')
+                    ?.addEventListener('click', renderMonthReclassConcepts);
+
+                document
+                    .getElementById('pmReclassStoreList')
+                    ?.addEventListener('keydown', function (event) {
+                        if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
+                            event.preventDefault();
+                            renderMonthReclassConcepts();
+                        }
+                    });
+
+                document
+                    .getElementById('pmReclassSelectAll')
+                    ?.addEventListener('change', function () {
+                        document
+                            .querySelectorAll('[data-pm-reclass-check]')
+                            .forEach(input => {
+                                input.checked = this.checked;
+                            });
+
+                        updateMonthReclassSelectedSummary();
+                    });
+
+                document
+                    .getElementById('pmReclassConceptsBody')
+                    ?.addEventListener('input', updateMonthReclassSelectedSummary);
+
+                document
+                    .getElementById('pmReclassConceptsBody')
+                    ?.addEventListener('change', updateMonthReclassSelectedSummary);
+
+                renderMonthReclassConcepts();
+            },
+            preConfirm: () => {
+                const fromMonth = normalizeScheduleMonth(document.getElementById('pmReclassFromMonth')?.value);
+                const toMonth = normalizeScheduleMonth(document.getElementById('pmReclassToMonth')?.value);
+                const amountType = document.getElementById('pmReclassAmountType')?.value || 'paid';
+                const scope = document.getElementById('pmReclassScope')?.value || 'all';
+                const reason = document.getElementById('pmReclassReason')?.value.trim() || '';
+
+                let selectedItems = [];
+
+                try {
+                    selectedItems = getSelectedMonthReclassItems();
+                } catch (error) {
+                    Swal.showValidationMessage(error.message || 'Review the selected move amounts.');
+                    return false;
+                }
+
+                if (!fromMonth || !toMonth) {
+                    Swal.showValidationMessage('Choose valid months.');
+                    return false;
+                }
+
+                if (fromMonth === toMonth) {
+                    Swal.showValidationMessage('Choose two different months.');
+                    return false;
+                }
+
+                if (!selectedItems.length) {
+                    Swal.showValidationMessage('Select at least one concept to move.');
+                    return false;
+                }
+
+                return {
+                    fromMonth,
+                    toMonth,
+                    amountType,
+                    scope,
+                    reason,
+                    selectedItems
+                };
+            }
+        });
+
+        if (!result.isConfirmed || !result.value) return;
+
+        const summary = moveMonthlyAmounts(result.value);
+
+        if (!summary.rowsChanged) {
+            await Swal.fire({
+                icon: 'info',
+                title: 'No amounts moved',
+                text: 'No selected concepts had available amounts in the source month.',
+                confirmButtonColor: '#102a43'
+            });
+            return;
+        }
+
+        recalculateScheduleRows();
+        renderSchedulePreview(getScheduleResult());
+
+        const message = [
+            `${summary.rowsChanged} row${summary.rowsChanged === 1 ? '' : 's'} updated`,
+            `${MONTH_NAMES[summary.fromMonth]} to ${MONTH_NAMES[summary.toMonth]}`,
+            summary.paidAmount ? `paid ${formatCurrency(summary.paidAmount)}` : '',
+            summary.collectedAmount ? `collected ${formatCurrency(summary.collectedAmount)}` : ''
+        ].filter(Boolean).join(' - ');
+
+        setScheduleStatus(`${message}. Save the schedule to keep this reclass.`, 'success');
+
+        showPmAlert({
+            type: 'success',
+            title: 'Month reclass applied',
+            message
+        });
+    }
+
+    function forceMonthReclassDialogWidth(popup) {
+        const dialog = popup || document.querySelector('.swal2-popup.pm-reclass-popup');
+
+        if (!dialog) return;
+
+        const isSmallScreen = window.matchMedia('(max-width: 1080px)').matches;
+        const dialogWidth = isSmallScreen ? 'calc(100vw - 16px)' : 'min(1080px, calc(100vw - 68px))';
+
+        dialog.style.setProperty('width', dialogWidth, 'important');
+        dialog.style.setProperty('max-width', dialogWidth, 'important');
+        dialog.style.setProperty('max-height', isSmallScreen ? 'calc(100vh - 16px)' : 'calc(100vh - 68px)', 'important');
+        dialog.style.setProperty('min-width', '0', 'important');
+        dialog.style.setProperty('padding', '0', 'important');
+        dialog.style.setProperty('box-sizing', 'border-box', 'important');
+        dialog.style.setProperty('display', 'flex', 'important');
+        dialog.style.setProperty('flex-direction', 'column', 'important');
+
+        const htmlContainer = dialog.querySelector('.swal2-html-container');
+
+        if (htmlContainer) {
+            htmlContainer.style.setProperty('flex', '1 1 auto', 'important');
+            htmlContainer.style.setProperty('width', '100%', 'important');
+            htmlContainer.style.setProperty('max-width', 'none', 'important');
+            htmlContainer.style.setProperty('min-height', '0', 'important');
+            htmlContainer.style.setProperty('margin', '0', 'important');
+            htmlContainer.style.setProperty('padding', '0', 'important');
+            htmlContainer.style.setProperty('overflow', 'hidden', 'important');
+            htmlContainer.style.setProperty('box-sizing', 'border-box', 'important');
+        }
+
+        const modal = dialog.querySelector('.pm-reclass-modal-v2');
+
+        if (modal) {
+            modal.style.setProperty('width', '100%', 'important');
+            modal.style.setProperty('max-height', isSmallScreen ? 'calc(100vh - 16px)' : 'calc(100vh - 68px)', 'important');
+            modal.style.setProperty('max-width', 'none', 'important');
+            modal.style.setProperty('min-height', '0', 'important');
+            modal.style.setProperty('display', 'flex', 'important');
+            modal.style.setProperty('flex-direction', 'column', 'important');
+            modal.style.setProperty('box-sizing', 'border-box', 'important');
+        }
+
+        const tableWrap = dialog.querySelector('.pm-reclass-table-wrap-v2');
+
+        if (tableWrap) {
+            tableWrap.style.setProperty('flex', '1 1 auto', 'important');
+            tableWrap.style.setProperty('min-height', '0', 'important');
+            tableWrap.style.setProperty('width', '100%', 'important');
+            tableWrap.style.setProperty('max-width', '100%', 'important');
+            tableWrap.style.setProperty('max-height', 'none', 'important');
+            tableWrap.style.setProperty('overflow', 'auto', 'important');
+            tableWrap.style.setProperty('box-sizing', 'border-box', 'important');
+        }
+
+        const table = dialog.querySelector('.pm-reclass-table-v2');
+
+        if (table) {
+            table.style.setProperty('min-width', '920px', 'important');
+            table.style.setProperty('width', '100%', 'important');
+            table.style.setProperty('table-layout', 'fixed', 'important');
+        }
+    }
+    function renderMonthOptions(selectedMonth = '') {
+        const selected = normalizeScheduleMonth(selectedMonth);
+
+        return MONTH_NAMES
+            .map((name, month) => {
+                if (!month) return '';
+
+                return `
+                    <option value="${month}" ${month === selected ? 'selected' : ''}>
+                        ${escapeHtml(name)}
+                    </option>
+                `;
+            })
+            .join('');
+    }
+
+    function moveMonthlyAmounts(options) {
+        const fromMonth = normalizeScheduleMonth(options.fromMonth);
+        const toMonth = normalizeScheduleMonth(options.toMonth);
+        const reason = String(options.reason || '').trim();
+        const selectedItems = Array.isArray(options.selectedItems)
+            ? options.selectedItems
+            : [];
+
+        const movedRowIndexes = new Set();
+
+        const summary = {
+            fromMonth,
+            toMonth,
+            rowsChanged: 0,
+            paidAmount: 0,
+            collectedAmount: 0
+        };
+
+        selectedItems.forEach(item => {
+            const row = scheduleRows[item.rowIndex];
+
+            if (!row) return;
+
+            const type = item.amountType;
+            const amountLimit = Math.abs(Number(item.amount || 0));
+
+            if (!amountLimit) return;
+
+            const fromColumn = type === 'paid'
+                ? PAID_COL_BY_MONTH[fromMonth]
+                : COLLECTED_COL_BY_MONTH[fromMonth];
+
+            const toColumn = type === 'paid'
+                ? PAID_COL_BY_MONTH[toMonth]
+                : COLLECTED_COL_BY_MONTH[toMonth];
+
+            const movedAmount = moveRowMonthAmount(row, fromColumn, toColumn, amountLimit);
+
+            if (!movedAmount) return;
+
+            movedRowIndexes.add(item.rowIndex);
+
+            if (type === 'paid') {
+                summary.paidAmount = roundMoney(summary.paidAmount + Math.abs(movedAmount));
+            }
+
+            if (type === 'collected') {
+                summary.collectedAmount = roundMoney(summary.collectedAmount + Math.abs(movedAmount));
+            }
+
+            row[4] = appendReclassReference(row[4], fromMonth, toMonth, reason);
+        });
+
+        summary.rowsChanged = movedRowIndexes.size;
+
+        return summary;
+    }
+
+    function moveRowMonthAmount(row, fromColumn, toColumn, amountLimit = null) {
+        if (fromColumn === undefined || toColumn === undefined) return 0;
+
+        const currentAmount = Number(row[fromColumn] || 0);
+
+        if (!currentAmount) return 0;
+
+        const absoluteCurrent = Math.abs(currentAmount);
+        const requestedAmount = parseMoney(amountLimit);
+
+        const absoluteToMove = requestedAmount !== null
+            ? Math.min(Math.abs(requestedAmount), absoluteCurrent)
+            : absoluteCurrent;
+
+        if (!absoluteToMove) return 0;
+
+        const amountToMove = currentAmount < 0
+            ? -absoluteToMove
+            : absoluteToMove;
+
+        row[toColumn] = roundMoney(Number(row[toColumn] || 0) + amountToMove);
+
+        const remainingAmount = roundMoney(currentAmount - amountToMove);
+        row[fromColumn] = remainingAmount ? remainingAmount : '';
+
+        return roundMoney(amountToMove);
+    }
+
+    function getMonthReclassStoreOptions() {
+        return Array.from(
+            new Set(
+                scheduleRows
+                    .map(row => String(row[1] || '').trim())
+                    .filter(Boolean)
+            )
+        ).sort(naturalSort);
+    }
+
+    function renderMonthReclassStoreOptions(selectedStore = '') {
+        const stores = getMonthReclassStoreOptions();
+
+        return stores.map(store => `
+        <option value="${escapeHtml(store)}" ${store === selectedStore ? 'selected' : ''}>
+            ${escapeHtml(store)}
+        </option>
+    `).join('');
+    }
+
+    function getStoresInMonthReclassRange(fromStore, toStore) {
+        const stores = getMonthReclassStoreOptions();
+
+        if (!stores.length) return [];
+
+        const fromIndex = stores.indexOf(fromStore);
+        const toIndex = stores.indexOf(toStore);
+
+        if (fromIndex < 0 && toIndex < 0) return stores;
+        if (fromIndex >= 0 && toIndex < 0) return [fromStore];
+        if (fromIndex < 0 && toIndex >= 0) return [toStore];
+
+        const start = Math.min(fromIndex, toIndex);
+        const end = Math.max(fromIndex, toIndex);
+
+        return stores.slice(start, end + 1);
+    }
+
+    function getMonthReclassAvailableItems() {
+        const fromMonth = normalizeScheduleMonth(document.getElementById('pmReclassFromMonth')?.value);
+        const amountType = document.getElementById('pmReclassAmountType')?.value || 'paid';
+        const scope = document.getElementById('pmReclassScope')?.value || 'all';
+
+        const selectedStoreKeys = getTypedMonthReclassStoreKeys();
+
+        if (!fromMonth || !selectedStoreKeys.size) return [];
+
+        const items = [];
+
+        scheduleRows.forEach((row, rowIndex) => {
+            const store = String(row[1] || '').trim();
+            const storeKey = normalizeReclassStore(store);
+
+            if (!store || !selectedStoreKeys.has(storeKey)) return;
+            if (!rowMatchesMonthReclassScope(row, scope)) return;
+
+            if (amountType === 'paid' || amountType === 'both') {
+                const column = PAID_COL_BY_MONTH[fromMonth];
+                const amount = Number(row[column] || 0);
+
+                if (amount) {
+                    items.push({
+                        rowIndex,
+                        amountType: 'paid',
+                        store,
+                        entity: row[2] || '',
+                        concept: row[0] || '',
+                        available: Math.abs(amount)
+                    });
+                }
+            }
+
+            if (amountType === 'collected' || amountType === 'both') {
+                const column = COLLECTED_COL_BY_MONTH[fromMonth];
+                const amount = Number(row[column] || 0);
+
+                if (amount) {
+                    items.push({
+                        rowIndex,
+                        amountType: 'collected',
+                        store,
+                        entity: row[2] || '',
+                        concept: row[0] || '',
+                        available: Math.abs(amount)
+                    });
+                }
+            }
+        });
+
+        return items.sort((a, b) =>
+            naturalSort(a.store, b.store) ||
+            naturalSort(a.concept, b.concept) ||
+            naturalSort(a.amountType, b.amountType)
+        );
+    }
+
+    function getTypedMonthReclassStoreKeys() {
+        const value = document.getElementById('pmReclassStoreList')?.value || '';
+
+        return new Set(
+            String(value)
+                .split(/[\s,;|]+/)
+                .map(normalizeReclassStore)
+                .filter(Boolean)
+        );
+    }
+
+    function hasTypedMonthReclassStores() {
+        return getTypedMonthReclassStoreKeys().size > 0;
+    }
+    function renderMonthReclassConcepts() {
+        const tbody = document.getElementById('pmReclassConceptsBody');
+        const counter = document.getElementById('pmReclassConceptCount');
+        const selectAll = document.getElementById('pmReclassSelectAll');
+
+        if (!tbody) return;
+
+        const items = getMonthReclassAvailableItems();
+
+        if (counter) {
+            counter.textContent = `${items.length} concept${items.length === 1 ? '' : 's'}`;
+        }
+
+        if (selectAll) {
+            selectAll.checked = false;
+        }
+
+        if (!items.length) {
+            const message = hasTypedMonthReclassStores()
+                ? 'No concepts found for those stores, month, and amount type.'
+                : 'Write one or more stores, then click Load concepts.';
+
+            tbody.innerHTML = `
+        <tr>
+            <td colspan="7" class="pm-table-empty">
+                ${escapeHtml(message)}
+            </td>
+        </tr>
+    `;
+
+            updateMonthReclassSelectedSummary();
+            return;
+        }
+
+        tbody.innerHTML = items.map((item, index) => `
+        <tr>
+            <td>
+                <input
+                    type="checkbox"
+                    data-pm-reclass-check
+                    data-row-index="${escapeHtml(item.rowIndex)}"
+                    data-amount-type="${escapeHtml(item.amountType)}"
+                    data-available="${escapeHtml(item.available)}"
+                />
+            </td>
+
+            <td>
+                <strong>${escapeHtml(item.store)}</strong>
+            </td>
+
+            <td>${escapeHtml(item.entity)}</td>
+
+            <td>
+                <span class="pm-reclass-type-v2 ${item.amountType === 'paid' ? 'is-paid' : 'is-collected'}">
+                    ${escapeHtml(item.amountType)}
+                </span>
+            </td>
+
+            <td class="pm-reclass-concept-v2">
+                ${escapeHtml(item.concept)}
+            </td>
+
+            <td class="is-number">
+                ${escapeHtml(formatCurrency(item.available))}
+            </td>
+
+            <td>
+                <input
+                    type="number"
+                    min="0.01"
+                    step="0.01"
+                    value="${escapeHtml(item.available.toFixed(2))}"
+                    data-pm-reclass-amount
+                />
+            </td>
+        </tr>
+    `).join('');
+
+        updateMonthReclassSelectedSummary();
+    }
+
+    function getSelectedMonthReclassItems() {
+        const selected = [];
+
+        document
+            .querySelectorAll('[data-pm-reclass-check]:checked')
+            .forEach(checkbox => {
+                const row = checkbox.closest('tr');
+                const amountInput = row?.querySelector('[data-pm-reclass-amount]');
+
+                const rowIndex = Number(checkbox.dataset.rowIndex);
+                const amountType = checkbox.dataset.amountType;
+                const available = Math.abs(Number(checkbox.dataset.available || 0));
+                const amount = Math.abs(parseMoney(amountInput?.value) || 0);
+
+                if (!Number.isInteger(rowIndex)) return;
+
+                if (!amount) {
+                    throw new Error('Selected concepts must have an amount greater than zero.');
+                }
+
+                if (amount > available + 0.01) {
+                    throw new Error('Move amount cannot be greater than the available amount.');
+                }
+
+                selected.push({
+                    rowIndex,
+                    amountType,
+                    amount
+                });
+            });
+
+        return selected;
+    }
+
+    function updateMonthReclassSelectedSummary() {
+        const summary = document.getElementById('pmReclassSelectedSummary');
+
+        if (!summary) return;
+
+        let count = 0;
+        let total = 0;
+
+        document
+            .querySelectorAll('[data-pm-reclass-check]:checked')
+            .forEach(checkbox => {
+                const row = checkbox.closest('tr');
+                const amountInput = row?.querySelector('[data-pm-reclass-amount]');
+                const amount = Math.abs(parseMoney(amountInput?.value) || 0);
+
+                count += 1;
+                total += amount;
+            });
+
+        summary.textContent = `Selected: ${count} concept${count === 1 ? '' : 's'} - ${formatCurrency(total)}`;
+    }
+
+    function parseMonthReclassRules(value, defaultAmountType = 'paid') {
+        const text = String(value || '').trim();
+
+        if (!text) return [];
+
+        return text
+            .split(/\r?\n/)
+            .map(line => line.trim())
+            .filter(Boolean)
+            .map((line, index) => {
+                const parts = line
+                    .split(/[,\t|;]/)
+                    .map(part => part.trim())
+                    .filter(Boolean);
+
+                let store = '';
+                let amountType = '';
+                let amount = null;
+
+                if (parts.length >= 3) {
+                    store = parts[0];
+                    amountType = normalizeReclassAmountType(parts[1]);
+                    amount = parseMoney(parts[2]);
+                } else if (parts.length === 2) {
+                    store = parts[0];
+
+                    if (defaultAmountType === 'both') {
+                        throw new Error(`Line ${index + 1}: choose paid or collected when Amount type is Both.`);
+                    }
+
+                    amountType = normalizeReclassAmountType(defaultAmountType);
+                    amount = parseMoney(parts[1]);
+                } else {
+                    throw new Error(`Line ${index + 1}: use Store, paid/collected, amount.`);
+                }
+
+                if (!store) {
+                    throw new Error(`Line ${index + 1}: store is required.`);
+                }
+
+                if (!amountType) {
+                    throw new Error(`Line ${index + 1}: amount type must be paid or collected.`);
+                }
+
+                if (amount === null || !amount) {
+                    throw new Error(`Line ${index + 1}: amount must be greater than zero.`);
+                }
+
+                return {
+                    store,
+                    storeKey: normalizeReclassStore(store),
+                    amountType,
+                    amount: Math.abs(amount)
+                };
+            });
+    }
+
+    function normalizeReclassAmountType(value) {
+        const text = String(value || '').trim().toLowerCase();
+
+        if (text === 'paid' || text === 'payment' || text === 'pago') return 'paid';
+        if (text === 'collected' || text === 'collection' || text === 'cobrado') return 'collected';
+
+        return '';
+    }
+
+    function normalizeReclassStore(value) {
+        return String(value || '')
+            .trim()
+            .toUpperCase()
+            .replace(/\s+/g, '')
+            .replace(/\.0$/, '');
+    }
+
+    function moveSpecificReclassRules(row, rules, amountType, fromColumn, toColumn) {
+        const storeKey = normalizeReclassStore(row[1]);
+
+        let movedAmount = 0;
+
+        rules
+            .filter(rule =>
+                rule.storeKey === storeKey &&
+                rule.amountType === amountType &&
+                Number(rule.remainingAmount || 0) > 0.01
+            )
+            .forEach(rule => {
+                const amount = moveRowMonthAmount(
+                    row,
+                    fromColumn,
+                    toColumn,
+                    rule.remainingAmount
+                );
+
+                if (!amount) return;
+
+                const absoluteMoved = Math.abs(amount);
+
+                rule.remainingAmount = roundMoney(
+                    Number(rule.remainingAmount || 0) - absoluteMoved
+                );
+
+                movedAmount = roundMoney(movedAmount + amount);
+            });
+
+        return movedAmount;
+    }
+
+    function rowMatchesMonthReclassScope(row, scope) {
+        if (scope !== 'filtered') return true;
+
+        const search = normalize(scheduleFilters.search);
+        const store = scheduleFilters.store;
+        const entity = scheduleFilters.entity;
+        const rowType = scheduleFilters.rowType;
+
+        if (store && String(row[1] || '') !== store) return false;
+        if (entity && String(row[2] || '') !== entity) return false;
+        if (rowType && !rowMatchesType(row, rowType)) return false;
+        if (search && !getRowSearchText(row).includes(search)) return false;
+
+        return true;
+    }
+
+    function appendReclassReference(value, fromMonth, toMonth, reason) {
+        const base = String(value || '').trim();
+        const note = `Reclass ${MONTH_NAMES[fromMonth]} to ${MONTH_NAMES[toMonth]}${reason ? `: ${reason}` : ''}`;
+
+        if (base.includes(note)) return base;
+        if (!base) return note;
+
+        return `${base} | ${note}`.slice(0, 240);
     }
 
     function getFilteredScheduleRows(rows) {
@@ -5452,5 +6969,3 @@
             .replaceAll("'", '&#039;');
     }
 })();
-
-

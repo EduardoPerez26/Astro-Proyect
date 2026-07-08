@@ -113,7 +113,8 @@ app.get('/api', (req, res) => {
             validaciones: '/api/validaciones',
             conciliaciones: '/api/conciliaciones',
             dashboard: '/api/dashboard/resumen',
-            propertyManagement: '/api/property-management'
+            propertyManagement: '/api/property-management',
+            chat: '/api/chat'
         }
     });
 });

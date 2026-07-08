@@ -1,483 +1,546 @@
 ---
 import DashboardLayout from "../../../layouts/DashboardLayout.astro";
-
-const schedules = [
-    {
-        id: 1,
-        name: "Taco Bell",
-        restaurant: "taco-bell",
-        description:
-            "Build the Sales Tax Payable Schedule using Dimension Balance and monthly General Ledger files.",
-        icon: "fa-utensils",
-        colorClass: "primary",
-        badge: "2 data sources",
-        files: ["Dimension Balance", "Monthly GL files"],
-        enabled: true,
-    },
-    {
-        id: 2,
-        name: "Burger King",
-        restaurant: "burger-king",
-        description:
-            "Prepare the Sales Tax Payable Schedule and review quarterly paid-next-month activity.",
-        icon: "fa-burger",
-        colorClass: "warning",
-        badge: "2 data sources",
-        files: ["Dimension Balance", "Monthly GL files"],
-        enabled: true,
-    },
-    {
-        id: 3,
-        name: "Popeyes",
-        restaurant: "popeyes",
-        description:
-            "Generate the Sales Tax Payable Schedule and review collected, paid, and store differences.",
-        icon: "fa-drumstick-bite",
-        colorClass: "danger",
-        badge: "2 data sources",
-        files: ["Dimension Balance", "Monthly GL files"],
-        enabled: true,
-    },
-];
-
-const availableSchedules = schedules.filter(
-    (schedule) => schedule.enabled,
-).length;
 ---
 
 <DashboardLayout title="Property Schedules">
-    <section
-        class="property-schedules-page"
-        aria-labelledby="propertySchedulesTitle"
-    >
-        <div class="property-schedules-hero">
-            <div class="property-schedules-copy">
-                <span class="property-schedules-eyebrow">
-                    <i class="fa-solid fa-layer-group" aria-hidden="true"></i>
-                    Property management
-                </span>
-
-                <h1 id="propertySchedulesTitle">Schedule modules</h1>
-
+    <section class="schedule-dashboard" aria-labelledby="scheduleDashboardTitle">
+        <header class="schedule-header">
+            <div>
+                <span class="schedule-eyebrow">Schedules</span>
+                <h1 id="scheduleDashboardTitle">Schedule dashboard</h1>
                 <p>
-                    Select a restaurant to create, review, and export the Sales
-                    Tax Payable Schedule.
+                    Review saved schedules, monthly periods, store coverage, and
+                    recent schedule activity.
                 </p>
             </div>
+
+            <div class="schedule-actions">
+                <a class="schedule-btn is-secondary" href="/views/departments/property-management-documents">
+                    <i class="fa-solid fa-folder-open" aria-hidden="true"></i>
+                    Source files
+                </a>
+                <a class="schedule-btn" href="/views/departments/property-management">
+                    <i class="fa-solid fa-plus" aria-hidden="true"></i>
+                    New schedule
+                </a>
+            </div>
+        </header>
+
+        <div class="schedule-metrics" aria-label="Schedule metrics">
+            <article>
+                <span>Saved schedules</span>
+                <strong id="scheduleMetricTotal">0</strong>
+                <small id="scheduleMetricLatest">Loading activity...</small>
+            </article>
+
+            <article>
+                <span>Latest period</span>
+                <strong id="scheduleMetricPeriod">-</strong>
+                <small id="scheduleMetricPeriodMeta">No saved period yet</small>
+            </article>
+
+            <article>
+                <span>Stores covered</span>
+                <strong id="scheduleMetricStores">0</strong>
+                <small>Across saved schedule versions</small>
+            </article>
+
+            <article>
+                <span>Total balance</span>
+                <strong id="scheduleMetricBalance">$0.00</strong>
+                <small>Sum of saved balances</small>
+            </article>
         </div>
 
-        <div class="property-schedule-grid">
-            {
-                schedules.map((schedule) => (
-                    <article
-                        class={`property-schedule-card ${schedule.enabled ? "" : "is-disabled"}`}
-                    >
-                        <div class="property-schedule-top">
-                            <span
-                                class={`property-schedule-icon ${schedule.colorClass}`}
-                                aria-hidden="true"
-                            >
-                                <i class={`fa-solid ${schedule.icon}`} />
-                            </span>
+        <section class="schedule-panel" aria-labelledby="recentSchedulesTitle">
+            <div class="schedule-panel-header">
+                <div>
+                    <span>Saved workbooks</span>
+                    <h2 id="recentSchedulesTitle">Recent schedules</h2>
+                </div>
+                <small id="scheduleTableMeta">Loading...</small>
+            </div>
 
-                            <span class="property-schedule-status-badge">
-                                <span />
-                                Available
-                            </span>
-                        </div>
-
-                        <div class="property-schedule-body">
-                            <span class="property-schedule-kicker">
-                                Schedule flow
-                            </span>
-
-                            <h2>{schedule.name}</h2>
-
-                            <p>{schedule.description}</p>
-                        </div>
-
-                        <div class="property-schedule-files">
-                            <span>Required files</span>
-
-                            <div>
-                                {schedule.files.map((file) => (
-                                    <small>
-                                        <i
-                                            class="fa-solid fa-file-excel"
-                                            aria-hidden="true"
-                                        />
-                                        {file}
-                                    </small>
-                                ))}
-                            </div>
-                        </div>
-
-                        <div class="property-schedule-footer">
-                            <span>{schedule.badge}</span>
-
-                            <a
-                                class="property-schedule-action"
-                                href={`/views/departments/property-management?restaurant=${schedule.restaurant}`}
-                            >
-                                Create schedule
-                                <i
-                                    class="fa-solid fa-arrow-right"
-                                    aria-hidden="true"
-                                />
-                            </a>
-                        </div>
-                    </article>
-                ))
-            }
-        </div>
-
-        <footer class="property-schedules-note">
-            <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
-            <span>
-                Schedule rules and validations are applied automatically based
-                on the selected restaurant.
-            </span>
-        </footer>
+            <div class="schedule-table-wrap">
+                <table class="schedule-table">
+                    <thead>
+                        <tr>
+                            <th>Schedule</th>
+                            <th>Period</th>
+                            <th>Stores</th>
+                            <th>Rows</th>
+                            <th>Balance</th>
+                            <th>Updated</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="scheduleRecentBody">
+                        <tr>
+                            <td colspan="7" class="schedule-empty">
+                                Loading recent schedules...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
     </section>
 
     <style>
-        .property-schedules-page {
+        .schedule-dashboard {
+            display: grid;
+            gap: 16px;
             width: 100%;
             min-width: 0;
-            padding-bottom: 16px;
+            padding-bottom: 18px;
         }
 
-        .property-schedules-hero {
-            display: grid;
-            grid-template-columns: minmax(0, 1fr) minmax(330px, 460px);
-            gap: 28px;
-            align-items: center;
-            padding: 24px 28px;
-            border: 1px solid #d7e3ef;
-            border-radius: 18px;
+        .schedule-header,
+        .schedule-metrics article,
+        .schedule-panel {
+            border: 1px solid #dfe8f2;
+            border-radius: 14px;
             background: #ffffff;
-            box-shadow: 0 16px 38px -34px rgba(7, 31, 52, 0.5);
+            box-shadow: 0 18px 42px -38px rgba(8, 28, 46, 0.64);
         }
 
-        .property-schedules-copy {
-            min-width: 0;
+        .schedule-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 24px;
+            padding: 28px 34px;
         }
 
-        .property-schedules-eyebrow {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 10px;
-            color: #60758a;
+        .schedule-eyebrow,
+        .schedule-metrics span,
+        .schedule-panel-header span {
+            display: block;
+            color: #0b1d31;
             font-size: 11px;
             font-weight: 900;
-            letter-spacing: 0.08em;
+            letter-spacing: 0;
             text-transform: uppercase;
         }
 
-        .property-schedules-eyebrow i {
-            color: #0b3a67;
-        }
-
-        .property-schedules-hero h1 {
-            margin: 0;
-            color: #082033;
-            font-size: clamp(32px, 3.2vw, 46px);
-            line-height: 1.05;
+        .schedule-header h1 {
+            margin: 10px 0 0;
+            color: #0d2238;
+            font-size: clamp(30px, 4vw, 44px);
+            line-height: 1.02;
             font-weight: 950;
-            letter-spacing: -0.05em;
         }
 
-        .property-schedules-hero p {
-            max-width: 720px;
+        .schedule-header p {
+            max-width: 680px;
             margin: 12px 0 0;
-            color: #60758a;
+            color: #60768d;
             font-size: 14px;
             line-height: 1.6;
             font-weight: 700;
         }
 
-        .property-schedules-metrics {
-            display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 10px;
-        }
-
-        .property-schedules-metrics > div {
-            min-height: 78px;
-            padding: 15px 16px;
-            border: 1px solid #d7e3ef;
-            border-radius: 14px;
-            background: #f8fbfe;
-        }
-
-        .property-schedules-metrics strong {
-            display: block;
-            color: #082033;
-            font-size: 28px;
-            line-height: 1;
-            font-weight: 950;
-            letter-spacing: -0.04em;
-        }
-
-        .property-schedules-metrics span {
-            display: block;
-            margin-top: 7px;
-            color: #60758a;
-            font-size: 11px;
-            font-weight: 900;
-            letter-spacing: 0.04em;
-            text-transform: uppercase;
-        }
-
-        .property-schedules-status {
-            grid-column: 1 / -1;
-            display: flex !important;
-            align-items: center;
-            gap: 9px;
-            min-height: 50px !important;
-        }
-
-        .status-pulse {
-            width: 8px;
-            height: 8px;
-            margin: 0 !important;
-            border-radius: 999px;
-            background: #10b981;
-            box-shadow: 0 0 0 5px rgba(16, 185, 129, 0.12);
-        }
-
-        .property-schedule-grid {
-            display: grid;
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-            gap: 18px;
-            width: 100%;
-            min-width: 0;
-            margin-top: 22px;
-        }
-
-        .property-schedule-card {
-            display: grid;
-            align-items: center;
-            justify-content: space-between;
-            gap: 20px;
-            min-width: 0;
-            padding: 20px 24px;
-            border: 1px solid #d7e3ef;
-            border-radius: 18px;
-            background: #ffffff;
-            box-shadow: 0 14px 34px -32px rgba(7, 31, 52, 0.54);
-        }
-
-        .property-schedule-top {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 12px;
-        }
-
-        .property-schedule-icon {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 46px;
-            height: 46px;
-            min-width: 46px;
-            border-radius: 14px;
-            background: #eef5fc;
-            color: #0b3a67;
-            font-size: 18px;
-        }
-
-        .property-schedule-icon.warning {
-            background: #fff7e8;
-            color: #9a6700;
-        }
-
-        .property-schedule-icon.danger {
-            background: #fff1ec;
-            color: #c2410c;
-        }
-
-        .property-schedule-status-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 7px;
-            min-height: 28px;
-            padding: 0 12px;
-            border-radius: 999px;
-            background: #eaf8f3;
-            color: #0f665f;
-            font-size: 11px;
-            font-weight: 900;
-            white-space: nowrap;
-        }
-
-        .property-schedule-status-badge span {
-            width: 6px;
-            height: 6px;
-            border-radius: 999px;
-            background: currentColor;
-        }
-
-        .property-schedule-body {
-            display: grid;
-            gap: 8px;
-        }
-
-        .property-schedule-kicker {
-            color: #60758a;
-            font-size: 11px;
-            font-weight: 900;
-            letter-spacing: 0.06em;
-            text-transform: uppercase;
-        }
-
-        .property-schedule-body h2 {
-            margin: 0;
-            color: #082033;
-            font-size: 25px;
-            line-height: 1.1;
-            font-weight: 950;
-            letter-spacing: -0.04em;
-        }
-
-        .property-schedule-body strong {
-            color: #173a59;
-            font-size: 14px;
-            font-weight: 900;
-        }
-
-        .property-schedule-body p {
-            margin: 0;
-            color: #52667a;
-            font-size: 13px;
-            line-height: 1.65;
-        }
-
-        .property-schedule-files {
-            display: grid;
-            gap: 10px;
-            padding: 15px;
-            border: 1px solid #ffffff;
-            border-radius: 14px;
-            background: #f8fbfe;
-        }
-
-        .property-schedule-files > span {
-            color: #60758a;
-            font-size: 10px;
-            font-weight: 900;
-            letter-spacing: 0.06em;
-            text-transform: uppercase;
-        }
-
-        .property-schedule-files > div {
+        .schedule-actions {
             display: flex;
             flex-wrap: wrap;
-            gap: 7px;
+            gap: 10px;
+            justify-content: flex-end;
         }
 
-        .property-schedule-files small {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            min-height: 27px;
-            padding: 0 10px;
-            border: 1px solid #d7e3ef;
-            border-radius: 999px;
-            background: #ffffff;
-            color: #173a59;
-            font-size: 11px;
-            font-weight: 850;
-        }
-
-        .property-schedule-files i {
-            color: #0b3a67;
-        }
-
-        .property-schedule-footer {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 12px;
-        }
-
-        .property-schedule-footer > span {
-            color: #60758a;
-            font-size: 12px;
-            font-weight: 850;
-        }
-
-        .property-schedule-action {
+        .schedule-btn,
+        .schedule-open-link {
             display: inline-flex;
             align-items: center;
             justify-content: center;
             gap: 8px;
-            min-height: 38px !important;
-            padding: 0 15px !important;
-            border-radius: 999px;
-            background: #111224;
+            min-height: 42px;
+            padding: 0 15px;
+            border-radius: 10px;
+            background: #101122;
             color: #ffffff;
-            font-size: 12px;
-            font-weight: 800;
+            font-size: 13px;
+            font-weight: 900;
             text-decoration: none;
             white-space: nowrap;
         }
 
-        .property-schedule-action:hover {
-            background: #0b3a67;
+        .schedule-btn.is-secondary {
+            border: 1px solid #d7e3ef;
+            background: #ffffff;
+            color: #101122;
         }
 
-        .property-schedules-note {
+        .schedule-btn:hover,
+        .schedule-open-link:hover {
+            background: #173a59;
+        }
+
+        .schedule-btn.is-secondary:hover {
+            background: #f7fbff;
+        }
+
+        .schedule-metrics {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        .schedule-metrics article {
+            min-width: 0;
+            min-height: 96px;
+            padding: 16px 18px;
+            background: #f8fbff;
+        }
+
+        .schedule-metrics strong {
+            display: block;
+            margin-top: 10px;
+            overflow: hidden;
+            color: #0d3d68;
+            font-size: 30px;
+            line-height: 1;
+            font-weight: 950;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+        }
+
+        .schedule-metrics small {
+            display: block;
+            margin-top: 8px;
+            color: #60768d;
+            font-size: 12px;
+            font-weight: 750;
+        }
+
+        .schedule-panel {
+            min-width: 0;
+            overflow: hidden;
+        }
+
+        .schedule-panel-header {
             display: flex;
             align-items: center;
-            gap: 9px;
-            margin-top: 18px;
-            padding-top: 14px;
-            border-top: 1px solid #d7e3ef;
-            color: #60758a;
+            justify-content: space-between;
+            gap: 16px;
+            padding: 18px 20px;
+            border-bottom: 1px solid #e3ecf5;
+        }
+
+        .schedule-panel-header h2 {
+            margin: 6px 0 0;
+            color: #0d2238;
+            font-size: 20px;
+            line-height: 1.1;
+            font-weight: 950;
+        }
+
+        .schedule-panel-header small {
+            color: #60768d;
             font-size: 12px;
-            font-weight: 700;
+            font-weight: 800;
+            text-align: right;
         }
 
-        .property-schedules-note i {
-            color: #0b3a67;
+        .schedule-table-wrap {
+            max-height: 520px;
+            overflow: auto;
         }
 
-        @media (max-width: 1180px) {
-            .property-schedules-hero {
-                grid-template-columns: 1fr;
-            }
+        .schedule-table {
+            width: 100%;
+            min-width: 840px;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
 
-            .property-schedules-metrics {
-                max-width: 520px;
-            }
+        .schedule-table th {
+            position: sticky;
+            top: 0;
+            z-index: 1;
+            padding: 12px;
+            background: #101122;
+            color: #ffffff;
+            font-size: 11px;
+            font-weight: 950;
+            text-align: left;
+            text-transform: uppercase;
+        }
 
-            .property-schedule-grid {
+        .schedule-table td {
+            padding: 12px;
+            border-bottom: 1px solid #e3ecf5;
+            color: #0d2238;
+            font-weight: 750;
+            vertical-align: middle;
+        }
+
+        .schedule-table tr:nth-child(even) td {
+            background: #f8fbff;
+        }
+
+        .schedule-table .is-number {
+            text-align: right;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .schedule-table small {
+            color: #60768d;
+            font-size: 11px;
+            font-weight: 750;
+        }
+
+        .schedule-open-link {
+            min-height: 30px;
+            padding: 0 10px;
+            border-radius: 9px;
+            font-size: 12px;
+        }
+
+        .schedule-empty {
+            padding: 30px !important;
+            color: #60768d !important;
+            text-align: center;
+        }
+
+        @media (max-width: 1100px) {
+            .schedule-metrics {
                 grid-template-columns: repeat(2, minmax(0, 1fr));
             }
         }
 
-        @media (max-width: 760px) {
-            .property-schedules-hero {
-                padding: 20px;
-                border-radius: 16px;
+        @media (max-width: 780px) {
+            .schedule-header {
+                flex-direction: column;
+                padding: 24px;
             }
 
-            .property-schedule-grid {
+            .schedule-actions {
+                justify-content: stretch;
+                width: 100%;
+            }
+
+            .schedule-btn {
+                flex: 1 1 180px;
+            }
+        }
+
+        @media (max-width: 560px) {
+            .schedule-metrics {
                 grid-template-columns: 1fr;
             }
 
-            .property-schedule-footer {
-                align-items: stretch;
+            .schedule-panel-header {
+                align-items: flex-start;
                 flex-direction: column;
-            }
-
-            .property-schedule-action {
-                width: 100%;
             }
         }
     </style>
+
+    <script src="/js/config.js" is:inline></script>
+    <script is:inline>
+        const MONTH_NAMES = [
+            "",
+            "January",
+            "February",
+            "March",
+            "April",
+            "May",
+            "June",
+            "July",
+            "August",
+            "September",
+            "October",
+            "November",
+            "December",
+        ];
+
+        document.addEventListener("DOMContentLoaded", loadScheduleDashboard);
+
+        async function loadScheduleDashboard() {
+            try {
+                const schedules = await fetchSchedules();
+                renderScheduleDashboard(schedules);
+            } catch (error) {
+                console.error(error);
+                renderScheduleDashboardError(error);
+            }
+        }
+
+        async function fetchSchedules() {
+            const apiBase = String(window.API_URL || "").replace(/\/$/, "");
+            const token = localStorage.getItem("token");
+
+            if (!apiBase) throw new Error("API_URL is not configured");
+            if (!token) throw new Error("Your session token was not found. Sign in again.");
+
+            const response = await fetch(`${apiBase}/property-management/schedules`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            const data = await response.json();
+
+            if (!response.ok || data.success === false) {
+                throw new Error(data.message || "Schedules could not be loaded");
+            }
+
+            return Array.isArray(data.schedules) ? data.schedules : [];
+        }
+
+        function renderScheduleDashboard(schedules) {
+            const stats = buildDashboardStats(schedules);
+
+            setText("scheduleMetricTotal", formatInteger(stats.totalSchedules));
+            setText("scheduleMetricStores", formatInteger(stats.totalStores));
+            setText("scheduleMetricBalance", formatCurrency(stats.totalBalance));
+            setText("scheduleMetricPeriod", stats.latestPeriodShort || "-");
+            setText("scheduleMetricLatest", stats.latest ? `Latest update: ${formatShortDate(stats.latest.fecha_actualizacion || stats.latest.fecha_creacion)}` : "No schedules saved yet");
+            setText("scheduleMetricPeriodMeta", stats.periodCount ? `${formatInteger(stats.periodCount)} saved period${stats.periodCount === 1 ? "" : "s"}` : "No saved period yet");
+            setText("scheduleTableMeta", `${formatInteger(schedules.length)} schedule${schedules.length === 1 ? "" : "s"}`);
+
+            renderRecentSchedules(schedules.slice(0, 12));
+        }
+
+        function buildDashboardStats(schedules) {
+            const periods = new Set();
+            let totalStores = 0;
+            let totalBalance = 0;
+
+            schedules.forEach((schedule) => {
+                const stores = Number(schedule.total_tiendas || 0);
+                const balance = Number(schedule.balance_total || 0);
+                const period = getPeriodKey(schedule);
+
+                totalStores += stores;
+                totalBalance += Number.isFinite(balance) ? balance : 0;
+                if (period) periods.add(period);
+            });
+
+            const latestPeriodKey = Array.from(periods).sort().reverse()[0] || "";
+
+            return {
+                totalSchedules: schedules.length,
+                totalStores,
+                totalBalance,
+                periodCount: periods.size,
+                latestPeriodShort: latestPeriodKey ? formatPeriodKey(latestPeriodKey) : "",
+                latest: schedules[0] || null,
+            };
+        }
+
+        function renderRecentSchedules(schedules) {
+            const tbody = document.getElementById("scheduleRecentBody");
+            if (!tbody) return;
+
+            if (!schedules.length) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="schedule-empty">
+                            No schedules saved yet. Create the first schedule from the builder.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = schedules
+                .map((schedule) => `
+                    <tr>
+                        <td>
+                            <strong>${escapeHtml(schedule.nombre || "Schedule")}</strong>
+                            <br />
+                            <small>${escapeHtml(schedule.estado || "draft")}</small>
+                        </td>
+                        <td>${escapeHtml(formatSchedulePeriod(schedule))}</td>
+                        <td class="is-number">${formatInteger(schedule.total_tiendas)}</td>
+                        <td class="is-number">${formatInteger(schedule.total_filas)}</td>
+                        <td class="is-number">${formatCurrency(schedule.balance_total)}</td>
+                        <td>${escapeHtml(formatShortDate(schedule.fecha_actualizacion || schedule.fecha_creacion))}</td>
+                        <td>
+                            <a class="schedule-open-link" href="/views/departments/property-management">
+                                Open
+                            </a>
+                        </td>
+                    </tr>
+                `)
+                .join("");
+        }
+
+        function renderScheduleDashboardError(error) {
+            setText("scheduleMetricLatest", error.message || "Schedules could not be loaded");
+            setText("scheduleTableMeta", "Unavailable");
+
+            const tbody = document.getElementById("scheduleRecentBody");
+            if (!tbody) return;
+
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="7" class="schedule-empty">
+                        ${escapeHtml(error.message || "Schedules could not be loaded")}
+                    </td>
+                </tr>
+            `;
+        }
+
+        function getPeriodKey(schedule) {
+            const year = Number(schedule.periodo_anio || 0);
+            const month = Number(schedule.periodo_mes || 0);
+
+            if (!year || !month) return "";
+            return `${year}-${String(month).padStart(2, "0")}`;
+        }
+
+        function formatPeriodKey(key) {
+            const [year, month] = key.split("-");
+            return `${MONTH_NAMES[Number(month)] || month} ${year}`;
+        }
+
+        function formatSchedulePeriod(schedule) {
+            const year = Number(schedule.periodo_anio || 0);
+            const month = Number(schedule.periodo_mes || 0);
+
+            if (!year && !month) return "No period";
+            if (!month) return String(year);
+            return `${MONTH_NAMES[month] || month} ${year || ""}`.trim();
+        }
+
+        function formatShortDate(value) {
+            if (!value) return "No date";
+            const date = new Date(value);
+            if (Number.isNaN(date.getTime())) return "No date";
+
+            return new Intl.DateTimeFormat("en-US", {
+                month: "short",
+                day: "2-digit",
+                year: "numeric",
+            }).format(date);
+        }
+
+        function formatCurrency(value) {
+            const number = Number(value || 0);
+
+            return new Intl.NumberFormat("en-US", {
+                style: "currency",
+                currency: "USD",
+                maximumFractionDigits: 2,
+            }).format(Number.isFinite(number) ? number : 0);
+        }
+
+        function formatInteger(value) {
+            const number = Number(value || 0);
+            return new Intl.NumberFormat("en-US").format(Number.isFinite(number) ? number : 0);
+        }
+
+        function setText(id, value) {
+            const element = document.getElementById(id);
+            if (element) element.textContent = value;
+        }
+
+        function escapeHtml(value) {
+            return String(value ?? "")
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+    </script>
 </DashboardLayout>
- <script src="/js/config.js" is:inline></script>
