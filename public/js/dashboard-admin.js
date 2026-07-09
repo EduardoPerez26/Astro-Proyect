@@ -1,6 +1,7 @@
 ﻿let adminActivityLogRows = [];
 
 document.addEventListener('DOMContentLoaded', () => {
+    redirectLegacySystemErrorsLink();
     document.getElementById('refreshAdminDashboard')
         ?.addEventListener('click', loadAdminDashboard);
     document.getElementById('adminSessionsList')
@@ -13,6 +14,15 @@ document.addEventListener('DOMContentLoaded', () => {
         ?.addEventListener('click', onAdminActivityLogClick);
     loadAdminDashboard();
 });
+
+
+function redirectLegacySystemErrorsLink() {
+    const params = new URLSearchParams(window.location.search);
+
+    if (params.get('section') === 'system-errors') {
+        window.location.replace('/views/system-errors');
+    }
+}
 
 async function loadAdminDashboard() {
     const token = localStorage.getItem('token');
@@ -43,6 +53,7 @@ async function loadAdminDashboard() {
         }
 
         renderAdminSummary(data.resumen || {}, data.modo_compatibilidad);
+        loadAdminErrorSummary(token);
         renderAdminMovements(data.movimientos || []);
         renderAdminSessions(data.sesiones_recientes || [], data.modo_compatibilidad);
         renderAdminUserActivity(data.actividad_usuarios || []);
@@ -106,7 +117,9 @@ async function loadCompatibleAdminDashboard(token) {
             usuarios_activos: users.filter(user =>
                 user.activo === true || user.activo === 1 || user.estado === 'activo'
             ).length,
-            administradores: users.filter(user => user.rol === 'admin').length,
+            administradores: users.filter(user =>
+                ['superadmin', 'admin'].includes(user.rol)
+            ).length,
             sesiones_activas: 0,
             inicios_hoy: 0,
             inicios_7_dias: 0,
@@ -162,6 +175,41 @@ function renderAdminSummary(summary, compatibilityMode = false) {
     setAdminText('adminValidationMeta', `${summary.validaciones_con_incidencias || 0} with issues`);
     setAdminText('adminDepartmentsActive', summary.departamentos_activos);
     setAdminText('adminDepartmentsMeta', `${summary.departamentos_total || 0} registered`);
+}
+
+
+async function loadAdminErrorSummary(token) {
+    const openElement = document.getElementById('adminSystemErrorsOpen');
+    const metaElement = document.getElementById('adminSystemErrorsMeta');
+
+    if (!openElement || !metaElement || !window.API_URL || !token) return;
+
+    try {
+        const response = await fetch(`${window.API_URL}/notificaciones/system-errors?status=open&limit=1`, {
+            credentials: 'include',
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        const data = await response.json().catch(() => ({}));
+
+        if (!response.ok || data.success === false) {
+            throw new Error(data.message || data.mensaje || 'System health unavailable');
+        }
+
+        const summary = data.summary || {};
+        const open = Number(summary.abiertos || 0);
+        const critical = Number(summary.criticos_abiertos || 0);
+
+        openElement.textContent = open.toLocaleString('en-US');
+        metaElement.textContent = critical > 0
+            ? `${critical.toLocaleString('en-US')} critical open`
+            : 'No critical errors';
+        metaElement.classList.toggle('is-error-meta', critical > 0);
+    } catch (error) {
+        console.warn('System error summary could not be loaded:', error);
+        openElement.textContent = '-';
+        metaElement.textContent = 'Update backend to enable';
+        metaElement.classList.remove('is-error-meta');
+    }
 }
 
 function renderAdminMovements(movements) {
@@ -821,6 +869,7 @@ function formatAdminDate(value, short = false) {
 
 function formatAdminStateLabel(value) {
     const labels = {
+        superadmin: 'Super administrator',
         admin: 'Administrator',
         supervisor: 'Supervisor',
         usuario: 'User',

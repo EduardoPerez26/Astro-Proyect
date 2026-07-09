@@ -3,55 +3,33 @@ const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
 const { pool } = require('../config/database');
-const { verificarToken, esAdmin } = require('../middleware/auth.middleware');
+const {
+    verificarToken,
+    checkPermission
+} = require('../middleware/auth.middleware');
+const {
+    normalizeUserPermissions,
+    isSuperAdmin
+} = require('../config/permissions');
 
-const VENTANAS_OPERATIVAS = ['tiendas', 'documentos', 'historial', 'propertyManagement', 'propertyManagementDocuments', 'chat'];
-const VENTANAS_ADMIN = ['dashboardAdmin', ...VENTANAS_OPERATIVAS];
-const PERMISOS_ADMIN = {
-    dashboardAdmin: true,
-    tiendas: true,
-    documentos: true,
-    perfil: true,
-    permisos: true,
-    historial: true,
-    usuarios: true,
-    controlRestaurants: true,
-    propertyManagement: true,
-    propertyManagementDocuments: true,
-    chat: true,
-    paginaInicio: 'dashboardAdmin'
-};
+const VALID_ROLES = new Set(['superadmin', 'admin', 'supervisor', 'usuario']);
 
-function normalizarPermissionsUser(permisos, rol) {
-    if (rol === 'admin') {
-        return {
-            ...PERMISOS_ADMIN,
-            paginaInicio: VENTANAS_ADMIN.includes(permisos.paginaInicio)
-                ? permisos.paginaInicio
-                : 'dashboardAdmin'
-        };
-    }
+function canManageRole(actor, targetRole) {
+    if (isSuperAdmin(actor)) return true;
+    return actor?.rol === 'admin' && !['superadmin', 'admin'].includes(targetRole);
+}
 
-    const normalizados = {
-        tiendas: permisos.tiendas === true,
-        documentos: permisos.documentos === true,
-        historial: permisos.historial === true,
-        propertyManagement: permisos.propertyManagement === true,
-        propertyManagementDocuments: permisos.propertyManagementDocuments === true ||
-            (permisos.propertyManagementDocuments === undefined && permisos.propertyManagement === true),
-        chat: permisos.chat === true,
-        perfil: true,
-        permisos: false,
-        usuarios: false,
-        controlRestaurants: false
-    };
-    const disponibles = VENTANAS_OPERATIVAS.filter(codigo => normalizados[codigo]);
+async function isLastActiveSuperAdmin(userId) {
+    const [[row]] = await pool.query(
+        `SELECT COUNT(*) AS total
+         FROM usuarios
+         WHERE rol = 'superadmin'
+           AND activo = TRUE
+           AND id <> ?`,
+        [userId]
+    );
 
-    normalizados.paginaInicio = disponibles.includes(permisos.paginaInicio)
-        ? permisos.paginaInicio
-        : disponibles[0] || null;
-
-    return normalizados;
+    return Number(row?.total || 0) === 0;
 }
 
 function esErrorEsquemaDepartments(error) {
@@ -67,19 +45,20 @@ function esErrorEsquemaDepartments(error) {
 
 function formatearUsers(usuarios) {
     return usuarios.map(u => {
-        let permisos = {};
-        if (u.permisos) {
-            if (typeof u.permisos === 'string') {
-                try { permisos = JSON.parse(u.permisos); } catch { permisos = {}; }
-            } else {
-                permisos = u.permisos;
-            }
-        }
+        const permisos = normalizeUserPermissions(
+            u.permisos,
+            u.rol,
+            { departmentCode: u.departamento_codigo }
+        );
         return { ...u, permisos };
     });
 }
 
-router.get('/', verificarToken, esAdmin, async (req, res) => {
+router.get(
+    '/',
+    verificarToken,
+    checkPermission('view_usuarios'),
+    async (req, res) => {
     try {
         const [usuarios] = await pool.query(
             `SELECT u.id,
@@ -145,17 +124,12 @@ router.get('/', verificarToken, esAdmin, async (req, res) => {
     }
 });
 
-router.get('/:id', verificarToken, async (req, res) => {
+router.get(
+    '/:id',
+    verificarToken,
+    checkPermission('view_usuarios'),
+    async (req, res) => {
     try {
-        // Only admins can view other users.
-        if (req.usuario.rol !== 'admin' && req.usuario.id !== parseInt(req.params.id)) {
-            return res.status(403).json({
-                error: true,
-                success: false,
-                mensaje: 'You do not have permission to view this user'
-            });
-        }
-
         const [usuarios] = await pool.query(
             `SELECT
  u.id,
@@ -186,13 +160,11 @@ router.get('/:id', verificarToken, async (req, res) => {
         }
 
         const usuario = usuarios[0];
-        if (usuario.permisos) {
-            if (typeof usuario.permisos === 'string') {
-                try { usuario.permisos = JSON.parse(usuario.permisos); } catch { usuario.permisos = {}; }
-            }
-        } else {
-            usuario.permisos = {};
-        }
+        usuario.permisos = normalizeUserPermissions(
+            usuario.permisos,
+            usuario.rol,
+            { departmentCode: usuario.departamento_codigo }
+        );
 
         res.json({
             error: false,
@@ -210,13 +182,30 @@ router.get('/:id', verificarToken, async (req, res) => {
     }
 });
 
-router.put('/:id', verificarToken, async (req, res) => {
+router.put(
+    '/:id',
+    verificarToken,
+    checkPermission('edit_users'),
+    async (req, res) => {
     try {
-        // Only admins can edit other users.
-        if (req.usuario.rol !== 'admin' && req.usuario.id !== parseInt(req.params.id)) {
+        const targetId = Number(req.params.id);
+        const [targetUsers] = await pool.query(
+            'SELECT id, rol, activo FROM usuarios WHERE id = ? LIMIT 1',
+            [targetId]
+        );
+        const targetUser = targetUsers[0];
+
+        if (!targetUser) {
+            return res.status(404).json({
+                error: true,
+                message: 'User not found'
+            });
+        }
+
+        if (!canManageRole(req.usuario, targetUser.rol)) {
             return res.status(403).json({
                 error: true,
-                mensaje: 'You do not have permission to edit this user'
+                mensaje: 'You cannot edit a user with this role'
             });
         }
 
@@ -242,36 +231,56 @@ router.put('/:id', verificarToken, async (req, res) => {
             params.push(email);
         }
 
-        // Only admins can change role and status.
-        if (req.usuario.rol === 'admin') {
-            if (rol) {
-                updates.push('rol = ?');
-                params.push(rol);
+        if (rol) {
+            if (!VALID_ROLES.has(rol) || !canManageRole(req.usuario, rol)) {
+                return res.status(403).json({
+                    error: true,
+                    message: 'You cannot assign this role'
+                });
             }
-            if (estado !== undefined) {
-                updates.push('activo = ?');
-                params.push(estado === 'activo');
-            }
-            if (departamento_id !== undefined) {
-                const departamentoId = Number(departamento_id) || null;
+            updates.push('rol = ?');
+            params.push(rol);
+        }
+        if (estado !== undefined) {
+            updates.push('activo = ?');
+            params.push(estado === 'activo');
+        }
+        if (departamento_id !== undefined) {
+            const departamentoId = Number(departamento_id) || null;
 
-                if (departamentoId) {
-                    const [departamentos] = await pool.query(
-                        'SELECT id FROM departamentos WHERE id = ? AND activo = TRUE LIMIT 1',
-                        [departamentoId]
-                    );
+            if (departamentoId) {
+                const [departamentos] = await pool.query(
+                    'SELECT id FROM departamentos WHERE id = ? AND activo = TRUE LIMIT 1',
+                    [departamentoId]
+                );
 
-                    if (!departamentos.length) {
-                        return res.status(400).json({
-                            error: true,
-                            message: 'The selected department does not exist or is inactive'
-                        });
-                    }
+                if (!departamentos.length) {
+                    return res.status(400).json({
+                        error: true,
+                        message: 'The selected department does not exist or is inactive'
+                    });
                 }
-
-                updates.push('departamento_id = ?');
-                params.push(departamentoId);
             }
+
+            updates.push('departamento_id = ?');
+            params.push(departamentoId);
+        }
+
+        const removesLastSuperAdmin =
+            targetUser.rol === 'superadmin' &&
+            (
+                (rol && rol !== 'superadmin') ||
+                estado === 'inactivo'
+            );
+
+        if (
+            removesLastSuperAdmin &&
+            await isLastActiveSuperAdmin(targetId)
+        ) {
+            return res.status(409).json({
+                error: true,
+                message: 'The last active super administrator cannot be demoted or disabled'
+            });
         }
 
         if (req.body.username) {
@@ -294,7 +303,7 @@ router.put('/:id', verificarToken, async (req, res) => {
         }
 
         query += updates.join(', ') + ' WHERE id = ?';
-        params.push(req.params.id);
+        params.push(targetId);
 
         await pool.query(query, params);
 
@@ -313,7 +322,11 @@ router.put('/:id', verificarToken, async (req, res) => {
     }
 });
 
-router.delete('/:id', verificarToken, esAdmin, async (req, res) => {
+router.delete(
+    '/:id',
+    verificarToken,
+    checkPermission('delete_users'),
+    async (req, res) => {
     const connection = await pool.getConnection();
 
     try {
@@ -327,7 +340,7 @@ router.delete('/:id', verificarToken, esAdmin, async (req, res) => {
         }
 
         const [usuarios] = await connection.query(
-            'SELECT id, nombre_completo FROM usuarios WHERE id = ? LIMIT 1',
+            'SELECT id, nombre_completo, rol, activo FROM usuarios WHERE id = ? LIMIT 1',
             [usuarioId]
         );
 
@@ -335,6 +348,24 @@ router.delete('/:id', verificarToken, esAdmin, async (req, res) => {
             return res.status(404).json({
                 error: true,
                 message: 'User not found'
+            });
+        }
+
+        if (!canManageRole(req.usuario, usuarios[0].rol)) {
+            return res.status(403).json({
+                error: true,
+                message: 'You cannot delete a user with this role'
+            });
+        }
+
+        if (
+            usuarios[0].rol === 'superadmin' &&
+            usuarios[0].activo &&
+            await isLastActiveSuperAdmin(usuarioId)
+        ) {
+            return res.status(409).json({
+                error: true,
+                message: 'The last active super administrator cannot be deleted'
             });
         }
 
@@ -399,18 +430,19 @@ router.delete('/:id', verificarToken, esAdmin, async (req, res) => {
     }
 });
 
-router.get('/:id/permisos', verificarToken, async (req, res) => {
+router.get(
+    '/:id/permisos',
+    verificarToken,
+    checkPermission('view_permisos'),
+    async (req, res) => {
     try {
-        // Only admins can view permissions for other users.
-        if (req.usuario.rol !== 'admin' && req.usuario.id !== parseInt(req.params.id)) {
-            return res.status(403).json({
-                success: false,
-                message: 'You do not have permission to view these permissions'
-            });
-        }
-
         const [rows] = await pool.query(
-            'SELECT permisos FROM usuarios WHERE id = ?',
+            `SELECT u.permisos,
+                    u.rol,
+                    d.codigo AS departamento_codigo
+             FROM usuarios u
+             LEFT JOIN departamentos d ON d.id = u.departamento_id
+             WHERE u.id = ?`,
             [req.params.id]
         );
 
@@ -421,14 +453,11 @@ router.get('/:id/permisos', verificarToken, async (req, res) => {
             });
         }
 
-        let permisos = {};
-        try {
-            permisos = typeof rows[0].permisos === 'string'
-                ? JSON.parse(rows[0].permisos || '{}')
-                : rows[0].permisos || {};
-        } catch {
-            permisos = {};
-        }
+        const permisos = normalizeUserPermissions(
+            rows[0].permisos,
+            rows[0].rol,
+            { departmentCode: rows[0].departamento_codigo }
+        );
 
         res.json({
             success: true,
@@ -444,7 +473,11 @@ router.get('/:id/permisos', verificarToken, async (req, res) => {
     }
 });
 
-router.put('/:id/permisos', verificarToken, esAdmin, async (req, res) => {
+router.put(
+    '/:id/permisos',
+    verificarToken,
+    checkPermission('manage_permissions'),
+    async (req, res) => {
     try {
         const { permisos } = req.body;
 
@@ -457,7 +490,12 @@ router.put('/:id/permisos', verificarToken, esAdmin, async (req, res) => {
 
         // Verify that the user exists.
         const [usuarios] = await pool.query(
-            'SELECT id, rol FROM usuarios WHERE id = ?',
+            `SELECT u.id,
+                    u.rol,
+                    d.codigo AS departamento_codigo
+             FROM usuarios u
+             LEFT JOIN departamentos d ON d.id = u.departamento_id
+             WHERE u.id = ?`,
             [req.params.id]
         );
 
@@ -468,13 +506,21 @@ router.put('/:id/permisos', verificarToken, esAdmin, async (req, res) => {
             });
         }
 
-        const permisosNormalizados = normalizarPermissionsUser(
+        if (!canManageRole(req.usuario, usuarios[0].rol)) {
+            return res.status(403).json({
+                success: false,
+                message: 'You cannot change permissions for a user with this role'
+            });
+        }
+
+        const permisosNormalizados = normalizeUserPermissions(
             permisos,
-            usuarios[0].rol
+            usuarios[0].rol,
+            { departmentCode: usuarios[0].departamento_codigo }
         );
 
         if (
-            usuarios[0].rol !== 'admin' &&
+            usuarios[0].rol !== 'superadmin' &&
             !permisosNormalizados.paginaInicio
         ) {
             return res.status(400).json({
@@ -503,15 +549,27 @@ router.put('/:id/permisos', verificarToken, esAdmin, async (req, res) => {
     }
 });
 
-router.post('/', verificarToken, esAdmin, async (req, res) => {
+router.post(
+    '/',
+    verificarToken,
+    checkPermission('create_users'),
+    async (req, res) => {
     try {
         const { nombre, email, username, password, rol, estado, departamento_id } = req.body;
+        const requestedRole = rol || 'usuario';
 
         // Validations.
         if (!nombre || !email || !username || !password) {
             return res.status(400).json({
                 success: false,
                 message: 'Required fields are missing'
+            });
+        }
+
+        if (!VALID_ROLES.has(requestedRole) || !canManageRole(req.usuario, requestedRole)) {
+            return res.status(403).json({
+                success: false,
+                message: 'You cannot create a user with this role'
             });
         }
 
@@ -547,12 +605,10 @@ router.post('/', verificarToken, esAdmin, async (req, res) => {
             }
         }
 
-        // Permissions por defecto segun rol
-        const defaultPermissions = {
-            'admin': { ...PERMISOS_ADMIN },
-            'supervisor': { tiendas: true, documentos: true, perfil: true, permisos: false, historial: true, usuarios: false, controlRestaurants: false, propertyManagement: false, propertyManagementDocuments: false, chat: false, paginaInicio: 'tiendas' },
-            'usuario': { tiendas: true, documentos: true, perfil: true, permisos: false, historial: false, usuarios: false, controlRestaurants: false, propertyManagement: false, propertyManagementDocuments: false, chat: false, paginaInicio: 'tiendas' }
-        };
+        const defaultPermissions = normalizeUserPermissions(
+            {},
+            requestedRole
+        );
 
         // Insert user.
         const [result] = await pool.query(
@@ -564,10 +620,10 @@ router.post('/', verificarToken, esAdmin, async (req, res) => {
                 passwordHash,
                 nombre,
                 email,
-                rol || 'usuario',
+                requestedRole,
                 departamentoId,
                 estado !== 'inactivo',
-                JSON.stringify(defaultPermissions[rol] || defaultPermissions['usuario'])
+                JSON.stringify(defaultPermissions)
             ]
         );
 
@@ -579,7 +635,7 @@ router.post('/', verificarToken, esAdmin, async (req, res) => {
                 nombre,
                 email,
                 username,
-                rol: rol || 'usuario'
+                rol: requestedRole
             }
         });
 

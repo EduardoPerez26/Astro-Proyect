@@ -7,6 +7,7 @@ function obtenerRutaInicial(usuario) {
     const esPropertyManagement = departmentCode === 'property-management' || departmentCode === 'pm';
     const rutas = {
         dashboardAdmin: '/views/dashboard-admin',
+        systemErrors: '/views/system-errors',
         tiendas: '/views/tiendas',
         documentos: '/views/documentos',
         historial: '/views/historial',
@@ -27,7 +28,8 @@ function obtenerRutaInicial(usuario) {
     if (permisos.propertyManagementDocuments) return '/views/departments/property-management-documents';
     if (permisos.chat) return '/views/chat';
     if (esPropertyManagement) return '/views/departments/dashboard-property';
-    if (usuario?.rol === 'admin' && permisos.dashboardAdmin) return '/views/dashboard-admin';
+    if (['superadmin', 'admin'].includes(usuario?.rol) && permisos.dashboardAdmin) return '/views/dashboard-admin';
+    if (['superadmin', 'admin'].includes(usuario?.rol) && permisos.systemErrors) return '/views/system-errors';
     return '/';
 }
 

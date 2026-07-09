@@ -3,32 +3,32 @@ const router = express.Router();
 
 const { pool } = require('../config/database');
 const { verificarToken, checkPermission } = require('../middleware/auth.middleware');
+const {
+    normalizeUserPermissions,
+    hasPermission,
+    isSuperAdmin
+} = require('../config/permissions');
+const { createChatMessageNotifications } = require('../services/notifications.service');
 
-router.use(verificarToken, checkPermission('chat'));
+router.use(verificarToken);
 
 function getUsuarioId(req) {
     return req.usuario?.id || req.user?.id || req.usuario?.userId || null;
 }
 
-function parseJson(value) {
-    if (!value) return {};
-    if (typeof value === 'object') return value;
-
-    try {
-        return JSON.parse(value);
-    } catch {
-        return {};
-    }
-}
-
 function tienePermisoChat(usuario = {}) {
-    if (usuario.rol === 'admin') return true;
-    return parseJson(usuario.permisos).chat === true;
+    if (isSuperAdmin(usuario)) return true;
+    const permissions = normalizeUserPermissions(
+        usuario.permisos,
+        usuario.rol,
+        { departmentCode: usuario.departamento_codigo }
+    );
+    return hasPermission(permissions, 'chat', 'ver');
 }
 
 // Obtener conversaciones del usuario
 // Obtener conversaciones del usuario
-router.get('/conversaciones', async (req, res) => {
+router.get('/conversaciones', checkPermission('view_chat'), async (req, res) => {
     try {
         const usuarioId = req.usuario?.id || req.user?.id;
 
@@ -116,7 +116,7 @@ router.get('/conversaciones', async (req, res) => {
 });
 
 // Crear o abrir conversación directa con otro usuario
-router.post('/directa', async (req, res) => {
+router.post('/directa', checkPermission('send_chat'), async (req, res) => {
     const connection = await pool.getConnection();
 
     try {
@@ -226,7 +226,7 @@ router.post('/directa', async (req, res) => {
 });
 
 // Obtener mensajes de una conversación
-router.get('/conversaciones/:id/mensajes', async (req, res) => {
+router.get('/conversaciones/:id/mensajes', checkPermission('view_chat'), async (req, res) => {
     try {
         const usuarioId = getUsuarioId(req);
         const conversacionId = Number(req.params.id);
@@ -330,7 +330,7 @@ router.get('/conversaciones/:id/mensajes', async (req, res) => {
 });
 
 // Enviar mensaje
-router.post('/conversaciones/:id/mensajes', async (req, res) => {
+router.post('/conversaciones/:id/mensajes', checkPermission('send_chat'), async (req, res) => {
     try {
         const usuarioId = getUsuarioId(req);
         const conversacionId = Number(req.params.id);
@@ -369,6 +369,25 @@ router.post('/conversaciones/:id/mensajes', async (req, res) => {
             VALUES (?, ?, ?)
         `, [conversacionId, usuarioId, mensaje]);
 
+        try {
+            const [[sender]] = await pool.query(`
+                SELECT COALESCE(nombre_completo, username, email, 'User') AS nombre
+                FROM usuarios
+                WHERE id = ?
+                LIMIT 1
+            `, [usuarioId]);
+
+            await createChatMessageNotifications({
+                conversacionId,
+                senderId: usuarioId,
+                senderName: sender?.nombre || 'User',
+                mensaje,
+                messageId: result.insertId
+            });
+        } catch (notificationError) {
+            console.warn('Chat notification could not be created:', notificationError.message);
+        }
+
         res.json({
             success: true,
             mensaje_id: result.insertId
@@ -383,7 +402,7 @@ router.post('/conversaciones/:id/mensajes', async (req, res) => {
 });
 
 // Usuarios disponibles para iniciar chat
-router.get('/usuarios', async (req, res) => {
+router.get('/usuarios', checkPermission('view_chat'), async (req, res) => {
     try {
         const usuarioId = getUsuarioId(req);
 
@@ -425,7 +444,7 @@ router.get('/usuarios', async (req, res) => {
 });
 
 // Contador total de mensajes no leídos
-router.get('/no-leidos', async (req, res) => {
+router.get('/no-leidos', checkPermission('view_chat'), async (req, res) => {
     try {
         const usuarioId = req.usuario.id;
 
@@ -453,7 +472,7 @@ router.get('/no-leidos', async (req, res) => {
 });
 
 // Marcar conversación como leída
-router.put('/conversaciones/:id/leida', async (req, res) => {
+router.put('/conversaciones/:id/leida', checkPermission('edit_chat'), async (req, res) => {
     try {
         const usuarioId = req.usuario.id;
         const conversacionId = Number(req.params.id);
@@ -499,7 +518,7 @@ router.put('/conversaciones/:id/leida', async (req, res) => {
 });
 
 // Actualizar estado "escribiendo"
-router.put('/conversaciones/:id/typing', async (req, res) => {
+router.put('/conversaciones/:id/typing', checkPermission('edit_chat'), async (req, res) => {
     try {
         const usuarioId = req.usuario?.id || req.user?.id;
         const conversacionId = Number(req.params.id);
@@ -552,7 +571,7 @@ router.put('/conversaciones/:id/typing', async (req, res) => {
 });
 
 // Consultar quién está escribiendo
-router.get('/conversaciones/:id/typing', async (req, res) => {
+router.get('/conversaciones/:id/typing', checkPermission('view_chat'), async (req, res) => {
     try {
         const usuarioId = req.usuario?.id || req.user?.id;
         const conversacionId = Number(req.params.id);

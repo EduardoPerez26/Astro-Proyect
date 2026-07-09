@@ -1,6 +1,12 @@
 ﻿const jwt = require('jsonwebtoken');
 const { pool } = require('../config/database');
 const { buildDepartmentContext } = require('../config/departments');
+const {
+    normalizeUserPermissions,
+    hasPermission,
+    isSuperAdmin,
+    isAdminRole
+} = require('../config/permissions');
 const { tokenHash } = require('../services/securityAudit.service');
 
 function obtenerCookie(req, nombre) {
@@ -69,6 +75,59 @@ async function validarSesionActiva(token) {
     }
 }
 
+async function cargarIdentidadActual(decoded) {
+    let usuarios;
+
+    try {
+        [usuarios] = await pool.query(
+            `SELECT u.id,
+                    u.rol,
+                    u.activo,
+                    u.departamento_id,
+                    d.codigo AS departamento_codigo,
+                    d.nombre AS departamento_nombre,
+                    d.activo AS departamento_activo
+             FROM usuarios u
+             LEFT JOIN departamentos d ON d.id = u.departamento_id
+             WHERE u.id = ?
+             LIMIT 1`,
+            [decoded.id]
+        );
+    } catch (error) {
+        if (!['ER_NO_SUCH_TABLE', 'ER_BAD_FIELD_ERROR'].includes(error.code)) {
+            throw error;
+        }
+
+        [usuarios] = await pool.query(
+            `SELECT id, rol, activo
+             FROM usuarios
+             WHERE id = ?
+             LIMIT 1`,
+            [decoded.id]
+        );
+    }
+
+    const usuario = usuarios[0];
+
+    if (!usuario || usuario.activo === 0 || usuario.activo === false) {
+        const error = new Error('The authenticated user does not exist or is inactive');
+        error.code = 'AUTH_USER_INACTIVE';
+        throw error;
+    }
+
+    return {
+        ...decoded,
+        rol: usuario.rol,
+        departamento_id: usuario.departamento_id || null,
+        departamento: buildDepartmentContext({
+            ...usuario,
+            departamento_codigo:
+                usuario.departamento_codigo ||
+                decoded.departamento
+        })
+    };
+}
+
 const verificarToken = async (req, res, next) => {
     const token = obtenerTokenAutenticacion(req);
 
@@ -100,11 +159,8 @@ const verificarToken = async (req, res, next) => {
             );
         }
 
-        req.usuario = decoded;
-        req.departamento = buildDepartmentContext({
-            departamento_codigo: decoded.departamento
-        });
-        req.usuario.departamento = req.departamento;
+        req.usuario = await cargarIdentidadActual(decoded);
+        req.departamento = req.usuario.departamento;
         req.authToken = token;
         next();
     } catch (error) {
@@ -113,20 +169,85 @@ const verificarToken = async (req, res, next) => {
 };
 
 const esAdmin = (req, res, next) => {
-    if (!req.usuario || req.usuario.rol !== 'admin') {
+    if (!req.usuario || !isAdminRole(req.usuario)) {
         return res.status(403).json({ error: true, message: 'Access denied: administrators only' });
     }
     next();
 };
 
+const esSuperAdmin = (req, res, next) => {
+    if (!req.usuario || !isSuperAdmin(req.usuario)) {
+        return res.status(403).json({ error: true, message: 'Access denied: super administrators only' });
+    }
+    next();
+};
+
 const esSupervisorOAdmin = (req, res, next) => {
-    if (!req.usuario || (req.usuario.rol !== 'admin' && req.usuario.rol !== 'supervisor')) {
+    if (
+        !req.usuario ||
+        (!isAdminRole(req.usuario) && req.usuario.rol !== 'supervisor')
+    ) {
         return res.status(403).json({ error: true, message: 'Access denied: supervisors or administrators only' });
     }
     next();
 };
 
-const checkPermission = (permiso) => {
+const PERMISSION_MAPPING = {
+    view_dashboard: ['dashboardAdmin', 'ver'],
+    manage_sessions: ['dashboardAdmin', 'editar'],
+    export_dashboard: ['dashboardAdmin', 'exportar'],
+
+    view_archivos: ['documentos', 'ver'],
+    upload_files: ['documentos', 'crear'],
+    validate_files: ['documentos', 'crear'],
+    download_files: ['documentos', 'exportar'],
+    delete_files: ['documentos', 'eliminar'],
+
+    view_validaciones: ['historial', 'ver'],
+    view_validation_stats: ['historial', 'ver'],
+    delete_validaciones: ['historial', 'eliminar'],
+    export_validaciones: ['historial', 'exportar'],
+
+    view_conciliaciones: ['tiendas', 'ver'],
+    create_conciliaciones: ['tiendas', 'crear'],
+    edit_conciliaciones: ['tiendas', 'editar'],
+    delete_conciliaciones: ['tiendas', 'eliminar'],
+    export_conciliaciones: ['tiendas', 'exportar'],
+
+    view_usuarios: ['usuarios', 'ver'],
+    create_users: ['usuarios', 'crear'],
+    edit_users: ['usuarios', 'editar'],
+    delete_users: ['usuarios', 'eliminar'],
+    export_users: ['usuarios', 'exportar'],
+
+    view_permisos: ['permisos', 'ver'],
+    manage_permissions: ['permisos', 'editar'],
+
+    view_chat: ['chat', 'ver'],
+    send_chat: ['chat', 'crear'],
+    edit_chat: ['chat', 'editar'],
+    delete_chat: ['chat', 'eliminar'],
+    export_chat: ['chat', 'exportar'],
+
+    view_restaurantes: [
+        ['tiendas', 'ver'],
+        ['controlRestaurants', 'ver']
+    ],
+    create_restaurantes: ['controlRestaurants', 'crear'],
+    edit_restaurantes: ['controlRestaurants', 'editar'],
+    delete_restaurantes: ['controlRestaurants', 'eliminar'],
+    manage_restaurantes: ['controlRestaurants', 'editar'],
+
+    view_system_errors: ['systemErrors', 'ver'],
+    create_system_notifications: ['systemErrors', 'crear'],
+    edit_system_errors: ['systemErrors', 'editar'],
+    export_system_errors: ['systemErrors', 'exportar'],
+
+    view_profile: ['perfil', 'ver'],
+    edit_profile: ['perfil', 'editar']
+};
+
+const checkPermission = (permissionOrModule, requestedAction = null) => {
     return async (req, res, next) => {
         try {
 
@@ -137,7 +258,7 @@ const checkPermission = (permiso) => {
                 });
             }
 
-            if (req.usuario.rol === 'admin') {
+            if (isSuperAdmin(req.usuario)) {
                 return next();
             }
 
@@ -156,46 +277,34 @@ const checkPermission = (permiso) => {
                 });
             }
 
-            let permisos = {};
-            const permisosFuente = rows[0].permisos;
+            const mappedPermission = PERMISSION_MAPPING[permissionOrModule];
+            const requestedPermissions =
+                Array.isArray(mappedPermission?.[0])
+                    ? mappedPermission
+                    : [mappedPermission || [
+                        permissionOrModule,
+                        requestedAction || 'ver'
+                    ]];
+            const permissions = normalizeUserPermissions(
+                rows[0].permisos,
+                req.usuario.rol,
+                { departmentCode: req.departamento?.codigo }
+            );
+            const allowed = requestedPermissions.some(([module, action]) =>
+                hasPermission(permissions, module, action)
+            );
 
-            if (typeof permisosFuente === 'string') {
-                permisos = JSON.parse(permisosFuente || '{}');
-            } else {
-                permisos = permisosFuente || {};
-            }
-
-            const mapping = {
-                view_dashboard: 'dashboardAdmin',
-
-                view_archivos: 'documentos',
-                upload_files: 'documentos',
-                validate_files: 'documentos',
-
-                view_validaciones: 'historial',
-
-                view_usuarios: 'usuarios',
-                manage_users: 'usuarios',
-
-                view_permisos: 'permisos',
-
-                view_chat: 'chat',
-                send_chat: 'chat',
-
-                view_restaurantes: 'tiendas',
-                manage_restaurantes: 'tiendas',
-
-                view_profile: 'perfil'
-            };
-            const permisoJson = mapping[permiso] || permiso;
-
-            if (!permisos[permisoJson]) {
+            if (!allowed) {
+                const required = requestedPermissions
+                    .map(([module, action]) => `${module}.${action}`)
+                    .join(' or ');
                 return res.status(403).json({
                     error: true,
-                    message: `Access denied: required permission: ${permiso}`
+                    message: `Access denied: ${required} permission is required`
                 });
             }
 
+            req.permissions = permissions;
             next();
 
         } catch (error) {
@@ -221,7 +330,7 @@ const requireDepartment = (allowedDepartments = []) => {
     ));
 
     return async (req, res, next) => {
-        const isAdmin = req.usuario?.rol === 'admin';
+        const hasGlobalDepartmentAccess = isSuperAdmin(req.usuario);
         let departmentCode = String(
             req.departamento?.codigo ||
             req.usuario?.departamento?.codigo ||
@@ -229,12 +338,12 @@ const requireDepartment = (allowedDepartments = []) => {
         ).toLowerCase();
         const hasDepartmentId = Boolean(req.departamento?.id || req.usuario?.departamento_id);
 
-        if (!isAdmin && departmentCode && allowed.includes(departmentCode) && hasDepartmentId) {
+        if (!hasGlobalDepartmentAccess && departmentCode && allowed.includes(departmentCode) && hasDepartmentId) {
             return next();
         }
 
         try {
-            const [rows] = isAdmin
+            const [rows] = hasGlobalDepartmentAccess
                 ? await pool.query(
                     `SELECT id AS departamento_id,
                             codigo AS departamento_codigo,
@@ -273,7 +382,7 @@ const requireDepartment = (allowedDepartments = []) => {
             }
         }
 
-        if (isAdmin) return next();
+        if (hasGlobalDepartmentAccess) return next();
 
         if (!departmentCode || !allowed.includes(departmentCode)) {
             return res.status(403).json({
@@ -289,6 +398,7 @@ const requireDepartment = (allowedDepartments = []) => {
 module.exports = {
     verificarToken,
     esAdmin,
+    esSuperAdmin,
     esSupervisorOAdmin,
     checkPermission,
     requireDepartment,

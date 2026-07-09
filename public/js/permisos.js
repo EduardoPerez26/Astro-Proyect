@@ -5,6 +5,30 @@
 let currentUserId = null;
 let currentUser = null;
 let originalPermissions = {};
+let viewerUser = null;
+
+const ACTION_LABELS = {
+    ver: 'View',
+    crear: 'Create',
+    editar: 'Edit',
+    eliminar: 'Delete',
+    exportar: 'Export'
+};
+
+const MODULE_ACTIONS = {
+    dashboardAdmin: ['ver', 'editar', 'exportar'],
+    systemErrors: ['ver', 'crear', 'editar', 'exportar'],
+    tiendas: ['ver', 'crear', 'editar', 'eliminar', 'exportar'],
+    documentos: ['ver', 'crear', 'editar', 'eliminar', 'exportar'],
+    historial: ['ver', 'eliminar', 'exportar'],
+    propertyManagement: ['ver', 'crear', 'editar', 'eliminar', 'exportar'],
+    propertyManagementDocuments: ['ver', 'crear', 'editar', 'eliminar', 'exportar'],
+    usuarios: ['ver', 'crear', 'editar', 'eliminar', 'exportar'],
+    controlRestaurants: ['ver', 'crear', 'editar', 'eliminar'],
+    permisos: ['ver', 'editar'],
+    perfil: ['ver', 'editar'],
+    chat: ['ver', 'crear', 'editar', 'eliminar', 'exportar']
+};
 
 // System sections shown in the permission editor.
 const MENU_SECTIONS = [
@@ -17,8 +41,19 @@ const MENU_SECTIONS = [
         department: 'Information Technology',
         path: '/views/dashboard-admin',
         required: true,
-        adminOnly: true,
+        administrative: true,
         initialOption: true
+    },
+    {
+        id: 'systemErrors',
+        name: 'System errors',
+        description: 'Backend error monitoring and incident resolution',
+        icon: 'fa-bug',
+        iconClass: 'system-errors',
+        department: 'Information Technology',
+        path: '/views/system-errors',
+        required: false,
+        administrative: true
     },
     {
         id: 'tiendas',
@@ -61,7 +96,7 @@ const MENU_SECTIONS = [
         department: 'Information Technology',
         path: '/views/permisos',
         required: false,
-        adminOnly: true
+        administrative: true
     },
     {
         id: 'historial',
@@ -105,7 +140,7 @@ const MENU_SECTIONS = [
         department: 'Information Technology',
         path: '/views/usuarios',
         required: false,
-        adminOnly: true
+        administrative: true
     },
     {
         id: 'controlRestaurants',
@@ -116,7 +151,7 @@ const MENU_SECTIONS = [
         department: 'Information Technology',
         path: '/views/restaurantes',
         required: true,
-        adminOnly: true
+        administrative: true
     },
     {
         id: 'chat',
@@ -139,7 +174,10 @@ const MENU_GROUP_ORDER = [
 ];
 
 function normalizeLegacyPermissions(permisos = {}) {
-    const normalized = { ...permisos };
+    const normalized = {
+        ...permisos,
+        acciones: { ...(permisos.acciones || {}) }
+    };
 
     if (
         normalized.propertyManagement === true &&
@@ -148,11 +186,29 @@ function normalizeLegacyPermissions(permisos = {}) {
         normalized.propertyManagementDocuments = true;
     }
 
+    MENU_SECTIONS.forEach(section => {
+        const actions = MODULE_ACTIONS[section.id] || ['ver'];
+        const existing = normalized.acciones[section.id] || {};
+        const legacyEnabled = normalized[section.id] === true;
+
+        normalized.acciones[section.id] = Object.fromEntries(
+            actions.map(action => [
+                action,
+                typeof existing[action] === 'boolean'
+                    ? existing[action]
+                    : legacyEnabled
+            ])
+        );
+        normalized[section.id] =
+            normalized.acciones[section.id].ver === true;
+    });
+
     return normalized;
 }
 
 // Initialize
 document.addEventListener('DOMContentLoaded', function () {
+    viewerUser = window.AppPermissions?.getUser() || {};
     // Read userId from the URL.
     const urlParams = new URLSearchParams(window.location.search);
     currentUserId = urlParams.get('userId');
@@ -179,9 +235,9 @@ async function loadUserData() {
     const token = localStorage.getItem('token');
 
     // Offline mode sample data
-    if (!token || localStorage.getItem('modoOffline')) {
+    if (!token || window.isOfflineMode?.() === true) {
         const users = [
-            { id: 1, nombre: 'Administrator', email: 'admin@empresa.com', username: 'admin', rol: 'admin' },
+            { id: 1, nombre: 'Super administrator', email: 'admin@empresa.com', username: 'admin', rol: 'superadmin' },
             { id: 2, nombre: 'Juan Perez', email: 'juan@empresa.com', username: 'jperez', rol: 'supervisor' },
             { id: 3, nombre: 'Maria Garcia', email: 'maria@empresa.com', username: 'mgarcia', rol: 'usuario' },
             { id: 4, nombre: 'Carlos Lopez', email: 'carlos@empresa.com', username: 'clopez', rol: 'usuario' }
@@ -201,14 +257,14 @@ async function loadUserData() {
 
         // Sample permissions
         const defaultPermissions = {
-            1: { dashboardAdmin: true, tiendas: true, documentos: true, perfil: true, permisos: true, historial: true, usuarios: true, controlRestaurants: true, propertyManagement: true, propertyManagementDocuments: true, chat: true, paginaInicio: 'dashboardAdmin' },
+            1: { dashboardAdmin: true, systemErrors: true, tiendas: true, documentos: true, perfil: true, permisos: true, historial: true, usuarios: true, controlRestaurants: true, propertyManagement: true, propertyManagementDocuments: true, chat: true, paginaInicio: 'dashboardAdmin' },
             2: { tiendas: true, documentos: true, perfil: true, permisos: false, historial: true, usuarios: false, controlRestaurants: false, propertyManagement: false, propertyManagementDocuments: false, chat: false, paginaInicio: 'tiendas' },
             3: { tiendas: true, documentos: true, perfil: true, permisos: false, historial: false, usuarios: false, controlRestaurants: false, propertyManagement: false, propertyManagementDocuments: false, chat: false, paginaInicio: 'tiendas' },
             4: { tiendas: true, documentos: false, perfil: true, permisos: false, historial: false, usuarios: false, controlRestaurants: false, propertyManagement: true, propertyManagementDocuments: true, chat: false, paginaInicio: 'propertyManagement' }
         };
 
         currentUser.permisos = normalizeLegacyPermissions(defaultPermissions[currentUser.id] || {});
-        originalPermissions = { ...currentUser.permisos };
+        originalPermissions = JSON.parse(JSON.stringify(currentUser.permisos));
 
         renderUserInfo();
         renderPermissions();
@@ -233,12 +289,7 @@ async function loadUserData() {
                 }
             }
             currentUser.permisos = normalizeLegacyPermissions(currentUser.permisos || {});
-            if (currentUser.rol === 'admin') {
-                MENU_SECTIONS.forEach(section => {
-                    currentUser.permisos[section.id] = true;
-                });
-            }
-            originalPermissions = { ...currentUser.permisos };
+            originalPermissions = JSON.parse(JSON.stringify(currentUser.permisos));
 
             renderUserInfo();
             renderPermissions();
@@ -286,17 +337,32 @@ function renderUserInfo() {
 
 function renderPermissions() {
     const container = document.getElementById('permissionsList');
+    const viewerCanEdit =
+        window.AppPermissions?.can('permisos', 'editar', viewerUser) === true;
+    const targetIsPrivileged =
+        ['superadmin', 'admin'].includes(currentUser.rol);
+    const viewerCanManageTarget =
+        viewerCanEdit &&
+        (
+            viewerUser.rol === 'superadmin' ||
+            !targetIsPrivileged
+        );
 
     const renderCard = (section) => {
         const isRequired = section.required;
-        const isAdminSection = section.adminOnly;
-        const isEnabled = isAdminSection
-            ? currentUser.rol === 'admin'
-            : isRequired || currentUser.permisos[section.id] === true;
-        const isDisabled = isRequired || (isAdminSection && currentUser.rol !== 'admin');
+        const isAdministrative = section.administrative;
+        const targetCanUseSection =
+            !isAdministrative ||
+            ['superadmin', 'admin'].includes(currentUser.rol);
+        const actions = MODULE_ACTIONS[section.id] || ['ver'];
+        const isLocked =
+            currentUser.rol === 'superadmin' ||
+            !viewerCanManageTarget ||
+            !targetCanUseSection;
         const tags = [
             isRequired ? 'Required' : '',
-            isAdminSection ? 'Admin only' : ''
+            isAdministrative ? 'Administrative' : '',
+            currentUser.rol === 'superadmin' ? 'Full access' : ''
         ].filter(Boolean);
 
         return `
@@ -315,15 +381,32 @@ function renderPermissions() {
                         ` : ''}
                     </div>
                 </div>
-                <label class="toggle-switch">
-                    <input type="checkbox" 
-                           id="perm_${section.id}" 
-                           data-section="${section.id}"
-                           ${isEnabled || (isRequired && !isAdminSection) ? 'checked' : ''}
-                           ${isDisabled ? 'disabled' : ''}
-                           onchange="togglePermission('${section.id}', this.checked)">
-                    <span class="toggle-slider"></span>
-                </label>
+                <div class="permission-action-grid" aria-label="${section.name} permissions">
+                    ${actions.map(action => {
+                        const requiredAction =
+                            section.id === 'perfil' &&
+                            ['ver', 'editar'].includes(action);
+                        const checked =
+                            currentUser.rol === 'superadmin' ||
+                            currentUser.permisos.acciones?.[section.id]?.[action] === true ||
+                            requiredAction;
+                        const disabled = isLocked || requiredAction;
+
+                        return `
+                            <label class="permission-action">
+                                <input
+                                    type="checkbox"
+                                    id="perm_${section.id}_${action}"
+                                    data-section="${section.id}"
+                                    data-action="${action}"
+                                    ${checked ? 'checked' : ''}
+                                    ${disabled ? 'disabled' : ''}
+                                    onchange="toggleActionPermission('${section.id}', '${action}', this.checked)">
+                                <span>${ACTION_LABELS[action] || action}</span>
+                            </label>
+                        `;
+                    }).join('')}
+                </div>
             </div>
         `;
     };
@@ -347,11 +430,20 @@ function renderPermissions() {
     }).join('');
 
     renderInitialWindow();
+
+    const saveButton = document.querySelector('[onclick="savePermissions()"]');
+    if (saveButton) {
+        saveButton.disabled = !viewerCanManageTarget || currentUser.rol === 'superadmin';
+        saveButton.title = saveButton.disabled
+            ? 'These permissions are managed by the super administrator policy'
+            : '';
+    }
 }
 
 function getEnabledInitialSections() {
     return MENU_SECTIONS.filter(section =>
-        section.initialOption && currentUser.permisos[section.id] === true
+        section.initialOption &&
+        currentUser.permisos.acciones?.[section.id]?.ver === true
     );
 }
 
@@ -382,9 +474,30 @@ function changeInitialWindow(value) {
 // TOGGLE PERMISSION
 // ============================================
 
-function togglePermission(sectionId, enabled) {
+function toggleActionPermission(sectionId, action, enabled) {
     if (!currentUser) return;
-    currentUser.permisos[sectionId] = enabled;
+
+    currentUser.permisos.acciones ||= {};
+    currentUser.permisos.acciones[sectionId] ||= {};
+    currentUser.permisos.acciones[sectionId][action] = enabled;
+
+    if (action === 'ver' && !enabled) {
+        Object.keys(currentUser.permisos.acciones[sectionId])
+            .forEach(key => {
+                currentUser.permisos.acciones[sectionId][key] = false;
+            });
+        renderPermissions();
+        return;
+    }
+
+    if (action !== 'ver' && enabled) {
+        currentUser.permisos.acciones[sectionId].ver = true;
+        const viewCheckbox = document.getElementById(`perm_${sectionId}_ver`);
+        if (viewCheckbox) viewCheckbox.checked = true;
+    }
+
+    currentUser.permisos[sectionId] =
+        currentUser.permisos.acciones[sectionId].ver === true;
     renderInitialWindow();
 }
 
@@ -393,7 +506,7 @@ function togglePermission(sectionId, enabled) {
 // ============================================
 
 function resetPermissions() {
-    currentUser.permisos = { ...originalPermissions };
+    currentUser.permisos = JSON.parse(JSON.stringify(originalPermissions));
     renderPermissions();
 
     Swal.fire({
@@ -413,21 +526,26 @@ async function savePermissions() {
     const token = localStorage.getItem('token');
 
     // Collect current permissions.
-    const permissions = {};
+    const permissions = { acciones: {} };
     MENU_SECTIONS.forEach(section => {
-        const checkbox = document.getElementById(`perm_${section.id}`);
-        if (checkbox) {
-            permissions[section.id] = section.adminOnly
-                ? currentUser.rol === 'admin'
-                : checkbox.checked;
-        }
+        permissions.acciones[section.id] = {};
+        (MODULE_ACTIONS[section.id] || ['ver']).forEach(action => {
+            const checkbox = document.getElementById(
+                `perm_${section.id}_${action}`
+            );
+            permissions.acciones[section.id][action] =
+                currentUser.rol === 'superadmin' ||
+                checkbox?.checked === true;
+        });
+        permissions[section.id] =
+            permissions.acciones[section.id].ver === true;
     });
     const initialWindow = document.getElementById('initialWindow')?.value || null;
     const enabledWindows = MENU_SECTIONS.filter(
         section => section.initialOption && permissions[section.id]
     );
 
-    if (!enabledWindows.length && currentUser.rol !== 'admin') {
+    if (!enabledWindows.length && currentUser.rol !== 'superadmin') {
         await Swal.fire({
             icon: 'warning',
             title: 'Select a window',
@@ -441,13 +559,13 @@ async function savePermissions() {
         : enabledWindows[0]?.id || 'tiendas';
 
     // Offline mode
-    if (!token || localStorage.getItem('modoOffline')) {
+    if (!token || window.isOfflineMode?.() === true) {
         // Save to localStorage to simulate persistence.
         const savedPermissions = JSON.parse(localStorage.getItem('userPermissions') || '{}');
         savedPermissions[currentUserId] = permissions;
         localStorage.setItem('userPermissions', JSON.stringify(savedPermissions));
 
-        originalPermissions = { ...permissions };
+        originalPermissions = JSON.parse(JSON.stringify(permissions));
 
         Swal.fire({
             icon: 'success',
@@ -472,8 +590,10 @@ async function savePermissions() {
         const data = await response.json();
 
         if (response.ok && data.success) {
-            currentUser.permisos = { ...(data.permisos || permissions) };
-            originalPermissions = { ...currentUser.permisos };
+            currentUser.permisos = normalizeLegacyPermissions(
+                data.permisos || permissions
+            );
+            originalPermissions = JSON.parse(JSON.stringify(currentUser.permisos));
             renderPermissions();
 
             Swal.fire({
@@ -510,10 +630,10 @@ function getInitials(name) {
 
 function getRoleLabel(role) {
     const labels = {
+        'superadmin': 'Super administrator',
         'admin': 'Administrator',
         'supervisor': 'Supervisor',
         'usuario': 'User'
     };
     return labels[role] || role;
 }
-

@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { pool } = require('../config/database');
-const { verificarToken, esAdmin, checkPermission } = require('../middleware/auth.middleware');
+const { verificarToken, checkPermission } = require('../middleware/auth.middleware');
 
 function errorHistorial(error, res) {
     if (['ER_NO_SUCH_TABLE', 'ER_BAD_FIELD_ERROR'].includes(error.code)) {
@@ -68,7 +68,7 @@ router.get('/', verificarToken, checkPermission('view_validaciones'), async (req
             const termino = `%${busqueda.trim()}%`;
             parametros.push(termino, termino, termino, termino);
         }
-        if (req.usuario?.rol !== 'admin' && req.departamento?.id) {
+        if (req.usuario?.rol !== 'superadmin' && req.departamento?.id) {
             condiciones.push('(ca.departamento_id = ? OR ca.departamento_id IS NULL)');
             parametros.push(req.departamento.id);
             condicionesEstadisticas.push('(ca.departamento_id = ? OR ca.departamento_id IS NULL)');
@@ -150,11 +150,11 @@ router.get('/:id', verificarToken, checkPermission('view_validaciones'), async (
              LEFT JOIN usuarios u ON u.id = ca.usuario_id
              LEFT JOIN archivos_excel a ON a.id = ca.archivo_referencia_id
              WHERE ca.id = ?
-               ${req.usuario?.rol !== 'admin' && req.departamento?.id
+               ${req.usuario?.rol !== 'superadmin' && req.departamento?.id
                     ? 'AND (ca.departamento_id = ? OR ca.departamento_id IS NULL)'
                     : ''}
              LIMIT 1`,
-            req.usuario?.rol !== 'admin' && req.departamento?.id
+            req.usuario?.rol !== 'superadmin' && req.departamento?.id
                 ? [req.params.id, req.departamento.id]
                 : [req.params.id]
         );
@@ -191,7 +191,7 @@ router.get('/:id', verificarToken, checkPermission('view_validaciones'), async (
     }
 });
 
-router.delete('/:id', verificarToken, esAdmin, async (req, res) => {
+router.delete('/:id', verificarToken, checkPermission('delete_validaciones'), async (req, res) => {
     try {
         const [resultado] = await pool.query(
             'DELETE FROM comparaciones_archivos WHERE id = ?',

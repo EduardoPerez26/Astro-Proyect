@@ -247,30 +247,35 @@ router.post('/', verificarToken, checkPermission('validate_files'), async (req, 
     }
 });
 
-router.get('/stats/resumen', verificarToken, async (req, res) => {
-    try {
-        const [stats] = await pool.query(`
-            SELECT 
-                COUNT(*) as total,
-                SUM(CASE WHEN resultado = 'exitoso' THEN 1 ELSE 0 END) as exitosas,
-                SUM(CASE WHEN resultado = 'con_errores' THEN 1 ELSE 0 END) as con_errores,
-                SUM(CASE WHEN resultado = 'fallido' THEN 1 ELSE 0 END) as fallidas,
-                AVG(duracion_segundos) as tiempo_promedio
-            FROM historial_validaciones
-        `);
-        
-        res.json({
-            success: true,
-            estadisticas: stats[0]
-        });
-        
-    } catch (error) {
-        console.error('Error loading statistics:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Statistics could not be loaded'
-        });
+router.get(
+    '/stats/resumen',
+    verificarToken,
+    checkPermission('view_validation_stats'),
+    async (req, res) => {
+        try {
+            const [stats] = await pool.query(`
+                SELECT
+                    COUNT(*) as total,
+                    SUM(CASE WHEN resultado = 'exitoso' THEN 1 ELSE 0 END) as exitosas,
+                    SUM(CASE WHEN resultado = 'con_errores' THEN 1 ELSE 0 END) as con_errores,
+                    SUM(CASE WHEN resultado = 'fallido' THEN 1 ELSE 0 END) as fallidas,
+                    AVG(duracion_segundos) as tiempo_promedio
+                FROM historial_validaciones
+            `);
+
+            res.json({
+                success: true,
+                estadisticas: stats[0]
+            });
+
+        } catch (error) {
+            console.error('Error loading statistics:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Statistics could not be loaded'
+            });
+        }
     }
-});
+);
 
 module.exports = router;

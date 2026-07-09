@@ -54,7 +54,7 @@ router.get('/:id', verificarToken, checkPermission('view_restaurantes'), async (
     }
 });
 
-router.post('/', verificarToken, esAdmin, async (req, res) => {
+router.post('/', verificarToken, esAdmin, checkPermission('create_restaurantes'), async (req, res) => {
     try {
         const { codigo, nombre, descripcion, icono, color_clase } = req.body;
 
@@ -86,7 +86,7 @@ router.post('/', verificarToken, esAdmin, async (req, res) => {
     }
 });
 
-router.put('/:id', verificarToken, esAdmin, async (req, res) => {
+router.put('/:id', verificarToken, esAdmin, checkPermission('edit_restaurantes'), async (req, res) => {
     try {
         const { nombre, descripcion, icono, color_clase, activo } = req.body;
 

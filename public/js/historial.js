@@ -184,11 +184,7 @@ function renderComparacionItem(item) {
 }
 
 function puedeDeleteComparaciones() {
-    try {
-        return JSON.parse(localStorage.getItem('usuario') || '{}').rol === 'admin';
-    } catch {
-        return false;
-    }
+    return window.AppPermissions?.can('historial', 'eliminar') === true;
 }
 
 async function eliminarComparacion(id) {
@@ -307,6 +303,7 @@ function limpiarFiltros() {
 }
 
 function exportarHistorial() {
+    if (!window.AppPermissions?.can('historial', 'exportar')) return;
     if (!comparacionesFiltradas.length) {
         Swal.fire({ icon: 'warning', title: 'No comparisons', text: 'There is no data to export.' });
         return;

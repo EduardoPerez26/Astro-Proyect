@@ -34,7 +34,7 @@ CREATE TABLE IF NOT EXISTS usuarios (
     nombre_completo VARCHAR(100) NOT NULL,
     email VARCHAR(120) NOT NULL,
     foto_perfil_url VARCHAR(255) NULL,
-    rol ENUM('admin', 'supervisor', 'usuario') NOT NULL DEFAULT 'usuario',
+    rol ENUM('superadmin', 'admin', 'supervisor', 'usuario') NOT NULL DEFAULT 'usuario',
     departamento_id INT NULL,
     permisos JSON NULL,
     activo BOOLEAN NOT NULL DEFAULT TRUE,

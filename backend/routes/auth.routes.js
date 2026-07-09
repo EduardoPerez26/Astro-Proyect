@@ -6,8 +6,16 @@ const fs = require('fs');
 const path = require('path');
 const multer = require('multer');
 const { pool } = require('../config/database');
-const { verificarToken, esAdmin } = require('../middleware/auth.middleware');
+const {
+    verificarToken,
+    esAdmin,
+    checkPermission
+} = require('../middleware/auth.middleware');
 const { buildDepartmentContext } = require('../config/departments');
+const {
+    normalizeUserPermissions,
+    isSuperAdmin
+} = require('../config/permissions');
 const {
     tokenHash,
     registrarEventoSeguridad,
@@ -105,78 +113,13 @@ function esErrorColumnaFoto(error) {
     return error.code === 'ER_BAD_FIELD_ERROR' && /foto_perfil_url/i.test(detalle);
 }
 
-const PERMISOS_ADMIN = {
-    dashboardAdmin: true,
-    perfil: true,
-    tiendas: true,
-    permisos: true,
-    usuarios: true,
-    controlRestaurants: true,
-    historial: true,
-    documentos: true,
-    propertyManagement: true,
-    propertyManagementDocuments: true,
-    chat: true
-};
-const VENTANAS_OPERATIVAS = ['tiendas', 'documentos', 'historial', 'propertyManagement', 'propertyManagementDocuments', 'chat'];
-const VENTANAS_ADMIN = ['dashboardAdmin', ...VENTANAS_OPERATIVAS];
-
-function parsearJson(valor) {
-    if (!valor) return {};
-    if (typeof valor === 'object') return valor;
-
-    try {
-        return JSON.parse(valor);
-    } catch {
-        return {};
-    }
-}
-
 function construirContextoUsuario(usuario) {
     const departamento = buildDepartmentContext(usuario);
-    let permisos;
-
-    if (usuario.rol === 'admin') {
-        const permisosGuardados = parsearJson(usuario.permisos);
-        const paginaInicio = VENTANAS_ADMIN.includes(
-            permisosGuardados.paginaInicio
-        ) ? permisosGuardados.paginaInicio : 'dashboardAdmin';
-        permisos = { ...PERMISOS_ADMIN, paginaInicio };
-    } else {
-        const permisosGuardados = parsearJson(usuario.permisos);
-        const esPropertyManagement = departamento.codigo === 'property-management';
-        const tienePermisoPropertyManagement =
-            permisosGuardados.propertyManagement === true ||
-            (permisosGuardados.propertyManagement === undefined && esPropertyManagement);
-        const tienePermisoPropertyManagementDocuments =
-            permisosGuardados.propertyManagementDocuments === true ||
-            (permisosGuardados.propertyManagementDocuments === undefined && tienePermisoPropertyManagement);
-        const tienePermisoChat = permisosGuardados.chat === true;
-        permisos = {
-            tiendas: false,
-            documentos: false,
-            historial: false,
-            propertyManagement: false,
-            propertyManagementDocuments: false,
-            chat: false,
-            perfil: true,
-            permisos: false,
-            usuarios: false,
-            controlRestaurants: false,
-            ...permisosGuardados,
-            perfil: true,
-            usuarios: false,
-            permisos: false,
-            controlRestaurants: false,
-            propertyManagement: tienePermisoPropertyManagement,
-            propertyManagementDocuments: tienePermisoPropertyManagementDocuments,
-            chat: tienePermisoChat
-        };
-        const ventanasDisponibles = VENTANAS_OPERATIVAS.filter(codigo => permisos[codigo]);
-        permisos.paginaInicio = ventanasDisponibles.includes(permisosGuardados.paginaInicio)
-            ? permisosGuardados.paginaInicio
-            : ventanasDisponibles[0] || undefined;
-    }
+    const permisos = normalizeUserPermissions(
+        usuario.permisos,
+        usuario.rol,
+        { departmentCode: departamento.codigo }
+    );
 
     return {
         id: usuario.id,
@@ -418,7 +361,7 @@ router.post('/login', async (req, res) => {
         }
 
         if (
-            usuario.rol !== 'admin' &&
+            usuario.rol !== 'superadmin' &&
             usuario.departamento_id &&
             usuario.departamento_activo === 0
         ) {
@@ -778,15 +721,31 @@ router.post('/mfa/disable', verificarToken, async (req, res) => {
     }
 });
 
-router.post('/register', verificarToken, esAdmin, async (req, res) => {
+router.post(
+    '/register',
+    verificarToken,
+    esAdmin,
+    checkPermission('create_users'),
+    async (req, res) => {
     try {
         const { username, password, nombre_completo, email, rol } = req.body;
+        const requestedRole = rol || 'usuario';
 
         // Validate required fields
         if (!username || !password || !nombre_completo || !email) {
             return res.status(400).json({
                 error: true,
                 mensaje: 'All fields are required'
+            });
+        }
+
+        if (
+            !['superadmin', 'admin', 'supervisor', 'usuario'].includes(requestedRole) ||
+            (!isSuperAdmin(req.usuario) && ['superadmin', 'admin'].includes(requestedRole))
+        ) {
+            return res.status(403).json({
+                error: true,
+                mensaje: 'You cannot create a user with this role'
             });
         }
 
@@ -811,7 +770,7 @@ router.post('/register', verificarToken, esAdmin, async (req, res) => {
         const [resultado] = await pool.query(
             `INSERT INTO usuarios (username, password, nombre_completo, email, rol)
              VALUES (?, ?, ?, ?, ?)`,
-            [username, passwordHash, nombre_completo, email, rol || 'usuario']
+            [username, passwordHash, nombre_completo, email, requestedRole]
         );
 
         res.status(201).json({

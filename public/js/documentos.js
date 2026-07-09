@@ -286,6 +286,10 @@ function mostrarDocumentos() {
 
     table.style.display = 'table';
     emptyState.style.display = 'none';
+    const canExport =
+        window.AppPermissions?.can('documentos', 'exportar') === true;
+    const canDelete =
+        window.AppPermissions?.can('documentos', 'eliminar') === true;
 
     tbody.innerHTML = paginados.map(doc => {
         const revision = obtenerInfoReviewFuente(doc);
@@ -334,10 +338,10 @@ function mostrarDocumentos() {
 <button class="action-btn view" onclick="verDetalles(${doc.id})" title="View details">
     <i class="fa-solid fa-circle-info"></i>
 </button>
-                    <button class="action-btn download" onclick="descargarArchivo(${doc.id})" title="Download">
+                    <button class="action-btn download" onclick="descargarArchivo(${doc.id})" title="Download" ${canExport ? '' : 'hidden'}>
                         <i class="fa-solid fa-download"></i>
                     </button>
-                    <button class="action-btn delete" onclick="eliminarArchivo(${doc.id})" title="Delete">
+                    <button class="action-btn delete" onclick="eliminarArchivo(${doc.id})" title="Delete" ${canDelete ? '' : 'hidden'}>
                         <i class="fa-solid fa-trash"></i>
                     </button>
                 </div>
@@ -557,17 +561,10 @@ function cerrarModal() {
 }
 
 function downloadSelectedDocument() {
+    if (!window.AppPermissions?.can('documentos', 'exportar')) return;
     if (selectedDocument?.id) descargarArchivo(selectedDocument.id);
 }
 
-function escapeDocumentoHtml(value) {
-    return String(value ?? '')
-        .replaceAll('&', '&amp;')
-        .replaceAll('<', '&lt;')
-        .replaceAll('>', '&gt;')
-        .replaceAll('"', '&quot;')
-        .replaceAll("'", '&#039;');
-}
 
 function obtenerNotasVisiblesDocumento(doc = {}) {
     if (!doc.notas) return '';
@@ -586,6 +583,7 @@ function obtenerNotasVisiblesDocumento(doc = {}) {
 }
 
 async function descargarArchivo(id) {
+    if (!window.AppPermissions?.can('documentos', 'exportar')) return;
     const token = localStorage.getItem('token');
     const modoOffline = localStorage.getItem('modoOffline');
 
@@ -634,6 +632,7 @@ async function descargarArchivo(id) {
 }
 
 async function eliminarArchivo(id) {
+    if (!window.AppPermissions?.can('documentos', 'eliminar')) return;
     const result = await Swal.fire({
         title: 'Delete document',
         text: 'This action cannot be undone. The file and all its data will be deleted.',

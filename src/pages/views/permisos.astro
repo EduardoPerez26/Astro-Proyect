@@ -266,6 +266,47 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
             font-weight: 800;
         }
 
+        .permission-action-grid {
+            display: grid;
+            grid-template-columns: repeat(5, minmax(72px, 1fr));
+            gap: 6px;
+            min-width: min(100%, 430px);
+        }
+
+        .permission-action {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            min-height: 34px;
+            padding: 6px 8px;
+            border: 1px solid #d5e2ee;
+            border-radius: 7px;
+            background: #f8fbfe;
+            color: #38536b;
+            cursor: pointer;
+            font-size: 10px;
+            font-weight: 800;
+        }
+
+        .permission-action:has(input:checked) {
+            border-color: #8db5d8;
+            background: #eaf4fc;
+            color: #0b4778;
+        }
+
+        .permission-action:has(input:disabled) {
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .permission-action input {
+            width: 14px;
+            height: 14px;
+            margin: 0;
+            accent-color: #0b4778;
+        }
+
         .toggle-switch {
             position: relative;
             display: inline-block;
@@ -377,6 +418,16 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
             .page-header {
                 align-items: flex-start;
                 flex-direction: column;
+            }
+
+            .permission-card {
+                align-items: stretch;
+                flex-direction: column;
+            }
+
+            .permission-action-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                min-width: 0;
             }
 
             .permission-card {

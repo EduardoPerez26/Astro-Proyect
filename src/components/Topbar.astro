@@ -25,6 +25,55 @@ const { title = "Panel", placeholder = "Search..." } = Astro.props;
     </div>
 
         <div class="header-user">
+            <div class="notification-center" id="notificationCenter">
+                <button
+                    type="button"
+                    class="notification-toggle"
+                    id="notificationsToggle"
+                    aria-label="Open notifications"
+                    aria-haspopup="true"
+                    aria-expanded="false"
+                >
+                    <i class="fa-regular fa-bell" aria-hidden="true"></i>
+                    <span
+                        class="notification-badge"
+                        id="notificationsBadge"
+                        hidden
+                    >0</span>
+                </button>
+
+                <div
+                    class="notifications-panel"
+                    id="notificationsPanel"
+                    role="dialog"
+                    aria-label="Notifications"
+                    hidden
+                >
+                    <div class="notifications-panel-header">
+                        <div>
+                            <strong>Notifications</strong>
+                            <span>Recent system activity</span>
+                        </div>
+                        <button
+                            type="button"
+                            class="notifications-mark-all"
+                            id="notificationsMarkAll"
+                        >
+                            Mark all read
+                        </button>
+                    </div>
+                    <div
+                        class="notifications-list"
+                        id="notificationsList"
+                        aria-live="polite"
+                    >
+                        <div class="notifications-empty">
+                            <i class="fa-regular fa-bell" aria-hidden="true"></i>
+                            <strong>Loading notifications...</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
             <div class="department-pill" title="Active department">
                 <span>Department</span>
                 <strong data-department-label>AR</strong>

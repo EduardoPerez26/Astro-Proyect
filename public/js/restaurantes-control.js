@@ -10,7 +10,10 @@ let operationalRestaurants = [];
 
 document.addEventListener('DOMContentLoaded', () => {
     const usuario = parseJson(localStorage.getItem('usuario'), {});
-    if (usuario.rol !== 'admin') {
+    if (
+        !window.AppPermissions?.isAdmin(usuario) ||
+        !window.AppPermissions?.can('controlRestaurants', 'ver', usuario)
+    ) {
         Swal.fire({
             icon: 'error',
             title: 'Restricted access',
@@ -128,6 +131,8 @@ function getRestaurantIcon(code) {
 function renderRestaurants() {
     const container = document.getElementById('restaurantControlList');
     if (!container) return;
+    const canEdit =
+        window.AppPermissions?.can('controlRestaurants', 'editar') === true;
 
     if (!operationalRestaurants.length) {
         container.innerHTML = '<div class="operations-error">No restaurants configured.</div>';
@@ -153,7 +158,7 @@ function renderRestaurants() {
                     ? 'The team can start reconciliations.'
                     : 'The reconciliation button is locked.'}
             </p>
-            <button class="toggle-restaurant-state ${restaurant.activo ? 'is-disable' : 'is-enable'}" type="button">
+            <button class="toggle-restaurant-state ${restaurant.activo ? 'is-disable' : 'is-enable'}" type="button" ${canEdit ? '' : 'hidden'}>
                 <i class="fa-solid ${restaurant.activo ? 'fa-ban' : 'fa-power-off'}"></i>
                 ${restaurant.activo ? 'Disable' : 'Enable'}
             </button>
@@ -164,6 +169,7 @@ function renderRestaurants() {
 }
 
 async function toggleRestaurant(row) {
+    if (!window.AppPermissions?.can('controlRestaurants', 'editar')) return;
     if (!row) return;
     const id = row.dataset.restaurantId;
     const restaurant = operationalRestaurants.find(item => String(item.id) === String(id));

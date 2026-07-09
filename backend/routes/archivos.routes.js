@@ -14,7 +14,7 @@ const upload = multer({
 });
 
 function debeFiltrarPorDepartment(req) {
-    return req.usuario?.rol !== 'admin' && Boolean(req.departamento?.id);
+    return req.usuario?.rol !== 'superadmin' && Boolean(req.departamento?.id);
 }
 
 async function obtenerArchivoPorId(req, archivoId) {
@@ -596,7 +596,7 @@ router.post(
 router.get(
     '/:id/descargar',
     verificarToken,
-    checkPermission('view_archivos'),
+    checkPermission('download_files'),
     async (req, res) => {
         try {
 
@@ -662,7 +662,7 @@ router.get(
 router.delete(
     '/:id',
     verificarToken,
-    checkPermission('upload_files'),
+    checkPermission('delete_files'),
     async (req, res) => {
         try {
 

@@ -90,6 +90,8 @@ function populateDepartmentFilter() {
 function renderDepartments() {
     const tbody = document.getElementById('departmentsTableBody');
     const total = document.getElementById('totalDepartments');
+    const canEdit = window.AppPermissions?.can('usuarios', 'editar') === true;
+    const canDelete = window.AppPermissions?.can('usuarios', 'eliminar') === true;
     if (total) total.textContent = departments.length;
     if (!tbody) return;
 
@@ -120,13 +122,14 @@ function renderDepartments() {
                 <td><span class="status-badge ${active ? 'activo' : 'inactivo'}">${active ? 'Active' : 'Inactive'}</span></td>
                 <td>
                     <div class="department-actions">
-                    <button class="action-btn edit" onclick="openDepartmentModal(${department.id})" title="Edit department">
+                    <button class="action-btn edit" onclick="openDepartmentModal(${department.id})" title="Edit department" ${canEdit ? '' : 'hidden'}>
                         <i class="fa-solid fa-pen"></i>
                     </button>
                     <button
                         class="action-btn department-state ${active ? 'is-disable' : 'is-enable'}"
                         onclick="toggleDepartmentStatus(${department.id}, ${!active})"
                         title="${active ? 'Disable' : 'Enable'} department"
+                        ${canEdit ? '' : 'hidden'}
                     >
                         <i class="fa-solid ${active ? 'fa-ban' : 'fa-power-off'}"></i>
                     </button>
@@ -134,6 +137,7 @@ function renderDepartments() {
                         class="action-btn delete"
                         onclick="deleteDepartment(${department.id})"
                         title="Delete department"
+                        ${canDelete ? '' : 'hidden'}
                     >
                         <i class="fa-solid fa-trash"></i>
                     </button>
@@ -148,8 +152,12 @@ function switchAdminView(view) {
     const isDepartments = view === 'departamentos';
     document.getElementById('usuariosPanel').hidden = isDepartments;
     document.getElementById('departamentosPanel').hidden = !isDepartments;
-    document.getElementById('btnNuevoUser').hidden = isDepartments;
-    document.getElementById('btnNuevoDepartment').hidden = !isDepartments;
+    document.getElementById('btnNuevoUser').hidden =
+        isDepartments ||
+        !window.AppPermissions?.can('usuarios', 'crear');
+    document.getElementById('btnNuevoDepartment').hidden =
+        !isDepartments ||
+        !window.AppPermissions?.can('usuarios', 'crear');
     document.getElementById('tabUsers').classList.toggle('active', !isDepartments);
     document.getElementById('tabDepartments').classList.toggle('active', isDepartments);
 }
@@ -208,6 +216,8 @@ async function loadUsers() {
 
 function renderUsers(usersToRender) {
     const tbody = document.getElementById('usersTableBody');
+    const viewer = window.AppPermissions?.getUser() || {};
+    const viewerIsSuperAdmin = viewer.rol === 'superadmin';
 
     if (!usersToRender || usersToRender.length === 0) {
         tbody.innerHTML = `
@@ -231,6 +241,21 @@ function renderUsers(usersToRender) {
         const statusLabel = isActive ? 'Active' : 'Inactive';
         const lastAccess = user.fecha_creacion ? formatDate(user.fecha_creacion) : 'N/A';
         const departmentLabel = user.departamento_nombre || 'No department';
+        const targetIsPrivileged = ['superadmin', 'admin'].includes(user.rol);
+        const canManageTarget = viewerIsSuperAdmin || !targetIsPrivileged;
+        const canEdit =
+            canManageTarget &&
+            window.AppPermissions?.can('usuarios', 'editar', viewer);
+        const canEditPermissions =
+            canManageTarget &&
+            window.AppPermissions?.can('permisos', 'editar', viewer);
+        const canDelete =
+            canManageTarget &&
+            Number(viewer.id) !== Number(user.id) &&
+            window.AppPermissions?.can('usuarios', 'eliminar', viewer);
+        const safeName = JSON.stringify(
+            user.nombre || user.nombre_completo || ''
+        ).replaceAll('"', '&quot;');
 
         return `
             <tr data-id="${user.id}">
@@ -250,13 +275,13 @@ function renderUsers(usersToRender) {
                 <td>${lastAccess}</td>
                 <td>
                     <div class="action-buttons">
-                        <button class="action-btn edit" onclick="editUser(${user.id})" title="Edit">
+                        <button class="action-btn edit" onclick="editUser(${user.id})" title="Edit" ${canEdit ? '' : 'hidden'}>
                             <i class="fa-solid fa-pen"></i>
                         </button>
-                        <button class="action-btn view" onclick="openPermissions(${user.id})" title="Permissions">
+                        <button class="action-btn view" onclick="openPermissions(${user.id})" title="Permissions" ${canEditPermissions || viewerIsSuperAdmin ? '' : 'hidden'}>
                             <i class="fa-solid fa-key"></i>
                         </button>
-                        <button class="action-btn delete" onclick="deleteUser(${user.id}, '${user.nombre}')" title="Delete">
+                        <button class="action-btn delete" onclick="deleteUser(${user.id}, ${safeName})" title="Delete" ${canDelete ? '' : 'hidden'}>
                             <i class="fa-solid fa-trash"></i>
                         </button>
                     </div>
@@ -278,7 +303,7 @@ function updateStats() {
     const inactivos = total - activos;
 
     const admins = users.filter(u =>
-        u.rol === 'admin'
+        ['superadmin', 'admin'].includes(u.rol)
     ).length;
 
     document.getElementById('totalUsers').textContent = total;
@@ -325,6 +350,12 @@ function openUserModal(userId = null) {
     const title = document.getElementById('modalTitle');
     const passwordHelp = document.getElementById('passwordHelp');
     const passwordInput = document.getElementById('userPassword');
+    const viewer = window.AppPermissions?.getUser() || {};
+    document.querySelectorAll('#userRole [data-privileged-role]')
+        .forEach(option => {
+            option.hidden = viewer.rol !== 'superadmin';
+            option.disabled = viewer.rol !== 'superadmin';
+        });
 
     form.reset();
     document.getElementById('userId').value = '';
@@ -876,6 +907,7 @@ function escapeHtml(value) {
 
 function getRoleLabel(role) {
     const labels = {
+        'superadmin': 'Super administrator',
         'admin': 'Administrator',
         'supervisor': 'Supervisor',
         'usuario': 'User'

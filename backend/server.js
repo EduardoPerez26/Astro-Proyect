@@ -21,9 +21,14 @@ const comparacionesRoutes = require('./routes/comparaciones.routes');
 const taxRatesRoutes = require('./routes/taxRates.routes');
 const propertyManagementRoutes = require('./routes/propertyManagement.routes');
 const chatRoutes = require('./routes/chat.routes');
+const notificacionesRoutes = require('./routes/notificaciones.routes');
+const { attachErrorNotificationCapture } = require('./middleware/error-notification.middleware');
 
 const app = express();
 app.disable('x-powered-by');
+
+// Captures 5xx / critical backend errors and notifies administrators.
+app.use(attachErrorNotificationCapture());
 
 // ============================================
 // MIDDLEWARES
@@ -114,7 +119,9 @@ app.get('/api', (req, res) => {
             conciliaciones: '/api/conciliaciones',
             dashboard: '/api/dashboard/resumen',
             propertyManagement: '/api/property-management',
-            chat: '/api/chat'
+            chat: '/api/chat',
+            notificaciones: '/api/notificaciones',
+            systemErrors: '/api/notificaciones/system-errors'
         }
     });
 });
@@ -132,6 +139,7 @@ app.use('/api/comparaciones', comparacionesRoutes);
 app.use('/api/tax-rates', taxRatesRoutes);
 app.use('/api/property-management', propertyManagementRoutes);
 app.use('/api/chat', chatRoutes);
+app.use('/api/notificaciones', notificacionesRoutes);
 
 
 // ============================================
@@ -150,6 +158,8 @@ app.use((req, res, next) => {
 // General errors
 app.use((err, req, res, next) => {
     console.error('Error:', err);
+    res.locals.errorForAdmin = err;
+
     const status = Number(err.status || err.statusCode) || 500;
     const esContenidoGrande = status === 413 || err.type === 'entity.too.large';
 

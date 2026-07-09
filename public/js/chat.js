@@ -75,6 +75,7 @@ function obtenerDestinoSeguroChat() {
     const permisos = usuario.permisos || {};
     const rutas = {
         dashboardAdmin: '/views/dashboard-admin',
+        systemErrors: '/views/system-errors',
         tiendas: '/views/tiendas',
         documentos: '/views/documentos',
         historial: '/views/historial',
@@ -89,7 +90,8 @@ function obtenerDestinoSeguroChat() {
         'historial',
         'propertyManagement',
         'propertyManagementDocuments',
-        usuario.rol === 'admin' ? 'dashboardAdmin' : null,
+        ['superadmin', 'admin'].includes(usuario.rol) ? 'dashboardAdmin' : null,
+        ['superadmin', 'admin'].includes(usuario.rol) ? 'systemErrors' : null,
         'perfil'
     ].filter(Boolean);
 

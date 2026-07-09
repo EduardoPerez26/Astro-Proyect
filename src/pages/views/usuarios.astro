@@ -10,11 +10,11 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
                 <h1>User administration</h1>
                 <p>Manage system users</p>
             </div>
-            <button class="btn btn-primary" id="btnNuevoUser" onclick="openUserModal()">
+            <button class="btn btn-primary" id="btnNuevoUser" onclick="openUserModal()" data-permission-module="usuarios" data-permission-action="crear">
                 <i class="fa-solid fa-user-plus"></i>
                 New user
             </button>
-            <button class="btn btn-primary" id="btnNuevoDepartment" onclick="openDepartmentModal()" hidden>
+            <button class="btn btn-primary" id="btnNuevoDepartment" onclick="openDepartmentModal()" data-permission-module="usuarios" data-permission-action="crear" hidden>
                 <i class="fa-solid fa-building-circle-check"></i>
                 New department
             </button>
@@ -83,6 +83,7 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
                 <label>Role:</label>
                 <select id="filterRole" onchange="filterUsers()">
                     <option value="">All</option>
+                    <option value="superadmin">Super administrator</option>
                     <option value="admin">Administrator</option>
                     <option value="supervisor">Supervisor</option>
                     <option value="usuario">User</option>
@@ -220,7 +221,8 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
                             <label class="form-label" for="userRole">Role</label>
                             <select id="userRole" class="form-control" required>
                                 <option value="">Select...</option>
-                                <option value="admin">Administrator</option>
+                                <option value="superadmin" data-privileged-role>Super administrator</option>
+                                <option value="admin" data-privileged-role>Administrator</option>
                                 <option value="supervisor">Supervisor</option>
                                 <option value="usuario">User</option>
                             </select>
@@ -1179,4 +1181,3 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
 <script src="/js/config.js" is:inline></script>
     <script is:inline src="/js/usuarios.js"></script>
 </DashboardLayout>
-

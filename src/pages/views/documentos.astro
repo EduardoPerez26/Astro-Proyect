@@ -114,6 +114,8 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
                     <button
                         class="btn btn-secondary btn-sm"
                         onclick="exportarCSV()"
+                        data-permission-module="documentos"
+                        data-permission-action="exportar"
                     >
                         <i class="fa-solid fa-download"></i>
                         Export
@@ -203,6 +205,8 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
                     class="btn btn-primary"
                     id="btnDownload"
                     onclick="downloadSelectedDocument()"
+                    data-permission-module="documentos"
+                    data-permission-action="exportar"
                 >
                     <i class="fa-solid fa-download"></i>
                     Download
@@ -243,6 +247,8 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
                 <button
                     class="btn btn-primary"
                     onclick="downloadSelectedDocument()"
+                    data-permission-module="documentos"
+                    data-permission-action="exportar"
                 >
                     <i class="fa-solid fa-download"></i>
                     Download

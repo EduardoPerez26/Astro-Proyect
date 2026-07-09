@@ -1,7 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const { pool } = require('../config/database');
-const { verificarToken, esAdmin } = require('../middleware/auth.middleware');
+const {
+    verificarToken,
+    esAdmin,
+    checkPermission
+} = require('../middleware/auth.middleware');
 
 function normalizarCodigo(valor) {
     return String(valor || '')
@@ -26,7 +30,7 @@ function responderErrorInstalacion(error, res) {
     return false;
 }
 
-router.get('/', verificarToken, esAdmin, async (req, res) => {
+router.get('/', verificarToken, esAdmin, checkPermission('view_usuarios'), async (req, res) => {
     try {
         const [departamentos] = await pool.query(
             `SELECT d.id,
@@ -57,7 +61,7 @@ router.get('/', verificarToken, esAdmin, async (req, res) => {
     }
 });
 
-router.post('/', verificarToken, esAdmin, async (req, res) => {
+router.post('/', verificarToken, esAdmin, checkPermission('create_users'), async (req, res) => {
     try {
         const { nombre, codigo, descripcion, activo } = req.body;
         const codigoNormalizado = normalizarCodigo(codigo || nombre);
@@ -100,7 +104,7 @@ router.post('/', verificarToken, esAdmin, async (req, res) => {
     }
 });
 
-router.put('/:id', verificarToken, esAdmin, async (req, res) => {
+router.put('/:id', verificarToken, esAdmin, checkPermission('edit_users'), async (req, res) => {
     try {
         const { nombre, codigo, descripcion, activo } = req.body;
         const codigoNormalizado = normalizarCodigo(codigo || nombre);
@@ -145,7 +149,7 @@ router.put('/:id', verificarToken, esAdmin, async (req, res) => {
     }
 });
 
-router.put('/:id/estado', verificarToken, esAdmin, async (req, res) => {
+router.put('/:id/estado', verificarToken, esAdmin, checkPermission('edit_users'), async (req, res) => {
     try {
         const { activo } = req.body;
 
@@ -261,7 +265,7 @@ async function eliminarDepartment(req, res) {
     }
 }
 
-router.delete('/:id', verificarToken, esAdmin, eliminarDepartment);
-router.post('/:id/eliminar', verificarToken, esAdmin, eliminarDepartment);
+router.delete('/:id', verificarToken, esAdmin, checkPermission('delete_users'), eliminarDepartment);
+router.post('/:id/eliminar', verificarToken, esAdmin, checkPermission('delete_users'), eliminarDepartment);
 
 module.exports = router;

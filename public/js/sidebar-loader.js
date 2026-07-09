@@ -194,7 +194,7 @@ async function cerrarSesion() {
     if (!result.isConfirmed) return;
 
     // Try to close the session on the server.
-    if (window.API_URL && !localStorage.getItem('modoOffline')) {
+    if (window.API_URL && window.isOfflineMode?.() !== true) {
         try {
             await fetch(`${window.API_URL}/auth/logout`, {
                 method: 'POST',
@@ -234,7 +234,7 @@ async function actualizarContextoUser() {
     const token = localStorage.getItem('token');
     const apiUrl = window.API_URL;
 
-    if (!apiUrl || localStorage.getItem('modoOffline')) return;
+    if (!apiUrl || window.isOfflineMode?.() === true) return;
 
     try {
         const response = await fetch(`${apiUrl}/auth/verify`, {
@@ -244,6 +244,15 @@ async function actualizarContextoUser() {
                 : {}
         });
         const data = await response.json().catch(() => ({}));
+
+        if (response.status === 401 || response.status === 403) {
+            localStorage.removeItem('token');
+            localStorage.removeItem('usuario');
+            localStorage.removeItem('isLoggedIn');
+            localStorage.removeItem('modoOffline');
+            window.location.replace('/');
+            return;
+        }
 
         if (response.ok && data.usuario) {
             localStorage.setItem('usuario', JSON.stringify(data.usuario));
@@ -326,6 +335,7 @@ function cargarInfoUser() {
     const sidebarUserAvatar = document.getElementById('sidebarUserAvatar');
 
     const roles = {
+        'superadmin': 'Super administrator',
         'admin': 'Administrator',
         'supervisor': 'Supervisor',
         'usuario': 'User'
@@ -361,7 +371,7 @@ function cargarInfoUser() {
     }
 
     // Mostrar indicador de modo offline
-    if (localStorage.getItem('modoOffline')) {
+    if (window.isOfflineMode?.() === true) {
         const topbar = document.querySelector('.topbar');
         if (topbar && !document.querySelector('.offline-badge')) {
             const offlineIndicator = document.createElement('div');
@@ -377,6 +387,7 @@ window.cargarInfoUser = cargarInfoUser;
 
 const START_PERMISSION_ORDER = [
     'dashboardAdmin',
+    'systemErrors',
     'tiendas',
     'documentos',
     'historial',
@@ -410,7 +421,7 @@ function aplicarPermissions(opciones = {}) {
         const soloAdmin = item.hasAttribute('data-admin-only');
 
         // Check whether the user has the permission.
-        if (!permisos[permiso] || (soloAdmin && usuario.rol !== 'admin')) {
+        if (!permisos[permiso] || (soloAdmin && !window.AppPermissions?.isAdmin(usuario))) {
             item.classList.add('hidden');
         } else {
             item.classList.remove('hidden');
@@ -443,9 +454,24 @@ function aplicarPermissions(opciones = {}) {
 function obtenerPermissions(usuario) {
     const departmentCode = String(usuario.departamento?.codigo || '').toLowerCase();
     const esPropertyManagement = departmentCode === 'property-management' || departmentCode === 'pm';
+    const modules = [
+        'dashboardAdmin',
+        'systemErrors',
+        'tiendas',
+        'documentos',
+        'perfil',
+        'permisos',
+        'historial',
+        'usuarios',
+        'controlRestaurants',
+        'propertyManagement',
+        'propertyManagementDocuments',
+        'chat'
+    ];
     const defaultPermissions = {
-        'admin': {
+        'superadmin': {
             dashboardAdmin: true,
+            systemErrors: true,
             tiendas: true,
             documentos: true,
             perfil: true,
@@ -457,6 +483,20 @@ function obtenerPermissions(usuario) {
             propertyManagementDocuments: true,
             chat: true
         },
+        'admin': {
+            dashboardAdmin: true,
+            systemErrors: true,
+            tiendas: false,
+            documentos: false,
+            perfil: true,
+            permisos: true,
+            historial: false,
+            usuarios: true,
+            controlRestaurants: true,
+            propertyManagement: false,
+            propertyManagementDocuments: false,
+            chat: false
+        },
         'supervisor': {
             tiendas: true,
             documentos: true,
@@ -464,6 +504,7 @@ function obtenerPermissions(usuario) {
             permisos: false,
             historial: true,
             usuarios: false,
+            systemErrors: false,
             controlRestaurants: false,
             propertyManagement: false,
             propertyManagementDocuments: false,
@@ -477,6 +518,7 @@ function obtenerPermissions(usuario) {
             permisos: false,
             historial: false,
             usuarios: false,
+            systemErrors: false,
             controlRestaurants: false,
             propertyManagement: false,
             propertyManagementDocuments: false,
@@ -484,70 +526,50 @@ function obtenerPermissions(usuario) {
         }
     };
 
-    if (usuario.rol === 'admin') {
+    if (usuario.rol === 'superadmin') {
         const permisos = {
-            ...defaultPermissions.admin,
+            ...defaultPermissions.superadmin,
             paginaInicio: usuario.permisos?.paginaInicio || 'dashboardAdmin'
         };
         permisos.paginaInicio = resolverPaginaInicioPermitida(permisos, 'dashboardAdmin');
         return permisos;
     }
 
-    // Use permissions saved in localStorage when available.
     const savedPermissions = JSON.parse(localStorage.getItem('userPermissions') || '{}');
+    const source = usuario.id && savedPermissions[usuario.id]
+        ? savedPermissions[usuario.id]
+        : usuario.permisos || defaultPermissions[usuario.rol] || defaultPermissions.usuario;
+    const permisos = {
+        ...(defaultPermissions[usuario.rol] || defaultPermissions.usuario),
+        ...source,
+        perfil: true
+    };
+    const permissionUser = { ...usuario, permisos: source };
 
-    if (usuario.id && savedPermissions[usuario.id]) {
-        const permisosGuardados = savedPermissions[usuario.id];
-        const tienePropertyManagement =
-            permisosGuardados.propertyManagement === true ||
-            (permisosGuardados.propertyManagement === undefined && esPropertyManagement);
-        const permisos = {
-            ...permisosGuardados,
-            perfil: true,
-            usuarios: false,
-            permisos: false,
-            controlRestaurants: false,
-            propertyManagement: tienePropertyManagement,
-            propertyManagementDocuments: permisosGuardados.propertyManagementDocuments === true ||
-                (permisosGuardados.propertyManagementDocuments === undefined && tienePropertyManagement),
-            chat: permisosGuardados.chat === true
-        };
-        permisos.paginaInicio = resolverPaginaInicioPermitida(permisos);
-        return permisos;
+    modules.forEach(module => {
+        if (source.acciones?.[module]) {
+            permisos[module] = window.AppPermissions?.can(
+                module,
+                'ver',
+                permissionUser
+            ) === true;
+        }
+    });
+
+    if (
+        esPropertyManagement &&
+        source.propertyManagement === undefined &&
+        !source.acciones?.propertyManagement
+    ) {
+        permisos.propertyManagement = true;
+        permisos.propertyManagementDocuments = true;
     }
 
-    // Use permissions from the user object when available.
-    if (usuario.permisos) {
-        const permisosGuardados = usuario.permisos;
-        const tienePropertyManagement =
-            permisosGuardados.propertyManagement === true ||
-            (permisosGuardados.propertyManagement === undefined && esPropertyManagement);
-        const tienePropertyManagementDocuments =
-            permisosGuardados.propertyManagementDocuments === true ||
-            (permisosGuardados.propertyManagementDocuments === undefined && tienePropertyManagement);
-        const permisos = {
-            tiendas: false,
-            documentos: false,
-            historial: false,
-            ...permisosGuardados,
-            perfil: true,
-            usuarios: false,
-            permisos: false,
-            controlRestaurants: false,
-            propertyManagement: tienePropertyManagement,
-            propertyManagementDocuments: tienePropertyManagementDocuments,
-            chat: permisosGuardados.chat === true,
-            paginaInicio: permisosGuardados.paginaInicio ||
-                (tienePropertyManagement ? 'propertyManagement' : undefined)
-        };
-        permisos.paginaInicio = resolverPaginaInicioPermitida(
-            permisos,
-            tienePropertyManagement ? 'propertyManagement' : null
-        );
-        return permisos;
-    }
-
-    return defaultPermissions[usuario.rol] || defaultPermissions['usuario'];
+    permisos.paginaInicio = resolverPaginaInicioPermitida(
+        permisos,
+        esPropertyManagement ? 'propertyManagement' : null
+    );
+    return permisos;
 }
 
 // Check whether the user can access the current page.
@@ -557,7 +579,9 @@ function verificarAccesoPagina(permisos) {
     // Route-to-permission map.
     const routePermissions = {
         '/views/tiendas': 'tiendas',
+        '/views/conciliacion': 'tiendas',
         '/views/dashboard-admin': 'dashboardAdmin',
+        '/views/system-errors': 'systemErrors',
         '/views/documentos': 'documentos',
         '/views/perfil': 'perfil',
         '/views/permisos': 'permisos',
@@ -577,13 +601,14 @@ function verificarAccesoPagina(permisos) {
     const requiereAdmin = [
         '/views/restaurantes',
         '/views/dashboard-admin',
+        '/views/system-errors',
         '/views/usuarios',
         '/views/permisos'
     ].includes(currentPath);
 
     if (
         requiredPermission &&
-        (!permisos[requiredPermission] || (requiereAdmin && usuario.rol !== 'admin'))
+        (!permisos[requiredPermission] || (requiereAdmin && !window.AppPermissions?.isAdmin(usuario)))
     ) {
         Swal.fire({
             icon: 'error',
@@ -593,6 +618,7 @@ function verificarAccesoPagina(permisos) {
         }).then(() => {
             const rutasDepartment = {
                 dashboardAdmin: '/views/dashboard-admin',
+                systemErrors: '/views/system-errors',
                 tiendas: '/views/tiendas',
                 documentos: '/views/documentos',
                 historial: '/views/historial',
@@ -616,7 +642,7 @@ function verificarAccesoPagina(permisos) {
                                 ? '/views/departments/property-management-documents'
                                 : permisos.chat
                                     ? '/views/chat'
-                                    : usuario.rol === 'admin' && permisos.dashboardAdmin
+                                    : window.AppPermissions?.isAdmin(usuario) && permisos.dashboardAdmin
                                         ? '/views/dashboard-admin'
                                         : '/');
             window.location.href = destino;
@@ -706,4 +732,3 @@ function iniciarContadorChat() {
 }
 
 window.actualizarContadorChat = actualizarContadorChat;
-

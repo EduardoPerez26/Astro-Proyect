@@ -3,14 +3,22 @@ const multer = require('multer');
 const crypto = require('crypto');
 const XLSX = require('xlsx');
 const { pool } = require('../config/database');
-const { verificarToken, requireDepartment } = require('../middleware/auth.middleware');
+const {
+    verificarToken,
+    checkPermission,
+    requireDepartment
+} = require('../middleware/auth.middleware');
 
 const router = express.Router();
 const upload = multer({
     storage: multer.memoryStorage(),
     limits: { fileSize: 75 * 1024 * 1024 }
 });
-const access = [verificarToken, requireDepartment('property-management')];
+const access = (module, action) => [
+    verificarToken,
+    checkPermission(module, action),
+    requireDepartment('property-management')
+];
 const VALID_DOCUMENT_TYPES = new Set([
     'general_ledger',
     'dimension_balances',
@@ -117,12 +125,12 @@ async function syncScheduleDocuments(scheduleId, documentIds) {
     );
 }
 
-router.get('/documents', ...access, async (req, res) => {
+router.get('/documents', ...access('propertyManagementDocuments', 'ver'), async (req, res) => {
     try {
         const params = [];
         let where = '';
 
-        if (req.usuario?.rol !== 'admin' && getDepartmentId(req)) {
+        if (req.usuario?.rol !== 'superadmin' && getDepartmentId(req)) {
             where = 'WHERE departamento_id = ? OR departamento_id IS NULL';
             params.push(getDepartmentId(req));
         }
@@ -164,7 +172,7 @@ router.get('/documents', ...access, async (req, res) => {
     }
 });
 
-router.post('/documents', ...access, upload.single('document'), async (req, res) => {
+router.post('/documents', ...access('propertyManagementDocuments', 'crear'), upload.single('document'), async (req, res) => {
     try {
         if (!req.file) {
             return res.status(400).json({ success: false, message: 'No document was received' });
@@ -243,7 +251,7 @@ router.post('/documents', ...access, upload.single('document'), async (req, res)
     }
 });
 
-router.get('/documents/:id/download', ...access, async (req, res) => {
+router.get('/documents/:id/download', ...access('propertyManagementDocuments', 'exportar'), async (req, res) => {
     try {
         const [rows] = await pool.query(
             `SELECT nombre_original,
@@ -278,7 +286,7 @@ router.get('/documents/:id/download', ...access, async (req, res) => {
     }
 });
 
-router.delete('/documents/:id', ...access, async (req, res) => {
+router.delete('/documents/:id', ...access('propertyManagementDocuments', 'eliminar'), async (req, res) => {
     const connection = await pool.getConnection();
 
     try {
@@ -313,12 +321,12 @@ router.delete('/documents/:id', ...access, async (req, res) => {
     }
 });
 
-router.get('/schedules', ...access, async (req, res) => {
+router.get('/schedules', ...access('propertyManagement', 'ver'), async (req, res) => {
     try {
         const params = [];
         let where = '';
 
-        if (req.usuario?.rol !== 'admin' && getDepartmentId(req)) {
+        if (req.usuario?.rol !== 'superadmin' && getDepartmentId(req)) {
             where = 'WHERE s.departamento_id = ? OR s.departamento_id IS NULL';
             params.push(getDepartmentId(req));
         }
@@ -352,7 +360,7 @@ router.get('/schedules', ...access, async (req, res) => {
     }
 });
 
-router.get('/schedules/:id', ...access, async (req, res) => {
+router.get('/schedules/:id', ...access('propertyManagement', 'ver'), async (req, res) => {
     try {
         const [rows] = await pool.query(
             `SELECT *
@@ -388,7 +396,7 @@ router.get('/schedules/:id', ...access, async (req, res) => {
     }
 });
 
-router.post('/schedules', ...access, async (req, res) => {
+router.post('/schedules', ...access('propertyManagement', 'crear'), async (req, res) => {
     try {
         const scheduleData = parseSchedulePayload(req.body);
         const rows = scheduleData.rows;
@@ -435,7 +443,7 @@ router.post('/schedules', ...access, async (req, res) => {
     }
 });
 
-router.put('/schedules/:id', ...access, async (req, res) => {
+router.put('/schedules/:id', ...access('propertyManagement', 'editar'), async (req, res) => {
     try {
         const scheduleData = parseSchedulePayload(req.body);
         const rows = scheduleData.rows;
@@ -491,7 +499,7 @@ router.put('/schedules/:id', ...access, async (req, res) => {
     }
 });
 
-router.delete('/schedules/:id', ...access, async (req, res) => {
+router.delete('/schedules/:id', ...access('propertyManagement', 'eliminar'), async (req, res) => {
     const connection = await pool.getConnection();
 
     try {
@@ -590,7 +598,7 @@ function parseOrgChartWorkbook(buffer) {
     return entities;
 }
 
-router.get('/entities', ...access, async (req, res) => {
+router.get('/entities', ...access('propertyManagement', 'ver'), async (req, res) => {
     try {
         const [rows] = await pool.query(
             `SELECT id,
@@ -619,7 +627,7 @@ router.get('/entities', ...access, async (req, res) => {
     }
 });
 
-router.post('/entities/import', ...access, upload.single('orgChart'), async (req, res) => {
+router.post('/entities/import', ...access('propertyManagement', 'crear'), upload.single('orgChart'), async (req, res) => {
     const connection = await pool.getConnection();
 
     try {
@@ -678,7 +686,7 @@ router.post('/entities/import', ...access, upload.single('orgChart'), async (req
     }
 });
 
-router.post('/entities', ...access, async (req, res) => {
+router.post('/entities', ...access('propertyManagement', 'crear'), async (req, res) => {
     try {
         const location = normalizeLocationValue(req.body.location);
         const entityCode = normalizeEntityCodeValue(req.body.entity_code);
@@ -723,7 +731,7 @@ router.post('/entities', ...access, async (req, res) => {
     }
 });
 
-router.put('/entities/:id', ...access, async (req, res) => {
+router.put('/entities/:id', ...access('propertyManagement', 'editar'), async (req, res) => {
     try {
         const location = normalizeLocationValue(req.body.location);
         const entityCode = normalizeEntityCodeValue(req.body.entity_code);
@@ -775,7 +783,7 @@ router.put('/entities/:id', ...access, async (req, res) => {
     }
 });
 
-router.delete('/entities/:id', ...access, async (req, res) => {
+router.delete('/entities/:id', ...access('propertyManagement', 'eliminar'), async (req, res) => {
     try {
         const [result] = await pool.query(
             `UPDATE property_management_entities

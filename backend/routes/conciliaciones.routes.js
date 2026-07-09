@@ -3,11 +3,28 @@ const express = require('express');
 const router = express.Router();
 const XLSX = require('xlsx');
 const { pool } = require('../config/database');
-const { verificarToken, esAdmin } = require('../middleware/auth.middleware');
+const {
+    verificarToken,
+    esAdmin,
+    checkPermission
+} = require('../middleware/auth.middleware');
 const {
     registrarComparacion,
     vincularComparacion
 } = require('../services/comparaciones.service');
+
+const viewAccess = [
+    verificarToken,
+    checkPermission('view_conciliaciones')
+];
+const createAccess = [
+    verificarToken,
+    checkPermission('create_conciliaciones')
+];
+const editAccess = [
+    verificarToken,
+    checkPermission('edit_conciliaciones')
+];
 
 const CAMPOS_IDENTIDAD_CONCILIACION = new Set([
     'store',
@@ -217,7 +234,7 @@ function compararDatosConciliacion(
     };
 }
 
-router.get('/templates', verificarToken, async (req, res) => {
+router.get('/templates', ...viewAccess, async (req, res) => {
     try {
         const { restaurante_id } = req.query;
         
@@ -260,7 +277,7 @@ router.get('/templates', verificarToken, async (req, res) => {
     }
 });
 
-router.get('/templates/:id', verificarToken, async (req, res) => {
+router.get('/templates/:id', ...viewAccess, async (req, res) => {
     try {
         const [templates] = await pool.query(
             `SELECT t.*, r.nombre as restaurante_nombre
@@ -296,7 +313,7 @@ router.get('/templates/:id', verificarToken, async (req, res) => {
     }
 });
 
-router.post('/templates', verificarToken, esAdmin, async (req, res) => {
+router.post('/templates', verificarToken, esAdmin, checkPermission('create_conciliaciones'), async (req, res) => {
     try {
         const { restaurante_id, nombre, descripcion, configuracion, es_default } = req.body;
         
@@ -341,7 +358,7 @@ router.post('/templates', verificarToken, esAdmin, async (req, res) => {
     }
 });
 
-router.put('/templates/:id', verificarToken, esAdmin, async (req, res) => {
+router.put('/templates/:id', verificarToken, esAdmin, checkPermission('edit_conciliaciones'), async (req, res) => {
     try {
         const { nombre, descripcion, configuracion, es_default, activo } = req.body;
         
@@ -398,7 +415,7 @@ router.put('/templates/:id', verificarToken, esAdmin, async (req, res) => {
 });
 
 
-router.get('/', verificarToken, async (req, res) => {
+router.get('/', ...viewAccess, async (req, res) => {
     try {
         const { restaurante_id, estado, fecha_inicio, fecha_fin } = req.query;
         
@@ -431,7 +448,7 @@ router.get('/', verificarToken, async (req, res) => {
             query += ' AND c.fecha_conciliacion <= ?';
             params.push(fecha_fin);
         }
-        if (req.usuario?.rol !== 'admin' && req.departamento?.id) {
+        if (req.usuario?.rol !== 'superadmin' && req.departamento?.id) {
             query += ' AND (c.departamento_id = ? OR c.departamento_id IS NULL)';
             params.push(req.departamento.id);
         }
@@ -462,7 +479,7 @@ router.get('/', verificarToken, async (req, res) => {
     }
 });
 
-router.post('/comparar-existente', verificarToken, async (req, res) => {
+router.post('/comparar-existente', ...createAccess, async (req, res) => {
     try {
         const {
             restaurante_id,
@@ -662,7 +679,7 @@ router.post('/comparar-existente', verificarToken, async (req, res) => {
     }
 });
 
-router.get('/:id', verificarToken, async (req, res) => {
+router.get('/:id', ...viewAccess, async (req, res) => {
     try {
         const [conciliaciones] = await pool.query(
             `SELECT c.*, 
@@ -675,10 +692,10 @@ router.get('/:id', verificarToken, async (req, res) => {
              JOIN templates_conciliacion t ON c.template_id = t.id
              JOIN usuarios u ON c.usuario_id = u.id
              WHERE c.id = ?
-               ${req.usuario?.rol !== 'admin' && req.departamento?.id
+               ${req.usuario?.rol !== 'superadmin' && req.departamento?.id
                     ? 'AND (c.departamento_id = ? OR c.departamento_id IS NULL)'
                     : ''}`,
-            req.usuario?.rol !== 'admin' && req.departamento?.id
+            req.usuario?.rol !== 'superadmin' && req.departamento?.id
                 ? [req.params.id, req.departamento.id]
                 : [req.params.id]
         );
@@ -712,7 +729,7 @@ router.get('/:id', verificarToken, async (req, res) => {
     }
 });
 
-router.post('/', verificarToken, async (req, res) => {
+router.post('/', ...createAccess, async (req, res) => {
     try {
         const {
             restaurante_id,
@@ -921,7 +938,7 @@ router.post('/', verificarToken, async (req, res) => {
     }
 });
 
-router.put('/:id', verificarToken, async (req, res) => {
+router.put('/:id', ...editAccess, async (req, res) => {
     try {
         const { datos_extraidos, estado, notas } = req.body;
         
@@ -979,7 +996,7 @@ router.put('/:id', verificarToken, async (req, res) => {
     }
 });
 
-router.get('/valores-esperados/:restaurante_id/:fecha', verificarToken, async (req, res) => {
+router.get('/valores-esperados/:restaurante_id/:fecha', ...viewAccess, async (req, res) => {
     try {
         const { restaurante_id, fecha } = req.params;
         
@@ -1013,7 +1030,7 @@ router.get('/valores-esperados/:restaurante_id/:fecha', verificarToken, async (r
 });
 
 
-router.post('/valores-esperados', verificarToken, async (req, res) => {
+router.post('/valores-esperados', ...editAccess, async (req, res) => {
     try {
         const { restaurante_id, fecha, valores } = req.body;
         

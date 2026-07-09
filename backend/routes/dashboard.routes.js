@@ -326,7 +326,7 @@ async function obtenerDashboardAdminBasico(tokenActual) {
         consultaSegura(
             `SELECT COUNT(*) AS total,
                     COALESCE(SUM(activo = TRUE), 0) AS activos,
-                    COALESCE(SUM(rol = 'admin'), 0) AS administradores
+                    COALESCE(SUM(rol IN ('superadmin', 'admin')), 0) AS administradores
              FROM usuarios`,
             [],
             [{ total: 0, activos: 0, administradores: 0 }]
@@ -639,7 +639,7 @@ router.get('/resumen', verificarToken, checkPermission('view_dashboard'), async 
     }
 });
 
-router.get('/admin', verificarToken, esAdmin, async (req, res) => {
+router.get('/admin', verificarToken, esAdmin, checkPermission('view_dashboard'), async (req, res) => {
     const tokenActual =
         req.authToken ||
         req.headers.authorization?.split(' ')[1] ||
@@ -660,7 +660,7 @@ router.get('/admin', verificarToken, esAdmin, async (req, res) => {
             pool.query(
                 `SELECT COUNT(*) AS total,
                         COALESCE(SUM(activo = TRUE), 0) AS activos,
-                        COALESCE(SUM(rol = 'admin'), 0) AS administradores
+                        COALESCE(SUM(rol IN ('superadmin', 'admin')), 0) AS administradores
                  FROM usuarios`
             ),
             pool.query(
@@ -837,7 +837,7 @@ router.get('/admin', verificarToken, esAdmin, async (req, res) => {
     }
 });
 
-router.patch('/admin/sessions/:sessionId/logout', verificarToken, esAdmin, async (req, res) => {
+router.patch('/admin/sessions/:sessionId/logout', verificarToken, esAdmin, checkPermission('manage_sessions'), async (req, res) => {
     try {
         const sessionId = Number(req.params.sessionId);
         const tokenActual =
