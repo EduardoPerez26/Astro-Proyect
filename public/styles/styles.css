@@ -2934,7 +2934,7 @@ input[type=file] {
 }
 
 .main table td {
-    padding: 8px 11px;
+    padding: 8px 8px;
     border-right: 1px solid #e3e9ef;
     border-bottom: 1px solid #e3e9ef;
     color: #334e68;

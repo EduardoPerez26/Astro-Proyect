@@ -1,3 +1,4 @@
+
 // ============================================
 // SERVIDOR PRINCIPAL - EXPRESS
 // ============================================
@@ -22,6 +23,7 @@ const taxRatesRoutes = require('./routes/taxRates.routes');
 const propertyManagementRoutes = require('./routes/propertyManagement.routes');
 const chatRoutes = require('./routes/chat.routes');
 const notificacionesRoutes = require('./routes/notificaciones.routes');
+const prepaidRoutes = require('./routes/prepaid.routes');
 const { attachErrorNotificationCapture } = require('./middleware/error-notification.middleware');
 
 const app = express();
@@ -121,7 +123,8 @@ app.get('/api', (req, res) => {
             propertyManagement: '/api/property-management',
             chat: '/api/chat',
             notificaciones: '/api/notificaciones',
-            systemErrors: '/api/notificaciones/system-errors'
+            systemErrors: '/api/notificaciones/system-errors',
+            prepaids: '/api/prepaids'
         }
     });
 });
@@ -140,6 +143,7 @@ app.use('/api/tax-rates', taxRatesRoutes);
 app.use('/api/property-management', propertyManagementRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/notificaciones', notificacionesRoutes);
+app.use('/api/prepaids', prepaidRoutes);
 
 
 // ============================================

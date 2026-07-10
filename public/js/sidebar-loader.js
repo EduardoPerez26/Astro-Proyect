@@ -590,6 +590,7 @@ function verificarAccesoPagina(permisos) {
         '/views/restaurantes': 'controlRestaurants',
         '/views/departments/dashboard-property': 'propertyManagement',
         '/views/departments/property-management': 'propertyManagement',
+        '/views/departments/prepaid-amortization': 'propertyManagement',
         '/views/departments/property-management-documents': 'propertyManagementDocuments',
         '/views/chat': 'chat'
     };

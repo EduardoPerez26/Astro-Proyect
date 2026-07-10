@@ -1,6 +1,8 @@
 (function () {
     'use strict';
 
+    console.info('[XBFS PM] property-management.js loaded: 2026-07-09-prior-year-forward-quarter-review-v13');
+
     const STORAGE_KEY = 'xbfs.propertyManagement.requests.v1';
     const SCHEDULE_HEADERS = [
         'Entry / Payee',
@@ -149,6 +151,7 @@
         ['AMARJEET', 'AI'],
         ['EAST BAY', 'EB'],
         ['QS RESTAURANTS', 'QR'],
+        ['QS CAJUN', 'QCJ'],
         ['QS ENTERPRISES', 'QE'],
         ['ISHAR', 'II'],
         ['RITURAJ', 'RI'],
@@ -165,6 +168,45 @@
         ['SAMRAT', 'SM'],
         ['SRS MILPITAS', 'SF'],
         ['HARSHRAJ', 'HI']
+    ];
+
+    // Entity codes that can appear as compact codes inside sales-tax payment memos.
+    // Keep the longest codes first so QMSI/GSCB/N2B are evaluated before shorter aliases.
+    const ENTITY_CODE_ALIASES = {
+        EBR: 'EB',
+        QCI: 'QE',
+        QES: 'QE',
+        GSC: 'GSCB',
+        NBP: 'NB'
+    };
+
+    const ENTITY_CODES_IN_MEMO = [
+        'QMSI',
+        'QCJ',
+        'NBP',
+        'GSCB',
+        'N2B',
+        'EBR',
+        'QCI',
+        'QES',
+        'GSC',
+        'GGB',
+        'GCF',
+        'GCE',
+        'GVB',
+        'QE',
+        'QR',
+        'EB',
+        'AI',
+        'II',
+        'RI',
+        'SI',
+        'HB',
+        'NB',
+        'EF',
+        'SM',
+        'SF',
+        'HI'
     ];
 
     let orgChartEntityByLocation = new Map();
@@ -1427,8 +1469,8 @@
         const isPayment =
             /\bQ[1-4]\s+RETURN\b/.test(memo) ||
             /\bRETURN\s+PAYMENT\b/.test(memo) ||
-            /\bMONTHLY\s+PREPAYMENT\b/.test(memo) ||
-            /\bPREPAYMENT\b/.test(memo) ||
+            /\bMONTHLY\s+PRE\s*PAYMENT\b/.test(memo) ||
+            /\bPRE\s*PAYMENT\b/.test(memo) ||
             /\b\(\s*(JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|SEPT|OCT|NOV|DEC)[A-Z]*\s+PAID\s*\)/.test(memo);
 
         if (!isSalesTax || !isPayment) {
@@ -1449,10 +1491,13 @@
         }
 
         if (credit) {
+            // Keep credits as credits. The GL balance column is debit - credit;
+            // converting a credit-side reclass/payment into a debit breaks YTD BAL,
+            // especially for Popeyes InterCo rows.
             return {
                 ...transaction,
-                debit: Math.abs(credit),
-                credit: 0,
+                debit: 0,
+                credit: Math.abs(credit),
                 taxPeriodMonth,
                 paymentMonth
             };
@@ -1704,6 +1749,10 @@
             return true;
         }
 
+        if (/\bQ[1-4]\s+RETURN\b/.test(text)) {
+            return true;
+        }
+
         return findMonthMentions(text)
             .some(mention => !isPaidMonthMention(text, mention));
     }
@@ -1715,31 +1764,107 @@
     function applyQuarterReviewToGroup(groupRows, summaryRow) {
         if (!summaryRow) return;
 
+        const scheduleYear = getScheduleYear(groupRows || scheduleRows);
+
+        applyPriorYearBalanceForwardReview(groupRows, summaryRow, scheduleYear);
+
         Object.keys(QUARTER_MONTHS).forEach(quarterText => {
             const quarter = Number(quarterText);
-            const targetRow = findQuarterReviewTargetRow(groupRows, quarter);
+            const totals = getQuarterGroupTotals(groupRows, summaryRow, quarter, scheduleYear);
+            const hasQuarterActivity = Boolean(totals.collected || totals.paid);
+
+            if (!hasQuarterActivity) return;
+
+            const targetRow = findQuarterReviewTargetRow(groupRows, quarter, summaryRow, scheduleYear);
 
             if (!targetRow) return;
 
-            targetRow[35] = calculateQuarterReviewBalance(groupRows, summaryRow, quarter);
+            // This column must show the quarter formula result per store:
+            // collected for the quarter + payments for the same current-year tax period.
+            // Prior-year tax payments are not quarter-review activity; they settle
+            // against Prior Yr End Balance Forward.
+            targetRow[35] = totals.difference;
         });
     }
 
-    function findQuarterReviewTargetRow(groupRows, quarter) {
-        const quarterReturnPattern = new RegExp(`\\bQ${quarter}\\s+RETURN\\b`, 'i');
-        const quarterEndMonth = quarter * 3;
+    function applyPriorYearBalanceForwardReview(groupRows, summaryRow, scheduleYear = null) {
+        const targetYear = Number(scheduleYear || getScheduleYear(groupRows || scheduleRows));
+        const priorBalance = roundMoney(Number(summaryRow?.[8] || 0));
+        const priorSettlementRows = getPriorYearSettlementRows(groupRows, summaryRow, targetYear);
 
-        return groupRows.find(row => quarterReturnPattern.test(String(row[0] || ''))) ||
-            groupRows.find(row => getScheduleRowTaxPeriodMonth(row) === quarterEndMonth) ||
-            null;
+        if (!priorSettlementRows.length) return;
+
+        const priorPaid = roundMoney(priorSettlementRows.reduce((sum, row) => {
+            const taxMonth = getScheduleRowTaxPeriodMonth(row);
+            return sum + getScheduleRowPaymentAmountForTaxMonth(row, taxMonth);
+        }, 0));
+
+        const difference = roundMoney(priorBalance + priorPaid);
+        const targetRow = priorSettlementRows[priorSettlementRows.length - 1];
+
+        if (!targetRow) return;
+
+        // Prior-year settlements, for example 2025.12 paid during 2026, do not
+        // belong to the current-year Q4 formula. They must be reviewed against
+        // Prior Yr End Balance Forward so the final column shows whether the
+        // beginning balance was cleared by those prior-year payments.
+        targetRow[35] = difference;
+    }
+
+    function getPriorYearSettlementRows(groupRows, summaryRow, scheduleYear = null) {
+        const targetYear = Number(scheduleYear || getScheduleYear(groupRows || scheduleRows));
+
+        return (groupRows || []).filter(row => {
+            if (!row || row === summaryRow || row[0] === 'Sales Tax') return false;
+            if (!isSchedulePaymentRow(row)) return false;
+
+            const taxMonth = getScheduleRowTaxPeriodMonth(row);
+
+            return isPriorYearTaxSettlementRow(row, taxMonth, targetYear);
+        });
+    }
+
+    function findQuarterReviewTargetRow(groupRows, quarter, summaryRow = null, scheduleYear = null) {
+        const targetYear = Number(scheduleYear || getScheduleYear(groupRows || scheduleRows));
+        const months = QUARTER_MONTHS[quarter] || [];
+        const quarterReturnPattern = new RegExp(`\\bQ${quarter}\\s+RETURN\\b`, 'i');
+
+        const currentYearQuarterRows = groupRows.filter(row => {
+            if (!row || row[0] === 'Sales Tax') return false;
+
+            const taxPeriodMonth = getScheduleRowTaxPeriodMonth(row);
+
+            if (!months.includes(taxPeriodMonth)) return false;
+
+            return scheduleRowBelongsToTaxYear(row, taxPeriodMonth, targetYear);
+        });
+
+        const quarterReturnRow = currentYearQuarterRows.find(row =>
+            quarterReturnPattern.test(String(row[0] || ''))
+        );
+
+        if (quarterReturnRow) return quarterReturnRow;
+
+        // If the quarter return has not been paid yet, still show the quarter formula
+        // once for the store by placing it on the last current-year activity row for
+        // that quarter. This keeps the export total aligned with the quarter cards.
+        if (currentYearQuarterRows.length) {
+            return currentYearQuarterRows[currentYearQuarterRows.length - 1];
+        }
+
+        // Some quarters may only have collected amounts in the Sales Tax summary row
+        // and no payment/detail row yet. In that case use the summary row as the
+        // anchor so the quarter review total is still visible.
+        return summaryRow || null;
     }
 
     function calculateQuarterReviewBalance(groupRows, summaryRow, quarter) {
-        return getQuarterGroupTotals(groupRows, summaryRow, quarter).difference;
+        return getQuarterGroupTotals(groupRows, summaryRow, quarter, getScheduleYear(groupRows || scheduleRows)).difference;
     }
 
-    function getQuarterGroupTotals(groupRows, summaryRow, quarter) {
+    function getQuarterGroupTotals(groupRows, summaryRow, quarter, scheduleYear = null) {
         const months = QUARTER_MONTHS[quarter] || [];
+        const targetYear = Number(scheduleYear || getScheduleYear(groupRows || scheduleRows));
 
         const collectedTotal = months.reduce((sum, month) => {
             const column = COLLECTED_COL_BY_MONTH[month];
@@ -1747,7 +1872,7 @@
         }, 0);
 
         const paidTotal = months.reduce((sum, taxMonth) => {
-            return sum + getPaidForTaxMonth(groupRows, summaryRow, taxMonth);
+            return sum + getPaidForTaxMonth(groupRows, summaryRow, taxMonth, targetYear);
         }, 0);
 
         return {
@@ -1757,7 +1882,9 @@
         };
     }
 
-    function getPaidForTaxMonth(groupRows, summaryRow, taxMonth) {
+    function getPaidForTaxMonth(groupRows, summaryRow, taxMonth, scheduleYear = null) {
+        const targetYear = Number(scheduleYear || getScheduleYear(groupRows || scheduleRows));
+
         return roundMoney(groupRows.reduce((sum, row) => {
             if (!row || row === summaryRow || row[0] === 'Sales Tax') return sum;
 
@@ -1767,8 +1894,60 @@
             // Si la fila corresponde a marzo fiscal, entra en APR PAID (MAR).
             if (rowTaxMonth !== taxMonth) return sum;
 
+            // Prior-year tax payments, for example 2025.12 paid during 2026,
+            // must affect YTD because they reduce the GL balance. They must NOT be
+            // part of the current-year Q4 Review because they settle against
+            // Prior Yr End Balance Forward.
+            if (isPriorYearTaxSettlementRow(row, taxMonth, targetYear)) return sum;
+            if (!scheduleRowBelongsToTaxYear(row, taxMonth, targetYear)) return sum;
+
             return sum + getScheduleRowPaymentAmountForTaxMonth(row, taxMonth);
         }, 0));
+    }
+
+    function getExplicitTaxPeriodYearFromText(value) {
+        const text = normalizeMemoForMonthParsing(value);
+        const periodMatch = text.match(/\b(20\d{2})\s*[.\-/]\s*(0?[1-9]|1[0-2])\b/);
+
+        return periodMatch ? Number(periodMatch[1]) : null;
+    }
+
+    function getDateYear(value) {
+        const date = value instanceof Date ? value : parseDateValue(value);
+        return date ? date.getFullYear() : null;
+    }
+
+    function getScheduleRowTaxPeriodYear(row, taxMonth = null, scheduleYear = null) {
+        const explicitYear =
+            getExplicitTaxPeriodYearFromText(row?.[0]) ||
+            getExplicitTaxPeriodYearFromText(row?.[4]);
+
+        if (explicitYear) return explicitYear;
+
+        const normalizedTaxMonth = normalizeScheduleMonth(taxMonth || getScheduleRowTaxPeriodMonth(row));
+        const paidMonth = getScheduleRowPaidMonth(row);
+        const postedYear = getDateYear(row?.[6]);
+
+        // Example: tax period December paid in February belongs to the previous year.
+        if (postedYear && normalizedTaxMonth && paidMonth && normalizedTaxMonth > paidMonth && paidMonth <= 3) {
+            return postedYear - 1;
+        }
+
+        return postedYear || Number(scheduleYear || getScheduleYear(scheduleRows));
+    }
+
+    function scheduleRowBelongsToTaxYear(row, taxMonth, scheduleYear) {
+        const targetYear = Number(scheduleYear || getScheduleYear(scheduleRows));
+        const taxYear = getScheduleRowTaxPeriodYear(row, taxMonth, targetYear);
+
+        return !taxYear || taxYear === targetYear;
+    }
+
+    function isPriorYearTaxSettlementRow(row, taxMonth, scheduleYear) {
+        const targetYear = Number(scheduleYear || getScheduleYear(scheduleRows));
+        const taxYear = getScheduleRowTaxPeriodYear(row, taxMonth, targetYear);
+
+        return Boolean(taxYear && taxYear < targetYear);
     }
 
     function getScheduleRowPaymentAmountForTaxMonth(row, taxMonth) {
@@ -4246,9 +4425,9 @@
         ];
 
         const scheduleEndExcelRow = aoa.length;
-        const monthlySummaryStartRow = aoa.length + 1;
+        const totalsStartRow = aoa.length;
 
-        appendMonthlyTotalsExportRows(aoa, scheduleRows);
+        appendScheduleAttachedTotalsExportRows(aoa, scheduleRows);
 
         const worksheet = window.XLSX.utils.aoa_to_sheet(aoa, {
             cellDates: true
@@ -4281,10 +4460,7 @@
             { hpt: 22 },
             { hpt: 34 },
             ...Array.from({ length: Math.max(scheduleRows.length, 1) }, () => ({ hpt: 13 })),
-            { hpt: 8 },
-            { hpt: 24 },
-            { hpt: 22 },
-            { hpt: 22 },
+            { hpt: 18 },
             { hpt: 20 },
             { hpt: 20 },
             { hpt: 20 }
@@ -4302,7 +4478,7 @@
         };
 
         applyCompletedScheduleWorkbookStyle(worksheet, scheduleEndExcelRow);
-        applyMonthlyTotalsExportStyle(worksheet, monthlySummaryStartRow);
+        applyScheduleAttachedTotalsExportStyle(worksheet, totalsStartRow);
 
         window.XLSX.utils.book_append_sheet(workbook, worksheet, 'Schedule 2026');
 
@@ -4316,25 +4492,8 @@
         );
     }
 
-    function appendMonthlyTotalsExportRows(aoa, rows) {
+    function appendScheduleAttachedTotalsExportRows(aoa, rows) {
         const totals = getMonthlyPaidCollectedTotals(rows);
-        const totalCollected = roundMoney(
-            totals.reduce((sum, item) => sum + Number(item.collectedDisplay || 0), 0)
-        );
-        const totalPaid = roundMoney(
-            totals.reduce((sum, item) => sum + Number(item.paid || 0), 0)
-        );
-
-        const blankRow = emptyExportSummaryRow();
-
-        const titleRow = emptyExportSummaryRow();
-        titleRow[0] = 'MONTHLY TOTALS - PAID AND COLLECTED BY MONTH';
-
-        const grandTotalRow = emptyExportSummaryRow();
-        grandTotalRow[0] = 'TOTAL COLLECTED';
-        grandTotalRow[1] = totalCollected;
-        grandTotalRow[3] = 'TOTAL PAID';
-        grandTotalRow[4] = totalPaid;
 
         const monthRow = emptyExportSummaryRow();
         const labelRow = emptyExportSummaryRow();
@@ -4359,10 +4518,15 @@
             differenceRow[collectedColumn] = Number(item.difference || 0);
         });
 
+        monthRow[33] = 'YTD TOTALS';
+        labelRow[33] = 'YTD BAL';
+        labelRow[34] = 'YTD BAL PER STORE';
+        labelRow[35] = 'QUARTER REVIEW';
+        valueRow[33] = getScheduleColumnTotal(rows, 33);
+        valueRow[34] = getScheduleColumnTotal(rows, 34);
+        valueRow[35] = getScheduleColumnTotal(rows, 35);
+
         aoa.push(
-            blankRow,
-            titleRow,
-            grandTotalRow,
             monthRow,
             labelRow,
             valueRow,
@@ -4370,75 +4534,24 @@
         );
     }
 
+    function getScheduleColumnTotal(rows, columnIndex) {
+        return roundMoney((rows || []).reduce((sum, row) => {
+            const value = parseMoney(row?.[columnIndex]);
+            return value === null ? sum : sum + value;
+        }, 0));
+    }
+
     function emptyExportSummaryRow() {
         return Array.from({ length: SCHEDULE_HEADERS.length }, () => '');
     }
 
-    function applyMonthlyTotalsExportStyle(worksheet, startRow) {
-        const lastColumn = SCHEDULE_HEADERS.length - 1;
-
-        const titleRow = startRow;
-        const grandRow = startRow + 1;
-        const monthRow = startRow + 2;
-        const labelRow = startRow + 3;
-        const valueRow = startRow + 4;
-        const differenceRow = startRow + 5;
-
+    function applyScheduleAttachedTotalsExportStyle(worksheet, startRow) {
+        const monthRow = startRow;
+        const labelRow = startRow + 1;
+        const valueRow = startRow + 2;
+        const differenceRow = startRow + 3;
         const moneyFormat = '$#,##0.00;($#,##0.00);$0.00';
-
         const border = createBorder('000000');
-
-        const titleStyle = {
-            font: {
-                name: 'Arial',
-                bold: true,
-                sz: 12,
-                color: { rgb: 'FFFFFF' }
-            },
-            fill: {
-                fgColor: { rgb: '102A43' }
-            },
-            alignment: {
-                horizontal: 'left',
-                vertical: 'center'
-            },
-            border
-        };
-
-        const grandLabelStyle = {
-            font: {
-                name: 'Arial',
-                bold: true,
-                sz: 10,
-                color: { rgb: '102A43' }
-            },
-            fill: {
-                fgColor: { rgb: 'EAF2F8' }
-            },
-            alignment: {
-                horizontal: 'left',
-                vertical: 'center'
-            },
-            border
-        };
-
-        const grandValueStyle = {
-            font: {
-                name: 'Arial',
-                bold: true,
-                sz: 11,
-                color: { rgb: '102A43' }
-            },
-            fill: {
-                fgColor: { rgb: 'FFFFFF' }
-            },
-            alignment: {
-                horizontal: 'right',
-                vertical: 'center'
-            },
-            border,
-            numFmt: moneyFormat
-        };
 
         const monthStyle = {
             font: {
@@ -4469,7 +4582,8 @@
             },
             alignment: {
                 horizontal: 'center',
-                vertical: 'center'
+                vertical: 'center',
+                wrapText: true
             },
             border
         };
@@ -4529,20 +4643,6 @@
 
         worksheet['!merges'] = worksheet['!merges'] || [];
 
-        worksheet['!merges'].push({
-            s: { r: titleRow, c: 0 },
-            e: { r: titleRow, c: lastColumn }
-        });
-
-        for (let column = 0; column <= lastColumn; column += 1) {
-            setExportCellStyle(worksheet, titleRow, column, titleStyle);
-        }
-
-        setExportCellStyle(worksheet, grandRow, 0, grandLabelStyle);
-        setExportCellStyle(worksheet, grandRow, 1, grandValueStyle, moneyFormat);
-        setExportCellStyle(worksheet, grandRow, 3, grandLabelStyle);
-        setExportCellStyle(worksheet, grandRow, 4, grandValueStyle, moneyFormat);
-
         for (let month = 1; month <= 12; month += 1) {
             const paidColumn = PAID_COL_BY_MONTH[month];
             const collectedColumn = COLLECTED_COL_BY_MONTH[month];
@@ -4566,6 +4666,17 @@
             setExportCellStyle(worksheet, differenceRow, paidColumn, diffLabelStyle);
             setExportCellStyle(worksheet, differenceRow, collectedColumn, diffValueStyle, moneyFormat);
         }
+
+        worksheet['!merges'].push({
+            s: { r: monthRow, c: 33 },
+            e: { r: monthRow, c: 35 }
+        });
+
+        [33, 34, 35].forEach(column => {
+            setExportCellStyle(worksheet, monthRow, column, monthStyle);
+            setExportCellStyle(worksheet, labelRow, column, labelStyle);
+            setExportCellStyle(worksheet, valueRow, column, valueStyle, moneyFormat);
+        });
     }
 
     function setExportCellStyle(worksheet, rowIndex, columnIndex, style, numberFormat = '') {
@@ -4766,7 +4877,7 @@
             },
             font: {
                 name: 'Arial',
-                sz: 6,
+                sz: 10,
                 bold: true,
                 color: { rgb: colors.white }
             },
@@ -4782,7 +4893,7 @@
         const ytdPerStoreDataStyle = {
             fill: {
                 patternType: 'solid',
-                fgColor: { rgb: colors.paleGreen }
+                fgColor: { rgb: colors.lightBlue }
             },
             font: {
                 name: 'Arial',
@@ -4799,13 +4910,13 @@
         const quarterStyle = {
             fill: {
                 patternType: 'solid',
-                fgColor: { rgb: colors.paleGreen }
+                fgColor: { rgb: colors.white }
             },
             font: {
                 name: 'Arial',
-                sz: 6,
-                bold: true,
-                color: { rgb: colors.white }
+                sz: 10,
+                bold: false,
+                color: { rgb: colors.black }
             },
             alignment: {
                 horizontal: 'center',
@@ -4815,6 +4926,7 @@
             },
             border: thinLightBorder
         };
+
 
         // Top metadata rows
         setRangeStyle(worksheet, 0, 0, 4, lastColumn, metaStyle);
@@ -6004,11 +6116,12 @@
 
         setScheduleStatus(
             messages.join(' '),
-            failedFiles.length || documentWarnings.length ? 'warning' : 'success'
+            failedFiles.length ? 'warning' : 'success'
         );
     }
 
     function applyMonthlyLedgerTransactions(transactions, sourceName = '') {
+        const sourceMonth = getPaymentMonthFromMonthlySource(sourceName);
         const usableTransactions = transactions
             .filter(item =>
                 item?.location && item?.postedDate && (item.debit || item.credit)
@@ -6045,12 +6158,17 @@
             const taxPeriodMonth = getTransactionTaxPeriodMonth(transaction);
             const paymentMonth = getTransactionPaymentMonth(transaction);
             const store = String(transaction.location || '').trim();
-            const entity = getTransactionEntity(transaction);
-            const storeEntityKey = getStoreEntityKey(store, entity);
 
             if (transaction.credit && taxPeriodMonth) {
                 summaryMonths.add(taxPeriodMonth);
-                summaryClearKeys.add(`${storeEntityKey}||${taxPeriodMonth}`);
+
+                // Replace only the collected value for the month represented by this file.
+                // Popeyes can include off-month InterCo/reclass credits, for example a March
+                // credit inside MAY.xls. Those must be added to the existing March amount,
+                // not used to clear/replace March.
+                if (!sourceMonth || taxPeriodMonth === sourceMonth) {
+                    summaryClearKeys.add(`${store}||${taxPeriodMonth}`);
+                }
             }
 
             if (transaction.debit && paymentMonth) {
@@ -6065,12 +6183,11 @@
             const summaryRow = findOrCreateStoreSummaryRow(transaction);
             const store = String(transaction.location || '').trim();
             const entity = getTransactionEntity(transaction) || getScheduleRowEntity(summaryRow);
-            const storeEntityKey = getStoreEntityKey(store, entity);
 
-            affectedStores.add(storeEntityKey);
+            affectedStores.add(store);
 
-            if (transaction.credit) {
-                const key = `${storeEntityKey}||${month}`;
+            if (transaction.credit && month) {
+                const key = `${store}||${month}`;
                 const current = Number(collectedByStoreMonth.get(key) || 0);
 
                 collectedByStoreMonth.set(
@@ -6092,10 +6209,9 @@
                 paymentRows.push(paymentRow);
 
                 const paymentTaxMonth = getScheduleRowTaxPeriodMonth(paymentRow);
-                const paymentEntity = getScheduleRowEntity(paymentRow) || entity;
                 const paymentKey = getImportedPaymentKey(
                     paymentRow[1],
-                    paymentEntity,
+                    '',
                     paymentTaxMonth
                 );
 
@@ -6104,14 +6220,19 @@
         });
 
         collectedByStoreMonth.forEach((amount, key) => {
-            const [store, entity, monthText] = key.split('||');
+            const [store, monthText] = key.split('||');
             const month = Number(monthText);
             const collectedColumn = COLLECTED_COL_BY_MONTH[month];
-            const summaryRow = findStoreSummaryRow(store, entity);
+            const summaryRow = findStoreSummaryRow(store);
 
             if (!summaryRow || collectedColumn === undefined) return;
 
-            summaryRow[collectedColumn] = roundMoney(amount);
+            const shouldAddToExisting = Boolean(sourceMonth && month !== sourceMonth);
+            const existing = shouldAddToExisting
+                ? Number(summaryRow[collectedColumn] || 0)
+                : 0;
+
+            summaryRow[collectedColumn] = roundMoney(existing + amount);
         });
 
         removeImportedRowsForPaymentKeys(paymentRemovalKeys);
@@ -6137,6 +6258,10 @@
         const mixedStores = new Set();
 
         transactions.forEach(transaction => {
+            // Only payment rows should be used to infer the entity for a store.
+            // Credit/reclass rows can include another entity code and should not relabel the store.
+            if (!transaction?.debit) return;
+
             const store = String(transaction.location || '').trim();
             const entity = getTransactionEntity(transaction);
 
@@ -6170,9 +6295,9 @@
         let cleared = 0;
 
         keys.forEach(key => {
-            const [store, entity, monthText] = key.split('||');
+            const [store, monthText] = key.split('||');
             const month = Number(monthText);
-            const summaryRow = findStoreSummaryRow(store, entity);
+            const summaryRow = findStoreSummaryRow(store);
 
             if (!summaryRow) return;
 
@@ -6193,9 +6318,9 @@
     }
 
     function getImportedPaymentKey(store, entity, taxPeriodMonth) {
+        // Entity is only a display/sorting value; imported payments belong to the store and tax period.
         return [
             String(store || '').trim(),
-            normalizeEntityCode(entity || ''),
             Number(taxPeriodMonth || 0)
         ].join('||');
     }
@@ -6212,9 +6337,8 @@
             if (!isImported) return true;
 
             const store = String(row[1] || '').trim();
-            const entity = getScheduleRowEntity(row);
             const taxPeriodMonth = getScheduleRowTaxPeriodMonth(row);
-            const key = getImportedPaymentKey(store, entity, taxPeriodMonth);
+            const key = getImportedPaymentKey(store, '', taxPeriodMonth);
 
             return !paymentKeys.has(key);
         });
@@ -6228,7 +6352,7 @@
         const store = String(transaction.location || '').trim();
         const entity = getTransactionEntity(transaction);
 
-        let summaryRow = findStoreSummaryRow(store, entity);
+        let summaryRow = findStoreSummaryRow(store);
 
         if (summaryRow) {
             if (!summaryRow[2] && entity) {
@@ -6276,9 +6400,9 @@
     }
 
     function getImportedPaymentKey(store, entity, taxPeriodMonth) {
+        // Entity is only a display/sorting value; imported payments belong to the store and tax period.
         return [
             String(store || '').trim(),
-            normalizeEntityCode(entity || ''),
             Number(taxPeriodMonth || 0)
         ].join('||');
     }
@@ -6295,9 +6419,8 @@
             if (!isImported) return true;
 
             const store = String(row[1] || '').trim();
-            const entity = getScheduleRowEntity(row);
             const taxPeriodMonth = getScheduleRowTaxPeriodMonth(row);
-            const key = getImportedPaymentKey(store, entity, taxPeriodMonth);
+            const key = getImportedPaymentKey(store, '', taxPeriodMonth);
 
             return !paymentKeys.has(key);
         });
@@ -6396,8 +6519,7 @@
     }
 
     function insertRowForStore(store, row) {
-        const entity = getScheduleRowEntity(row);
-        const lastStoreIndex = findLastStoreRowIndex(store, entity);
+        const lastStoreIndex = findLastStoreRowIndex(store);
         const insertAt = lastStoreIndex >= 0 ? lastStoreIndex + 1 : scheduleRows.length;
 
         scheduleRows.splice(insertAt, 0, row);
@@ -6405,16 +6527,12 @@
 
     function findLastStoreRowIndex(store, entity = '') {
         const normalizedStore = String(store || '').trim();
-        const normalizedEntity = normalizeEntityCode(entity);
 
         for (let index = scheduleRows.length - 1; index >= 0; index -= 1) {
             const row = scheduleRows[index];
             const rowStore = String(row[1] || '').trim();
-            const rowEntity = getScheduleRowEntity(row);
 
-            if (rowStore !== normalizedStore) continue;
-
-            if (!normalizedEntity || rowEntity === normalizedEntity) {
+            if (rowStore === normalizedStore) {
                 return index;
             }
         }
@@ -6904,10 +7022,10 @@
         }
 
         const text = String(memo || '').toUpperCase();
-        const qReturnMatch = text.match(/\bQ[1-4]\s+RETURN\s+([A-Z0-9]{2,5})\b/);
+        const entityCodeFromMemo = getEntityCodeFromSalesTaxMemo(text);
 
-        if (qReturnMatch) {
-            return normalizeEntityCode(qReturnMatch[1]);
+        if (entityCodeFromMemo) {
+            return normalizeEntityCode(entityCodeFromMemo);
         }
 
         for (const [keyword, entity] of ENTITY_KEYWORDS) {
@@ -6917,15 +7035,36 @@
         return '';
     }
 
+    function getEntityCodeFromSalesTaxMemo(text) {
+        const codePattern = ENTITY_CODES_IN_MEMO
+            .map(escapeRegExp)
+            .join('|');
+
+        const patterns = [
+            // Example: "2026.03 MAR CA SALES TAX Q1 RETURN QCJ (APR PAID)".
+            new RegExp(`\\bQ[1-4]\\s+RETURN\\s+(${codePattern})\\b`),
+
+            // Example: "2026.04 APRIL QMSI CALIFORNIA SALES TAX (MAY PAID)".
+            new RegExp(`\\b(${codePattern})\\s+CALIFORNIA\\s+SALES\\s+TAX\\b`),
+
+            // Example: "2026.05 MAY CA SALES TAX MONTHLY PREPAYMENT QMSI (JUN PAID)".
+            new RegExp(`\\bSALES\\s+TAX\\s+(?:MONTHLY\\s+)?PRE\\s*PAYMENT\\s+(${codePattern})\\b`),
+
+            // Example: "MONTHLY PREPAYMENT QE (JUN PAID)".
+            new RegExp(`\\bMONTHLY\\s+PRE\\s*PAYMENT\\s+(${codePattern})\\b`)
+        ];
+
+        for (const pattern of patterns) {
+            const match = text.match(pattern);
+            if (match) return match[1];
+        }
+
+        return '';
+    }
+
     function normalizeEntityCode(code) {
         const normalized = String(code || '').toUpperCase();
-        const aliases = {
-            EBR: 'EB',
-            QCI: 'QE',
-            QES: 'QE',
-            GSC: 'GSCB'
-        };
-        return aliases[normalized] || normalized;
+        return ENTITY_CODE_ALIASES[normalized] || normalized;
     }
 
     function getTransactionEntity(transaction) {
@@ -6954,7 +7093,7 @@
     }
 
     function getScheduleRowGroupKey(row) {
-        return getStoreEntityKey(row?.[1], getScheduleRowEntity(row));
+        return String(row?.[1] || '').trim();
     }
 
     function naturalSort(a, b) {
@@ -7017,8 +7156,26 @@
     }
 
     function getScheduleYear(rows) {
-        const date = rows.flat().find(value => value instanceof Date);
+        const headerYear = getScheduleHeaderYear();
+
+        if (headerYear) {
+            return headerYear;
+        }
+
+        const date = Array.isArray(rows)
+            ? rows.flat().find(value => value instanceof Date)
+            : null;
+
         return date ? date.getFullYear() : new Date().getFullYear();
+    }
+
+    function getScheduleHeaderYear() {
+        const joinedHeaders = SCHEDULE_HEADERS.join(' ');
+        const match = joinedHeaders.match(/P0?1\.(\d{2})/);
+
+        if (!match) return null;
+
+        return 2000 + Number(match[1]);
     }
 
     function loadRequests() {
