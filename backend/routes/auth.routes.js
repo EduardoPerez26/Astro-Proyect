@@ -31,17 +31,30 @@ const {
     verificarCodigoTotp
 } = require('../services/mfa.service');
 
-const PROFILE_UPLOAD_DIR = path.join(__dirname, '..', 'uploads', 'perfiles');
+const PROFILE_UPLOAD_DIR = process.env.PROFILE_UPLOAD_DIR
+    ? path.resolve(process.env.PROFILE_UPLOAD_DIR)
+    : path.join(__dirname, '..', 'uploads', 'perfiles');
 const PROFILE_PHOTO_EXTENSIONS = {
     'image/jpeg': '.jpg', 
     'image/png': '.png',
     'image/webp': '.webp'
 };
 
-fs.mkdirSync(PROFILE_UPLOAD_DIR, { recursive: true });
+function ensureProfileUploadDir() {
+    fs.mkdirSync(PROFILE_UPLOAD_DIR, { recursive: true });
+    fs.accessSync(PROFILE_UPLOAD_DIR, fs.constants.W_OK);
+}
 
 const profilePhotoStorage = multer.diskStorage({
-    destination: (req, file, cb) => cb(null, PROFILE_UPLOAD_DIR),
+    destination: (req, file, cb) => {
+        try {
+            ensureProfileUploadDir();
+            cb(null, PROFILE_UPLOAD_DIR);
+        } catch (error) {
+            error.message = 'Profile photo storage is not writable. Configure PROFILE_UPLOAD_DIR with a writable folder.';
+            cb(error);
+        }
+    },
     filename: (req, file, cb) => {
         const extension = PROFILE_PHOTO_EXTENSIONS[file.mimetype]
             || path.extname(file.originalname || '').toLowerCase()
@@ -56,7 +69,7 @@ const profilePhotoStorage = multer.diskStorage({
 
 const uploadProfilePhoto = multer({
     storage: profilePhotoStorage,
-    limits: { fileSize: 3 * 1024 * 1024 },
+    limits: { fileSize: Number(process.env.PROFILE_PHOTO_MAX_MB || 3) * 1024 * 1024 },
     fileFilter: (req, file, cb) => {
         if (!PROFILE_PHOTO_EXTENSIONS[file.mimetype]) {
             cb(new Error('Only JPG, PNG, or WebP images are allowed.'));

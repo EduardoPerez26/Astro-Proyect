@@ -196,6 +196,9 @@
         const icon = isSchedule ? 'fa-file-pen' : 'fa-file-excel';
         const actions = item.kind === 'schedule'
             ? `
+            <button class="action-btn view" type="button" data-schedule-info="${escapeHtml(item.rawId)}" title="View details">
+                <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
+            </button>
             <button class="action-btn edit" type="button" data-schedule-edit="${escapeHtml(item.rawId)}" title="Edit schedule">
                 <i class="fa-solid fa-pen-to-square" aria-hidden="true"></i>
             </button>
@@ -208,6 +211,9 @@
         `
             : item.kind === 'prepaidSchedule'
                 ? `
+            <button class="action-btn view" type="button" data-prepaid-info="${escapeHtml(item.rawId)}" title="View details">
+                <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
+            </button>
             <button class="action-btn edit" type="button" data-prepaid-open="${escapeHtml(item.rawId)}" title="Open prepaid schedule">
                 <i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i>
             </button>
@@ -494,15 +500,22 @@
     }
 
     async function handleTableAction(event) {
+        const scheduleInfoButton = event.target.closest('[data-schedule-info]');
         const scheduleButton = event.target.closest('[data-schedule-edit]');
         const scheduleDownloadButton = event.target.closest('[data-schedule-download]');
         const scheduleDeleteButton = event.target.closest('[data-schedule-delete]');
+        const prepaidInfoButton = event.target.closest('[data-prepaid-info]');
         const prepaidOpenButton = event.target.closest('[data-prepaid-open]');
         const prepaidDownloadButton = event.target.closest('[data-prepaid-download]');
         const prepaidDeleteButton = event.target.closest('[data-prepaid-delete]');
         const viewButton = event.target.closest('[data-document-view]');
         const downloadButton = event.target.closest('[data-document-download]');
         const documentDeleteButton = event.target.closest('[data-document-delete]');
+
+        if (scheduleInfoButton) {
+            showScheduleInfo('schedule', scheduleInfoButton.dataset.scheduleInfo);
+            return;
+        }
 
         if (scheduleButton) {
             const id = scheduleButton.dataset.scheduleEdit;
@@ -519,6 +532,11 @@
 
         if (scheduleDeleteButton) {
             await deleteSchedule(scheduleDeleteButton.dataset.scheduleDelete, scheduleDeleteButton);
+            return;
+        }
+
+        if (prepaidInfoButton) {
+            showScheduleInfo('prepaidSchedule', prepaidInfoButton.dataset.prepaidInfo);
             return;
         }
 
@@ -592,6 +610,188 @@
         } finally {
             if (button) button.disabled = false;
         }
+    }
+
+    function showScheduleInfo(kind, id) {
+        const item = getAllItems().find(candidate =>
+            candidate.kind === kind && String(candidate.rawId) === String(id)
+        );
+
+        if (!item) {
+            showSwal('error', 'Details unavailable', 'The selected schedule could not be found in the current list.');
+            return;
+        }
+
+        const title = kind === 'prepaidSchedule'
+            ? 'Prepaid schedule detail'
+            : 'Schedule detail';
+        const icon = kind === 'prepaidSchedule'
+            ? 'fa-calendar-days'
+            : 'fa-file-pen';
+        const subtitle = `${item.displayId} / ${item.category}`;
+        const rows = [
+            ['Identifier', item.displayId],
+            ['Category', item.category],
+            ['Period', item.period],
+            ['Status', item.statusLabel],
+            ['Updated', formatDateTime(item.date)],
+            ['Primary detail', item.detailsPrimary],
+            ['Secondary detail', item.detailsSecondary],
+            ['Saved as', item.name],
+            ['Source', item.meta]
+        ];
+        openScheduleInfoModal({
+            title,
+            icon,
+            subtitle,
+            rows,
+            item,
+            confirmText: kind === 'prepaidSchedule' ? 'Open prepaid' : 'Edit schedule',
+            href: kind === 'prepaidSchedule'
+                ? `/views/departments/prepaid-amortization?schedule=${encodeURIComponent(item.rawId)}`
+                : `/views/departments/property-management?schedule=${encodeURIComponent(item.rawId)}`
+        });
+    }
+
+    function openScheduleInfoModal(options) {
+        const modal = ensureScheduleInfoModal();
+        const body = modal.querySelector('[data-pm-schedule-modal-body]');
+        const title = modal.querySelector('[data-pm-schedule-modal-title]');
+        const confirmButton = modal.querySelector('[data-pm-schedule-modal-confirm]');
+
+        if (!body || !title || !confirmButton) return;
+
+        title.textContent = options.title;
+        confirmButton.textContent = options.confirmText;
+        confirmButton.dataset.href = options.href;
+
+        body.innerHTML = `
+            <section class="pm-schedule-info-overview">
+                <div class="pm-schedule-info-icon">
+                    <i class="fa-solid ${options.icon}" aria-hidden="true"></i>
+                </div>
+                <div class="pm-schedule-info-copy">
+                    <span>PROPERTY MANAGEMENT</span>
+                    <h4 title="${escapeHtml(options.item.name)}">${escapeHtml(options.item.name)}</h4>
+                    <p>${escapeHtml(options.subtitle)}</p>
+                </div>
+                <span class="pm-schedule-info-status">${escapeHtml(options.item.statusLabel)}</span>
+            </section>
+
+            <section class="pm-schedule-info-grid">
+                ${renderScheduleInfoMetric('fa-calendar-day', 'Period', options.item.period)}
+                ${renderScheduleInfoMetric('fa-chart-simple', 'Details', options.item.detailsPrimary)}
+                ${renderScheduleInfoMetric('fa-clock', 'Updated', formatDateTime(options.item.date))}
+                ${renderScheduleInfoMetric('fa-layer-group', 'Type', options.item.category)}
+            </section>
+
+            <section class="pm-schedule-info-section">
+                <header><span>TECHNICAL INFORMATION</span><h4>Schedule data</h4></header>
+                <dl class="pm-schedule-info-list">
+                    ${options.rows.map(([label, value]) => `
+                        <div>
+                            <dt>${escapeHtml(label)}</dt>
+                            <dd>${escapeHtml(value || '-')}</dd>
+                        </div>
+                    `).join('')}
+                </dl>
+            </section>
+        `;
+
+        modal.hidden = false;
+        document.body.classList.add('pm-schedule-modal-open');
+        requestAnimationFrame(() => modal.classList.add('is-open'));
+        confirmButton.focus({ preventScroll: true });
+    }
+
+    function renderScheduleInfoMetric(icon, label, value) {
+        return `
+            <article>
+                <span class="pm-schedule-info-card-icon">
+                    <i class="fa-solid ${icon}" aria-hidden="true"></i>
+                </span>
+                <div>
+                    <small>${escapeHtml(label)}</small>
+                    <strong>${escapeHtml(value || '-')}</strong>
+                </div>
+            </article>
+        `;
+    }
+
+    function ensureScheduleInfoModal() {
+        let modal = document.getElementById('pmScheduleInfoModal');
+
+        if (modal) return modal;
+
+        modal = document.createElement('div');
+        modal.id = 'pmScheduleInfoModal';
+        modal.className = 'pm-schedule-modal';
+        modal.hidden = true;
+        modal.innerHTML = `
+            <div class="pm-schedule-modal-backdrop" data-pm-schedule-modal-close></div>
+            <section
+                class="pm-schedule-modal-dialog"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="pmScheduleInfoModalTitle"
+            >
+                <button
+                    type="button"
+                    class="pm-schedule-modal-close"
+                    data-pm-schedule-modal-close
+                    aria-label="Close"
+                >
+                    <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                </button>
+                <h3 id="pmScheduleInfoModalTitle" data-pm-schedule-modal-title></h3>
+                <div class="pm-schedule-info" data-pm-schedule-modal-body></div>
+                <footer class="pm-schedule-modal-actions">
+                    <button type="button" class="pm-schedule-modal-primary" data-pm-schedule-modal-confirm></button>
+                    <button type="button" class="pm-schedule-modal-secondary" data-pm-schedule-modal-close>Close</button>
+                </footer>
+            </section>
+        `;
+
+        modal.addEventListener('click', handleScheduleInfoModalClick);
+        document.addEventListener('keydown', handleScheduleInfoModalKeydown);
+        document.body.appendChild(modal);
+
+        return modal;
+    }
+
+    function handleScheduleInfoModalClick(event) {
+        const closeButton = event.target.closest('[data-pm-schedule-modal-close]');
+        const confirmButton = event.target.closest('[data-pm-schedule-modal-confirm]');
+
+        if (closeButton) {
+            closeScheduleInfoModal();
+            return;
+        }
+
+        if (confirmButton?.dataset.href) {
+            window.location.href = confirmButton.dataset.href;
+        }
+    }
+
+    function handleScheduleInfoModalKeydown(event) {
+        if (event.key !== 'Escape') return;
+
+        const modal = document.getElementById('pmScheduleInfoModal');
+        if (!modal || modal.hidden) return;
+
+        closeScheduleInfoModal();
+    }
+
+    function closeScheduleInfoModal() {
+        const modal = document.getElementById('pmScheduleInfoModal');
+        if (!modal) return;
+
+        modal.classList.remove('is-open');
+        document.body.classList.remove('pm-schedule-modal-open');
+
+        window.setTimeout(() => {
+            modal.hidden = true;
+        }, 160);
     }
 
     async function downloadPrepaidSchedule(id, button = null) {

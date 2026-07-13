@@ -18,7 +18,7 @@ const {
 const router = express.Router();
 const upload = multer({
     storage: multer.memoryStorage(),
-    limits: { fileSize: 75 * 1024 * 1024 }
+    limits: { fileSize: Number(process.env.PROPERTY_MANAGEMENT_FILE_SIZE_MB || process.env.MAX_FILE_SIZE_MB || 75) * 1024 * 1024 }
 });
 const access = (module, action) => [
     verificarToken,
@@ -41,6 +41,22 @@ function parseJson(value, fallback = null) {
     } catch {
         return fallback;
     }
+}
+
+function sendWorkbookDownload(res, workbook, downloadName) {
+    if (workbook?.buffer) {
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', `attachment; filename="${downloadName || workbook.filename || 'property-management-schedule.xlsx'}"`);
+        res.setHeader('Content-Length', workbook.buffer.length);
+        res.send(workbook.buffer);
+        return;
+    }
+
+    res.download(workbook.path, downloadName || workbook.filename, error => {
+        if (!error || res.headersSent) return;
+        console.error('Property Management schedule could not be downloaded:', error);
+        res.status(500).json({ success: false, message: 'Schedule could not be downloaded' });
+    });
 }
 
 function normalizeYear(value) {
@@ -535,22 +551,18 @@ router.get('/schedules/:id/export', ...access('propertyManagement', 'exportar'),
             return res.status(404).json({ success: false, message: 'Schedule not found' });
         }
 
-        let exportPath = getScheduleExportPath(schedule);
-        if (!fs.existsSync(exportPath)) {
-            const savedWorkbook = await persistPropertyManagementScheduleWorkbook(schedule.id);
-            exportPath = savedWorkbook.path;
-        }
-
         const downloadName = `${String(schedule.nombre || 'property-management-schedule')
             .replace(/[^a-z0-9]+/gi, '-')
             .replace(/^-+|-+$/g, '')
             .slice(0, 90) || 'property-management-schedule'}.xlsx`;
 
-        res.download(exportPath, downloadName, error => {
-            if (!error || res.headersSent) return;
-            console.error('Property Management schedule could not be downloaded:', error);
-            res.status(500).json({ success: false, message: 'Schedule could not be downloaded' });
-        });
+        const exportPath = getScheduleExportPath(schedule);
+        if (fs.existsSync(exportPath)) {
+            return sendWorkbookDownload(res, { path: exportPath, filename: downloadName }, downloadName);
+        }
+
+        const savedWorkbook = await persistPropertyManagementScheduleWorkbook(schedule.id);
+        return sendWorkbookDownload(res, savedWorkbook, downloadName);
     } catch (error) {
         console.error('Property Management schedule export could not be created:', error);
         if (tableSetupMessage(error, res)) return;

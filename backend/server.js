@@ -28,6 +28,10 @@ const { attachErrorNotificationCapture } = require('./middleware/error-notificat
 
 const app = express();
 app.disable('x-powered-by');
+const requestBodyLimit = process.env.REQUEST_BODY_LIMIT || '10mb';
+const uploadRoot = process.env.UPLOAD_FOLDER
+    ? path.resolve(__dirname, process.env.UPLOAD_FOLDER)
+    : path.join(__dirname, 'uploads');
 
 // Captures 5xx / critical backend errors and notifies administrators.
 app.use(attachErrorNotificationCapture());
@@ -95,14 +99,14 @@ app.use((req, res, next) => {
 });
 
 // Parse JSON and URL-encoded bodies
-app.use(express.json({ limit: '10mb' }));
+app.use(express.json({ limit: requestBodyLimit }));
 app.use(express.urlencoded({
     extended: true,
-    limit: '10mb'
+    limit: requestBodyLimit
 }));
 
 // Static files
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/uploads', express.static(uploadRoot));
 
 // ============================================
 // RUTAS DE LA API

@@ -1,0 +1,1146 @@
+---
+import DashboardLayout from "../../../layouts/DashboardLayout.astro";
+---
+
+<DashboardLayout title="Prepaid Bills | XBFS Operations Hub">
+    <main class="prepaid-page property-management-page">
+        <section class="prepaid-hero">
+            <div>
+                <span class="prepaid-eyebrow">Property Management</span>
+                <h1>Prepaid Bills</h1>
+                <p>
+                    Import paid PTAX bill rows from the 246000 GL report,
+                    generate the monthly amortization schedule, then upload each
+                    monthly GL to validate expected amounts against actual
+                    postings.
+                </p>
+            </div>
+
+            <div class="prepaid-actions">
+                <button
+                    type="button"
+                    class="btn-secondary"
+                    id="refreshSchedulesBtn"
+                >
+                    <i class="fa-solid fa-rotate" aria-hidden="true"></i>
+                    Refresh
+                </button>
+                <button
+                    type="button"
+                    class="btn-primary"
+                    id="exportScheduleBtn"
+                    disabled
+                >
+                    <i class="fa-solid fa-file-excel" aria-hidden="true"></i>
+                    Download Schedule
+                </button>
+            </div>
+        </section>
+
+        <section class="prepaid-kpis" aria-label="Prepaid schedule summary">
+            <article class="prepaid-kpi-card">
+                <span>Source rows</span>
+                <strong id="kpiSourceRows">0</strong>
+                <small>Rows extracted from the bill GL source</small>
+            </article>
+            <article class="prepaid-kpi-card">
+                <span>Included bills</span>
+                <strong id="kpiIncludedRows">0</strong>
+                <small>Rows used to build the schedule</small>
+            </article>
+            <article class="prepaid-kpi-card">
+                <span>Expected amortization</span>
+                <strong id="kpiExpected">$0.00</strong>
+                <small>Generated from the included bill rows</small>
+            </article>
+            <article class="prepaid-kpi-card warning">
+                <span>GL difference</span>
+                <strong id="kpiDifference">$0.00</strong>
+                <small>Actual GL minus expected amortization</small>
+            </article>
+        </section>
+
+        <div class="prepaid-upload-grid">
+            <section class="prepaid-panel prepaid-upload-panel">
+                <div class="panel-header stackable">
+                    <div>
+                        <h2>Upload paid bill source</h2>
+                        <p>
+                            The system reads the paid bill rows and uses the
+                            amortization period to calculate the monthly
+                            adjustment schedule.
+                        </p>
+                    </div>
+                </div>
+
+                <form
+                    id="billSourceUploadForm"
+                    class="prepaid-form prepaid-source-form"
+                    enctype="multipart/form-data"
+                >
+                    <label class="wide-field file-drop" data-file-drop>
+                        <span class="file-drop-heading">
+                            <i
+                                class="fa-solid fa-cloud-arrow-up"
+                                aria-hidden="true"></i>
+                            Paid bill GL source
+                        </span>
+
+                        <input
+                            type="file"
+                            name="billSourceFile"
+                            accept=".xlsx,.xls,.csv"
+                            required
+                        />
+                        <span class="file-drop-selection">
+                            <span class="file-drop-name">No file selected</span>
+                            <button
+                                type="button"
+                                class="file-remove-btn"
+                                data-remove-file
+                                aria-label="Remove selected file"
+                                title="Remove selected file"
+                            >
+                                <i class="fa-solid fa-trash" aria-hidden="true"
+                                ></i>
+                            </button>
+                        </span>
+                    </label>
+                </form>
+            </section>
+
+            <section class="prepaid-panel prepaid-gl-panel">
+                <div class="panel-header stackable">
+                    <div>
+                        <h2>Upload monthly GL</h2>
+                        <p>
+                            After generating the schedule, upload the monthly GL
+                            to validate expected vs actual amounts by store.
+                        </p>
+                    </div>
+                </div>
+
+                <form
+                    id="glUploadForm"
+                    class="prepaid-form prepaid-gl-form"
+                    enctype="multipart/form-data"
+                >
+                    <input
+                        type="hidden"
+                        id="glScheduleSelect"
+                        name="schedule_id"
+                        required
+                    />
+
+                    <label class="wide-field file-drop" data-file-drop>
+                        <span class="file-drop-heading">
+                            <i
+                                class="fa-solid fa-file-arrow-up"
+                                aria-hidden="true"></i>
+                            Monthly GL file
+                        </span>
+
+                        <input
+                            type="file"
+                            name="glFile"
+                            accept=".xlsx,.xls,.csv"
+                            required
+                        />
+                        <span class="file-drop-selection">
+                            <span class="file-drop-name">No file selected</span>
+                            <button
+                                type="button"
+                                class="file-remove-btn"
+                                data-remove-file
+                                aria-label="Remove selected file"
+                                title="Remove selected file"
+                            >
+                                <i class="fa-solid fa-trash" aria-hidden="true"
+                                ></i>
+                            </button>
+                        </span>
+                    </label>
+                </form>
+            </section>
+        </div>
+
+        <section class="prepaid-panel">
+            <div class="panel-header stackable">
+                <div>
+                    <h2 id="selectedScheduleTitle">Schedule Detail</h2>
+                    <p id="selectedScheduleSubtitle">
+                        Select a schedule to load source rows.
+                    </p>
+                </div>
+
+                <div class="prepaid-detail-actions source-review-actions">
+                    <button
+                        type="button"
+                        class="btn-secondary hidden"
+                        id="addSourceRowBtn"
+                        disabled
+                    >
+                        <i class="fa-solid fa-plus" aria-hidden="true"></i>
+                        Add Concept
+                    </button>
+                    <button
+                        type="button"
+                        class="btn-primary hidden"
+                        id="generateScheduleBtn"
+                        disabled
+                    >
+                        <i class="fa-solid fa-calculator" aria-hidden="true"
+                        ></i>
+                        Generate Schedule
+                    </button>
+                </div>
+            </div>
+
+            <div class="prepaid-tabs" role="tablist">
+                <button
+                    type="button"
+                    class="tab-button active"
+                    data-tab="source">Source Rows</button
+                >
+                <button type="button" class="tab-button" data-tab="schedule"
+                    >Generated Schedule</button
+                >
+                <button type="button" class="tab-button" data-tab="comparison"
+                    >GL Validation</button
+                >
+                <button type="button" class="tab-button" data-tab="differences"
+                    >Differences</button
+                >
+            </div>
+
+            <div id="sourceTab">
+                <div class="source-review-bar">
+                    <div>
+                        <strong>Review before generating</strong>
+                        <span id="sourceReviewStatus"
+                            >Upload a file to review its records before
+                            generating.</span
+                        >
+                    </div>
+                    <small>
+                        Edit the original amortization period, apply a store
+                        closeout to accelerate the remaining balance, remove
+                        exceptions, or add manual concepts before generating.
+                    </small>
+                </div>
+
+                <div class="prepaid-table-wrap">
+                    <table class="prepaid-table prepaid-source-table">
+                        <thead>
+                            <thead>
+                                <tr>
+                                    <th class="source-sticky-store">Store</th>
+                                    <th class="source-sticky-actions"
+                                        >Actions</th
+                                    >
+                                    <th>Concept / Payee</th>
+                                    <th>Doc</th>
+                                    <th>Date</th>
+                                    <th>Tax Year</th>
+                                    <th>Amount Paid</th>
+                                    <th>Amortization</th>
+                                    <th>Memo</th>
+                                </tr>
+                            </thead>
+
+                            <tbody id="sourceRows">
+                                <tr>
+                                    <td colspan="9" class="empty-cell">
+                                        No source bills loaded.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </thead>
+                        <tbody id="sourceRows">
+                            <tr
+                                ><td colspan="10" class="empty-cell"
+                                    >No source bills loaded.</td
+                                ></tr
+                            >
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="hidden" id="scheduleTab">
+                <div class="prepaid-table-wrap">
+                    <table class="prepaid-table prepaid-schedule-matrix">
+                        <thead id="scheduleTableHead">
+                            <tr>
+                                <th>Payee</th>
+                                <th>Location</th>
+                                <th>Entity</th>
+                                <th>GL Acct</th>
+                                <th>Exp. To GL Acct</th>
+                                <th>Date</th>
+                                <th>Amortization Period</th>
+                                <th>Amount Paid</th>
+                                <th>Prior Yr End Balance Forward</th>
+                                <th>MO AMORT AMT</th>
+                                <th>January</th>
+                                <th>February</th>
+                                <th>March</th>
+                                <th>April</th>
+                                <th>May</th>
+                                <th>June</th>
+                                <th>July</th>
+                                <th>August</th>
+                                <th>September</th>
+                                <th>October</th>
+                                <th>November</th>
+                                <th>December</th>
+                                <th>YTD Amortization</th>
+                                <th>Ending Prepaid Balance</th>
+                                <th>Ending Balance per Store</th>
+                            </tr>
+                        </thead>
+                        <tbody id="scheduleRows">
+                            <tr
+                                ><td colspan="25" class="empty-cell"
+                                    >No generated amortization yet.</td
+                                ></tr
+                            >
+                        </tbody>
+                    </table>
+                </div>
+
+                <div
+                    class="prepaid-table-footer hidden"
+                    id="saveScheduleFooter"
+                >
+                    <button
+                        type="button"
+                        class="btn-primary"
+                        id="saveScheduleBtn"
+                        disabled
+                    >
+                        <i class="fa-solid fa-floppy-disk" aria-hidden="true"
+                        ></i>
+                        Save Schedule
+                    </button>
+                </div>
+            </div>
+
+            <div class="prepaid-table-wrap hidden" id="comparisonTab">
+                <table class="prepaid-table">
+                    <thead>
+                        <tr>
+                            <th>Period</th>
+                            <th>Store</th>
+                            <th>Payee</th>
+                            <th>Doc</th>
+                            <th>Expected</th>
+                            <th>GL Actual</th>
+                            <th>Difference</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="comparisonRows">
+                        <tr
+                            ><td colspan="8" class="empty-cell"
+                                >No validation loaded.</td
+                            ></tr
+                        >
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="prepaid-table-wrap hidden" id="differencesTab">
+                <table class="prepaid-table">
+                    <thead>
+                        <tr>
+                            <th>Period</th>
+                            <th>Store</th>
+                            <th>Payee</th>
+                            <th>Doc</th>
+                            <th>Expected</th>
+                            <th>GL Actual</th>
+                            <th>Difference</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="differenceRows">
+                        <tr
+                            ><td colspan="8" class="empty-cell"
+                                >No differences loaded.</td
+                            ></tr
+                        >
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <style>
+        .source-review-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .source-review-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 18px;
+            margin: 14px 16px 0;
+            padding: 14px 16px;
+            border: 1px solid #dfe8f2;
+            border-radius: 14px;
+            background: #f8fbfe;
+        }
+
+        .source-review-bar > div {
+            display: grid;
+            gap: 4px;
+        }
+
+        .source-review-bar strong {
+            color: #102033;
+            font-size: 13px;
+        }
+
+        .source-review-bar span,
+        .source-review-bar small {
+            color: #60758b;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+
+        .source-review-bar span.pending {
+            color: #9a5b00;
+            font-weight: 700;
+        }
+
+        :global(.source-row-actions) {
+            width: 220px;
+            min-width: 220px;
+            padding-left: 10px !important;
+            padding-right: 10px !important;
+            text-align: center;
+            vertical-align: middle;
+        }
+
+        :global(.source-row-action-group) {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            white-space: nowrap;
+        }
+
+        :global(.source-action-btn) {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            height: 32px;
+            min-width: 58px;
+            padding: 0 9px;
+            border: 1px solid #d5e0eb;
+            border-radius: 8px;
+            background: #ffffff;
+            box-shadow: 0 1px 2px rgba(15, 35, 55, 0.06);
+            color: #40576f;
+            font: inherit;
+            font-size: 11px;
+            font-weight: 800;
+            line-height: 1;
+            cursor: pointer;
+            transition:
+                border-color 160ms ease,
+                background 160ms ease,
+                color 160ms ease,
+                box-shadow 160ms ease,
+                transform 160ms ease;
+        }
+
+        :global(.source-action-btn i) {
+            width: 12px;
+            font-size: 11px;
+            text-align: center;
+        }
+
+        :global(.source-action-btn:hover) {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 10px rgba(15, 35, 55, 0.1);
+        }
+
+        :global(.source-action-btn:focus-visible) {
+            outline: 3px solid rgba(37, 99, 235, 0.2);
+            outline-offset: 2px;
+        }
+
+        :global(.source-action-edit) {
+            border-color: #cbdcf0;
+            background: #f4f8fd;
+            color: #245b96;
+        }
+
+        :global(.source-action-edit:hover) {
+            border-color: #7da8d8;
+            background: #eaf3fd;
+            color: #174d85;
+        }
+
+        :global(.source-action-row:hover) {
+            border-color: #e5a9a4;
+            background: #fff7f6;
+            color: #b42318;
+        }
+
+        :global(.source-action-store) {
+            border-color: #efc6c2;
+            background: #fff3f2;
+            color: #a61b12;
+        }
+
+        :global(.source-action-store:hover) {
+            border-color: #d96b63;
+            background: #fde8e6;
+            color: #8f160f;
+        }
+
+        :global(.source-amortization-cell) {
+            min-width: 220px;
+            white-space: nowrap;
+        }
+
+        :global(.source-amortization-range) {
+            display: grid;
+            gap: 5px;
+        }
+
+        :global(.source-amortization-range strong) {
+            color: #17324f;
+            font-size: 11px;
+            font-weight: 850;
+        }
+
+        :global(.source-amortization-range strong span) {
+            margin: 0 4px;
+            color: #8ca0b5;
+        }
+
+        :global(.source-amortization-range small) {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            color: #647a91;
+            font-size: 10px;
+            font-weight: 700;
+        }
+
+        :global(.source-period-badge) {
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 6px;
+            border-radius: 999px;
+            background: #eef2f7;
+            color: #62758a;
+            font-size: 9px;
+            font-weight: 900;
+            text-transform: uppercase;
+        }
+
+        :global(.source-period-badge.custom) {
+            background: #e8f3ff;
+            color: #1f609f;
+        }
+
+        :global(.swal2-container .swal2-popup.source-amortization-swal) {
+            width: min(650px, calc(100vw - 32px)) !important;
+            max-width: none !important;
+            padding: 0;
+            overflow: hidden;
+            border-radius: 22px;
+            background: #f7faff;
+            box-shadow: 0 26px 60px rgba(15, 23, 42, 0.22);
+        }
+
+        :global(.source-amortization-swal .swal2-title) {
+            margin: 0;
+            padding: 24px 26px 8px;
+            color: #10233c;
+            font-size: 25px;
+            line-height: 1.15;
+            font-weight: 900;
+            text-align: left;
+        }
+
+        :global(.source-amortization-swal-html) {
+            margin: 0 !important;
+            padding: 0 26px 16px !important;
+        }
+
+        :global(.source-amortization-modal-body) {
+            display: grid;
+            gap: 16px;
+            text-align: left;
+        }
+
+        :global(.source-amortization-summary) {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 12px;
+            align-items: center;
+            padding: 14px 16px;
+            border: 1px solid #dbe6f2;
+            border-radius: 15px;
+            background: #ffffff;
+        }
+
+        :global(.source-amortization-summary-icon) {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            background: #10233c;
+            color: #ffffff;
+        }
+
+        :global(.source-amortization-summary strong) {
+            display: block;
+            margin-bottom: 3px;
+            color: #17324f;
+            font-size: 13px;
+            font-weight: 900;
+        }
+
+        :global(.source-amortization-summary span) {
+            color: #687d92;
+            font-size: 12px;
+        }
+
+        :global(.source-amortization-presets) {
+            display: grid;
+            gap: 8px;
+        }
+
+        :global(.source-amortization-presets > span) {
+            color: #40566f;
+            font-size: 11px;
+            font-weight: 900;
+            text-transform: uppercase;
+        }
+
+        :global(.source-amortization-presets > div) {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        :global(.source-amortization-presets button) {
+            height: 34px;
+            padding: 0 12px;
+            border: 1px solid #cfdae8;
+            border-radius: 10px;
+            background: #ffffff;
+            color: #40566f;
+            font: inherit;
+            font-size: 11px;
+            font-weight: 850;
+            cursor: pointer;
+        }
+
+        :global(.source-amortization-presets button:hover),
+        :global(.source-amortization-presets button.active) {
+            border-color: #7ca7d8;
+            background: #eaf3fd;
+            color: #174d85;
+        }
+
+        :global(.source-amortization-date-grid) {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 14px;
+        }
+
+        :global(.source-amortization-date-grid label) {
+            display: grid;
+            gap: 6px;
+            margin: 0;
+        }
+
+        :global(.source-amortization-date-grid label span) {
+            color: #40566f;
+            font-size: 11px;
+            font-weight: 850;
+        }
+
+        :global(.source-amortization-date-grid .swal2-input) {
+            width: 100%;
+            height: 44px;
+            margin: 0;
+            padding: 0 12px;
+            box-sizing: border-box;
+            border: 1px solid #cfdae8;
+            border-radius: 12px;
+            background: #ffffff;
+            color: #10233c;
+            font-size: 13px;
+        }
+
+        :global(.source-amortization-date-grid .swal2-input:focus) {
+            border-color: #7fa8db;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.13);
+            outline: none;
+        }
+
+        :global(.source-amortization-preview) {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            padding: 12px 14px;
+            border-radius: 12px;
+            background: #edf5ff;
+            color: #245b96;
+            font-size: 12px;
+            font-weight: 800;
+        }
+
+        :global(.source-amortization-swal-actions) {
+            width: 100%;
+            margin: 0;
+            padding: 14px 26px 22px;
+            gap: 10px;
+            justify-content: flex-end;
+            border-top: 1px solid #e2ebf4;
+            background: #ffffff;
+        }
+
+        :global(.source-amortization-confirm-btn),
+        :global(.source-amortization-cancel-btn) {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-width: 132px;
+            height: 42px;
+            padding: 0 16px;
+            border: 1px solid transparent;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 900;
+            cursor: pointer;
+        }
+
+        :global(.source-amortization-confirm-btn) {
+            background: #0f172a;
+            color: #ffffff;
+            box-shadow: 0 8px 18px rgba(15, 23, 42, 0.17);
+        }
+
+        :global(.source-amortization-cancel-btn) {
+            border-color: #dbe5f0;
+            background: #f5f8fc;
+            color: #334a63;
+        }
+
+        :global(.source-manual-badge) {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            margin-left: 6px;
+            padding: 2px 6px;
+            border-radius: 999px;
+            background: #eef5ff;
+            color: #245ea8;
+            font-size: 9px;
+            font-weight: 850;
+            vertical-align: middle;
+        }
+
+        :global(.swal2-container .swal2-popup.source-concept-swal) {
+            width: min(1040px, calc(100vw - 40px)) !important;
+            max-width: none !important;
+            min-width: 0 !important;
+            max-height: calc(100vh - 24px);
+            padding: 0;
+            overflow: hidden;
+            border-radius: 22px;
+            background: #f7faff;
+            box-shadow: 0 26px 60px rgba(15, 23, 42, 0.22);
+        }
+
+        :global(
+            .swal2-container .swal2-popup.source-concept-swal .swal2-title
+        ) {
+            margin: 0;
+            padding: 22px 28px 6px;
+            color: #10233c;
+            font-size: 27px;
+            line-height: 1.15;
+            font-weight: 900;
+            text-align: left;
+        }
+
+        :global(.source-concept-swal-html) {
+            width: 100%;
+            margin: 0 !important;
+            padding: 0 28px 14px !important;
+            overflow: visible !important;
+            box-sizing: border-box;
+        }
+
+        :global(.source-concept-modal-body) {
+            display: grid;
+            gap: 14px;
+            text-align: left;
+        }
+
+        :global(.source-modal-helper) {
+            margin: 0;
+            color: #60758c;
+            font-size: 13px;
+            line-height: 1.45;
+        }
+
+        :global(.source-concept-section) {
+            display: grid;
+            align-content: start;
+            gap: 12px;
+            padding: 15px 16px;
+            border: 1px solid #dbe6f2;
+            border-radius: 16px;
+            background: #ffffff;
+            box-shadow: 0 6px 16px rgba(16, 35, 60, 0.045);
+        }
+
+        :global(.source-concept-section-title) {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #10233c;
+            font-size: 12px;
+            font-weight: 900;
+            letter-spacing: 0.025em;
+            text-transform: uppercase;
+        }
+
+        :global(.source-concept-section-title i) {
+            width: 15px;
+            color: #3b6ea8;
+            font-size: 13px;
+            text-align: center;
+        }
+
+        :global(.source-concept-grid) {
+            display: grid;
+            gap: 12px;
+        }
+
+        :global(.source-concept-grid-main) {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        :global(.source-concept-grid-stack) {
+            grid-template-columns: 1fr;
+        }
+
+        :global(.source-concept-bottom-grid) {
+            display: grid;
+            grid-template-columns: 0.9fr 1fr 1.15fr;
+            gap: 14px;
+        }
+
+        :global(.source-concept-form label),
+        :global(.source-concept-modal-body label),
+        :global(.source-memo-field) {
+            display: grid;
+            gap: 5px;
+            margin: 0;
+            min-width: 0;
+        }
+
+        :global(.source-concept-modal-body label span),
+        :global(.source-memo-field span) {
+            color: #40566f;
+            font-size: 11px;
+            font-weight: 800;
+        }
+
+        :global(.source-concept-modal-body .swal2-input),
+        :global(.source-concept-modal-body .swal2-textarea) {
+            width: 100%;
+            min-width: 0;
+            margin: 0;
+            box-sizing: border-box;
+            border: 1px solid #cfdae8;
+            border-radius: 12px;
+            background: #fbfdff;
+            color: #10233c;
+            font-size: 13px;
+            line-height: 1.35;
+            box-shadow: inset 0 1px 1px rgba(16, 35, 60, 0.03);
+            transition:
+                border-color 160ms ease,
+                box-shadow 160ms ease,
+                background 160ms ease;
+        }
+
+        :global(.source-concept-modal-body .swal2-input) {
+            height: 42px;
+            padding: 0 12px;
+        }
+
+        :global(.source-concept-modal-body .swal2-textarea) {
+            min-height: 111px;
+            height: 111px;
+            padding: 12px;
+            resize: vertical;
+        }
+
+        :global(.source-concept-modal-body .swal2-input:focus),
+        :global(.source-concept-modal-body .swal2-textarea:focus) {
+            border-color: #7fa8db;
+            background: #ffffff;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.13);
+            outline: none;
+        }
+
+        :global(.source-concept-modal-body .swal2-input::placeholder),
+        :global(.source-concept-modal-body .swal2-textarea::placeholder) {
+            color: #8da0b5;
+        }
+
+        :global(.source-concept-swal-actions) {
+            width: 100%;
+            margin: 0;
+            padding: 14px 28px 20px;
+            gap: 10px;
+            justify-content: flex-end;
+            border-top: 1px solid #e2ebf4;
+            background: #ffffff;
+        }
+
+        :global(.source-concept-confirm-btn),
+        :global(.source-concept-cancel-btn) {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-width: 132px;
+            height: 42px;
+            padding: 0 16px;
+            border: 1px solid transparent;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 900;
+            cursor: pointer;
+            transition:
+                transform 160ms ease,
+                box-shadow 160ms ease,
+                background 160ms ease,
+                border-color 160ms ease,
+                color 160ms ease;
+        }
+
+        :global(.source-concept-confirm-btn) {
+            background: #0f172a;
+            color: #ffffff;
+            box-shadow: 0 8px 18px rgba(15, 23, 42, 0.17);
+        }
+
+        :global(.source-concept-confirm-btn:hover) {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 20px rgba(15, 23, 42, 0.22);
+        }
+
+        :global(.source-concept-cancel-btn) {
+            background: #f5f8fc;
+            border-color: #dbe5f0;
+            color: #334a63;
+        }
+
+        :global(.source-concept-cancel-btn:hover) {
+            background: #edf3f9;
+            border-color: #cbd9e7;
+        }
+
+        @media (max-width: 860px) {
+            :global(.source-concept-grid-main) {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            :global(.source-concept-bottom-grid) {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            :global(.source-concept-memo-section) {
+                grid-column: 1 / -1;
+            }
+
+            :global(.source-concept-modal-body .swal2-textarea) {
+                min-height: 86px;
+                height: 86px;
+            }
+        }
+
+        @media (max-width: 620px) {
+            .source-review-bar {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+            :global(.swal2-container .swal2-popup.source-concept-swal) {
+                width: calc(100vw - 18px) !important;
+                max-height: calc(100vh - 18px);
+                overflow-y: auto;
+                border-radius: 17px;
+            }
+
+            :global(
+                .swal2-container .swal2-popup.source-concept-swal .swal2-title
+            ) {
+                padding: 20px 18px 6px;
+                font-size: 23px;
+            }
+
+            :global(.source-concept-swal-html) {
+                padding: 0 18px 12px !important;
+            }
+
+            :global(.source-concept-grid-main),
+            :global(.source-concept-bottom-grid) {
+                grid-template-columns: 1fr;
+            }
+
+            :global(.source-concept-memo-section) {
+                grid-column: auto;
+            }
+
+            :global(.source-concept-section) {
+                padding: 14px;
+            }
+
+            :global(.source-concept-swal-actions) {
+                padding: 12px 18px 18px;
+                flex-direction: column-reverse;
+                align-items: stretch;
+            }
+
+            :global(.source-concept-confirm-btn),
+            :global(.source-concept-cancel-btn) {
+                width: 100%;
+            }
+
+            :global(.source-amortization-date-grid) {
+                grid-template-columns: 1fr;
+            }
+
+            :global(.source-amortization-swal-actions) {
+                padding: 12px 18px 18px;
+                flex-direction: column-reverse;
+                align-items: stretch;
+            }
+
+            :global(.source-amortization-confirm-btn),
+            :global(.source-amortization-cancel-btn) {
+                width: 100%;
+            }
+        }
+
+        :global(.prepaid-source-table) {
+            border-collapse: separate !important;
+            border-spacing: 0 !important;
+            min-width: 1450px;
+        }
+
+        /* STORE: primera columna fija */
+        :global(.prepaid-source-table .source-sticky-store) {
+            position: sticky !important;
+            left: 0 !important;
+            width: 84px !important;
+            min-width: 84px !important;
+            max-width: 84px !important;
+            box-sizing: border-box;
+            text-align: center;
+            z-index: 20;
+        }
+
+        /* ACTIONS: segunda columna fija */
+        :global(.prepaid-source-table .source-sticky-actions) {
+            position: sticky !important;
+            left: 84px !important;
+            width: 126px !important;
+            min-width: 126px !important;
+            max-width: 126px !important;
+            box-sizing: border-box;
+            z-index: 20;
+            box-shadow: 8px 0 12px -10px rgba(15, 35, 55, 0.75);
+        }
+
+        /* Encabezado */
+        :global(.prepaid-source-table thead .source-sticky-store),
+        :global(.prepaid-source-table thead .source-sticky-actions) {
+            background: #0d1123 !important;
+            color: #ffffff !important;
+            z-index: 35 !important;
+        }
+
+        /* Filas normales */
+        :global(.prepaid-source-table tbody .source-sticky-store),
+        :global(.prepaid-source-table tbody .source-sticky-actions) {
+            background: #ffffff !important;
+        }
+
+        /* Filas alternadas */
+        :global(
+            .prepaid-source-table tbody tr:nth-child(even) .source-sticky-store
+        ),
+        :global(
+            .prepaid-source-table
+                tbody
+                tr:nth-child(even)
+                .source-sticky-actions
+        ) {
+            background: #f5f8fc !important;
+        }
+
+        /* Hover */
+        :global(.prepaid-source-table tbody tr:hover .source-sticky-store),
+        :global(.prepaid-source-table tbody tr:hover .source-sticky-actions) {
+            background: #edf5ff !important;
+        }
+
+        /* Botones compactos */
+        :global(.source-row-actions) {
+            padding: 6px !important;
+            text-align: center;
+        }
+
+        :global(.source-row-action-group) {
+            display: flex !important;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+
+        :global(.source-action-btn) {
+            width: 34px !important;
+            min-width: 34px !important;
+            height: 34px !important;
+            padding: 0 !important;
+            border-radius: 9px;
+        }
+
+        :global(.source-action-btn span) {
+            display: none !important;
+        }
+    </style>
+
+    <script src="/js/config.js" is:inline></script>
+    <script
+        type="module"
+        src="/js/departments/property-management-prepaid.js?v=20260713-store-closeout-v2"
+    ></script>
+</DashboardLayout>

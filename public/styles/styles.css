@@ -613,72 +613,6 @@ th:focus{
     outline: none;
     background: var(--primary-light);
     box-shadow: inset 0 0 0 2px var(--primary);
-}/* =============================================
-   ALERTAS DEL SISTEMA
-============================================= */
-.swal2-container{
-    padding: 22px !important;
-    background: transparent !important;
-    backdrop-filter: none;
-}.swal2-container.swal2-center.swal2-backdrop-show{
-    background: rgba(8, 31, 51, .42) !important;
-    backdrop-filter: blur(3px);
-}.swal2-popup:not(.swal2-toast){
-    width: min(430px, calc(100vw - 32px)) !important;
-    padding: 0 0 22px !important;
-    overflow: hidden;
-    border: 1px solid #d7e1eb !important;
-    border-top: 4px solid #102a43 !important;
-    border-radius: 14px !important;
-    background: #fff !important;
-    box-shadow: 0 28px 70px -30px rgba(8, 31, 51, .72) !important;
-    font-family: 'Inter', sans-serif !important;
-}.swal2-popup:not(.swal2-toast) .swal2-icon{
-    margin: 28px auto 16px !important;
-    transform: scale(.86);
-}.swal2-popup:not(.swal2-toast) .swal2-title{
-    padding: 0 28px !important;
-    color: #102a43 !important;
-    font-family: 'Inter', sans-serif !important;
-    font-size: 24px !important;
-    font-weight: 600 !important;
-    letter-spacing: -.015em !important;
-    line-height: 1.2 !important;
-}.swal2-popup:not(.swal2-toast) .swal2-html-container{
-    margin: 10px 28px 0 !important;
-    color: #60758a !important;
-    font-size: 13px !important;
-    line-height: 1.65 !important;
-}.swal2-popup:not(.swal2-toast) .swal2-actions{
-    width: calc(100% - 56px) !important;
-    gap: 9px !important;
-    margin: 22px 28px 0 !important;
-}.swal2-popup:not(.swal2-toast) .swal2-actions button{
-    min-height: 40px !important;
-    margin: 0 !important;
-    padding: 0 16px !important;
-    border: 0 !important;
-    border-radius: 8px !important;
-    box-shadow: none !important;
-    font-family: 'Inter', sans-serif !important;
-    font-size: 11px !important;
-    font-weight: 800 !important;
-}.swal2-confirm{
-    background: #102a43 !important;
-    color: #fff !important;
-}.swal2-confirm:hover{
-    background: #081f33 !important;
-}.swal2-deny{
-    background: #355b7c !important;
-    color: #fff !important;
-}.swal2-deny:hover{
-    background: #274965 !important;
-}.swal2-cancel{
-    border: 1px solid #d5dee8 !important;
-    background: #edf2f7 !important;
-    color: #334e68 !important;
-}.swal2-cancel:hover{
-    background: #e3eaf1 !important;
 }.replacement-file-dialog{
     width: min(780px, calc(100vw - 48px)) !important;
     max-height: calc(100vh - 56px) !important;
@@ -866,58 +800,7 @@ th:focus{
     color: #b91c1c !important;
     font-size: 12px !important;
     font-weight: 800 !important;
-}.swal2-loader{
-    border-color: #102a43 transparent #102a43 transparent !important;
-}.swal2-timer-progress-bar{
-    background: #174a75 !important;
-}.swal2-popup.swal2-toast{
-    width: min(340px, calc(100vw - 28px)) !important;
-    max-width: min(380px, calc(100vw - 28px)) !important;
-    min-height: 64px !important;
-    padding: 13px 16px !important;
-    border: 1px solid #d7e1eb !important;
-    border-top: 3px solid #102a43 !important;
-    border-radius: 10px !important;
-    background: #fff !important;
-    box-shadow: 0 18px 38px -24px rgba(8, 31, 51, .72) !important;
-    font-family: 'Inter', sans-serif !important;
-}.swal2-toast .swal2-icon{
-    width: 32px !important;
-    min-width: 32px !important;
-    height: 32px !important;
-    margin: 0 10px 0 0 !important;
-    transform: scale(.72);
-}.swal2-toast .swal2-title{
-    margin: 0 !important;
-    padding: 0 !important;
-    color: #102a43 !important;
-    font-family: 'Inter', sans-serif !important;
-    font-size: 12px !important;
-    font-weight: 700 !important;
-    line-height: 1.45 !important;
-    text-align: left !important;
-}.swal2-toast .swal2-timer-progress-bar{
-    height: 2px !important;
-}.swal2-close{
-    color: #718096 !important;
-    font-size: 25px !important;
-}.swal2-close:hover{
-    color: #102a43 !important;
-}@media (max-width: 520px) {.swal2-container{
-        padding: 14px !important;
-    }.swal2-popup:not(.swal2-toast) .swal2-title{
-        padding: 0 20px !important;
-        font-size: 22px !important;
-    }.swal2-popup:not(.swal2-toast) .swal2-html-container{
-        margin-right: 20px !important;
-        margin-left: 20px !important;
-    }.swal2-popup:not(.swal2-toast) .swal2-actions{
-        width: calc(100% - 40px) !important;
-        margin-right: 20px !important;
-        margin-left: 20px !important;
-    }.swal2-popup:not(.swal2-toast) .swal2-actions button{
-        flex: 1 1 100%;
-    }.replacement-file-hero{
+}@media (max-width: 520px) {.replacement-file-hero{
         padding-right: 18px;
         padding-left: 18px;
     }.replacement-file-summary,
@@ -2522,21 +2405,10 @@ td{
 .popeyes-tab-btn{
         flex: 1 1 auto;
     }
-}#burgerKingTaxStoreDialog .bk-tax-swal-container,
-#burgerKingTaxStoreDialog .swal2-container{
-    z-index: 2147483647 !important;
 }#burgerKingTaxStoreDialog .bk-tax-swal-container{
     position: fixed !important;
     inset: 0 !important;
 }#burgerKingTaxStoreDialog .bk-tax-swal-popup{
-    z-index: 2147483647 !important;
-}#burgerKingTaxStoreDialog .swal2-container,
-#burgerKingTaxStoreDialog .bk-tax-swal-container{
-    z-index: 2147483647 !important;
-    position: fixed !important;
-    inset: 0 !important;
-}#burgerKingTaxStoreDialog .swal2-popup,
-#burgerKingTaxStoreDialog .bk-tax-swal-popup{
     z-index: 2147483647 !important;
 }/* =============================================
    UI POLISH SYSTEM
@@ -2738,17 +2610,6 @@ td{
     background: #fff;
     color: #173a59;
     font-weight: 900;
-}.swal2-popup:not(.swal2-toast){
-    width: min(480px, calc(100vw - 32px)) !important;
-    border-radius: 12px !important;
-    border-top-width: 5px !important;
-}.swal2-popup:not(.swal2-toast) .swal2-title{
-    font-size: 23px !important;
-}.swal2-popup:not(.swal2-toast) .swal2-actions{
-    justify-content: flex-end !important;
-}.swal2-popup:not(.swal2-toast) .swal2-actions button{
-    min-width: 104px !important;
-    font-size: 12px !important;
 }.action-buttons,
 .bk-tax-store-actions,
 .admin-session-actions{
@@ -2922,21 +2783,6 @@ dialog.bk-tax-store-dialog[open]{
 .bk-tax-store-form,
 .file-comparison-window-content{
     animation: appModalSoftIn .2s ease-out both;
-}.swal2-container.swal2-center.swal2-backdrop-show{
-    background: rgba(8, 31, 51, .56) !important;
-    backdrop-filter: blur(5px);
-    animation: appBackdropIn .18s ease-out both;
-}.swal2-popup:not(.swal2-toast){
-    border: 1px solid #d4dfeb !important;
-    border-top: 5px solid #102a43 !important;
-    border-radius: 12px !important;
-    box-shadow: 0 30px 80px -36px rgba(8, 31, 51, .72) !important;
-}.swal2-popup.swal2-show:not(.swal2-toast){
-    animation: appModalIn .22s cubic-bezier(.2, .8, .2, 1) both !important;
-}.swal2-popup.swal2-hide:not(.swal2-toast){
-    animation: none !important;
-}.swal2-popup:not(.swal2-toast) .swal2-title{
-    letter-spacing: 0 !important;
 }@media (max-width: 820px) {.department-pill span{
         display: none;
     }.header-user{
@@ -2945,33 +2791,6 @@ dialog.bk-tax-store-dialog[open]{
 }@media (max-width: 560px) {.department-pill{
         display: none;
     }
-}/* =============================================
-   SWEETALERT SAFETY + ENTERPRISE LOGIN
-============================================= */
-.swal2-container{
-    z-index: 3000 !important;
-}.swal2-container .swal2-popup{
-    pointer-events: auto !important;
-}.swal2-popup:not(.swal2-toast) .swal2-actions{
-    display: flex !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-    pointer-events: auto !important;
-}.swal2-popup:not(.swal2-toast) .swal2-actions:empty{
-    display: none !important;
-}.swal2-popup:not(.swal2-toast) .swal2-actions button{
-    align-items: center;
-    justify-content: center;
-    pointer-events: auto !important;
-}.swal2-popup:not(.swal2-toast) .swal2-actions button:not([style*="display: none"]){
-    display: inline-flex !important;
-}.swal2-popup:not(.swal2-toast) .swal2-actions button[style*="display: none"]{
-    display: none !important;
-}.swal2-popup:not(.swal2-toast) .swal2-actions button:not([disabled]){
-    opacity: 1 !important;
-    filter: none !important;
-}.swal2-popup:not(.swal2-toast) .swal2-actions button[disabled]{
-    opacity: .55 !important;
 }.login-screen{
     background:
         linear-gradient(rgba(16, 42, 67, .045) 1px, transparent 1px),
@@ -3309,44 +3128,6 @@ dialog.bk-tax-store-dialog[open]{
     }.login-copyright{
         margin-top: 34px;
     }
-}/* =============================================
-   ENTERPRISE ALERT REDESIGN
-============================================= */
-.swal2-container{
-    padding: 24px !important;
-    z-index: 3000 !important;
-}.swal2-container.swal2-backdrop-show,
-.swal2-container.swal2-center.swal2-backdrop-show{
-    background: rgba(8, 31, 51, 0.58) !important;
-    backdrop-filter: blur(5px);
-}.swal2-popup:not(.swal2-toast){
-    font-family: "Inter", sans-serif !important;
-}.swal2-popup:not(.swal2-toast):not(.replacement-file-dialog):not(.tb-tax-swal-popup):not(.py-tax-swal-popup):not(.bk-tax-swal-popup){
-    width: min(468px, calc(100vw - 32px)) !important;
-    padding: 0 0 24px !important;
-    overflow: hidden;
-    border: 1px solid #cfdbe8 !important;
-    border-top: 0 !important;
-    border-radius: 10px !important;
-    background:
-        linear-gradient(180deg, #ffffff 0%, #f8fafc 100%) !important;
-    box-shadow: 0 30px 84px -38px rgba(8, 31, 51, 0.76) !important;
-    color: #102a43 !important;
-    text-align: left !important;
-}.swal2-popup:not(.swal2-toast):not(.replacement-file-dialog):not(.tb-tax-swal-popup):not(.py-tax-swal-popup):not(.bk-tax-swal-popup)::before{
-    content: "";
-    display: block;
-    height: 5px;
-    background: linear-gradient(90deg, #102a43 0%, #2f6f9f 100%);
-}.swal2-popup.swal2-icon-success:not(.swal2-toast)::before{
-    background: linear-gradient(90deg, #102a43 0%, #287a5c 100%) !important;
-}.swal2-popup.swal2-icon-warning:not(.swal2-toast)::before,
-.swal2-popup.swal2-icon-question:not(.swal2-toast)::before{
-    background: linear-gradient(90deg, #102a43 0%, #b7791f 100%) !important;
-}.swal2-popup.swal2-icon-error:not(.swal2-toast)::before{
-    background: linear-gradient(90deg, #102a43 0%, #b42318 100%) !important;
-}.swal2-popup.swal2-icon-info:not(.swal2-toast)::before{
-    background: linear-gradient(90deg, #102a43 0%, #2f6f9f 100%) !important;
 }.replacement-file-dialog,
 .tb-tax-swal-popup,
 .py-tax-swal-popup,
@@ -3355,105 +3136,6 @@ dialog.bk-tax-store-dialog[open]{
     border-top-color: #102a43 !important;
     border-radius: 10px !important;
     box-shadow: 0 30px 84px -38px rgba(8, 31, 51, 0.76) !important;
-}.swal2-popup:not(.swal2-toast) .swal2-icon{
-    margin: 26px auto 14px !important;
-    transform: scale(0.78);
-    transform-origin: center;
-}.swal2-popup:not(.swal2-toast) .swal2-icon.swal2-success{
-    border-color: #287a5c !important;
-    color: #287a5c !important;
-}.swal2-popup:not(.swal2-toast) .swal2-success-line-tip,
-.swal2-popup:not(.swal2-toast) .swal2-success-line-long{
-    background-color: #287a5c !important;
-}.swal2-popup:not(.swal2-toast) .swal2-success-ring{
-    border-color: rgba(40, 122, 92, 0.28) !important;
-}.swal2-popup:not(.swal2-toast) .swal2-icon.swal2-warning,
-.swal2-popup:not(.swal2-toast) .swal2-icon.swal2-question{
-    border-color: #b7791f !important;
-    color: #b7791f !important;
-}.swal2-popup:not(.swal2-toast) .swal2-icon.swal2-error{
-    border-color: #b42318 !important;
-    color: #b42318 !important;
-}.swal2-popup:not(.swal2-toast) .swal2-x-mark-line-left,
-.swal2-popup:not(.swal2-toast) .swal2-x-mark-line-right{
-    background-color: #b42318 !important;
-}.swal2-popup:not(.swal2-toast) .swal2-icon.swal2-info{
-    border-color: #2f6f9f !important;
-    color: #2f6f9f !important;
-}.swal2-popup:not(.swal2-toast) .swal2-title{
-    padding: 0 30px !important;
-    color: #102a43 !important;
-    font-family: "Inter", sans-serif !important;
-    font-size: 24px !important;
-    font-weight: 700 !important;
-    letter-spacing: 0 !important;
-    line-height: 1.18 !important;
-    text-align: left !important;
-}.swal2-popup:not(.swal2-toast) .swal2-html-container{
-    margin: 10px 30px 0 !important;
-    color: #526a82 !important;
-    font-size: 13px !important;
-    line-height: 1.65 !important;
-    text-align: left !important;
-}.swal2-popup:not(.swal2-toast) .swal2-html-container b,
-.swal2-popup:not(.swal2-toast) .swal2-html-container strong{
-    color: #102a43 !important;
-    font-weight: 800 !important;
-}.swal2-popup:not(.swal2-toast) .swal2-actions{
-    width: calc(100% - 60px) !important;
-    justify-content: flex-end !important;
-    gap: 10px !important;
-    margin: 24px 30px 0 !important;
-}.swal2-popup:not(.swal2-toast) .swal2-actions button{
-    min-width: 112px !important;
-    min-height: 42px !important;
-    align-items: center;
-    justify-content: center;
-    margin: 0 !important;
-    padding: 0 18px !important;
-    border-radius: 6px !important;
-    box-shadow: none !important;
-    font-family: "Inter", sans-serif !important;
-    font-size: 12px !important;
-    font-weight: 800 !important;
-    letter-spacing: 0 !important;
-    transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease, transform 0.18s ease !important;
-}.swal2-popup:not(.swal2-toast) .swal2-actions button:not([style*="display: none"]){
-    display: inline-flex !important;
-}.swal2-popup:not(.swal2-toast) .swal2-actions button:hover:not(:disabled){
-    transform: translateY(-1px);
-}.swal2-confirm{
-    border: 1px solid #102a43 !important;
-    background: #102a43 !important;
-    color: #ffffff !important;
-}.swal2-confirm:hover{
-    border-color: #081f33 !important;
-    background: #081f33 !important;
-}.swal2-deny{
-    border: 1px solid #2f6f9f !important;
-    background: #2f6f9f !important;
-    color: #ffffff !important;
-}.swal2-deny:hover{
-    border-color: #255d87 !important;
-    background: #255d87 !important;
-}.swal2-cancel{
-    border: 1px solid #cfdbe8 !important;
-    background: #ffffff !important;
-    color: #334e68 !important;
-}.swal2-cancel:hover{
-    border-color: #aebfd0 !important;
-    background: #edf4f9 !important;
-    color: #102a43 !important;
-}.swal2-close{
-    width: 38px !important;
-    height: 38px !important;
-    border-radius: 6px !important;
-    color: #60758a !important;
-    font-size: 24px !important;
-    transition: background 0.18s ease, color 0.18s ease !important;
-}.swal2-close:hover{
-    background: #edf4f9 !important;
-    color: #102a43 !important;
 }.swal2-input,
 .swal2-textarea,
 .swal2-select{
@@ -3488,97 +3170,6 @@ dialog.bk-tax-store-dialog[open]{
     font-size: 12px !important;
     font-weight: 700 !important;
     text-align: left !important;
-}.swal2-loader{
-    border-color: #102a43 transparent #102a43 transparent !important;
-}.swal2-timer-progress-bar{
-    height: 3px !important;
-    background: #2f6f9f !important;
-}.swal2-popup.swal2-toast{
-    width: min(360px, calc(100vw - 28px)) !important;
-    max-width: min(380px, calc(100vw - 28px)) !important;
-    min-height: 68px !important;
-    padding: 14px 16px !important;
-    border: 1px solid #cfdbe8 !important;
-    border-left: 4px solid #102a43 !important;
-    border-radius: 8px !important;
-    background: #ffffff !important;
-    box-shadow: 0 20px 44px -26px rgba(8, 31, 51, 0.76) !important;
-    font-family: "Inter", sans-serif !important;
-}body.swal2-toast-shown .swal2-container,
-.swal2-container:has(.swal2-toast){
-    background: transparent !important;
-    backdrop-filter: none !important;
-    pointer-events: none !important;
-}body.swal2-toast-shown .swal2-container .swal2-popup,
-.swal2-container:has(.swal2-toast) .swal2-popup{
-    pointer-events: auto !important;
-}.swal2-popup.swal2-toast.swal2-icon-success{
-    border-left-color: #287a5c !important;
-}.swal2-popup.swal2-toast.swal2-icon-warning,
-.swal2-popup.swal2-toast.swal2-icon-question{
-    border-left-color: #b7791f !important;
-}.swal2-popup.swal2-toast.swal2-icon-error{
-    border-left-color: #b42318 !important;
-}.swal2-popup.swal2-toast.swal2-icon-info{
-    border-left-color: #2f6f9f !important;
-}.swal2-toast .swal2-icon{
-    margin: 0 10px 0 0 !important;
-    transform: scale(0.72);
-}.swal2-toast .swal2-title{
-    color: #102a43 !important;
-    font-family: "Inter", sans-serif !important;
-    font-size: 12px !important;
-    font-weight: 800 !important;
-    letter-spacing: 0 !important;
-    line-height: 1.45 !important;
-    text-align: left !important;
-}@media (max-width: 560px) {.swal2-container{
-        padding: 14px !important;
-    }.swal2-popup:not(.swal2-toast):not(.replacement-file-dialog):not(.tb-tax-swal-popup):not(.py-tax-swal-popup):not(.bk-tax-swal-popup){
-        width: min(100%, calc(100vw - 28px)) !important;
-    }.swal2-popup:not(.swal2-toast) .swal2-icon{
-        margin-right: auto !important;
-        margin-left: auto !important;
-    }.swal2-popup:not(.swal2-toast) .swal2-title{
-        padding-right: 22px !important;
-        padding-left: 22px !important;
-        font-size: 22px !important;
-    }.swal2-popup:not(.swal2-toast) .swal2-html-container,
-.swal2-input,
-.swal2-textarea,
-.swal2-select,
-.swal2-validation-message{
-        width: calc(100% - 44px) !important;
-        margin-right: 22px !important;
-        margin-left: 22px !important;
-    }.swal2-popup:not(.swal2-toast) .swal2-actions{
-        width: calc(100% - 44px) !important;
-        align-items: stretch !important;
-        flex-direction: column-reverse !important;
-        margin-right: 22px !important;
-        margin-left: 22px !important;
-    }.swal2-popup:not(.swal2-toast) .swal2-actions button{
-        width: 100% !important;
-    }
-}/* =============================================
-   CENTERED ALERT CONTENT
-============================================= */
-.swal2-popup:not(.swal2-toast):not(.replacement-file-dialog):not(.tb-tax-swal-popup):not(.py-tax-swal-popup):not(.bk-tax-swal-popup){
-    text-align: center !important;
-}.swal2-popup:not(.swal2-toast):not(.replacement-file-dialog):not(.tb-tax-swal-popup):not(.py-tax-swal-popup):not(.bk-tax-swal-popup) .swal2-icon{
-    margin-right: auto !important;
-    margin-left: auto !important;
-    transform-origin: center !important;
-}.swal2-popup:not(.swal2-toast):not(.replacement-file-dialog):not(.tb-tax-swal-popup):not(.py-tax-swal-popup):not(.bk-tax-swal-popup) .swal2-title,
-.swal2-popup:not(.swal2-toast):not(.replacement-file-dialog):not(.tb-tax-swal-popup):not(.py-tax-swal-popup):not(.bk-tax-swal-popup) .swal2-html-container,
-.swal2-popup:not(.swal2-toast):not(.replacement-file-dialog):not(.tb-tax-swal-popup):not(.py-tax-swal-popup):not(.bk-tax-swal-popup) .swal2-validation-message{
-    text-align: center !important;
-}.swal2-popup:not(.swal2-toast):not(.replacement-file-dialog):not(.tb-tax-swal-popup):not(.py-tax-swal-popup):not(.bk-tax-swal-popup) .swal2-actions{
-    justify-content: center !important;
-}.swal2-popup:not(.swal2-toast):not(.replacement-file-dialog):not(.tb-tax-swal-popup):not(.py-tax-swal-popup):not(.bk-tax-swal-popup) .swal2-input,
-.swal2-popup:not(.swal2-toast):not(.replacement-file-dialog):not(.tb-tax-swal-popup):not(.py-tax-swal-popup):not(.bk-tax-swal-popup) .swal2-textarea,
-.swal2-popup:not(.swal2-toast):not(.replacement-file-dialog):not(.tb-tax-swal-popup):not(.py-tax-swal-popup):not(.bk-tax-swal-popup) .swal2-select{
-    text-align: center !important;
 }/* =============================================
    ENTERPRISE UI CONSOLIDATION
 ============================================= */
@@ -3591,33 +3182,6 @@ dialog.bk-tax-store-dialog[open]{
     --enterprise-soft: #f6f9fc;
     --enterprise-panel: #ffffff;
     --enterprise-shadow: 0 18px 42px -36px rgba(8, 31, 51, 0.58);
-}body,
-button,
-input,
-select,
-textarea,
-table,
-h1,
-h2,
-h3,
-h4,
-h5,
-h6,
-p,
-small,
-strong,
-label,
-.main,
-.page-container,
-.login-screen,
-.login-screen :not(i):not([class^="fa-"]):not([class*=" fa-"]),
-.dashboard-page :not(i):not([class^="fa-"]):not([class*=" fa-"]),
-.admin-dashboard-page :not(i):not([class^="fa-"]):not([class*=" fa-"]),
-.comparison-history-page :not(i):not([class^="fa-"]):not([class*=" fa-"]),
-.documents-page :not(i):not([class^="fa-"]):not([class*=" fa-"]),
-.store-card :not(i):not([class^="fa-"]):not([class*=" fa-"]),
-.swal2-popup :not(i):not([class^="fa-"]):not([class*=" fa-"]){
-    font-family: var(--font-ui) !important;
 }h1,
 h2,
 h3,
@@ -3662,23 +3226,6 @@ h3,
 .bk-tax-store-header h3{
     color: var(--enterprise-ink) !important;
     font-weight: 800 !important;
-}.btn,
-button,
-.login-submit,
-.swal2-popup:not(.swal2-toast) .swal2-actions button{
-    border-radius: 6px !important;
-}.btn-primary,
-.login-submit,
-.swal2-confirm,
-.admin-db-count,
-.department-pill strong{
-    background: var(--enterprise-ink) !important;
-    border-color: var(--enterprise-ink) !important;
-}.btn-primary:hover,
-.login-submit:hover:not(:disabled),
-.swal2-confirm:hover{
-    background: #081f33 !important;
-    border-color: #081f33 !important;
 }.admin-table th,
 .admin-db-preview th{
     background: var(--enterprise-ink) !important;
@@ -3695,12 +3242,6 @@ button,
 }.login-brand-message h1{
     font-size: 44px !important;
     line-height: 1.05 !important;
-}.login-header h2,
-.swal2-popup:not(.swal2-toast) .swal2-title{
-    font-weight: 800 !important;
-}.swal2-popup:not(.swal2-toast):not(.replacement-file-dialog):not(.tb-tax-swal-popup):not(.py-tax-swal-popup):not(.bk-tax-swal-popup){
-    border-radius: 8px !important;
-    box-shadow: 0 26px 72px -38px rgba(8, 31, 51, 0.78) !important;
 }@media (max-width: 560px) {.login-brand-message h1{
         font-size: 34px !important;
     }
@@ -4083,33 +3624,12 @@ button,
     }.profile-crop-stage{
         width: min(240px, 100%);
     }
-}/* Modal contrast pass */
-.modal-body,
-.modal-footer,
-.document-detail-modal,
-.document-preview-modal,
-.comparison-detail-modal,
-.profile-crop-dialog,
-.swal2-popup{
-    color: #173a59;
-}.modal-body p,
-.modal-body small,
-.modal-footer,
-.document-detail-modal p,
-.document-preview-modal p,
-.comparison-detail-modal p,
-.profile-crop-dialog small,
-.profile-crop-dialog label,
-.swal2-html-container{
-    color: #415a70 !important;
 }.modal-body .form-label,
 .modal-body label,
 .profile-crop-header span,
 .profile-crop-controls label,
 .swal2-input-label{
     color: #344f67 !important;
-}.swal2-title{
-    color: #102a43 !important;
 }.modal-body .form-control,
 .modal-body .form-input,
 .modal-body textarea,
@@ -4852,71 +4372,6 @@ button,
         width: 100%;
         justify-content: center;
     }
-}/* =============================================
-   SWEETALERT2 SUCCESS ICON - FINAL FIX
-   Quita el doble circulo/artefactos internos del icono success.
-   Mantener este bloque al final del CSS.
-============================================= */
-html body .swal2-container .swal2-popup.swal2-modal:not(.swal2-toast) .swal2-icon.swal2-success,
-html body .swal2-container .swal2-popup:not(.swal2-toast) .swal2-icon.swal2-success{
-    position: relative !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    width: 58px !important;
-    height: 58px !important;
-    min-width: 58px !important;
-    min-height: 58px !important;
-    margin: 30px auto 18px !important;
-    border: 3px solid rgba(15, 118, 110, 0.28) !important;
-    border-radius: 999px !important;
-    color: #0f766e !important;
-    line-height: 58px !important;
-    transform: none !important;
-    transform-origin: center !important;
-    overflow: hidden !important;
-    animation: none !important;
-    box-sizing: border-box !important;
-}html body .swal2-container .swal2-popup.swal2-modal:not(.swal2-toast) .swal2-icon.swal2-success [class^="swal2-success-circular-line"],
-html body .swal2-container .swal2-popup.swal2-modal:not(.swal2-toast) .swal2-icon.swal2-success .swal2-success-ring,
-html body .swal2-container .swal2-popup.swal2-modal:not(.swal2-toast) .swal2-icon.swal2-success .swal2-success-fix,
-html body .swal2-container .swal2-popup:not(.swal2-toast) .swal2-icon.swal2-success [class^="swal2-success-circular-line"],
-html body .swal2-container .swal2-popup:not(.swal2-toast) .swal2-icon.swal2-success .swal2-success-ring,
-html body .swal2-container .swal2-popup:not(.swal2-toast) .swal2-icon.swal2-success .swal2-success-fix{
-    display: none !important;
-    visibility: hidden !important;
-    opacity: 0 !important;
-    width: 0 !important;
-    height: 0 !important;
-    border: 0 !important;
-    background: transparent !important;
-    animation: none !important;
-}html body .swal2-container .swal2-popup.swal2-modal:not(.swal2-toast) .swal2-icon.swal2-success .swal2-success-line-tip,
-html body .swal2-container .swal2-popup.swal2-modal:not(.swal2-toast) .swal2-icon.swal2-success .swal2-success-line-long,
-html body .swal2-container .swal2-popup:not(.swal2-toast) .swal2-icon.swal2-success .swal2-success-line-tip,
-html body .swal2-container .swal2-popup:not(.swal2-toast) .swal2-icon.swal2-success .swal2-success-line-long{
-    position: absolute !important;
-    display: block !important;
-    height: 4px !important;
-    border-radius: 999px !important;
-    background-color: #0f766e !important;
-    z-index: 2 !important;
-    animation: none !important;
-}html body .swal2-container .swal2-popup.swal2-modal:not(.swal2-toast) .swal2-icon.swal2-success .swal2-success-line-tip,
-html body .swal2-container .swal2-popup:not(.swal2-toast) .swal2-icon.swal2-success .swal2-success-line-tip{
-    top: 32px !important;
-    left: 14px !important;
-    width: 18px !important;
-    transform: rotate(45deg) !important;
-}html body .swal2-container .swal2-popup.swal2-modal:not(.swal2-toast) .swal2-icon.swal2-success .swal2-success-line-long,
-html body .swal2-container .swal2-popup:not(.swal2-toast) .swal2-icon.swal2-success .swal2-success-line-long{
-    top: 27px !important;
-    left: 24px !important;
-    width: 34px !important;
-    transform: rotate(-45deg) !important;
-}/* System error detail custom modal. Independent from SweetAlert. */
-body.system-error-detail-open{
-    overflow: hidden;
 }.system-error-detail-overlay{
     position: fixed;
     inset: 0;

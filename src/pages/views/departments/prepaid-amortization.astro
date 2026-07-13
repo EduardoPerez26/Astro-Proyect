@@ -9,17 +9,28 @@ import DashboardLayout from "../../../layouts/DashboardLayout.astro";
                 <span class="prepaid-eyebrow">Property Management</span>
                 <h1>Prepaid Bills</h1>
                 <p>
-                    Import paid PTAX bill rows from the 246000 GL report, generate the monthly amortization schedule,
-                    then upload each monthly GL to validate expected amounts against actual postings.
+                    Import paid PTAX bill rows from the 246000 GL report,
+                    generate the monthly amortization schedule, then upload each
+                    monthly GL to validate expected amounts against actual
+                    postings.
                 </p>
             </div>
 
             <div class="prepaid-actions">
-                <button type="button" class="btn-secondary" id="refreshSchedulesBtn">
+                <button
+                    type="button"
+                    class="btn-secondary"
+                    id="refreshSchedulesBtn"
+                >
                     <i class="fa-solid fa-rotate" aria-hidden="true"></i>
                     Refresh
                 </button>
-                <button type="button" class="btn-primary" id="exportScheduleBtn" disabled>
+                <button
+                    type="button"
+                    class="btn-primary"
+                    id="exportScheduleBtn"
+                    disabled
+                >
                     <i class="fa-solid fa-file-excel" aria-hidden="true"></i>
                     Download Schedule
                 </button>
@@ -51,60 +62,105 @@ import DashboardLayout from "../../../layouts/DashboardLayout.astro";
 
         <div class="prepaid-upload-grid">
             <section class="prepaid-panel prepaid-upload-panel">
-            <div class="panel-header stackable">
-                <div>
-                    <h2>Upload paid bill source</h2>
-                    <p>
-                        The system reads the paid bill rows and uses the
-                        amortization period to calculate the monthly adjustment schedule.
-                    </p>
+                <div class="panel-header stackable">
+                    <div>
+                        <h2>Upload paid bill source</h2>
+                        <p>
+                            The system reads the paid bill rows and uses the
+                            amortization period to calculate the monthly
+                            adjustment schedule.
+                        </p>
+                    </div>
                 </div>
-            </div>
 
-            <form id="billSourceUploadForm" class="prepaid-form prepaid-source-form" enctype="multipart/form-data">
-                <label class="wide-field file-drop" data-file-drop>
-                    <span class="file-drop-heading">
-                        <i class="fa-solid fa-cloud-arrow-up" aria-hidden="true"></i>
-                        Paid bill GL source
-                    </span>
-                    
-                    <input type="file" name="billSourceFile" accept=".xlsx,.xls,.csv" required />
-                    <span class="file-drop-selection">
-                        <span class="file-drop-name">No file selected</span>
-                        <button type="button" class="file-remove-btn" data-remove-file aria-label="Remove selected file" title="Remove selected file">
-                            <i class="fa-solid fa-trash" aria-hidden="true"></i>
-                        </button>
-                    </span>
-                </label>
-            </form>
-        </section>
+                <form
+                    id="billSourceUploadForm"
+                    class="prepaid-form prepaid-source-form"
+                    enctype="multipart/form-data"
+                >
+                    <label class="wide-field file-drop" data-file-drop>
+                        <span class="file-drop-heading">
+                            <i
+                                class="fa-solid fa-cloud-arrow-up"
+                                aria-hidden="true"></i>
+                            Paid bill GL source
+                        </span>
+
+                        <input
+                            type="file"
+                            name="billSourceFile"
+                            accept=".xlsx,.xls,.csv"
+                            required
+                        />
+                        <span class="file-drop-selection">
+                            <span class="file-drop-name">No file selected</span>
+                            <button
+                                type="button"
+                                class="file-remove-btn"
+                                data-remove-file
+                                aria-label="Remove selected file"
+                                title="Remove selected file"
+                            >
+                                <i class="fa-solid fa-trash" aria-hidden="true"
+                                ></i>
+                            </button>
+                        </span>
+                    </label>
+                </form>
+            </section>
 
             <section class="prepaid-panel prepaid-gl-panel">
-            <div class="panel-header stackable">
-                <div>
-                    <h2>Upload monthly GL</h2>
-                    <p>After generating the schedule, upload the monthly GL to validate expected vs actual amounts by store.</p>
+                <div class="panel-header stackable">
+                    <div>
+                        <h2>Upload monthly GL</h2>
+                        <p>
+                            After generating the schedule, upload the monthly GL
+                            to validate expected vs actual amounts by store.
+                        </p>
+                    </div>
                 </div>
-            </div>
 
-            <form id="glUploadForm" class="prepaid-form prepaid-gl-form" enctype="multipart/form-data">
-                <input type="hidden" id="glScheduleSelect" name="schedule_id" required />
+                <form
+                    id="glUploadForm"
+                    class="prepaid-form prepaid-gl-form"
+                    enctype="multipart/form-data"
+                >
+                    <input
+                        type="hidden"
+                        id="glScheduleSelect"
+                        name="schedule_id"
+                        required
+                    />
 
-                <label class="wide-field file-drop" data-file-drop>
-                    <span class="file-drop-heading">
-                        <i class="fa-solid fa-file-arrow-up" aria-hidden="true"></i>
-                        Monthly GL file
-                    </span>
-                    
-                    <input type="file" name="glFile" accept=".xlsx,.xls,.csv" required />
-                    <span class="file-drop-selection">
-                        <span class="file-drop-name">No file selected</span>
-                        <button type="button" class="file-remove-btn" data-remove-file aria-label="Remove selected file" title="Remove selected file">
-                            <i class="fa-solid fa-trash" aria-hidden="true"></i>
-                        </button>
-                    </span>
-                </label>
-            </form>
+                    <label class="wide-field file-drop" data-file-drop>
+                        <span class="file-drop-heading">
+                            <i
+                                class="fa-solid fa-file-arrow-up"
+                                aria-hidden="true"></i>
+                            Monthly GL file
+                        </span>
+
+                        <input
+                            type="file"
+                            name="glFile"
+                            accept=".xlsx,.xls,.csv"
+                            required
+                        />
+                        <span class="file-drop-selection">
+                            <span class="file-drop-name">No file selected</span>
+                            <button
+                                type="button"
+                                class="file-remove-btn"
+                                data-remove-file
+                                aria-label="Remove selected file"
+                                title="Remove selected file"
+                            >
+                                <i class="fa-solid fa-trash" aria-hidden="true"
+                                ></i>
+                            </button>
+                        </span>
+                    </label>
+                </form>
             </section>
         </div>
 
@@ -112,36 +168,64 @@ import DashboardLayout from "../../../layouts/DashboardLayout.astro";
             <div class="panel-header stackable">
                 <div>
                     <h2 id="selectedScheduleTitle">Schedule Detail</h2>
-                    <p id="selectedScheduleSubtitle">Select a schedule to load source rows.</p>
+                    <p id="selectedScheduleSubtitle">
+                        Select a schedule to load source rows.
+                    </p>
                 </div>
 
                 <div class="prepaid-detail-actions source-review-actions">
-                    <button type="button" class="btn-secondary hidden" id="addSourceRowBtn" disabled>
+                    <button
+                        type="button"
+                        class="btn-secondary hidden"
+                        id="addSourceRowBtn"
+                        disabled
+                    >
                         <i class="fa-solid fa-plus" aria-hidden="true"></i>
                         Add Concept
                     </button>
-                    <button type="button" class="btn-primary hidden" id="generateScheduleBtn" disabled>
-                        <i class="fa-solid fa-calculator" aria-hidden="true"></i>
+                    <button
+                        type="button"
+                        class="btn-primary hidden"
+                        id="generateScheduleBtn"
+                        disabled
+                    >
+                        <i class="fa-solid fa-calculator" aria-hidden="true"
+                        ></i>
                         Generate Schedule
                     </button>
                 </div>
             </div>
 
             <div class="prepaid-tabs" role="tablist">
-                <button type="button" class="tab-button active" data-tab="source">Source Rows</button>
-                <button type="button" class="tab-button" data-tab="schedule">Generated Schedule</button>
-                <button type="button" class="tab-button" data-tab="comparison">GL Validation</button>
-                <button type="button" class="tab-button" data-tab="differences">Differences</button>
+                <button
+                    type="button"
+                    class="tab-button active"
+                    data-tab="source">Source Rows</button
+                >
+                <button type="button" class="tab-button" data-tab="schedule"
+                    >Generated Schedule</button
+                >
+                <button type="button" class="tab-button" data-tab="comparison"
+                    >GL Validation</button
+                >
+                <button type="button" class="tab-button" data-tab="differences"
+                    >Differences</button
+                >
             </div>
 
             <div id="sourceTab">
                 <div class="source-review-bar">
                     <div>
                         <strong>Review before generating</strong>
-                        <span id="sourceReviewStatus">Upload a file to review its records before generating.</span>
+                        <span id="sourceReviewStatus"
+                            >Upload a file to review its records before
+                            generating.</span
+                        >
                     </div>
                     <small>
-                        Edit the amortization period for each payment, remove exceptions, or add manual concepts before generating.
+                        Edit the original amortization period, apply a store
+                        closeout to accelerate the remaining balance, remove
+                        exceptions, or add manual concepts before generating.
                     </small>
                 </div>
 
@@ -149,8 +233,8 @@ import DashboardLayout from "../../../layouts/DashboardLayout.astro";
                     <table class="prepaid-table prepaid-source-table">
                         <thead>
                             <tr>
-                                <th>Row</th>
-                                <th>Store</th>
+                                <th class="source-sticky-store">Store</th>
+                                <th class="source-sticky-actions">Actions</th>
                                 <th>Concept / Payee</th>
                                 <th>Doc</th>
                                 <th>Date</th>
@@ -158,11 +242,23 @@ import DashboardLayout from "../../../layouts/DashboardLayout.astro";
                                 <th>Amount Paid</th>
                                 <th>Amortization</th>
                                 <th>Memo</th>
-                                <th>Actions</th>
                             </tr>
                         </thead>
+
+                            <tbody id="sourceRows">
+                                <tr>
+                                    <td colspan="9" class="empty-cell">
+                                        No source bills loaded.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </thead>
                         <tbody id="sourceRows">
-                            <tr><td colspan="10" class="empty-cell">No source bills loaded.</td></tr>
+                            <tr
+                                ><td colspan="10" class="empty-cell"
+                                    >No source bills loaded.</td
+                                ></tr
+                            >
                         </tbody>
                     </table>
                 </div>
@@ -201,14 +297,27 @@ import DashboardLayout from "../../../layouts/DashboardLayout.astro";
                             </tr>
                         </thead>
                         <tbody id="scheduleRows">
-                            <tr><td colspan="25" class="empty-cell">No generated amortization yet.</td></tr>
+                            <tr
+                                ><td colspan="25" class="empty-cell"
+                                    >No generated amortization yet.</td
+                                ></tr
+                            >
                         </tbody>
                     </table>
                 </div>
 
-                <div class="prepaid-table-footer hidden" id="saveScheduleFooter">
-                    <button type="button" class="btn-primary" id="saveScheduleBtn" disabled>
-                        <i class="fa-solid fa-floppy-disk" aria-hidden="true"></i>
+                <div
+                    class="prepaid-table-footer hidden"
+                    id="saveScheduleFooter"
+                >
+                    <button
+                        type="button"
+                        class="btn-primary"
+                        id="saveScheduleBtn"
+                        disabled
+                    >
+                        <i class="fa-solid fa-floppy-disk" aria-hidden="true"
+                        ></i>
                         Save Schedule
                     </button>
                 </div>
@@ -229,7 +338,11 @@ import DashboardLayout from "../../../layouts/DashboardLayout.astro";
                         </tr>
                     </thead>
                     <tbody id="comparisonRows">
-                        <tr><td colspan="8" class="empty-cell">No validation loaded.</td></tr>
+                        <tr
+                            ><td colspan="8" class="empty-cell"
+                                >No validation loaded.</td
+                            ></tr
+                        >
                     </tbody>
                 </table>
             </div>
@@ -249,14 +362,16 @@ import DashboardLayout from "../../../layouts/DashboardLayout.astro";
                         </tr>
                     </thead>
                     <tbody id="differenceRows">
-                        <tr><td colspan="8" class="empty-cell">No differences loaded.</td></tr>
+                        <tr
+                            ><td colspan="8" class="empty-cell"
+                                >No differences loaded.</td
+                            ></tr
+                        >
                     </tbody>
                 </table>
             </div>
         </section>
     </main>
-
-
 
     <style>
         .source-review-actions {
@@ -335,7 +450,12 @@ import DashboardLayout from "../../../layouts/DashboardLayout.astro";
             font-weight: 800;
             line-height: 1;
             cursor: pointer;
-            transition: border-color 160ms ease, background 160ms ease, color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+            transition:
+                border-color 160ms ease,
+                background 160ms ease,
+                color 160ms ease,
+                box-shadow 160ms ease,
+                transform 160ms ease;
         }
 
         :global(.source-action-btn i) {
@@ -648,7 +768,9 @@ import DashboardLayout from "../../../layouts/DashboardLayout.astro";
             box-shadow: 0 26px 60px rgba(15, 23, 42, 0.22);
         }
 
-        :global(.swal2-popup.source-concept-swal .swal2-title) {
+        :global(
+            .swal2-container .swal2-popup.source-concept-swal .swal2-title
+        ) {
             margin: 0;
             padding: 22px 28px 6px;
             color: #10233c;
@@ -756,7 +878,10 @@ import DashboardLayout from "../../../layouts/DashboardLayout.astro";
             font-size: 13px;
             line-height: 1.35;
             box-shadow: inset 0 1px 1px rgba(16, 35, 60, 0.03);
-            transition: border-color 160ms ease, box-shadow 160ms ease, background 160ms ease;
+            transition:
+                border-color 160ms ease,
+                box-shadow 160ms ease,
+                background 160ms ease;
         }
 
         :global(.source-concept-modal-body .swal2-input) {
@@ -808,7 +933,12 @@ import DashboardLayout from "../../../layouts/DashboardLayout.astro";
             font-size: 13px;
             font-weight: 900;
             cursor: pointer;
-            transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease, border-color 160ms ease, color 160ms ease;
+            transition:
+                transform 160ms ease,
+                box-shadow 160ms ease,
+                background 160ms ease,
+                border-color 160ms ease,
+                color 160ms ease;
         }
 
         :global(.source-concept-confirm-btn) {
@@ -865,7 +995,9 @@ import DashboardLayout from "../../../layouts/DashboardLayout.astro";
                 border-radius: 17px;
             }
 
-            :global(.swal2-popup.source-concept-swal .swal2-title) {
+            :global(
+                .swal2-container .swal2-popup.source-concept-swal .swal2-title
+            ) {
                 padding: 20px 18px 6px;
                 font-size: 23px;
             }
@@ -913,8 +1045,200 @@ import DashboardLayout from "../../../layouts/DashboardLayout.astro";
                 width: 100%;
             }
         }
+
+        :global(.prepaid-source-table) {
+            border-collapse: separate !important;
+            border-spacing: 0 !important;
+            min-width: 1450px;
+        }
+
+        /* STORE: primera columna fija */
+        :global(.prepaid-source-table .source-sticky-store) {
+            position: sticky !important;
+            left: 0 !important;
+            width: 84px !important;
+            min-width: 84px !important;
+            max-width: 84px !important;
+            box-sizing: border-box;
+            text-align: center;
+            z-index: 20;
+        }
+
+        /* ACTIONS: segunda columna fija */
+        :global(.prepaid-source-table .source-sticky-actions) {
+            position: sticky !important;
+            left: 84px !important;
+            width: 126px !important;
+            min-width: 126px !important;
+            max-width: 126px !important;
+            box-sizing: border-box;
+            z-index: 20;
+            box-shadow: 8px 0 12px -10px rgba(15, 35, 55, 0.75);
+        }
+
+        /* Encabezado */
+        :global(.prepaid-source-table thead .source-sticky-store),
+        :global(.prepaid-source-table thead .source-sticky-actions) {
+            background: #0d1123 !important;
+            color: #ffffff !important;
+            z-index: 35 !important;
+        }
+
+        /* Filas normales */
+        :global(.prepaid-source-table tbody .source-sticky-store),
+        :global(.prepaid-source-table tbody .source-sticky-actions) {
+            background: #ffffff !important;
+        }
+
+        /* Filas alternadas */
+        :global(
+            .prepaid-source-table tbody tr:nth-child(even) .source-sticky-store
+        ),
+        :global(
+            .prepaid-source-table
+                tbody
+                tr:nth-child(even)
+                .source-sticky-actions
+        ) {
+            background: #f5f8fc !important;
+        }
+
+        /* Hover */
+        :global(.prepaid-source-table tbody tr:hover .source-sticky-store),
+        :global(.prepaid-source-table tbody tr:hover .source-sticky-actions) {
+            background: #edf5ff !important;
+        }
+
+        /* Botones compactos */
+        :global(.source-row-actions) {
+            padding: 6px !important;
+            text-align: center;
+        }
+
+        :global(.source-row-action-group) {
+            display: flex !important;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+
+        :global(.source-action-btn) {
+            width: 34px !important;
+            min-width: 34px !important;
+            height: 34px !important;
+            padding: 0 !important;
+            border-radius: 9px;
+        }
+
+        :global(.source-action-btn span) {
+            display: none !important;
+        }
+    
+
+        /* XBFS PREPAID SOURCE STATUS FIX V5 */
+        :global(.source-store-stack) {
+            display: grid;
+            gap: 4px;
+            align-items: center;
+            justify-items: start;
+            line-height: 1.15;
+        }
+
+        :global(.source-store-stack > strong) {
+            color: #0d3157;
+            font-size: 12px;
+            font-weight: 900;
+        }
+
+        :global(.source-store-status) {
+            display: inline-flex;
+            align-items: center;
+            width: max-content;
+            max-width: 100%;
+            padding: 3px 7px;
+            border-radius: 999px;
+            font-size: 8px;
+            font-weight: 950;
+            letter-spacing: .03em;
+            line-height: 1;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+
+        :global(.source-store-status.closeout) {
+            border: 1px solid #fdba74;
+            background: #fff7ed;
+            color: #9a3412;
+        }
+
+        :global(.source-store-status.custom) {
+            border: 1px solid #bfdbfe;
+            background: #eff6ff;
+            color: #1d4f91;
+        }
+
+        :global(.source-period-badge.closeout) {
+            gap: 4px;
+            border: 1px solid #fdba74;
+            background: #fff1e6;
+            color: #9a3412;
+        }
+
+        :global(.source-period-badge.custom) {
+            gap: 4px;
+        }
+
+        :global(.source-closeout-note) {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            width: max-content;
+            max-width: 100%;
+            margin-top: 2px;
+            padding: 5px 8px;
+            border: 1px solid #fed7aa;
+            border-radius: 8px;
+            background: #fff7ed;
+            color: #9a3412;
+            font-size: 9px;
+            font-style: normal;
+            font-weight: 850;
+            line-height: 1.25;
+            white-space: normal;
+        }
+
+        :global(.prepaid-source-table tbody tr.source-row-closeout > td) {
+            border-top-color: #fed7aa;
+            border-bottom-color: #fed7aa;
+        }
+
+        :global(.prepaid-source-table tbody tr.source-row-closeout .source-sticky-store),
+        :global(.prepaid-source-table tbody tr.source-row-closeout .source-sticky-actions) {
+            background: #fffaf5 !important;
+        }
+
+        :global(.prepaid-source-table tbody tr.source-row-custom .source-sticky-store),
+        :global(.prepaid-source-table tbody tr.source-row-custom .source-sticky-actions) {
+            background: #f7fbff !important;
+        }
+
+        :global(.prepaid-source-table .source-sticky-store) {
+            width: 92px !important;
+            min-width: 92px !important;
+            max-width: 92px !important;
+            padding: 8px 10px !important;
+            text-align: left !important;
+        }
+
+        :global(.prepaid-source-table .source-sticky-actions) {
+            left: 92px !important;
+        }
+
     </style>
 
     <script src="/js/config.js" is:inline></script>
-    <script type="module" src="/js/departments/property-management-prepaid.js?v=20260713-save-schedule-choice"></script>
+    <script
+        type="module"
+        src="/js/departments/property-management-prepaid.js?v=20260713-store-closeout-v2"
+    ></script>
 </DashboardLayout>

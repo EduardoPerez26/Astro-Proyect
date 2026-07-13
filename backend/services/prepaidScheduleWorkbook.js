@@ -2,7 +2,11 @@ const fs = require('fs');
 const path = require('path');
 const ExcelJS = require('exceljs');
 
-const EXPORT_DIR = path.join(__dirname, '..', 'uploads', 'prepaid-schedules');
+const uploadRoot = process.env.PREPAID_SCHEDULE_UPLOAD_DIR
+    || (process.env.UPLOAD_FOLDER
+        ? path.resolve(__dirname, '..', process.env.UPLOAD_FOLDER)
+        : path.join(__dirname, '..', 'uploads'));
+const EXPORT_DIR = path.join(uploadRoot, 'prepaid-schedules');
 
 const COLORS = {
     navy: '336699',
@@ -20,6 +24,7 @@ const COLORS = {
 
 function ensureExportDir() {
     fs.mkdirSync(EXPORT_DIR, { recursive: true });
+    fs.accessSync(EXPORT_DIR, fs.constants.W_OK);
 }
 
 function safeFilePart(value, fallback = 'prepaid-schedule') {
@@ -33,10 +38,15 @@ function safeFilePart(value, fallback = 'prepaid-schedule') {
 }
 
 function getScheduleExportPath(schedule) {
-    ensureExportDir();
     const title = safeFilePart(schedule?.title);
     const id = Number(schedule?.id || 0);
     return path.join(EXPORT_DIR, `${title}-${id}.xlsx`);
+}
+
+function getScheduleExportFilename(schedule) {
+    const title = safeFilePart(schedule?.title);
+    const id = Number(schedule?.id || 0);
+    return `${title}-${id}.xlsx`;
 }
 
 function asDate(value) {
@@ -136,6 +146,17 @@ function getScheduleEntity(schedule) {
     return metadata.entity || schedule?.brand || 'QCJ';
 }
 
+function getBillEntity(schedule, bill) {
+    return bill?.entity_code || bill?.entity || getScheduleEntity(schedule);
+}
+
+function compareBillsForSchedule(schedule) {
+    return (a, b) => String(getBillEntity(schedule, a)).localeCompare(String(getBillEntity(schedule, b)), undefined, { numeric: true, sensitivity: 'base' })
+        || String(a.store_number || '').localeCompare(String(b.store_number || ''), undefined, { numeric: true, sensitivity: 'base' })
+        || String(a.payee || '').localeCompare(String(b.payee || ''), undefined, { sensitivity: 'base' })
+        || String(a.doc_number || '').localeCompare(String(b.doc_number || ''), undefined, { numeric: true, sensitivity: 'base' });
+}
+
 function displayNegativeAmount(value) {
     const amount = Math.abs(money(value));
     return amount ? -amount : 0;
@@ -170,7 +191,6 @@ function buildScheduleSheet(workbook, schedule, bills, months) {
     styleHeaderRow(headerRow);
 
     const scheduleYear = Number(schedule.schedule_year || new Date().getFullYear());
-    const entity = getScheduleEntity(schedule);
     const monthsByBill = new Map();
     for (const row of months) {
         const id = Number(row.bill_id);
@@ -179,7 +199,9 @@ function buildScheduleSheet(workbook, schedule, bills, months) {
     }
 
     const storeTotals = new Map();
-    for (const bill of bills) {
+    const sortedBills = [...bills].sort(compareBillsForSchedule(schedule));
+
+    for (const bill of sortedBills) {
         const billMonths = monthsByBill.get(Number(bill.id)) || [];
         const yearAmortization = billMonths
             .filter(month => Number(month.period_year) === scheduleYear)
@@ -190,7 +212,22 @@ function buildScheduleSheet(workbook, schedule, bills, months) {
     }
 
     let currentRow = headerRowNumber + 1;
-    for (const bill of bills) {
+    let previousEntity = null;
+    for (const bill of sortedBills) {
+        const entity = getBillEntity(schedule, bill);
+        if (entity !== previousEntity) {
+            const entityRow = sheet.getRow(currentRow);
+            entityRow.getCell(1).value = `Entity: ${entity}`;
+            sheet.mergeCells(currentRow, 1, currentRow, headers.length);
+            entityRow.eachCell({ includeEmpty: true }, cell => {
+                cell.font = { name: 'Verdana', size: 10, bold: true, color: { argb: COLORS.navy } };
+                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLORS.light } };
+                cell.border = border('D9D9D9');
+            });
+            previousEntity = entity;
+            currentRow += 1;
+        }
+
         const billMonths = monthsByBill.get(Number(bill.id)) || [];
         const monthValues = Array.from({ length: 12 }, (_, index) => {
             const match = billMonths.find(month => Number(month.period_year) === scheduleYear && Number(month.period_month) === index + 1);
@@ -205,6 +242,7 @@ function buildScheduleSheet(workbook, schedule, bills, months) {
             .filter(month => Number(month.period_year) <= scheduleYear)
             .reduce((sum, month) => sum + money(month.expected_amount), 0);
         const storeEnding = storeTotals.get(String(bill.store_number || '')) || 0;
+        const isCloseout = String(bill.amortization_mode || '').toUpperCase() === 'CLOSEOUT';
 
         const row = sheet.getRow(currentRow);
         row.values = [
@@ -217,7 +255,7 @@ function buildScheduleSheet(workbook, schedule, bills, months) {
             `${String(bill.amortization_start || '').slice(0, 10)} - ${String(bill.amortization_end || '').slice(0, 10)}`,
             amountPaid,
             Math.max(priorBalance, 0),
-            money(bill.monthly_amount),
+            isCloseout ? null : money(bill.monthly_amount),
             ...monthValues.map(displayNegativeAmount),
             displayNegativeAmount(ytd),
             Math.max(endingBalance, 0),
@@ -361,11 +399,34 @@ async function savePrepaidScheduleWorkbook({ schedule, sourceRows, bills, months
     buildValidationSheet(workbook, schedule, months);
 
     const exportPath = getScheduleExportPath(schedule);
-    await workbook.xlsx.writeFile(exportPath);
-    return {
-        path: exportPath,
-        filename: path.basename(exportPath)
-    };
+    const filename = getScheduleExportFilename(schedule);
+
+    try {
+        ensureExportDir();
+        await workbook.xlsx.writeFile(exportPath);
+        return {
+            path: exportPath,
+            filename,
+            persisted: true
+        };
+    } catch (error) {
+        if (!['EACCES', 'EPERM', 'EROFS'].includes(error.code)) {
+            throw error;
+        }
+
+        console.warn(
+            `Prepaid workbook could not be written to ${exportPath}; using in-memory download buffer instead:`,
+            error.message
+        );
+        const buffer = await workbook.xlsx.writeBuffer();
+        return {
+            path: null,
+            filename,
+            buffer: Buffer.from(buffer),
+            persisted: false,
+            write_error: error.message
+        };
+    }
 }
 
 function deleteSavedScheduleWorkbook(schedule) {

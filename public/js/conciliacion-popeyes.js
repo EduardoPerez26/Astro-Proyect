@@ -373,7 +373,7 @@ function asegurarSweetAlertSobreModalPopeyes() {
             inset: 0 !important;
         }
 
-        #popeyesTaxStoreDialog .swal2-popup,
+        #popeyesTaxStoreDialog .swal2-container-dialog,
         #popeyesTaxStoreDialog .py-tax-swal-popup,
         .py-tax-swal-popup {
             z-index: 2147483647 !important;

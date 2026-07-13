@@ -10,7 +10,7 @@ const { verificarToken, checkPermission } = require('../middleware/auth.middlewa
 const storage = multer.memoryStorage();
 const upload = multer({
     storage,
-    limits: { fileSize: 50 * 1024 * 1024 }
+    limits: { fileSize: Number(process.env.MAX_FILE_SIZE_MB || 50) * 1024 * 1024 }
 });
 
 function debeFiltrarPorDepartment(req) {

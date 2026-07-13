@@ -451,33 +451,12 @@ textarea:focus,
     border-color: #d8e8f7 !important;
     background: #f6fbff !important;
     color: #40586f !important;
-}/* Modals and SweetAlert */
-.modal-overlay,
-.profile-crop-modal{
-    background: rgba(6, 29, 51, 0.58) !important;
-    backdrop-filter: blur(6px);
-}.modal,
-.profile-crop-dialog,
-.swal2-popup{
-    border: 1px solid #cfddea !important;
-    border-radius: 8px !important;
-    background: #ffffff !important;
-    box-shadow: 0 34px 90px -56px rgba(6, 29, 51, 0.9) !important;
 }.modal-header,
 .document-detail-modal-header,
 .profile-crop-header{
     border-bottom: 1px solid #d8e4ee !important;
     background: #f8fbfe !important;
     color: #061d33 !important;
-}.modal-header h3,
-.document-detail-modal-header h3,
-.profile-crop-header strong,
-.swal2-title{
-    color: #061d33 !important;
-}.document-detail-modal-header p,
-.modal-header p,
-.swal2-html-container{
-    color: #40586f !important;
 }.modal-close,
 .profile-crop-close{
     border: 1px solid #c8d9e8 !important;
@@ -1077,29 +1056,6 @@ and status blocks */
 .pill{
     border-radius: 999px !important;
     font-weight: 850 !important;
-}/* Modals */
-.modal-overlay,
-.profile-crop-modal,
-.swal2-container.swal2-backdrop-show{
-    background: rgba(12, 17, 36, 0.62) !important;
-    backdrop-filter: blur(8px);
-}.modal,
-.profile-crop-dialog,
-.swal2-popup,
-.tax-store-dialog,
-.bk-tax-store-dialog,
-.tb-tax-store-dialog,
-.py-tax-store-dialog{
-    border: 1px solid #cddcea !important;
-    border-radius: 8px !important;
-    background: #ffffff !important;
-    box-shadow: 0 36px 90px -54px rgba(8, 16, 32, 0.95) !important;
-}.modal-close,
-.profile-crop-close,
-.swal2-close{
-    border-radius: 8px !important;
-    background: #ffffff !important;
-    color: #0b2f54 !important;
 }/* Login follows the same visual system */
 .login-screen{
     background: #eef4fb !important;
@@ -1578,16 +1534,6 @@ body .main :is(table,
     .document-detail-modal-header,
     .profile-crop-header) :is(h2, h3, strong, span, p){
     color: #ffffff !important;
-}.swal2-popup{
-    border-radius: 8px !important;
-    font-family: "Inter", sans-serif !important;
-}.swal2-confirm{
-    border-radius: 8px !important;
-    background: #101122 !important;
-}.swal2-cancel{
-    border-radius: 8px !important;
-    background: #ffffff !important;
-    color: #0b2f54 !important;
 }@media (max-width: 900px) {body .main :is(.page-header,
         .admin-dashboard-header,
         .comparison-history-hero,
@@ -3074,76 +3020,6 @@ body .main :is(.profile-form-intro,
 }@media (max-width: 980px) {.property-management-page .pm-upload-grid{
         grid-template-columns: 1fr !important;
     }
-}/* SweetAlert and app modals */
-.swal2-container.swal2-backdrop-show,
-.swal2-container.swal2-center.swal2-backdrop-show,
-.modal-overlay.active,
-.comparison-detail-overlay.active,
-.profile-crop-modal:not([hidden]){
-    background: rgba(12, 31, 50, .48) !important;
-    backdrop-filter: blur(8px) !important;
-}.swal2-popup:not(.swal2-toast),
-.modal,
-.document-detail-modal,
-.document-preview-modal,
-.comparison-detail-modal,
-.profile-crop-dialog,
-dialog.file-comparison-dialog,
-dialog.bk-tax-store-dialog,
-.file-comparison-window,
-.bk-tax-store-window{
-    border: 0 !important;
-    border-radius: 22px !important;
-    background: #ffffff !important;
-    color: var(--clean-text) !important;
-    box-shadow: 0 30px 80px -48px rgba(8, 28, 46, .82) !important;
-}.swal2-popup:not(.swal2-toast){
-    width: min(440px, calc(100vw - 32px)) !important;
-    padding: 28px !important;
-}.swal2-popup.swal2-toast{
-    border: 0 !important;
-    border-radius: 14px !important;
-    background: #ffffff !important;
-    box-shadow: 0 18px 45px -32px rgba(8, 28, 46, .75) !important;
-}.swal2-popup:not(.swal2-toast) .swal2-title{
-    margin: 0 !important;
-    color: var(--clean-text) !important;
-    font-size: 23px !important;
-    font-weight: 850 !important;
-    line-height: 1.15 !important;
-}.swal2-popup:not(.swal2-toast) .swal2-html-container{
-    margin: 12px 0 0 !important;
-    color: var(--clean-muted) !important;
-    font-size: 14px !important;
-    line-height: 1.55 !important;
-}.swal2-popup:not(.swal2-toast) .swal2-icon{
-    width: 54px !important;
-    height: 54px !important;
-    margin: 0 auto 16px !important;
-    border-width: 2px !important;
-}.swal2-popup:not(.swal2-toast) .swal2-actions{
-    gap: 10px !important;
-    margin-top: 22px !important;
-}.swal2-popup:not(.swal2-toast) .swal2-actions button,
-.swal2-confirm,
-.swal2-cancel,
-.swal2-deny{
-    min-width: 120px !important;
-    min-height: 42px !important;
-    border: 0 !important;
-    border-radius: 13px !important;
-    box-shadow: none !important;
-    font-size: 13px !important;
-    font-weight: 800 !important;
-}.swal2-confirm{
-    background: var(--clean-ink) !important;
-    color: #ffffff !important;
-}.swal2-cancel{
-    background: #f2f6fb !important;
-    color: var(--clean-primary) !important;
-}.swal2-deny{
-    background: #b72d38 !important;
-    color: #ffffff !important;
 }.swal2-close,
 .modal-close,
 .profile-crop-close,
@@ -3223,59 +3099,6 @@ dialog.bk-tax-store-dialog,
 .profile-actions .btn{
         width: 100% !important;
     }
-}/* SweetAlert icon spacing and geometry fix */
-.swal2-popup:not(.swal2-toast)::before{
-    content: none !important;
-    display: none !important;
-    height: 0 !important;
-}.swal2-popup:not(.swal2-toast){
-    padding: 36px 34px 30px !important;
-    border-top: 0 !important;
-}.swal2-popup:not(.swal2-toast) .swal2-icon{
-    width: 5em !important;
-    height: 5em !important;
-    margin: 0 auto 20px !important;
-    border-width: .25em !important;
-    font-size: 12px !important;
-    line-height: 5em !important;
-    transform: none !important;
-}.swal2-popup:not(.swal2-toast) .swal2-icon-content{
-    font-size: 3.5em !important;
-}.swal2-popup:not(.swal2-toast) .swal2-success-line-tip,
-.swal2-popup:not(.swal2-toast) .swal2-success-line-long{
-    height: .3125em !important;
-    border-radius: .125em !important;
-}.swal2-popup:not(.swal2-toast) .swal2-success-line-tip{
-    top: 2.875em !important;
-    left: .8125em !important;
-    width: 1.5625em !important;
-}.swal2-popup:not(.swal2-toast) .swal2-success-line-long{
-    top: 2.375em !important;
-    right: .5em !important;
-    width: 2.9375em !important;
-}.swal2-popup:not(.swal2-toast) .swal2-success-ring{
-    top: -.25em !important;
-    left: -.25em !important;
-    width: 100% !important;
-    height: 100% !important;
-    border-width: .25em !important;
-}.swal2-popup:not(.swal2-toast) .swal2-title{
-    padding: 0 8px !important;
-}.swal2-popup:not(.swal2-toast) .swal2-html-container{
-    margin: 14px 4px 0 !important;
-}.swal2-popup:not(.swal2-toast) .swal2-actions{
-    margin-top: 26px !important;
-}/* Final spacing pass: modals and sticky topbar */
-.swal2-popup:not(.swal2-toast){
-    padding: 48px 42px 34px !important;
-}.swal2-popup:not(.swal2-toast) .swal2-icon{
-    margin: 0 auto 24px !important;
-}.swal2-popup:not(.swal2-toast) .swal2-title{
-    padding: 0 12px !important;
-}.swal2-popup:not(.swal2-toast) .swal2-html-container{
-    margin: 16px 8px 0 !important;
-}.swal2-popup:not(.swal2-toast) .swal2-actions{
-    margin-top: 30px !important;
 }.topbar,
 .header{
     position: sticky !important;
@@ -3312,11 +3135,6 @@ dialog.bk-tax-store-dialog,
         padding: 14px 18px !important;
         border-radius: 0 0 18px 18px !important;
     }
-}.swal2-popup:not(.swal2-toast){
-    padding-top: 48px !important;
-}.swal2-popup:not(.swal2-toast) .swal2-icon{
-    margin-top: 0 !important;
-    margin-bottom: 24px !important;
 }/* FIX: topbar siempre encima del contenido */
 .main{
     position: relative !important;
@@ -3440,119 +3258,6 @@ html body .main>.topbar .department-pill,
 html body .main>.topbar .lang-toggle{
     position: relative !important;
     z-index: 1000001 !important;
-}html body .swal2-container{
-    padding: 30px !important;
-    z-index: 2000000 !important;
-}html body .swal2-container.swal2-backdrop-show,
-html body .swal2-container.swal2-center.swal2-backdrop-show{
-    background: rgba(12, 31, 50, .48) !important;
-    backdrop-filter: blur(8px) !important;
-}html body .swal2-container .swal2-popup.swal2-modal:not(.swal2-toast):not(.mfa-swal):not(.replacement-file-dialog):not(.tb-tax-swal-popup):not(.py-tax-swal-popup):not(.bk-tax-swal-popup){
-    width: min(480px, calc(100vw - 46px)) !important;
-    padding: 68px 42px 38px !important;
-    overflow: visible !important;
-    border: 0 !important;
-    border-top: 0 !important;
-    border-radius: 22px !important;
-    background: #ffffff !important;
-    box-shadow: 0 34px 90px -50px rgba(8, 28, 46, .88) !important;
-    color: #0d2238 !important;
-    text-align: center !important;
-}html body .swal2-container .swal2-popup.swal2-modal:not(.swal2-toast):not(.mfa-swal):not(.replacement-file-dialog):not(.tb-tax-swal-popup):not(.py-tax-swal-popup):not(.bk-tax-swal-popup)::before{
-    content: none !important;
-    display: none !important;
-    width: 0 !important;
-    height: 0 !important;
-    background: none !important;
-}html body .swal2-container .swal2-popup.swal2-modal:not(.swal2-toast) .swal2-icon{
-    width: 5em !important;
-    height: 5em !important;
-    margin: 0 auto 27px !important;
-    border-width: .25em !important;
-    font-size: 12px !important;
-    line-height: 5em !important;
-    transform: none !important;
-    transform-origin: center !important;
-}html body .swal2-container .swal2-popup.swal2-modal:not(.swal2-toast) .swal2-icon-content{
-    font-size: 3.55em !important;
-}html body .swal2-container .swal2-popup.swal2-modal:not(.swal2-toast) .swal2-icon.swal2-question,
-html body .swal2-container .swal2-popup.swal2-modal:not(.swal2-toast) .swal2-icon.swal2-warning{
-    border-color: #b7791f !important;
-    color: #b7791f !important;
-}html body .swal2-container .swal2-popup.swal2-modal:not(.swal2-toast) .swal2-icon.swal2-success{
-    border-color: #2f855a !important;
-    color: #2f855a !important;
-}html body .swal2-container .swal2-popup.swal2-modal:not(.swal2-toast) .swal2-success-ring{
-    top: -.25em !important;
-    left: -.25em !important;
-    width: 100% !important;
-    height: 100% !important;
-    border-width: .25em !important;
-    border-color: rgba(47, 133, 90, .28) !important;
-}html body .swal2-container .swal2-popup.swal2-modal:not(.swal2-toast) .swal2-success-line-tip,
-html body .swal2-container .swal2-popup.swal2-modal:not(.swal2-toast) .swal2-success-line-long{
-    height: .3125em !important;
-    border-radius: .125em !important;
-    background-color: #2f855a !important;
-}html body .swal2-container .swal2-popup.swal2-modal:not(.swal2-toast) .swal2-success-line-tip{
-    top: 2.875em !important;
-    left: .8125em !important;
-    width: 1.5625em !important;
-}html body .swal2-container .swal2-popup.swal2-modal:not(.swal2-toast) .swal2-success-line-long{
-    top: 2.375em !important;
-    right: .5em !important;
-    width: 2.9375em !important;
-}html body .swal2-container .swal2-popup.swal2-modal:not(.swal2-toast) .swal2-title{
-    margin: 0 !important;
-    padding: 0 !important;
-    color: #0d2238 !important;
-    font-family: "Inter", sans-serif !important;
-    font-size: 24px !important;
-    font-weight: 850 !important;
-    letter-spacing: 0 !important;
-    line-height: 1.18 !important;
-    text-align: center !important;
-}html body .swal2-container .swal2-popup.swal2-modal:not(.swal2-toast) .swal2-html-container{
-    margin: 18px 0 0 !important;
-    padding: 0 !important;
-    color: #60768d !important;
-    font-size: 14px !important;
-    font-weight: 550 !important;
-    line-height: 1.6 !important;
-    text-align: center !important;
-}html body .swal2-container .swal2-popup.swal2-modal:not(.swal2-toast) .swal2-actions{
-    width: 100% !important;
-    justify-content: center !important;
-    gap: 12px !important;
-    margin: 34px 0 0 !important;
-}html body .swal2-container .swal2-popup.swal2-modal:not(.swal2-toast) .swal2-actions button{
-    min-width: 124px !important;
-    min-height: 44px !important;
-    margin: 0 !important;
-    padding: 0 20px !important;
-    border: 0 !important;
-    border-radius: 13px !important;
-    box-shadow: none !important;
-    font-family: "Inter", sans-serif !important;
-    font-size: 13px !important;
-    font-weight: 850 !important;
-    letter-spacing: 0 !important;
-}html body .swal2-container .swal2-popup.swal2-modal:not(.swal2-toast) .swal2-confirm{
-    background: #101122 !important;
-    color: #ffffff !important;
-}html body .swal2-container .swal2-popup.swal2-modal:not(.swal2-toast) .swal2-cancel{
-    background: #f3f7fb !important;
-    color: #173a59 !important;
-}html body .swal2-container .swal2-popup.swal2-modal:not(.swal2-toast) .swal2-close{
-    top: 18px !important;
-    right: 18px !important;
-    width: 42px !important;
-    height: 42px !important;
-    border: 1px solid #d7e3ef !important;
-    border-radius: 13px !important;
-    background: #f7fbff !important;
-    color: #0d2238 !important;
-    font-size: 24px !important;
 }html body .modal-overlay{
     padding: 34px !important;
     background: rgba(12, 31, 50, .48) !important;
@@ -3746,11 +3451,7 @@ html body #departmentModal .admin-form-modal .modal-footer .btn{
     padding: 0 34px 32px !important;
     border-top: 0 !important;
     background: #ffffff !important;
-}@media (max-width: 760px) {html body .swal2-container{
-        padding: 18px !important;
-    }html body .swal2-container .swal2-popup.swal2-modal:not(.swal2-toast):not(.mfa-swal):not(.replacement-file-dialog):not(.tb-tax-swal-popup):not(.py-tax-swal-popup):not(.bk-tax-swal-popup){
-        padding: 58px 24px 28px !important;
-    }html body #userModal .admin-form-modal,
+}@media (max-width: 760px) {html body #userModal .admin-form-modal,
 html body #departmentModal .admin-form-modal{
         width: calc(100vw - 28px) !important;
         max-width: calc(100vw - 28px) !important;
@@ -3849,79 +3550,6 @@ html body .comparison-detail-table-wrap{
     background: #f8fbff !important;
 }html body .comparison-detail-table th{
     background: #101122 !important;
-}html body .swal2-container{
-    z-index: 70000 !important;
-}html body.swal2-toast-shown,
-html body.swal2-toast-shown.swal2-height-auto,
-html body.swal2-toast-shown.swal2-shown{
-    overflow: auto !important;
-    padding-right: 0 !important;
-}html body.swal2-toast-shown .swal2-container,
-html body .swal2-container.xbfs-toast-container,
-html body .swal2-container:has(.xbfs-toast-popup),
-html body .swal2-container:has(.swal2-toast){
-    background: transparent !important;
-    backdrop-filter: none !important;
-    pointer-events: none !important;
-}html body .swal2-container.xbfs-toast-container{
-    width: auto !important;
-    padding: 22px !important;
-}html body .swal2-container .swal2-popup.swal2-toast,
-html body .swal2-container .swal2-popup.xbfs-toast-popup{
-    display: flex !important;
-    align-items: center !important;
-    width: auto !important;
-    min-width: 280px !important;
-    max-width: min(390px, calc(100vw - 44px)) !important;
-    min-height: 58px !important;
-    padding: 12px 16px !important;
-    overflow: hidden !important;
-    border: 1px solid #dfe8f2 !important;
-    border-radius: 18px !important;
-    background: #ffffff !important;
-    box-shadow: 0 24px 54px -36px rgba(8, 28, 46, .78) !important;
-    color: #0d2238 !important;
-    pointer-events: auto !important;
-}html body .swal2-container .swal2-popup.swal2-toast::before,
-html body .swal2-container .swal2-popup.xbfs-toast-popup::before{
-    content: none !important;
-    display: none !important;
-}html body .swal2-container .swal2-popup.swal2-toast .swal2-icon,
-html body .swal2-container .swal2-popup.xbfs-toast-popup .swal2-icon{
-    flex: 0 0 auto !important;
-    width: 30px !important;
-    height: 30px !important;
-    min-width: 30px !important;
-    min-height: 30px !important;
-    margin: 0 12px 0 0 !important;
-    border-width: 2px !important;
-    font-size: 7px !important;
-    line-height: 30px !important;
-    transform: none !important;
-}html body .swal2-container .swal2-popup.swal2-toast .swal2-icon-content,
-html body .swal2-container .swal2-popup.xbfs-toast-popup .swal2-icon-content{
-    font-size: 3.4em !important;
-}html body .swal2-container .swal2-popup.swal2-toast .swal2-title,
-html body .swal2-container .swal2-popup.xbfs-toast-popup .swal2-title{
-    margin: 0 !important;
-    padding: 0 !important;
-    color: #0d2238 !important;
-    font-size: 13px !important;
-    font-weight: 850 !important;
-    line-height: 1.35 !important;
-    text-align: left !important;
-}html body .swal2-container .swal2-popup.swal2-toast .swal2-html-container,
-html body .swal2-container .swal2-popup.xbfs-toast-popup .swal2-html-container{
-    margin: 2px 0 0 !important;
-    padding: 0 !important;
-    color: #60768d !important;
-    font-size: 12px !important;
-    line-height: 1.4 !important;
-    text-align: left !important;
-}html body .swal2-container .swal2-popup.swal2-toast .swal2-timer-progress-bar,
-html body .swal2-container .swal2-popup.xbfs-toast-popup .swal2-timer-progress-bar{
-    height: 3px !important;
-    background: #8dbbe4 !important;
 }html body .sidebar-profile-link{
     margin: 0 0 8px !important;
     background: #1a1a2f !important;
@@ -4064,11 +3692,6 @@ body .profile-crop-modal:not([hidden]) .profile-crop-dialog,
 body dialog[open].file-comparison-dialog,
 body dialog[open].bk-tax-store-dialog{
     animation: appModalLift var(--motion-slow) var(--motion-ease) both !important;
-}body .swal2-container .swal2-popup.swal2-modal:not(.swal2-toast){
-    animation: appModalLift var(--motion-slow) var(--motion-ease) both !important;
-}body .swal2-container .swal2-popup.swal2-toast,
-body .swal2-container .swal2-popup.xbfs-toast-popup{
-    animation: appToastSlide var(--motion-slow) var(--motion-ease) both !important;
 }body .data-table tbody tr,
 body .comparison-detail-table tbody tr,
 body .preview-excel-table tbody tr{
@@ -4204,38 +3827,6 @@ html body .property-management-page .pm-schedule-management{
     }html body .property-management-page .pm-schedule-management:has(#pmMonthEditor[hidden]){
         width: 100% !important;
     }
-}/* Microsoft Authenticator modal redesign */
-html body .swal2-container .swal2-popup.mfa-swal{
-    width: min(760px, calc(100vw - 44px)) !important;
-    padding: 0 !important;
-    overflow: hidden !important;
-    border: 0 !important;
-    border-radius: 26px !important;
-    background: #ffffff !important;
-    box-shadow: 0 34px 90px -50px rgba(8, 28, 46, .9) !important;
-    text-align: left !important;
-}html body .swal2-container .swal2-popup.mfa-swal::before{
-    content: none !important;
-    display: none !important;
-}html body .swal2-container .swal2-popup.mfa-swal .swal2-title,
-html body .swal2-container .swal2-popup.mfa-swal .mfa-swal-title{
-    display: none !important;
-}html body .swal2-container .swal2-popup.mfa-swal .mfa-swal-html{
-    margin: 0 !important;
-    padding: 0 !important;
-    overflow: visible !important;
-    color: #0d2238 !important;
-    text-align: left !important;
-}html body .swal2-container .swal2-popup.mfa-swal .mfa-swal-close{
-    top: 24px !important;
-    right: 24px !important;
-    width: 42px !important;
-    height: 42px !important;
-    border: 1px solid #d7e3ef !important;
-    border-radius: 14px !important;
-    background: #f7fbff !important;
-    color: #0d2238 !important;
-    box-shadow: none !important;
 }html body .mfa-swal-setup .mfa-modal-shell{
     display: grid !important;
     grid-template-columns: minmax(260px, 318px) minmax(0, 1fr) !important;
@@ -4306,42 +3897,6 @@ html body .mfa-swal-danger .mfa-modal-icon{
     text-transform: none !important;
 }html body .mfa-swal-setup .mfa-modal-input{
     grid-column: 2 !important;
-}html body .swal2-container .swal2-popup.mfa-swal .mfa-modal-input{
-    height: 46px !important;
-    border: 0 !important;
-    border-radius: 15px !important;
-    background: #f8fbff !important;
-    color: #0d2238 !important;
-    box-shadow: inset 0 0 0 1px #cad8e6 !important;
-}html body .swal2-container .swal2-popup.mfa-swal .mfa-code-input{
-    font-size: 22px !important;
-    font-weight: 900 !important;
-    letter-spacing: .12em !important;
-}html body .swal2-container .swal2-popup.mfa-swal .mfa-swal-actions{
-    justify-content: flex-end !important;
-    gap: 12px !important;
-    width: 100% !important;
-    margin: 0 !important;
-    padding: 20px 34px 30px !important;
-    border-top: 1px solid #e3ecf5 !important;
-    background: #ffffff !important;
-}html body .swal2-container .swal2-popup.mfa-swal .mfa-swal-confirm,
-html body .swal2-container .swal2-popup.mfa-swal .mfa-swal-danger-confirm,
-html body .swal2-container .swal2-popup.mfa-swal .mfa-swal-cancel{
-    min-width: 136px !important;
-    min-height: 44px !important;
-    border: 0 !important;
-    border-radius: 14px !important;
-    font-size: 13px !important;
-    font-weight: 850 !important;
-}html body .swal2-container .swal2-popup.mfa-swal .mfa-swal-confirm{
-    background: #101122 !important;
-    color: #ffffff !important;
-}html body .swal2-container .swal2-popup.mfa-swal .mfa-swal-cancel{
-    background: #f3f7fb !important;
-    color: #173a59 !important;
-}html body .swal2-container .swal2-popup.mfa-swal-danger{
-    width: min(560px, calc(100vw - 44px)) !important;
 }html body .mfa-swal-danger .mfa-modal-shell{
     display: grid !important;
     gap: 16px !important;
@@ -4352,21 +3907,11 @@ html body .swal2-container .swal2-popup.mfa-swal .mfa-swal-cancel{
     border: 1px solid #f0c9c9 !important;
     border-radius: 18px !important;
     background: #fff8f8 !important;
-}html body .mfa-swal-danger .mfa-modal-icon-danger,
-html body .swal2-container .swal2-popup.mfa-swal .mfa-swal-danger-confirm{
-    background: #b42318 !important;
-    color: #ffffff !important;
 }html body .mfa-swal-danger .mfa-modal-lead{
     margin: 0 !important;
     color: #60768d !important;
     font-size: 13px !important;
     line-height: 1.55 !important;
-}html body .swal2-container .swal2-popup.mfa-swal .swal2-validation-message{
-    margin: 0 34px 18px !important;
-    border-radius: 14px !important;
-    background: #fff7ed !important;
-    color: #8a4b0f !important;
-    font-weight: 750 !important;
 }/* Sidebar micro motion without width animation */
 html body .sidebar{
     transition: box-shadow 180ms var(--motion-ease), filter 180ms var(--motion-ease) !important;
@@ -4451,248 +3996,6 @@ html body .mfa-swal-setup .mfa-modal-input{
         grid-row: auto !important;
     }html body .mfa-swal-setup .mfa-setup-qr{
         width: min(230px, 100%) !important;
-    }html body .swal2-container .swal2-popup.mfa-swal .mfa-swal-actions{
-        flex-direction: column-reverse !important;
-        padding: 0 22px 28px !important;
-    }html body .swal2-container .swal2-popup.mfa-swal .mfa-swal-confirm,
-html body .swal2-container .swal2-popup.mfa-swal .mfa-swal-danger-confirm,
-html body .swal2-container .swal2-popup.mfa-swal .mfa-swal-cancel{
-        width: 100% !important;
-    }
-}/* MFA modal hard fix: override generic SweetAlert modal sizing */
-html body .swal2-container .swal2-popup.swal2-modal.mfa-swal:not(.swal2-toast),
-html body .swal2-container .swal2-popup.swal2-modal.mfa-swal.mfa-swal-setup:not(.swal2-toast),
-html body .swal2-container .swal2-popup.swal2-modal.mfa-swal.mfa-swal-danger:not(.swal2-toast){
-    width: min(540px, calc(100vw - 44px)) !important;
-    padding: 0 !important;
-    overflow: hidden !important;
-    border: 0 !important;
-    border-radius: 24px !important;
-    background: #ffffff !important;
-    box-shadow: 0 34px 90px -50px rgba(8, 28, 46, .9) !important;
-    text-align: left !important;
-}html body .swal2-container .swal2-popup.swal2-modal.mfa-swal:not(.swal2-toast)::before{
-    content: none !important;
-    display: none !important;
-}html body .swal2-container .swal2-popup.swal2-modal.mfa-swal:not(.swal2-toast) .mfa-swal-html{
-    width: 100% !important;
-    margin: 0 !important;
-    padding: 0 !important;
-}html body .swal2-container .swal2-popup.swal2-modal.mfa-swal:not(.swal2-toast) .mfa-modal-shell{
-    box-sizing: border-box !important;
-    display: grid !important;
-    width: 100% !important;
-    min-width: 0 !important;
-    gap: 16px !important;
-    padding: 34px !important;
-}html body .swal2-container .swal2-popup.swal2-modal.mfa-swal.mfa-swal-setup:not(.swal2-toast) .mfa-modal-shell{
-    grid-template-columns: 1fr !important;
-}html body .swal2-container .swal2-popup.swal2-modal.mfa-swal:not(.swal2-toast) .mfa-modal-titlebar,
-html body .swal2-container .swal2-popup.swal2-modal.mfa-swal:not(.swal2-toast) .mfa-modal-banner,
-html body .swal2-container .swal2-popup.swal2-modal.mfa-swal:not(.swal2-toast) .mfa-modal-lead,
-html body .swal2-container .swal2-popup.swal2-modal.mfa-swal:not(.swal2-toast) .mfa-qr-panel,
-html body .swal2-container .swal2-popup.swal2-modal.mfa-swal:not(.swal2-toast) .mfa-setup-secret,
-html body .swal2-container .swal2-popup.swal2-modal.mfa-swal:not(.swal2-toast) .mfa-field-label,
-html body .swal2-container .swal2-popup.swal2-modal.mfa-swal:not(.swal2-toast) .mfa-modal-input{
-    grid-column: 1 !important;
-    grid-row: auto !important;
-    min-width: 0 !important;
-}html body .swal2-container .swal2-popup.swal2-modal.mfa-swal:not(.swal2-toast) .mfa-modal-titlebar{
-    padding: 0 56px 0 0 !important;
-}html body .swal2-container .swal2-popup.swal2-modal.mfa-swal:not(.swal2-toast) .mfa-modal-titlebar h2{
-    margin: 0 !important;
-    color: #0d2238 !important;
-    font-size: 25px !important;
-    font-weight: 900 !important;
-    line-height: 1.12 !important;
-    text-align: left !important;
-}html body .swal2-container .swal2-popup.swal2-modal.mfa-swal:not(.swal2-toast) .mfa-modal-banner{
-    display: flex !important;
-    align-items: center !important;
-    gap: 12px !important;
-    padding: 14px !important;
-    border: 1px solid #e1ebf5 !important;
-    border-radius: 18px !important;
-    background: #f8fbff !important;
-}html body .swal2-container .swal2-popup.swal2-modal.mfa-swal:not(.swal2-toast) .mfa-modal-lead{
-    margin: 0 !important;
-    color: #60768d !important;
-    font-size: 13px !important;
-    font-weight: 650 !important;
-    line-height: 1.55 !important;
-    text-align: left !important;
-}html body .swal2-container .swal2-popup.swal2-modal.mfa-swal:not(.swal2-toast) .mfa-qr-panel{
-    display: grid !important;
-    min-height: 0 !important;
-    padding: 16px !important;
-    place-items: center !important;
-    border: 1px solid #e1ebf5 !important;
-    border-radius: 20px !important;
-    background: #f8fbff !important;
-}html body .swal2-container .swal2-popup.swal2-modal.mfa-swal:not(.swal2-toast) .mfa-setup-qr{
-    display: block !important;
-    width: min(250px, 100%) !important;
-    max-width: 100% !important;
-    height: auto !important;
-    margin: 0 auto !important;
-    border-radius: 12px !important;
-    background: #ffffff !important;
-}html body .swal2-container .swal2-popup.swal2-modal.mfa-swal:not(.swal2-toast) .mfa-setup-secret{
-    padding: 13px 14px !important;
-    border: 1px solid #e1ebf5 !important;
-    border-radius: 18px !important;
-    background: #f8fbff !important;
-}html body .swal2-container .swal2-popup.swal2-modal.mfa-swal:not(.swal2-toast) .mfa-setup-secret strong{
-    display: block !important;
-    overflow-wrap: anywhere !important;
-    color: #0d2238 !important;
-    font-size: 12px !important;
-    line-height: 1.5 !important;
-}html body .swal2-container .swal2-popup.swal2-modal.mfa-swal:not(.swal2-toast) .mfa-field-label{
-    margin: 0 0 -6px !important;
-    color: #4a647d !important;
-    font-size: 11px !important;
-    font-weight: 850 !important;
-    text-transform: none !important;
-}html body .swal2-container .swal2-popup.swal2-modal.mfa-swal:not(.swal2-toast) .mfa-swal-actions{
-    width: 100% !important;
-    justify-content: flex-end !important;
-    gap: 12px !important;
-    margin: 0 !important;
-    padding: 0 34px 34px !important;
-    border-top: 0 !important;
-    background: #ffffff !important;
-}html body .swal2-container .swal2-popup.swal2-modal.mfa-swal:not(.swal2-toast) .mfa-swal-confirm,
-html body .swal2-container .swal2-popup.swal2-modal.mfa-swal:not(.swal2-toast) .mfa-swal-danger-confirm,
-html body .swal2-container .swal2-popup.swal2-modal.mfa-swal:not(.swal2-toast) .mfa-swal-cancel{
-    min-width: 136px !important;
-    min-height: 44px !important;
-    margin: 0 !important;
-    border: 0 !important;
-    border-radius: 14px !important;
-}@media (max-width: 600px) {html body .swal2-container .swal2-popup.swal2-modal.mfa-swal:not(.swal2-toast) .mfa-modal-shell{
-        padding: 28px 22px !important;
-    }html body .swal2-container .swal2-popup.swal2-modal.mfa-swal:not(.swal2-toast) .mfa-swal-actions{
-        flex-direction: column-reverse !important;
-        padding: 0 22px 28px !important;
-    }html body .swal2-container .swal2-popup.swal2-modal.mfa-swal:not(.swal2-toast) .mfa-swal-confirm,
-html body .swal2-container .swal2-popup.swal2-modal.mfa-swal:not(.swal2-toast) .mfa-swal-danger-confirm,
-html body .swal2-container .swal2-popup.swal2-modal.mfa-swal:not(.swal2-toast) .mfa-swal-cancel{
-        width: 100% !important;
-    }
-}/* MFA final stable layout: keep Authenticator modals out of generic alert sizing */
-html body .swal2-container .swal2-popup.swal2-modal.mfa-swal.mfa-swal-setup:not(.swal2-toast),
-html body .swal2-container .swal2-popup.swal2-modal.mfa-swal.mfa-swal-danger:not(.swal2-toast){
-    box-sizing: border-box !important;
-    width: min(560px, calc(100vw - 48px)) !important;
-    max-width: min(560px, calc(100vw - 48px)) !important;
-    padding: 0 !important;
-    overflow: hidden !important;
-    border: 0 !important;
-    border-radius: 24px !important;
-    background: #ffffff !important;
-    color: #0d2238 !important;
-    text-align: left !important;
-}html body .swal2-container .swal2-popup.swal2-modal.mfa-swal.mfa-swal-setup:not(.swal2-toast)::before,
-html body .swal2-container .swal2-popup.swal2-modal.mfa-swal.mfa-swal-danger:not(.swal2-toast)::before{
-    content: none !important;
-    display: none !important;
-}html body .swal2-container .swal2-popup.swal2-modal.mfa-swal:not(.swal2-toast) .mfa-swal-title,
-html body .swal2-container .swal2-popup.swal2-modal.mfa-swal:not(.swal2-toast) .swal2-title{
-    display: none !important;
-}html body .swal2-container .swal2-popup.swal2-modal.mfa-swal:not(.swal2-toast) .mfa-swal-html{
-    box-sizing: border-box !important;
-    display: block !important;
-    width: 100% !important;
-    max-width: none !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    overflow: visible !important;
-    color: #0d2238 !important;
-    text-align: left !important;
-}html body .swal2-container .swal2-popup.swal2-modal.mfa-swal:not(.swal2-toast) .mfa-modal-shell{
-    box-sizing: border-box !important;
-    display: grid !important;
-    grid-template-columns: minmax(0, 1fr) !important;
-    gap: 16px !important;
-    width: 100% !important;
-    max-width: none !important;
-    min-width: 0 !important;
-    margin: 0 !important;
-    padding: 38px 34px 24px !important;
-}html body .swal2-container .swal2-popup.swal2-modal.mfa-swal:not(.swal2-toast) .mfa-modal-shell *{
-    writing-mode: horizontal-tb !important;
-    text-orientation: mixed !important;
-    word-break: normal !important;
-}html body .swal2-container .swal2-popup.swal2-modal.mfa-swal:not(.swal2-toast) .mfa-modal-titlebar,
-html body .swal2-container .swal2-popup.swal2-modal.mfa-swal:not(.swal2-toast) .mfa-modal-banner,
-html body .swal2-container .swal2-popup.swal2-modal.mfa-swal:not(.swal2-toast) .mfa-modal-lead,
-html body .swal2-container .swal2-popup.swal2-modal.mfa-swal:not(.swal2-toast) .mfa-qr-panel,
-html body .swal2-container .swal2-popup.swal2-modal.mfa-swal:not(.swal2-toast) .mfa-setup-secret,
-html body .swal2-container .swal2-popup.swal2-modal.mfa-swal:not(.swal2-toast) .mfa-field-label,
-html body .swal2-container .swal2-popup.swal2-modal.mfa-swal:not(.swal2-toast) .mfa-modal-input{
-    grid-column: 1 !important;
-    grid-row: auto !important;
-    min-width: 0 !important;
-    max-width: 100% !important;
-}html body .swal2-container .swal2-popup.swal2-modal.mfa-swal:not(.swal2-toast) .mfa-modal-titlebar{
-    padding: 0 58px 2px 0 !important;
-}html body .swal2-container .swal2-popup.swal2-modal.mfa-swal:not(.swal2-toast) .mfa-modal-titlebar h2{
-    margin: 0 !important;
-    color: #0d2238 !important;
-    font-size: 27px !important;
-    font-weight: 900 !important;
-    line-height: 1.12 !important;
-    text-align: left !important;
-}html body .swal2-container .swal2-popup.swal2-modal.mfa-swal:not(.swal2-toast) .mfa-modal-banner{
-    display: flex !important;
-    align-items: center !important;
-    gap: 13px !important;
-    padding: 14px !important;
-    border: 1px solid #e1ebf5 !important;
-    border-radius: 18px !important;
-    background: #f8fbff !important;
-}html body .swal2-container .swal2-popup.swal2-modal.mfa-swal:not(.swal2-toast) .mfa-modal-banner>div{
-    min-width: 0 !important;
-}html body .swal2-container .swal2-popup.swal2-modal.mfa-swal:not(.swal2-toast) .mfa-modal-banner strong,
-html body .swal2-container .swal2-popup.swal2-modal.mfa-swal:not(.swal2-toast) .mfa-modal-banner small{
-    display: block !important;
-    white-space: normal !important;
-}html body .swal2-container .swal2-popup.swal2-modal.mfa-swal:not(.swal2-toast) .mfa-qr-panel{
-    display: grid !important;
-    padding: 18px !important;
-    place-items: center !important;
-    border: 1px solid #e1ebf5 !important;
-    border-radius: 20px !important;
-    background: #f8fbff !important;
-}html body .swal2-container .swal2-popup.swal2-modal.mfa-swal:not(.swal2-toast) .mfa-setup-qr{
-    display: block !important;
-    width: min(260px, 100%) !important;
-    max-width: 100% !important;
-    height: auto !important;
-    margin: 0 auto !important;
-    border-radius: 12px !important;
-    background: #ffffff !important;
-}html body .swal2-container .swal2-popup.swal2-modal.mfa-swal:not(.swal2-toast) .mfa-swal-actions{
-    display: flex !important;
-    width: 100% !important;
-    justify-content: flex-end !important;
-    gap: 12px !important;
-    margin: 0 !important;
-    padding: 0 34px 34px !important;
-    border-top: 0 !important;
-    background: #ffffff !important;
-}html body .swal2-container .swal2-popup.swal2-modal.mfa-swal:not(.swal2-toast) .swal2-validation-message{
-    margin: 0 34px 18px !important;
-}@media (max-width: 620px) {html body .swal2-container .swal2-popup.swal2-modal.mfa-swal.mfa-swal-setup:not(.swal2-toast),
-html body .swal2-container .swal2-popup.swal2-modal.mfa-swal.mfa-swal-danger:not(.swal2-toast){
-        width: calc(100vw - 28px) !important;
-        max-width: calc(100vw - 28px) !important;
-    }html body .swal2-container .swal2-popup.swal2-modal.mfa-swal:not(.swal2-toast) .mfa-modal-shell{
-        padding: 32px 22px 22px !important;
-    }html body .swal2-container .swal2-popup.swal2-modal.mfa-swal:not(.swal2-toast) .mfa-swal-actions{
-        flex-direction: column-reverse !important;
-        padding: 0 22px 28px !important;
     }
 }/* Sidebar completeness fix: keep every configured window visible and footer pinned */
 html body .sidebar{
@@ -5792,20 +5095,6 @@ html.sidebar-collapsed-preset body .sidebar .sidebar-menu-link .sidebar-chat-bad
     font-size: 10px !important;
     box-shadow: 0 8px 16px -10px rgba(0, 0, 0, .75) !important;
     z-index: 4 !important;
-}/* =============================================
-   SWEETALERT2 ICONS AND MOTION - FINAL PASS
-   Mantener este bloque al final del CSS.
-============================================= */
-@keyframes xbfs-swal-in{
-    from {
-        opacity: 0;
-        transform: translate3d(0, 8px, 0) scale(.985);
-    }
-
-    to {
-        opacity: 1;
-        transform: translate3d(0, 0, 0) scale(1);
-    }
 }
 
 @keyframes xbfs-swal-out {
@@ -5854,150 +5143,6 @@ html.sidebar-collapsed-preset body .sidebar .sidebar-menu-link .sidebar-chat-bad
         opacity: 0;
         transform: translate3d(10px, 0, 0);
     }
-}html body .swal2-container.swal2-backdrop-show{
-    transition: opacity 120ms ease, backdrop-filter 120ms ease, background 120ms ease !important;
-}html body .swal2-container.swal2-backdrop-hide{
-    opacity: 0 !important;
-    transition: opacity 110ms ease !important;
-}html body .swal2-container .swal2-popup.swal2-modal.swal2-show:not(.swal2-toast){
-    animation: xbfs-swal-in 140ms ease-out both !important;
-}html body .swal2-container .swal2-popup.swal2-modal.swal2-hide:not(.swal2-toast){
-    pointer-events: none !important;
-    animation: xbfs-swal-out 110ms ease-in both !important;
-}html body .swal2-container .swal2-popup.swal2-toast.swal2-show{
-    animation: xbfs-toast-in 130ms ease-out both !important;
-}html body .swal2-container .swal2-popup.swal2-toast.swal2-hide{
-    pointer-events: none !important;
-    animation: xbfs-toast-out 110ms ease-in both !important;
-}html body .swal2-container .swal2-popup.swal2-toast .swal2-icon{
-    flex: 0 0 22px !important;
-    width: 22px !important;
-    height: 22px !important;
-    min-width: 22px !important;
-    min-height: 22px !important;
-    margin: 0 10px 0 0 !important;
-    border-width: 2px !important;
-    transform: none !important;
-    animation: none !important;
-}html body .swal2-container .swal2-popup.swal2-toast .swal2-icon-content{
-    font-size: 15px !important;
-    line-height: 1 !important;
-}html body .swal2-container .swal2-popup.swal2-modal.swal2-hide:not(.swal2-toast) .swal2-actions button,
-html body .swal2-container .swal2-popup.swal2-modal:not(.swal2-toast) .swal2-actions button:disabled{
-    opacity: 1 !important;
-    filter: none !important;
-}html body .swal2-container .swal2-popup.swal2-modal.swal2-hide:not(.swal2-toast) .swal2-confirm,
-html body .swal2-container .swal2-popup.swal2-modal:not(.swal2-toast) .swal2-confirm:disabled{
-    background: #101122 !important;
-    color: #ffffff !important;
-}html body .swal2-container .swal2-popup.swal2-modal:not(.swal2-toast) .swal2-icon{
-    position: relative !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    width: 58px !important;
-    height: 58px !important;
-    min-width: 58px !important;
-    min-height: 58px !important;
-    margin: 0 auto 22px !important;
-    overflow: visible !important;
-    border-width: 3px !important;
-    border-style: solid !important;
-    border-radius: 999px !important;
-    font-size: 1rem !important;
-    line-height: 1 !important;
-    transform: none !important;
-    transform-origin: center !important;
-    animation: xbfs-icon-in 160ms ease-out 45ms both !important;
-    box-sizing: border-box !important;
-}html body .swal2-container .swal2-popup.swal2-modal:not(.swal2-toast) .swal2-icon *,
-html body .swal2-container .swal2-popup.swal2-modal:not(.swal2-toast) .swal2-icon .swal2-icon-content{
-    display: none !important;
-    visibility: hidden !important;
-    opacity: 0 !important;
-    animation: none !important;
-}html body .swal2-container .swal2-popup.swal2-modal:not(.swal2-toast) .swal2-icon::before,
-html body .swal2-container .swal2-popup.swal2-modal:not(.swal2-toast) .swal2-icon::after{
-    content: "" !important;
-    position: absolute !important;
-    display: block !important;
-    box-sizing: border-box !important;
-}html body .swal2-container .swal2-popup.swal2-modal:not(.swal2-toast) .swal2-icon.swal2-success{
-    border-color: rgba(15, 118, 110, .28) !important;
-    background: #f2fbf7 !important;
-    color: #0f766e !important;
-}html body .swal2-container .swal2-popup.swal2-modal:not(.swal2-toast) .swal2-icon.swal2-success::before{
-    top: 18px !important;
-    left: 16px !important;
-    width: 26px !important;
-    height: 14px !important;
-    border-bottom: 4px solid currentColor !important;
-    border-left: 4px solid currentColor !important;
-    border-radius: 2px !important;
-    transform: rotate(-45deg) !important;
-}html body .swal2-container .swal2-popup.swal2-modal:not(.swal2-toast) .swal2-icon.swal2-success::after{
-    display: none !important;
-}html body .swal2-container .swal2-popup.swal2-modal:not(.swal2-toast) .swal2-icon.swal2-error{
-    border-color: rgba(184, 46, 46, .24) !important;
-    background: #fff4f4 !important;
-    color: #b42318 !important;
-}html body .swal2-container .swal2-popup.swal2-modal:not(.swal2-toast) .swal2-icon.swal2-error::before,
-html body .swal2-container .swal2-popup.swal2-modal:not(.swal2-toast) .swal2-icon.swal2-error::after{
-    top: 26px !important;
-    left: 16px !important;
-    width: 26px !important;
-    height: 4px !important;
-    border-radius: 999px !important;
-    background: currentColor !important;
-}html body .swal2-container .swal2-popup.swal2-modal:not(.swal2-toast) .swal2-icon.swal2-error::before{
-    transform: rotate(45deg) !important;
-}html body .swal2-container .swal2-popup.swal2-modal:not(.swal2-toast) .swal2-icon.swal2-error::after{
-    transform: rotate(-45deg) !important;
-}html body .swal2-container .swal2-popup.swal2-modal:not(.swal2-toast) .swal2-icon.swal2-warning{
-    border-color: rgba(177, 105, 17, .27) !important;
-    background: #fff8ea !important;
-    color: #a16207 !important;
-}html body .swal2-container .swal2-popup.swal2-modal:not(.swal2-toast) .swal2-icon.swal2-info{
-    border-color: rgba(29, 95, 159, .24) !important;
-    background: #f0f7ff !important;
-    color: #1d5f9f !important;
-}html body .swal2-container .swal2-popup.swal2-modal:not(.swal2-toast) .swal2-icon.swal2-question{
-    border-color: rgba(88, 112, 138, .28) !important;
-    background: #f6f9fc !important;
-    color: #40586f !important;
-}html body .swal2-container .swal2-popup.swal2-modal:not(.swal2-toast) .swal2-icon.swal2-warning::before,
-html body .swal2-container .swal2-popup.swal2-modal:not(.swal2-toast) .swal2-icon.swal2-info::before,
-html body .swal2-container .swal2-popup.swal2-modal:not(.swal2-toast) .swal2-icon.swal2-question::before{
-    inset: 0 !important;
-    display: grid !important;
-    place-items: center !important;
-    font-family: "Inter", sans-serif !important;
-    font-size: 31px !important;
-    font-weight: 900 !important;
-    line-height: 1 !important;
-}html body .swal2-container .swal2-popup.swal2-modal:not(.swal2-toast) .swal2-icon.swal2-warning::before{
-    content: "!" !important;
-    padding-bottom: 2px !important;
-}html body .swal2-container .swal2-popup.swal2-modal:not(.swal2-toast) .swal2-icon.swal2-info::before{
-    content: "i" !important;
-    padding-bottom: 2px !important;
-    font-style: normal !important;
-}html body .swal2-container .swal2-popup.swal2-modal:not(.swal2-toast) .swal2-icon.swal2-question::before{
-    content: "?" !important;
-    padding-bottom: 2px !important;
-}html body .swal2-container .swal2-popup.swal2-modal:not(.swal2-toast) .swal2-icon.swal2-warning::after,
-html body .swal2-container .swal2-popup.swal2-modal:not(.swal2-toast) .swal2-icon.swal2-info::after,
-html body .swal2-container .swal2-popup.swal2-modal:not(.swal2-toast) .swal2-icon.swal2-question::after{
-    display: none !important;
-}/* SweetAlert keeps an empty .swal2-icon node when no icon type is requested. */
-html body .swal2-container .swal2-popup.swal2-modal:not(.swal2-toast) .swal2-icon:not(.swal2-success):not(.swal2-error):not(.swal2-warning):not(.swal2-info):not(.swal2-question){
-    display: none !important;
-    width: 0 !important;
-    height: 0 !important;
-    min-width: 0 !important;
-    min-height: 0 !important;
-    margin: 0 !important;
-    border: 0 !important;
 }/* ============================================================
    Notification center
    ============================================================ */
@@ -7001,28 +6146,6 @@ body .main .prepaid-page .file-drop.is-dragging{
     max-height: min(520px, 62vh) !important;
     overflow: auto !important;
     text-align: left !important;
-}body .main .prepaid-page .prepaid-difference-modal-table table,
-.swal2-popup .prepaid-difference-modal-table table{
-    width: 100% !important;
-    border-collapse: collapse !important;
-    font-size: 12px !important;
-}.swal2-popup .prepaid-difference-modal-table th,
-.swal2-popup .prepaid-difference-modal-table td{
-    padding: 8px 9px !important;
-    border-bottom: 1px solid #e1e9f2 !important;
-    text-align: left !important;
-    white-space: nowrap !important;
-}.swal2-popup .prepaid-difference-modal-table th{
-    position: sticky !important;
-    top: 0 !important;
-    background: #102033 !important;
-    color: #ffffff !important;
-    font-weight: 900 !important;
-}.swal2-popup .prepaid-difference-modal-table td:nth-child(4),
-.swal2-popup .prepaid-difference-modal-table td:nth-child(5),
-.swal2-popup .prepaid-difference-modal-table td:nth-child(6){
-    text-align: right !important;
-    font-variant-numeric: tabular-nums !important;
 }body .main .prepaid-page .prepaid-form button[type="submit"]{
     width: 100% !important;
     min-height: 44px !important;

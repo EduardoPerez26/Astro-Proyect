@@ -27,11 +27,14 @@ const {
     periodCode,
     roundMoney
 } = require('../services/prepaidAmortizationCalculator');
+const {
+    calculateBillAmortizationWithCloseout
+} = require('../services/prepaidCloseoutCalculator');
 
 const router = express.Router();
 const upload = multer({
     storage: multer.memoryStorage(),
-    limits: { fileSize: 75 * 1024 * 1024 }
+    limits: { fileSize: Number(process.env.PREPAID_FILE_SIZE_MB || process.env.MAX_FILE_SIZE_MB || 75) * 1024 * 1024 }
 });
 
 const draftSchedules = new Map();
@@ -74,6 +77,36 @@ function parseYear(value, fallback = new Date().getFullYear()) {
 function parseMonth(value) {
     const month = Number(value);
     return Number.isInteger(month) && month >= 1 && month <= 12 ? month : null;
+}
+
+function normalizeLocationKey(value) {
+    return cleanText(value)
+        .toUpperCase()
+        .replace(/\s+/g, '')
+        .replace(/\.0$/, '');
+}
+
+async function loadPropertyManagementEntityMap() {
+    try {
+        const [rows] = await pool.query(
+            `SELECT location, entity_code
+             FROM property_management_entities
+             WHERE is_active = 1`
+        );
+
+        return new Map(
+            rows
+                .map(row => [normalizeLocationKey(row.location), cleanText(row.entity_code).toUpperCase()])
+                .filter(([location, entity]) => location && entity)
+        );
+    } catch (error) {
+        if (!['ER_NO_SUCH_TABLE', 'ER_BAD_FIELD_ERROR'].includes(error.code)) throw error;
+        return new Map();
+    }
+}
+
+function resolveEntityForStore(entityMap, storeNumber, fallback = '') {
+    return entityMap.get(normalizeLocationKey(storeNumber)) || cleanText(fallback).toUpperCase();
 }
 
 function inferGlPeriod(parsed) {
@@ -204,6 +237,96 @@ function scheduleDataFromRecord(schedule) {
     };
 }
 
+function normalizeSourceRowRecord(row = {}, schedule = {}) {
+    return {
+        ...row,
+        id: Number(row.id || row.source_row_id || 0) || nextDraftRowId--,
+        schedule_id: Number(schedule.id || row.schedule_id || 0) || row.schedule_id,
+        source_row_number: Number(row.source_row_number || row.sourceRowNumber || 0) || 0,
+        posted_date: cleanSqlDate(row.posted_date || row.postedDate || row.doc_date || row.docDate, null),
+        doc_date: cleanSqlDate(row.doc_date || row.docDate || row.posted_date || row.postedDate, null),
+        doc_number: cleanText(row.doc_number || row.docNumber),
+        memo_description: cleanText(row.memo_description || row.memoDescription),
+        department: cleanText(row.department || row.store_number || row.storeNumber),
+        store_number: cleanText(row.store_number || row.storeNumber),
+        entity_code: cleanText(row.entity_code || row.entity || row.entityCode || schedule.entity_code || schedule.brand).toUpperCase(),
+        txn_no: cleanText(row.txn_no || row.txnNo),
+        journal: cleanText(row.journal),
+        debit: roundMoney(row.debit ?? row.amount_paid ?? row.amountPaid ?? 0),
+        credit: roundMoney(row.credit ?? 0),
+        balance: roundMoney(row.balance ?? row.amount_paid ?? row.amountPaid ?? 0),
+        payee: cleanText(row.payee),
+        tax_year: parseYear(row.tax_year || row.taxYear, schedule.tax_year),
+        amount_paid: roundMoney(row.amount_paid ?? row.amountPaid ?? 0),
+        source_account: cleanAccount(row.source_account || row.sourceAccount, schedule.source_account),
+        prepaid_account: cleanAccount(row.prepaid_account || row.prepaidAccount, schedule.prepaid_account),
+        expense_account: cleanAccount(row.expense_account || row.expenseAccount, schedule.expense_account),
+        include_in_schedule: Number(row.include_in_schedule ?? row.includeInSchedule ?? 1) === 0 ? 0 : 1,
+        exception_reason: row.exception_reason || row.exceptionReason || null,
+        raw_json: typeof row.raw_json === 'string'
+            ? row.raw_json
+            : JSON.stringify(row.raw_json || row.rawJson || {})
+    };
+}
+
+function buildPersistentScheduleData(schedule, overrides = {}) {
+    const current = scheduleDataFromRecord(schedule);
+    const sourceRows = (overrides.sourceRows ?? current.sourceRows).map(row =>
+        normalizeSourceRowRecord(row, schedule)
+    );
+    const bills = Array.isArray(overrides.bills) ? overrides.bills : current.bills;
+    const months = Array.isArray(overrides.months) ? overrides.months : current.months;
+    const {
+        datos_json,
+        metadata_json,
+        ...scheduleRecord
+    } = schedule;
+
+    return {
+        schedule: {
+            ...scheduleRecord,
+            source_row_count: sourceRows.length,
+            included_row_count: sourceRows.filter(row => Number(row.include_in_schedule ?? 1) === 1).length,
+            excluded_row_count: sourceRows.filter(row => Number(row.include_in_schedule ?? 1) !== 1).length,
+            generated_month_count: months.length,
+            status: overrides.status || schedule.status,
+            generated_at: overrides.generated_at ?? schedule.generated_at
+        },
+        sourceRows,
+        bills,
+        months,
+        summary: summarizeMonths(months)
+    };
+}
+
+async function updatePrepaidScheduleJson(connection, scheduleId, payload, extra = {}) {
+    const schedule = payload.schedule || {};
+
+    await connection.query(
+        `UPDATE prepaid_schedules
+         SET status = ?,
+             source_row_count = ?,
+             included_row_count = ?,
+             excluded_row_count = ?,
+             generated_month_count = ?,
+             generated_at = ?,
+             datos_json = ?,
+             metadata_json = ?
+         WHERE id = ?`,
+        [
+            extra.status || schedule.status || 'SOURCE_LOADED',
+            Number(schedule.source_row_count || 0),
+            Number(schedule.included_row_count || 0),
+            Number(schedule.excluded_row_count || 0),
+            Number(schedule.generated_month_count || 0),
+            extra.generated_at ?? schedule.generated_at ?? null,
+            JSON.stringify(payload),
+            JSON.stringify(extra.metadata || parseJson(schedule.metadata_json, {}) || {}),
+            scheduleId
+        ]
+    );
+}
+
 async function saveWorkbookFromPayload(schedule, payload) {
     return savePrepaidScheduleWorkbook({
         schedule,
@@ -213,14 +336,42 @@ async function saveWorkbookFromPayload(schedule, payload) {
     });
 }
 
+function sendWorkbookDownload(res, workbook, downloadName) {
+    if (workbook?.buffer) {
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', `attachment; filename="${downloadName || workbook.filename || 'prepaid-schedule.xlsx'}"`);
+        res.setHeader('Content-Length', workbook.buffer.length);
+        res.send(workbook.buffer);
+        return;
+    }
+
+    res.download(workbook.path, downloadName || workbook.filename, error => {
+        if (!error || res.headersSent) return;
+        console.error('Prepaid workbook could not be downloaded:', error);
+        res.status(500).json({ success: false, message: 'Export could not be downloaded' });
+    });
+}
+
 function cleanSqlDate(value, fallback = null) {
     const parsed = parseDate(value);
     return parsed ? toSqlDate(parsed) : fallback;
 }
 
+function normalizeAmortizationMode(value) {
+    return String(value || 'NORMAL').trim().toUpperCase() === 'CLOSEOUT'
+        ? 'CLOSEOUT'
+        : 'NORMAL';
+}
+
 function getSourceRowReviewMetadata(row = {}, schedule = {}) {
     const raw = parseJson(row.raw_json, {}) || {};
     const review = parseJson(raw.source_review, {}) || raw.source_review || {};
+    const amortizationMode = normalizeAmortizationMode(
+        review.amortization_mode || raw.amortization_mode
+    );
+    const closeoutDate = amortizationMode === 'CLOSEOUT'
+        ? cleanSqlDate(review.closeout_date || raw.closeout_date, null)
+        : null;
 
     return {
         raw,
@@ -232,7 +383,9 @@ function getSourceRowReviewMetadata(row = {}, schedule = {}) {
         amortizationEnd: cleanSqlDate(
             review.amortization_end || raw.amortization_end,
             schedule.amortization_end || null
-        )
+        ),
+        amortizationMode,
+        closeoutDate
     };
 }
 
@@ -242,8 +395,46 @@ function sourceRowForClient(row, schedule = {}) {
         ...row,
         is_manual: metadata.isManual ? 1 : 0,
         amortization_start: metadata.amortizationStart,
-        amortization_end: metadata.amortizationEnd
+        amortization_end: metadata.amortizationEnd,
+        amortization_mode: metadata.amortizationMode,
+        closeout_date: metadata.closeoutDate
     };
+}
+
+function validateCloseoutSettings({ rowNumber, amortizationStart, amortizationEnd, amortizationMode, closeoutDate }) {
+    if (amortizationMode !== 'CLOSEOUT') return;
+
+    if (!closeoutDate) {
+        const error = new Error(`Row ${rowNumber} requires a store closure month.`);
+        error.statusCode = 400;
+        throw error;
+    }
+
+    const startMonth = String(amortizationStart).slice(0, 7);
+    const endMonth = String(amortizationEnd).slice(0, 7);
+    const closeoutMonth = String(closeoutDate).slice(0, 7);
+    if (closeoutMonth < startMonth || closeoutMonth > endMonth) {
+        const error = new Error(`Row ${rowNumber} has a closure month outside the original amortization period.`);
+        error.statusCode = 400;
+        throw error;
+    }
+}
+
+function calculateSourceAmortization(sourceMetadata, amountPaid, amortizationStart, amortizationEnd) {
+    if (sourceMetadata.amortizationMode === 'CLOSEOUT') {
+        return calculateBillAmortizationWithCloseout({
+            amountPaid,
+            amortizationStart,
+            amortizationEnd,
+            closeoutDate: sourceMetadata.closeoutDate
+        });
+    }
+
+    return calculateBillAmortization({
+        amountPaid,
+        amortizationStart,
+        amortizationEnd
+    });
 }
 
 function tableSetupMessage(error, res) {
@@ -256,88 +447,6 @@ function tableSetupMessage(error, res) {
         return true;
     }
     return false;
-}
-
-async function updateScheduleCounts(connection, scheduleId) {
-    const [[sourceCounts]] = await connection.query(
-        `SELECT COUNT(*) AS source_row_count,
-                SUM(include_in_schedule = 1) AS included_row_count,
-                SUM(include_in_schedule = 0) AS excluded_row_count
-         FROM prepaid_source_rows
-         WHERE schedule_id = ?`,
-        [scheduleId]
-    );
-
-    const [[monthCounts]] = await connection.query(
-        `SELECT COUNT(*) AS generated_month_count
-         FROM prepaid_amortization_months
-         WHERE schedule_id = ?`,
-        [scheduleId]
-    );
-
-    await connection.query(
-        `UPDATE prepaid_schedules
-         SET source_row_count = ?,
-             included_row_count = ?,
-             excluded_row_count = ?,
-             generated_month_count = ?
-         WHERE id = ?`,
-        [
-            Number(sourceCounts?.source_row_count || 0),
-            Number(sourceCounts?.included_row_count || 0),
-            Number(sourceCounts?.excluded_row_count || 0),
-            Number(monthCounts?.generated_month_count || 0),
-            scheduleId
-        ]
-    );
-}
-
-async function refreshScheduleStatus(connection, scheduleId) {
-    const [[summary]] = await connection.query(
-        `SELECT COUNT(*) AS month_count,
-                SUM(status = 'DIFFERENCE') AS difference_count,
-                SUM(status = 'MISSING_GL') AS missing_count,
-                SUM(status = 'PENDING_GL') AS pending_count
-         FROM prepaid_amortization_months
-         WHERE schedule_id = ?`,
-        [scheduleId]
-    );
-
-    let status = 'SOURCE_LOADED';
-    if (Number(summary?.month_count || 0) > 0) {
-        status = 'GENERATED';
-        if (Number(summary?.difference_count || 0) > 0 || Number(summary?.missing_count || 0) > 0) {
-            status = 'DIFFERENCE';
-        } else if (Number(summary?.pending_count || 0) === 0) {
-            status = 'VALIDATED';
-        }
-    }
-
-    await connection.query('UPDATE prepaid_schedules SET status = ? WHERE id = ?', [status, scheduleId]);
-}
-
-async function persistScheduleWorkbook(scheduleId) {
-    const [[schedule]] = await pool.query('SELECT * FROM prepaid_schedules WHERE id = ? LIMIT 1', [scheduleId]);
-    if (!schedule) throw new Error('Schedule was not found');
-
-    const [sourceRows] = await pool.query(
-        `SELECT * FROM prepaid_source_rows WHERE schedule_id = ? ORDER BY source_row_number`,
-        [scheduleId]
-    );
-    const [bills] = await pool.query(
-        `SELECT * FROM prepaid_bills WHERE schedule_id = ? ORDER BY store_number + 0, store_number, id`,
-        [scheduleId]
-    );
-    const [months] = await pool.query(
-        `SELECT pam.*, pb.payee, pb.doc_number
-         FROM prepaid_amortization_months pam
-         JOIN prepaid_bills pb ON pb.id = pam.bill_id
-         WHERE pam.schedule_id = ?
-         ORDER BY pam.period_year, pam.period_month, pam.store_number + 0, pam.store_number, pam.id`,
-        [scheduleId]
-    );
-
-    return savePrepaidScheduleWorkbook({ schedule, sourceRows, bills, months });
 }
 
 async function loadScheduleOr404(scheduleId, res) {
@@ -448,6 +557,7 @@ router.post('/upload-bill-source', ...access('crear'), upload.single('billSource
             req.body.title,
             `${brand} PTAX ${inferredTaxYear} Prepaid Amortization`
         );
+        const entityMap = await loadPropertyManagementEntityMap();
 
         const scheduleId = nextDraftScheduleId;
         nextDraftScheduleId -= 1;
@@ -483,6 +593,7 @@ router.post('/upload-bill-source', ...access('crear'), upload.single('billSource
                 ...row,
                 id: nextDraftRowId--,
                 schedule_id: scheduleId,
+                entity_code: resolveEntityForStore(entityMap, row.store_number, brand),
                 tax_year: row.tax_year || inferredTaxYear,
                 raw_json: JSON.stringify(row.raw_json)
             })),
@@ -562,6 +673,7 @@ router.put('/:scheduleId/source-rows', ...access('editar'), async (req, res) => 
                 return res.status(400).json({ success: false, message: 'The reviewed source rows are required.' });
             }
 
+            const entityMap = await loadPropertyManagementEntityMap();
             const removedStoreNumbers = new Set(
                 (Array.isArray(req.body.removed_store_numbers) ? req.body.removed_store_numbers : [])
                     .map(value => cleanText(value))
@@ -593,10 +705,23 @@ router.put('/:scheduleId/source-rows', ...access('editar'), async (req, res) => 
                 const isManual = Number(input.is_manual ?? (existingMetadata.isManual ? 1 : 0)) === 1;
                 const amortizationStart = cleanSqlDate(input.amortization_start, existingMetadata.amortizationStart || draft.schedule.amortization_start);
                 const amortizationEnd = cleanSqlDate(input.amortization_end, existingMetadata.amortizationEnd || draft.schedule.amortization_end);
+                const amortizationMode = normalizeAmortizationMode(
+                    input.amortization_mode ?? existingMetadata.amortizationMode
+                );
+                const closeoutDate = amortizationMode === 'CLOSEOUT'
+                    ? cleanSqlDate(input.closeout_date, existingMetadata.closeoutDate)
+                    : null;
 
                 if (!amortizationStart || !amortizationEnd || amortizationStart > amortizationEnd) {
                     return res.status(400).json({ success: false, message: `Row ${index + 1} has an invalid amortization period.` });
                 }
+                validateCloseoutSettings({
+                    rowNumber: index + 1,
+                    amortizationStart,
+                    amortizationEnd,
+                    amortizationMode,
+                    closeoutDate
+                });
 
                 reviewedRows.push({
                     id: existing?.id || nextDraftRowId--,
@@ -608,6 +733,7 @@ router.put('/:scheduleId/source-rows', ...access('editar'), async (req, res) => 
                     memo_description: cleanText(input.memo_description, existing?.memo_description || ''),
                     department: cleanText(input.department, existing?.department || storeNumber),
                     store_number: storeNumber,
+                    entity_code: resolveEntityForStore(entityMap, storeNumber, input.entity_code || existing?.entity_code || draft.schedule.brand),
                     txn_no: cleanText(input.txn_no, existing?.txn_no || ''),
                     journal: cleanText(input.journal, existing?.journal || (isManual ? 'MANUAL' : '')),
                     debit: roundMoney(input.debit ?? existing?.debit ?? amountPaid),
@@ -624,10 +750,14 @@ router.put('/:scheduleId/source-rows', ...access('editar'), async (req, res) => 
                     raw_json: JSON.stringify({
                         ...(existingMetadata.raw || {}),
                         manual_entry: isManual ? 1 : 0,
+                        amortization_mode: amortizationMode,
+                        closeout_date: closeoutDate,
                         source_review: {
                             is_manual: isManual ? 1 : 0,
                             amortization_start: amortizationStart,
-                            amortization_end: amortizationEnd
+                            amortization_end: amortizationEnd,
+                            amortization_mode: amortizationMode,
+                            closeout_date: closeoutDate
                         }
                     })
                 });
@@ -665,17 +795,15 @@ router.put('/:scheduleId/source-rows', ...access('editar'), async (req, res) => 
             return res.status(413).json({ success: false, message: 'Too many source rows were submitted.' });
         }
 
+        const entityMap = await loadPropertyManagementEntityMap();
         const removedStoreNumbers = new Set(
             (Array.isArray(req.body.removed_store_numbers) ? req.body.removed_store_numbers : [])
                 .map(value => cleanText(value))
                 .filter(Boolean)
         );
 
-        const [existingRows] = await connection.query(
-            `SELECT *
-             FROM prepaid_source_rows
-             WHERE schedule_id = ?`,
-            [scheduleId]
+        const existingRows = scheduleDataFromRecord(schedule).sourceRows.map(row =>
+            normalizeSourceRowRecord(row, schedule)
         );
         const existingById = new Map(existingRows.map(row => [Number(row.id), row]));
         const receivedIds = new Set();
@@ -731,6 +859,12 @@ router.put('/:scheduleId/source-rows', ...access('editar'), async (req, res) => 
                 input.amortization_end,
                 existingMetadata.amortizationEnd || schedule.amortization_end
             );
+            const amortizationMode = normalizeAmortizationMode(
+                input.amortization_mode ?? existingMetadata.amortizationMode
+            );
+            const closeoutDate = amortizationMode === 'CLOSEOUT'
+                ? cleanSqlDate(input.closeout_date, existingMetadata.closeoutDate)
+                : null;
 
             if (!amortizationStart || !amortizationEnd || amortizationStart > amortizationEnd) {
                 return res.status(400).json({
@@ -738,14 +872,25 @@ router.put('/:scheduleId/source-rows', ...access('editar'), async (req, res) => 
                     message: `Row ${index + 1} has an invalid amortization period.`
                 });
             }
+            validateCloseoutSettings({
+                rowNumber: index + 1,
+                amortizationStart,
+                amortizationEnd,
+                amortizationMode,
+                closeoutDate
+            });
 
             const rawJson = {
                 ...(existingMetadata.raw || {}),
                 manual_entry: isManual ? 1 : 0,
+                amortization_mode: amortizationMode,
+                closeout_date: closeoutDate,
                 source_review: {
                     is_manual: isManual ? 1 : 0,
                     amortization_start: amortizationStart,
-                    amortization_end: amortizationEnd
+                    amortization_end: amortizationEnd,
+                    amortization_mode: amortizationMode,
+                    closeout_date: closeoutDate
                 }
             };
 
@@ -761,6 +906,7 @@ router.put('/:scheduleId/source-rows', ...access('editar'), async (req, res) => 
                 memoDescription: cleanText(input.memo_description, existing?.memo_description || ''),
                 department: cleanText(input.department, existing?.department || storeNumber),
                 storeNumber,
+                entityCode: resolveEntityForStore(entityMap, storeNumber, input.entity_code || existing?.entity_code || schedule.brand),
                 txnNo: cleanText(input.txn_no, existing?.txn_no || ''),
                 journal: cleanText(input.journal, existing?.journal || (isManual ? 'MANUAL' : '')),
                 debit: roundMoney(input.debit ?? existing?.debit ?? amountPaid),
@@ -798,127 +944,48 @@ router.put('/:scheduleId/source-rows', ...access('editar'), async (req, res) => 
             nextSourceRowNumber += 1;
         }
 
+        const savedRows = reviewedRows.map(row => normalizeSourceRowRecord({
+            id: row.id || nextDraftRowId--,
+            schedule_id: scheduleId,
+            source_row_number: row.sourceRowNumber,
+            posted_date: row.postedDate,
+            doc_date: row.docDate,
+            doc_number: row.docNumber,
+            memo_description: row.memoDescription,
+            department: row.department,
+            store_number: row.storeNumber,
+            entity_code: row.entityCode,
+            txn_no: row.txnNo,
+            journal: row.journal,
+            debit: row.debit,
+            credit: row.credit,
+            balance: row.balance,
+            payee: row.payee,
+            tax_year: row.taxYear,
+            amount_paid: row.amountPaid,
+            source_account: row.sourceAccount,
+            prepaid_account: row.prepaidAccount,
+            expense_account: row.expenseAccount,
+            include_in_schedule: 1,
+            exception_reason: null,
+            raw_json: row.rawJson
+        }, schedule));
+        const metadata = parseJson(schedule.metadata_json, {}) || {};
+        const payload = buildPersistentScheduleData(schedule, {
+            sourceRows: savedRows,
+            bills: [],
+            months: [],
+            status: 'SOURCE_LOADED',
+            generated_at: null
+        });
+
         await connection.beginTransaction();
-        await connection.query('DELETE FROM prepaid_amortization_months WHERE schedule_id = ?', [scheduleId]);
-        await connection.query('DELETE FROM prepaid_bills WHERE schedule_id = ?', [scheduleId]);
-
-        const retainedIds = reviewedRows.filter(row => row.id).map(row => row.id);
-        if (retainedIds.length) {
-            const placeholders = retainedIds.map(() => '?').join(', ');
-            await connection.query(
-                `DELETE FROM prepaid_source_rows
-                 WHERE schedule_id = ?
-                   AND id NOT IN (${placeholders})`,
-                [scheduleId, ...retainedIds]
-            );
-        } else {
-            await connection.query('DELETE FROM prepaid_source_rows WHERE schedule_id = ?', [scheduleId]);
-        }
-
-        for (const row of reviewedRows) {
-            if (row.id) {
-                await connection.query(
-                    `UPDATE prepaid_source_rows
-                     SET source_row_number = ?,
-                         posted_date = ?,
-                         doc_date = ?,
-                         doc_number = ?,
-                         memo_description = ?,
-                         department = ?,
-                         store_number = ?,
-                         txn_no = ?,
-                         journal = ?,
-                         debit = ?,
-                         credit = ?,
-                         balance = ?,
-                         payee = ?,
-                         tax_year = ?,
-                         amount_paid = ?,
-                         source_account = ?,
-                         prepaid_account = ?,
-                         expense_account = ?,
-                         include_in_schedule = 1,
-                         exception_reason = NULL,
-                         raw_json = ?
-                     WHERE id = ?
-                       AND schedule_id = ?`,
-                    [
-                        row.sourceRowNumber,
-                        row.postedDate,
-                        row.docDate,
-                        row.docNumber,
-                        row.memoDescription,
-                        row.department,
-                        row.storeNumber,
-                        row.txnNo,
-                        row.journal,
-                        row.debit,
-                        row.credit,
-                        row.balance,
-                        row.payee,
-                        row.taxYear,
-                        row.amountPaid,
-                        row.sourceAccount,
-                        row.prepaidAccount,
-                        row.expenseAccount,
-                        row.rawJson,
-                        row.id,
-                        scheduleId
-                    ]
-                );
-                continue;
-            }
-
-            await connection.query(
-                `INSERT INTO prepaid_source_rows
-                 (schedule_id, source_row_number, posted_date, doc_date, doc_number, memo_description,
-                  department, store_number, txn_no, journal, debit, credit, balance, payee, tax_year,
-                  amount_paid, source_account, prepaid_account, expense_account, include_in_schedule,
-                  exception_reason, raw_json)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, NULL, ?)`,
-                [
-                    scheduleId,
-                    row.sourceRowNumber,
-                    row.postedDate,
-                    row.docDate,
-                    row.docNumber,
-                    row.memoDescription,
-                    row.department,
-                    row.storeNumber,
-                    row.txnNo,
-                    row.journal,
-                    row.debit,
-                    row.credit,
-                    row.balance,
-                    row.payee,
-                    row.taxYear,
-                    row.amountPaid,
-                    row.sourceAccount,
-                    row.prepaidAccount,
-                    row.expenseAccount,
-                    row.rawJson
-                ]
-            );
-        }
-
-        await updateScheduleCounts(connection, scheduleId);
-        await connection.query(
-            `UPDATE prepaid_schedules
-             SET status = 'SOURCE_LOADED',
-                 generated_at = NULL
-             WHERE id = ?`,
-            [scheduleId]
-        );
+        await updatePrepaidScheduleJson(connection, scheduleId, payload, {
+            status: 'SOURCE_LOADED',
+            generated_at: null,
+            metadata
+        });
         await connection.commit();
-
-        const [savedRows] = await pool.query(
-            `SELECT *
-             FROM prepaid_source_rows
-             WHERE schedule_id = ?
-               AND include_in_schedule = 1
-             ORDER BY store_number + 0, store_number, source_row_number`,
-            [scheduleId]
-        );
 
         res.json({
             success: true,
@@ -931,7 +998,7 @@ router.put('/:scheduleId/source-rows', ...access('editar'), async (req, res) => 
         await connection.rollback();
         console.error('Prepaid source rows could not be synchronized:', error);
         if (tableSetupMessage(error, res)) return;
-        res.status(500).json({ success: false, message: error.message || 'Source rows could not be saved' });
+        res.status(Number(error.statusCode) || 500).json({ success: false, message: error.message || 'Source rows could not be saved' });
     } finally {
         connection.release();
     }
@@ -942,16 +1009,23 @@ router.patch('/source-rows/:rowId', ...access('editar'), async (req, res) => {
 
     try {
         const rowId = Number(req.params.rowId);
-        const [[existing]] = await connection.query(
-            `SELECT psr.id, psr.schedule_id, ps.title
-             FROM prepaid_source_rows psr
-             JOIN prepaid_schedules ps ON ps.id = psr.schedule_id
-             WHERE psr.id = ?
-             LIMIT 1`,
-            [rowId]
-        );
+        const [schedules] = await connection.query('SELECT * FROM prepaid_schedules ORDER BY id DESC');
+        let schedule = null;
+        let payload = null;
+        let rowIndex = -1;
 
-        if (!existing) {
+        for (const candidate of schedules) {
+            const candidatePayload = scheduleDataFromRecord(candidate);
+            const index = candidatePayload.sourceRows.findIndex(row => Number(row.id) === rowId);
+            if (index >= 0) {
+                schedule = candidate;
+                payload = candidatePayload;
+                rowIndex = index;
+                break;
+            }
+        }
+
+        if (!schedule || !payload || rowIndex < 0) {
             return res.status(404).json({ success: false, message: 'Source row was not found' });
         }
 
@@ -975,23 +1049,32 @@ router.patch('/source-rows/:rowId', ...access('editar'), async (req, res) => {
         });
 
         if (!updates.length) {
-            return res.json({ success: true, schedule_id: existing.schedule_id });
+            return res.json({ success: true, schedule_id: schedule.id });
         }
 
+        const sourceRows = payload.sourceRows.map(row => normalizeSourceRowRecord(row, schedule));
+        Object.entries(allowed).forEach(([field, cleaner]) => {
+            if (req.body[field] === undefined) return;
+            sourceRows[rowIndex][field] = cleaner(req.body[field]);
+        });
+
+        const nextPayload = buildPersistentScheduleData(schedule, {
+            sourceRows,
+            bills: [],
+            months: [],
+            status: 'SOURCE_LOADED',
+            generated_at: null
+        });
+
         await connection.beginTransaction();
-        await connection.query(
-            `UPDATE prepaid_source_rows
-             SET ${updates.join(', ')}
-             WHERE id = ?`,
-            [...params, rowId]
-        );
-        await connection.query('DELETE FROM prepaid_amortization_months WHERE schedule_id = ?', [existing.schedule_id]);
-        await connection.query('DELETE FROM prepaid_bills WHERE schedule_id = ?', [existing.schedule_id]);
-        await updateScheduleCounts(connection, existing.schedule_id);
-        await connection.query('UPDATE prepaid_schedules SET status = "SOURCE_LOADED", generated_at = NULL WHERE id = ?', [existing.schedule_id]);
+        await updatePrepaidScheduleJson(connection, schedule.id, nextPayload, {
+            status: 'SOURCE_LOADED',
+            generated_at: null,
+            metadata: parseJson(schedule.metadata_json, {}) || {}
+        });
         await connection.commit();
 
-        res.json({ success: true, schedule_id: existing.schedule_id, needs_regenerate: true });
+        res.json({ success: true, schedule_id: schedule.id, needs_regenerate: true });
     } catch (error) {
         await connection.rollback();
         console.error('Prepaid source row could not be updated:', error);
@@ -1024,17 +1107,19 @@ router.post('/:scheduleId/generate', ...access('crear'), async (req, res) => {
                 const sourceMetadata = getSourceRowReviewMetadata(source, draft.schedule);
                 const amortizationStart = sourceMetadata.amortizationStart || draft.schedule.amortization_start;
                 const amortizationEnd = sourceMetadata.amortizationEnd || draft.schedule.amortization_end;
-                const calculation = calculateBillAmortization({
-                    amountPaid: source.amount_paid,
+                const calculation = calculateSourceAmortization(
+                    sourceMetadata,
+                    source.amount_paid,
                     amortizationStart,
                     amortizationEnd
-                });
+                );
                 const billId = nextDraftBillId--;
                 const bill = {
                     id: billId,
                     schedule_id: scheduleId,
                     source_row_id: source.id,
                     store_number: source.store_number,
+                    entity_code: source.entity_code || draft.schedule.brand,
                     payee: source.payee,
                     doc_number: source.doc_number,
                     bill_date: source.doc_date || source.posted_date,
@@ -1046,7 +1131,10 @@ router.post('/:scheduleId/generate', ...access('crear'), async (req, res) => {
                     amortization_start: amortizationStart,
                     amortization_end: amortizationEnd,
                     total_months: calculation.totalMonths,
-                    monthly_amount: calculation.monthlyAmount
+                    monthly_amount: calculation.monthlyAmount,
+                    amortization_mode: calculation.isCloseout ? 'CLOSEOUT' : 'NORMAL',
+                    closeout_date: calculation.closeoutDate || null,
+                    closeout_amount: calculation.closeoutAmount ?? null
                 };
                 draft.bills.push(bill);
 
@@ -1057,6 +1145,7 @@ router.post('/:scheduleId/generate', ...access('crear'), async (req, res) => {
                         bill_id: billId,
                         source_row_id: source.id,
                         store_number: source.store_number,
+                        entity_code: source.entity_code || draft.schedule.brand,
                         payee: source.payee,
                         doc_number: source.doc_number,
                         period_year: month.period_year,
@@ -1088,92 +1177,101 @@ router.post('/:scheduleId/generate', ...access('crear'), async (req, res) => {
             return res.status(404).json({ success: false, message: 'Schedule was not found' });
         }
 
-        const [sourceRows] = await connection.query(
-            `SELECT *
-             FROM prepaid_source_rows
-             WHERE schedule_id = ?
-               AND include_in_schedule = 1
-             ORDER BY store_number + 0, store_number, source_row_number`,
-            [scheduleId]
-        );
+        const entityMap = await loadPropertyManagementEntityMap();
+        const sourceRows = scheduleDataFromRecord(schedule).sourceRows
+            .map(row => {
+                const normalized = normalizeSourceRowRecord(row, schedule);
+                return {
+                    ...normalized,
+                    entity_code: resolveEntityForStore(entityMap, normalized.store_number, normalized.entity_code || schedule.brand)
+                };
+            })
+            .filter(row => Number(row.include_in_schedule ?? 1) === 1)
+            .sort((a, b) => String(a.store_number).localeCompare(String(b.store_number), undefined, { numeric: true })
+                || Number(a.source_row_number || 0) - Number(b.source_row_number || 0));
 
         if (!sourceRows.length) {
             return res.status(400).json({ success: false, message: 'There are no included bills to amortize.' });
         }
 
         await connection.beginTransaction();
-        await connection.query('DELETE FROM prepaid_amortization_months WHERE schedule_id = ?', [scheduleId]);
-        await connection.query('DELETE FROM prepaid_bills WHERE schedule_id = ?', [scheduleId]);
 
-        let insertedBills = 0;
-        let insertedMonths = 0;
+        const bills = [];
+        const months = [];
+        let nextBillId = -1;
+        let nextMonthId = -1;
 
         for (const source of sourceRows) {
             const sourceMetadata = getSourceRowReviewMetadata(source, schedule);
             const amortizationStart = sourceMetadata.amortizationStart || schedule.amortization_start;
             const amortizationEnd = sourceMetadata.amortizationEnd || schedule.amortization_end;
-            const calculation = calculateBillAmortization({
-                amountPaid: source.amount_paid,
+            const calculation = calculateSourceAmortization(
+                sourceMetadata,
+                source.amount_paid,
                 amortizationStart,
                 amortizationEnd
-            });
-
-            const [billResult] = await connection.query(
-                `INSERT INTO prepaid_bills
-                 (schedule_id, source_row_id, store_number, payee, doc_number, bill_date, tax_year,
-                  amount_paid, source_account, prepaid_account, expense_account, amortization_start,
-                  amortization_end, total_months, monthly_amount)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-                [
-                    scheduleId,
-                    source.id,
-                    source.store_number,
-                    source.payee,
-                    source.doc_number,
-                    source.doc_date || source.posted_date,
-                    source.tax_year || schedule.tax_year,
-                    source.amount_paid,
-                    source.source_account || schedule.source_account,
-                    source.prepaid_account || schedule.prepaid_account,
-                    source.expense_account || schedule.expense_account,
-                    amortizationStart,
-                    amortizationEnd,
-                    calculation.totalMonths,
-                    calculation.monthlyAmount
-                ]
             );
 
-            insertedBills += 1;
+            const billId = nextBillId--;
+            bills.push({
+                id: billId,
+                schedule_id: scheduleId,
+                source_row_id: source.id,
+                store_number: source.store_number,
+                entity_code: source.entity_code || schedule.brand,
+                payee: source.payee,
+                doc_number: source.doc_number,
+                bill_date: source.doc_date || source.posted_date,
+                tax_year: source.tax_year || schedule.tax_year,
+                amount_paid: source.amount_paid,
+                source_account: source.source_account || schedule.source_account,
+                prepaid_account: source.prepaid_account || schedule.prepaid_account,
+                expense_account: source.expense_account || schedule.expense_account,
+                amortization_start: amortizationStart,
+                amortization_end: amortizationEnd,
+                total_months: calculation.totalMonths,
+                monthly_amount: calculation.monthlyAmount,
+                amortization_mode: calculation.isCloseout ? 'CLOSEOUT' : 'NORMAL',
+                closeout_date: calculation.closeoutDate || null,
+                closeout_amount: calculation.closeoutAmount ?? null
+            });
 
-            if (calculation.months.length) {
-                const monthValues = calculation.months.map(month => [
+            calculation.months.forEach(month => {
+                months.push({
+                    id: nextMonthId--,
                     scheduleId,
-                    billResult.insertId,
-                    source.id,
-                    source.store_number,
-                    month.period_year,
-                    month.period_month,
-                    month.period_code,
-                    month.expected_amount,
-                    0,
-                    month.expected_amount,
-                    'PENDING_GL'
-                ]);
-
-                await connection.query(
-                    `INSERT INTO prepaid_amortization_months
-                     (schedule_id, bill_id, source_row_id, store_number, period_year, period_month,
-                      period_code, expected_amount, gl_actual_amount, difference, status)
-                     VALUES ?`,
-                    [monthValues]
-                );
-
-                insertedMonths += monthValues.length;
-            }
+                    schedule_id: scheduleId,
+                    bill_id: billId,
+                    source_row_id: source.id,
+                    store_number: source.store_number,
+                    entity_code: source.entity_code || schedule.brand,
+                    payee: source.payee,
+                    doc_number: source.doc_number,
+                    period_year: month.period_year,
+                    period_month: month.period_month,
+                    period_code: month.period_code,
+                    expected_amount: month.expected_amount,
+                    gl_actual_amount: 0,
+                    difference: month.expected_amount,
+                    status: 'PENDING_GL'
+                });
+            });
         }
 
-        await updateScheduleCounts(connection, scheduleId);
-        await connection.query('UPDATE prepaid_schedules SET status = "GENERATED", generated_at = NOW() WHERE id = ?', [scheduleId]);
+        const generatedAt = new Date();
+        const payload = buildPersistentScheduleData(schedule, {
+            sourceRows,
+            bills,
+            months,
+            status: 'GENERATED',
+            generated_at: generatedAt
+        });
+
+        await updatePrepaidScheduleJson(connection, scheduleId, payload, {
+            status: 'GENERATED',
+            generated_at: generatedAt,
+            metadata: parseJson(schedule.metadata_json, {}) || {}
+        });
         await connection.commit();
 
         // Generating only updates the database preview. The Excel workbook is
@@ -1181,8 +1279,8 @@ router.post('/:scheduleId/generate', ...access('crear'), async (req, res) => {
         res.json({
             success: true,
             schedule_id: scheduleId,
-            inserted_bills: insertedBills,
-            inserted_months: insertedMonths,
+            inserted_bills: bills.length,
+            inserted_months: months.length,
             saved_to_server: false,
             needs_save: true
         });
@@ -1190,7 +1288,7 @@ router.post('/:scheduleId/generate', ...access('crear'), async (req, res) => {
         await connection.rollback();
         console.error('Prepaid schedule could not be generated:', error);
         if (tableSetupMessage(error, res)) return;
-        res.status(500).json({ success: false, message: error.message || 'Schedule could not be generated' });
+        res.status(Number(error.statusCode) || 500).json({ success: false, message: error.message || 'Schedule could not be generated' });
     } finally {
         connection.release();
     }
@@ -1266,73 +1364,13 @@ router.post('/upload-gl', ...access('crear'), upload.single('glFile'), async (re
             });
         }
 
-        await connection.beginTransaction();
+        const schedule = await loadScheduleOr404(scheduleId, res);
+        if (!schedule) return;
 
-        await connection.query(
-            `DELETE d
-             FROM prepaid_gl_details d
-             JOIN prepaid_gl_uploads u ON u.id = d.gl_upload_id
-             WHERE u.schedule_id = ?
-               AND u.period_year = ?
-               AND u.period_month = ?`,
-            [scheduleId, periodYear, periodMonth]
-        );
-        await connection.query(
-            `DELETE FROM prepaid_gl_uploads
-             WHERE schedule_id = ?
-               AND period_year = ?
-               AND period_month = ?`,
-            [scheduleId, periodYear, periodMonth]
-        );
-
-        const [uploadResult] = await connection.query(
-            `INSERT INTO prepaid_gl_uploads
-             (schedule_id, period_year, period_month, file_name, file_hash, sheet_name,
-              parsed_row_count, uploaded_by, metadata_json)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [
-                scheduleId,
-                periodYear,
-                periodMonth,
-                req.file.originalname,
-                hashBuffer(req.file.buffer),
-                parsed.sheetName,
-                parsed.details.length,
-                getUserId(req),
-                JSON.stringify({ periodCode: periodCode(periodMonth, periodYear) })
-            ]
-        );
-
-        if (parsed.details.length) {
-            await connection.query(
-                `INSERT INTO prepaid_gl_details
-                 (gl_upload_id, source_row_number, posted_date, doc_date, doc_number, memo_description,
-                  store_number, debit, credit, signed_amount, actual_amount, raw_json)
-                 VALUES ?`,
-                [parsed.details.map(detail => [
-                    uploadResult.insertId,
-                    detail.source_row_number,
-                    detail.posted_date,
-                    detail.doc_date,
-                    detail.doc_number,
-                    detail.memo_description,
-                    detail.store_number,
-                    detail.debit,
-                    detail.credit,
-                    detail.signed_amount,
-                    detail.actual_amount,
-                    JSON.stringify(detail.raw_json)
-                ])]
-            );
-        }
-
-        const [monthRows] = await connection.query(
-            `SELECT id, store_number, expected_amount
-             FROM prepaid_amortization_months
-             WHERE schedule_id = ?
-               AND period_year = ?
-               AND period_month = ?`,
-            [scheduleId, periodYear, periodMonth]
+        const payload = scheduleDataFromRecord(schedule);
+        const monthRows = payload.months.filter(row =>
+            Number(row.period_year) === periodYear &&
+            Number(row.period_month) === periodMonth
         );
 
         let matched = 0;
@@ -1355,45 +1393,57 @@ router.post('/upload-gl', ...access('crear'), upload.single('glFile'), async (re
                 matched += 1;
             }
 
-            await connection.query(
-                `UPDATE prepaid_amortization_months
-                 SET gl_actual_amount = ?,
-                     difference = ?,
-                     status = ?,
-                     gl_upload_id = ?
-                 WHERE id = ?`,
-                [actual, difference, status, uploadResult.insertId, row.id]
-            );
+            row.gl_actual_amount = actual;
+            row.difference = difference;
+            row.status = status;
+            row.gl_upload = {
+                file_name: req.file.originalname,
+                file_hash: hashBuffer(req.file.buffer),
+                sheet_name: parsed.sheetName,
+                parsed_row_count: parsed.details.length,
+                period_code: periodCode(periodMonth, periodYear),
+                uploaded_by: getUserId(req),
+                uploaded_at: new Date().toISOString()
+            };
         }
 
-        await connection.query(
-            `UPDATE prepaid_gl_uploads
-             SET matched_count = ?,
-                 difference_count = ?,
-                 missing_count = ?
-             WHERE id = ?`,
-            [matched, differences, missing, uploadResult.insertId]
-        );
-        await refreshScheduleStatus(connection, scheduleId);
+        const summary = summarizeMonths(payload.months);
+        const status = summary.difference_count || summary.missing_gl_count
+            ? 'DIFFERENCE'
+            : summary.pending_count
+                ? 'GENERATED'
+                : 'VALIDATED';
+        const metadata = parseJson(schedule.metadata_json, {}) || {};
+        metadata.last_gl_upload = {
+            file_name: req.file.originalname,
+            file_hash: hashBuffer(req.file.buffer),
+            sheet_name: parsed.sheetName,
+            parsed_row_count: parsed.details.length,
+            period_year: periodYear,
+            period_month: periodMonth,
+            period_code: periodCode(periodMonth, periodYear),
+            matched,
+            differences,
+            missing
+        };
+        const nextPayload = buildPersistentScheduleData(schedule, {
+            sourceRows: payload.sourceRows,
+            bills: payload.bills,
+            months: payload.months,
+            status
+        });
+        const differenceRows = payload.months
+            .filter(month => Number(month.period_year) === periodYear
+                && Number(month.period_month) === periodMonth
+                && ['DIFFERENCE', 'MISSING_GL'].includes(String(month.status).toUpperCase()))
+            .sort((a, b) => Math.abs(Number(b.difference || 0)) - Math.abs(Number(a.difference || 0)));
 
-        const [differenceRows] = await connection.query(
-            `SELECT pam.store_number,
-                    pb.payee,
-                    pb.doc_number,
-                    pam.expected_amount,
-                    pam.gl_actual_amount,
-                    pam.difference,
-                    pam.status
-             FROM prepaid_amortization_months pam
-             JOIN prepaid_bills pb ON pb.id = pam.bill_id
-             WHERE pam.schedule_id = ?
-               AND pam.period_year = ?
-               AND pam.period_month = ?
-               AND pam.status IN ('DIFFERENCE', 'MISSING_GL')
-             ORDER BY ABS(pam.difference) DESC, pam.store_number + 0, pam.store_number`,
-            [scheduleId, periodYear, periodMonth]
-        );
-
+        await connection.beginTransaction();
+        await updatePrepaidScheduleJson(connection, scheduleId, nextPayload, {
+            status,
+            generated_at: schedule.generated_at,
+            metadata
+        });
         await connection.commit();
 
         // GL validation updates database values only. It does not create or
@@ -1549,6 +1599,8 @@ router.post('/:scheduleId/save', ...access('crear'), async (req, res) => {
 
             const savedWorkbook = await saveWorkbookFromPayload({ ...draft.schedule, id: documentId, metadata_json: JSON.stringify(metadata) }, payload);
             metadata.saved_workbook.filename = savedWorkbook.filename;
+            metadata.saved_workbook.persisted = savedWorkbook.persisted !== false;
+            if (savedWorkbook.write_error) metadata.saved_workbook.write_error = savedWorkbook.write_error;
             await pool.query(
                 'UPDATE prepaid_schedules SET metadata_json = ? WHERE id = ?',
                 [JSON.stringify(metadata), documentId]
@@ -1585,9 +1637,11 @@ router.post('/:scheduleId/save', ...access('crear'), async (req, res) => {
         const metadata = parseJson(schedule.metadata_json, {}) || {};
         metadata.saved_workbook = {
             filename: savedWorkbook.filename,
+            persisted: savedWorkbook.persisted !== false,
             saved_at: new Date().toISOString(),
             saved_by: getUserId(req)
         };
+        if (savedWorkbook.write_error) metadata.saved_workbook.write_error = savedWorkbook.write_error;
         await pool.query(
             'UPDATE prepaid_schedules SET metadata_json = ? WHERE id = ?',
             [JSON.stringify(metadata), scheduleId]
@@ -1666,11 +1720,7 @@ router.get('/:scheduleId/export', ...access('exportar'), async (req, res) => {
                 .replace(/^-+|-+$/g, '')
                 .slice(0, 90) || 'prepaid-schedule'}.xlsx`;
 
-            return res.download(savedWorkbook.path, downloadName, error => {
-                if (!error || res.headersSent) return;
-                console.error('Prepaid workbook could not be downloaded:', error);
-                res.status(500).json({ success: false, message: 'Export could not be downloaded' });
-            });
+            return sendWorkbookDownload(res, savedWorkbook, downloadName);
         }
 
         const schedule = await loadScheduleOr404(scheduleId, res);
@@ -1683,10 +1733,10 @@ router.get('/:scheduleId/export', ...access('exportar'), async (req, res) => {
             });
         }
 
-        let exportPath = getScheduleExportPath(schedule);
+        const exportPath = getScheduleExportPath(schedule);
+        let generatedWorkbook = null;
         if (!fs.existsSync(exportPath)) {
-            const savedWorkbook = await saveWorkbookFromPayload(schedule, scheduleDataFromRecord(schedule));
-            exportPath = savedWorkbook.path;
+            generatedWorkbook = await saveWorkbookFromPayload(schedule, scheduleDataFromRecord(schedule));
         }
 
         const downloadName = `${String(schedule.title || 'prepaid-schedule')
@@ -1694,11 +1744,16 @@ router.get('/:scheduleId/export', ...access('exportar'), async (req, res) => {
             .replace(/^-+|-+$/g, '')
             .slice(0, 90) || 'prepaid-schedule'}.xlsx`;
 
-        res.download(exportPath, downloadName, error => {
-            if (!error || res.headersSent) return;
-            console.error('Prepaid workbook could not be downloaded:', error);
-            res.status(500).json({ success: false, message: 'Export could not be downloaded' });
-        });
+        if (generatedWorkbook) {
+            return sendWorkbookDownload(res, generatedWorkbook, downloadName);
+        }
+
+        if (fs.existsSync(exportPath)) {
+            return sendWorkbookDownload(res, { path: exportPath, filename: downloadName }, downloadName);
+        }
+
+        generatedWorkbook = await saveWorkbookFromPayload(schedule, scheduleDataFromRecord(schedule));
+        return sendWorkbookDownload(res, generatedWorkbook, downloadName);
     } catch (error) {
         console.error('Prepaid export could not be created:', error);
         if (tableSetupMessage(error, res)) return;

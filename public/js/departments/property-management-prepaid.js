@@ -68,7 +68,7 @@ async function apiFetch(path, options = {}) {
         try {
             const data = await response.json();
             message = data.message || data.mensaje || message;
-        } catch (_) {}
+        } catch (_) { }
         throw new Error(message);
     }
 
@@ -144,15 +144,83 @@ function inclusiveMonthCount(startDate, endDate) {
     return ((end.year - start.year) * 12) + (end.month - start.month) + 1;
 }
 
+
+function normalizeAmortizationMode(value) {
+    return String(value || 'NORMAL').toUpperCase() === 'CLOSEOUT'
+        ? 'CLOSEOUT'
+        : 'NORMAL';
+}
+
+function sqlMonth(value) {
+    const date = sqlDate(value);
+    return date ? date.slice(0, 7) : '';
+}
+
+function monthInputToSqlDate(value) {
+    const text = String(value || '').trim();
+    if (/^\d{4}-\d{2}$/.test(text)) return `${text}-01`;
+    return sqlDate(text);
+}
+
+function formatMonthLabel(value) {
+    const month = sqlMonth(value);
+    const match = month.match(/^(\d{4})-(\d{2})$/);
+    if (!match) return '-';
+
+    const date = new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1, 1));
+    return new Intl.DateTimeFormat('en-US', {
+        month: 'long',
+        year: 'numeric',
+        timeZone: 'UTC'
+    }).format(date);
+}
+
+function roundCurrency(value) {
+    return Math.round((Number(value || 0) + Number.EPSILON) * 100) / 100;
+}
+
+function getCloseoutPreview(row, startDate, endDate, closeoutDate) {
+    const totalMonths = inclusiveMonthCount(startDate, endDate);
+    const closeoutMonth = sqlMonth(closeoutDate);
+    const startMonth = sqlMonth(startDate);
+    const endMonth = sqlMonth(endDate);
+
+    if (!totalMonths || !closeoutMonth || closeoutMonth < startMonth || closeoutMonth > endMonth) {
+        return null;
+    }
+
+    const closeoutSqlDate = `${closeoutMonth}-01`;
+    const closeoutPosition = inclusiveMonthCount(startDate, closeoutSqlDate);
+    const monthsBeforeCloseout = Math.max(closeoutPosition - 1, 0);
+    const remainingInstallments = totalMonths - monthsBeforeCloseout;
+    const amountPaid = Number(row.amount_paid || 0);
+    const previouslyAmortized = roundCurrency(amountPaid * monthsBeforeCloseout / totalMonths);
+    const closeoutAmount = roundCurrency(amountPaid - previouslyAmortized);
+
+    return {
+        totalMonths,
+        monthsBeforeCloseout,
+        remainingInstallments,
+        closeoutDate: closeoutSqlDate,
+        closeoutAmount
+    };
+}
+
 function getRowAmortization(row = {}) {
     const defaultStart = sqlDate(state.selectedSchedule?.amortization_start);
     const defaultEnd = sqlDate(state.selectedSchedule?.amortization_end);
     const start = sqlDate(row.amortization_start, defaultStart);
     const end = sqlDate(row.amortization_end, defaultEnd);
+    const mode = normalizeAmortizationMode(row.amortization_mode);
+    const closeoutDate = mode === 'CLOSEOUT' ? sqlDate(row.closeout_date) : '';
+
     return {
         start,
         end,
         months: inclusiveMonthCount(start, end),
+        mode,
+        closeoutDate,
+        isCloseout: mode === 'CLOSEOUT' && Boolean(closeoutDate),
         isCustom: Boolean(start && end && (start !== defaultStart || end !== defaultEnd))
     };
 }
@@ -254,23 +322,41 @@ function createDraftRowId(row, index = 0) {
     return String(row?._draft_id || row?.id || row?.source_row_id || `source-${Date.now()}-${index}-${Math.random().toString(36).slice(2, 8)}`);
 }
 
+
 function normalizeSourceRows(rows = []) {
     const defaultStart = sqlDate(state.selectedSchedule?.amortization_start);
     const defaultEnd = sqlDate(state.selectedSchedule?.amortization_end);
 
-    return rows.map((row, index) => ({
-        ...row,
-        _draft_id: createDraftRowId(row, index),
-        is_manual: Number(row.is_manual || row.manual_entry || 0),
-        amortization_start: sqlDate(row.amortization_start, defaultStart),
-        amortization_end: sqlDate(row.amortization_end, defaultEnd)
-    }));
+    return rows.map((row, index) => {
+        const amortizationMode = normalizeAmortizationMode(row.amortization_mode);
+        return {
+            ...row,
+            _draft_id: createDraftRowId(row, index),
+            is_manual: Number(row.is_manual || row.manual_entry || 0),
+            amortization_start: sqlDate(row.amortization_start, defaultStart),
+            amortization_end: sqlDate(row.amortization_end, defaultEnd),
+            amortization_mode: amortizationMode,
+            closeout_date: amortizationMode === 'CLOSEOUT'
+                ? sqlDate(row.closeout_date)
+                : ''
+        };
+    });
 }
 
 function updateSourceEditorState() {
     const hasSchedule = Boolean(state.selectedScheduleId);
     const hasRows = state.sourceRows.length > 0;
     const generated = state.bills.length > 0;
+
+    const editedRows = state.sourceRows.filter(row => {
+        const amortization = getRowAmortization(row);
+        return amortization.isCustom || amortization.isCloseout;
+    });
+    const closeoutCount = editedRows.filter(row => getRowAmortization(row).isCloseout).length;
+    const customTermCount = editedRows.filter(row => {
+        const amortization = getRowAmortization(row);
+        return amortization.isCustom && !amortization.isCloseout;
+    }).length;
 
     if (els.addSourceRowBtn) {
         els.addSourceRowBtn.classList.toggle('hidden', !hasSchedule);
@@ -286,15 +372,20 @@ function updateSourceEditorState() {
     }
 
     if (els.sourceReviewStatus) {
+        const changeParts = [];
+        if (customTermCount) changeParts.push(`${customTermCount} custom term${customTermCount === 1 ? '' : 's'}`);
+        if (closeoutCount) changeParts.push(`${closeoutCount} closed store${closeoutCount === 1 ? '' : 's'}`);
+        const changeSummary = changeParts.length ? ` · ${changeParts.join(' · ')}` : '';
+
         if (!hasSchedule) {
             els.sourceReviewStatus.textContent = 'Upload a file to review its records before generating.';
             els.sourceReviewStatus.classList.remove('pending');
         } else if (state.sourceDirty) {
             const staleText = generated ? ' The current generated schedule is out of date.' : '';
-            els.sourceReviewStatus.textContent = `${state.sourceRows.length} rows ready. Changes will be saved when the schedule is generated.${staleText}`;
+            els.sourceReviewStatus.textContent = `${state.sourceRows.length} rows ready${changeSummary}. Changes will be saved when the schedule is generated.${staleText}`;
             els.sourceReviewStatus.classList.add('pending');
         } else {
-            els.sourceReviewStatus.textContent = `${state.sourceRows.length} rows ready to generate.`;
+            els.sourceReviewStatus.textContent = `${state.sourceRows.length} rows ready${changeSummary} to generate.`;
             els.sourceReviewStatus.classList.remove('pending');
         }
     }
@@ -315,6 +406,17 @@ function renderKpis(summary = {}) {
     els.kpiDifference.textContent = money(summary.difference_total || state.months.reduce((sum, row) => sum + Number(row.difference || 0), 0));
 }
 
+function getBillEntity(row = {}) {
+    return String(row.entity_code || row.entity || state.selectedSchedule?.metadata_json?.entity || state.selectedSchedule?.brand || 'QCJ');
+}
+
+function compareScheduleBills(a, b) {
+    return getBillEntity(a).localeCompare(getBillEntity(b), undefined, { numeric: true, sensitivity: 'base' })
+        || String(a.store_number || '').localeCompare(String(b.store_number || ''), undefined, { numeric: true, sensitivity: 'base' })
+        || String(a.payee || '').localeCompare(String(b.payee || ''), undefined, { sensitivity: 'base' })
+        || String(a.doc_number || '').localeCompare(String(b.doc_number || ''), undefined, { numeric: true, sensitivity: 'base' });
+}
+
 function renderScheduleList() {
     if (!els.scheduleList) return;
 
@@ -330,7 +432,7 @@ function renderScheduleList() {
             <button type="button" class="schedule-card ${selected}" data-schedule-id="${schedule.id}">
                 <div>
                     <strong>${escapeHtml(schedule.title)}</strong>
-                    <span>${escapeHtml(schedule.brand)} - PTAX ${escapeHtml(schedule.tax_year || '')} - ${escapeHtml(shortDate(schedule.amortization_start))} to ${escapeHtml(shortDate(schedule.amortization_end))}</span>
+                    <span>Group ${escapeHtml(schedule.brand)} - PTAX ${escapeHtml(schedule.tax_year || '')} - ${escapeHtml(shortDate(schedule.amortization_start))} to ${escapeHtml(shortDate(schedule.amortization_end))}</span>
                     <small>${escapeHtml(schedule.source_file_name || '')}</small>
                 </div>
                 <div class="schedule-card-stats">
@@ -348,9 +450,10 @@ function renderScheduleList() {
     }
 }
 
+
 function renderSourceRows(rows) {
     if (!rows.length) {
-        els.sourceRows.innerHTML = '<tr><td colspan="10" class="empty-cell">No source bills loaded.</td></tr>';
+        els.sourceRows.innerHTML = '<tr><td colspan="9" class="empty-cell">No source bills loaded.</td></tr>';
         updateSourceEditorState();
         return;
     }
@@ -358,17 +461,77 @@ function renderSourceRows(rows) {
     els.sourceRows.innerHTML = rows.map((row, index) => {
         const rowKey = createDraftRowId(row, index);
         const period = getRowAmortization(row);
+        const closeoutPreview = period.isCloseout
+            ? getCloseoutPreview(row, period.start, period.end, period.closeoutDate)
+            : null;
+
         const manualBadge = Number(row.is_manual || 0) === 1
             ? '<span class="source-manual-badge"><i class="fa-solid fa-pen" aria-hidden="true"></i> Manual</span>'
             : '';
-        const periodBadge = period.isCustom
-            ? '<span class="source-period-badge custom">Custom</span>'
-            : '<span class="source-period-badge">Default</span>';
+
+        const periodBadge = period.isCloseout
+            ? '<span class="source-period-badge closeout"><i class="fa-solid fa-store-slash" aria-hidden="true"></i> Closed</span>'
+            : period.isCustom
+                ? '<span class="source-period-badge custom"><i class="fa-solid fa-pen-to-square" aria-hidden="true"></i> Changed</span>'
+                : '<span class="source-period-badge">Default</span>';
+
+        const storeStatus = period.isCloseout
+            ? `<span class="source-store-status closeout">Closed · ${escapeHtml(formatMonthLabel(period.closeoutDate))}</span>`
+            : period.isCustom
+                ? '<span class="source-store-status custom">Custom term</span>'
+                : '';
+
+        const closeoutNote = closeoutPreview
+            ? `<em class="source-closeout-note"><i class="fa-solid fa-store-slash" aria-hidden="true"></i><span>${escapeHtml(formatMonthLabel(period.closeoutDate))}: ${money(closeoutPreview.closeoutAmount)} posted in closure month</span></em>`
+            : '';
+
+        const rowClass = period.isCloseout
+            ? 'source-row-closeout'
+            : period.isCustom
+                ? 'source-row-custom'
+                : '';
 
         return `
-            <tr data-source-row-key="${escapeHtml(rowKey)}">
-                <td>${escapeHtml(row.source_row_number || index + 1)}</td>
-                <td class="strong">${escapeHtml(row.store_number)}</td>
+            <tr class="${rowClass}" data-source-row-key="${escapeHtml(rowKey)}" title="Double-click to edit amortization">
+                <td class="source-sticky-store strong">
+                    <div class="source-store-stack">
+                        <strong>${escapeHtml(row.store_number || '-')}</strong>
+                        ${storeStatus}
+                    </div>
+                </td>
+
+                <td class="source-row-actions source-sticky-actions">
+                    <div class="source-row-action-group" role="group" aria-label="Source row actions">
+                        <button
+                            type="button"
+                            class="source-action-btn source-action-edit"
+                            data-edit-source-amortization="${escapeHtml(rowKey)}"
+                            title="Edit amortization or store closeout"
+                            aria-label="Edit amortization for store ${escapeHtml(row.store_number || '')}"
+                        >
+                            <i class="fa-solid fa-calendar-days" aria-hidden="true"></i>
+                        </button>
+                        <button
+                            type="button"
+                            class="source-action-btn source-action-row"
+                            data-remove-source-row="${escapeHtml(rowKey)}"
+                            title="Remove this row"
+                            aria-label="Remove row for store ${escapeHtml(row.store_number || '')}"
+                        >
+                            <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                        </button>
+                        <button
+                            type="button"
+                            class="source-action-btn source-action-store"
+                            data-remove-source-store="${escapeHtml(row.store_number || '')}"
+                            title="Remove complete store ${escapeHtml(row.store_number || '')}"
+                            aria-label="Remove complete store ${escapeHtml(row.store_number || '')}"
+                        >
+                            <i class="fa-solid fa-store-slash" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                </td>
+
                 <td>
                     <span>${escapeHtml(row.payee || '')}</span>
                     ${manualBadge}
@@ -380,44 +543,14 @@ function renderSourceRows(rows) {
                 <td class="source-amortization-cell">
                     <div class="source-amortization-range">
                         <strong>${escapeHtml(period.start || '-')} <span>→</span> ${escapeHtml(period.end || '-')}</strong>
-                        <small>${period.months ? `${period.months} month${period.months === 1 ? '' : 's'}` : 'Invalid period'} ${periodBadge}</small>
+                        <small>
+                            ${period.months ? `${period.months} month${period.months === 1 ? '' : 's'}` : 'Invalid period'}
+                            ${periodBadge}
+                        </small>
+                        ${closeoutNote}
                     </div>
                 </td>
                 <td>${escapeHtml(row.memo_description || '')}</td>
-                <td class="source-row-actions">
-                    <div class="source-row-action-group" role="group" aria-label="Source row actions">
-                        <button
-                            type="button"
-                            class="source-action-btn source-action-edit"
-                            data-edit-source-amortization="${escapeHtml(rowKey)}"
-                            title="Change amortization period"
-                            aria-label="Change amortization period for row ${escapeHtml(row.source_row_number || index + 1)}"
-                        >
-                            <i class="fa-solid fa-calendar-days" aria-hidden="true"></i>
-                            <span>Edit</span>
-                        </button>
-                        <button
-                            type="button"
-                            class="source-action-btn source-action-row"
-                            data-remove-source-row="${escapeHtml(rowKey)}"
-                            title="Remove only this row"
-                            aria-label="Remove only row ${escapeHtml(row.source_row_number || index + 1)}"
-                        >
-                            <i class="fa-solid fa-xmark" aria-hidden="true"></i>
-                            <span>Row</span>
-                        </button>
-                        <button
-                            type="button"
-                            class="source-action-btn source-action-store"
-                            data-remove-source-store="${escapeHtml(row.store_number || '')}"
-                            title="Remove every row for store ${escapeHtml(row.store_number || '')}"
-                            aria-label="Remove every row for store ${escapeHtml(row.store_number || '')}"
-                        >
-                            <i class="fa-solid fa-store-slash" aria-hidden="true"></i>
-                            <span>Store</span>
-                        </button>
-                    </div>
-                </td>
             </tr>
         `;
     }).join('');
@@ -426,6 +559,7 @@ function renderSourceRows(rows) {
 }
 
 function serializeSourceRow(row, index) {
+    const amortization = getRowAmortization(row);
     return {
         id: Number(row.id || row.source_row_id || 0) || null,
         source_row_number: Number(row.source_row_number || index + 1),
@@ -439,8 +573,10 @@ function serializeSourceRow(row, index) {
         memo_description: String(row.memo_description || '').trim(),
         prepaid_account: String(row.prepaid_account || '').trim() || null,
         expense_account: String(row.expense_account || '').trim() || null,
-        amortization_start: getRowAmortization(row).start || null,
-        amortization_end: getRowAmortization(row).end || null,
+        amortization_start: amortization.start || null,
+        amortization_end: amortization.end || null,
+        amortization_mode: amortization.isCloseout ? 'CLOSEOUT' : 'NORMAL',
+        closeout_date: amortization.isCloseout ? amortization.closeoutDate : null,
         is_manual: Number(row.is_manual || 0)
     };
 }
@@ -508,6 +644,19 @@ function ensureAmortizationModalStyles() {
     const style = document.createElement('style');
     style.id = styleId;
     style.textContent = `
+        /* Keep SweetAlert above the sticky topbar and sticky table headers. */
+        html body > .swal2-container,
+        html body .swal2-container {
+            position: fixed !important;
+            inset: 0 !important;
+            z-index: 2147483647 !important;
+            isolation: isolate !important;
+        }
+
+        body.swal2-shown .prepaid-page .prepaid-table th {
+            z-index: 0 !important;
+        }
+
         .swal2-container .swal2-popup.source-amortization-swal {
             width: min(720px, calc(100vw - 32px)) !important;
             max-width: none !important;
@@ -799,8 +948,148 @@ function ensureAmortizationModalStyles() {
     document.head.appendChild(style);
 }
 
+
+function ensureCloseoutModalStyles() {
+    const styleId = 'prepaid-closeout-modal-styles';
+    if (document.getElementById(styleId)) return;
+
+    const style = document.createElement('style');
+    style.id = styleId;
+    style.textContent = `
+        .source-period-badge.closeout {
+            gap: 4px !important;
+            background: #fff1df !important;
+            color: #9a4d00 !important;
+        }
+
+        .source-closeout-note {
+            display: block !important;
+            color: #9a4d00 !important;
+            font-size: 10px !important;
+            line-height: 1.35 !important;
+            font-style: normal !important;
+            font-weight: 800 !important;
+            white-space: normal !important;
+        }
+
+        .source-closeout-panel {
+            display: grid !important;
+            grid-template-columns: minmax(0, 1fr) 210px !important;
+            gap: 14px !important;
+            align-items: stretch !important;
+            padding: 14px 16px !important;
+            border: 1px solid #f2d2a8 !important;
+            border-radius: 15px !important;
+            background: #fffaf3 !important;
+        }
+
+        .source-closeout-toggle {
+            display: flex !important;
+            align-items: flex-start !important;
+            gap: 11px !important;
+            margin: 0 !important;
+            cursor: pointer !important;
+        }
+
+        .source-closeout-toggle input {
+            width: 18px !important;
+            height: 18px !important;
+            margin: 2px 0 0 !important;
+            accent-color: #a8550b !important;
+            flex: 0 0 auto !important;
+        }
+
+        .source-closeout-toggle-copy {
+            display: grid !important;
+            gap: 3px !important;
+        }
+
+        .source-closeout-toggle-copy strong {
+            color: #6f3600 !important;
+            font-size: 13px !important;
+            font-weight: 900 !important;
+        }
+
+        .source-closeout-toggle-copy small {
+            color: #8c6947 !important;
+            font-size: 11px !important;
+            line-height: 1.4 !important;
+        }
+
+        .source-closeout-month {
+            display: grid !important;
+            gap: 7px !important;
+            margin: 0 !important;
+        }
+
+        .source-closeout-month > span {
+            color: #6f3600 !important;
+            font-size: 12px !important;
+            font-weight: 850 !important;
+        }
+
+        .source-closeout-month .swal2-input {
+            width: 100% !important;
+            min-width: 0 !important;
+            height: 44px !important;
+            margin: 0 !important;
+            padding: 0 12px !important;
+            box-sizing: border-box !important;
+            border: 1px solid #e6c18f !important;
+            border-radius: 12px !important;
+            background: #ffffff !important;
+            color: #5f3007 !important;
+            font-family: inherit !important;
+            font-size: 13px !important;
+        }
+
+        .source-closeout-month.is-disabled {
+            opacity: 0.48 !important;
+            pointer-events: none !important;
+        }
+
+        .source-amortization-preview.closeout {
+            border-color: #f2d2a8 !important;
+            background: #fff4e5 !important;
+            color: #8a4505 !important;
+        }
+
+        @media (max-width: 620px) {
+            .source-closeout-panel {
+                grid-template-columns: 1fr !important;
+            }
+        }
+    `;
+    document.head.appendChild(style);
+}
+
+function sourceAmortizationPreviewText(row, start, end, closeoutEnabled, closeoutDate) {
+    const months = inclusiveMonthCount(start, end);
+    if (!months) return 'Select a valid original amortization period.';
+
+    if (!closeoutEnabled) {
+        return `${months} monthly amortization entries will be generated.`;
+    }
+
+    const preview = getCloseoutPreview(row, start, end, closeoutDate);
+    if (!preview) {
+        return 'Select a closure month inside the original amortization period.';
+    }
+
+    return `${formatMonthLabel(preview.closeoutDate)} closeout: ${money(preview.closeoutAmount)} will be amortized in that month. The original ${preview.totalMonths}-month term and monthly amount are preserved.`;
+}
+
 function sourceAmortizationModalHtml(row, defaults) {
-    const months = inclusiveMonthCount(defaults.start, defaults.end);
+    const closeoutEnabled = defaults.isCloseout;
+    const closeoutMonth = sqlMonth(defaults.closeoutDate);
+    const previewText = sourceAmortizationPreviewText(
+        row,
+        defaults.start,
+        defaults.end,
+        closeoutEnabled,
+        defaults.closeoutDate
+    );
+
     return `
         <div class="source-amortization-modal-body">
             <div class="source-amortization-summary">
@@ -813,8 +1102,8 @@ function sourceAmortizationModalHtml(row, defaults) {
                 </div>
             </div>
 
-            <div class="source-amortization-presets" aria-label="Quick amortization periods">
-                <span>Quick period</span>
+            <div class="source-amortization-presets" aria-label="Quick original amortization periods">
+                <span>Original amortization term</span>
                 <div>
                     ${[3, 6, 12, 18, 24].map(value => `
                         <button type="button" data-amortization-months="${value}">${value} months</button>
@@ -824,22 +1113,38 @@ function sourceAmortizationModalHtml(row, defaults) {
 
             <div class="source-amortization-date-grid">
                 <label>
-                    <span>Start date</span>
+                    <span>Original start date</span>
                     <input id="rowAmortizationStart" class="swal2-input" type="date" value="${escapeHtml(defaults.start)}">
                 </label>
                 <label>
-                    <span>End date</span>
+                    <span>Original end date</span>
                     <input id="rowAmortizationEnd" class="swal2-input" type="date" value="${escapeHtml(defaults.end)}">
                 </label>
             </div>
 
-            <div class="source-amortization-preview" id="rowAmortizationPreview">
-                <i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i>
-                <span>${months ? `${months} monthly amortization entries will be generated.` : 'Select a valid period.'}</span>
+            <div class="source-closeout-panel">
+                <label class="source-closeout-toggle">
+                    <input id="rowCloseoutEnabled" type="checkbox" ${closeoutEnabled ? 'checked' : ''}>
+                    <span class="source-closeout-toggle-copy">
+                        <strong>Store closed — amortize remaining balance</strong>
+                        <small>Keep the original term. The unamortized balance will be posted completely in the closure month.</small>
+                    </span>
+                </label>
+
+                <label class="source-closeout-month ${closeoutEnabled ? '' : 'is-disabled'}" id="rowCloseoutMonthField">
+                    <span>Closure month</span>
+                    <input id="rowCloseoutMonth" class="swal2-input" type="month" value="${escapeHtml(closeoutMonth)}" ${closeoutEnabled ? '' : 'disabled'}>
+                </label>
+            </div>
+
+            <div class="source-amortization-preview ${closeoutEnabled ? 'closeout' : ''}" id="rowAmortizationPreview">
+                <i class="fa-solid ${closeoutEnabled ? 'fa-store-slash' : 'fa-clock-rotate-left'}" aria-hidden="true"></i>
+                <span>${escapeHtml(previewText)}</span>
             </div>
         </div>
     `;
 }
+
 
 async function editSourceAmortization(rowKey) {
     const row = state.sourceRows.find(item => String(item._draft_id) === String(rowKey));
@@ -849,17 +1154,40 @@ async function editSourceAmortization(rowKey) {
     let values;
 
     if (!window.Swal) {
-        const start = window.prompt('Amortization start (YYYY-MM-DD):', current.start)?.trim();
+        const start = window.prompt('Original amortization start (YYYY-MM-DD):', current.start)?.trim();
         if (!start) return;
-        const end = window.prompt('Amortization end (YYYY-MM-DD):', current.end)?.trim();
+        const end = window.prompt('Original amortization end (YYYY-MM-DD):', current.end)?.trim();
         if (!end) return;
         if (!parseSqlDateParts(start) || !parseSqlDateParts(end) || end < start) {
-            showToast('Enter a valid amortization period.', 'error');
+            showToast('Enter a valid original amortization period.', 'error');
             return;
         }
-        values = { start, end };
+
+        const closeoutEnabled = window.confirm(
+            'Did the store close? Press OK to amortize the remaining balance in the closure month.'
+        );
+        let closeoutDate = '';
+        if (closeoutEnabled) {
+            const closeoutMonth = window.prompt(
+                'Closure month (YYYY-MM):',
+                sqlMonth(current.closeoutDate) || start.slice(0, 7)
+            )?.trim();
+            closeoutDate = monthInputToSqlDate(closeoutMonth);
+            if (!closeoutDate || closeoutDate.slice(0, 7) < start.slice(0, 7) || closeoutDate.slice(0, 7) > end.slice(0, 7)) {
+                showToast('The closure month must be inside the original amortization period.', 'error');
+                return;
+            }
+        }
+
+        values = {
+            start,
+            end,
+            amortizationMode: closeoutEnabled ? 'CLOSEOUT' : 'NORMAL',
+            closeoutDate: closeoutEnabled ? closeoutDate : null
+        };
     } else {
         ensureAmortizationModalStyles();
+        ensureCloseoutModalStyles();
 
         const result = await window.Swal.fire({
             title: 'Edit amortization',
@@ -874,10 +1202,16 @@ async function editSourceAmortization(rowKey) {
             },
             buttonsStyling: false,
             showCancelButton: true,
-            confirmButtonText: '<i class="fa-solid fa-check" aria-hidden="true"></i><span>Apply period</span>',
+            confirmButtonText: '<i class="fa-solid fa-check" aria-hidden="true"></i><span>Apply amortization</span>',
             cancelButtonText: '<i class="fa-solid fa-xmark" aria-hidden="true"></i><span>Cancel</span>',
             focusConfirm: false,
             didOpen: popup => {
+                const swalContainer = popup.closest('.swal2-container');
+                swalContainer?.style.setProperty('position', 'fixed', 'important');
+                swalContainer?.style.setProperty('inset', '0', 'important');
+                swalContainer?.style.setProperty('z-index', '2147483647', 'important');
+                swalContainer?.style.setProperty('isolation', 'isolate', 'important');
+
                 popup.classList.add('source-amortization-swal');
                 popup.style.setProperty('width', 'min(720px, calc(100vw - 32px))', 'important');
                 popup.style.setProperty('max-width', 'none', 'important');
@@ -893,16 +1227,33 @@ async function editSourceAmortization(rowKey) {
 
                 const startInput = popup.querySelector('#rowAmortizationStart');
                 const endInput = popup.querySelector('#rowAmortizationEnd');
-                const preview = popup.querySelector('#rowAmortizationPreview span');
+                const closeoutToggle = popup.querySelector('#rowCloseoutEnabled');
+                const closeoutMonthInput = popup.querySelector('#rowCloseoutMonth');
+                const closeoutMonthField = popup.querySelector('#rowCloseoutMonthField');
+                const previewBox = popup.querySelector('#rowAmortizationPreview');
+                const previewIcon = previewBox?.querySelector('i');
+                const preview = previewBox?.querySelector('span');
 
                 const updatePreview = () => {
                     const start = startInput?.value || '';
                     const end = endInput?.value || '';
-                    const months = inclusiveMonthCount(start, end);
+                    const closeoutEnabled = Boolean(closeoutToggle?.checked);
+                    const closeoutDate = monthInputToSqlDate(closeoutMonthInput?.value);
+
+                    if (closeoutMonthInput) closeoutMonthInput.disabled = !closeoutEnabled;
+                    closeoutMonthField?.classList.toggle('is-disabled', !closeoutEnabled);
+                    previewBox?.classList.toggle('closeout', closeoutEnabled);
+                    if (previewIcon) {
+                        previewIcon.className = `fa-solid ${closeoutEnabled ? 'fa-store-slash' : 'fa-clock-rotate-left'}`;
+                    }
                     if (preview) {
-                        preview.textContent = months
-                            ? `${months} monthly amortization entries will be generated.`
-                            : 'Select a valid period.';
+                        preview.textContent = sourceAmortizationPreviewText(
+                            row,
+                            start,
+                            end,
+                            closeoutEnabled,
+                            closeoutDate
+                        );
                     }
                 };
 
@@ -921,20 +1272,53 @@ async function editSourceAmortization(rowKey) {
 
                 startInput?.addEventListener('change', updatePreview);
                 endInput?.addEventListener('change', updatePreview);
+                closeoutToggle?.addEventListener('change', () => {
+                    if (
+                        closeoutToggle.checked &&
+                        closeoutMonthInput &&
+                        !closeoutMonthInput.value
+                    ) {
+                        closeoutMonthInput.value = sqlMonth(startInput?.value);
+                    }
+                    updatePreview();
+                });
+                closeoutMonthInput?.addEventListener('change', updatePreview);
                 updatePreview();
             },
             preConfirm: () => {
                 const start = document.getElementById('rowAmortizationStart')?.value || '';
                 const end = document.getElementById('rowAmortizationEnd')?.value || '';
+                const closeoutEnabled = Boolean(document.getElementById('rowCloseoutEnabled')?.checked);
+                const closeoutDate = monthInputToSqlDate(
+                    document.getElementById('rowCloseoutMonth')?.value || ''
+                );
+
                 if (!parseSqlDateParts(start) || !parseSqlDateParts(end)) {
-                    window.Swal.showValidationMessage('Start date and end date are required.');
+                    window.Swal.showValidationMessage('Original start date and end date are required.');
                     return false;
                 }
                 if (end < start) {
-                    window.Swal.showValidationMessage('Amortization end must be after the start date.');
+                    window.Swal.showValidationMessage('Original amortization end must be after the start date.');
                     return false;
                 }
-                return { start, end };
+
+                if (closeoutEnabled) {
+                    if (!closeoutDate) {
+                        window.Swal.showValidationMessage('Select the month in which the store closed.');
+                        return false;
+                    }
+                    if (closeoutDate.slice(0, 7) < start.slice(0, 7) || closeoutDate.slice(0, 7) > end.slice(0, 7)) {
+                        window.Swal.showValidationMessage('The closure month must be inside the original amortization period.');
+                        return false;
+                    }
+                }
+
+                return {
+                    start,
+                    end,
+                    amortizationMode: closeoutEnabled ? 'CLOSEOUT' : 'NORMAL',
+                    closeoutDate: closeoutEnabled ? closeoutDate : null
+                };
             }
         });
 
@@ -944,9 +1328,21 @@ async function editSourceAmortization(rowKey) {
 
     row.amortization_start = values.start;
     row.amortization_end = values.end;
+    row.amortization_mode = values.amortizationMode;
+    row.closeout_date = values.closeoutDate || '';
+
     markSourceDirty();
     renderSourceRows(state.sourceRows);
-    showToast(`Amortization updated to ${inclusiveMonthCount(values.start, values.end)} months.`, 'success');
+
+    if (values.amortizationMode === 'CLOSEOUT') {
+        const preview = getCloseoutPreview(row, values.start, values.end, values.closeoutDate);
+        showToast(
+            `Store closeout set for ${formatMonthLabel(values.closeoutDate)}. Remaining balance: ${money(preview?.closeoutAmount || 0)}.`,
+            'success'
+        );
+    } else {
+        showToast(`Amortization updated to ${inclusiveMonthCount(values.start, values.end)} months.`, 'success');
+    }
 }
 
 function sourceModalHtml(defaults) {
@@ -1053,6 +1449,12 @@ async function addManualSourceRow() {
             cancelButtonText: '<i class="fa-solid fa-xmark" aria-hidden="true"></i><span>Cancel</span>',
             focusConfirm: false,
             didOpen: popup => {
+                const swalContainer = popup.closest('.swal2-container');
+                swalContainer?.style.setProperty('position', 'fixed', 'important');
+                swalContainer?.style.setProperty('inset', '0', 'important');
+                swalContainer?.style.setProperty('z-index', '2147483647', 'important');
+                swalContainer?.style.setProperty('isolation', 'isolate', 'important');
+
                 popup.style.setProperty('width', 'min(1040px, calc(100vw - 40px))', 'important');
                 popup.style.setProperty('max-width', 'none', 'important');
                 popup.style.setProperty('min-width', '0', 'important');
@@ -1093,6 +1495,8 @@ async function addManualSourceRow() {
         ...values,
         source_row_number: state.sourceRows.length + 1,
         is_manual: 1,
+        amortization_mode: 'NORMAL',
+        closeout_date: '',
         _draft_id: `manual-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
     });
     markSourceDirty();
@@ -1120,6 +1524,19 @@ function handleSourceRowsClick(event) {
     }
 }
 
+function handleSourceRowsDoubleClick(event) {
+    if (event.target.closest('button')) return;
+
+    const tableRow = event.target.closest('tr[data-source-row-key]');
+    if (!tableRow) return;
+
+    const rowKey = tableRow.dataset.sourceRowKey;
+    if (!rowKey) return;
+
+    editSourceAmortization(rowKey)
+        .catch(error => showToast(error.message, 'error'));
+}
+
 function renderBillRows(rows) {
     if (!rows.length) {
         els.scheduleRows.innerHTML = '<tr><td colspan="25" class="empty-cell">No generated amortization yet.</td></tr>';
@@ -1139,8 +1556,9 @@ function renderBillRows(rows) {
         monthsByBill.get(billId).push(month);
     });
 
+    const sortedRows = [...rows].sort(compareScheduleBills);
     const storeTotals = new Map();
-    rows.forEach(row => {
+    sortedRows.forEach(row => {
         const billMonths = monthsByBill.get(Number(row.id)) || [];
         const yearAmortization = billMonths
             .filter(month => Number(month.period_year) === scheduleYear)
@@ -1152,8 +1570,8 @@ function renderBillRows(rows) {
     let previousEntity = null;
     const html = [];
 
-    rows.forEach(row => {
-        const entity = String(state.selectedSchedule?.metadata_json?.entity || state.selectedSchedule?.brand || 'QCJ');
+    sortedRows.forEach(row => {
+        const entity = getBillEntity(row);
         if (entity !== previousEntity) {
             html.push(`<tr class="schedule-entity-row"><td colspan="25">Entity: ${escapeHtml(entity)}</td></tr>`);
             previousEntity = entity;
@@ -1194,7 +1612,7 @@ function renderBillRows(rows) {
         `);
     });
 
-    const totals = rows.reduce((acc, row) => {
+    const totals = sortedRows.reduce((acc, row) => {
         const billMonths = monthsByBill.get(Number(row.id)) || [];
         acc.amountPaid += Number(row.amount_paid || 0);
         acc.prior += billMonths.filter(month => Number(month.period_year) < scheduleYear)
@@ -1284,7 +1702,7 @@ async function loadScheduleDetail(scheduleId) {
     state.summary = detail.summary || {};
 
     els.selectedScheduleTitle.textContent = detail.schedule?.title || 'Schedule Detail';
-    els.selectedScheduleSubtitle.textContent = `${detail.schedule?.brand || ''} - PTAX ${detail.schedule?.tax_year || ''} - ${shortDate(detail.schedule?.amortization_start)} to ${shortDate(detail.schedule?.amortization_end)} - ${detail.schedule?.status || ''}`;
+    els.selectedScheduleSubtitle.textContent = `Group ${detail.schedule?.brand || ''} - PTAX ${detail.schedule?.tax_year || ''} - ${shortDate(detail.schedule?.amortization_start)} to ${shortDate(detail.schedule?.amortization_end)} - ${detail.schedule?.status || ''}`;
     els.exportScheduleBtn.disabled = !state.bills.length;
     if (els.glScheduleSelect) els.glScheduleSelect.value = String(scheduleId);
 
@@ -1640,6 +2058,10 @@ function init() {
     els.glUploadForm?.addEventListener('submit', handleGlUpload);
     els.scheduleList?.addEventListener('click', handleScheduleClick);
     els.sourceRows?.addEventListener('click', handleSourceRowsClick);
+    els.sourceRows?.addEventListener(
+        'dblclick',
+        handleSourceRowsDoubleClick
+    );
     els.addSourceRowBtn?.addEventListener('click', addManualSourceRow);
     els.generateScheduleBtn?.addEventListener('click', generateSchedule);
     els.saveScheduleBtn?.addEventListener('click', saveCurrentSchedule);

@@ -1281,7 +1281,7 @@ function asegurarSweetAlertSobreModalTacoBell() {
             inset: 0 !important;
         }
 
-        #tacoBellTaxStoreDialog .swal2-popup,
+        #tacoBellTaxStoreDialog .swal2-container-dialog,
         #tacoBellTaxStoreDialog .tb-tax-swal-popup,
         .tb-tax-swal-popup {
             z-index: 2147483647 !important;

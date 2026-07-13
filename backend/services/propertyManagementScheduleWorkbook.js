@@ -4,10 +4,15 @@ const ExcelJS = require('exceljs');
 
 // Normal Property Management schedules are intentionally isolated from
 // prepaid schedules, which use backend/uploads/prepaid-schedules.
-const EXPORT_DIR = path.join(__dirname, '..', 'uploads', 'schedules');
+const uploadRoot = process.env.PROPERTY_MANAGEMENT_SCHEDULE_UPLOAD_DIR
+    || (process.env.UPLOAD_FOLDER
+        ? path.resolve(__dirname, '..', process.env.UPLOAD_FOLDER)
+        : path.join(__dirname, '..', 'uploads'));
+const EXPORT_DIR = path.join(uploadRoot, 'schedules');
 
 function ensureExportDir() {
     fs.mkdirSync(EXPORT_DIR, { recursive: true });
+    fs.accessSync(EXPORT_DIR, fs.constants.W_OK);
 }
 
 function safeFilePart(value, fallback = 'property-management-schedule') {
@@ -21,10 +26,15 @@ function safeFilePart(value, fallback = 'property-management-schedule') {
 }
 
 function getScheduleExportPath(schedule) {
-    ensureExportDir();
     const id = Number(schedule?.id || 0);
     const name = safeFilePart(schedule?.nombre);
     return path.join(EXPORT_DIR, `${name}-${id}.xlsx`);
+}
+
+function getScheduleExportFilename(schedule) {
+    const id = Number(schedule?.id || 0);
+    const name = safeFilePart(schedule?.nombre);
+    return `${name}-${id}.xlsx`;
 }
 
 function normalizeRows(data) {
@@ -126,12 +136,36 @@ async function savePropertyManagementScheduleWorkbook({ schedule, data }) {
     }
 
     const exportPath = getScheduleExportPath(schedule);
-    await workbook.xlsx.writeFile(exportPath);
+    const filename = getScheduleExportFilename(schedule);
 
-    return {
-        path: exportPath,
-        filename: path.basename(exportPath)
-    };
+    try {
+        ensureExportDir();
+        await workbook.xlsx.writeFile(exportPath);
+
+        return {
+            path: exportPath,
+            filename,
+            persisted: true
+        };
+    } catch (error) {
+        if (!['EACCES', 'EPERM', 'EROFS'].includes(error.code)) {
+            throw error;
+        }
+
+        console.warn(
+            `Property Management schedule workbook could not be written to ${exportPath}; using in-memory download buffer instead:`,
+            error.message
+        );
+        const buffer = await workbook.xlsx.writeBuffer();
+
+        return {
+            path: null,
+            filename,
+            buffer: Buffer.from(buffer),
+            persisted: false,
+            write_error: error.message
+        };
+    }
 }
 
 function deleteSavedPropertyManagementScheduleWorkbook(schedule) {
@@ -142,6 +176,7 @@ function deleteSavedPropertyManagementScheduleWorkbook(schedule) {
 module.exports = {
     EXPORT_DIR,
     getScheduleExportPath,
+    getScheduleExportFilename,
     savePropertyManagementScheduleWorkbook,
     deleteSavedPropertyManagementScheduleWorkbook
 };
