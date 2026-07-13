@@ -743,5 +743,122 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
             color: #42617c;
             background: #fff;
         }
+
+        /* System Errors filter visual parity */
+        .comparison-history-page {
+            --se-navy: #071b2d;
+            --se-muted: #64748b;
+            --se-line: #dbe5ef;
+            --se-soft: #f8fafc;
+            --se-shadow: 0 20px 50px -42px rgba(7, 27, 45, 0.7);
+        }
+
+        .comparison-history-filters {
+            display: grid !important;
+            grid-template-columns: minmax(280px, 1.6fr) repeat(4, minmax(130px, 0.75fr)) auto !important;
+            gap: 12px !important;
+            align-items: end !important;
+            margin: 0 0 18px !important;
+            padding: 16px !important;
+            border: 1px solid var(--se-line) !important;
+            border-radius: 20px !important;
+            background: var(--se-soft) !important;
+            box-shadow: var(--se-shadow) !important;
+        }
+
+        .comparison-filter {
+            display: grid !important;
+            gap: 6px !important;
+            min-width: 0 !important;
+        }
+
+        .comparison-filter label {
+            margin: 0 !important;
+            color: var(--se-muted) !important;
+            font-size: 10px !important;
+            font-weight: 900 !important;
+            letter-spacing: 0.08em !important;
+            line-height: 1 !important;
+            text-transform: uppercase !important;
+        }
+
+        .comparison-filter.search > div {
+            position: relative !important;
+        }
+
+        .comparison-filter.search i {
+            position: absolute !important;
+            top: 50% !important;
+            left: 13px !important;
+            z-index: 1 !important;
+            transform: translateY(-50%) !important;
+            color: #7b8ea3 !important;
+            font-size: 13px !important;
+            pointer-events: none !important;
+        }
+
+        .comparison-filter input,
+        .comparison-filter select {
+            width: 100% !important;
+            min-height: 40px !important;
+            padding: 8px 12px !important;
+            border: 1px solid #cfdce8 !important;
+            border-radius: 12px !important;
+            outline: none !important;
+            background: #ffffff !important;
+            color: #102f4c !important;
+            font-size: 12px !important;
+            font-weight: 700 !important;
+            box-shadow: none !important;
+        }
+
+        .comparison-filter.search input {
+            padding-left: 38px !important;
+        }
+
+        .comparison-filter input:focus,
+        .comparison-filter select:focus {
+            border-color: #7aa7ca !important;
+            box-shadow: 0 0 0 4px rgba(23, 92, 145, 0.11) !important;
+        }
+
+        .comparison-clear-button {
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 8px !important;
+            min-height: 40px !important;
+            padding: 0 13px !important;
+            border: 1px solid #cfdce8 !important;
+            border-radius: 12px !important;
+            background: #ffffff !important;
+            color: #113d61 !important;
+            font-size: 12px !important;
+            font-weight: 900 !important;
+            white-space: nowrap !important;
+            cursor: pointer !important;
+            transition: background 0.16s ease, transform 0.16s ease !important;
+        }
+
+        .comparison-clear-button:hover {
+            transform: translateY(-1px) !important;
+            background: #eef5fb !important;
+        }
+
+        @media (max-width: 1200px) {
+            .comparison-history-filters {
+                grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+            }
+
+            .comparison-filter.search {
+                grid-column: 1 / -1 !important;
+            }
+        }
+
+        @media (max-width: 720px) {
+            .comparison-history-filters {
+                grid-template-columns: 1fr !important;
+            }
+        }
     </style>
 </DashboardLayout>

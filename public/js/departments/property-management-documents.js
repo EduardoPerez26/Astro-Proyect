@@ -2,6 +2,7 @@
     'use strict';
 
     const PM_API = '/property-management';
+    const PREPAID_API = '/prepaids';
     const ITEMS_PER_PAGE = 10;
     const MONTH_NAMES = [
         '',
@@ -22,10 +23,12 @@
     const TABLE_TITLES = {
         '': 'All department documents',
         schedule: 'Editable schedules',
+        prepaidSchedule: 'Prepaid schedules',
         source: 'Source files'
     };
 
     let schedules = [];
+    let prepaidSchedules = [];
     let documents = [];
     let currentPage = 1;
     let searchText = '';
@@ -123,19 +126,22 @@
         setStatus('Loading server documents...', 'info');
 
         try {
-            const [schedulePayload, documentPayload] = await Promise.all([
+            const [schedulePayload, prepaidPayload, documentPayload] = await Promise.all([
                 apiJson('/schedules'),
+                prepaidApiJson('/schedules'),
                 apiJson('/documents')
             ]);
 
             schedules = Array.isArray(schedulePayload.schedules) ? schedulePayload.schedules : [];
+            prepaidSchedules = Array.isArray(prepaidPayload.schedules) ? prepaidPayload.schedules : [];
             documents = Array.isArray(documentPayload.documents) ? documentPayload.documents : [];
             currentPage = 1;
             populateFileTypes();
             renderDocuments();
-            setStatus(`Loaded ${schedules.length} schedules and ${documents.length} source files.`, 'success');
+            setStatus(`Loaded ${schedules.length} schedules, ${prepaidSchedules.length} prepaid schedules, and ${documents.length} source files.`, 'success');
         } catch (error) {
             schedules = [];
+            prepaidSchedules = [];
             documents = [];
             renderDocuments();
             setStatus(error.message || 'Server documents could not be loaded.', 'error');
@@ -178,10 +184,11 @@
     }
 
     function renderDocumentRow(item) {
-        const iconClass = item.kind === 'schedule'
+        const isSchedule = ['schedule', 'prepaidSchedule'].includes(item.kind);
+        const iconClass = isSchedule
             ? 'property-docs-schedule-icon'
             : 'property-docs-file-icon';
-        const icon = item.kind === 'schedule' ? 'fa-file-pen' : 'fa-file-excel';
+        const icon = isSchedule ? 'fa-file-pen' : 'fa-file-excel';
         const actions = item.kind === 'schedule'
             ? `
             <button class="action-btn edit" type="button" data-schedule-edit="${escapeHtml(item.rawId)}" title="Edit schedule">
@@ -192,6 +199,15 @@
             </button>
             <button class="action-btn delete" type="button" data-schedule-delete="${escapeHtml(item.rawId)}" title="Delete schedule">
                 <i class="fa-solid fa-trash" aria-hidden="true"></i>
+            </button>
+        `
+            : item.kind === 'prepaidSchedule'
+                ? `
+            <button class="action-btn edit" type="button" data-prepaid-open="${escapeHtml(item.rawId)}" title="Open prepaid schedule">
+                <i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i>
+            </button>
+            <button class="action-btn download" type="button" data-prepaid-download="${escapeHtml(item.rawId)}" title="Download prepaid schedule">
+                <i class="fa-solid fa-download" aria-hidden="true"></i>
             </button>
         `
             : `
@@ -243,7 +259,8 @@
 
         return getAllItems().filter(item => {
             if (currentKind && item.kind !== currentKind) return false;
-            if (fileType && currentKind !== 'schedule' && (item.kind !== 'source' || item.fileType !== fileType)) return false;
+            if (fileType && currentKind !== 'source' && item.kind !== 'source') return false;
+            if (fileType && item.kind === 'source' && item.fileType !== fileType) return false;
             if (searchText && !item.searchText.includes(searchText)) return false;
 
             const itemDate = parseDateValue(item.date);
@@ -291,6 +308,40 @@
             };
         });
 
+        const prepaidItems = prepaidSchedules.map(schedule => {
+            const period = formatPeriod(null, schedule.schedule_year || schedule.tax_year);
+            const updated = schedule.updated_at || schedule.generated_at || schedule.created_at;
+            const status = String(schedule.status || 'SOURCE_LOADED').toLowerCase();
+            const name = schedule.title || 'Prepaid amortization schedule';
+            const brand = schedule.brand || 'Property Management';
+            const expected = formatCurrency(schedule.expected_total || 0);
+            const difference = formatCurrency(schedule.difference_total || 0);
+
+            return {
+                kind: 'prepaidSchedule',
+                rawId: schedule.id,
+                displayId: `P-${schedule.id}`,
+                name,
+                meta: `${brand} prepaid schedule`,
+                category: 'Prepaid schedule',
+                period,
+                detailsPrimary: expected,
+                detailsSecondary: `Difference ${difference}`,
+                statusClass: status === 'validated' ? 'saved' : status === 'difference' ? 'warning' : 'loaded',
+                statusLabel: toTitleCase(status.replace(/_/g, ' ')),
+                date: updated,
+                searchText: normalize([
+                    name,
+                    brand,
+                    'prepaid schedule',
+                    period,
+                    expected,
+                    difference,
+                    status
+                ].join(' '))
+            };
+        });
+
         const sourceItems = documents.map(document => {
             const period = formatPeriod(document.periodo_mes, document.periodo_anio);
             const label = document.tipo_label || document.tipo_documento || 'Source file';
@@ -323,7 +374,7 @@
             };
         });
 
-        return [...scheduleItems, ...sourceItems].sort((a, b) => {
+        return [...scheduleItems, ...prepaidItems, ...sourceItems].sort((a, b) => {
             const dateA = parseDateValue(a.date)?.getTime() || 0;
             const dateB = parseDateValue(b.date)?.getTime() || 0;
             if (dateA !== dateB) return dateB - dateA;
@@ -335,10 +386,12 @@
         const allItems = getAllItems();
         const allCount = document.getElementById('pmAllDocumentsCount');
         const scheduleCount = document.getElementById('pmSchedulesCount');
+        const prepaidCount = document.getElementById('pmPrepaidSchedulesCount');
         const sourceCount = document.getElementById('pmSourceFilesCount');
 
         if (allCount) allCount.textContent = allItems.length;
         if (scheduleCount) scheduleCount.textContent = allItems.filter(item => item.kind === 'schedule').length;
+        if (prepaidCount) prepaidCount.textContent = allItems.filter(item => item.kind === 'prepaidSchedule').length;
         if (sourceCount) sourceCount.textContent = allItems.filter(item => item.kind === 'source').length;
     }
 
@@ -355,7 +408,7 @@
             kindSelect.value = currentKind;
         }
         if (typeSelect) {
-            typeSelect.disabled = currentKind === 'schedule';
+            typeSelect.disabled = currentKind && currentKind !== 'source';
         }
     }
 
@@ -436,6 +489,8 @@
         const scheduleButton = event.target.closest('[data-schedule-edit]');
         const scheduleDownloadButton = event.target.closest('[data-schedule-download]');
         const scheduleDeleteButton = event.target.closest('[data-schedule-delete]');
+        const prepaidOpenButton = event.target.closest('[data-prepaid-open]');
+        const prepaidDownloadButton = event.target.closest('[data-prepaid-download]');
         const viewButton = event.target.closest('[data-document-view]');
         const downloadButton = event.target.closest('[data-document-download]');
         const documentDeleteButton = event.target.closest('[data-document-delete]');
@@ -458,6 +513,16 @@
             return;
         }
 
+        if (prepaidOpenButton) {
+            window.location.href = '/views/departments/prepaid-amortization';
+            return;
+        }
+
+        if (prepaidDownloadButton) {
+            await downloadPrepaidSchedule(prepaidDownloadButton.dataset.prepaidDownload, prepaidDownloadButton);
+            return;
+        }
+
         if (viewButton) {
             await viewDocument(viewButton.dataset.documentView, viewButton);
             return;
@@ -477,38 +542,61 @@
         if (button) button.disabled = true;
 
         try {
-            const payload = await apiJson(`/schedules/${encodeURIComponent(id)}`);
-            const schedule = payload.schedule || {};
-            const data = schedule.datos_json || {};
-            const rows = Array.isArray(data.rows) ? data.rows : [];
-            const headers = Array.isArray(data.headers) ? data.headers : [];
-            const filename = `${safeFilename(schedule.nombre || 'Property Management Schedule')}.xlsx`;
+            const apiBase = String(window.API_URL || '').replace(/\/$/, '');
+            const token = localStorage.getItem('token');
 
-            if (!window.XLSX) {
-                const blob = new Blob([JSON.stringify({ schedule, rows }, null, 2)], {
-                    type: 'application/json'
-                });
-                downloadBlob(blob, filename.replace(/\.xlsx$/i, '.json'));
-                return;
+            if (!apiBase) throw new Error('API_URL is not configured.');
+            if (!token) throw new Error('Your session expired. Sign in again.');
+
+            const response = await fetch(
+                `${apiBase}${PM_API}/schedules/${encodeURIComponent(id)}/export`,
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+
+            if (!response.ok) {
+                const contentType = response.headers.get('content-type') || '';
+                const data = contentType.includes('application/json')
+                    ? await response.json()
+                    : null;
+                throw new Error(data?.message || 'Schedule could not be downloaded.');
             }
 
-            const workbook = window.XLSX.utils.book_new();
-            let worksheet;
+            const disposition = response.headers.get('content-disposition') || '';
+            const encodedName = disposition.match(/filename\*=UTF-8''([^;]+)/i)?.[1];
+            const simpleName = disposition.match(/filename="?([^";]+)"?/i)?.[1];
+            const filename = encodedName
+                ? decodeURIComponent(encodedName)
+                : (simpleName || 'Property-Management-Schedule.xlsx');
 
-            if (rows.length && Array.isArray(rows[0])) {
-                worksheet = window.XLSX.utils.aoa_to_sheet(headers.length ? [headers, ...rows] : rows);
-            } else if (rows.length) {
-                worksheet = window.XLSX.utils.json_to_sheet(rows, headers.length ? { header: headers } : undefined);
-            } else {
-                worksheet = window.XLSX.utils.aoa_to_sheet([
-                    ['No rows saved for this schedule']
-                ]);
-            }
-
-            window.XLSX.utils.book_append_sheet(workbook, worksheet, 'Schedule 2026');
-            window.XLSX.writeFile(workbook, filename);
+            const blob = await response.blob();
+            downloadBlob(blob, filename);
         } catch (error) {
             showSwal('error', 'Download failed', error.message || 'Schedule could not be downloaded.');
+        } finally {
+            if (button) button.disabled = false;
+        }
+    }
+
+    async function downloadPrepaidSchedule(id, button = null) {
+        if (button) button.disabled = true;
+
+        try {
+            const response = await prepaidApiFetch(`/${encodeURIComponent(id)}/export`);
+
+            if (!response.ok) {
+                const contentType = response.headers.get('content-type') || '';
+                const data = contentType.includes('application/json')
+                    ? await response.json()
+                    : null;
+                throw new Error(data?.message || 'Prepaid schedule could not be downloaded.');
+            }
+
+            const disposition = response.headers.get('content-disposition') || '';
+            const filename = decodeDispositionFilename(disposition) || `prepaid-schedule-${id}.xlsx`;
+            const blob = await response.blob();
+            downloadBlob(blob, filename);
+        } catch (error) {
+            showSwal('error', 'Download failed', error.message || 'Prepaid schedule could not be downloaded.');
         } finally {
             if (button) button.disabled = false;
         }
@@ -791,13 +879,39 @@
     }
 
     async function apiFetch(path, options = {}) {
+        return authenticatedFetch(`${PM_API}${path}`, options);
+    }
+
+    async function prepaidApiJson(path, options = {}) {
+        const response = await prepaidApiFetch(path, {
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                ...(options.headers || {})
+            },
+            body: options.body ? JSON.stringify(options.body) : undefined
+        });
+        const payload = await readJsonResponse(response);
+
+        if (!response.ok || payload.success === false) {
+            throw new Error(payload.message || 'The Prepaid server request failed');
+        }
+
+        return payload;
+    }
+
+    async function prepaidApiFetch(path, options = {}) {
+        return authenticatedFetch(`${PREPAID_API}${path}`, options);
+    }
+
+    async function authenticatedFetch(path, options = {}) {
         const apiBase = String(window.API_URL || '').replace(/\/$/, '');
         const token = localStorage.getItem('token');
 
         if (!apiBase) throw new Error('API_URL is not configured');
         if (!token) throw new Error('Your session token was not found. Sign in again.');
 
-        return fetch(`${apiBase}${PM_API}${path}`, {
+        return fetch(`${apiBase}${path}`, {
             ...options,
             headers: {
                 ...(options.headers || {}),

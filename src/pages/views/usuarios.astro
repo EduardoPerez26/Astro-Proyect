@@ -3,7 +3,7 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
 ---
 
 <DashboardLayout title="Users">
-    <div class="page-container">
+    <div class="page-container admin-users-page">
         <!-- Header -->
         <div class="page-header">
             <div class="page-header-info">
@@ -1174,6 +1174,161 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
             #userModal .admin-form-modal .modal-footer .btn,
             #departmentModal .admin-form-modal .modal-footer .btn {
                 width: 100% !important;
+            }
+        }
+
+        /* System Errors filter/table visual parity */
+        .page-container {
+            --se-navy: #071b2d;
+            --se-muted: #64748b;
+            --se-line: #dbe5ef;
+            --se-panel: #ffffff;
+            --se-soft: #f8fafc;
+            --se-shadow: 0 20px 50px -42px rgba(7, 27, 45, 0.7);
+        }
+
+        #usuariosPanel .filters-bar {
+            display: grid !important;
+            grid-template-columns: minmax(280px, 1.6fr) repeat(3, minmax(130px, 0.75fr)) !important;
+            gap: 12px !important;
+            align-items: end !important;
+            margin: 0 0 18px !important;
+            padding: 16px !important;
+            border: 1px solid var(--se-line) !important;
+            border-radius: 20px !important;
+            background: var(--se-soft) !important;
+            box-shadow: var(--se-shadow) !important;
+        }
+
+        #usuariosPanel .filters-bar .filter-group {
+            display: grid !important;
+            gap: 6px !important;
+            min-width: 0 !important;
+        }
+
+        #usuariosPanel .filters-bar label {
+            margin: 0 !important;
+            color: var(--se-muted) !important;
+            font-size: 10px !important;
+            font-weight: 900 !important;
+            letter-spacing: 0.08em !important;
+            line-height: 1 !important;
+            text-transform: uppercase !important;
+        }
+
+        #usuariosPanel .filters-bar input,
+        #usuariosPanel .filters-bar select {
+            width: 100% !important;
+            min-height: 40px !important;
+            padding: 8px 12px !important;
+            border: 1px solid #cfdce8 !important;
+            border-radius: 12px !important;
+            outline: none !important;
+            background: #ffffff !important;
+            color: #102f4c !important;
+            font-size: 12px !important;
+            font-weight: 700 !important;
+            box-shadow: none !important;
+        }
+
+        #usuariosPanel .filters-bar input:focus,
+        #usuariosPanel .filters-bar select:focus {
+            border-color: #7aa7ca !important;
+            box-shadow: 0 0 0 4px rgba(23, 92, 145, 0.11) !important;
+        }
+
+        #usuariosPanel .table-container {
+            overflow-x: auto !important;
+            margin: 0 !important;
+            border: 1px solid var(--se-line) !important;
+            border-radius: 20px !important;
+            background: var(--se-panel) !important;
+            box-shadow: var(--se-shadow) !important;
+            scrollbar-width: thin !important;
+            scrollbar-color: #9fb1c2 #edf2f6 !important;
+        }
+
+        #usuariosPanel .table-container::-webkit-scrollbar { width: 9px; height: 9px; }
+        #usuariosPanel .table-container::-webkit-scrollbar-track { background: #edf2f6; }
+        #usuariosPanel .table-container::-webkit-scrollbar-thumb { background: #9fb1c2; border-radius: 999px; }
+
+        #usuariosPanel #usersTable {
+            display: table !important;
+            width: 100% !important;
+            min-width: 1120px !important;
+            border-collapse: separate !important;
+            border-spacing: 0 !important;
+            table-layout: fixed !important;
+            background: #ffffff !important;
+            font-size: 12px !important;
+        }
+
+        #usuariosPanel #usersTable thead th {
+            position: sticky !important;
+            top: 0 !important;
+            z-index: 2 !important;
+            padding: 13px 14px !important;
+            border: 0 !important;
+            border-bottom: 1px solid #071b2d !important;
+            background: #071b2d !important;
+            color: #dbeafe !important;
+            font-size: 10px !important;
+            font-weight: 900 !important;
+            letter-spacing: 0.06em !important;
+            line-height: 1.2 !important;
+            text-align: left !important;
+            text-transform: uppercase !important;
+            white-space: nowrap !important;
+        }
+
+        #usuariosPanel #usersTable th:nth-child(1) { width: 205px !important; }
+        #usuariosPanel #usersTable th:nth-child(2) { width: 320px !important; }
+        #usuariosPanel #usersTable th:nth-child(3) { width: 265px !important; }
+        #usuariosPanel #usersTable th:nth-child(4) { width: 270px !important; }
+        #usuariosPanel #usersTable th:nth-child(5) { width: 130px !important; }
+        #usuariosPanel #usersTable th:nth-child(6) { width: 270px !important; }
+        #usuariosPanel #usersTable th:nth-child(7) { width: 215px !important; }
+
+        #usuariosPanel #usersTable tbody td {
+            padding: 14px !important;
+            border: 0 !important;
+            border-bottom: 1px solid #edf2f7 !important;
+            background: #ffffff !important;
+            color: #344054 !important;
+            font-size: 12px !important;
+            line-height: 1.35 !important;
+            vertical-align: middle !important;
+        }
+
+        #usuariosPanel #usersTable tbody tr:hover td {
+            background: #f8fbff !important;
+        }
+
+        #usuariosPanel .pagination {
+            min-height: 56px !important;
+            padding: 12px 18px !important;
+            border-top: 1px solid #edf2f7 !important;
+            background: #f8fafc !important;
+        }
+
+        #usuariosPanel .data-table .action-btn,
+        #usuariosPanel .data-table button {
+            border: 1px solid #cfdce8 !important;
+            border-radius: 12px !important;
+            background: #ffffff !important;
+            color: #113d61 !important;
+            box-shadow: none !important;
+        }
+
+        @media (max-width: 1100px) {
+            #usuariosPanel .filters-bar {
+                grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            }
+        }
+
+        @media (max-width: 640px) {
+            #usuariosPanel .filters-bar {
+                grid-template-columns: 1fr !important;
             }
         }
     </style>

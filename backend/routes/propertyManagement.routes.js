@@ -1,8 +1,14 @@
 const express = require('express');
 const multer = require('multer');
 const crypto = require('crypto');
+const fs = require('fs');
 const XLSX = require('xlsx');
 const { pool } = require('../config/database');
+const {
+    getScheduleExportPath,
+    savePropertyManagementScheduleWorkbook,
+    deleteSavedPropertyManagementScheduleWorkbook
+} = require('../services/propertyManagementScheduleWorkbook');
 const {
     verificarToken,
     checkPermission,
@@ -321,6 +327,17 @@ router.delete('/documents/:id', ...access('propertyManagementDocuments', 'elimin
     }
 });
 
+async function persistPropertyManagementScheduleWorkbook(scheduleId) {
+    const [[schedule]] = await pool.query(
+        `SELECT * FROM property_management_schedules WHERE id = ? LIMIT 1`,
+        [scheduleId]
+    );
+    if (!schedule) throw new Error('Schedule not found');
+
+    const data = parseJson(schedule.datos_json, {});
+    return savePropertyManagementScheduleWorkbook({ schedule, data });
+}
+
 router.get('/schedules', ...access('propertyManagement', 'ver'), async (req, res) => {
     try {
         const params = [];
@@ -431,10 +448,14 @@ router.post('/schedules', ...access('propertyManagement', 'crear'), async (req, 
         );
 
         await syncScheduleDocuments(result.insertId, req.body.documentIds);
+        const savedWorkbook = await persistPropertyManagementScheduleWorkbook(result.insertId);
 
         res.status(201).json({
             success: true,
-            schedule: { id: result.insertId }
+            schedule: {
+                id: result.insertId,
+                export_file: savedWorkbook.filename
+            }
         });
     } catch (error) {
         console.error('Property Management schedule could not be saved:', error);
@@ -487,10 +508,14 @@ router.put('/schedules/:id', ...access('propertyManagement', 'editar'), async (r
         }
 
         await syncScheduleDocuments(req.params.id, req.body.documentIds);
+        const savedWorkbook = await persistPropertyManagementScheduleWorkbook(req.params.id);
 
         res.json({
             success: true,
-            schedule: { id: Number(req.params.id) }
+            schedule: {
+                id: Number(req.params.id),
+                export_file: savedWorkbook.filename
+            }
         });
     } catch (error) {
         console.error('Property Management schedule could not be updated:', error);
@@ -499,10 +524,49 @@ router.put('/schedules/:id', ...access('propertyManagement', 'editar'), async (r
     }
 });
 
+router.get('/schedules/:id/export', ...access('propertyManagement', 'exportar'), async (req, res) => {
+    try {
+        const [[schedule]] = await pool.query(
+            `SELECT * FROM property_management_schedules WHERE id = ? LIMIT 1`,
+            [req.params.id]
+        );
+
+        if (!schedule) {
+            return res.status(404).json({ success: false, message: 'Schedule not found' });
+        }
+
+        let exportPath = getScheduleExportPath(schedule);
+        if (!fs.existsSync(exportPath)) {
+            const savedWorkbook = await persistPropertyManagementScheduleWorkbook(schedule.id);
+            exportPath = savedWorkbook.path;
+        }
+
+        const downloadName = `${String(schedule.nombre || 'property-management-schedule')
+            .replace(/[^a-z0-9]+/gi, '-')
+            .replace(/^-+|-+$/g, '')
+            .slice(0, 90) || 'property-management-schedule'}.xlsx`;
+
+        res.download(exportPath, downloadName, error => {
+            if (!error || res.headersSent) return;
+            console.error('Property Management schedule could not be downloaded:', error);
+            res.status(500).json({ success: false, message: 'Schedule could not be downloaded' });
+        });
+    } catch (error) {
+        console.error('Property Management schedule export could not be created:', error);
+        if (tableSetupMessage(error, res)) return;
+        res.status(500).json({ success: false, message: error.message || 'Schedule export could not be created' });
+    }
+});
+
 router.delete('/schedules/:id', ...access('propertyManagement', 'eliminar'), async (req, res) => {
     const connection = await pool.getConnection();
 
     try {
+        const [[schedule]] = await connection.query(
+            `SELECT id, nombre FROM property_management_schedules WHERE id = ? LIMIT 1`,
+            [req.params.id]
+        );
+
         await connection.beginTransaction();
 
         await connection.query(
@@ -523,6 +587,15 @@ router.delete('/schedules/:id', ...access('propertyManagement', 'eliminar'), asy
         }
 
         await connection.commit();
+
+        if (schedule) {
+            try {
+                deleteSavedPropertyManagementScheduleWorkbook(schedule);
+            } catch (fileError) {
+                console.warn('Saved Property Management workbook could not be removed:', fileError.message);
+            }
+        }
+
         res.json({ success: true, message: 'Schedule deleted successfully' });
     } catch (error) {
         await connection.rollback();

@@ -1,7 +1,6 @@
 const express = require('express');
 const multer = require('multer');
 const crypto = require('crypto');
-const XLSX = require('xlsx');
 const { pool } = require('../config/database');
 const {
     verificarToken,
@@ -13,6 +12,9 @@ const {
     parseMonthlyGlActuals,
     normalizeText
 } = require('../services/prepaidBillSourceParser');
+const {
+    savePrepaidScheduleWorkbook
+} = require('../services/prepaidScheduleWorkbook');
 const {
     calculateBillAmortization,
     defaultAmortizationPeriod,
@@ -96,6 +98,39 @@ function parseJson(value, fallback = null) {
     }
 }
 
+function cleanSqlDate(value, fallback = null) {
+    const parsed = parseDate(value);
+    return parsed ? toSqlDate(parsed) : fallback;
+}
+
+function getSourceRowReviewMetadata(row = {}, schedule = {}) {
+    const raw = parseJson(row.raw_json, {}) || {};
+    const review = parseJson(raw.source_review, {}) || raw.source_review || {};
+
+    return {
+        raw,
+        isManual: Number(review.is_manual ?? raw.manual_entry ?? raw.is_manual ?? 0) === 1,
+        amortizationStart: cleanSqlDate(
+            review.amortization_start || raw.amortization_start,
+            schedule.amortization_start || null
+        ),
+        amortizationEnd: cleanSqlDate(
+            review.amortization_end || raw.amortization_end,
+            schedule.amortization_end || null
+        )
+    };
+}
+
+function sourceRowForClient(row, schedule = {}) {
+    const metadata = getSourceRowReviewMetadata(row, schedule);
+    return {
+        ...row,
+        is_manual: metadata.isManual ? 1 : 0,
+        amortization_start: metadata.amortizationStart,
+        amortization_end: metadata.amortizationEnd
+    };
+}
+
 function tableSetupMessage(error, res) {
     if (['ER_NO_SUCH_TABLE', 'ER_BAD_FIELD_ERROR'].includes(error.code)) {
         res.status(503).json({
@@ -164,6 +199,30 @@ async function refreshScheduleStatus(connection, scheduleId) {
     }
 
     await connection.query('UPDATE prepaid_schedules SET status = ? WHERE id = ?', [status, scheduleId]);
+}
+
+async function persistScheduleWorkbook(scheduleId) {
+    const [[schedule]] = await pool.query('SELECT * FROM prepaid_schedules WHERE id = ? LIMIT 1', [scheduleId]);
+    if (!schedule) throw new Error('Schedule was not found');
+
+    const [sourceRows] = await pool.query(
+        `SELECT * FROM prepaid_source_rows WHERE schedule_id = ? ORDER BY source_row_number`,
+        [scheduleId]
+    );
+    const [bills] = await pool.query(
+        `SELECT * FROM prepaid_bills WHERE schedule_id = ? ORDER BY store_number + 0, store_number, id`,
+        [scheduleId]
+    );
+    const [months] = await pool.query(
+        `SELECT pam.*, pb.payee, pb.doc_number
+         FROM prepaid_amortization_months pam
+         JOIN prepaid_bills pb ON pb.id = pam.bill_id
+         WHERE pam.schedule_id = ?
+         ORDER BY pam.period_year, pam.period_month, pam.store_number + 0, pam.store_number, pam.id`,
+        [scheduleId]
+    );
+
+    return savePrepaidScheduleWorkbook({ schedule, sourceRows, bills, months });
 }
 
 async function loadScheduleOr404(scheduleId, res) {
@@ -355,13 +414,15 @@ router.get('/:scheduleId', ...access('ver'), async (req, res) => {
         const schedule = await loadScheduleOr404(scheduleId, res);
         if (!schedule) return;
 
-        const [sourceRows] = await pool.query(
+        const [sourceRowRecords] = await pool.query(
             `SELECT *
              FROM prepaid_source_rows
              WHERE schedule_id = ?
-             ORDER BY include_in_schedule DESC, store_number + 0, store_number, source_row_number`,
+               AND include_in_schedule = 1
+             ORDER BY store_number + 0, store_number, source_row_number`,
             [scheduleId]
         );
+        const sourceRows = sourceRowRecords.map(row => sourceRowForClient(row, schedule));
 
         const [bills] = await pool.query(
             `SELECT *
@@ -425,15 +486,313 @@ router.get('/:scheduleId', ...access('ver'), async (req, res) => {
     }
 });
 
+
+router.put('/:scheduleId/source-rows', ...access('editar'), async (req, res) => {
+    const connection = await pool.getConnection();
+
+    try {
+        const scheduleId = Number(req.params.scheduleId);
+        if (!Number.isInteger(scheduleId) || scheduleId <= 0) {
+            return res.status(400).json({ success: false, message: 'A valid schedule is required.' });
+        }
+
+        const [[schedule]] = await connection.query(
+            'SELECT * FROM prepaid_schedules WHERE id = ? LIMIT 1',
+            [scheduleId]
+        );
+        if (!schedule) {
+            return res.status(404).json({ success: false, message: 'Schedule was not found' });
+        }
+
+        if (!Array.isArray(req.body?.rows)) {
+            return res.status(400).json({ success: false, message: 'The reviewed source rows are required.' });
+        }
+        if (req.body.rows.length > 10000) {
+            return res.status(413).json({ success: false, message: 'Too many source rows were submitted.' });
+        }
+
+        const removedStoreNumbers = new Set(
+            (Array.isArray(req.body.removed_store_numbers) ? req.body.removed_store_numbers : [])
+                .map(value => cleanText(value))
+                .filter(Boolean)
+        );
+
+        const [existingRows] = await connection.query(
+            `SELECT *
+             FROM prepaid_source_rows
+             WHERE schedule_id = ?`,
+            [scheduleId]
+        );
+        const existingById = new Map(existingRows.map(row => [Number(row.id), row]));
+        const receivedIds = new Set();
+        const reviewedRows = [];
+
+        for (let index = 0; index < req.body.rows.length; index += 1) {
+            const input = req.body.rows[index] || {};
+            const id = Number(input.id || 0) || null;
+            const existing = id ? existingById.get(id) : null;
+
+            if (id && !existing) {
+                return res.status(400).json({
+                    success: false,
+                    message: `Source row ${id} does not belong to this schedule.`
+                });
+            }
+            if (id && receivedIds.has(id)) {
+                return res.status(400).json({
+                    success: false,
+                    message: `Source row ${id} was submitted more than once.`
+                });
+            }
+            if (id) receivedIds.add(id);
+
+            const storeNumber = cleanText(input.store_number);
+            if (removedStoreNumbers.has(storeNumber)) continue;
+
+            const payee = cleanText(input.payee, existing?.payee || '');
+            const amountPaid = roundMoney(input.amount_paid);
+            const docDate = cleanSqlDate(
+                input.doc_date || input.posted_date,
+                existing?.doc_date || existing?.posted_date || null
+            );
+            const postedDate = cleanSqlDate(
+                input.posted_date || input.doc_date,
+                existing?.posted_date || existing?.doc_date || docDate
+            );
+
+            if (!storeNumber || !payee || !docDate || !Number.isFinite(amountPaid) || amountPaid <= 0) {
+                return res.status(400).json({
+                    success: false,
+                    message: `Row ${index + 1} requires a store, concept, bill date, and amount greater than zero.`
+                });
+            }
+
+            const existingMetadata = getSourceRowReviewMetadata(existing || {}, schedule);
+            const isManual = Number(input.is_manual ?? (existingMetadata.isManual ? 1 : 0)) === 1;
+            const amortizationStart = cleanSqlDate(
+                input.amortization_start,
+                existingMetadata.amortizationStart || schedule.amortization_start
+            );
+            const amortizationEnd = cleanSqlDate(
+                input.amortization_end,
+                existingMetadata.amortizationEnd || schedule.amortization_end
+            );
+
+            if (!amortizationStart || !amortizationEnd || amortizationStart > amortizationEnd) {
+                return res.status(400).json({
+                    success: false,
+                    message: `Row ${index + 1} has an invalid amortization period.`
+                });
+            }
+
+            const rawJson = {
+                ...(existingMetadata.raw || {}),
+                manual_entry: isManual ? 1 : 0,
+                source_review: {
+                    is_manual: isManual ? 1 : 0,
+                    amortization_start: amortizationStart,
+                    amortization_end: amortizationEnd
+                }
+            };
+
+            reviewedRows.push({
+                id,
+                // Existing rows keep their original source row number. New/manual rows
+                // are numbered by the server after validation to avoid collisions with
+                // imported Excel row numbers covered by uq_prepaid_source_row.
+                sourceRowNumber: existing ? Number(existing.source_row_number) : null,
+                postedDate,
+                docDate,
+                docNumber: cleanText(input.doc_number, existing?.doc_number || ''),
+                memoDescription: cleanText(input.memo_description, existing?.memo_description || ''),
+                department: cleanText(input.department, existing?.department || storeNumber),
+                storeNumber,
+                txnNo: cleanText(input.txn_no, existing?.txn_no || ''),
+                journal: cleanText(input.journal, existing?.journal || (isManual ? 'MANUAL' : '')),
+                debit: roundMoney(input.debit ?? existing?.debit ?? amountPaid),
+                credit: roundMoney(input.credit ?? existing?.credit ?? 0),
+                balance: roundMoney(input.balance ?? existing?.balance ?? amountPaid),
+                payee,
+                taxYear: parseYear(input.tax_year, existing?.tax_year || schedule.tax_year),
+                amountPaid,
+                sourceAccount: cleanAccount(input.source_account || existing?.source_account, schedule.source_account),
+                prepaidAccount: cleanAccount(input.prepaid_account || existing?.prepaid_account, schedule.prepaid_account),
+                expenseAccount: cleanAccount(input.expense_account || existing?.expense_account, schedule.expense_account),
+                rawJson: JSON.stringify(rawJson)
+            });
+        }
+
+        if (!reviewedRows.length) {
+            return res.status(400).json({
+                success: false,
+                message: 'At least one source row is required to generate the schedule.'
+            });
+        }
+
+        // The unique key uq_prepaid_source_row uses (schedule_id, source_row_number).
+        // Imported Excel rows can contain non-contiguous row numbers, so using
+        // state.sourceRows.length + 1 for a manual row can reuse an existing number
+        // (for example 36). Always allocate manual numbers above the current maximum.
+        let nextSourceRowNumber = existingRows.reduce(
+            (max, row) => Math.max(max, Number(row.source_row_number) || 0),
+            0
+        ) + 1;
+
+        for (const row of reviewedRows) {
+            if (row.id) continue;
+            row.sourceRowNumber = nextSourceRowNumber;
+            nextSourceRowNumber += 1;
+        }
+
+        await connection.beginTransaction();
+        await connection.query('DELETE FROM prepaid_amortization_months WHERE schedule_id = ?', [scheduleId]);
+        await connection.query('DELETE FROM prepaid_bills WHERE schedule_id = ?', [scheduleId]);
+
+        const retainedIds = reviewedRows.filter(row => row.id).map(row => row.id);
+        if (retainedIds.length) {
+            const placeholders = retainedIds.map(() => '?').join(', ');
+            await connection.query(
+                `DELETE FROM prepaid_source_rows
+                 WHERE schedule_id = ?
+                   AND id NOT IN (${placeholders})`,
+                [scheduleId, ...retainedIds]
+            );
+        } else {
+            await connection.query('DELETE FROM prepaid_source_rows WHERE schedule_id = ?', [scheduleId]);
+        }
+
+        for (const row of reviewedRows) {
+            if (row.id) {
+                await connection.query(
+                    `UPDATE prepaid_source_rows
+                     SET source_row_number = ?,
+                         posted_date = ?,
+                         doc_date = ?,
+                         doc_number = ?,
+                         memo_description = ?,
+                         department = ?,
+                         store_number = ?,
+                         txn_no = ?,
+                         journal = ?,
+                         debit = ?,
+                         credit = ?,
+                         balance = ?,
+                         payee = ?,
+                         tax_year = ?,
+                         amount_paid = ?,
+                         source_account = ?,
+                         prepaid_account = ?,
+                         expense_account = ?,
+                         include_in_schedule = 1,
+                         exception_reason = NULL,
+                         raw_json = ?
+                     WHERE id = ?
+                       AND schedule_id = ?`,
+                    [
+                        row.sourceRowNumber,
+                        row.postedDate,
+                        row.docDate,
+                        row.docNumber,
+                        row.memoDescription,
+                        row.department,
+                        row.storeNumber,
+                        row.txnNo,
+                        row.journal,
+                        row.debit,
+                        row.credit,
+                        row.balance,
+                        row.payee,
+                        row.taxYear,
+                        row.amountPaid,
+                        row.sourceAccount,
+                        row.prepaidAccount,
+                        row.expenseAccount,
+                        row.rawJson,
+                        row.id,
+                        scheduleId
+                    ]
+                );
+                continue;
+            }
+
+            await connection.query(
+                `INSERT INTO prepaid_source_rows
+                 (schedule_id, source_row_number, posted_date, doc_date, doc_number, memo_description,
+                  department, store_number, txn_no, journal, debit, credit, balance, payee, tax_year,
+                  amount_paid, source_account, prepaid_account, expense_account, include_in_schedule,
+                  exception_reason, raw_json)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, NULL, ?)`,
+                [
+                    scheduleId,
+                    row.sourceRowNumber,
+                    row.postedDate,
+                    row.docDate,
+                    row.docNumber,
+                    row.memoDescription,
+                    row.department,
+                    row.storeNumber,
+                    row.txnNo,
+                    row.journal,
+                    row.debit,
+                    row.credit,
+                    row.balance,
+                    row.payee,
+                    row.taxYear,
+                    row.amountPaid,
+                    row.sourceAccount,
+                    row.prepaidAccount,
+                    row.expenseAccount,
+                    row.rawJson
+                ]
+            );
+        }
+
+        await updateScheduleCounts(connection, scheduleId);
+        await connection.query(
+            `UPDATE prepaid_schedules
+             SET status = 'SOURCE_LOADED',
+                 generated_at = NULL
+             WHERE id = ?`,
+            [scheduleId]
+        );
+        await connection.commit();
+
+        const [savedRows] = await pool.query(
+            `SELECT *
+             FROM prepaid_source_rows
+             WHERE schedule_id = ?
+               AND include_in_schedule = 1
+             ORDER BY store_number + 0, store_number, source_row_number`,
+            [scheduleId]
+        );
+
+        res.json({
+            success: true,
+            schedule_id: scheduleId,
+            updated_rows: savedRows.length,
+            needs_regenerate: true,
+            source_rows: savedRows.map(row => sourceRowForClient(row, schedule))
+        });
+    } catch (error) {
+        await connection.rollback();
+        console.error('Prepaid source rows could not be synchronized:', error);
+        if (tableSetupMessage(error, res)) return;
+        res.status(500).json({ success: false, message: error.message || 'Source rows could not be saved' });
+    } finally {
+        connection.release();
+    }
+});
+
 router.patch('/source-rows/:rowId', ...access('editar'), async (req, res) => {
     const connection = await pool.getConnection();
 
     try {
         const rowId = Number(req.params.rowId);
         const [[existing]] = await connection.query(
-            `SELECT id, schedule_id
-             FROM prepaid_source_rows
-             WHERE id = ?
+            `SELECT psr.id, psr.schedule_id, ps.title
+             FROM prepaid_source_rows psr
+             JOIN prepaid_schedules ps ON ps.id = psr.schedule_id
+             WHERE psr.id = ?
              LIMIT 1`,
             [rowId]
         );
@@ -521,10 +880,13 @@ router.post('/:scheduleId/generate', ...access('crear'), async (req, res) => {
         let insertedMonths = 0;
 
         for (const source of sourceRows) {
+            const sourceMetadata = getSourceRowReviewMetadata(source, schedule);
+            const amortizationStart = sourceMetadata.amortizationStart || schedule.amortization_start;
+            const amortizationEnd = sourceMetadata.amortizationEnd || schedule.amortization_end;
             const calculation = calculateBillAmortization({
                 amountPaid: source.amount_paid,
-                amortizationStart: schedule.amortization_start,
-                amortizationEnd: schedule.amortization_end
+                amortizationStart,
+                amortizationEnd
             });
 
             const [billResult] = await connection.query(
@@ -545,8 +907,8 @@ router.post('/:scheduleId/generate', ...access('crear'), async (req, res) => {
                     source.source_account || schedule.source_account,
                     source.prepaid_account || schedule.prepaid_account,
                     source.expense_account || schedule.expense_account,
-                    schedule.amortization_start,
-                    schedule.amortization_end,
+                    amortizationStart,
+                    amortizationEnd,
                     calculation.totalMonths,
                     calculation.monthlyAmount
                 ]
@@ -585,11 +947,15 @@ router.post('/:scheduleId/generate', ...access('crear'), async (req, res) => {
         await connection.query('UPDATE prepaid_schedules SET status = "GENERATED", generated_at = NOW() WHERE id = ?', [scheduleId]);
         await connection.commit();
 
+        // Generating only updates the database preview. The Excel workbook is
+        // persisted on the server exclusively through POST /:scheduleId/save.
         res.json({
             success: true,
             schedule_id: scheduleId,
             inserted_bills: insertedBills,
-            inserted_months: insertedMonths
+            inserted_months: insertedMonths,
+            saved_to_server: false,
+            needs_save: true
         });
     } catch (error) {
         await connection.rollback();
@@ -753,6 +1119,8 @@ router.post('/upload-gl', ...access('crear'), upload.single('glFile'), async (re
 
         await connection.commit();
 
+        // GL validation updates database values only. It does not create or
+        // overwrite the saved Excel workbook until the user presses Save.
         res.json({
             success: true,
             schedule_id: scheduleId,
@@ -761,7 +1129,9 @@ router.post('/upload-gl', ...access('crear'), upload.single('glFile'), async (re
             matched,
             differences,
             missing_gl: missing,
-            difference_rows: differenceRows
+            difference_rows: differenceRows,
+            saved_to_server: false,
+            needs_save: true
         });
     } catch (error) {
         await connection.rollback();
@@ -803,60 +1173,64 @@ router.get('/:scheduleId/comparison', ...access('ver'), async (req, res) => {
     }
 });
 
+router.post('/:scheduleId/save', ...access('crear'), async (req, res) => {
+    try {
+        const scheduleId = Number(req.params.scheduleId);
+        const schedule = await loadScheduleOr404(scheduleId, res);
+        if (!schedule) return;
+
+        if (!Number(schedule.generated_month_count || 0) && schedule.status === 'SOURCE_LOADED') {
+            return res.status(409).json({
+                success: false,
+                message: 'Generate the schedule before saving it.'
+            });
+        }
+
+        // This is the only endpoint that persists/overwrites the schedule workbook.
+        const savedWorkbook = await persistScheduleWorkbook(scheduleId);
+        res.json({
+            success: true,
+            message: 'Schedule saved on the server.',
+            schedule_id: scheduleId,
+            file_name: savedWorkbook.filename
+        });
+    } catch (error) {
+        console.error('Prepaid schedule could not be saved:', error);
+        if (tableSetupMessage(error, res)) return;
+        res.status(500).json({ success: false, message: error.message || 'Schedule could not be saved' });
+    }
+});
+
 router.get('/:scheduleId/export', ...access('exportar'), async (req, res) => {
     try {
         const scheduleId = Number(req.params.scheduleId);
         const schedule = await loadScheduleOr404(scheduleId, res);
         if (!schedule) return;
 
-        const [sourceRows] = await pool.query(
-            `SELECT source_row_number, include_in_schedule, exception_reason, store_number, payee,
-                    doc_number, doc_date, tax_year, amount_paid, source_account, prepaid_account,
-                    expense_account, memo_description
-             FROM prepaid_source_rows
-             WHERE schedule_id = ?
-             ORDER BY source_row_number`,
-            [scheduleId]
-        );
+        if (!Number(schedule.generated_month_count || 0) && schedule.status === 'SOURCE_LOADED') {
+            return res.status(409).json({
+                success: false,
+                message: 'Generate the schedule before downloading the Excel file.'
+            });
+        }
 
-        const [billRows] = await pool.query(
-            `SELECT store_number, payee, doc_number, bill_date, tax_year, amount_paid,
-                    source_account, prepaid_account, expense_account, amortization_start,
-                    amortization_end, total_months, monthly_amount
-             FROM prepaid_bills
-             WHERE schedule_id = ?
-             ORDER BY store_number + 0, store_number`,
-            [scheduleId]
-        );
+        const savedWorkbook = await persistScheduleWorkbook(scheduleId);
+        const exportPath = savedWorkbook.path;
 
-        const [monthRows] = await pool.query(
-            `SELECT pam.store_number, pb.payee, pb.doc_number, pam.period_code,
-                    pam.expected_amount, pam.gl_actual_amount, pam.difference, pam.status
-             FROM prepaid_amortization_months pam
-             JOIN prepaid_bills pb ON pb.id = pam.bill_id
-             WHERE pam.schedule_id = ?
-             ORDER BY pam.period_year, pam.period_month, pam.store_number + 0, pam.store_number`,
-            [scheduleId]
-        );
-
-        const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(sourceRows), 'Source Bills');
-        XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(billRows), 'Bill Summary');
-        XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(monthRows), 'Monthly Validation');
-
-        const buffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'buffer' });
-        const safeTitle = String(schedule.title || 'prepaid-schedule')
+        const downloadName = `${String(schedule.title || 'prepaid-schedule')
             .replace(/[^a-z0-9]+/gi, '-')
             .replace(/^-+|-+$/g, '')
-            .slice(0, 90);
+            .slice(0, 90) || 'prepaid-schedule'}.xlsx`;
 
-        res.setHeader('Content-Disposition', `attachment; filename="${safeTitle || 'prepaid-schedule'}.xlsx"`);
-        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        res.send(buffer);
+        res.download(exportPath, downloadName, error => {
+            if (!error || res.headersSent) return;
+            console.error('Prepaid workbook could not be downloaded:', error);
+            res.status(500).json({ success: false, message: 'Export could not be downloaded' });
+        });
     } catch (error) {
         console.error('Prepaid export could not be created:', error);
         if (tableSetupMessage(error, res)) return;
-        res.status(500).json({ success: false, message: 'Export could not be created' });
+        res.status(500).json({ success: false, message: error.message || 'Export could not be created' });
     }
 });
 
