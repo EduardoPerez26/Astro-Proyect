@@ -36,6 +36,18 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     setSidebarCollapsedState(localStorage.getItem('sidebarCollapsed') === 'true');
 
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            if (sidebar?.style.transition === 'none') {
+                sidebar.style.transition = '';
+            }
+
+            if (mainContent?.style.transition === 'none') {
+                mainContent.style.transition = '';
+            }
+        });
+    });
+
     // Verify authentication.
     verificarAutenticacion();
 

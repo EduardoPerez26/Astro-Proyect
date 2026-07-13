@@ -128,7 +128,7 @@
         try {
             const [schedulePayload, prepaidPayload, documentPayload] = await Promise.all([
                 apiJson('/schedules'),
-                prepaidApiJson('/schedules'),
+                prepaidApiJson('/schedules?saved=1'),
                 apiJson('/documents')
             ]);
 
@@ -138,7 +138,7 @@
             currentPage = 1;
             populateFileTypes();
             renderDocuments();
-            setStatus(`Loaded ${schedules.length} schedules, ${prepaidSchedules.length} prepaid schedules, and ${documents.length} source files.`, 'success');
+            setStatus(`Loaded ${schedules.length} schedules, ${prepaidSchedules.length} saved prepaid schedules, and ${documents.length} source files.`, 'success');
         } catch (error) {
             schedules = [];
             prepaidSchedules = [];
@@ -168,8 +168,11 @@
         if (!tbody || !table || !emptyState) return;
 
         if (!filtered.length) {
-            table.style.display = 'none';
-            emptyState.style.display = 'block';
+            table.hidden = true;
+            table.style.setProperty('display', 'none', 'important');
+            emptyState.hidden = false;
+            emptyState.style.setProperty('display', 'block', 'important');
+            tbody.innerHTML = '';
             updatePagination(0);
             return;
         }
@@ -177,8 +180,10 @@
         const start = (currentPage - 1) * ITEMS_PER_PAGE;
         const pageItems = filtered.slice(start, start + ITEMS_PER_PAGE);
 
-        table.style.display = 'table';
-        emptyState.style.display = 'none';
+        table.hidden = false;
+        table.style.setProperty('display', 'table', 'important');
+        emptyState.hidden = true;
+        emptyState.style.setProperty('display', 'none', 'important');
         tbody.innerHTML = pageItems.map(renderDocumentRow).join('');
         updatePagination(filtered.length);
     }
@@ -208,6 +213,9 @@
             </button>
             <button class="action-btn download" type="button" data-prepaid-download="${escapeHtml(item.rawId)}" title="Download prepaid schedule">
                 <i class="fa-solid fa-download" aria-hidden="true"></i>
+            </button>
+            <button class="action-btn delete" type="button" data-prepaid-delete="${escapeHtml(item.rawId)}" title="Delete prepaid schedule">
+                <i class="fa-solid fa-trash" aria-hidden="true"></i>
             </button>
         `
             : `
@@ -322,7 +330,7 @@
                 rawId: schedule.id,
                 displayId: `P-${schedule.id}`,
                 name,
-                meta: `${brand} prepaid schedule`,
+                meta: `${brand} saved prepaid schedule`,
                 category: 'Prepaid schedule',
                 period,
                 detailsPrimary: expected,
@@ -491,6 +499,7 @@
         const scheduleDeleteButton = event.target.closest('[data-schedule-delete]');
         const prepaidOpenButton = event.target.closest('[data-prepaid-open]');
         const prepaidDownloadButton = event.target.closest('[data-prepaid-download]');
+        const prepaidDeleteButton = event.target.closest('[data-prepaid-delete]');
         const viewButton = event.target.closest('[data-document-view]');
         const downloadButton = event.target.closest('[data-document-download]');
         const documentDeleteButton = event.target.closest('[data-document-delete]');
@@ -514,12 +523,20 @@
         }
 
         if (prepaidOpenButton) {
-            window.location.href = '/views/departments/prepaid-amortization';
+            const id = prepaidOpenButton.dataset.prepaidOpen;
+            window.location.href = id
+                ? `/views/departments/prepaid-amortization?schedule=${encodeURIComponent(id)}`
+                : '/views/departments/prepaid-amortization';
             return;
         }
 
         if (prepaidDownloadButton) {
             await downloadPrepaidSchedule(prepaidDownloadButton.dataset.prepaidDownload, prepaidDownloadButton);
+            return;
+        }
+
+        if (prepaidDeleteButton) {
+            await deletePrepaidSchedule(prepaidDeleteButton.dataset.prepaidDelete, prepaidDeleteButton);
             return;
         }
 
@@ -597,6 +614,27 @@
             downloadBlob(blob, filename);
         } catch (error) {
             showSwal('error', 'Download failed', error.message || 'Prepaid schedule could not be downloaded.');
+        } finally {
+            if (button) button.disabled = false;
+        }
+    }
+
+    async function deletePrepaidSchedule(id, button = null) {
+        const confirmed = await confirmDelete(
+            'Delete prepaid schedule?',
+            'This saved prepaid schedule and its workbook will be permanently removed.'
+        );
+
+        if (!confirmed) return;
+        if (button) button.disabled = true;
+
+        try {
+            await prepaidApiJson(`/${encodeURIComponent(id)}`, { method: 'DELETE' });
+            prepaidSchedules = prepaidSchedules.filter(schedule => String(schedule.id) !== String(id));
+            renderDocuments();
+            showSwal('success', 'Deleted', 'Prepaid schedule deleted successfully.');
+        } catch (error) {
+            showSwal('error', 'Delete failed', error.message || 'Prepaid schedule could not be deleted.');
         } finally {
             if (button) button.disabled = false;
         }
@@ -939,7 +977,10 @@
 
         if (loading) loading.style.display = isLoading ? 'block' : 'none';
         if (table) table.style.display = isLoading ? 'none' : table.style.display;
-        if (empty && isLoading) empty.style.display = 'none';
+        if (empty && isLoading) {
+            empty.hidden = true;
+            empty.style.setProperty('display', 'none', 'important');
+        }
         if (pagination && isLoading) pagination.style.display = 'none';
     }
 

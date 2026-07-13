@@ -122,7 +122,7 @@ import DashboardLayout from "../../../layouts/DashboardLayout.astro";
                 </span>
                 <span class="documents-type-copy">
                     <strong>Prepaid</strong>
-                    <small>Prepaid amortization schedules</small>
+                    <small>Saved prepaid amortization schedules</small>
                 </span>
                 <span class="documents-type-count" id="pmPrepaidSchedulesCount"
                     >0</span
@@ -1650,6 +1650,27 @@ import DashboardLayout from "../../../layouts/DashboardLayout.astro";
         border-top: 0 !important;
         border-radius: 0 0 20px 20px !important;
         box-shadow: var(--se-shadow) !important;
+        max-height: min(70vh, 760px) !important;
+        overflow: auto !important;
+    }
+
+    .property-documents-page #pmDocumentsTable thead,
+    .property-documents-page #pmDocumentsTable thead tr,
+    .property-documents-page #pmDocumentsTable thead th {
+        position: sticky !important;
+        top: 0 !important;
+    }
+
+    .property-documents-page #pmDocumentsTable thead,
+    .property-documents-page #pmDocumentsTable thead tr {
+        z-index: 80 !important;
+    }
+
+    .property-documents-page #pmDocumentsTable thead th {
+        z-index: 90 !important;
+        background: #071b2d !important;
+        color: #ffffff !important;
+        background-clip: padding-box !important;
     }
 
 </style>

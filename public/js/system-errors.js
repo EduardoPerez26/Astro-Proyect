@@ -326,98 +326,150 @@ async function openSystemErrorDetail(errorId) {
         stack: error.stack_trace
     };
 
-    await Swal.fire({
-        title: '',
-        width: 1040,
-        padding: 0,
-        confirmButtonText: 'Close',
-        showCancelButton: !isResolved,
-        cancelButtonText: 'Mark resolved',
-        buttonsStyling: true,
-        customClass: {
-            popup: 'system-error-detail-popup',
-            htmlContainer: 'system-error-detail-html',
-            actions: 'system-error-detail-actions',
-            confirmButton: 'system-error-detail-confirm',
-            cancelButton: 'system-error-detail-cancel'
-        },
-        html: `
-            <div class="system-error-detail-modal">
-                <header class="system-error-detail-header">
-                    <span class="system-error-detail-header-icon" aria-hidden="true">
-                        <i class="fa-solid fa-bug"></i>
-                    </span>
-                    <div>
-                        <span class="system-error-detail-kicker">Backend incident</span>
-                        <h2 class="system-error-detail-title">System error detail</h2>
-                        <span class="system-error-detail-route-line" title="${escapeSystemErrorHtml(error.method || '-')} ${escapeSystemErrorHtml(route)}">
-                            ${escapeSystemErrorHtml(error.method || '-')} ${escapeSystemErrorHtml(route)}
-                        </span>
-                    </div>
-                </header>
+    showSystemErrorDetailModal({
+        error,
+        isResolved,
+        html: renderSystemErrorDetailHtml({
+            error,
+            isResolved,
+            route,
+            normalizedRoute,
+            technicalPayload
+        })
+    });
+}
 
-                <div class="system-error-detail-body">
-                    <section class="system-error-detail-alert ${isResolved ? 'is-resolved' : ''}">
-                        <div class="system-error-detail-alert-text">
-                            <span>Error message</span>
-                            <strong>${escapeSystemErrorHtml(error.error_message || 'No message')}</strong>
+function renderSystemErrorDetailHtml({ error, isResolved, route, normalizedRoute, technicalPayload }) {
+    return `
+        <div class="system-error-detail-modal">
+            <header class="system-error-detail-header">
+                <span class="system-error-detail-header-icon" aria-hidden="true">
+                    <i class="fa-solid fa-bug"></i>
+                </span>
+                <div>
+                    <span class="system-error-detail-kicker">Backend incident</span>
+                    <h2 class="system-error-detail-title" id="systemErrorDetailTitle">System error detail</h2>
+                    <span class="system-error-detail-route-line" title="${escapeSystemErrorHtml(error.method || '-')} ${escapeSystemErrorHtml(route)}">
+                        ${escapeSystemErrorHtml(error.method || '-')} ${escapeSystemErrorHtml(route)}
+                    </span>
+                </div>
+            </header>
+
+            <div class="system-error-detail-body">
+                <section class="system-error-detail-alert ${isResolved ? 'is-resolved' : ''}">
+                    <div class="system-error-detail-alert-text">
+                        <span>Error message</span>
+                        <strong>${escapeSystemErrorHtml(error.error_message || 'No message')}</strong>
+                    </div>
+                    <div class="system-error-detail-alert-meta">
+                        <span class="system-error-detail-chip ${isResolved ? 'is-resolved' : 'is-open'}">
+                            <i class="fa-solid ${isResolved ? 'fa-circle-check' : 'fa-circle-exclamation'}"></i>
+                            ${isResolved ? 'Resolved' : 'Open'}
+                        </span>
+                        <span class="system-error-detail-chip is-method">${escapeSystemErrorHtml(error.status_code || '-')}</span>
+                        <span class="system-error-detail-chip is-method">${escapeSystemErrorHtml(error.method || '-')}</span>
+                    </div>
+                </section>
+
+                <div class="system-error-detail-layout">
+                    <section class="system-error-detail-section">
+                        <div class="system-error-detail-section-header">
+                            <h3>Request context</h3>
+                            <span>Runtime data</span>
                         </div>
-                        <div class="system-error-detail-alert-meta">
-                            <span class="system-error-detail-chip ${isResolved ? 'is-resolved' : 'is-open'}">
-                                <i class="fa-solid ${isResolved ? 'fa-circle-check' : 'fa-circle-exclamation'}"></i>
-                                ${isResolved ? 'Resolved' : 'Open'}
-                            </span>
-                            <span class="system-error-detail-chip is-method">${escapeSystemErrorHtml(error.status_code || '-')}</span>
-                            <span class="system-error-detail-chip is-method">${escapeSystemErrorHtml(error.method || '-')}</span>
+                        <div class="system-error-detail-grid">
+                            ${renderSystemErrorDetailCard('Route', `${error.method || '-'} ${route}`, 'is-wide')}
+                            ${renderSystemErrorDetailCard('Normalized route', normalizedRoute, 'is-wide')}
+                            ${renderSystemErrorDetailCard('Status', `${error.status_code || '-'} / ${isResolved ? 'Resolved' : 'Open'}`)}
+                            ${renderSystemErrorDetailCard('Occurrences', Number(error.occurrences || 0).toLocaleString('en-US'))}
+                            ${renderSystemErrorDetailCard('User', error.user_label || 'Unknown user')}
+                            ${renderSystemErrorDetailCard('IP address', error.ip_address || '-')}
+                            ${renderSystemErrorDetailCard('First seen', formatSystemErrorDate(error.first_seen_at))}
+                            ${renderSystemErrorDetailCard('Last seen', formatSystemErrorDate(error.last_seen_at))}
                         </div>
                     </section>
 
-                    <div class="system-error-detail-layout">
-                        <section class="system-error-detail-section">
-                            <div class="system-error-detail-section-header">
-                                <h3>Request context</h3>
-                                <span>Runtime data</span>
-                            </div>
-                            <div class="system-error-detail-grid">
-                                ${renderSystemErrorDetailCard('Route', `${error.method || '-'} ${route}`, 'is-wide')}
-                                ${renderSystemErrorDetailCard('Normalized route', normalizedRoute, 'is-wide')}
-                                ${renderSystemErrorDetailCard('Status', `${error.status_code || '-'} / ${isResolved ? 'Resolved' : 'Open'}`)}
-                                ${renderSystemErrorDetailCard('Occurrences', Number(error.occurrences || 0).toLocaleString('en-US'))}
-                                ${renderSystemErrorDetailCard('User', error.user_label || 'Unknown user')}
-                                ${renderSystemErrorDetailCard('IP address', error.ip_address || '-')}
-                                ${renderSystemErrorDetailCard('First seen', formatSystemErrorDate(error.first_seen_at))}
-                                ${renderSystemErrorDetailCard('Last seen', formatSystemErrorDate(error.last_seen_at))}
-                            </div>
-                        </section>
-
-                        <section class="system-error-detail-section">
-                            <div class="system-error-detail-section-header">
-                                <h3>Resolution</h3>
-                                <span>Admin tracking</span>
-                            </div>
-                            <div class="system-error-detail-stack">
-                                ${renderSystemErrorDetailCard('Resolved by', formatSystemErrorResolvedBy(error))}
-                                ${renderSystemErrorDetailCard('Resolved at', formatSystemErrorDate(error.resolved_at))}
-                                ${renderSystemErrorDetailCard('Resolution notes', error.resolution_notes || '-', 'is-wide')}
-                                ${renderSystemErrorDetailCard('Error name', error.error_name || '-')}
-                                ${renderSystemErrorDetailCard('Error code', error.error_code || '-')}
-                                ${renderSystemErrorDetailCard('Hash', error.error_hash || '-', 'is-wide')}
-                            </div>
-                        </section>
-                    </div>
-
-                    <details class="system-error-detail-technical" open>
-                        <summary>Technical payload</summary>
-                        <pre class="system-error-detail-pre">${escapeSystemErrorHtml(JSON.stringify(technicalPayload, null, 2))}</pre>
-                    </details>
+                    <section class="system-error-detail-section">
+                        <div class="system-error-detail-section-header">
+                            <h3>Resolution</h3>
+                            <span>Admin tracking</span>
+                        </div>
+                        <div class="system-error-detail-stack">
+                            ${renderSystemErrorDetailCard('Resolved by', formatSystemErrorResolvedBy(error))}
+                            ${renderSystemErrorDetailCard('Resolved at', formatSystemErrorDate(error.resolved_at))}
+                            ${renderSystemErrorDetailCard('Resolution notes', error.resolution_notes || '-', 'is-wide')}
+                            ${renderSystemErrorDetailCard('Error name', error.error_name || '-')}
+                            ${renderSystemErrorDetailCard('Error code', error.error_code || '-')}
+                            ${renderSystemErrorDetailCard('Hash', error.error_hash || '-', 'is-wide')}
+                        </div>
+                    </section>
                 </div>
+
+                <details class="system-error-detail-technical" open>
+                    <summary>Technical payload</summary>
+                    <pre class="system-error-detail-pre">${escapeSystemErrorHtml(JSON.stringify(technicalPayload, null, 2))}</pre>
+                </details>
             </div>
-        `
-    }).then(async result => {
-        if (result.dismiss === Swal.DismissReason.cancel && !isResolved) {
+        </div>
+    `;
+}
+
+function showSystemErrorDetailModal({ error, isResolved, html }) {
+    closeSystemErrorDetailModal();
+
+    const overlay = document.createElement('div');
+    overlay.className = 'system-error-detail-overlay';
+    overlay.setAttribute('role', 'presentation');
+    overlay.innerHTML = `
+        <article class="system-error-detail-dialog" role="dialog" aria-modal="true" aria-labelledby="systemErrorDetailTitle" tabindex="-1">
+            <div class="system-error-detail-scroll">
+                ${html}
+            </div>
+            <footer class="system-error-detail-footer">
+                <button class="system-error-detail-confirm" type="button" data-system-error-detail-close>Close</button>
+                ${isResolved ? '' : '<button class="system-error-detail-cancel" type="button" data-system-error-detail-resolve>Mark resolved</button>'}
+            </footer>
+        </article>
+    `;
+
+    document.body.appendChild(overlay);
+    document.body.classList.add('system-error-detail-open');
+
+    const dialog = overlay.querySelector('.system-error-detail-dialog');
+    const scroller = overlay.querySelector('.system-error-detail-scroll');
+
+    requestAnimationFrame(() => {
+        if (scroller) scroller.scrollTop = 0;
+        dialog?.focus({ preventScroll: true });
+    });
+
+    overlay.addEventListener('click', async event => {
+        const closeTarget = event.target.closest('[data-system-error-detail-close]');
+        const resolveTarget = event.target.closest('[data-system-error-detail-resolve]');
+        const dialog = event.target.closest('.system-error-detail-dialog');
+
+        if (closeTarget || (!dialog && event.target === overlay)) {
+            closeSystemErrorDetailModal();
+            return;
+        }
+
+        if (resolveTarget) {
+            closeSystemErrorDetailModal();
             await resolveSystemError(error.id);
         }
     });
+
+    overlay.addEventListener('keydown', event => {
+        if (event.key === 'Escape') {
+            event.preventDefault();
+            closeSystemErrorDetailModal();
+        }
+    });
+}
+
+function closeSystemErrorDetailModal() {
+    document.querySelector('.system-error-detail-overlay')?.remove();
+    document.body.classList.remove('system-error-detail-open');
 }
 
 function renderSystemErrorDetailCard(label, value, extraClass = '') {

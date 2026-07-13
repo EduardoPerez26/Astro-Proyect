@@ -1260,6 +1260,17 @@ async function loadSchedules() {
 
 }
 
+function getRequestedScheduleId() {
+    const params = new URLSearchParams(window.location.search);
+    const value =
+        params.get('schedule') ||
+        params.get('scheduleId') ||
+        params.get('prepaid') ||
+        params.get('prepaidSchedule');
+    const id = Number(value);
+    return Number.isInteger(id) && id !== 0 ? id : null;
+}
+
 async function loadScheduleDetail(scheduleId) {
     const detail = await apiFetch(`/prepaids/${scheduleId}`);
     state.selectedScheduleId = Number(scheduleId);
@@ -1520,13 +1531,13 @@ function handleTabs(event) {
     activateTab(button.dataset.tab);
 }
 
-async function saveCurrentSchedule() {
-    if (!state.selectedScheduleId || !state.bills.length || els.saveScheduleBtn?.disabled) return;
-
-    const originalHtml = els.saveScheduleBtn.innerHTML;
-    els.saveScheduleBtn.disabled = true;
-    els.saveScheduleBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i> Saving';
-
+async function saveScheduleOnServer() {
+    const button = els.saveScheduleBtn;
+    const originalHtml = button?.innerHTML;
+    if (button) {
+        button.disabled = true;
+        button.innerHTML = '<i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i> Saving';
+    }
     try {
         const data = await apiFetch(`/prepaids/${state.selectedScheduleId}/save`, {
             method: 'POST',
@@ -1538,18 +1549,20 @@ async function saveCurrentSchedule() {
     } catch (error) {
         showToast(error.message || 'The schedule could not be saved.', 'error');
     } finally {
-        els.saveScheduleBtn.disabled = !state.selectedScheduleId || !state.bills.length;
-        els.saveScheduleBtn.innerHTML = originalHtml;
+        if (button) {
+            button.disabled = !state.selectedScheduleId || !state.bills.length;
+            button.innerHTML = originalHtml;
+        }
     }
 }
 
-async function exportCurrentSchedule() {
-    if (!state.selectedScheduleId || els.exportScheduleBtn?.disabled) return;
+async function downloadScheduleFile(button = els.exportScheduleBtn) {
+    if (!state.selectedScheduleId || !state.bills.length) return;
 
-    const originalHtml = els.exportScheduleBtn?.innerHTML;
-    if (els.exportScheduleBtn) {
-        els.exportScheduleBtn.disabled = true;
-        els.exportScheduleBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i> Preparing Excel';
+    const originalHtml = button?.innerHTML;
+    if (button) {
+        button.disabled = true;
+        button.innerHTML = '<i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i> Preparing Excel';
     }
 
     try {
@@ -1578,11 +1591,48 @@ async function exportCurrentSchedule() {
     } catch (error) {
         showToast(error.message || 'The schedule could not be downloaded.', 'error');
     } finally {
-        if (els.exportScheduleBtn) {
-            els.exportScheduleBtn.disabled = !state.selectedScheduleId;
-            els.exportScheduleBtn.innerHTML = originalHtml;
+        if (button) {
+            button.disabled = !state.selectedScheduleId || !state.bills.length;
+            button.innerHTML = originalHtml;
         }
     }
+}
+
+async function saveCurrentSchedule() {
+    if (!state.selectedScheduleId || !state.bills.length || els.saveScheduleBtn?.disabled) return;
+
+    if (!window.Swal) {
+        const shouldSave = window.confirm('OK saves the schedule on the server. Cancel downloads the Excel file.');
+        if (shouldSave) {
+            await saveScheduleOnServer();
+        } else {
+            await downloadScheduleFile(els.saveScheduleBtn);
+        }
+        return;
+    }
+
+    const result = await window.Swal.fire({
+        icon: 'question',
+        title: 'Save schedule',
+        text: 'Do you want to download the Excel file or save this schedule on the server?',
+        showCancelButton: true,
+        showDenyButton: true,
+        confirmButtonText: 'Save on server',
+        denyButtonText: 'Download Excel',
+        cancelButtonText: 'Cancel',
+        reverseButtons: true
+    });
+
+    if (result.isConfirmed) {
+        await saveScheduleOnServer();
+    } else if (result.isDenied) {
+        await downloadScheduleFile(els.saveScheduleBtn);
+    }
+}
+
+async function exportCurrentSchedule() {
+    if (!state.selectedScheduleId || els.exportScheduleBtn?.disabled) return;
+    await downloadScheduleFile(els.exportScheduleBtn);
 }
 
 function init() {
@@ -1598,7 +1648,14 @@ function init() {
     document.querySelector('.prepaid-tabs')?.addEventListener('click', handleTabs);
     bindAutoDrop(els.billSourceUploadForm, handleBillSourceUpload, resetBillSourceView);
     bindAutoDrop(els.glUploadForm, handleGlUpload, resetGlView);
-    loadSchedules().catch(error => showToast(error.message, 'error'));
+    loadSchedules()
+        .then(async () => {
+            const requestedScheduleId = getRequestedScheduleId();
+            if (!requestedScheduleId) return;
+            await loadScheduleDetail(requestedScheduleId);
+            activateTab('source');
+        })
+        .catch(error => showToast(error.message, 'error'));
 }
 
 init();
