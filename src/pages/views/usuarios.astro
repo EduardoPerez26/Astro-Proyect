@@ -10,14 +10,16 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
                 <h1>User administration</h1>
                 <p>Manage system users</p>
             </div>
-            <button class="btn btn-primary" id="btnNuevoUser" onclick="openUserModal()" data-permission-module="usuarios" data-permission-action="crear">
-                <i class="fa-solid fa-user-plus"></i>
-                New user
-            </button>
-            <button class="btn btn-primary" id="btnNuevoDepartment" onclick="openDepartmentModal()" data-permission-module="usuarios" data-permission-action="crear" hidden>
-                <i class="fa-solid fa-building-circle-check"></i>
-                New department
-            </button>
+            <div class="page-header-actions">
+                <button class="btn btn-primary" id="btnNuevoUser" onclick="openUserModal()" data-permission-module="usuarios" data-permission-action="crear">
+                    <i class="fa-solid fa-user-plus"></i>
+                    New user
+                </button>
+                <button class="btn btn-primary" id="btnNuevoDepartment" onclick="openDepartmentModal()" data-permission-module="usuarios" data-permission-action="crear" hidden>
+                    <i class="fa-solid fa-building-circle-check"></i>
+                    New department
+                </button>
+            </div>
         </div>
 
         <div class="admin-view-tabs" role="tablist" aria-label="Access administration">
@@ -341,6 +343,40 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
             border: 1px solid #cfdae6;
             border-radius: 8px;
             background: #eaf0f6;
+        }
+
+        .admin-users-page > .page-header .page-header-actions {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 12px;
+            justify-self: end;
+            align-self: center;
+            flex-wrap: wrap;
+        }
+
+        .admin-users-page > .page-header .page-header-actions > .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            flex: 0 0 auto;
+            width: auto;
+            min-height: 40px;
+            padding: 0 14px;
+            border: 1px solid #ffffff;
+            border-radius: 12px;
+            background: #ffffff;
+            color: #102f4c;
+            font-size: 12px;
+            font-weight: 900;
+            box-shadow: none;
+        }
+
+        .admin-users-page > .page-header .page-header-actions > [hidden] {
+            display: none !important;
         }
 
         .admin-view-tab {
