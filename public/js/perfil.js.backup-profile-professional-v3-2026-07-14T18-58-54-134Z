@@ -35,7 +35,6 @@
 
         initProfileTabs();
         initPasswordExperience();
-        updateProfileActionBar('profileConfigPanel');
         cargarPerfil();
 
         form.addEventListener('submit', guardarPerfil);
@@ -89,24 +88,13 @@
     });
 
     function initProfileTabs() {
-        const tabsContainer = document.querySelector('.profile-settings-tabs');
         const tabs = Array.from(document.querySelectorAll('[data-profile-tab-target]'));
         const panels = Array.from(document.querySelectorAll('[data-profile-tab-panel]'));
-        let panelAnimationTimer = null;
 
         if (!tabs.length || !panels.length) return;
 
         function activateTab(selectedTab) {
             const targetId = selectedTab.dataset.profileTabTarget;
-            const selectedIndex = Math.max(0, tabs.indexOf(selectedTab));
-
-            if (tabsContainer) {
-                tabsContainer.style.setProperty(
-                    '--profile-active-index',
-                    String(selectedIndex)
-                );
-                tabsContainer.dataset.activeIndex = String(selectedIndex);
-            }
 
             tabs.forEach(function (tab) {
                 const isActive = tab === selectedTab;
@@ -115,40 +103,11 @@
                 tab.tabIndex = isActive ? 0 : -1;
             });
 
-            window.clearTimeout(panelAnimationTimer);
-
             panels.forEach(function (panel) {
                 const isActive = panel.id === targetId;
-
-                panel.classList.remove('is-profile-entering');
                 panel.classList.toggle('is-active', isActive);
                 panel.hidden = !isActive;
-
-                if (isActive) {
-                    void panel.offsetWidth;
-                    panel.classList.add('is-profile-entering');
-                }
             });
-
-            panelAnimationTimer = window.setTimeout(function () {
-                panels.forEach(function (panel) {
-                    panel.classList.remove('is-profile-entering');
-                });
-            }, 480);
-
-            updateProfileActionBar(targetId);
-        }
-
-        const initiallyActiveTab =
-            tabs.find(function (tab) {
-                return tab.classList.contains('is-active');
-            }) || tabs[0];
-
-        if (tabsContainer && initiallyActiveTab) {
-            tabsContainer.style.setProperty(
-                '--profile-active-index',
-                String(Math.max(0, tabs.indexOf(initiallyActiveTab)))
-            );
         }
 
         tabs.forEach(function (tab, index) {
@@ -293,43 +252,6 @@
             label.textContent = percentage === 100
                 ? 'Account setup complete'
                 : `${values.length - completed} recommended item${values.length - completed === 1 ? '' : 's'} remaining`;
-        }
-    }
-
-    function updateProfileActionBar(targetId) {
-        const actionBar = document.getElementById('profileActionBar');
-        const resetButton = document.getElementById('profileResetBtn');
-        const saveButton = document.getElementById('profileSaveBtn');
-        const hint = document.getElementById('profileActionHint');
-
-        const isMfa = targetId === 'profileMfaPanel';
-        const isPassword = targetId === 'profilePasswordPanel';
-
-        if (actionBar) {
-            actionBar.classList.toggle('is-mfa', isMfa);
-        }
-
-        if (resetButton) {
-            resetButton.hidden = isMfa;
-        }
-
-        if (saveButton) {
-            saveButton.hidden = isMfa;
-            const html = isPassword
-                ? '<i class="fa-solid fa-key" aria-hidden="true"></i>Update password'
-                : '<i class="fa-solid fa-floppy-disk" aria-hidden="true"></i>Save profile';
-            saveButton.dataset.defaultHtml = html;
-            if (!saveButton.disabled) {
-                saveButton.innerHTML = html;
-            }
-        }
-
-        if (hint) {
-            hint.innerHTML = isMfa
-                ? '<i class="fa-solid fa-shield-halved" aria-hidden="true"></i>Authenticator changes use their own protected confirmation flow.'
-                : isPassword
-                    ? '<i class="fa-solid fa-circle-info" aria-hidden="true"></i>Only password fields will be used when they are completed.'
-                    : '<i class="fa-solid fa-circle-info" aria-hidden="true"></i>Only changed profile fields will be updated.';
         }
     }
 
@@ -1217,7 +1139,7 @@
         button.disabled = isSaving;
         button.innerHTML = isSaving
             ? '<i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i>Saving...'
-            : (button.dataset.defaultHtml || '<i class="fa-solid fa-floppy-disk" aria-hidden="true"></i>Save profile');
+            : '<i class="fa-solid fa-floppy-disk" aria-hidden="true"></i>Save changes';
     }
 })();
 

@@ -89,24 +89,13 @@
     });
 
     function initProfileTabs() {
-        const tabsContainer = document.querySelector('.profile-settings-tabs');
         const tabs = Array.from(document.querySelectorAll('[data-profile-tab-target]'));
         const panels = Array.from(document.querySelectorAll('[data-profile-tab-panel]'));
-        let panelAnimationTimer = null;
 
         if (!tabs.length || !panels.length) return;
 
         function activateTab(selectedTab) {
             const targetId = selectedTab.dataset.profileTabTarget;
-            const selectedIndex = Math.max(0, tabs.indexOf(selectedTab));
-
-            if (tabsContainer) {
-                tabsContainer.style.setProperty(
-                    '--profile-active-index',
-                    String(selectedIndex)
-                );
-                tabsContainer.dataset.activeIndex = String(selectedIndex);
-            }
 
             tabs.forEach(function (tab) {
                 const isActive = tab === selectedTab;
@@ -115,40 +104,13 @@
                 tab.tabIndex = isActive ? 0 : -1;
             });
 
-            window.clearTimeout(panelAnimationTimer);
-
             panels.forEach(function (panel) {
                 const isActive = panel.id === targetId;
-
-                panel.classList.remove('is-profile-entering');
                 panel.classList.toggle('is-active', isActive);
                 panel.hidden = !isActive;
-
-                if (isActive) {
-                    void panel.offsetWidth;
-                    panel.classList.add('is-profile-entering');
-                }
             });
 
-            panelAnimationTimer = window.setTimeout(function () {
-                panels.forEach(function (panel) {
-                    panel.classList.remove('is-profile-entering');
-                });
-            }, 480);
-
             updateProfileActionBar(targetId);
-        }
-
-        const initiallyActiveTab =
-            tabs.find(function (tab) {
-                return tab.classList.contains('is-active');
-            }) || tabs[0];
-
-        if (tabsContainer && initiallyActiveTab) {
-            tabsContainer.style.setProperty(
-                '--profile-active-index',
-                String(Math.max(0, tabs.indexOf(initiallyActiveTab)))
-            );
         }
 
         tabs.forEach(function (tab, index) {

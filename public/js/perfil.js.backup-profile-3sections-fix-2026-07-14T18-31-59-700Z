@@ -1,0 +1,219 @@
+
+(function () {
+    function $(selector, scope = document) {
+        return scope.querySelector(selector);
+    }
+
+    function $$(selector, scope = document) {
+        return Array.from(scope.querySelectorAll(selector));
+    }
+
+    function safeParse(value) {
+        try { return JSON.parse(value); } catch (error) { return null; }
+    }
+
+    function getStoredUser() {
+        const candidates = [
+            localStorage.getItem('usuario'),
+            localStorage.getItem('user'),
+            localStorage.getItem('userData'),
+            sessionStorage.getItem('usuario'),
+            sessionStorage.getItem('user'),
+            sessionStorage.getItem('userData')
+        ].map(safeParse).filter(Boolean);
+
+        if (candidates.length) return candidates[0];
+
+        return {
+            nombre: 'Eduardo',
+            nombre_completo: 'Eduardo',
+            username: 'Admin12',
+            email: 'eduardo.sis26@outlook.com',
+            rol: 'Super administrator',
+            departamento: 'Information Technology',
+            photo_url: 'https://placehold.co/160x160/png'
+        };
+    }
+
+    function normalizeUser(user) {
+        return {
+            name: user?.nombre_completo || user?.nombre || user?.name || user?.username || 'User',
+            username: user?.username || user?.user || 'User',
+            email: user?.email || 'No email registered',
+            role: user?.rol || user?.role || 'Standard user',
+            department: user?.departamento || user?.department || user?.department_name || 'No department',
+            photo: user?.photo_url || user?.avatar || user?.foto || 'https://placehold.co/160x160/png'
+        };
+    }
+
+    function populateUser() {
+        const user = normalizeUser(getStoredUser());
+
+        const mapping = {
+            '#profile-display-name': user.name,
+            '#profile-full-name': user.name,
+            '#profile-display-email': user.email,
+            '#profile-email': user.email,
+            '#profile-username': user.username,
+            '#profile-department': user.department,
+            '#hero-role-value': user.role,
+            '#sidebar-role-value': user.role,
+            '#hero-department-value': user.department,
+            '#sidebar-department-value': user.department,
+            '#sidebar-username-value': user.username,
+            '#verification-role': user.role,
+            '#verification-department': user.department
+        };
+
+        Object.entries(mapping).forEach(([selector, value]) => {
+            const element = $(selector);
+            if (!element) return;
+            if ('value' in element) element.value = value;
+            else element.textContent = value;
+        });
+
+        const avatar = $('#profile-avatar');
+        if (avatar) avatar.src = user.photo;
+    }
+
+    function initTabs() {
+        const tabs = $$('[data-profile-tab]');
+        const panels = $$('[data-profile-panel]');
+
+        tabs.forEach((tab) => {
+            tab.addEventListener('click', () => {
+                const target = tab.dataset.profileTab;
+                tabs.forEach((item) => {
+                    item.classList.toggle('is-active', item === tab);
+                    item.setAttribute('aria-selected', item === tab ? 'true' : 'false');
+                });
+                panels.forEach((panel) => {
+                    const isTarget = panel.dataset.profilePanel === target;
+                    panel.classList.toggle('is-active', isTarget);
+                    panel.hidden = !isTarget;
+                });
+            });
+        });
+    }
+
+    function initPasswordToggles() {
+        $$('[data-toggle-password]').forEach((button) => {
+            button.addEventListener('click', () => {
+                const target = $(button.dataset.togglePassword);
+                if (!target) return;
+                const isPassword = target.type === 'password';
+                target.type = isPassword ? 'text' : 'password';
+                const icon = $('i', button);
+                if (icon) icon.className = isPassword ? 'fa-regular fa-eye-slash' : 'fa-regular fa-eye';
+            });
+        });
+    }
+
+    function initPasswordStrength() {
+        const newPassword = $('#new-password');
+        const confirmPassword = $('#confirm-password');
+        const label = $('#password-strength-label');
+        const bar = $('#password-strength-bar');
+        const message = $('#password-match-message');
+        if (!newPassword || !confirmPassword || !label || !bar || !message) return;
+
+        const rules = {
+            length: (value) => value.length >= 8,
+            upper: (value) => /[A-Z]/.test(value),
+            number: (value) => /\d/.test(value),
+            special: (value) => /[^A-Za-z0-9]/.test(value)
+        };
+
+        function updateMatch() {
+            const newValue = newPassword.value;
+            const confirmValue = confirmPassword.value;
+            message.classList.remove('is-valid', 'is-invalid');
+
+            if (!newValue && !confirmValue) {
+                message.textContent = 'Passwords must match before saving.';
+                return;
+            }
+
+            if (newValue && confirmValue && newValue === confirmValue) {
+                message.textContent = 'Passwords match and are ready to be saved.';
+                message.classList.add('is-valid');
+            } else {
+                message.textContent = 'Passwords do not match yet.';
+                message.classList.add('is-invalid');
+            }
+        }
+
+        function updateStrength() {
+            const value = newPassword.value;
+            const score = Object.values(rules).reduce((acc, rule) => acc + (rule(value) ? 1 : 0), 0);
+            const labels = ['Not evaluated', 'Weak', 'Fair', 'Good', 'Strong'];
+            const widths = ['0%', '25%', '50%', '75%', '100%'];
+
+            label.textContent = labels[score];
+            bar.style.width = widths[score];
+
+            Object.keys(rules).forEach((ruleName) => {
+                const item = document.querySelector(`[data-rule="${ruleName}"]`);
+                if (item) item.classList.toggle('is-valid', rules[ruleName](value));
+            });
+
+            updateMatch();
+        }
+
+        [newPassword, confirmPassword].forEach((input) => {
+            input.addEventListener('input', updateStrength);
+        });
+
+        updateStrength();
+    }
+
+    function initButtons() {
+        $('#change-photo-btn')?.addEventListener('click', () => {
+            alert('This redesign keeps your existing photo workflow. Connect this button to your current crop/upload modal.');
+        });
+
+        $('#reset-profile-btn')?.addEventListener('click', populateUser);
+
+        $('#reset-password-btn')?.addEventListener('click', () => {
+            ['#current-password', '#new-password', '#confirm-password', '#two-step-code'].forEach((selector) => {
+                const input = $(selector);
+                if (input) input.value = '';
+            });
+
+            const label = $('#password-strength-label');
+            const bar = $('#password-strength-bar');
+            const message = $('#password-match-message');
+
+            if (label) label.textContent = 'Not evaluated';
+            if (bar) bar.style.width = '0%';
+            if (message) {
+                message.textContent = 'Passwords must match before saving.';
+                message.classList.remove('is-valid', 'is-invalid');
+            }
+
+            $$('#password-rules li').forEach((item) => item.classList.remove('is-valid'));
+        });
+
+        const status = $('#two-step-status');
+
+        $('#enable-two-step-btn')?.addEventListener('click', () => {
+            if (!status) return;
+            status.className = 'profile-chip profile-chip--success';
+            status.innerHTML = '<i class="fa-solid fa-shield-halved"></i> Enabled';
+        });
+
+        $('#disable-two-step-btn')?.addEventListener('click', () => {
+            if (!status) return;
+            status.className = 'profile-chip profile-chip--warning';
+            status.innerHTML = '<i class="fa-solid fa-shield-halved"></i> Not enabled';
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        populateUser();
+        initTabs();
+        initPasswordToggles();
+        initPasswordStrength();
+        initButtons();
+    });
+})();

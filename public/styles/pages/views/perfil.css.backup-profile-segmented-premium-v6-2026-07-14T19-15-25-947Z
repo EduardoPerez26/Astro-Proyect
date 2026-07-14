@@ -156,7 +156,7 @@ html body .main .profile-page.profile-professional-v3 > .profile-account-hero::a
     place-items: center;
     border: 4px solid #ffffff;
     border-radius: 50%;
-    background: #ffffff;
+    background: #0b3555;
     color: #ffffff;
     cursor: pointer;
     box-shadow: 0 12px 24px -14px rgba(3, 18, 31, 0.9);
@@ -165,7 +165,7 @@ html body .main .profile-page.profile-professional-v3 > .profile-account-hero::a
 
 .profile-avatar-action:hover {
     transform: translateY(-2px) scale(1.03);
-    background: #c4c4c4;
+    background: #145681;
 }
 
 .profile-hero-summary {

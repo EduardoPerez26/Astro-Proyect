@@ -49,11 +49,6 @@ const { title, includeSheetJS = false, stylesheets = [] } = Astro.props;
     <script is:inline src="/js/swal-guard.js?v=20260714-style-repair-v2"></script>
     <script is:inline src="/js/sticky-table-headers.js?v=20260713-floating-header-style-match"></script>
     <script is:inline src="/js/card-interactions.js?v=20260714-card-hover-v1"></script>
-    <link rel="stylesheet" href="/styles/layout/view-standardization.css?v=20260714-view-standard-v1">
-    <link rel="stylesheet" href="/styles/components/page-heroes.css?v=20260714-standard-heroes-v1">
-    <link rel="stylesheet" href="/styles/screens/login-session.css?v=20260714-remember-session-v1">
-    <script is:inline src="/js/session-persistence.js?v=20260714-remember-session-v1"></script>
-    <link rel="stylesheet" href="/styles/modal-premium-fixes.css?v=20260714-modal-premium-fixes-v2">
 </head>
 <body>
     <slot />
