@@ -45,9 +45,7 @@ const configuredStoreCount = stores.length;
 const initialAvailableStoreCount = stores.filter((store) => store.enabled).length;
 ---
 
-<DashboardLayout title="Stores" stylesheets={["/styles/pages/views/tiendas.css?v=20260714-stores-profile-header-v1",
-        "/styles/pages/views/tiendas-header-fix.css?v=20260714-stores-header-fix-v2"
-    ]}>
+<DashboardLayout title="Stores" stylesheets={["/styles/pages/views/tiendas.css?v=20260714-stores-profile-header-v1"]}>
     <section class="stores-page" aria-labelledby="storesTitle">
         <header class="stores-hero">
             <div class="stores-hero-copy">

@@ -1,4 +1,4 @@
-(function () {
+﻿(function () {
     const CROP_SIZE = 512;
 
     const state = {
@@ -34,7 +34,6 @@
         if (!form) return;
 
         initProfileTabs();
-        initPasswordExperience();
         cargarPerfil();
 
         form.addEventListener('submit', guardarPerfil);
@@ -133,128 +132,6 @@
         });
     }
 
-    function initPasswordExperience() {
-        const inputs = ['currentPassword', 'newPassword', 'confirmPassword']
-            .map((id) => document.getElementById(id))
-            .filter(Boolean);
-
-        inputs.forEach((input) => {
-            input.addEventListener('input', updatePasswordExperience);
-        });
-
-        document.querySelectorAll('[data-password-toggle]').forEach((button) => {
-            button.addEventListener('click', function () {
-                const targetId = button.dataset.passwordToggle;
-                const input = document.getElementById(targetId);
-                if (!input) return;
-
-                const showing = input.type === 'text';
-                input.type = showing ? 'password' : 'text';
-                button.setAttribute('aria-pressed', showing ? 'false' : 'true');
-                button.setAttribute('aria-label', showing ? 'Show password' : 'Hide password');
-
-                const icon = button.querySelector('i');
-                if (icon) {
-                    icon.className = showing
-                        ? 'fa-solid fa-eye'
-                        : 'fa-solid fa-eye-slash';
-                }
-
-                input.focus({ preventScroll: true });
-            });
-        });
-
-        updatePasswordExperience();
-    }
-
-    function updatePasswordExperience() {
-        const password = document.getElementById('newPassword')?.value || '';
-        const confirmation = document.getElementById('confirmPassword')?.value || '';
-        const strengthBar = document.getElementById('profilePasswordStrengthBar');
-        const strengthText = document.getElementById('profilePasswordStrengthText');
-        const strengthBox = document.getElementById('profilePasswordStrength');
-
-        const rules = {
-            profileRuleLength: password.length >= 8,
-            profileRuleCase: /[a-z]/.test(password) && /[A-Z]/.test(password),
-            profileRuleNumber: /\d/.test(password),
-            profileRuleSpecial: /[^A-Za-z0-9]/.test(password),
-            profileRuleMatch: Boolean(password && confirmation && password === confirmation)
-        };
-
-        Object.entries(rules).forEach(([id, met]) => {
-            const element = document.getElementById(id);
-            if (!element) return;
-            element.classList.toggle('is-met', met);
-            const icon = element.querySelector('i');
-            if (icon) {
-                icon.className = met
-                    ? 'fa-solid fa-circle-check'
-                    : 'fa-regular fa-circle';
-            }
-        });
-
-        let score = 0;
-        if (password.length >= 6) score += 1;
-        if (password.length >= 10) score += 1;
-        if (rules.profileRuleCase) score += 1;
-        if (rules.profileRuleNumber) score += 1;
-        if (rules.profileRuleSpecial) score += 1;
-
-        const levels = [
-            { label: 'Enter a new password', width: 0, level: 'empty' },
-            { label: 'Weak', width: 24, level: 'weak' },
-            { label: 'Fair', width: 46, level: 'fair' },
-            { label: 'Good', width: 68, level: 'good' },
-            { label: 'Strong', width: 86, level: 'strong' },
-            { label: 'Excellent', width: 100, level: 'excellent' }
-        ];
-
-        const result = password ? levels[Math.min(score, 5)] : levels[0];
-
-        if (strengthBar) strengthBar.style.width = `${result.width}%`;
-        if (strengthText) strengthText.textContent = result.label;
-        if (strengthBox) strengthBox.dataset.level = result.level;
-
-        const matchStatus = document.getElementById('profilePasswordMatchStatus');
-        if (matchStatus) {
-            if (!confirmation) {
-                matchStatus.textContent = 'Confirmation pending';
-                matchStatus.dataset.state = 'idle';
-            } else if (password === confirmation) {
-                matchStatus.textContent = 'Passwords match';
-                matchStatus.dataset.state = 'match';
-            } else {
-                matchStatus.textContent = 'Passwords do not match';
-                matchStatus.dataset.state = 'mismatch';
-            }
-        }
-    }
-
-    function updateProfileCompletion(usuario = {}) {
-        const values = [
-            Boolean(String(usuario.nombre || '').trim()),
-            Boolean(String(usuario.email || '').trim()),
-            Boolean(String(usuario.username || '').trim()),
-            Boolean(obtenerFotoPerfil(usuario)),
-            Boolean(usuario.mfa_enabled)
-        ];
-
-        const completed = values.filter(Boolean).length;
-        const percentage = Math.round((completed / values.length) * 100);
-        const bar = document.getElementById('profileCompletionBar');
-        const value = document.getElementById('profileCompletionValue');
-        const label = document.getElementById('profileCompletionLabel');
-
-        if (bar) bar.style.width = `${percentage}%`;
-        if (value) value.textContent = `${percentage}%`;
-        if (label) {
-            label.textContent = percentage === 100
-                ? 'Account setup complete'
-                : `${values.length - completed} recommended item${values.length - completed === 1 ? '' : 's'} remaining`;
-        }
-    }
-
     function cancelarRecorteFoto() {
         const input = document.getElementById('profilePhoto');
 
@@ -321,7 +198,6 @@
 
     function etiquetaRole(rol) {
         const roles = {
-            superadmin: 'Super administrator',
             admin: 'Administrator',
             supervisor: 'Supervisor',
             usuario: 'User'
@@ -386,9 +262,6 @@
         setText('profileRoleLabel', roleText);
         setText('profileDepartmentLabel', departmentText);
         setText('profileUsernameLabel', username || '---');
-        setText('profileHeroRole', roleText);
-        setText('profileHeroDepartment', departmentText);
-        updateProfileCompletion(usuario);
 
         renderMfaState(usuario);
         renderAvatarPreview(usuario);
@@ -414,24 +287,6 @@
 
         if (setupBtn) setupBtn.hidden = enabled;
         if (disableBtn) disableBtn.hidden = !enabled;
-
-        const securityTitle = document.getElementById('profileSecurityStatusTitle');
-        const securityText = document.getElementById('profileSecurityStatusText');
-        const securityDot = document.getElementById('profileSecurityStatusDot');
-
-        if (securityTitle) {
-            securityTitle.textContent = enabled ? 'Two-step verification enabled' : 'Password protection active';
-        }
-
-        if (securityText) {
-            securityText.textContent = enabled
-                ? 'Your password and Microsoft Authenticator protect this account.'
-                : 'Enable Microsoft Authenticator to add a second sign-in verification step.';
-        }
-
-        if (securityDot) {
-            securityDot.classList.toggle('is-enabled', enabled);
-        }
     }
 
     function setValue(id, value) {
@@ -1099,7 +954,6 @@
         setValue('currentPassword', '');
         setValue('newPassword', '');
         setValue('confirmPassword', '');
-        updatePasswordExperience();
     }
 
     function limpiarFotoTemporal() {

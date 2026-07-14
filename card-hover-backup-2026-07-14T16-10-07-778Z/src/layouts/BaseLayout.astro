@@ -18,7 +18,6 @@ const { title, includeSheetJS = false, stylesheets = [] } = Astro.props;
     <link rel="stylesheet" href="/styles/app.css?v=20260714-style-repair-v2">
     <link rel="stylesheet" href="/styles/alerts.css?v=20260714-style-repair-v2">
     <link rel="stylesheet" href="/styles/modals.css?v=20260714-style-repair-v2">
-    <link rel="stylesheet" href="/styles/components/card-interactions.css?v=20260714-card-hover-v1">
     {stylesheets.map((stylesheet) => (
         <link rel="stylesheet" href={stylesheet} />
     ))}
@@ -48,7 +47,6 @@ const { title, includeSheetJS = false, stylesheets = [] } = Astro.props;
     <script is:inline src="/js/i18n.js?v=20260626-enterprise-ui"></script>
     <script is:inline src="/js/swal-guard.js?v=20260714-style-repair-v2"></script>
     <script is:inline src="/js/sticky-table-headers.js?v=20260713-floating-header-style-match"></script>
-    <script is:inline src="/js/card-interactions.js?v=20260714-card-hover-v1"></script>
 </head>
 <body>
     <slot />

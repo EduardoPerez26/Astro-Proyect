@@ -481,8 +481,6 @@ textarea:focus,
 .avatar{
     border-color: #d8e8f7 !important;
     box-shadow: 0 18px 40px -30px rgba(7, 31, 52, 0.75) !important;
-}.profile-photo-frame{
-    background: linear-gradient(180deg, #f8fbfe, #eef7ff) !important;
 }/* Property Management / Department pages */
 .pm-schedule-status,
 .pm-alert,

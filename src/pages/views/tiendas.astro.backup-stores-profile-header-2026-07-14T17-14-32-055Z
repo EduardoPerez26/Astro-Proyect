@@ -40,16 +40,11 @@ const stores = [
         enabled: true
     }
 ];
-
-const configuredStoreCount = stores.length;
-const initialAvailableStoreCount = stores.filter((store) => store.enabled).length;
 ---
 
-<DashboardLayout title="Stores" stylesheets={["/styles/pages/views/tiendas.css?v=20260714-stores-profile-header-v1",
-        "/styles/pages/views/tiendas-header-fix.css?v=20260714-stores-header-fix-v2"
-    ]}>
+<DashboardLayout title="Stores" stylesheets={["/styles/pages/views/tiendas.css?v=20260714-style-refactor-v1"]}>
     <section class="stores-page" aria-labelledby="storesTitle">
-        <header class="stores-hero">
+        <div class="stores-hero">
             <div class="stores-hero-copy">
                 <span class="stores-eyebrow">
                     <i class="fa-solid fa-layer-group" aria-hidden="true"></i>
@@ -62,32 +57,21 @@ const initialAvailableStoreCount = stores.filter((store) => store.enabled).lengt
                 </p>
             </div>
 
-            <div class="stores-hero-overview" aria-label="Brand summary">
-                <article>
-                    <span class="stores-hero-icon" aria-hidden="true">
-                        <i class="fa-solid fa-store"></i>
-                    </span>
-                    <div>
-                        <small>Configured brands</small>
-                        <strong>{configuredStoreCount}</strong>
-                    </div>
-                </article>
-
-                <article>
-                    <span class="stores-hero-icon" aria-hidden="true">
-                        <i class="fa-solid fa-circle-check"></i>
-                    </span>
-                    <div>
-                        <small>Available flows</small>
-                        <strong id="availableStoresMetric">{initialAvailableStoreCount}</strong>
-                        <span class="stores-hero-status">
-                            <span class="status-pulse" aria-hidden="true"></span>
-                            <span id="storesOperationalLabel">Operation available</span>
-                        </span>
-                    </div>
-                </article>
+            <div class="stores-hero-metrics" aria-label="Brand summary">
+                <div>
+                    <strong>3</strong>
+                    <span>Configured brands</span>
+                </div>
+                <div>
+                    <strong id="availableStoresMetric">2</strong>
+                    <span>Available flows</span>
+                </div>
+                <div class="stores-operational-status">
+                    <span class="status-pulse"></span>
+                    <span id="storesOperationalLabel">Operation available</span>
+                </div>
             </div>
-        </header>
+        </div>
 
         <div class="store-grid" id="storeGrid">
             {stores.map((store) => <StoreCard {...store} />)}

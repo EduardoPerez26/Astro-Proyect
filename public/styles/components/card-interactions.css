@@ -1,0 +1,222 @@
+/* =========================================================
+   XBFS CARD INTERACTIONS
+   Global hover/focus motion for dashboard and module cards.
+   Kept separate from alerts.css and modals.css.
+   ========================================================= */
+
+:root {
+    --xbfs-card-motion-duration: 220ms;
+    --xbfs-card-motion-easing: cubic-bezier(0.22, 1, 0.36, 1);
+    --xbfs-card-hover-border: rgba(31, 94, 148, 0.38);
+    --xbfs-card-hover-shadow: 0 22px 46px -30px rgba(9, 39, 68, 0.62),
+        0 10px 22px -18px rgba(9, 39, 68, 0.34);
+    --xbfs-card-soft-shadow: 0 16px 34px -28px rgba(9, 39, 68, 0.54),
+        0 7px 16px -16px rgba(9, 39, 68, 0.28);
+}
+
+/* The JS helper adds this class only to known cards. */
+.xbfs-dynamic-card {
+    position: relative !important;
+    isolation: isolate;
+    transform: translate3d(0, 0, 0);
+    transition:
+        transform var(--xbfs-card-motion-duration) var(--xbfs-card-motion-easing),
+        box-shadow var(--xbfs-card-motion-duration) var(--xbfs-card-motion-easing),
+        border-color var(--xbfs-card-motion-duration) ease,
+        background-color var(--xbfs-card-motion-duration) ease !important;
+    backface-visibility: hidden;
+}
+
+.xbfs-card-hover-glow {
+    position: absolute;
+    z-index: 0;
+    inset: 0;
+    overflow: hidden;
+    border-radius: inherit;
+    pointer-events: none;
+    opacity: 0;
+    background:
+        radial-gradient(
+            360px circle at var(--xbfs-card-pointer-x, 50%) var(--xbfs-card-pointer-y, 50%),
+            rgba(38, 119, 183, 0.13),
+            rgba(38, 119, 183, 0.045) 34%,
+            transparent 68%
+        );
+    transition: opacity 180ms ease;
+}
+
+/* Keep card content above the glow without changing its layout. */
+.xbfs-dynamic-card > :not(.xbfs-card-hover-glow) {
+    position: relative;
+    z-index: 1;
+}
+
+.xbfs-dynamic-card.xbfs-card-hovered .xbfs-card-hover-glow,
+.xbfs-dynamic-card:focus-within .xbfs-card-hover-glow {
+    opacity: 1;
+}
+
+/* Strong interaction: navigation/module cards. */
+html body .xbfs-dynamic-card.xbfs-card-hover--interactive.xbfs-card-hovered,
+html body .xbfs-dynamic-card.xbfs-card-hover--interactive:focus-within {
+    transform: translate3d(0, -5px, 0) !important;
+    border-color: var(--xbfs-card-hover-border) !important;
+    box-shadow: var(--xbfs-card-hover-shadow) !important;
+}
+
+/* Soft interaction: KPI and summary cards. */
+html body .xbfs-dynamic-card.xbfs-card-hover--metric.xbfs-card-hovered,
+html body .xbfs-dynamic-card.xbfs-card-hover--metric:focus-within {
+    transform: translate3d(0, -3px, 0) !important;
+    border-color: rgba(31, 94, 148, 0.27) !important;
+    box-shadow: var(--xbfs-card-soft-shadow) !important;
+}
+
+/* Small visual response in card icons. */
+.xbfs-dynamic-card :is(
+    .store-card-icon,
+    .schedule-option-icon,
+    .admin-metric-icon,
+    .stat-icon,
+    .summary-icon,
+    .metric-icon,
+    .pm-simple-stat-icon,
+    .pm-manager-icon,
+    .system-error-card-icon,
+    .prepaid-kpi-icon
+) {
+    transform: translate3d(0, 0, 0) scale(1);
+    transition:
+        transform var(--xbfs-card-motion-duration) var(--xbfs-card-motion-easing),
+        box-shadow var(--xbfs-card-motion-duration) ease,
+        background-color var(--xbfs-card-motion-duration) ease !important;
+}
+
+.xbfs-dynamic-card.xbfs-card-hovered :is(
+    .store-card-icon,
+    .schedule-option-icon,
+    .admin-metric-icon,
+    .stat-icon,
+    .summary-icon,
+    .metric-icon,
+    .pm-simple-stat-icon,
+    .pm-manager-icon,
+    .system-error-card-icon,
+    .prepaid-kpi-icon
+),
+.xbfs-dynamic-card:focus-within :is(
+    .store-card-icon,
+    .schedule-option-icon,
+    .admin-metric-icon,
+    .stat-icon,
+    .summary-icon,
+    .metric-icon,
+    .pm-simple-stat-icon,
+    .pm-manager-icon,
+    .system-error-card-icon,
+    .prepaid-kpi-icon
+) {
+    transform: translate3d(0, -2px, 0) scale(1.065) !important;
+}
+
+/* Move action arrows slightly so navigation cards feel responsive. */
+.xbfs-dynamic-card :is(
+    .schedule-option-footer,
+    .store-card-footer,
+    .pm-card-action,
+    .module-card-action,
+    .card-action
+) i.fa-arrow-right {
+    transition: transform var(--xbfs-card-motion-duration) var(--xbfs-card-motion-easing) !important;
+}
+
+.xbfs-dynamic-card.xbfs-card-hovered :is(
+    .schedule-option-footer,
+    .store-card-footer,
+    .pm-card-action,
+    .module-card-action,
+    .card-action
+) i.fa-arrow-right,
+.xbfs-dynamic-card:focus-within :is(
+    .schedule-option-footer,
+    .store-card-footer,
+    .pm-card-action,
+    .module-card-action,
+    .card-action
+) i.fa-arrow-right {
+    transform: translateX(4px) !important;
+}
+
+/* Press response for cards that are links or buttons. */
+html body .xbfs-dynamic-card.xbfs-card-hover--interactive:active {
+    transform: translate3d(0, -1px, 0) scale(0.995) !important;
+    transition-duration: 90ms !important;
+}
+
+/* Never animate disabled or intentionally static states. */
+html body :is(
+    .store-card-disabled,
+    .xbfs-card-disabled,
+    .is-disabled,
+    [aria-disabled="true"],
+    [disabled]
+).xbfs-dynamic-card,
+html body :is(
+    .store-card-disabled,
+    .xbfs-card-disabled,
+    .is-disabled,
+    [aria-disabled="true"],
+    [disabled]
+).xbfs-dynamic-card.xbfs-card-hovered {
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+:is(
+    .store-card-disabled,
+    .xbfs-card-disabled,
+    .is-disabled,
+    [aria-disabled="true"],
+    [disabled]
+).xbfs-dynamic-card .xbfs-card-hover-glow {
+    display: none;
+}
+
+/* Utility classes for new cards. */
+.xbfs-hover-card {
+    cursor: pointer;
+}
+
+.xbfs-hover-card-soft {
+    --xbfs-card-hover-border: rgba(31, 94, 148, 0.25);
+}
+
+/* Touch screens should not retain desktop hover transforms. */
+@media (hover: none), (pointer: coarse) {
+    html body .xbfs-dynamic-card,
+    html body .xbfs-dynamic-card.xbfs-card-hovered,
+    html body .xbfs-dynamic-card:focus-within {
+        transform: none !important;
+    }
+
+    .xbfs-dynamic-card .xbfs-card-hover-glow {
+        display: none;
+    }
+}
+
+/* Accessibility: preserve the UI without motion. */
+@media (prefers-reduced-motion: reduce) {
+    .xbfs-dynamic-card,
+    .xbfs-dynamic-card *,
+    .xbfs-card-hover-glow {
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+    }
+
+    html body .xbfs-dynamic-card,
+    html body .xbfs-dynamic-card.xbfs-card-hovered,
+    html body .xbfs-dynamic-card:focus-within {
+        transform: none !important;
+    }
+}

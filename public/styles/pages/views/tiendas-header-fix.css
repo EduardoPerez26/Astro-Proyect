@@ -1,0 +1,294 @@
+/* =========================================================
+   XBFS STORES HEADER — PROFILE & SECURITY ALIGNMENT FIX V2
+   Loaded after tiendas.css. This file only corrects the hero.
+   ========================================================= */
+
+html body .stores-page.stores-page {
+    width: min(100%, 1480px) !important;
+    max-width: 1480px !important;
+    margin: 0 auto !important;
+    padding: 22px 24px 34px !important;
+}
+
+html body .stores-page.stores-page .stores-hero {
+    position: relative !important;
+    isolation: isolate !important;
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    align-items: center !important;
+    gap: 34px !important;
+    min-height: 188px !important;
+    margin: 0 0 22px !important;
+    padding: 32px 34px !important;
+    overflow: hidden !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 22px !important;
+    background:
+        radial-gradient(circle at 86% 20%, rgba(255, 255, 255, 0.18), transparent 25%),
+        radial-gradient(circle at 8% 100%, rgba(45, 212, 191, 0.14), transparent 32%),
+        linear-gradient(125deg, #071b2d 0%, #0e3555 56%, #0f766e 100%) !important;
+    box-shadow: 0 30px 68px -48px rgba(7, 27, 45, 0.95) !important;
+    color: #ffffff !important;
+    opacity: 1 !important;
+    filter: none !important;
+}
+
+html body .stores-page.stores-page .stores-hero::before {
+    content: "" !important;
+    position: absolute !important;
+    inset: auto -70px -120px auto !important;
+    z-index: 0 !important;
+    display: block !important;
+    width: 310px !important;
+    height: 310px !important;
+    border: 44px solid rgba(255, 255, 255, 0.055) !important;
+    border-radius: 50% !important;
+    background: transparent !important;
+    pointer-events: none !important;
+}
+
+html body .stores-page.stores-page .stores-hero-copy,
+html body .stores-page.stores-page .stores-hero-overview {
+    position: relative !important;
+    z-index: 2 !important;
+    opacity: 1 !important;
+    filter: none !important;
+}
+
+html body .stores-page.stores-page .stores-hero-copy {
+    width: min(720px, 100%) !important;
+}
+
+html body .stores-page.stores-page .stores-eyebrow {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 7px !important;
+    min-height: 28px !important;
+    margin: 0 0 12px !important;
+    padding: 0 11px !important;
+    border: 1px solid rgba(255, 255, 255, 0.24) !important;
+    border-radius: 999px !important;
+    background: rgba(255, 255, 255, 0.12) !important;
+    color: #f0f8ff !important;
+    opacity: 1 !important;
+    font-size: 10px !important;
+    font-weight: 900 !important;
+    letter-spacing: 0.09em !important;
+    line-height: 1 !important;
+    text-transform: uppercase !important;
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.12) !important;
+}
+
+html body .stores-page.stores-page .stores-eyebrow i {
+    color: #ffffff !important;
+    opacity: 1 !important;
+    font-size: 10px !important;
+}
+
+html body .stores-page.stores-page .stores-hero h1 {
+    max-width: 720px !important;
+    margin: 0 0 10px !important;
+    color: #ffffff !important;
+    opacity: 1 !important;
+    font-family: "Inter", sans-serif !important;
+    font-size: clamp(32px, 4vw, 48px) !important;
+    font-weight: 950 !important;
+    letter-spacing: -0.045em !important;
+    line-height: 1 !important;
+    text-shadow: 0 2px 12px rgba(3, 17, 30, 0.18) !important;
+}
+
+html body .stores-page.stores-page .stores-hero-copy > p {
+    max-width: 720px !important;
+    margin: 0 !important;
+    color: #e1edf6 !important;
+    opacity: 1 !important;
+    font-size: 14px !important;
+    font-weight: 650 !important;
+    line-height: 1.65 !important;
+    text-shadow: 0 1px 1px rgba(3, 17, 30, 0.14) !important;
+}
+
+html body .stores-page.stores-page .stores-hero-overview {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(190px, 1fr)) !important;
+    gap: 12px !important;
+    width: 430px !important;
+    min-width: 430px !important;
+}
+
+html body .stores-page.stores-page .stores-hero-overview article {
+    position: relative !important;
+    display: grid !important;
+    grid-template-columns: 44px minmax(0, 1fr) !important;
+    gap: 12px !important;
+    align-items: center !important;
+    min-height: 88px !important;
+    padding: 14px 15px !important;
+    overflow: hidden !important;
+    border: 1px solid rgba(255, 255, 255, 0.24) !important;
+    border-radius: 16px !important;
+    background: rgba(7, 27, 45, 0.40) !important;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.10),
+        0 16px 30px -26px rgba(1, 12, 22, 0.8) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    color: #ffffff !important;
+    opacity: 1 !important;
+    transition:
+        transform 170ms ease,
+        background-color 170ms ease,
+        border-color 170ms ease,
+        box-shadow 170ms ease !important;
+}
+
+html body .stores-page.stores-page .stores-hero-overview article::before,
+html body .stores-page.stores-page .stores-hero-overview article::after {
+    pointer-events: none !important;
+}
+
+html body .stores-page.stores-page .stores-hero-overview article > div {
+    display: grid !important;
+    min-width: 0 !important;
+    align-content: center !important;
+}
+
+html body .stores-page.stores-page .stores-hero-icon {
+    display: grid !important;
+    width: 44px !important;
+    height: 44px !important;
+    place-items: center !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    border-radius: 13px !important;
+    background: rgba(255, 255, 255, 0.15) !important;
+    color: #ffffff !important;
+    opacity: 1 !important;
+    font-size: 16px !important;
+}
+
+html body .stores-page.stores-page .stores-hero-icon i {
+    color: #ffffff !important;
+    opacity: 1 !important;
+}
+
+html body .stores-page.stores-page .stores-hero-overview small {
+    display: block !important;
+    margin: 0 0 4px !important;
+    color: #d9ebf7 !important;
+    opacity: 1 !important;
+    font-size: 9px !important;
+    font-weight: 900 !important;
+    letter-spacing: 0.08em !important;
+    line-height: 1.2 !important;
+    text-transform: uppercase !important;
+}
+
+html body .stores-page.stores-page .stores-hero-overview strong {
+    display: block !important;
+    margin: 0 !important;
+    color: #ffffff !important;
+    opacity: 1 !important;
+    font-family: "Inter", sans-serif !important;
+    font-size: 24px !important;
+    font-weight: 950 !important;
+    letter-spacing: -0.035em !important;
+    line-height: 1 !important;
+}
+
+html body .stores-page.stores-page .stores-hero-status {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-self: start !important;
+    gap: 6px !important;
+    max-width: 100% !important;
+    min-height: 22px !important;
+    margin: 7px 0 0 !important;
+    padding: 0 8px !important;
+    border: 1px solid rgba(134, 239, 172, 0.25) !important;
+    border-radius: 999px !important;
+    background: rgba(20, 83, 45, 0.34) !important;
+    color: #ecfdf5 !important;
+    opacity: 1 !important;
+    font-size: 8px !important;
+    font-weight: 900 !important;
+    letter-spacing: 0.035em !important;
+    line-height: 1 !important;
+    text-transform: uppercase !important;
+    white-space: nowrap !important;
+}
+
+html body .stores-page.stores-page .stores-hero-status span {
+    color: inherit !important;
+    opacity: 1 !important;
+}
+
+html body .stores-page.stores-page .status-pulse {
+    flex: 0 0 auto !important;
+    width: 6px !important;
+    height: 6px !important;
+    margin: 0 !important;
+    border-radius: 50% !important;
+    background: #4ade80 !important;
+    box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.13) !important;
+}
+
+@media (hover: hover) {
+    html body .stores-page.stores-page .stores-hero-overview article:hover {
+        transform: translateY(-2px) !important;
+        border-color: rgba(255, 255, 255, 0.36) !important;
+        background: rgba(7, 27, 45, 0.50) !important;
+        box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.12),
+            0 20px 34px -26px rgba(1, 12, 22, 0.9) !important;
+    }
+}
+
+@media (max-width: 1100px) {
+    html body .stores-page.stores-page .stores-hero {
+        grid-template-columns: 1fr !important;
+        align-items: start !important;
+    }
+
+    html body .stores-page.stores-page .stores-hero-overview {
+        width: min(100%, 520px) !important;
+        min-width: 0 !important;
+    }
+}
+
+@media (max-width: 780px) {
+    html body .stores-page.stores-page {
+        padding: 16px 16px 28px !important;
+    }
+
+    html body .stores-page.stores-page .stores-hero {
+        min-height: auto !important;
+        gap: 24px !important;
+        padding: 26px 24px !important;
+        border-radius: 18px !important;
+    }
+
+    html body .stores-page.stores-page .stores-hero h1 {
+        font-size: clamp(31px, 9vw, 40px) !important;
+    }
+}
+
+@media (max-width: 520px) {
+    html body .stores-page.stores-page .stores-hero {
+        padding: 23px 19px !important;
+    }
+
+    html body .stores-page.stores-page .stores-hero-overview {
+        grid-template-columns: 1fr !important;
+    }
+
+    html body .stores-page.stores-page .stores-hero-overview article {
+        min-height: 82px !important;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html body .stores-page.stores-page .stores-hero-overview article {
+        transition: none !important;
+    }
+}

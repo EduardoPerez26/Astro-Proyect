@@ -4,7 +4,7 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
 
 <DashboardLayout
     title="Profile & Security"
-    stylesheets={["/styles/pages/views/perfil.css?v=20260714-profile-security-v2-contrast"]}
+    stylesheets={["/styles/pages/views/perfil.css?v=20260714-profile-security-v1"]}
 >
     <div class="page-container profile-page profile-security-v2">
         <header class="profile-settings-hero">
@@ -480,5 +480,5 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
     </div>
 
     <script src="/js/config.js" is:inline></script>
-    <script src="/js/perfil.js?v=20260714-profile-security-v2-contrast" is:inline></script>
+    <script src="/js/perfil.js?v=20260714-profile-security-v1" is:inline></script>
 </DashboardLayout>
