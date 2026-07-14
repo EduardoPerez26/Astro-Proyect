@@ -227,5 +227,4 @@ import DashboardLayout from "../../../layouts/DashboardLayout.astro";
     ></script>
     <link rel="stylesheet" href="/styles/pages/views/property-management-documents-fix.css?v=20260714-property-documents-modal-v2" />
     <link rel="stylesheet" href="/styles/pages/views/property-management-documents-modal-v3.css?v=20260714-property-documents-modal-v3" />
-    <link rel="stylesheet" href="/styles/pages/views/property-management-documents-modal-v4.css?v=20260714-property-documents-modal-v4" />
 </DashboardLayout>

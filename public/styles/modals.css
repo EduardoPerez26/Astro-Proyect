@@ -616,7 +616,7 @@ html body .pm-modal .pm-modal-card {
 }
 
 html body .pm-schedule-modal .pm-schedule-modal-dialog {
-    width: min(620px, calc(100vw - 48px)) !important;
+    width: min(920px, calc(100vw - 48px)) !important;
     padding: 26px 26px 0 !important;
 }
 

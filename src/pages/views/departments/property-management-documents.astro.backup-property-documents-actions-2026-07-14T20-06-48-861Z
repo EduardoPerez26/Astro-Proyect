@@ -223,9 +223,7 @@ import DashboardLayout from "../../../layouts/DashboardLayout.astro";
     <script src="/js/config.js" is:inline></script>
     <script
         is:inline
-        src="/js/departments/property-management-documents.js?v=20260714-property-documents-modal-v2"
+        src="/js/departments/property-management-documents.js?v=20260714-property-documents-actions-v1"
     ></script>
-    <link rel="stylesheet" href="/styles/pages/views/property-management-documents-fix.css?v=20260714-property-documents-modal-v2" />
-    <link rel="stylesheet" href="/styles/pages/views/property-management-documents-modal-v3.css?v=20260714-property-documents-modal-v3" />
-    <link rel="stylesheet" href="/styles/pages/views/property-management-documents-modal-v4.css?v=20260714-property-documents-modal-v4" />
+    <link rel="stylesheet" href="/styles/pages/views/property-management-documents-fix.css?v=20260714-property-documents-actions-v1" />
 </DashboardLayout>

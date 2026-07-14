@@ -1,0 +1,407 @@
+/* =========================================================
+   XBFS — STANDARD PAGE HEADERS WITH SIDEBAR GRADIENT V1
+   Loaded after the project styles to standardize all large
+   page headers / hero sections.
+   ========================================================= */
+
+:root {
+    --xbfs-sidebar-gradient-start: #101122;
+    --xbfs-sidebar-gradient-middle: #0c2038;
+    --xbfs-sidebar-gradient-end: #0b3a67;
+    --xbfs-header-text: #ffffff;
+    --xbfs-header-muted: rgba(229, 240, 250, 0.78);
+    --xbfs-header-border: rgba(255, 255, 255, 0.12);
+    --xbfs-header-surface: rgba(255, 255, 255, 0.10);
+    --xbfs-header-surface-strong: rgba(4, 20, 36, 0.34);
+}
+
+/* ---------------------------------------------------------
+   STANDARD HERO / HEADER SURFACES
+   --------------------------------------------------------- */
+
+html body .main :is(
+    .page-header,
+    .admin-dashboard-header,
+    .comparison-history-hero,
+    .documents-system-hero,
+    .system-errors-hero,
+    .stores-hero,
+    .prepaid-hero,
+    .pm-hero,
+    .property-management-hero,
+    .profile-settings-hero,
+    .profile-account-hero,
+    .reconciliation-hero,
+    .operations-hero
+) {
+    position: relative !important;
+    isolation: isolate !important;
+    overflow: hidden !important;
+    min-height: 190px !important;
+    padding: 30px 34px !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 22px !important;
+    background:
+        radial-gradient(
+            circle at 92% 12%,
+            rgba(74, 144, 214, 0.22),
+            transparent 26%
+        ),
+        radial-gradient(
+            circle at 8% 118%,
+            rgba(21, 93, 144, 0.20),
+            transparent 38%
+        ),
+        linear-gradient(
+            128deg,
+            var(--xbfs-sidebar-gradient-start) 0%,
+            var(--xbfs-sidebar-gradient-middle) 54%,
+            var(--xbfs-sidebar-gradient-end) 100%
+        ) !important;
+    color: var(--xbfs-header-text) !important;
+    box-shadow:
+        0 28px 58px -42px rgba(5, 15, 32, 0.92) !important;
+}
+
+/* Decorative shape shared by all headers. */
+html body .main :is(
+    .page-header,
+    .admin-dashboard-header,
+    .comparison-history-hero,
+    .documents-system-hero,
+    .system-errors-hero,
+    .stores-hero,
+    .prepaid-hero,
+    .pm-hero,
+    .property-management-hero,
+    .profile-settings-hero,
+    .profile-account-hero,
+    .reconciliation-hero,
+    .operations-hero
+)::before {
+    content: "" !important;
+    position: absolute !important;
+    top: -120px !important;
+    right: -86px !important;
+    z-index: 0 !important;
+    display: block !important;
+    width: 320px !important;
+    height: 320px !important;
+    border: 46px solid rgba(255, 255, 255, 0.045) !important;
+    border-radius: 50% !important;
+    background: transparent !important;
+    pointer-events: none !important;
+}
+
+html body .main :is(
+    .page-header,
+    .admin-dashboard-header,
+    .comparison-history-hero,
+    .documents-system-hero,
+    .system-errors-hero,
+    .stores-hero,
+    .prepaid-hero,
+    .pm-hero,
+    .property-management-hero,
+    .profile-settings-hero,
+    .profile-account-hero,
+    .reconciliation-hero,
+    .operations-hero
+)::after {
+    content: "" !important;
+    position: absolute !important;
+    right: 16% !important;
+    bottom: -90px !important;
+    z-index: 0 !important;
+    display: block !important;
+    width: 220px !important;
+    height: 220px !important;
+    border-radius: 50% !important;
+    background:
+        radial-gradient(
+            circle,
+            rgba(50, 118, 174, 0.18) 0%,
+            transparent 68%
+        ) !important;
+    pointer-events: none !important;
+}
+
+/* Keep all actual content above decorative layers. */
+html body .main :is(
+    .page-header,
+    .admin-dashboard-header,
+    .comparison-history-hero,
+    .documents-system-hero,
+    .system-errors-hero,
+    .stores-hero,
+    .prepaid-hero,
+    .pm-hero,
+    .property-management-hero,
+    .profile-settings-hero,
+    .profile-account-hero,
+    .reconciliation-hero,
+    .operations-hero
+) > * {
+    position: relative !important;
+    z-index: 2 !important;
+}
+
+/* ---------------------------------------------------------
+   TYPOGRAPHY
+   --------------------------------------------------------- */
+
+html body .main :is(
+    .page-header,
+    .admin-dashboard-header,
+    .comparison-history-hero,
+    .documents-system-hero,
+    .system-errors-hero,
+    .stores-hero,
+    .prepaid-hero,
+    .pm-hero,
+    .property-management-hero,
+    .profile-settings-hero,
+    .profile-account-hero,
+    .reconciliation-hero,
+    .operations-hero
+) :is(h1, h2) {
+    margin-top: 0 !important;
+    color: #ffffff !important;
+    font-size: clamp(34px, 3.2vw, 48px) !important;
+    font-weight: 950 !important;
+    letter-spacing: -0.045em !important;
+    line-height: 1.02 !important;
+    text-shadow: 0 2px 14px rgba(1, 12, 25, 0.24) !important;
+}
+
+html body .main :is(
+    .page-header,
+    .admin-dashboard-header,
+    .comparison-history-hero,
+    .documents-system-hero,
+    .system-errors-hero,
+    .stores-hero,
+    .prepaid-hero,
+    .pm-hero,
+    .property-management-hero,
+    .profile-settings-hero,
+    .profile-account-hero,
+    .reconciliation-hero,
+    .operations-hero
+) :is(
+    p,
+    .page-header-subtitle,
+    .admin-dashboard-subtitle,
+    .comparison-history-subtitle,
+    .hero-subtitle,
+    .profile-hero-subtitle
+) {
+    color: var(--xbfs-header-muted) !important;
+    font-size: 14px !important;
+    font-weight: 650 !important;
+    line-height: 1.5 !important;
+}
+
+/* Eyebrow / kicker labels. */
+html body .main :is(
+    .page-header,
+    .admin-dashboard-header,
+    .comparison-history-hero,
+    .documents-system-hero,
+    .system-errors-hero,
+    .stores-hero,
+    .prepaid-hero,
+    .pm-hero,
+    .property-management-hero,
+    .profile-settings-hero,
+    .profile-account-hero,
+    .reconciliation-hero,
+    .operations-hero
+) :is(
+    .eyebrow,
+    .page-eyebrow,
+    .pm-eyebrow,
+    .profile-eyebrow,
+    .profile-hero-eyebrow,
+    .hero-eyebrow,
+    .hero-kicker,
+    .admin-dashboard-eyebrow,
+    .comparison-history-eyebrow,
+    .system-errors-eyebrow,
+    .stores-eyebrow
+) {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 7px !important;
+    min-height: 28px !important;
+    padding: 0 11px !important;
+    border: 1px solid rgba(255, 255, 255, 0.20) !important;
+    border-radius: 999px !important;
+    background: rgba(255, 255, 255, 0.09) !important;
+    color: rgba(242, 248, 255, 0.92) !important;
+    font-size: 10px !important;
+    font-weight: 900 !important;
+    letter-spacing: 0.085em !important;
+    text-transform: uppercase !important;
+}
+
+/* ---------------------------------------------------------
+   HEADER METRICS / SUMMARY CARDS
+   --------------------------------------------------------- */
+
+html body .main :is(
+    .stores-hero-metrics,
+    .profile-hero-meta,
+    .profile-hero-summary,
+    .admin-dashboard-header-metrics,
+    .page-header-metrics,
+    .hero-metrics
+) :is(article, .metric-card, .hero-metric) {
+    border: 1px solid var(--xbfs-header-border) !important;
+    border-radius: 16px !important;
+    background: var(--xbfs-header-surface-strong) !important;
+    color: #ffffff !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.04) !important;
+}
+
+html body .main :is(
+    .stores-hero-metrics,
+    .profile-hero-meta,
+    .profile-hero-summary,
+    .admin-dashboard-header-metrics,
+    .page-header-metrics,
+    .hero-metrics
+) :is(strong, h3, h4) {
+    color: #ffffff !important;
+}
+
+html body .main :is(
+    .stores-hero-metrics,
+    .profile-hero-meta,
+    .profile-hero-summary,
+    .admin-dashboard-header-metrics,
+    .page-header-metrics,
+    .hero-metrics
+) :is(small, span, p) {
+    color: rgba(226, 239, 250, 0.74) !important;
+}
+
+/* Icons inside metric cards. */
+html body .main :is(
+    .stores-hero-metrics,
+    .profile-hero-meta,
+    .profile-hero-summary,
+    .admin-dashboard-header-metrics,
+    .page-header-metrics,
+    .hero-metrics
+) :is(
+    .metric-icon,
+    .hero-metric-icon,
+    .profile-hero-summary-icon
+) {
+    background: rgba(255, 255, 255, 0.12) !important;
+    color: #ffffff !important;
+}
+
+/* ---------------------------------------------------------
+   HEADER ACTIONS
+   --------------------------------------------------------- */
+
+html body .main :is(
+    .page-header-actions,
+    .admin-dashboard-header-actions,
+    .comparison-history-actions,
+    .system-errors-hero-actions,
+    .stores-hero-actions,
+    .prepaid-hero-actions,
+    .profile-hero-actions
+) :is(.btn, button, a) {
+    border: 1px solid rgba(255, 255, 255, 0.26) !important;
+    border-radius: 12px !important;
+    background: rgba(255, 255, 255, 0.94) !important;
+    color: #101a2f !important;
+    box-shadow:
+        0 14px 30px -22px rgba(1, 11, 24, 0.78) !important;
+}
+
+html body .main :is(
+    .page-header-actions,
+    .admin-dashboard-header-actions,
+    .comparison-history-actions,
+    .system-errors-hero-actions,
+    .stores-hero-actions,
+    .prepaid-hero-actions,
+    .profile-hero-actions
+) :is(.btn, button, a):hover {
+    background: #ffffff !important;
+    color: #0b3a67 !important;
+    transform: translateY(-1px) !important;
+}
+
+/* ---------------------------------------------------------
+   RESPONSIVE
+   --------------------------------------------------------- */
+
+@media (max-width: 900px) {
+    html body .main :is(
+        .page-header,
+        .admin-dashboard-header,
+        .comparison-history-hero,
+        .documents-system-hero,
+        .system-errors-hero,
+        .stores-hero,
+        .prepaid-hero,
+        .pm-hero,
+        .property-management-hero,
+        .profile-settings-hero,
+        .profile-account-hero,
+        .reconciliation-hero,
+        .operations-hero
+    ) {
+        min-height: 170px !important;
+        padding: 25px 24px !important;
+    }
+
+    html body .main :is(
+        .page-header,
+        .admin-dashboard-header,
+        .comparison-history-hero,
+        .documents-system-hero,
+        .system-errors-hero,
+        .stores-hero,
+        .prepaid-hero,
+        .pm-hero,
+        .property-management-hero,
+        .profile-settings-hero,
+        .profile-account-hero,
+        .reconciliation-hero,
+        .operations-hero
+    ) :is(h1, h2) {
+        font-size: clamp(30px, 7vw, 40px) !important;
+    }
+}
+
+@media (max-width: 560px) {
+    html body .main :is(
+        .page-header,
+        .admin-dashboard-header,
+        .comparison-history-hero,
+        .documents-system-hero,
+        .system-errors-hero,
+        .stores-hero,
+        .prepaid-hero,
+        .pm-hero,
+        .property-management-hero,
+        .profile-settings-hero,
+        .profile-account-hero,
+        .reconciliation-hero,
+        .operations-hero
+    ) {
+        min-height: auto !important;
+        padding: 22px 18px !important;
+        border-radius: 18px !important;
+    }
+}
