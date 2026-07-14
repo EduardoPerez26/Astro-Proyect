@@ -382,11 +382,6 @@
         addCustomClass(customClass, 'popup', options.toast ? 'xbfs-toast-popup' : 'xbfs-swal-popup');
         addCustomClass(customClass, 'popup', 'xbfs-alert-' + variant);
         addCustomClass(customClass, 'popup', 'xbfs-alert-' + mode);
-        addCustomClass(customClass, 'popup', options.icon ? 'xbfs-alert-has-icon' : 'xbfs-alert-no-icon');
-
-        if (isInteractiveDialog(options)) {
-            addCustomClass(customClass, 'popup', 'xbfs-alert-interactive');
-        }
 
         if (options.input) {
             addCustomClass(customClass, 'popup', 'xbfs-alert-form');

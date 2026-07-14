@@ -28,8 +28,7 @@ const { title, includeSheetJS = false } = Astro.props;
     </script>
     <link rel="stylesheet" href="/styles/styles.css?v=20260713-system-error-custom-modal">
     <link rel="stylesheet" href="/styles/modern-blue.css?v=20260713-floating-header-style-match">
-    <link rel="stylesheet" href="/styles/alerts.css?v=20260713-project-style-v4">
-    <link rel="stylesheet" href="/styles/modals.css?v=20260714-project-style-v1">
+    <link rel="stylesheet" href="/styles/alerts.css?v=20260713-alert-form-fix-v3">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -42,7 +41,7 @@ const { title, includeSheetJS = false } = Astro.props;
     )}
     <script is:inline src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script is:inline src="/js/i18n.js?v=20260626-enterprise-ui"></script>
-    <script is:inline src="/js/swal-guard.js?v=20260713-project-style-v4"></script>
+    <script is:inline src="/js/swal-guard.js?v=20260713-alert-form-fix-v3"></script>
     <script is:inline src="/js/sticky-table-headers.js?v=20260713-floating-header-style-match"></script>
 </head>
 <body>

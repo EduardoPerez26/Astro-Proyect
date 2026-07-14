@@ -29,7 +29,6 @@ const { title, includeSheetJS = false } = Astro.props;
     <link rel="stylesheet" href="/styles/styles.css?v=20260713-system-error-custom-modal">
     <link rel="stylesheet" href="/styles/modern-blue.css?v=20260713-floating-header-style-match">
     <link rel="stylesheet" href="/styles/alerts.css?v=20260713-project-style-v4">
-    <link rel="stylesheet" href="/styles/modals.css?v=20260714-project-style-v1">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

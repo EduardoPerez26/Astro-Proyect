@@ -1,0 +1,743 @@
+/* ============================================================
+   XBFS GLOBAL ALERT SYSTEM
+   Unified SweetAlert2 presentation for the entire application.
+   ============================================================ */
+
+:root {
+    --xbfs-alert-navy: #0f172a;
+    --xbfs-alert-navy-soft: #eaf1f8;
+    --xbfs-alert-blue: #2563eb;
+    --xbfs-alert-blue-soft: #eaf2ff;
+    --xbfs-alert-green: #15803d;
+    --xbfs-alert-green-soft: #eaf8ef;
+    --xbfs-alert-amber: #b45309;
+    --xbfs-alert-amber-soft: #fff5df;
+    --xbfs-alert-red: #c2413b;
+    --xbfs-alert-red-soft: #fff0ef;
+    --xbfs-alert-violet: #6d4aff;
+    --xbfs-alert-violet-soft: #f1edff;
+    --xbfs-alert-text: #132238;
+    --xbfs-alert-muted: #64748b;
+    --xbfs-alert-border: #dbe4ee;
+    --xbfs-alert-surface: #ffffff;
+    --xbfs-alert-surface-soft: #f7faff;
+    --xbfs-alert-shadow: 0 30px 85px -34px rgba(15, 23, 42, 0.58);
+}
+
+@keyframes xbfs-alert-in {
+    from {
+        opacity: 0;
+        transform: translate3d(0, 10px, 0) scale(0.975);
+    }
+    to {
+        opacity: 1;
+        transform: translate3d(0, 0, 0) scale(1);
+    }
+}
+
+@keyframes xbfs-alert-out {
+    from {
+        opacity: 1;
+        transform: translate3d(0, 0, 0) scale(1);
+    }
+    to {
+        opacity: 0;
+        transform: translate3d(0, 6px, 0) scale(0.985);
+    }
+}
+
+@keyframes xbfs-alert-toast-in {
+    from {
+        opacity: 0;
+        transform: translate3d(16px, 0, 0);
+    }
+    to {
+        opacity: 1;
+        transform: translate3d(0, 0, 0);
+    }
+}
+
+@keyframes xbfs-alert-toast-out {
+    from {
+        opacity: 1;
+        transform: translate3d(0, 0, 0);
+    }
+    to {
+        opacity: 0;
+        transform: translate3d(12px, 0, 0);
+    }
+}
+
+.xbfs-swal-enter {
+    animation: xbfs-alert-in 190ms cubic-bezier(0.16, 1, 0.3, 1) both !important;
+}
+
+.xbfs-swal-exit {
+    animation: xbfs-alert-out 145ms ease-in both !important;
+}
+
+.xbfs-toast-enter {
+    animation: xbfs-alert-toast-in 210ms cubic-bezier(0.16, 1, 0.3, 1) both !important;
+}
+
+.xbfs-toast-exit {
+    animation: xbfs-alert-toast-out 160ms ease-in both !important;
+}
+
+html body .swal2-container.xbfs-swal-container,
+html body .swal2-container.xbfs-toast-container {
+    z-index: 2147483000 !important;
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+}
+
+html body .swal2-container.xbfs-swal-container {
+    padding: 22px !important;
+    background: rgba(15, 23, 42, 0.54) !important;
+    backdrop-filter: blur(5px) saturate(112%);
+    -webkit-backdrop-filter: blur(5px) saturate(112%);
+}
+
+html body .swal2-container.xbfs-swal-container.swal2-backdrop-hide {
+    background: rgba(15, 23, 42, 0) !important;
+}
+
+html body .swal2-popup.xbfs-swal-popup {
+    --xbfs-alert-accent: var(--xbfs-alert-blue);
+    --xbfs-alert-accent-soft: var(--xbfs-alert-blue-soft);
+    position: relative !important;
+    max-width: calc(100vw - 28px) !important;
+    border: 1px solid var(--xbfs-alert-border) !important;
+    border-radius: 20px !important;
+    background: var(--xbfs-alert-surface) !important;
+    color: var(--xbfs-alert-text) !important;
+    box-shadow: var(--xbfs-alert-shadow) !important;
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+    overflow: hidden !important;
+}
+
+html body .swal2-popup.xbfs-swal-popup::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto;
+    height: 5px;
+    background: var(--xbfs-alert-accent);
+    z-index: 3;
+}
+
+html body .swal2-popup.xbfs-alert-success {
+    --xbfs-alert-accent: var(--xbfs-alert-green);
+    --xbfs-alert-accent-soft: var(--xbfs-alert-green-soft);
+}
+
+html body .swal2-popup.xbfs-alert-error {
+    --xbfs-alert-accent: var(--xbfs-alert-red);
+    --xbfs-alert-accent-soft: var(--xbfs-alert-red-soft);
+}
+
+html body .swal2-popup.xbfs-alert-warning {
+    --xbfs-alert-accent: var(--xbfs-alert-amber);
+    --xbfs-alert-accent-soft: var(--xbfs-alert-amber-soft);
+}
+
+html body .swal2-popup.xbfs-alert-question {
+    --xbfs-alert-accent: var(--xbfs-alert-violet);
+    --xbfs-alert-accent-soft: var(--xbfs-alert-violet-soft);
+}
+
+html body .swal2-popup.xbfs-alert-info,
+html body .swal2-popup.xbfs-alert-neutral {
+    --xbfs-alert-accent: var(--xbfs-alert-blue);
+    --xbfs-alert-accent-soft: var(--xbfs-alert-blue-soft);
+}
+
+html body .swal2-popup.xbfs-alert-simple,
+html body .swal2-popup.xbfs-alert-confirm,
+html body .swal2-popup.xbfs-alert-loading {
+    width: min(440px, calc(100vw - 28px));
+    padding: 30px 28px 24px !important;
+}
+
+html body .swal2-popup.xbfs-alert-confirm {
+    width: min(480px, calc(100vw - 28px));
+}
+
+html body .swal2-popup.xbfs-alert-complex {
+    min-width: 0 !important;
+}
+
+/*
+ * Form alerts use their own contained layout. SweetAlert2 input dialogs do not
+ * receive the padding used by simple alerts, which previously left titles and
+ * textareas touching the popup edges.
+ */
+html body .swal2-popup.xbfs-alert-form:not(.xbfs-alert-preserve-layout) {
+    width: min(520px, calc(100vw - 28px)) !important;
+    padding: 30px 30px 26px !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    row-gap: 0 !important;
+}
+
+html body .swal2-popup.xbfs-alert-form:not(.xbfs-alert-preserve-layout) > * {
+    grid-column: 1 !important;
+    min-width: 0 !important;
+}
+
+html body .swal2-popup.xbfs-alert-form:not(.xbfs-alert-preserve-layout) .swal2-icon.xbfs-swal-icon {
+    margin: 4px auto 18px !important;
+}
+
+html body .swal2-popup.xbfs-alert-form:not(.xbfs-alert-preserve-layout) > .swal2-title.xbfs-swal-title {
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 10px !important;
+    box-sizing: border-box !important;
+    text-align: center !important;
+}
+
+html body .swal2-popup.xbfs-alert-form:not(.xbfs-alert-preserve-layout) > .swal2-html-container.xbfs-swal-html {
+    width: 100% !important;
+    margin: 9px 0 0 !important;
+    padding: 0 8px !important;
+    box-sizing: border-box !important;
+    text-align: center !important;
+}
+
+html body .swal2-popup:not(.xbfs-alert-preserve-layout) .swal2-icon.xbfs-swal-icon {
+    width: 62px !important;
+    height: 62px !important;
+    margin: 6px auto 18px !important;
+    border-width: 0 !important;
+    border-radius: 18px !important;
+    background: var(--xbfs-alert-accent-soft) !important;
+    color: var(--xbfs-alert-accent) !important;
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--xbfs-alert-accent) 18%, transparent) !important;
+}
+
+/*
+ * SweetAlert2 draws success and error icons with absolutely positioned
+ * internal lines sized for its default 5em circle. Resizing that circle caused
+ * the success check to overlap and look like an X. The guard now replaces the
+ * internal drawing with one stable glyph, and these rules style that glyph.
+ */
+html body .swal2-popup:not(.xbfs-alert-preserve-layout) .swal2-icon.xbfs-swal-icon {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    overflow: hidden !important;
+}
+
+html body .swal2-popup:not(.xbfs-alert-preserve-layout) .swal2-icon.xbfs-swal-icon.xbfs-icon-rendered > *:not(.xbfs-alert-glyph) {
+    display: none !important;
+}
+
+html body .swal2-popup:not(.xbfs-alert-preserve-layout) .swal2-icon.xbfs-swal-icon .xbfs-alert-glyph {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100% !important;
+    height: 100% !important;
+    color: var(--xbfs-alert-accent) !important;
+    font-family: Arial, Helvetica, sans-serif !important;
+    font-size: 38px !important;
+    line-height: 1 !important;
+    font-weight: 700 !important;
+    text-align: center !important;
+    transform: translateY(-1px);
+    user-select: none;
+}
+
+html body .swal2-popup:not(.xbfs-alert-preserve-layout) .swal2-icon.xbfs-swal-icon .xbfs-alert-glyph-success {
+    font-size: 39px !important;
+    font-weight: 700 !important;
+    transform: translateY(-2px);
+}
+
+html body .swal2-popup:not(.xbfs-alert-preserve-layout) .swal2-icon.xbfs-swal-icon .xbfs-alert-glyph-error {
+    font-size: 43px !important;
+    font-weight: 400 !important;
+    transform: translateY(-2px);
+}
+
+html body .swal2-popup:not(.xbfs-alert-preserve-layout) .swal2-icon.xbfs-swal-icon .xbfs-alert-glyph-warning,
+html body .swal2-popup:not(.xbfs-alert-preserve-layout) .swal2-icon.xbfs-swal-icon .xbfs-alert-glyph-info,
+html body .swal2-popup:not(.xbfs-alert-preserve-layout) .swal2-icon.xbfs-swal-icon .xbfs-alert-glyph-question {
+    font-size: 32px !important;
+    font-weight: 800 !important;
+    transform: none;
+}
+
+html body .swal2-popup:not(.xbfs-alert-preserve-layout) .swal2-title.xbfs-swal-title {
+    margin: 0 !important;
+    padding: 0 !important;
+    color: var(--xbfs-alert-text) !important;
+    font-family: inherit !important;
+    font-size: 22px !important;
+    line-height: 1.24 !important;
+    font-weight: 850 !important;
+    letter-spacing: -0.025em !important;
+    text-align: center !important;
+}
+
+html body .swal2-popup:not(.xbfs-alert-preserve-layout) .swal2-html-container.xbfs-swal-html {
+    margin: 10px 0 0 !important;
+    padding: 0 !important;
+    color: var(--xbfs-alert-muted) !important;
+    font-family: inherit !important;
+    font-size: 13.5px !important;
+    line-height: 1.58 !important;
+    text-align: center !important;
+    overflow-wrap: anywhere;
+}
+
+html body .swal2-popup:not(.xbfs-alert-preserve-layout) .swal2-html-container.xbfs-swal-html p {
+    margin: 0 0 8px;
+}
+
+html body .swal2-popup:not(.xbfs-alert-preserve-layout) .swal2-html-container.xbfs-swal-html p:last-child {
+    margin-bottom: 0;
+}
+
+html body .swal2-popup:not(.xbfs-alert-preserve-layout) .swal2-html-container.xbfs-swal-html strong {
+    color: var(--xbfs-alert-text);
+    font-weight: 800;
+}
+
+html body .swal2-popup.xbfs-alert-complex:not(.xbfs-alert-preserve-layout) > .swal2-title.xbfs-swal-title,
+html body .swal2-popup.xbfs-alert-complex:not(.xbfs-alert-preserve-layout) > .swal2-html-container.xbfs-swal-html {
+    text-align: left !important;
+}
+
+
+html body .swal2-popup.xbfs-alert-form.xbfs-alert-complex:not(.xbfs-alert-preserve-layout) > .swal2-title.xbfs-swal-title,
+html body .swal2-popup.xbfs-alert-form.xbfs-alert-complex:not(.xbfs-alert-preserve-layout) > .swal2-html-container.xbfs-swal-html {
+    text-align: center !important;
+}
+
+html body .swal2-popup:not(.xbfs-alert-preserve-layout) .swal2-actions.xbfs-swal-actions {
+    display: flex !important;
+    width: 100% !important;
+    margin: 22px 0 0 !important;
+    padding: 0 !important;
+    gap: 10px !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+html body .swal2-popup:not(.xbfs-alert-preserve-layout) .swal2-actions.xbfs-swal-actions button {
+    min-width: 126px !important;
+    min-height: 44px !important;
+    margin: 0 !important;
+    padding: 0 18px !important;
+    border: 1px solid transparent !important;
+    border-radius: 12px !important;
+    font-family: inherit !important;
+    font-size: 13px !important;
+    line-height: 1 !important;
+    font-weight: 800 !important;
+    letter-spacing: -0.01em !important;
+    box-shadow: none !important;
+    transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease, border-color 160ms ease, color 160ms ease !important;
+}
+
+html body .swal2-popup:not(.xbfs-alert-preserve-layout) .swal2-actions.xbfs-swal-actions button:hover:not(:disabled) {
+    transform: translateY(-1px) !important;
+}
+
+html body .swal2-popup:not(.xbfs-alert-preserve-layout) .swal2-actions.xbfs-swal-actions button:focus-visible {
+    outline: 0 !important;
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15) !important;
+}
+
+html body .swal2-popup:not(.xbfs-alert-preserve-layout) .swal2-confirm.xbfs-swal-confirm {
+    border-color: var(--xbfs-alert-navy) !important;
+    background: var(--xbfs-alert-navy) !important;
+    color: #ffffff !important;
+    box-shadow: 0 12px 24px -16px rgba(15, 23, 42, 0.82) !important;
+}
+
+html body .swal2-popup:not(.xbfs-alert-preserve-layout) .swal2-confirm.xbfs-swal-confirm:hover:not(:disabled) {
+    border-color: #1e293b !important;
+    background: #1e293b !important;
+    box-shadow: 0 16px 28px -16px rgba(15, 23, 42, 0.72) !important;
+}
+
+html body .swal2-popup.xbfs-alert-danger-action:not(.xbfs-alert-preserve-layout) .swal2-confirm.xbfs-swal-confirm {
+    border-color: var(--xbfs-alert-red) !important;
+    background: var(--xbfs-alert-red) !important;
+    box-shadow: 0 12px 24px -16px rgba(194, 65, 59, 0.72) !important;
+}
+
+html body .swal2-popup.xbfs-alert-danger-action:not(.xbfs-alert-preserve-layout) .swal2-confirm.xbfs-swal-confirm:hover:not(:disabled) {
+    border-color: #a8322e !important;
+    background: #a8322e !important;
+}
+
+html body .swal2-popup:not(.xbfs-alert-preserve-layout) .swal2-deny.xbfs-swal-deny {
+    border-color: #bfd2e6 !important;
+    background: #eaf2fa !important;
+    color: #194c7d !important;
+}
+
+html body .swal2-popup:not(.xbfs-alert-preserve-layout) .swal2-deny.xbfs-swal-deny:hover:not(:disabled) {
+    border-color: #9fbedc !important;
+    background: #dceaf7 !important;
+}
+
+html body .swal2-popup:not(.xbfs-alert-preserve-layout) .swal2-cancel.xbfs-swal-cancel {
+    border-color: #d7e1eb !important;
+    background: #ffffff !important;
+    color: #41556d !important;
+}
+
+html body .swal2-popup:not(.xbfs-alert-preserve-layout) .swal2-cancel.xbfs-swal-cancel:hover:not(:disabled) {
+    border-color: #bdcbd9 !important;
+    background: #f5f8fb !important;
+    color: #24384f !important;
+}
+
+html body .swal2-popup:not(.xbfs-alert-preserve-layout) .swal2-close.xbfs-swal-close {
+    top: 14px !important;
+    right: 14px !important;
+    width: 38px !important;
+    height: 38px !important;
+    border: 1px solid #dce5ef !important;
+    border-radius: 12px !important;
+    background: #f7f9fc !important;
+    color: #5d7188 !important;
+    font-size: 25px !important;
+    line-height: 1 !important;
+    box-shadow: none !important;
+}
+
+html body .swal2-popup:not(.xbfs-alert-preserve-layout) .swal2-close.xbfs-swal-close:hover {
+    border-color: #c7d4e2 !important;
+    background: #edf2f7 !important;
+    color: #1e334a !important;
+    transform: none !important;
+}
+
+html body .swal2-popup:not(.xbfs-alert-preserve-layout) .swal2-input.xbfs-swal-input,
+html body .swal2-popup:not(.xbfs-alert-preserve-layout) .swal2-textarea.xbfs-swal-input,
+html body .swal2-popup:not(.xbfs-alert-preserve-layout) .swal2-select.xbfs-swal-input,
+html body .swal2-popup:not(.xbfs-alert-preserve-layout) .swal2-file.xbfs-swal-input {
+    width: 100% !important;
+    margin: 16px 0 0 !important;
+    border: 1px solid #cbd8e6 !important;
+    border-radius: 12px !important;
+    background: #ffffff !important;
+    color: var(--xbfs-alert-text) !important;
+    box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.025) !important;
+    font-family: inherit !important;
+    font-size: 13px !important;
+}
+
+html body .swal2-popup:not(.xbfs-alert-preserve-layout) .swal2-input.xbfs-swal-input,
+html body .swal2-popup:not(.xbfs-alert-preserve-layout) .swal2-select.xbfs-swal-input,
+html body .swal2-popup:not(.xbfs-alert-preserve-layout) .swal2-file.xbfs-swal-input {
+    height: 46px !important;
+}
+
+html body .swal2-popup:not(.xbfs-alert-preserve-layout) .swal2-textarea.xbfs-swal-input {
+    min-height: 112px !important;
+    padding: 12px 14px !important;
+    resize: vertical;
+}
+
+html body .swal2-popup:not(.xbfs-alert-preserve-layout) .swal2-input.xbfs-swal-input:focus,
+html body .swal2-popup:not(.xbfs-alert-preserve-layout) .swal2-textarea.xbfs-swal-input:focus,
+html body .swal2-popup:not(.xbfs-alert-preserve-layout) .swal2-select.xbfs-swal-input:focus,
+html body .swal2-popup:not(.xbfs-alert-preserve-layout) .swal2-file.xbfs-swal-input:focus {
+    border-color: #77a5d5 !important;
+    outline: 0 !important;
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12) !important;
+}
+
+html body .swal2-popup:not(.xbfs-alert-preserve-layout) .swal2-input-label {
+    margin: 18px 0 0 !important;
+    color: #435a72 !important;
+    font-family: inherit !important;
+    font-size: 12px !important;
+    font-weight: 800 !important;
+    text-align: left !important;
+}
+
+
+html body .swal2-popup.xbfs-alert-form:not(.xbfs-alert-preserve-layout) .swal2-input-label {
+    display: block !important;
+    justify-self: stretch !important;
+    width: 100% !important;
+    margin: 22px 0 8px !important;
+    padding: 0 !important;
+    color: #435a72 !important;
+    font-size: 12px !important;
+    line-height: 1.35 !important;
+    font-weight: 850 !important;
+    letter-spacing: 0.01em !important;
+    text-align: left !important;
+}
+
+html body .swal2-popup.xbfs-alert-form:not(.xbfs-alert-preserve-layout) .swal2-input.xbfs-swal-input,
+html body .swal2-popup.xbfs-alert-form:not(.xbfs-alert-preserve-layout) .swal2-textarea.xbfs-swal-input,
+html body .swal2-popup.xbfs-alert-form:not(.xbfs-alert-preserve-layout) .swal2-select.xbfs-swal-input,
+html body .swal2-popup.xbfs-alert-form:not(.xbfs-alert-preserve-layout) .swal2-file.xbfs-swal-input {
+    display: block !important;
+    justify-self: stretch !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+}
+
+html body .swal2-popup.xbfs-alert-form-textarea:not(.xbfs-alert-preserve-layout) .swal2-textarea.xbfs-swal-input {
+    min-height: 124px !important;
+    max-height: 240px !important;
+    padding: 14px 15px !important;
+    line-height: 1.5 !important;
+}
+
+html body .swal2-popup.xbfs-alert-form:not(.xbfs-alert-preserve-layout) .swal2-actions.xbfs-swal-actions {
+    margin-top: 22px !important;
+    justify-content: flex-end !important;
+}
+
+html body .swal2-popup.xbfs-alert-form:not(.xbfs-alert-preserve-layout) .swal2-validation-message.xbfs-swal-validation {
+    justify-self: stretch !important;
+    box-sizing: border-box !important;
+}
+
+html body .swal2-popup:not(.xbfs-alert-preserve-layout) .swal2-validation-message.xbfs-swal-validation {
+    width: 100% !important;
+    margin: 14px 0 0 !important;
+    padding: 11px 13px !important;
+    border: 1px solid #f0b9b5 !important;
+    border-radius: 11px !important;
+    background: var(--xbfs-alert-red-soft) !important;
+    color: #a8322e !important;
+    font-family: inherit !important;
+    font-size: 12px !important;
+    line-height: 1.45 !important;
+    font-weight: 750 !important;
+    text-align: left !important;
+}
+
+html body .swal2-popup:not(.xbfs-alert-preserve-layout) .swal2-validation-message.xbfs-swal-validation::before {
+    color: var(--xbfs-alert-red) !important;
+}
+
+html body .swal2-popup:not(.xbfs-alert-preserve-layout) .swal2-loader.xbfs-swal-loader {
+    width: 48px !important;
+    height: 48px !important;
+    margin: 12px auto 0 !important;
+    border-width: 4px !important;
+    border-color: var(--xbfs-alert-accent) transparent var(--xbfs-alert-accent) transparent !important;
+}
+
+html body .swal2-popup.xbfs-alert-loading .swal2-icon {
+    display: none !important;
+}
+
+html body .swal2-popup.xbfs-alert-loading .swal2-title {
+    margin-top: 8px !important;
+}
+
+html body .swal2-popup:not(.xbfs-alert-preserve-layout) .swal2-timer-progress-bar.xbfs-swal-progress {
+    height: 3px !important;
+    background: var(--xbfs-alert-accent) !important;
+    opacity: 0.84 !important;
+}
+
+/* Toasts */
+html body .swal2-container.xbfs-toast-container {
+    width: auto !important;
+    max-width: calc(100vw - 18px) !important;
+    padding: 14px !important;
+    background: transparent !important;
+    pointer-events: none !important;
+}
+
+html body .swal2-popup.xbfs-toast-popup {
+    --xbfs-alert-accent: var(--xbfs-alert-blue);
+    --xbfs-alert-accent-soft: var(--xbfs-alert-blue-soft);
+    position: relative !important;
+    display: grid !important;
+    grid-template-columns: 34px minmax(0, 1fr) auto !important;
+    grid-template-rows: auto auto !important;
+    column-gap: 12px !important;
+    row-gap: 2px !important;
+    width: min(390px, calc(100vw - 28px)) !important;
+    min-height: 70px !important;
+    padding: 14px 16px 15px 14px !important;
+    border: 1px solid var(--xbfs-alert-border) !important;
+    border-left: 5px solid var(--xbfs-alert-accent) !important;
+    border-radius: 15px !important;
+    background: rgba(255, 255, 255, 0.98) !important;
+    color: var(--xbfs-alert-text) !important;
+    box-shadow: 0 20px 48px -24px rgba(15, 23, 42, 0.56) !important;
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+    pointer-events: auto !important;
+    overflow: hidden !important;
+}
+
+html body .swal2-popup.xbfs-toast-popup::before {
+    display: none !important;
+}
+
+html body .swal2-popup.xbfs-toast-popup.xbfs-alert-success {
+    --xbfs-alert-accent: var(--xbfs-alert-green);
+    --xbfs-alert-accent-soft: var(--xbfs-alert-green-soft);
+}
+
+html body .swal2-popup.xbfs-toast-popup.xbfs-alert-error {
+    --xbfs-alert-accent: var(--xbfs-alert-red);
+    --xbfs-alert-accent-soft: var(--xbfs-alert-red-soft);
+}
+
+html body .swal2-popup.xbfs-toast-popup.xbfs-alert-warning {
+    --xbfs-alert-accent: var(--xbfs-alert-amber);
+    --xbfs-alert-accent-soft: var(--xbfs-alert-amber-soft);
+}
+
+html body .swal2-popup.xbfs-toast-popup.xbfs-alert-question {
+    --xbfs-alert-accent: var(--xbfs-alert-violet);
+    --xbfs-alert-accent-soft: var(--xbfs-alert-violet-soft);
+}
+
+html body .swal2-popup.xbfs-toast-popup .swal2-icon.xbfs-swal-icon {
+    grid-column: 1;
+    grid-row: 1 / span 2;
+    align-self: center;
+    width: 34px !important;
+    height: 34px !important;
+    margin: 0 !important;
+    border-radius: 10px !important;
+}
+
+html body .swal2-popup.xbfs-toast-popup .swal2-icon-content,
+html body .swal2-popup.xbfs-toast-popup .xbfs-alert-glyph {
+    font-size: 21px !important;
+}
+
+html body .swal2-popup.xbfs-toast-popup .xbfs-alert-glyph-error {
+    font-size: 25px !important;
+}
+
+html body .swal2-popup.xbfs-toast-popup .swal2-title.xbfs-swal-title {
+    grid-column: 2;
+    grid-row: 1;
+    align-self: end;
+    margin: 0 !important;
+    padding: 0 !important;
+    color: var(--xbfs-alert-text) !important;
+    font-size: 13px !important;
+    line-height: 1.35 !important;
+    font-weight: 800 !important;
+    text-align: left !important;
+}
+
+html body .swal2-popup.xbfs-toast-popup .swal2-html-container.xbfs-swal-html {
+    grid-column: 2;
+    grid-row: 2;
+    align-self: start;
+    margin: 1px 0 0 !important;
+    padding: 0 !important;
+    color: var(--xbfs-alert-muted) !important;
+    font-size: 11.5px !important;
+    line-height: 1.4 !important;
+    text-align: left !important;
+}
+
+html body .swal2-popup.xbfs-toast-popup .swal2-close.xbfs-swal-close {
+    position: static !important;
+    grid-column: 3;
+    grid-row: 1 / span 2;
+    align-self: center;
+    width: 30px !important;
+    height: 30px !important;
+    border: 0 !important;
+    border-radius: 9px !important;
+    background: transparent !important;
+    font-size: 22px !important;
+}
+
+html body .swal2-popup.xbfs-toast-popup .swal2-timer-progress-bar.xbfs-swal-progress {
+    position: absolute !important;
+    inset: auto 0 0 !important;
+}
+
+html body .swal2-popup.xbfs-toast-popup .swal2-actions {
+    display: none !important;
+}
+
+/* Preserve rich application dialogs while keeping the global shell. */
+html body .swal2-popup.xbfs-alert-complex .swal2-icon.xbfs-swal-icon:first-child {
+    margin-top: 22px !important;
+}
+
+html body .swal2-popup.xbfs-alert-complex.source-amortization-swal::before,
+html body .swal2-popup.xbfs-alert-complex.source-concept-swal::before,
+html body .swal2-popup.xbfs-alert-complex.pm-reclass-popup::before,
+html body .swal2-popup.xbfs-alert-complex.mfa-swal::before,
+html body .swal2-popup.xbfs-alert-complex.replacement-file-dialog::before,
+html body .swal2-popup.xbfs-alert-complex.tb-tax-swal-popup::before,
+html body .swal2-popup.xbfs-alert-complex.py-tax-swal-popup::before,
+html body .swal2-popup.xbfs-alert-complex.bk-tax-swal-popup::before {
+    height: 4px;
+}
+
+@media (max-width: 640px) {
+    html body .swal2-container.xbfs-swal-container {
+        padding: 10px !important;
+        align-items: flex-end !important;
+    }
+
+    html body .swal2-popup.xbfs-alert-simple,
+    html body .swal2-popup.xbfs-alert-confirm,
+    html body .swal2-popup.xbfs-alert-loading {
+        width: 100% !important;
+        padding: 27px 20px 20px !important;
+        border-radius: 18px !important;
+    }
+
+
+    html body .swal2-popup.xbfs-alert-form:not(.xbfs-alert-preserve-layout) {
+        width: 100% !important;
+        padding: 26px 20px 20px !important;
+        border-radius: 18px !important;
+    }
+
+    html body .swal2-popup.xbfs-alert-form:not(.xbfs-alert-preserve-layout) > .swal2-title.xbfs-swal-title,
+    html body .swal2-popup.xbfs-alert-form:not(.xbfs-alert-preserve-layout) > .swal2-html-container.xbfs-swal-html {
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+    }
+
+    html body .swal2-popup.xbfs-alert-form:not(.xbfs-alert-preserve-layout) .swal2-actions.xbfs-swal-actions {
+        justify-content: stretch !important;
+    }
+
+    html body .swal2-popup:not(.xbfs-alert-preserve-layout) .swal2-title.xbfs-swal-title {
+        font-size: 20px !important;
+    }
+
+    html body .swal2-popup:not(.xbfs-alert-preserve-layout) .swal2-actions.xbfs-swal-actions {
+        flex-direction: column !important;
+        align-items: stretch !important;
+    }
+
+    html body .swal2-popup:not(.xbfs-alert-preserve-layout) .swal2-actions.xbfs-swal-actions button {
+        width: 100% !important;
+    }
+
+    html body .swal2-popup.xbfs-toast-popup {
+        width: calc(100vw - 20px) !important;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html body .swal2-popup.xbfs-swal-popup,
+    html body .swal2-popup.xbfs-toast-popup,
+    html body .swal2-popup:not(.xbfs-alert-preserve-layout) .swal2-actions.xbfs-swal-actions button {
+        animation: none !important;
+        transition: none !important;
+    }
+}
