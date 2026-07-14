@@ -223,7 +223,6 @@ import DashboardLayout from "../../../layouts/DashboardLayout.astro";
     <script src="/js/config.js" is:inline></script>
     <script
         is:inline
-        src="/js/departments/property-management-documents.js?v=20260714-property-documents-actions-v1"
+        src="/js/departments/property-management-documents.js?v=20260701-compact-document-tables"
     ></script>
-    <link rel="stylesheet" href="/styles/pages/views/property-management-documents-fix.css?v=20260714-property-documents-actions-v1" />
 </DashboardLayout>

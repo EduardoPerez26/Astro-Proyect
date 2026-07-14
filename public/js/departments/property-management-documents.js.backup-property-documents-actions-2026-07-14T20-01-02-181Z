@@ -513,22 +513,7 @@
         const documentDeleteButton = event.target.closest('[data-document-delete]');
 
         if (scheduleInfoButton) {
-            event.preventDefault();
-
-            try {
-                showScheduleInfo(
-                    'schedule',
-                    scheduleInfoButton.dataset.scheduleInfo
-                );
-            } catch (error) {
-                console.error('Schedule information error:', error);
-                showSwal(
-                    'error',
-                    'Details unavailable',
-                    error.message || 'The schedule details could not be opened.'
-                );
-            }
-
+            showScheduleInfo('schedule', scheduleInfoButton.dataset.scheduleInfo);
             return;
         }
 
@@ -551,22 +536,7 @@
         }
 
         if (prepaidInfoButton) {
-            event.preventDefault();
-
-            try {
-                showScheduleInfo(
-                    'prepaidSchedule',
-                    prepaidInfoButton.dataset.prepaidInfo
-                );
-            } catch (error) {
-                console.error('Prepaid schedule information error:', error);
-                showSwal(
-                    'error',
-                    'Details unavailable',
-                    error.message || 'The prepaid schedule details could not be opened.'
-                );
-            }
-
+            showScheduleInfo('prepaidSchedule', prepaidInfoButton.dataset.prepaidInfo);
             return;
         }
 
@@ -689,17 +659,7 @@
         const title = modal.querySelector('[data-pm-schedule-modal-title]');
         const confirmButton = modal.querySelector('[data-pm-schedule-modal-confirm]');
 
-        if (!body || !title || !confirmButton) {
-            console.error(
-                'Property document information modal could not be initialized.'
-            );
-            showSwal(
-                'error',
-                'Details unavailable',
-                'The information window could not be initialized.'
-            );
-            return;
-        }
+        if (!body || !title || !confirmButton) return;
 
         title.textContent = options.title;
         confirmButton.textContent = options.confirmText;
@@ -739,17 +699,9 @@
         `;
 
         modal.hidden = false;
-        modal.removeAttribute('hidden');
-        modal.setAttribute('aria-hidden', 'false');
-        modal.style.setProperty('display', 'grid', 'important');
         document.body.classList.add('pm-schedule-modal-open');
-
-        requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-                modal.classList.add('is-open');
-                confirmButton.focus({ preventScroll: true });
-            });
-        });
+        requestAnimationFrame(() => modal.classList.add('is-open'));
+        confirmButton.focus({ preventScroll: true });
     }
 
     function renderScheduleInfoMetric(icon, label, value) {
@@ -839,9 +791,7 @@
 
         window.setTimeout(() => {
             modal.hidden = true;
-            modal.setAttribute('aria-hidden', 'true');
-            modal.style.removeProperty('display');
-        }, 180);
+        }, 160);
     }
 
     async function downloadPrepaidSchedule(id, button = null) {
