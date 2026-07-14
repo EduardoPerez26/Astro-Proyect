@@ -1,0 +1,4013 @@
+---
+import DashboardLayout from "../../../layouts/DashboardLayout.astro";
+---
+
+<DashboardLayout title="Property Management" includeSheetJS={true}>
+    <section
+        class="property-management-page page-container"
+        aria-labelledby="propertyManagementTitle"
+    >
+        <div class="page-header">
+            <div class="page-header-info">
+                <span class="pm-eyebrow"> Department workspace </span>
+                <h1 id="propertyManagementTitle">Property Management</h1>
+                <p>
+                    Load source reports, open saved schedules, and review the
+                    sales tax payable schedule before exporting.
+                </p>
+            </div>
+        </div>
+
+        <section
+            id="pmUploadSection"
+            class="upload-section pm-upload-section"
+            aria-labelledby="pmScheduleTitle"
+        >
+            <div class="section-heading">
+                <span class="step-badge">1</span>
+                <div>
+                    <h2 id="pmScheduleTitle">Files and schedule</h2>
+                    <p>
+                        Import the Dimension Balance report, add monthly files,
+                        or open a saved Property Management schedule.
+                    </p>
+                </div>
+            </div>
+
+            <div class="multi-upload-container pm-intake-grid">
+                <div class="upload-card pm-upload-panel" id="salesUploadCard">
+                    <div class="pm-upload-panel-header">
+                        <div>
+                            <h3>Upload Dimension Balance report</h3>
+                            <p>
+                                The system reads the report and prepares the
+                                Property Management schedule by store.
+                            </p>
+                        </div>
+
+                        <span class="upload-pill required">Required</span>
+                    </div>
+
+                    <div class="pm-upload-panel-body">
+                        <label
+                            class="pm-upload-drop-area"
+                            for="pmDimensionBalanceFile"
+                        >
+                            <span class="pm-upload-drop-icon">
+                                <i class="fa-solid fa-cloud-arrow-up" aria-hidden="true"></i>
+                            </span>
+
+                            <strong>Dimension Balance report</strong>
+                            <span>Drag and drop the file here or click to browse</span>
+                        </label>
+
+                        <input
+                            id="pmDimensionBalanceFile"
+                            type="file"
+                            accept=".xlsx,.xls"
+                            class="reconciliation-file-input"
+                        />
+
+                        <div class="pm-upload-selected-row">
+                            <div
+                                class="pm-upload-selected-name"
+                                id="pmDimensionBalanceFileName"
+                            >
+                                <span class="pm-upload-file-empty">No file selected</span>
+                            </div>
+
+                            <button
+                                type="button"
+                                class="btn btn-secondary pm-remove-file-btn"
+                                id="pmClearDimensionBalanceFileBtn"
+                                disabled
+                                aria-label="Remove Dimension Balance report"
+                            >
+                                <i class="fa-solid fa-trash" aria-hidden="true"></i>
+                            </button>
+                        </div>
+
+                        <small class="pm-upload-format">
+                            Accepted formats: .xlsx, .xls
+                        </small>
+                    </div>
+                </div>
+
+                <div class="upload-card pm-upload-panel" id="salesDetailUploadCard">
+                    <div class="pm-upload-panel-header">
+                        <div>
+                            <h3>Upload monthly files</h3>
+                            <p>
+                                Add one or more monthly GL exports after loading
+                                the Dimension Balance report.
+                            </p>
+                        </div>
+
+                        <span class="upload-pill">Optional</span>
+                    </div>
+
+                    <div class="pm-upload-panel-body">
+                        <label
+                            class="pm-upload-drop-area"
+                            for="pmMonthlyLedgerFile"
+                        >
+                            <span class="pm-upload-drop-icon">
+                                <i class="fa-solid fa-file-arrow-up" aria-hidden="true"></i>
+                            </span>
+
+                            <strong>Monthly GL files</strong>
+                            <span>Drag and drop files here or click to browse</span>
+                        </label>
+
+                        <input
+                            id="pmMonthlyLedgerFile"
+                            type="file"
+                            accept=".xls,.xlsx,.html,.htm"
+                            multiple
+                            class="reconciliation-file-input"
+                        />
+
+                        <div class="pm-upload-selected-row">
+                            <div
+                                class="pm-upload-selected-name"
+                                id="pmMonthlyLedgerFileName"
+                            >
+                                <span class="pm-upload-file-empty">No files selected</span>
+                            </div>
+
+                            <button
+                                type="button"
+                                class="btn btn-secondary pm-remove-file-btn"
+                                id="pmClearMonthlyLedgerFileBtn"
+                                disabled
+                                aria-label="Remove monthly files"
+                            >
+                                <i class="fa-solid fa-trash" aria-hidden="true"></i>
+                            </button>
+                        </div>
+
+                        <small class="pm-upload-format">
+                            Accepted formats: .xlsx, .xls, .html, .htm
+                        </small>
+                    </div>
+                </div>
+
+                <section
+                    class="pm-manager-card summary-card pm-saved-work-card"
+                    aria-labelledby="pmSavedScheduleTitle"
+                >
+                    <div class="pm-manager-card-header">
+                        <span class="pm-manager-icon">
+                            <i class="fa-solid fa-database" aria-hidden="true"
+                            ></i>
+                        </span>
+
+                        <div>
+                            <span>Saved work</span>
+                            <h3 id="pmSavedScheduleTitle">
+                                Property Management schedules
+                            </h3>
+                        </div>
+                    </div>
+
+                    <label class="pm-field">
+                        <span>Schedule name</span>
+                        <input
+                            id="pmScheduleName"
+                            type="text"
+                            value="Schedule 2026"
+                        />
+                    </label>
+
+                    <div class="pm-inline-controls">
+                        <select
+                            id="pmSavedScheduleSelect"
+                            aria-label="Saved Property Management schedules"
+                        >
+                            <option value="">No saved schedules loaded</option>
+                        </select>
+
+                        <button
+                            type="button"
+                            class="btn btn-secondary"
+                            id="pmLoadScheduleBtn"
+                        >
+                            <i
+                                class="fa-solid fa-folder-open"
+                                aria-hidden="true"></i>
+                            Open
+                        </button>
+                    </div>
+                </section>
+            </div>
+
+            <div
+                class="pm-alert-stack"
+                id="pmAlertStack"
+                aria-live="polite"
+                aria-atomic="false"
+            >
+            </div>
+
+            <div
+                class="pm-tab-panel is-active"
+                id="pmEditorTab"
+                role="tabpanel"
+                aria-labelledby="pmEditorTabButton"
+            >
+                <div class="pm-schedule-preview" id="pmSchedulePreview" hidden>
+                    <div class="section-heading pm-review-heading">
+                        <span class="step-badge">2</span>
+                        <div>
+                            <h2>Review</h2>
+                            <p>
+                                Review totals, filter rows, validate quarters,
+                                and export the schedule.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="pm-preview-summary pm-simple-stats-grid">
+                        <article class="pm-simple-stat-card">
+                            <span
+                                class="pm-simple-stat-icon"
+                                aria-hidden="true"
+                            >
+                                <i class="fa-solid fa-store"></i>
+                            </span>
+
+                            <div class="pm-simple-stat-copy">
+                                <strong id="pmScheduleStores">0</strong>
+                                <span>Stores</span>
+                            </div>
+                        </article>
+
+                        <article class="pm-simple-stat-card">
+                            <span
+                                class="pm-simple-stat-icon"
+                                aria-hidden="true"
+                            >
+                                <i class="fa-solid fa-table-list"></i>
+                            </span>
+
+                            <div class="pm-simple-stat-copy">
+                                <strong id="pmScheduleRows">0</strong>
+                                <span>Rows</span>
+                            </div>
+                        </article>
+
+                        <article class="pm-simple-stat-card">
+                            <span
+                                class="pm-simple-stat-icon"
+                                aria-hidden="true"
+                            >
+                                <i class="fa-solid fa-scale-balanced"></i>
+                            </span>
+
+                            <div class="pm-simple-stat-copy">
+                                <strong id="pmScheduleBalance">$0.00</strong>
+                                <span>YTD balance</span>
+                            </div>
+                        </article>
+                    </div>
+
+                    <section
+                        class="pm-quarter-workspace"
+                        id="pmQuarterWorkspace"
+                    >
+                        <div class="pm-quarter-section-head">
+                            <div>
+                                <span class="pm-eyebrow">
+                                    <i
+                                        class="fa-solid fa-chart-pie"
+                                        aria-hidden="true"></i>
+                                    Quarter overview
+                                </span>
+                                <h3>General quarter review</h3>
+                                <p>
+                                    Review collected, paid next month, and open
+                                    differences by quarter.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div
+                            class="pm-quarter-grid"
+                            id="pmQuarterReviewCards"
+                            aria-label="Quarterly tax payment differences"
+                        >
+                        </div>
+                    </section>
+
+                    <div class="pm-table-toolbar" aria-label="Schedule filters">
+                        <div class="pm-table-toolbar-head">
+                            <div>
+                                <span class="pm-eyebrow">
+                                    <i
+                                        class="fa-solid fa-filter"
+                                        aria-hidden="true"></i>
+                                    Working view
+                                </span>
+                                <h3>Schedule filters</h3>
+                            </div>
+                            <strong id="pmScheduleFilterCount"
+                                >Showing all rows</strong
+                            >
+                        </div>
+
+                        <div class="pm-filter-grid">
+                            <label class="pm-field">
+                                <span>Search</span>
+                                <input
+                                    id="pmScheduleSearch"
+                                    type="search"
+                                    placeholder="Store, entry, entity, reference"
+                                    data-pm-filter="search"
+                                />
+                            </label>
+
+                            <label class="pm-field">
+                                <span>Store</span>
+                                <select
+                                    id="pmScheduleStoreFilter"
+                                    data-pm-filter="store"
+                                >
+                                    <option value="">All stores</option>
+                                </select>
+                            </label>
+
+                            <label class="pm-field">
+                                <span>Entity</span>
+                                <select
+                                    id="pmScheduleEntityFilter"
+                                    data-pm-filter="entity"
+                                >
+                                    <option value="">All entities</option>
+                                </select>
+                            </label>
+
+                            <label class="pm-field">
+                                <span>Month</span>
+                                <select
+                                    id="pmScheduleMonthFilter"
+                                    data-pm-filter="month"
+                                >
+                                    <option value="">All months</option>
+                                    <option value="1">January</option>
+                                    <option value="2">February</option>
+                                    <option value="3">March</option>
+                                    <option value="4">April</option>
+                                    <option value="5">May</option>
+                                    <option value="6">June</option>
+                                    <option value="7">July</option>
+                                    <option value="8">August</option>
+                                    <option value="9">September</option>
+                                    <option value="10">October</option>
+                                    <option value="11">November</option>
+                                    <option value="12">December</option>
+                                </select>
+                            </label>
+
+                            <label class="pm-field">
+                                <span>Rows</span>
+                                <select
+                                    id="pmScheduleRowTypeFilter"
+                                    data-pm-filter="rowType"
+                                >
+                                    <option value="">All rows</option>
+                                    <option value="summary"
+                                        >Store summaries</option
+                                    >
+                                    <option value="detail">Detail rows</option>
+                                    <option value="manual">Manual rows</option>
+                                    <option value="activity"
+                                        >Rows with activity</option
+                                    >
+                                </select>
+                            </label>
+
+                            <button
+                                type="button"
+                                class="btn btn-secondary pm-filter-reset"
+                                id="pmClearScheduleFiltersBtn"
+                            >
+                                <i class="fa-solid fa-xmark" aria-hidden="true"
+                                ></i>
+                                Clear filters
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="pm-schedule-table-wrap">
+                        <table class="pm-schedule-table" id="pmScheduleTable">
+                        </table>
+                    </div>
+
+                    <section
+                        class="pm-monthly-totals-panel"
+                        aria-labelledby="pmMonthlyTotalsTitle"
+                    >
+                        <div class="pm-monthly-totals-header">
+                            <div>
+                                <span class="pm-eyebrow">
+                                    <i
+                                        class="fa-solid fa-calendar-check"
+                                        aria-hidden="true"></i>
+                                    Monthly totals
+                                </span>
+                                <h3 id="pmMonthlyTotalsTitle">
+                                    Paid and collected by month
+                                </h3>
+                                <p>
+                                    Review the total paid and collected amounts
+                                    for each month separately.
+                                </p>
+                            </div>
+
+                            <div class="pm-monthly-totals-grand">
+                                <div>
+                                    <span>Total collected</span>
+                                    <strong id="pmMonthlyCollectedTotal"
+                                        >$0.00</strong
+                                    >
+                                </div>
+
+                                <div>
+                                    <span>Total paid</span>
+                                    <strong id="pmMonthlyPaidTotal"
+                                        >$0.00</strong
+                                    >
+                                </div>
+                            </div>
+                        </div>
+
+                        <div
+                            class="pm-monthly-totals-strip"
+                            id="pmMonthlyTotalsCards"
+                        >
+                            <article class="pm-month-total-card is-empty">
+                                <span>No monthly totals loaded.</span>
+                            </article>
+                        </div>
+                    </section>
+
+                    <div
+                        class="pm-schedule-actions pm-schedule-actions-bottom"
+                        aria-label="Schedule actions"
+                    >
+                        <button
+                            type="button"
+                            class="btn btn-secondary"
+                            id="pmSaveScheduleBtn"
+                            disabled
+                        >
+                            <i
+                                class="fa-solid fa-floppy-disk"
+                                aria-hidden="true"></i>
+                            Save
+                        </button>
+
+                        <button
+                            type="button"
+                            class="btn btn-secondary"
+                            id="pmOpenMonthReclassBtn"
+                            disabled
+                        >
+                            <i class="fa-solid fa-right-left" aria-hidden="true"
+                            ></i>
+                            Month reclass
+                        </button>
+
+                        <button
+                            type="button"
+                            class="btn btn-secondary"
+                            id="pmManageEntitiesBtn"
+                        >
+                            <i class="fa-solid fa-sitemap" aria-hidden="true"
+                            ></i>
+                            Entities
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div
+                class="pm-tab-panel"
+                id="pmDepartmentDocumentsTab"
+                role="tabpanel"
+                aria-labelledby="pmDocumentsTabButton"
+                hidden
+            >
+                <div class="pm-documents-workspace">
+                    <section
+                        class="pm-documents-panel"
+                        aria-labelledby="pmSavedDocsTitle"
+                    >
+                        <div class="pm-documents-panel-header">
+                            <div>
+                                <span class="pm-eyebrow">
+                                    <i
+                                        class="fa-solid fa-file-pen"
+                                        aria-hidden="true"></i>
+                                    Editable schedules
+                                </span>
+                                <h3 id="pmSavedDocsTitle">
+                                    Department schedules
+                                </h3>
+                            </div>
+                            <button
+                                type="button"
+                                class="btn btn-secondary"
+                                id="pmDocsRefreshBtn"
+                            >
+                                <i
+                                    class="fa-solid fa-arrows-rotate"
+                                    aria-hidden="true"></i>
+                                Refresh
+                            </button>
+                        </div>
+
+                        <div class="pm-documents-table-wrap">
+                            <table class="pm-documents-table">
+                                <thead>
+                                    <tr>
+                                        <th>Schedule</th>
+                                        <th>Period</th>
+                                        <th>Stores</th>
+                                        <th>Rows</th>
+                                        <th>Balance</th>
+                                        <th>Updated</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="pmDepartmentSchedulesTable">
+                                    <tr
+                                        ><td colspan="7"
+                                            >Loading schedules...</td
+                                        ></tr
+                                    >
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+
+                    <section
+                        class="pm-documents-panel"
+                        aria-labelledby="pmSourceDocsTitle"
+                    >
+                        <div class="pm-documents-panel-header">
+                            <div>
+                                <span class="pm-eyebrow">
+                                    <i
+                                        class="fa-solid fa-file-shield"
+                                        aria-hidden="true"></i>
+                                    Source files
+                                </span>
+                                <h3 id="pmSourceDocsTitle">
+                                    Uploaded department documents
+                                </h3>
+                            </div>
+                        </div>
+
+                        <div class="pm-documents-table-wrap">
+                            <table class="pm-documents-table">
+                                <thead>
+                                    <tr>
+                                        <th>File</th>
+                                        <th>Type</th>
+                                        <th>Size</th>
+                                        <th>Uploaded</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="pmDepartmentFilesTable">
+                                    <tr
+                                        ><td colspan="5"
+                                            >Loading documents...</td
+                                        ></tr
+                                    >
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </section>
+    </section>
+    <div class="pm-modal pm-entities-modal" id="pmEntitiesModal" hidden>
+        <div class="pm-modal-backdrop" data-pm-close-entities></div>
+
+        <section
+            class="pm-modal-card pm-entities-modal-card"
+            aria-labelledby="pmEntitiesTitle"
+        >
+            <header class="pm-modal-header pm-entities-header">
+                <div>
+                    <span class="pm-eyebrow">Property Management</span>
+                    <h3 id="pmEntitiesTitle">Entities / ORG Chart</h3>
+                    <p>
+                        Manage the store-to-entity mapping used by the Sales Tax
+                        Payable Schedule.
+                    </p>
+                </div>
+
+                <button
+                    type="button"
+                    class="pm-modal-close"
+                    data-pm-close-entities
+                    aria-label="Close entities modal"
+                >
+                    <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                </button>
+            </header>
+
+            <div class="pm-modal-body pm-entities-body">
+                <section class="pm-entity-card" id="pmEntitiesImportCard">
+                    <div class="pm-entity-card-header">
+                        <div>
+                            <span class="pm-eyebrow">
+                                <i
+                                    class="fa-solid fa-file-excel"
+                                    aria-hidden="true"></i>
+                                Import
+                            </span>
+                            <h4>ORG Chart source</h4>
+                            <p>Import the entity mapping file only once.</p>
+                        </div>
+                    </div>
+
+                    <div class="pm-entity-import-row">
+                        <input
+                            id="pmEntitiesImportFile"
+                            type="file"
+                            accept=".xlsx,.xls"
+                            hidden
+                        />
+
+                        <button
+                            type="button"
+                            class="btn btn-secondary"
+                            id="pmChooseEntitiesFileBtn"
+                        >
+                            <i class="fa-solid fa-file-excel" aria-hidden="true"
+                            ></i>
+                            Choose ORG CHART file
+                        </button>
+
+                        <span
+                            class="pm-selected-file"
+                            id="pmEntitiesImportFileName"
+                        >
+                            No file selected
+                        </span>
+
+                        <button
+                            type="button"
+                            class="btn btn-primary"
+                            id="pmImportEntitiesBtn"
+                        >
+                            <i class="fa-solid fa-upload" aria-hidden="true"
+                            ></i>
+                            Import file
+                        </button>
+                    </div>
+                </section>
+
+                <section class="pm-entity-card pm-entity-toolbar-card">
+                    <div class="pm-entities-toolbar">
+                        <div>
+                            <span class="pm-eyebrow">
+                                <i class="fa-solid fa-table" aria-hidden="true"
+                                ></i>
+                                Entity mappings
+                            </span>
+                            <h4>Loaded entities</h4>
+                            <p id="pmEntitiesCountLabel">No entities loaded.</p>
+                        </div>
+
+                        <button
+                            type="button"
+                            class="btn btn-primary"
+                            id="pmToggleEntityFormBtn"
+                        >
+                            <i class="fa-solid fa-plus" aria-hidden="true"></i>
+                            Add entity
+                        </button>
+                    </div>
+                </section>
+
+                <section
+                    class="pm-entity-card pm-entity-form-card"
+                    id="pmEntityFormCard"
+                    hidden
+                >
+                    <div class="pm-entity-card-header">
+                        <div>
+                            <span class="pm-eyebrow">
+                                <i
+                                    class="fa-solid fa-pen-to-square"
+                                    aria-hidden="true"></i>
+                                Manual edit
+                            </span>
+                            <h4 id="pmEntityFormTitle">Add entity</h4>
+                        </div>
+
+                        <button
+                            type="button"
+                            class="btn btn-secondary"
+                            id="pmCancelEntityFormBtn"
+                        >
+                            Cancel
+                        </button>
+                    </div>
+
+                    <form id="pmEntityForm" class="pm-entity-form">
+                        <input type="hidden" id="pmEntityId" />
+
+                        <label class="pm-field">
+                            <span>Location</span>
+                            <input id="pmEntityLocation" type="text" required />
+                        </label>
+
+                        <label class="pm-field">
+                            <span>Entity</span>
+                            <input id="pmEntityCode" type="text" required />
+                        </label>
+
+                        <label class="pm-field">
+                            <span>Brand</span>
+                            <input id="pmEntityBrand" type="text" />
+                        </label>
+
+                        <label class="pm-field">
+                            <span>Legal Name</span>
+                            <input id="pmEntityLegalName" type="text" />
+                        </label>
+
+                        <label class="pm-field">
+                            <span>Short Name</span>
+                            <input id="pmEntityShortName" type="text" />
+                        </label>
+
+                        <label class="pm-field">
+                            <span>Other ID</span>
+                            <input id="pmEntityOtherId" type="text" />
+                        </label>
+
+                        <div class="pm-entity-form-actions">
+                            <button type="submit" class="btn btn-primary">
+                                <i
+                                    class="fa-solid fa-floppy-disk"
+                                    aria-hidden="true"></i>
+                                Save entity
+                            </button>
+
+                            <button
+                                type="button"
+                                class="btn btn-secondary"
+                                id="pmClearEntityFormBtn"
+                            >
+                                Clear
+                            </button>
+                        </div>
+                    </form>
+                </section>
+
+                <section class="pm-entity-card pm-entity-table-card">
+                    <div class="pm-entities-table-wrap">
+                        <table class="pm-entities-table">
+                            <thead>
+                                <tr>
+                                    <th>Location</th>
+                                    <th>Entity</th>
+                                    <th>Brand</th>
+                                    <th>Legal Name</th>
+                                    <th>Other ID</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+
+                            <tbody id="pmEntitiesTableBody">
+                                <tr>
+                                    <td colspan="6">No entities loaded.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+
+            <footer class="pm-modal-footer">
+                <button
+                    type="button"
+                    class="btn btn-secondary"
+                    data-pm-close-entities
+                >
+                    Close
+                </button>
+            </footer>
+        </section>
+    </div>
+
+    <div
+        class="pm-modal pm-quarter-store-modal"
+        id="pmQuarterStoreModal"
+        hidden
+    >
+        <div class="pm-modal-backdrop" data-pm-close-quarter-store></div>
+
+        <section
+            class="pm-modal-card pm-quarter-store-modal-card"
+            aria-labelledby="pmQuarterStoreTitle"
+        >
+            <header class="pm-modal-header pm-quarter-store-header">
+                <div>
+                    <span class="pm-eyebrow">
+                        <i class="fa-solid fa-calculator" aria-hidden="true"
+                        ></i>
+                        Quarter detail
+                    </span>
+                    <h3 id="pmQuarterStoreTitle">Quarter review</h3>
+                    <p id="pmQuarterStoreSubtitle">
+                        Review quarter differences by store.
+                    </p>
+                </div>
+
+                <button
+                    type="button"
+                    class="pm-modal-close"
+                    data-pm-close-quarter-store
+                    aria-label="Close quarter detail modal"
+                >
+                    <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                </button>
+            </header>
+
+            <div class="pm-modal-body pm-quarter-store-body">
+                <section class="pm-quarter-modal-filters">
+                    <label class="pm-field">
+                        <span>Search</span>
+                        <input
+                            id="pmQuarterModalSearch"
+                            type="search"
+                            placeholder="Store or entity"
+                        />
+                    </label>
+
+                    <label class="pm-field">
+                        <span>Quarter</span>
+                        <select id="pmQuarterModalQuarter">
+                            <option value="">All quarters</option>
+                            <option value="1">Q1 Jan-Mar</option>
+                            <option value="2">Q2 Apr-Jun</option>
+                            <option value="3">Q3 Jul-Sep</option>
+                            <option value="4">Q4 Oct-Dec</option>
+                        </select>
+                    </label>
+
+                    <label class="pm-field">
+                        <span>Entity</span>
+                        <select id="pmQuarterModalEntity">
+                            <option value="">All entities</option>
+                        </select>
+                    </label>
+
+                    <label class="pm-field">
+                        <span>Status</span>
+                        <select id="pmQuarterModalStatus">
+                            <option value="">All</option>
+                            <option value="open">Needs Review</option>
+                            <option value="balanced">Balanced</option>
+                        </select>
+                    </label>
+
+                    <button
+                        type="button"
+                        class="btn btn-secondary"
+                        id="pmQuarterModalClearFiltersBtn"
+                    >
+                        Clear filters
+                    </button>
+                </section>
+
+                <section
+                    class="pm-quarter-modal-summary"
+                    id="pmQuarterModalSummary"
+                >
+                </section>
+
+                <div class="pm-quarter-modal-table-wrap">
+                    <table class="pm-quarter-modal-table">
+                        <thead>
+                            <tr>
+                                <th>Store</th>
+                                <th>Entity</th>
+                                <th>Quarter</th>
+                                <th>Collected</th>
+                                <th>Paid next month</th>
+                                <th>Difference</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+
+                        <tbody id="pmQuarterModalTableBody">
+                            <tr>
+                                <td colspan="7">No data found.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <footer class="pm-modal-footer">
+                <button
+                    type="button"
+                    class="btn btn-secondary"
+                    data-pm-close-quarter-store
+                >
+                    Close
+                </button>
+            </footer>
+        </section>
+    </div>
+</DashboardLayout>
+
+<script src="/js/config.js" is:inline></script>
+
+<script
+    is:inline
+    src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"
+></script>
+
+<script
+    is:inline
+    src="/js/departments/property-management.js?v=20260708-alerts-global"
+></script>
+
+<style>
+    .property-management-page {
+        display: grid;
+        gap: 18px;
+        padding: 18px 24px 28px;
+    }
+
+    .property-management-page .page-header-info p {
+        margin: 6px 0 0;
+        color: var(--gray-500, #415a70);
+        font-size: 15px;
+    }
+
+    .pm-upload-section > .multi-upload-container {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        align-items: stretch;
+        gap: 16px;
+        margin-top: 1rem;
+    }
+
+    .pm-upload-section > .multi-upload-container > .upload-card {
+        display: grid;
+        align-content: start;
+        min-width: 0;
+        min-height: 100%;
+    }
+
+    .pm-saved-work-card {
+        grid-template-rows: auto auto minmax(40px, 1fr);
+    }
+
+    .pm-saved-work-card .pm-inline-controls {
+        align-self: end;
+    }
+
+    .pm-review-heading {
+        align-items: flex-start;
+        gap: 12px;
+        margin-top: 2px;
+    }
+
+    .pm-review-heading .pm-schedule-actions {
+        margin-left: auto;
+        align-self: center;
+    }
+
+    .pm-hero {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 24px;
+        padding: 24px 26px;
+        border: 1px solid #cfdae5;
+        border-left: 4px solid #0f766e;
+        border-radius: 8px;
+        background: #ffffff;
+        box-shadow: 0 18px 44px -38px rgba(8, 31, 51, 0.55);
+    }
+
+    .pm-eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        color: #344f67;
+        font-size: 11px;
+        font-weight: 850;
+        text-transform: uppercase;
+    }
+
+    .pm-hero h1 {
+        margin: 6px 0 6px;
+        color: #082033;
+        font-size: 31px;
+        font-weight: 900;
+        letter-spacing: 0;
+    }
+
+    .pm-hero p {
+        margin: 0;
+        color: #415a70;
+        font-size: 14px;
+        font-weight: 650;
+    }
+
+    .pm-metrics {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(110px, 1fr));
+        gap: 10px;
+        min-width: min(460px, 100%);
+    }
+
+    .pm-metrics div {
+        min-height: 82px;
+        padding: 14px;
+        border: 1px solid #d7e2ec;
+        border-radius: 8px;
+        background: #f8fbfd;
+    }
+
+    .pm-metrics strong {
+        display: block;
+        color: #09243b;
+        font-size: 28px;
+        font-weight: 900;
+        line-height: 1;
+    }
+
+    .pm-metrics span {
+        display: block;
+        margin-top: 8px;
+        color: #415a70;
+        font-size: 11px;
+        font-weight: 850;
+        text-transform: uppercase;
+    }
+
+    .pm-layout {
+        display: grid;
+        grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
+        gap: 18px;
+        align-items: start;
+    }
+
+    .pm-schedule-panel {
+        display: grid;
+        gap: 16px;
+        padding: 20px;
+        border: 1px solid #cfdae5;
+        border-radius: 8px;
+        background: #ffffff;
+        box-shadow: 0 18px 44px -40px rgba(8, 31, 51, 0.62);
+    }
+
+    .pm-schedule-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 18px;
+    }
+
+    .pm-schedule-header h2 {
+        margin: 6px 0;
+        color: #082033;
+        font-size: 22px;
+        font-weight: 900;
+    }
+
+    .pm-schedule-header p {
+        margin: 0;
+        color: #415a70;
+        font-size: 13px;
+        font-weight: 650;
+    }
+
+    .pm-schedule-actions,
+    .pm-builder-card {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 9px;
+        justify-content: flex-end;
+    }
+
+    .pm-upload-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 18px;
+    }
+
+    .pm-upload-card,
+    .pm-builder-card {
+        min-height: 286px;
+        padding: 20px;
+        border: 1px solid #d7e2ec;
+        border-radius: 14px;
+        background: #f8fbfd;
+    }
+
+    .pm-upload-card {
+        display: grid;
+        grid-template-rows: auto minmax(128px, 1fr) auto;
+        gap: 14px;
+        overflow: hidden;
+        cursor: pointer;
+    }
+
+    .pm-upload-card-head {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        min-width: 0;
+    }
+
+    .pm-upload-icon {
+        display: grid;
+        width: 42px;
+        height: 42px;
+        flex: 0 0 auto;
+        place-items: center;
+        border-radius: 8px;
+        background: #102a43;
+        color: #ffffff;
+    }
+
+    .pm-upload-card strong,
+    .pm-builder-card strong {
+        color: #082033;
+        font-size: 15px;
+        font-weight: 900;
+    }
+
+    .pm-upload-card small,
+    .pm-builder-card small {
+        color: #526b82;
+        font-size: 12px;
+        font-weight: 650;
+        line-height: 1.45;
+    }
+
+    .pm-upload-dropzone,
+    .pm-builder-illustration {
+        display: grid;
+        min-height: 128px;
+        place-items: center;
+        padding: 22px;
+        border: 1px dashed #b5c8db;
+        border-radius: 14px;
+        text-align: center;
+    }
+
+    .pm-upload-dropzone i,
+    .pm-builder-illustration i {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 28px;
+    }
+
+    .pm-upload-dropzone span,
+    .pm-upload-dropzone em {
+        display: block;
+        font-style: normal;
+    }
+
+    .pm-upload-card input[type="file"] {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    .pm-builder-card {
+        display: grid;
+        grid-template-rows: auto minmax(128px, 1fr) auto auto;
+        gap: 14px;
+        align-content: space-between;
+    }
+
+    .pm-builder-actions {
+        display: grid;
+        gap: 8px;
+    }
+
+    .pm-builder-actions .btn {
+        justify-content: center;
+        width: 100%;
+    }
+
+    .pm-builder-card .pm-upload-card-head em {
+        display: block;
+        margin-bottom: 4px;
+        color: #344f67;
+        font-size: 11px;
+        font-style: normal;
+        font-weight: 850;
+        text-transform: uppercase;
+    }
+
+    .pm-upload-card > .btn,
+    .pm-builder-card > .btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .pm-schedule-status {
+        padding: 12px 14px;
+        border: 1px solid #d7e2ec;
+        border-radius: 8px;
+        background: #fbfdff;
+        color: #415a70;
+        font-size: 13px;
+        font-weight: 700;
+    }
+
+    .pm-schedule-status.is-error {
+        border-color: #f0c9c9;
+        background: #fff8f8;
+        color: #9f1d1d;
+    }
+
+    .pm-schedule-status.is-success {
+        border-color: #b7ded6;
+        background: #f0fbf7;
+        color: #0f665f;
+    }
+
+    .pm-schedule-status.is-warning {
+        border-color: #f2d3a2;
+        background: #fff8ed;
+        color: #875a0a;
+    }
+
+    .pm-alert-stack {
+        display: grid;
+        gap: 9px;
+    }
+
+    .pm-alert-stack:empty {
+        display: none;
+    }
+
+    :global(.pm-alert) {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        gap: 10px;
+        align-items: center;
+        padding: 12px 13px;
+        border: 1px solid #d7e2ec;
+        border-left-width: 4px;
+        border-radius: 8px;
+        background: #ffffff;
+        color: #173a59;
+        box-shadow: 0 14px 32px -30px rgba(8, 31, 51, 0.55);
+    }
+
+    :global(.pm-alert > i) {
+        display: grid;
+        width: 30px;
+        height: 30px;
+        place-items: center;
+        border-radius: 8px;
+        background: #edf4f9;
+        color: #173a59;
+    }
+
+    :global(.pm-alert strong) {
+        display: block;
+        color: #082033;
+        font-size: 13px;
+        font-weight: 900;
+        line-height: 1.25;
+    }
+
+    :global(.pm-alert span) {
+        display: block;
+        margin-top: 2px;
+        color: #415a70;
+        font-size: 12px;
+        font-weight: 700;
+        line-height: 1.35;
+    }
+
+    :global(.pm-alert button) {
+        display: grid;
+        width: 30px;
+        height: 30px;
+        place-items: center;
+        border: 1px solid #cbd9e6;
+        border-radius: 7px;
+        background: #ffffff;
+        color: #173a59;
+        cursor: pointer;
+    }
+
+    :global(.pm-alert.is-success) {
+        border-color: #b7ded6;
+        border-left-color: #0f766e;
+        background: #f0fbf7;
+    }
+
+    :global(.pm-alert.is-success > i) {
+        background: #dff5ef;
+        color: #0f665f;
+    }
+
+    :global(.pm-alert.is-error) {
+        border-color: #f0c9c9;
+        border-left-color: #b42318;
+        background: #fff8f8;
+    }
+
+    :global(.pm-alert.is-error > i) {
+        background: #fee4e2;
+        color: #9f1d1d;
+    }
+
+    :global(.pm-alert.is-warning) {
+        border-color: #f2d3a2;
+        border-left-color: #b7791f;
+        background: #fff8ed;
+    }
+
+    :global(.pm-alert.is-warning > i) {
+        background: #fff1d6;
+        color: #875a0a;
+    }
+
+    .pm-tabs {
+        display: inline-flex;
+        width: fit-content;
+        max-width: 100%;
+        gap: 4px;
+        padding: 4px;
+        border: 1px solid #d7e2ec;
+        border-radius: 8px;
+        background: #f8fbfd;
+    }
+
+    .pm-tab {
+        display: inline-flex;
+        min-height: 40px;
+        align-items: center;
+        gap: 8px;
+        padding: 0 13px;
+        border: 1px solid transparent;
+        border-radius: 7px;
+        background: transparent;
+        color: #344f67;
+        font-size: 12px;
+        font-weight: 900;
+        cursor: pointer;
+    }
+
+    .pm-tab.is-active {
+        border-color: #cbd9e6;
+        background: #ffffff;
+        color: #082033;
+        box-shadow: 0 10px 24px -22px rgba(8, 31, 51, 0.65);
+    }
+
+    .pm-tab-panel {
+        display: grid;
+        gap: 16px;
+    }
+
+    .pm-tab-panel[hidden] {
+        display: none;
+    }
+
+    .pm-schedule-management {
+        display: grid;
+        grid-template-columns:
+            minmax(270px, 0.95fr) minmax(360px, 1.35fr)
+            minmax(270px, 1fr);
+        gap: 12px;
+        align-items: stretch;
+    }
+
+    .pm-manager-card {
+        display: grid;
+        align-content: start;
+        gap: 14px;
+        min-width: 0;
+        padding: 16px;
+        border: 1px solid #d7e2ec;
+        border-radius: 8px;
+        background: #fbfdff;
+    }
+
+    .pm-manager-card[hidden] {
+        display: none;
+    }
+
+    .pm-manager-card-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 0;
+    }
+
+    .pm-manager-icon {
+        display: grid;
+        width: 38px;
+        height: 38px;
+        flex: 0 0 auto;
+        place-items: center;
+        border-radius: 8px;
+        background: #102a43;
+        color: #ffffff;
+    }
+
+    .pm-manager-card-header span:not(.pm-manager-icon) {
+        display: block;
+        color: #344f67;
+        font-size: 10px;
+        font-weight: 900;
+        text-transform: uppercase;
+    }
+
+    .pm-manager-card-header h3 {
+        margin: 2px 0 0;
+        color: #082033;
+        font-size: 15px;
+        font-weight: 900;
+    }
+
+    .pm-field {
+        display: grid;
+        gap: 7px;
+        min-width: 0;
+    }
+
+    .pm-field span {
+        color: #344f67;
+        font-size: 11px;
+        font-weight: 850;
+        text-transform: uppercase;
+    }
+
+    .pm-field input,
+    .pm-field select,
+    .pm-inline-controls select {
+        width: 100%;
+        min-width: 0;
+        height: 40px;
+        padding: 0 11px;
+        border: 1px solid #bfd0df;
+        border-radius: 7px;
+        background: #ffffff;
+        color: #082033;
+        font: inherit;
+        font-size: 13px;
+        font-weight: 700;
+    }
+
+    .pm-field input:focus,
+    .pm-field select:focus,
+    .pm-inline-controls select:focus {
+        border-color: #174a75;
+        outline: 0;
+        box-shadow: 0 0 0 3px rgba(23, 74, 117, 0.12);
+    }
+
+    .pm-inline-controls {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 8px;
+        align-items: center;
+    }
+
+    .pm-month-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+    }
+
+    .pm-full-action {
+        justify-content: center;
+        width: 100%;
+    }
+
+    .pm-editor-actions {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 9px;
+    }
+
+    .pm-editor-actions .btn {
+        justify-content: center;
+        min-width: 0;
+        width: 100%;
+    }
+
+    .pm-card-note {
+        margin: 0;
+        color: #526b82;
+        font-size: 12px;
+        font-weight: 650;
+        line-height: 1.45;
+    }
+
+    .pm-documents-list {
+        display: grid;
+        gap: 8px;
+        max-height: 236px;
+        overflow: auto;
+        color: #415a70;
+        font-size: 12px;
+        font-weight: 700;
+    }
+
+    :global(.pm-document-item) {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 10px;
+        padding: 10px;
+        border: 1px solid #d7e2ec;
+        border-radius: 8px;
+        background: #ffffff;
+    }
+
+    :global(.pm-document-item strong) {
+        display: block;
+        overflow: hidden;
+        color: #082033;
+        font-size: 12px;
+        font-weight: 900;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    :global(.pm-document-item span) {
+        display: block;
+        margin-top: 4px;
+        color: #526b82;
+        font-size: 11px;
+        font-weight: 750;
+    }
+
+    :global(.pm-document-item small) {
+        display: block;
+        margin-top: 4px;
+        color: #526b82;
+        font-size: 11px;
+        font-weight: 750;
+    }
+
+    :global(.pm-document-item small + span) {
+        display: none;
+    }
+
+    :global(.pm-document-download) {
+        align-self: center;
+        min-height: 32px;
+        padding: 0 10px;
+        border: 1px solid #cbd9e6;
+        border-radius: 7px;
+        background: #ffffff;
+        color: #173a59;
+        font-size: 11px;
+        font-weight: 850;
+        cursor: pointer;
+    }
+
+    :global(.pm-empty-state) {
+        display: grid;
+        min-height: 76px;
+        place-items: center;
+        border: 1px dashed #cbd9e6;
+        border-radius: 8px;
+        color: #526b82;
+        text-align: center;
+    }
+
+    .pm-schedule-preview {
+        display: grid;
+        gap: 14px;
+    }
+
+    .pm-preview-summary.pm-simple-stats-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 12px;
+    }
+
+    .pm-simple-stat-card {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        min-width: 0;
+        min-height: 82px;
+        padding: 16px 18px;
+        border: 1px solid #d7e3ef;
+        border-radius: 12px;
+        background: #ffffff;
+        box-shadow: 0 10px 28px -26px rgba(7, 31, 52, 0.45);
+    }
+
+    .pm-simple-stat-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 42px;
+        height: 42px;
+        min-width: 42px;
+        border-radius: 11px;
+        background: #eef5fc;
+        color: #0b3a67;
+    }
+
+    .pm-simple-stat-icon i {
+        font-size: 15px;
+    }
+
+    .pm-simple-stat-copy {
+        display: grid;
+        gap: 2px;
+        min-width: 0;
+    }
+
+    .pm-simple-stat-copy strong {
+        display: block;
+        color: #082033;
+        font-size: 24px;
+        line-height: 1;
+        font-weight: 950;
+        letter-spacing: -0.03em;
+        font-variant-numeric: tabular-nums;
+        word-break: break-word;
+    }
+
+    .pm-simple-stat-copy span {
+        display: block;
+        color: #102a43;
+        font-size: 12px;
+        font-weight: 900;
+        text-transform: none;
+    }
+
+    .pm-simple-stat-copy small {
+        display: block;
+        color: #6b8094;
+        font-size: 11px;
+        font-weight: 700;
+    }
+
+    .pm-quarter-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 12px;
+    }
+
+    :global(.pm-qc-card) {
+        display: grid;
+        gap: 10px;
+        min-width: 0;
+        padding: 14px 16px;
+        border: 1px solid #d7e3ef;
+        border-radius: 12px;
+        background: #ffffff;
+        box-shadow: 0 10px 28px -26px rgba(7, 31, 52, 0.45);
+    }
+
+    :global(.pm-qc-header) {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+    }
+
+    :global(.pm-qc-quarter) {
+        color: #173a59;
+        font-size: 12px;
+        font-weight: 900;
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+    }
+
+    :global(.pm-qc-status) {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        min-height: 24px;
+        padding: 0 8px;
+        border-radius: 999px;
+        font-size: 10px;
+        font-weight: 900;
+        text-transform: uppercase;
+        white-space: nowrap;
+    }
+
+    :global(.pm-qc-status.is-open) {
+        background: #fff4e5;
+        color: #946200;
+    }
+
+    :global(.pm-qc-status.is-balanced) {
+        background: #e8f7f3;
+        color: #0f665f;
+    }
+
+    :global(.pm-qc-status i) {
+        font-size: 9px;
+    }
+
+    :global(.pm-qc-value-row) {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+    }
+
+    :global(.pm-qc-label) {
+        display: block;
+        margin-bottom: 3px;
+        color: #6b8094;
+        font-size: 10px;
+        font-weight: 850;
+        text-transform: uppercase;
+    }
+
+    :global(.pm-qc-value) {
+        display: block;
+        color: #082033;
+        font-size: 18px;
+        line-height: 1.05;
+        font-weight: 950;
+        letter-spacing: -0.03em;
+        font-variant-numeric: tabular-nums;
+    }
+
+    :global(.pm-qc-card.is-open .pm-qc-value) {
+        color: #8a5a00;
+    }
+
+    :global(.pm-qc-card.is-balanced .pm-qc-value) {
+        color: #0f665f;
+    }
+
+    :global(.pm-qc-button) {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 62px;
+        min-height: 36px;
+        padding: 0 14px;
+        border: 1px solid #bfd2e3;
+        border-radius: 10px;
+        background: #f8fbfe;
+        color: #0b3a67;
+        font-size: 12px;
+        font-weight: 900;
+        cursor: pointer;
+        transition:
+            background 0.18s ease,
+            border-color 0.18s ease;
+    }
+
+    :global(.pm-qc-button:hover) {
+        background: #edf5fc;
+        border-color: #9fbad3;
+    }
+
+    :global(.pm-qc-metrics) {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        border: 1px solid #dfe9f2;
+        border-radius: 10px;
+        overflow: hidden;
+        background: #f8fbfe;
+    }
+
+    :global(.pm-qc-metrics div) {
+        display: grid;
+        gap: 4px;
+        min-width: 0;
+        padding: 10px 10px;
+        border-right: 1px solid #dfe9f2;
+    }
+
+    :global(.pm-qc-metrics div:last-child) {
+        border-right: 0;
+    }
+
+    :global(.pm-qc-metrics span) {
+        color: #6b8094;
+        font-size: 10px;
+        font-weight: 800;
+        text-transform: uppercase;
+    }
+
+    :global(.pm-qc-metrics strong) {
+        overflow: hidden;
+        color: #173a59;
+        font-size: 12px;
+        font-weight: 900;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-variant-numeric: tabular-nums;
+    }
+
+    :global(.pm-qc-footer) {
+        color: #6b8094;
+        font-size: 11px;
+        font-weight: 700;
+    }
+
+    .pm-table-toolbar {
+        display: grid;
+        gap: 13px;
+        padding: 14px;
+        border: 1px solid #d7e2ec;
+        border-radius: 8px;
+        background: #fbfdff;
+    }
+
+    .pm-table-toolbar-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 14px;
+    }
+
+    .pm-table-toolbar-head h3 {
+        margin: 4px 0 0;
+        color: #082033;
+        font-size: 17px;
+        font-weight: 900;
+    }
+
+    .pm-table-toolbar-head strong {
+        display: inline-flex;
+        min-height: 30px;
+        align-items: center;
+        padding: 0 10px;
+        border: 1px solid #d7e2ec;
+        border-radius: 7px;
+        background: #ffffff;
+        color: #344f67;
+        font-size: 12px;
+        font-weight: 850;
+        white-space: nowrap;
+    }
+
+    .pm-filter-grid {
+        display: grid;
+        grid-template-columns:
+            minmax(220px, 1.4fr) repeat(4, minmax(140px, 1fr))
+            auto;
+        gap: 10px;
+        align-items: end;
+    }
+
+    .pm-filter-reset {
+        justify-content: center;
+        min-height: 40px;
+        white-space: nowrap;
+    }
+
+    :global(.pm-month-reclass-modal .pm-field) {
+        margin: 0;
+    }
+
+    :global(.pm-month-reclass-modal .pm-field select),
+    :global(.pm-month-reclass-modal .pm-field input) {
+        width: 100%;
+    }
+
+    :global(.pm-month-reclass-reason) {
+        grid-column: 1 / -1;
+    }
+
+    .pm-schedule-table-wrap {
+        max-height: 520px;
+        overflow: auto;
+        border: 1px solid #d7e2ec;
+        border-radius: 8px;
+        background: #ffffff;
+    }
+
+    .pm-schedule-table {
+        width: max-content;
+        min-width: 100%;
+        border-collapse: collapse;
+        color: #082033;
+        font-size: 12px;
+    }
+
+    .pm-schedule-table th,
+    .pm-schedule-table td {
+        padding: 8px 10px;
+        border-bottom: 1px solid #e1ebf3;
+        border-right: 1px solid #e1ebf3;
+        white-space: nowrap;
+    }
+
+    .pm-schedule-table th {
+        position: sticky;
+        top: 0;
+        z-index: 2;
+        background: #102a43;
+        color: #ffffff;
+        font-size: 11px;
+        font-weight: 900;
+        text-transform: uppercase;
+    }
+
+    .pm-schedule-table td.is-number {
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .pm-schedule-table td.is-editable {
+        background-image: linear-gradient(
+            0deg,
+            rgba(15, 118, 110, 0.08),
+            rgba(15, 118, 110, 0.08)
+        );
+        cursor: text;
+    }
+
+    .pm-schedule-table td.is-editable:focus {
+        position: relative;
+        z-index: 1;
+        background: #ffffff;
+        outline: 2px solid #174a75;
+        outline-offset: -2px;
+    }
+
+    .pm-schedule-table tr.is-store-summary td {
+        background: #f8fbfd;
+        font-weight: 850;
+    }
+
+    :global(.pm-table-empty) {
+        height: 82px;
+        color: #526b82;
+        font-size: 13px;
+        font-weight: 800;
+        text-align: center;
+    }
+
+    .pm-documents-workspace {
+        display: grid;
+        gap: 14px;
+    }
+
+    .pm-documents-panel {
+        overflow: hidden;
+        border: 1px solid #d7e2ec;
+        border-radius: 8px;
+        background: #ffffff;
+    }
+
+    .pm-documents-panel-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 14px;
+        padding: 16px;
+        border-bottom: 1px solid #d7e2ec;
+        background: #fbfdff;
+    }
+
+    .pm-documents-panel-header h3 {
+        margin: 5px 0 0;
+        color: #082033;
+        font-size: 18px;
+        font-weight: 900;
+    }
+
+    .pm-documents-table-wrap {
+        overflow: auto;
+    }
+
+    .pm-documents-table {
+        width: 100%;
+        min-width: 860px;
+        border-collapse: collapse;
+        color: #082033;
+        font-size: 12px;
+    }
+
+    .pm-documents-table th,
+    .pm-documents-table td {
+        padding: 11px 12px;
+        border-bottom: 1px solid #e1ebf3;
+        text-align: left;
+        vertical-align: middle;
+    }
+
+    .pm-documents-table th {
+        background: #102a43;
+        color: #ffffff;
+        font-size: 11px;
+        font-weight: 900;
+        text-transform: uppercase;
+        white-space: nowrap;
+    }
+
+    .pm-documents-table td {
+        color: #173a59;
+        font-weight: 750;
+    }
+
+    .pm-document-name {
+        display: grid;
+        gap: 3px;
+        min-width: 220px;
+    }
+
+    .pm-document-name strong {
+        color: #082033;
+        font-size: 13px;
+        font-weight: 900;
+    }
+
+    .pm-document-name span {
+        color: #526b82;
+        font-size: 11px;
+        font-weight: 750;
+    }
+
+    .pm-table-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 7px;
+    }
+
+    .pm-table-action {
+        display: inline-flex;
+        min-height: 32px;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        padding: 0 10px;
+        border: 1px solid #cbd9e6;
+        border-radius: 7px;
+        background: #ffffff;
+        color: #173a59;
+        font-size: 11px;
+        font-weight: 900;
+        cursor: pointer;
+        white-space: nowrap;
+    }
+
+    .pm-table-action.is-primary {
+        border-color: #102a43;
+        background: #102a43;
+        color: #ffffff;
+    }
+
+    :global(.pm-doc-empty) {
+        height: 82px;
+        color: #526b82;
+        font-size: 13px;
+        font-weight: 800;
+        text-align: center;
+    }
+
+    .pm-intake-panel,
+    .pm-stage {
+        border: 1px solid #cfdae5;
+        border-radius: 8px;
+        background: #ffffff;
+        box-shadow: 0 18px 44px -40px rgba(8, 31, 51, 0.62);
+    }
+
+    .pm-intake-panel {
+        position: sticky;
+        top: 74px;
+        overflow: hidden;
+    }
+
+    .pm-panel-header {
+        padding: 18px;
+        border-bottom: 1px solid #d8e5ef;
+        background: #f8fbfd;
+    }
+
+    .pm-panel-header span {
+        display: block;
+        color: #344f67;
+        font-size: 11px;
+        font-weight: 850;
+        text-transform: uppercase;
+    }
+
+    .pm-panel-header h2 {
+        margin: 5px 0 0;
+        color: #082033;
+        font-size: 20px;
+    }
+
+    .pm-form {
+        display: grid;
+        gap: 14px;
+        padding: 18px;
+    }
+
+    .pm-form label {
+        display: grid;
+        gap: 7px;
+    }
+
+    .pm-form label span {
+        color: #344f67;
+        font-size: 11px;
+        font-weight: 850;
+        text-transform: uppercase;
+    }
+
+    .pm-form input,
+    .pm-form select,
+    .pm-form textarea,
+    .pm-toolbar input,
+    .pm-toolbar select {
+        width: 100%;
+        border: 1px solid #bfd0df;
+        border-radius: 7px;
+        background: #ffffff;
+        color: #082033;
+        font: inherit;
+        font-size: 14px;
+    }
+
+    .pm-form input,
+    .pm-form select,
+    .pm-toolbar input,
+    .pm-toolbar select {
+        height: 42px;
+        padding: 0 12px;
+    }
+
+    .pm-form textarea {
+        min-height: 94px;
+        padding: 11px 12px;
+        resize: vertical;
+    }
+
+    .pm-form input:focus,
+    .pm-form select:focus,
+    .pm-form textarea:focus,
+    .pm-toolbar input:focus,
+    .pm-toolbar select:focus {
+        border-color: #174a75;
+        outline: 0;
+        box-shadow: 0 0 0 3px rgba(23, 74, 117, 0.12);
+    }
+
+    .pm-form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+
+    .pm-submit {
+        justify-content: center;
+        min-height: 42px;
+    }
+
+    .pm-workspace {
+        display: grid;
+        gap: 14px;
+        min-width: 0;
+    }
+
+    .pm-toolbar {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(170px, 220px);
+        gap: 12px;
+        padding: 14px;
+        border: 1px solid #cfdae5;
+        border-radius: 8px;
+        background: #ffffff;
+    }
+
+    .pm-search {
+        position: relative;
+    }
+
+    .pm-search i {
+        position: absolute;
+        top: 50%;
+        left: 12px;
+        color: #526b82;
+        transform: translateY(-50%);
+    }
+
+    .pm-search input {
+        padding-left: 36px;
+    }
+
+    .pm-board {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(210px, 1fr));
+        gap: 14px;
+        min-width: 0;
+    }
+
+    .pm-stage {
+        display: grid;
+        grid-template-rows: auto minmax(260px, 1fr);
+        overflow: hidden;
+    }
+
+    .pm-stage header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 14px;
+        border-bottom: 1px solid #d8e5ef;
+        background: #f8fbfd;
+    }
+
+    .pm-stage header div {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 0;
+    }
+
+    .pm-stage header i {
+        color: #0f5f59;
+    }
+
+    .pm-stage h2 {
+        margin: 0;
+        color: #082033;
+        font-size: 15px;
+        font-weight: 900;
+    }
+
+    .pm-stage header span {
+        display: inline-grid;
+        min-width: 28px;
+        height: 28px;
+        place-items: center;
+        border: 1px solid #d7e2ec;
+        border-radius: 999px;
+        background: #ffffff;
+        color: #344f67;
+        font-size: 12px;
+        font-weight: 900;
+    }
+
+    .pm-stage-list {
+        display: grid;
+        align-content: start;
+        gap: 10px;
+        min-height: 260px;
+        padding: 12px;
+        background: #fbfdff;
+    }
+
+    :global(.pm-request-card) {
+        display: grid;
+        gap: 10px;
+        padding: 14px;
+        border: 1px solid #d7e2ec;
+        border-radius: 8px;
+        background: #ffffff;
+    }
+
+    :global(.pm-request-card h3) {
+        margin: 0;
+        color: #082033;
+        font-size: 14px;
+        font-weight: 900;
+        line-height: 1.35;
+    }
+
+    :global(.pm-request-card p) {
+        margin: 0;
+        color: #526b82;
+        font-size: 12px;
+        font-weight: 650;
+        line-height: 1.45;
+    }
+
+    :global(.pm-request-meta) {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    :global(.pm-request-meta span) {
+        display: inline-flex;
+        align-items: center;
+        min-height: 24px;
+        padding: 0 8px;
+        border: 1px solid #d7e2ec;
+        border-radius: 999px;
+        background: #f8fbfd;
+        color: #344f67;
+        font-size: 11px;
+        font-weight: 800;
+    }
+
+    :global(.pm-request-meta .is-urgent) {
+        border-color: #f0c9c9;
+        background: #fff8f8;
+        color: #9f1d1d;
+    }
+
+    :global(.pm-request-actions) {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 7px;
+        border-top: 1px solid #e1ebf3;
+        padding-top: 10px;
+    }
+
+    :global(.pm-card-action) {
+        min-height: 30px;
+        padding: 0 9px;
+        border: 1px solid #cbd9e6;
+        border-radius: 7px;
+        background: #ffffff;
+        color: #173a59;
+        font-size: 11px;
+        font-weight: 850;
+        cursor: pointer;
+    }
+
+    :global(.pm-card-action.is-primary) {
+        border-color: #102a43;
+        background: #102a43;
+        color: #ffffff;
+    }
+
+    :global(.pm-card-action.is-danger) {
+        border-color: #f0c9c9;
+        color: #9f1d1d;
+    }
+
+    :global(.pm-stage-empty) {
+        display: grid;
+        min-height: 96px;
+        place-items: center;
+        border: 1px dashed #cbd9e6;
+        border-radius: 8px;
+        color: #60758a;
+        font-size: 12px;
+        font-weight: 750;
+        text-align: center;
+    }
+
+    @media (max-width: 1180px) {
+        .pm-layout {
+            grid-template-columns: 1fr;
+        }
+
+        .pm-intake-panel {
+            position: static;
+        }
+
+        .pm-board {
+            overflow-x: auto;
+            grid-template-columns: repeat(4, minmax(240px, 1fr));
+        }
+    }
+
+    @media (max-width: 760px) {
+        .property-management-page {
+            padding: 14px;
+        }
+
+        .pm-hero {
+            align-items: flex-start;
+            flex-direction: column;
+        }
+
+        .pm-metrics,
+        .pm-toolbar,
+        .pm-form-row,
+        .pm-upload-grid,
+        .pm-schedule-management,
+        .pm-quarter-grid,
+        .pm-filter-grid,
+        .pm-preview-summary {
+            grid-template-columns: 1fr;
+        }
+
+        .pm-inline-controls,
+        .pm-month-grid,
+        .pm-editor-actions {
+            grid-template-columns: 1fr;
+        }
+
+        .pm-table-toolbar-head {
+            flex-direction: column;
+        }
+
+        :global(.pm-month-reclass-modal) {
+            grid-template-columns: 1fr;
+            min-width: 0;
+        }
+
+        .pm-schedule-header {
+            flex-direction: column;
+        }
+
+        .pm-schedule-actions {
+            justify-content: stretch;
+            width: 100%;
+        }
+
+        .pm-tabs {
+            display: grid;
+            width: 100%;
+        }
+
+        .pm-tab {
+            justify-content: center;
+        }
+
+        .pm-documents-panel-header {
+            flex-direction: column;
+        }
+
+        .pm-board {
+            grid-template-columns: 1fr;
+        }
+    }
+    /* ===============================
+   ENTITIES MODAL - FULLSCREEN OVERLAY
+   =============================== */
+
+    .pm-modal[hidden] {
+        display: none !important;
+    }
+
+    .pm-entities-modal {
+        position: fixed !important;
+        inset: 0 !important;
+        width: 100vw;
+        height: 100vh;
+        z-index: 50000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+        background: rgba(8, 31, 51, 0.72);
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+        overflow: hidden;
+    }
+
+    .pm-entities-modal .pm-modal-backdrop {
+        display: none;
+    }
+
+    .pm-entities-modal-card {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        flex-direction: column;
+        width: min(1120px, 94vw);
+        height: min(880px, 92vh);
+        overflow: hidden;
+        border: 1px solid #d7e2ec;
+        border-radius: 14px;
+        background: #ffffff;
+        box-shadow: 0 32px 90px -34px rgba(8, 31, 51, 0.75);
+    }
+
+    .pm-entities-header {
+        flex: 0 0 auto;
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 20px;
+        padding: 24px 34px 20px;
+        border-bottom: 1px solid #d7e2ec;
+        background: #ffffff;
+    }
+
+    .pm-entities-header h3 {
+        margin: 6px 0 6px;
+        color: #082033;
+        font-size: 26px;
+        font-weight: 900;
+        letter-spacing: -0.02em;
+    }
+
+    .pm-entities-header p {
+        margin: 0;
+        color: #415a70;
+        font-size: 13px;
+        font-weight: 650;
+    }
+
+    .pm-entities-body {
+        flex: 1 1 auto;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        min-height: 0;
+        overflow-y: auto;
+        padding: 22px 34px;
+        background: #f8fbfd;
+    }
+
+    .pm-entity-card {
+        flex: 0 0 auto;
+        display: grid;
+        gap: 14px;
+        padding: 16px;
+        border: 1px solid #d7e2ec;
+        border-radius: 12px;
+        background: #ffffff;
+        box-shadow: 0 16px 38px -34px rgba(8, 31, 51, 0.6);
+    }
+
+    .pm-entity-card[hidden],
+    #pmEntitiesImportCard[hidden],
+    #pmEntityFormCard[hidden] {
+        display: none !important;
+    }
+
+    .pm-entity-card-header,
+    .pm-entities-toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+    }
+
+    .pm-entity-card-header h4,
+    .pm-entities-toolbar h4 {
+        margin: 4px 0 0;
+        color: #082033;
+        font-size: 15px;
+        font-weight: 900;
+    }
+
+    .pm-entity-card-header p,
+    .pm-entities-toolbar p {
+        margin: 4px 0 0;
+        color: #526b82;
+        font-size: 12px;
+        font-weight: 650;
+    }
+
+    .pm-entity-import-row {
+        display: grid;
+        grid-template-columns: 260px minmax(180px, 1fr) 190px;
+        gap: 10px;
+        align-items: center;
+    }
+
+    .pm-selected-file {
+        display: flex;
+        align-items: center;
+        min-height: 40px;
+        padding: 0 13px;
+        border: 1px solid #d7e2ec;
+        border-radius: 9px;
+        background: #f8fbfd;
+        color: #415a70;
+        font-size: 12px;
+        font-weight: 750;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .pm-entity-form {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 12px;
+        align-items: end;
+    }
+
+    .pm-entity-form .pm-field input {
+        min-height: 42px;
+    }
+
+    .pm-entity-form-actions {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+    }
+
+    .pm-entity-table-card {
+        flex: 1 1 auto;
+        min-height: 360px;
+    }
+
+    .pm-entities-table-wrap {
+        min-height: 320px;
+        max-height: 430px;
+        overflow: auto;
+        border: 1px solid #d7e2ec;
+        border-radius: 10px;
+        background: #ffffff;
+    }
+
+    .pm-entities-table {
+        width: 100%;
+        min-width: 940px;
+        border-collapse: separate;
+        border-spacing: 0;
+        font-size: 12px;
+    }
+
+    .pm-entities-table thead th {
+        position: sticky;
+        top: 0;
+        z-index: 2;
+        padding: 12px 13px;
+        background: #0d1021;
+        color: #ffffff;
+        font-size: 11px;
+        font-weight: 900;
+        text-align: left;
+        text-transform: uppercase;
+        border-bottom: 1px solid #0d1021;
+    }
+
+    .pm-entities-table tbody td {
+        padding: 12px 13px;
+        border-bottom: 1px solid #e1ebf3;
+        border-right: 1px solid #e1ebf3;
+        color: #003057;
+        vertical-align: middle;
+        background: #ffffff;
+    }
+
+    .pm-entities-table tbody tr:nth-child(even) td {
+        background: #f8fbfd;
+    }
+
+    .pm-entities-table tbody tr:hover td {
+        background: #eef6fb;
+    }
+
+    .pm-entities-table tbody td:last-child {
+        border-right: 0;
+    }
+
+    .pm-entity-chip {
+        display: inline-flex;
+        min-width: 46px;
+        justify-content: center;
+        padding: 5px 9px;
+        border-radius: 999px;
+        background: #edf4f9;
+        color: #173a59;
+        font-size: 11px;
+        font-weight: 900;
+    }
+
+    .pm-entity-row-actions {
+        display: flex;
+        gap: 7px;
+        align-items: center;
+        justify-content: flex-start;
+        min-width: 155px;
+    }
+
+    .pm-table-action {
+        display: inline-flex;
+        min-height: 32px;
+        align-items: center;
+        gap: 6px;
+        padding: 0 10px;
+        border: 1px solid #cbd9e6;
+        border-radius: 8px;
+        background: #ffffff;
+        color: #102a43;
+        font-size: 11px;
+        font-weight: 850;
+        cursor: pointer;
+        white-space: nowrap;
+    }
+
+    .pm-table-action:hover {
+        background: #edf4f9;
+    }
+
+    .pm-table-action.is-danger {
+        border-color: #f0c9c9;
+        background: #fff8f8;
+        color: #9f1d1d;
+    }
+
+    .pm-table-action.is-danger:hover {
+        background: #fee4e2;
+    }
+
+    .pm-modal-footer {
+        flex: 0 0 auto;
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        padding: 16px 34px 22px;
+        border-top: 1px solid #d7e2ec;
+        background: #ffffff;
+    }
+
+    body.pm-modal-open {
+        overflow: hidden;
+    }
+
+    @media (max-width: 980px) {
+        .pm-entity-import-row,
+        .pm-entity-form {
+            grid-template-columns: 1fr;
+        }
+
+        .pm-entities-header,
+        .pm-entities-body,
+        .pm-modal-footer {
+            padding-left: 20px;
+            padding-right: 20px;
+        }
+
+        .pm-entities-modal-card {
+            height: 94vh;
+        }
+
+        .pm-entities-table-wrap {
+            max-height: 360px;
+        }
+    }
+
+    /* ===============================
+   ENTITIES ACTION ICON BUTTONS - ASTRO GLOBAL FIX
+   =============================== */
+
+    :global(.pm-entities-modal .pm-entities-table th:nth-child(6)),
+    :global(.pm-entities-modal .pm-entities-table td:nth-child(6)) {
+        width: 128px !important;
+        min-width: 128px !important;
+        max-width: 128px !important;
+        text-align: center !important;
+    }
+
+    :global(.pm-entities-modal .pm-entities-table td:nth-child(6)) {
+        padding: 8px 12px !important;
+    }
+
+    :global(.pm-entities-modal .pm-entity-row-actions) {
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 12px !important;
+        width: 100% !important;
+        min-width: 92px !important;
+    }
+
+    :global(.pm-entities-modal .pm-icon-btn) {
+        display: inline-flex !important;
+        flex: 0 0 38px !important;
+        width: 38px !important;
+        min-width: 38px !important;
+        max-width: 38px !important;
+        height: 38px !important;
+        min-height: 38px !important;
+        max-height: 38px !important;
+        align-items: center !important;
+        justify-content: center !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        border: 1px solid #cbd9e6 !important;
+        border-radius: 10px !important;
+        background: #ffffff !important;
+        color: #244c6b !important;
+        font-size: 13px !important;
+        line-height: 1 !important;
+        cursor: pointer !important;
+        box-shadow: none !important;
+        text-indent: 0 !important;
+        overflow: visible !important;
+    }
+
+    :global(.pm-entities-modal .pm-icon-btn i) {
+        display: block !important;
+        font-size: 13px !important;
+        line-height: 1 !important;
+        pointer-events: none !important;
+    }
+
+    :global(.pm-entities-modal .pm-icon-btn:hover) {
+        background: #f3f8fc !important;
+        border-color: #9fb7cc !important;
+        color: #0f3554 !important;
+    }
+
+    :global(.pm-entities-modal .pm-icon-btn.is-danger) {
+        color: #244c6b !important;
+        border-color: #cbd9e6 !important;
+        background: #ffffff !important;
+    }
+
+    :global(.pm-entities-modal .pm-icon-btn.is-danger:hover) {
+        background: #fff5f5 !important;
+        border-color: #e8b4b4 !important;
+        color: #9f1d1d !important;
+    }
+
+    /* ===============================
+   QUARTER REVIEW REDESIGN
+   =============================== */
+
+    :global(.pm-quarter-workspace) {
+        display: grid;
+        gap: 16px;
+    }
+
+    :global(.pm-quarter-section-head) {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 18px;
+    }
+
+    :global(.pm-quarter-section-head h3) {
+        margin: 5px 0 4px;
+        color: #082033;
+        font-size: 18px;
+        font-weight: 900;
+    }
+
+    :global(.pm-quarter-section-head p) {
+        margin: 0;
+        color: #526b82;
+        font-size: 12px;
+        font-weight: 650;
+    }
+
+    :global(.pm-store-quarter-panel) {
+        display: grid;
+        gap: 14px;
+        padding: 16px;
+        border: 1px solid #d7e2ec;
+        border-radius: 12px;
+        background: #ffffff;
+        box-shadow: 0 18px 44px -40px rgba(8, 31, 51, 0.62);
+    }
+
+    :global(.pm-store-quarter-table-wrap) {
+        max-height: 420px;
+        overflow: auto;
+        border: 1px solid #d7e2ec;
+        border-radius: 10px;
+        background: #ffffff;
+    }
+
+    :global(.pm-store-quarter-table) {
+        width: 100%;
+        min-width: 980px;
+        border-collapse: separate;
+        border-spacing: 0;
+        font-size: 12px;
+    }
+
+    :global(.pm-store-quarter-table th) {
+        position: sticky;
+        top: 0;
+        z-index: 2;
+        padding: 12px 13px;
+        background: #0d1021;
+        color: #ffffff;
+        font-size: 11px;
+        font-weight: 900;
+        text-align: left;
+        text-transform: uppercase;
+    }
+
+    :global(.pm-store-quarter-table td) {
+        padding: 11px 13px;
+        border-bottom: 1px solid #e1ebf3;
+        border-right: 1px solid #e1ebf3;
+        color: #003057;
+        background: #ffffff;
+    }
+
+    :global(.pm-store-quarter-table tr:nth-child(even) td) {
+        background: #f8fbfd;
+    }
+
+    :global(.pm-store-quarter-table td.is-open),
+    :global(.pm-quarter-modal-table td.is-open) {
+        color: #9f1d1d;
+        font-weight: 900;
+    }
+
+    :global(.pm-store-quarter-table td.is-balanced),
+    :global(.pm-quarter-modal-table td.is-balanced) {
+        color: #0f665f;
+        font-weight: 900;
+    }
+
+    :global(.pm-quarter-status) {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 96px;
+        padding: 5px 9px;
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 900;
+    }
+
+    :global(.pm-quarter-status.is-open) {
+        background: #fff2f2;
+        color: #9f1d1d;
+    }
+
+    :global(.pm-quarter-status.is-balanced) {
+        background: #f0fbf7;
+        color: #0f665f;
+    }
+
+    :global(.pm-store-detail-button) {
+        display: inline-flex;
+        min-height: 34px;
+        align-items: center;
+        justify-content: center;
+        padding: 0 13px;
+        border: 1px solid #cbd9e6;
+        border-radius: 9px;
+        background: #ffffff;
+        color: #102a43;
+        font-size: 12px;
+        font-weight: 850;
+        cursor: pointer;
+    }
+
+    :global(.pm-store-detail-button:hover) {
+        background: #edf4f9;
+    }
+
+    /* Modal */
+    :global(.pm-quarter-store-modal) {
+        position: fixed !important;
+        inset: 0 !important;
+        z-index: 50000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+        background: rgba(8, 31, 51, 0.72);
+        backdrop-filter: blur(4px);
+        overflow: hidden;
+    }
+
+    :global(.pm-quarter-store-modal[hidden]) {
+        display: none !important;
+    }
+
+    :global(.pm-quarter-store-modal-card) {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        width: min(1180px, 95vw);
+        height: min(860px, 92vh);
+        overflow: hidden;
+        border: 1px solid #d7e2ec;
+        border-radius: 14px;
+        background: #ffffff;
+        box-shadow: 0 32px 90px -34px rgba(8, 31, 51, 0.75);
+    }
+
+    :global(.pm-quarter-store-header) {
+        flex: 0 0 auto;
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 20px;
+        padding: 24px 34px 20px;
+        border-bottom: 1px solid #d7e2ec;
+        background: #ffffff;
+    }
+
+    :global(.pm-quarter-store-header h3) {
+        margin: 6px 0 6px;
+        color: #082033;
+        font-size: 26px;
+        font-weight: 900;
+    }
+
+    :global(.pm-quarter-store-header p) {
+        margin: 0;
+        color: #415a70;
+        font-size: 13px;
+        font-weight: 650;
+    }
+
+    :global(.pm-quarter-store-body) {
+        flex: 1 1 auto;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        min-height: 0;
+        overflow: hidden;
+        padding: 22px 34px;
+        background: #f8fbfd;
+    }
+
+    :global(.pm-quarter-modal-filters) {
+        flex: 0 0 auto;
+        display: grid;
+        grid-template-columns:
+            minmax(180px, 1.4fr) repeat(3, minmax(150px, 1fr))
+            auto;
+        gap: 12px;
+        align-items: end;
+        padding: 16px;
+        border: 1px solid #d7e2ec;
+        border-radius: 12px;
+        background: #ffffff;
+    }
+
+    :global(.pm-quarter-modal-summary) {
+        flex: 0 0 auto;
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 10px;
+    }
+
+    :global(.pm-quarter-modal-summary article) {
+        padding: 14px;
+        border: 1px solid #d7e2ec;
+        border-radius: 10px;
+        background: #ffffff;
+    }
+
+    :global(.pm-quarter-modal-summary span) {
+        display: block;
+        color: #526b82;
+        font-size: 11px;
+        font-weight: 850;
+        text-transform: uppercase;
+    }
+
+    :global(.pm-quarter-modal-summary strong) {
+        display: block;
+        margin-top: 7px;
+        color: #082033;
+        font-size: 18px;
+        font-weight: 900;
+    }
+
+    :global(.pm-quarter-modal-summary article.is-open strong) {
+        color: #9f1d1d;
+    }
+
+    :global(.pm-quarter-modal-summary article.is-balanced strong) {
+        color: #0f665f;
+    }
+
+    :global(.pm-quarter-modal-table-wrap) {
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow: auto;
+        border: 1px solid #d7e2ec;
+        border-radius: 10px;
+        background: #ffffff;
+    }
+
+    :global(.pm-quarter-modal-table) {
+        width: 100%;
+        min-width: 980px;
+        border-collapse: separate;
+        border-spacing: 0;
+        font-size: 12px;
+    }
+
+    :global(.pm-quarter-modal-table th) {
+        position: sticky;
+        top: 0;
+        z-index: 2;
+        padding: 12px 13px;
+        background: #0d1021;
+        color: #ffffff;
+        font-size: 11px;
+        font-weight: 900;
+        text-align: left;
+        text-transform: uppercase;
+    }
+
+    :global(.pm-quarter-modal-table td) {
+        padding: 11px 13px;
+        border-bottom: 1px solid #e1ebf3;
+        border-right: 1px solid #e1ebf3;
+        color: #003057;
+        background: #ffffff;
+    }
+
+    :global(.pm-quarter-modal-table tr:nth-child(even) td) {
+        background: #f8fbfd;
+    }
+
+    @media (max-width: 980px) {
+        :global(.pm-quarter-modal-filters),
+        :global(.pm-quarter-modal-summary) {
+            grid-template-columns: 1fr;
+        }
+
+        :global(.pm-quarter-store-header),
+        :global(.pm-quarter-store-body) {
+            padding-left: 20px;
+            padding-right: 20px;
+        }
+    }
+
+    @media (max-width: 1180px) {
+        .pm-upload-section > .multi-upload-container {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .pm-review-heading {
+            flex-wrap: wrap;
+        }
+
+        .pm-review-heading .pm-schedule-actions {
+            width: 100%;
+            justify-content: flex-start;
+            margin-left: 42px;
+        }
+    }
+
+    @media (max-width: 760px) {
+        .pm-upload-section > .multi-upload-container {
+            grid-template-columns: 1fr;
+        }
+
+        .pm-review-heading .pm-schedule-actions {
+            margin-left: 0;
+        }
+
+        .pm-review-heading .pm-schedule-actions .btn {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+
+    .pm-upload-section .pm-intake-grid {
+        display: grid !important;
+        grid-template-columns:
+            minmax(320px, 1fr)
+            minmax(320px, 1fr)
+            minmax(340px, 0.72fr);
+        gap: 18px;
+        align-items: stretch;
+    }
+
+    .pm-upload-section .pm-intake-grid > .upload-card,
+    .pm-upload-section .pm-intake-grid > .pm-saved-work-card {
+        min-width: 0;
+        min-height: 315px;
+    }
+
+    .pm-saved-work-card {
+        display: flex;
+        flex-direction: column;
+        gap: 22px;
+        padding: 28px;
+        border: 1px solid #d7e2ec;
+        border-radius: 18px;
+        background: #ffffff;
+    }
+
+    .pm-saved-work-card .pm-manager-card-header {
+        padding-bottom: 18px;
+        border-bottom: 1px solid #d7e2ec;
+    }
+
+    .pm-saved-work-card .pm-field {
+        margin-top: 4px;
+    }
+
+    .pm-saved-work-card .pm-inline-controls {
+        margin-top: auto;
+    }
+
+    .pm-saved-work-card .pm-inline-controls select {
+        min-width: 0;
+    }
+
+    .pm-schedule-actions-bottom {
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        gap: 9px;
+        margin-top: 12px;
+        padding-top: 14px;
+        border-top: 1px solid #d7e2ec;
+    }
+
+    .pm-schedule-actions-bottom .btn {
+        min-height: 40px;
+    }
+
+    /* Property Management intake layout - keep 3 cards in one row */
+    .pm-upload-section > .multi-upload-container.pm-intake-grid {
+        display: grid !important;
+        grid-template-columns:
+            minmax(360px, 1fr)
+            minmax(360px, 1fr)
+            minmax(310px, 0.7fr) !important;
+        gap: 18px !important;
+        align-items: stretch !important;
+    }
+
+    .pm-upload-section > .multi-upload-container.pm-intake-grid > .upload-card,
+    .pm-upload-section
+        > .multi-upload-container.pm-intake-grid
+        > .pm-saved-work-card {
+        min-width: 0;
+        min-height: 315px;
+    }
+
+    .pm-upload-section
+        > .multi-upload-container.pm-intake-grid
+        > .pm-saved-work-card {
+        grid-column: auto !important;
+        grid-row: auto !important;
+    }
+
+    /* Only collapse when the screen is actually too small */
+    @media (max-width: 1080px) {
+        .pm-upload-section > .multi-upload-container.pm-intake-grid {
+            grid-template-columns: 1fr !important;
+        }
+
+        .pm-upload-section
+            > .multi-upload-container.pm-intake-grid
+            > .pm-saved-work-card {
+            grid-column: auto !important;
+        }
+    }
+
+    @media (max-width: 760px) {
+        .pm-upload-section .pm-intake-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .pm-upload-section .pm-intake-grid > .pm-saved-work-card {
+            grid-column: auto;
+        }
+
+        .pm-schedule-actions-bottom {
+            justify-content: stretch;
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .pm-schedule-actions-bottom .btn {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+
+    /* =========================================================
+   PROPERTY MANAGEMENT - FINAL VISUAL FIX V2
+   No depende de wrappers nuevos. Separa visualmente:
+   1) Files and schedule
+   2) Review
+   ========================================================= */
+
+    .property-management-page
+        #pmUploadSection.upload-section.pm-upload-section {
+        display: grid !important;
+        gap: 0 !important;
+        padding: 0 !important;
+        border: 0 !important;
+        border-radius: 0 !important;
+        background: transparent !important;
+        box-shadow: none !important;
+    }
+
+    .property-management-page #pmUploadSection > .section-heading {
+        display: flex !important;
+        align-items: flex-start !important;
+        gap: 12px !important;
+        margin: 0 !important;
+        padding: 24px 24px 8px !important;
+        border: 1px solid #d7e2ec !important;
+        border-bottom: 0 !important;
+        border-radius: 18px 18px 0 0 !important;
+        background: #ffffff !important;
+        box-shadow: 0 18px 44px -40px rgba(8, 31, 51, 0.62) !important;
+    }
+
+    .property-management-page
+        #pmUploadSection
+        > .section-heading
+        + .multi-upload-container.pm-intake-grid {
+        display: grid !important;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(
+                320px,
+                420px
+            ) !important;
+        grid-template-areas: "dimension monthly saved" !important;
+        gap: 18px !important;
+        align-items: stretch !important;
+        width: 100% !important;
+        max-width: none !important;
+        margin: 0 !important;
+        padding: 18px 24px 24px !important;
+        border: 1px solid #d7e2ec !important;
+        border-top: 0 !important;
+        border-radius: 0 0 18px 18px !important;
+        background: #ffffff !important;
+        box-shadow: 0 18px 44px -40px rgba(8, 31, 51, 0.62) !important;
+    }
+
+    .property-management-page #salesUploadCard {
+        grid-area: dimension !important;
+    }
+
+    .property-management-page #salesDetailUploadCard {
+        grid-area: monthly !important;
+    }
+
+    .property-management-page .pm-saved-work-card {
+        grid-area: saved !important;
+        grid-column: auto !important;
+        grid-row: auto !important;
+    }
+
+    .property-management-page #salesUploadCard,
+    .property-management-page #salesDetailUploadCard,
+    .property-management-page .pm-saved-work-card {
+        width: 100% !important;
+        min-width: 0 !important;
+        min-height: 315px !important;
+        box-sizing: border-box !important;
+    }
+
+    .property-management-page #salesUploadCard,
+    .property-management-page #salesDetailUploadCard {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 12px !important;
+        align-content: normal !important;
+        padding: 18px !important;
+        border: 1px solid #e1ebf3 !important;
+        border-radius: 16px !important;
+        background: #ffffff !important;
+    }
+
+    .property-management-page #salesUploadCard .reconciliation-dropzone,
+    .property-management-page #salesDetailUploadCard .reconciliation-dropzone {
+        display: grid !important;
+        flex: 1 1 auto !important;
+        min-height: 150px !important;
+        place-items: center !important;
+        margin: 0 !important;
+    }
+
+    .property-management-page #salesUploadCard .upload-format-hint,
+    .property-management-page #salesDetailUploadCard .upload-format-hint {
+        display: block !important;
+        margin: 0 !important;
+    }
+
+    .property-management-page #salesUploadCard > .btn,
+    .property-management-page #salesDetailUploadCard > .btn {
+        width: auto !important;
+        max-width: max-content !important;
+        justify-content: center !important;
+        margin-top: 2px !important;
+    }
+
+    .property-management-page .pm-saved-work-card {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 18px !important;
+        padding: 24px !important;
+        border: 1px solid #e1ebf3 !important;
+        border-radius: 16px !important;
+        background: #ffffff !important;
+    }
+
+    .property-management-page .pm-saved-work-card .pm-manager-card-header {
+        padding-bottom: 16px !important;
+        border-bottom: 1px solid #d7e2ec !important;
+    }
+
+    .property-management-page .pm-saved-work-card .pm-inline-controls {
+        margin-top: auto !important;
+        align-self: stretch !important;
+    }
+
+    .property-management-page #pmAlertStack {
+        margin-top: 14px !important;
+    }
+
+    .property-management-page #pmEditorTab.pm-tab-panel {
+        display: grid !important;
+        gap: 0 !important;
+        margin-top: 22px !important;
+    }
+
+    .property-management-page #pmEditorTab.pm-tab-panel[hidden] {
+        display: none !important;
+    }
+
+    .property-management-page #pmSchedulePreview.pm-schedule-preview {
+        display: grid !important;
+        gap: 16px !important;
+        width: 100% !important;
+        padding: 24px !important;
+        border: 1px solid #d7e2ec !important;
+        border-radius: 18px !important;
+        background: #ffffff !important;
+        box-shadow: 0 18px 44px -40px rgba(8, 31, 51, 0.62) !important;
+    }
+
+    .property-management-page #pmSchedulePreview.pm-schedule-preview[hidden] {
+        display: none !important;
+    }
+
+    .property-management-page
+        #pmSchedulePreview
+        > .section-heading.pm-review-heading {
+        display: flex !important;
+        align-items: flex-start !important;
+        gap: 12px !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: 0 !important;
+        background: transparent !important;
+        box-shadow: none !important;
+    }
+
+    .property-management-page .pm-preview-summary.pm-simple-stats-grid {
+        display: grid !important;
+        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+        gap: 12px !important;
+    }
+
+    .property-management-page .pm-schedule-actions-bottom {
+        display: flex !important;
+        justify-content: flex-end !important;
+        align-items: center !important;
+        gap: 9px !important;
+        margin-top: 0 !important;
+        padding-top: 14px !important;
+        border-top: 1px solid #d7e2ec !important;
+    }
+
+    @media (max-width: 1180px) {
+        .property-management-page
+            #pmUploadSection
+            > .section-heading
+            + .multi-upload-container.pm-intake-grid {
+            grid-template-columns: 1fr !important;
+            grid-template-areas:
+                "dimension"
+                "monthly"
+                "saved" !important;
+        }
+
+        .property-management-page .pm-saved-work-card {
+            min-width: 0 !important;
+        }
+    }
+
+    @media (max-width: 760px) {
+        .property-management-page #pmUploadSection > .section-heading,
+        .property-management-page
+            #pmUploadSection
+            > .section-heading
+            + .multi-upload-container.pm-intake-grid,
+        .property-management-page #pmSchedulePreview.pm-schedule-preview {
+            padding-left: 16px !important;
+            padding-right: 16px !important;
+        }
+
+        .property-management-page .pm-preview-summary {
+            grid-template-columns: 1fr !important;
+        }
+
+        .property-management-page .pm-schedule-actions-bottom {
+            flex-direction: column !important;
+            align-items: stretch !important;
+            justify-content: stretch !important;
+        }
+
+        .property-management-page .pm-schedule-actions-bottom .btn {
+            width: 100% !important;
+            justify-content: center !important;
+        }
+    }
+
+    @media (max-width: 760px) {
+        .property-management-page .pm-upload-file-actions {
+            grid-template-columns: 1fr !important;
+        }
+
+        .property-management-page .pm-remove-file-btn,
+        .property-management-page .pm-schedule-actions-bottom .btn {
+            width: 100% !important;
+            justify-content: center !important;
+        }
+
+        .property-management-page .pm-schedule-actions-bottom {
+            flex-direction: column !important;
+            align-items: stretch !important;
+        }
+
+        .property-management-page .pm-preview-summary.pm-simple-stats-grid {
+            grid-template-columns: 1fr !important;
+        }
+
+        .pm-simple-stat-card {
+            min-height: 76px;
+            padding: 14px;
+        }
+
+        .pm-simple-stat-icon {
+            width: 38px;
+            height: 38px;
+            min-width: 38px;
+        }
+
+        .pm-simple-stat-copy strong {
+            font-size: 22px;
+        }
+
+        :global(.pm-qc-card) {
+            padding: 13px;
+        }
+
+        :global(.pm-qc-value-row) {
+            align-items: flex-start;
+            flex-direction: column;
+        }
+
+        :global(.pm-qc-button) {
+            width: 100%;
+        }
+
+        :global(.pm-qc-metrics) {
+            grid-template-columns: 1fr;
+        }
+
+        :global(.pm-qc-metrics div) {
+            border-right: 0;
+            border-bottom: 1px solid #dfe9f2;
+        }
+
+        :global(.pm-qc-metrics div:last-child) {
+            border-bottom: 0;
+        }
+    }
+
+    /* =========================================================
+   PROPERTY MANAGEMENT - SELECTED FILES CLEAN DESIGN
+   ========================================================= */
+
+    :global(.property-management-page .pm-upload-file-actions) {
+        display: grid !important;
+        grid-template-columns: minmax(0, 1fr) 38px !important;
+        align-items: center !important;
+        gap: 12px !important;
+        margin-top: 12px !important;
+        padding: 12px !important;
+        border: 1px solid #d7e3ef !important;
+        border-radius: 14px !important;
+        background: #f8fbfe !important;
+    }
+
+    :global(.property-management-page .pm-upload-file-summary) {
+        display: grid !important;
+        gap: 8px !important;
+        min-width: 0 !important;
+    }
+
+    :global(.property-management-page .pm-upload-file-label) {
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 7px !important;
+        width: fit-content !important;
+        color: #526b82 !important;
+        font-size: 10px !important;
+        font-weight: 900 !important;
+        line-height: 1 !important;
+        letter-spacing: 0.04em !important;
+        text-transform: uppercase !important;
+    }
+
+    :global(.property-management-page .pm-upload-file-label i) {
+        color: #0b3a67 !important;
+        font-size: 11px !important;
+    }
+
+    :global(.property-management-page .pm-upload-file-name) {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        align-items: center !important;
+        gap: 6px !important;
+        min-width: 0 !important;
+        max-height: 64px !important;
+        overflow: auto !important;
+    }
+
+    :global(.property-management-page .pm-upload-file-empty) {
+        display: inline-flex !important;
+        align-items: center !important;
+        min-height: 28px !important;
+        padding: 0 10px !important;
+        border: 1px dashed #cbd9e6 !important;
+        border-radius: 999px !important;
+        background: #ffffff !important;
+        color: #60758a !important;
+        font-size: 12px !important;
+        font-weight: 800 !important;
+    }
+
+    :global(.property-management-page .pm-upload-file-chip) {
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 7px !important;
+        max-width: 210px !important;
+        min-height: 28px !important;
+        padding: 0 10px !important;
+        border: 1px solid #d7e3ef !important;
+        border-radius: 999px !important;
+        background: #ffffff !important;
+        color: #102a43 !important;
+        font-size: 12px !important;
+        font-weight: 850 !important;
+        line-height: 1 !important;
+    }
+
+    :global(.property-management-page .pm-upload-file-chip i) {
+        flex: 0 0 auto !important;
+        color: #0b3a67 !important;
+        font-size: 11px !important;
+    }
+
+    :global(.property-management-page .pm-upload-file-chip span) {
+        display: block !important;
+        min-width: 0 !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        white-space: nowrap !important;
+    }
+
+    :global(.property-management-page .pm-upload-file-count) {
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 7px !important;
+        min-height: 28px !important;
+        padding: 0 10px !important;
+        border: 1px solid #cce7de !important;
+        border-radius: 999px !important;
+        background: #eefaf6 !important;
+        color: #0f665f !important;
+        font-size: 12px !important;
+        font-weight: 900 !important;
+        line-height: 1 !important;
+    }
+
+    :global(.property-management-page .pm-upload-file-count i) {
+        color: #0f665f !important;
+        font-size: 11px !important;
+    }
+
+    :global(.property-management-page .pm-upload-file-more) {
+        display: inline-flex !important;
+        align-items: center !important;
+        min-height: 28px !important;
+        padding: 0 10px !important;
+        border: 1px solid #d7e3ef !important;
+        border-radius: 999px !important;
+        background: #edf4f9 !important;
+        color: #344f67 !important;
+        font-size: 12px !important;
+        font-weight: 850 !important;
+        line-height: 1 !important;
+    }
+
+    :global(.property-management-page .pm-remove-file-btn) {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        width: 38px !important;
+        height: 38px !important;
+        min-width: 38px !important;
+        padding: 0 !important;
+        border: 1px solid #f0c9c9 !important;
+        border-radius: 10px !important;
+        background: #fff8f8 !important;
+        color: #b42318 !important;
+        box-shadow: none !important;
+    }
+
+    :global(
+        .property-management-page .pm-remove-file-btn:hover:not(:disabled)
+    ) {
+        background: #fee4e2 !important;
+        border-color: #e8a7a7 !important;
+        color: #9f1d1d !important;
+    }
+
+    :global(.property-management-page .pm-remove-file-btn:disabled) {
+        opacity: 0.45 !important;
+        cursor: not-allowed !important;
+    }
+
+    @media (max-width: 760px) {
+        :global(.property-management-page .pm-upload-file-actions) {
+            grid-template-columns: 1fr !important;
+        }
+
+        :global(.property-management-page .pm-remove-file-btn) {
+            width: 100% !important;
+            min-width: 0 !important;
+        }
+    }
+
+    /*    /* ===============================
+       MONTHLY TOTALS - COMPACT STRIP
+       =============================== */
+
+    :global(.pm-monthly-totals-panel) {
+        display: grid;
+        gap: 12px;
+        padding: 14px 16px;
+        border: 1px solid #d7e2ec;
+        border-radius: 14px;
+        background: #fbfdff;
+    }
+
+    :global(.pm-monthly-totals-header) {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 18px;
+    }
+
+    :global(.pm-monthly-totals-header h3) {
+        margin: 4px 0 3px;
+        color: #082033;
+        font-size: 17px;
+        font-weight: 900;
+    }
+
+    :global(.pm-monthly-totals-header p) {
+        margin: 0;
+        color: #526b82;
+        font-size: 12px;
+        font-weight: 700;
+    }
+
+    :global(.pm-monthly-totals-grand) {
+        display: flex;
+        gap: 10px;
+        flex: 0 0 auto;
+    }
+
+    :global(.pm-monthly-totals-grand div) {
+        display: grid;
+        gap: 3px;
+        min-width: 150px;
+        padding: 10px 12px;
+        border: 1px solid #d7e2ec;
+        border-radius: 12px;
+        background: #ffffff;
+    }
+
+    :global(.pm-monthly-totals-grand span) {
+        color: #526b82;
+        font-size: 10px;
+        font-weight: 850;
+        text-transform: uppercase;
+    }
+
+    :global(.pm-monthly-totals-grand strong) {
+        color: #082033;
+        font-size: 17px;
+        font-weight: 950;
+        font-variant-numeric: tabular-nums;
+    }
+
+    :global(.pm-monthly-totals-strip) {
+        display: grid;
+        grid-auto-flow: column;
+        grid-auto-columns: minmax(320px, 340px);
+        gap: 12px;
+        overflow-x: auto;
+        overflow-y: hidden;
+        padding: 2px 2px 10px;
+        scrollbar-color: #9fbad3 #edf4f9;
+        scrollbar-width: thin;
+    }
+
+    :global(.pm-month-mini-values strong) {
+        color: #082033;
+        font-size: 13px;
+        font-weight: 950;
+        white-space: nowrap;
+        font-variant-numeric: tabular-nums;
+    }
+
+    :global(.pm-month-total-mini-card) {
+        display: grid;
+        gap: 10px;
+        min-height: 140px;
+        padding: 14px;
+    }
+
+    :global(.pm-monthly-totals-strip::-webkit-scrollbar) {
+        height: 8px;
+    }
+
+    :global(.pm-monthly-totals-strip::-webkit-scrollbar-track) {
+        border-radius: 999px;
+        background: #edf4f9;
+    }
+
+    :global(.pm-monthly-totals-strip::-webkit-scrollbar-thumb) {
+        border-radius: 999px;
+        background: #9fbad3;
+    }
+
+    :global(.pm-month-total-card) {
+        display: grid;
+        gap: 10px;
+        min-height: 148px;
+        min-width: 0;
+        padding: 14px;
+        border: 1px solid #d7e2ec;
+        border-radius: 13px;
+        background: #ffffff;
+        box-shadow: 0 10px 24px -24px rgba(8, 31, 51, 0.55);
+    }
+
+    :global(.pm-month-total-card.is-zero) {
+        opacity: 0.62;
+    }
+
+    :global(.pm-month-total-card.is-empty) {
+        min-height: 90px;
+        place-items: center;
+        color: #526b82;
+        font-size: 13px;
+        font-weight: 800;
+        text-align: center;
+    }
+
+    :global(.pm-month-total-head) {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+    }
+
+    :global(.pm-month-total-head > div) {
+        display: block;
+        min-width: 0;
+    }
+
+    :global(.pm-month-total-label) {
+        display: none;
+    }
+
+    :global(.pm-month-total-head strong) {
+        display: block;
+        overflow: hidden;
+        color: #082033;
+        font-size: 15px;
+        font-weight: 950;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    :global(.pm-month-total-status) {
+        display: inline-flex;
+        align-items: center;
+        min-height: 22px;
+        padding: 0 8px;
+        border-radius: 999px;
+        font-size: 9px;
+        font-weight: 900;
+        text-transform: uppercase;
+        white-space: nowrap;
+    }
+
+    :global(.pm-month-total-status.is-balanced) {
+        background: #e8f7f3;
+        color: #0f665f;
+    }
+
+    :global(.pm-month-total-status.is-open) {
+        background: #fff4e5;
+        color: #946200;
+    }
+
+    :global(.pm-month-total-grid) {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        overflow: hidden;
+        border: 1px solid #e1ebf3;
+        border-radius: 10px;
+        background: #f8fbfd;
+    }
+
+    :global(.pm-month-total-grid div) {
+        display: grid;
+        gap: 3px;
+        min-width: 0;
+        padding: 9px 10px;
+    }
+
+    :global(.pm-month-total-grid div:first-child) {
+        border-right: 1px solid #e1ebf3;
+    }
+
+    :global(.pm-month-total-grid span),
+    :global(.pm-month-total-difference span) {
+        color: #6b8094;
+        font-size: 9px;
+        font-weight: 850;
+        text-transform: uppercase;
+    }
+
+    :global(.pm-month-total-grid strong) {
+        overflow: visible;
+        color: #082033;
+        font-size: 13px;
+        font-weight: 950;
+        text-overflow: clip;
+        white-space: nowrap;
+        font-variant-numeric: tabular-nums;
+    }
+
+    :global(.pm-month-total-difference) {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        padding-top: 8px;
+        border-top: 1px solid #e1ebf3;
+    }
+
+    :global(.pm-month-total-difference strong) {
+        color: #082033;
+        font-size: 14px;
+        font-weight: 950;
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+    }
+
+    :global(
+        .pm-month-total-card.is-balanced .pm-month-total-difference strong
+    ) {
+        color: #0f665f;
+    }
+
+    :global(.pm-month-total-card.is-open .pm-month-total-difference strong) {
+        color: #946200;
+    }
+
+    @media (max-width: 760px) {
+        :global(.pm-monthly-totals-header) {
+            align-items: flex-start;
+            flex-direction: column;
+        }
+
+        :global(.pm-monthly-totals-grand) {
+            width: 100%;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+        }
+
+        :global(.pm-monthly-totals-grand div) {
+            min-width: 0;
+        }
+
+        :global(.pm-monthly-totals-strip) {
+            grid-auto-columns: minmax(300px, 86vw);
+        }
+    }
+</style>

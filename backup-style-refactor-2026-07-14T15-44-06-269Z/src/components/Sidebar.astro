@@ -1,0 +1,490 @@
+---
+// Sidebar component with permission-aware navigation.
+---
+
+<aside class="sidebar sidebar-permissions-pending" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-logo">
+            <span class="sidebar-logo-text">XBFS</span>
+        </div>
+        <button
+            class="sidebar-toggle"
+            id="sidebarToggle"
+            aria-label="Open or close menu"
+        >
+            <i class="fa-solid fa-bars"></i>
+        </button>
+    </div>
+    <div class="sidebar-search" role="search">
+        <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+        <input
+            id="sidebarSearch"
+            type="search"
+            placeholder="Search..."
+            autocomplete="off"
+            aria-label="Search menu"
+        />
+    </div>
+    <nav class="sidebar-nav">
+        <!-- GENERAL -->
+        <div class="sidebar-section">
+            <div class="sidebar-section-title">Accounts Receivable</div>
+            <ul class="sidebar-menu" id="menuGeneral">
+                <li class="sidebar-menu-item" data-permission="tiendas">
+                    <a class="sidebar-menu-link" href="/views/tiendas">
+                        <i class="fa-solid fa-shop"></i>
+                        <span>Stores</span>
+                    </a>
+                </li>
+                <li class="sidebar-menu-item" data-permission="documentos">
+                    <a class="sidebar-menu-link" href="/views/documentos">
+                        <i class="fa-solid fa-file-excel"></i>
+                        <span>Documents</span>
+                    </a>
+                </li>
+                <li class="sidebar-menu-item" data-permission="historial">
+                    <a class="sidebar-menu-link" href="/views/historial">
+                        <i class="fa-solid fa-clock-rotate-left"></i>
+                        <span>History</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- DEPARTMENTS -->
+        <div class="sidebar-section">
+            <div class="sidebar-section-title">Property Management</div>
+            <ul class="sidebar-menu" id="menuDepartments">
+                <li
+                    class="sidebar-menu-item"
+                    data-permission="propertyManagement"
+                >
+                    <a
+                        class="sidebar-menu-link"
+                        href="/views/departments/dashboard-property"
+                    >
+                        <i class="fa-solid fa-building-user"></i>
+                        <span>Schedules</span>
+                    </a>
+                </li>
+                <li
+                    class="sidebar-menu-item"
+                    data-permission="propertyManagementDocuments"
+                >
+                    <a
+                        class="sidebar-menu-link"
+                        href="/views/departments/property-management-documents"
+                    >
+                        <i class="fa-solid fa-folder-tree"></i>
+                        <span>Documents</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- ADMINISTRACION -->
+        <div class="sidebar-section" id="sectionAdmin">
+            <div class="sidebar-section-title">Information Technology</div>
+            <ul class="sidebar-menu">
+                <li
+                    class="sidebar-menu-item"
+                    data-permission="dashboardAdmin"
+                    data-admin-only
+                >
+                    <a class="sidebar-menu-link" href="/views/dashboard-admin">
+                        <i class="fa-solid fa-chart-line"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+                <li
+                    class="sidebar-menu-item"
+                    data-permission="usuarios"
+                    data-admin-only
+                >
+                    <a class="sidebar-menu-link" href="/views/usuarios">
+                        <i class="fa-solid fa-users"></i>
+                        <span>Users</span>
+                    </a>
+                </li>
+                <li
+                    class="sidebar-menu-item"
+                    data-permission="controlRestaurants"
+                    data-admin-only
+                >
+                    <a class="sidebar-menu-link" href="/views/restaurantes">
+                        <i class="fa-solid fa-screwdriver-wrench"></i>
+                        <span>Restaurant control</span>
+                    </a>
+                </li>
+                <li
+                    class="sidebar-menu-item"
+                    data-permission="systemErrors"
+                    data-admin-only
+                >
+                    <a class="sidebar-menu-link" href="/views/system-errors">
+                        <i class="fa-solid fa-bug"></i>
+                        <span>System errors</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- ACCOUNT -->
+        <div class="sidebar-section">
+            <div class="sidebar-section-title">Account</div>
+            <ul class="sidebar-menu">
+                <li class="sidebar-menu-item" data-permission="perfil">
+                    <a
+                        class="sidebar-menu-link sidebar-profile-link"
+                        href="/views/perfil"
+                        aria-label="Profile and security"
+                    >
+                        <i class="fa-solid fa-user-gear"></i>
+                        <span>Profile and security</span>
+                    </a>
+                </li>
+                <li class="sidebar-menu-item" data-permission="chat">
+                    <a href="/views/chat" class="sidebar-menu-link">
+                        <i class="fa-solid fa-comments"></i>
+                        <span>Chat</span>
+                        <span
+                            class="sidebar-chat-badge"
+                            id="chatUnreadBadge"
+                            hidden>0</span
+                        >
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="sidebar-footer">
+        <div class="sidebar-user-card">
+            <span class="avatar sidebar-user-avatar" id="sidebarUserAvatar"
+                >--</span
+            >
+            <span class="sidebar-user-copy">
+                <strong id="sidebarUserName">User</strong>
+                <small id="sidebarUserRole">Role</small>
+            </span>
+        </div>
+        <button class="sidebar-logout" id="logoutBtn">
+            <i class="fa-solid fa-right-from-bracket"></i>
+            <span>Log out</span>
+        </button>
+    </div>
+</aside>
+
+<style>
+    .sidebar-menu-link {
+        position: relative;
+    }
+
+    .sidebar-chat-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 20px;
+        height: 20px;
+        margin-left: auto;
+        padding: 0 6px;
+        border-radius: 999px;
+        background: #ef4444;
+        color: #ffffff;
+        font-size: 11px;
+        font-weight: 900;
+        line-height: 1;
+    }
+
+    .sidebar-chat-badge[hidden] {
+        display: none !important;
+    }
+
+    :global(html body .sidebar) {
+        --sidebar-motion-ease: cubic-bezier(0.22, 1, 0.36, 1);
+        --sidebar-motion-fast: 160ms;
+        --sidebar-motion-smooth: 340ms;
+        transition:
+            width var(--sidebar-motion-smooth) var(--sidebar-motion-ease),
+            transform var(--sidebar-motion-smooth) var(--sidebar-motion-ease),
+            box-shadow 220ms var(--sidebar-motion-ease),
+            filter 220ms var(--sidebar-motion-ease) !important;
+        will-change: width, transform;
+    }
+
+    :global(html body .sidebar::after) {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background: linear-gradient(
+            115deg,
+            transparent 0%,
+            rgba(255, 255, 255, 0.08) 34%,
+            transparent 68%
+        );
+        opacity: 0;
+        transform: translateX(-110%);
+    }
+
+    :global(html body .sidebar:not(.collapsed):hover::after) {
+        animation: xbSidebarSweep 900ms var(--sidebar-motion-ease);
+    }
+
+    :global(html body .sidebar-header),
+    :global(html body .sidebar-search),
+    :global(html body .sidebar-section),
+    :global(html body .sidebar-footer) {
+        animation: xbSidebarPanelIn 440ms var(--sidebar-motion-ease) both;
+    }
+
+    :global(html body .sidebar-search) {
+        animation-delay: 45ms;
+    }
+
+    :global(html body .sidebar-section:nth-of-type(1)) {
+        animation-delay: 80ms;
+    }
+
+    :global(html body .sidebar-section:nth-of-type(2)) {
+        animation-delay: 115ms;
+    }
+
+    :global(html body .sidebar-section:nth-of-type(3)) {
+        animation-delay: 150ms;
+    }
+
+    :global(html body .sidebar-section:nth-of-type(4)) {
+        animation-delay: 185ms;
+    }
+
+    :global(html body .sidebar-footer) {
+        animation-delay: 210ms;
+    }
+
+    :global(html body .sidebar-menu-item) {
+        animation: xbSidebarItemIn 360ms var(--sidebar-motion-ease) both;
+    }
+
+    :global(html body .sidebar-menu-item:nth-child(1)) {
+        animation-delay: 90ms;
+    }
+
+    :global(html body .sidebar-menu-item:nth-child(2)) {
+        animation-delay: 120ms;
+    }
+
+    :global(html body .sidebar-menu-item:nth-child(3)) {
+        animation-delay: 150ms;
+    }
+
+    :global(html body .sidebar-menu-item:nth-child(4)) {
+        animation-delay: 180ms;
+    }
+
+    :global(html body .sidebar-menu-link),
+    :global(html body .sidebar-profile-link),
+    :global(html body .sidebar-logout),
+    :global(html body .sidebar-search),
+    :global(html body .sidebar-user-card) {
+        transition:
+            background var(--sidebar-motion-fast) var(--sidebar-motion-ease),
+            border-color var(--sidebar-motion-fast) var(--sidebar-motion-ease),
+            color var(--sidebar-motion-fast) var(--sidebar-motion-ease),
+            transform var(--sidebar-motion-fast) var(--sidebar-motion-ease),
+            box-shadow 220ms var(--sidebar-motion-ease) !important;
+    }
+
+    :global(html body .sidebar-menu-link span),
+    :global(html body .sidebar-logout span),
+    :global(html body .sidebar-section-title),
+    :global(html body .sidebar-user-copy),
+    :global(html body .sidebar-search input),
+    :global(html body .sidebar-logo-text) {
+        transition:
+            opacity 180ms var(--sidebar-motion-ease),
+            transform 180ms var(--sidebar-motion-ease) !important;
+    }
+
+    :global(html body .sidebar-menu-link::before),
+    :global(html body .sidebar-profile-link::before),
+    :global(html body .sidebar-logout::before) {
+        transform-origin: center !important;
+        transition:
+            opacity var(--sidebar-motion-fast) var(--sidebar-motion-ease),
+            transform var(--sidebar-motion-fast) var(--sidebar-motion-ease) !important;
+    }
+
+    :global(html body .sidebar-menu-link:hover),
+    :global(html body .sidebar-profile-link:hover),
+    :global(html body .sidebar-logout:hover) {
+        transform: translate3d(4px, 0, 0) !important;
+        box-shadow: 0 12px 28px -22px rgba(5, 18, 32, 0.85) !important;
+    }
+
+    :global(html body .sidebar-menu-link:hover::before),
+    :global(html body .sidebar-profile-link:hover::before),
+    :global(html body .sidebar-logout:hover::before),
+    :global(html body .sidebar-menu-link.active::before),
+    :global(html body .sidebar-profile-link.active::before) {
+        opacity: 1 !important;
+        transform: scaleY(1) !important;
+    }
+
+    :global(html body .sidebar-menu-link i),
+    :global(html body .sidebar-profile-link i),
+    :global(html body .sidebar-logout i),
+    :global(html body .sidebar-toggle i),
+    :global(html body .sidebar-search i) {
+        transition:
+            transform 190ms var(--sidebar-motion-ease),
+            color 190ms var(--sidebar-motion-ease) !important;
+    }
+
+    :global(html body .sidebar-menu-link:hover i),
+    :global(html body .sidebar-profile-link:hover i),
+    :global(html body .sidebar-logout:hover i) {
+        transform: translateX(1px) scale(1.1) !important;
+    }
+
+    :global(html body .sidebar-toggle) {
+        transition:
+            background var(--sidebar-motion-fast) var(--sidebar-motion-ease),
+            color var(--sidebar-motion-fast) var(--sidebar-motion-ease),
+            transform 260ms var(--sidebar-motion-ease) !important;
+    }
+
+    :global(html body .sidebar-toggle:hover) {
+        transform: rotate(-6deg) scale(1.04) !important;
+    }
+
+    :global(html body .sidebar.collapsed .sidebar-toggle:hover),
+    :global(html.sidebar-collapsed-preset body .sidebar .sidebar-toggle:hover) {
+        transform: rotate(174deg) scale(1.04) !important;
+    }
+
+    :global(html body .sidebar.collapsed .sidebar-menu-link:hover),
+    :global(html body .sidebar.collapsed .sidebar-profile-link:hover),
+    :global(html body .sidebar.collapsed .sidebar-logout:hover),
+    :global(html.sidebar-collapsed-preset body .sidebar .sidebar-menu-link:hover),
+    :global(html.sidebar-collapsed-preset body .sidebar .sidebar-profile-link:hover),
+    :global(html.sidebar-collapsed-preset body .sidebar .sidebar-logout:hover) {
+        transform: translate3d(0, -2px, 0) !important;
+    }
+
+    :global(html body .sidebar.open) {
+        animation: xbSidebarSlideIn 320ms var(--sidebar-motion-ease) both;
+    }
+
+    @keyframes xbSidebarPanelIn {
+        from {
+            opacity: 0;
+            transform: translate3d(-10px, 0, 0);
+        }
+
+        to {
+            opacity: 1;
+            transform: translate3d(0, 0, 0);
+        }
+    }
+
+    @keyframes xbSidebarItemIn {
+        from {
+            opacity: 0;
+            transform: translate3d(-8px, 0, 0);
+        }
+
+        to {
+            opacity: 1;
+            transform: translate3d(0, 0, 0);
+        }
+    }
+
+    @keyframes xbSidebarSweep {
+        0% {
+            opacity: 0;
+            transform: translateX(-110%);
+        }
+
+        20% {
+            opacity: 1;
+        }
+
+        100% {
+            opacity: 0;
+            transform: translateX(110%);
+        }
+    }
+
+    @keyframes xbSidebarSlideIn {
+        from {
+            transform: translateX(-100%);
+        }
+
+        to {
+            transform: translateX(0);
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        :global(html body .sidebar),
+        :global(html body .sidebar::after),
+        :global(html body .sidebar *),
+        :global(html body .sidebar *::before),
+        :global(html body .sidebar *::after) {
+            animation: none !important;
+            transition: none !important;
+        }
+    }
+
+    :global(.sidebar-menu-link.has-unread-chat) {
+        padding-right: 44px;
+    }
+
+    :global(.sidebar.collapsed .sidebar-menu-link.has-unread-chat),
+    :global(html.sidebar-collapsed-preset body .sidebar .sidebar-menu-link.has-unread-chat) {
+        padding-right: 11px !important;
+    }
+
+    :global(.sidebar.collapsed .sidebar-menu-link .sidebar-chat-badge:not([hidden])),
+    :global(html.sidebar-collapsed-preset body .sidebar .sidebar-menu-link .sidebar-chat-badge:not([hidden])) {
+        position: absolute !important;
+        top: 4px !important;
+        right: 5px !important;
+        display: inline-flex !important;
+        min-width: 18px !important;
+        height: 18px !important;
+        padding: 0 5px !important;
+        border: 2px solid #06243e !important;
+        font-size: 10px !important;
+        box-shadow: 0 8px 16px -10px rgba(0, 0, 0, 0.75) !important;
+        z-index: 4 !important;
+    }
+</style>
+<script is:inline>
+    (function () {
+        try {
+            var isDesktop =
+                !window.matchMedia ||
+                !window.matchMedia("(max-width: 1024px)").matches;
+            if (
+                !isDesktop ||
+                localStorage.getItem("sidebarCollapsed") !== "true"
+            )
+                return;
+
+            document.documentElement.classList.add("sidebar-collapsed-preset");
+            document.body.classList.add("sidebar-collapsed");
+
+            var sidebar = document.getElementById("sidebar");
+            if (sidebar) {
+                sidebar.classList.add("collapsed");
+                sidebar.style.transition = "none";
+            }
+        } catch (error) {
+            document.documentElement.classList.remove(
+                "sidebar-collapsed-preset",
+            );
+        }
+    })();
+</script>

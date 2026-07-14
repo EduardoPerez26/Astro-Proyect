@@ -6,12 +6,13 @@ import Topbar from '../components/Topbar.astro';
 interface Props {
   title: string;
   includeSheetJS?: boolean;
+  stylesheets?: string[];
 }
 
-const { title, includeSheetJS = false } = Astro.props;
+const { title, includeSheetJS = false, stylesheets = [] } = Astro.props;
 ---
 
-<BaseLayout title={title} includeSheetJS={includeSheetJS}>
+<BaseLayout title={title} includeSheetJS={includeSheetJS} stylesheets={stylesheets}>
     <Sidebar />
     <main class="main" id="mainContent">
         <script is:inline>

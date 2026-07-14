@@ -68,7 +68,7 @@ async function apiFetch(path, options = {}) {
         try {
             const data = await response.json();
             message = data.message || data.mensaje || message;
-        } catch (_) { }
+        } catch (_) {}
         throw new Error(message);
     }
 
@@ -1524,19 +1524,6 @@ function handleSourceRowsClick(event) {
     }
 }
 
-function handleSourceRowsDoubleClick(event) {
-    if (event.target.closest('button')) return;
-
-    const tableRow = event.target.closest('tr[data-source-row-key]');
-    if (!tableRow) return;
-
-    const rowKey = tableRow.dataset.sourceRowKey;
-    if (!rowKey) return;
-
-    editSourceAmortization(rowKey)
-        .catch(error => showToast(error.message, 'error'));
-}
-
 function renderBillRows(rows) {
     if (!rows.length) {
         els.scheduleRows.innerHTML = '<tr><td colspan="25" class="empty-cell">No generated amortization yet.</td></tr>';
@@ -2058,10 +2045,6 @@ function init() {
     els.glUploadForm?.addEventListener('submit', handleGlUpload);
     els.scheduleList?.addEventListener('click', handleScheduleClick);
     els.sourceRows?.addEventListener('click', handleSourceRowsClick);
-    els.sourceRows?.addEventListener(
-        'dblclick',
-        handleSourceRowsDoubleClick
-    );
     els.addSourceRowBtn?.addEventListener('click', addManualSourceRow);
     els.generateScheduleBtn?.addEventListener('click', generateSchedule);
     els.saveScheduleBtn?.addEventListener('click', saveCurrentSchedule);

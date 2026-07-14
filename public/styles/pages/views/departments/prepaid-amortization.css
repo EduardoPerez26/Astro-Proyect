@@ -1,0 +1,768 @@
+/* Extracted from pages/views/departments/prepaid-amortization.astro. Keep page/component-specific styling here. */
+.source-review-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .source-review-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 18px;
+            margin: 14px 16px 0;
+            padding: 14px 16px;
+            border: 1px solid #dfe8f2;
+            border-radius: 14px;
+            background: #f8fbfe;
+        }
+
+        .source-review-bar > div {
+            display: grid;
+            gap: 4px;
+        }
+
+        .source-review-bar strong {
+            color: #102033;
+            font-size: 13px;
+        }
+
+        .source-review-bar span,
+        .source-review-bar small {
+            color: #60758b;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+
+        .source-review-bar span.pending {
+            color: #9a5b00;
+            font-weight: 700;
+        }
+
+        .source-row-actions {
+            width: 220px;
+            min-width: 220px;
+            padding-left: 10px !important;
+            padding-right: 10px !important;
+            text-align: center;
+            vertical-align: middle;
+        }
+
+        .source-row-action-group {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            white-space: nowrap;
+        }
+
+        .source-action-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            height: 32px;
+            min-width: 58px;
+            padding: 0 9px;
+            border: 1px solid #d5e0eb;
+            border-radius: 8px;
+            background: #ffffff;
+            box-shadow: 0 1px 2px rgba(15, 35, 55, 0.06);
+            color: #40576f;
+            font: inherit;
+            font-size: 11px;
+            font-weight: 800;
+            line-height: 1;
+            cursor: pointer;
+            transition: border-color 160ms ease, background 160ms ease, color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+        }
+
+        .source-action-btn i {
+            width: 12px;
+            font-size: 11px;
+            text-align: center;
+        }
+
+        .source-action-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 10px rgba(15, 35, 55, 0.1);
+        }
+
+        .source-action-btn:focus-visible {
+            outline: 3px solid rgba(37, 99, 235, 0.2);
+            outline-offset: 2px;
+        }
+
+        .source-action-edit {
+            border-color: #cbdcf0;
+            background: #f4f8fd;
+            color: #245b96;
+        }
+
+        .source-action-edit:hover {
+            border-color: #7da8d8;
+            background: #eaf3fd;
+            color: #174d85;
+        }
+
+        .source-action-row:hover {
+            border-color: #e5a9a4;
+            background: #fff7f6;
+            color: #b42318;
+        }
+
+        .source-action-store {
+            border-color: #efc6c2;
+            background: #fff3f2;
+            color: #a61b12;
+        }
+
+        .source-action-store:hover {
+            border-color: #d96b63;
+            background: #fde8e6;
+            color: #8f160f;
+        }
+
+        .source-amortization-cell {
+            min-width: 220px;
+            white-space: nowrap;
+        }
+
+        .source-amortization-range {
+            display: grid;
+            gap: 5px;
+        }
+
+        .source-amortization-range strong {
+            color: #17324f;
+            font-size: 11px;
+            font-weight: 850;
+        }
+
+        .source-amortization-range strong span {
+            margin: 0 4px;
+            color: #8ca0b5;
+        }
+
+        .source-amortization-range small {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            color: #647a91;
+            font-size: 10px;
+            font-weight: 700;
+        }
+
+        .source-period-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 6px;
+            border-radius: 999px;
+            background: #eef2f7;
+            color: #62758a;
+            font-size: 9px;
+            font-weight: 900;
+            text-transform: uppercase;
+        }
+
+        .source-period-badge.custom {
+            background: #e8f3ff;
+            color: #1f609f;
+        }
+
+        /* SweetAlert must render above the global sticky topbar and table headers. */
+        html body > .swal2-container,
+        html body .swal2-container {
+            position: fixed !important;
+            inset: 0 !important;
+            z-index: 2147483647 !important;
+            isolation: isolate !important;
+        }
+
+        body.swal2-shown .prepaid-page .prepaid-table th {
+            z-index: 0 !important;
+        }
+
+        .swal2-container .swal2-popup.source-amortization-swal {
+            width: min(650px, calc(100vw - 32px)) !important;
+            max-width: none !important;
+            padding: 0;
+            overflow: hidden;
+            border-radius: 22px;
+            background: #f7faff;
+            box-shadow: 0 26px 60px rgba(15, 23, 42, 0.22);
+        }
+
+        .source-amortization-swal .swal2-title {
+            margin: 0;
+            padding: 24px 26px 8px;
+            color: #10233c;
+            font-size: 25px;
+            line-height: 1.15;
+            font-weight: 900;
+            text-align: left;
+        }
+
+        .source-amortization-swal-html {
+            margin: 0 !important;
+            padding: 0 26px 16px !important;
+        }
+
+        .source-amortization-modal-body {
+            display: grid;
+            gap: 16px;
+            text-align: left;
+        }
+
+        .source-amortization-summary {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 12px;
+            align-items: center;
+            padding: 14px 16px;
+            border: 1px solid #dbe6f2;
+            border-radius: 15px;
+            background: #ffffff;
+        }
+
+        .source-amortization-summary-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            background: #10233c;
+            color: #ffffff;
+        }
+
+        .source-amortization-summary strong {
+            display: block;
+            margin-bottom: 3px;
+            color: #17324f;
+            font-size: 13px;
+            font-weight: 900;
+        }
+
+        .source-amortization-summary span {
+            color: #687d92;
+            font-size: 12px;
+        }
+
+        .source-amortization-presets {
+            display: grid;
+            gap: 8px;
+        }
+
+        .source-amortization-presets > span {
+            color: #40566f;
+            font-size: 11px;
+            font-weight: 900;
+            text-transform: uppercase;
+        }
+
+        .source-amortization-presets > div {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .source-amortization-presets button {
+            height: 34px;
+            padding: 0 12px;
+            border: 1px solid #cfdae8;
+            border-radius: 10px;
+            background: #ffffff;
+            color: #40566f;
+            font: inherit;
+            font-size: 11px;
+            font-weight: 850;
+            cursor: pointer;
+        }
+
+        .source-amortization-presets button:hover,
+        .source-amortization-presets button.active {
+            border-color: #7ca7d8;
+            background: #eaf3fd;
+            color: #174d85;
+        }
+
+        .source-amortization-date-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 14px;
+        }
+
+        .source-amortization-date-grid label {
+            display: grid;
+            gap: 6px;
+            margin: 0;
+        }
+
+        .source-amortization-date-grid label span {
+            color: #40566f;
+            font-size: 11px;
+            font-weight: 850;
+        }
+
+        .source-amortization-date-grid .swal2-input {
+            width: 100%;
+            height: 44px;
+            margin: 0;
+            padding: 0 12px;
+            box-sizing: border-box;
+            border: 1px solid #cfdae8;
+            border-radius: 12px;
+            background: #ffffff;
+            color: #10233c;
+            font-size: 13px;
+        }
+
+        .source-amortization-date-grid .swal2-input:focus {
+            border-color: #7fa8db;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.13);
+            outline: none;
+        }
+
+        .source-amortization-preview {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            padding: 12px 14px;
+            border-radius: 12px;
+            background: #edf5ff;
+            color: #245b96;
+            font-size: 12px;
+            font-weight: 800;
+        }
+
+        .source-amortization-swal-actions {
+            width: 100%;
+            margin: 0;
+            padding: 14px 26px 22px;
+            gap: 10px;
+            justify-content: flex-end;
+            border-top: 1px solid #e2ebf4;
+            background: #ffffff;
+        }
+
+        .source-amortization-confirm-btn,
+        .source-amortization-cancel-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-width: 132px;
+            height: 42px;
+            padding: 0 16px;
+            border: 1px solid transparent;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 900;
+            cursor: pointer;
+        }
+
+        .source-amortization-confirm-btn {
+            background: #0f172a;
+            color: #ffffff;
+            box-shadow: 0 8px 18px rgba(15, 23, 42, 0.17);
+        }
+
+        .source-amortization-cancel-btn {
+            border-color: #dbe5f0;
+            background: #f5f8fc;
+            color: #334a63;
+        }
+
+        .source-manual-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            margin-left: 6px;
+            padding: 2px 6px;
+            border-radius: 999px;
+            background: #eef5ff;
+            color: #245ea8;
+            font-size: 9px;
+            font-weight: 850;
+            vertical-align: middle;
+        }
+
+        .swal2-container .swal2-popup.source-concept-swal {
+            width: min(1040px, calc(100vw - 40px)) !important;
+            max-width: none !important;
+            min-width: 0 !important;
+            max-height: calc(100vh - 24px);
+            padding: 0;
+            overflow: hidden;
+            border-radius: 22px;
+            background: #f7faff;
+            box-shadow: 0 26px 60px rgba(15, 23, 42, 0.22);
+        }
+
+        .swal2-container .swal2-popup.source-concept-swal .swal2-title {
+            margin: 0;
+            padding: 22px 28px 6px;
+            color: #10233c;
+            font-size: 27px;
+            line-height: 1.15;
+            font-weight: 900;
+            text-align: left;
+        }
+
+        .source-concept-swal-html {
+            width: 100%;
+            margin: 0 !important;
+            padding: 0 28px 14px !important;
+            overflow: visible !important;
+            box-sizing: border-box;
+        }
+
+        .source-concept-modal-body {
+            display: grid;
+            gap: 14px;
+            text-align: left;
+        }
+
+        .source-modal-helper {
+            margin: 0;
+            color: #60758c;
+            font-size: 13px;
+            line-height: 1.45;
+        }
+
+        .source-concept-section {
+            display: grid;
+            align-content: start;
+            gap: 12px;
+            padding: 15px 16px;
+            border: 1px solid #dbe6f2;
+            border-radius: 16px;
+            background: #ffffff;
+            box-shadow: 0 6px 16px rgba(16, 35, 60, 0.045);
+        }
+
+        .source-concept-section-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #10233c;
+            font-size: 12px;
+            font-weight: 900;
+            letter-spacing: 0.025em;
+            text-transform: uppercase;
+        }
+
+        .source-concept-section-title i {
+            width: 15px;
+            color: #3b6ea8;
+            font-size: 13px;
+            text-align: center;
+        }
+
+        .source-concept-grid {
+            display: grid;
+            gap: 12px;
+        }
+
+        .source-concept-grid-main {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .source-concept-grid-stack {
+            grid-template-columns: 1fr;
+        }
+
+        .source-concept-bottom-grid {
+            display: grid;
+            grid-template-columns: 0.9fr 1fr 1.15fr;
+            gap: 14px;
+        }
+
+        .source-concept-form label,
+        .source-concept-modal-body label,
+        .source-memo-field {
+            display: grid;
+            gap: 5px;
+            margin: 0;
+            min-width: 0;
+        }
+
+        .source-concept-modal-body label span,
+        .source-memo-field span {
+            color: #40566f;
+            font-size: 11px;
+            font-weight: 800;
+        }
+
+        .source-concept-modal-body .swal2-input,
+        .source-concept-modal-body .swal2-textarea {
+            width: 100%;
+            min-width: 0;
+            margin: 0;
+            box-sizing: border-box;
+            border: 1px solid #cfdae8;
+            border-radius: 12px;
+            background: #fbfdff;
+            color: #10233c;
+            font-size: 13px;
+            line-height: 1.35;
+            box-shadow: inset 0 1px 1px rgba(16, 35, 60, 0.03);
+            transition: border-color 160ms ease, box-shadow 160ms ease, background 160ms ease;
+        }
+
+        .source-concept-modal-body .swal2-input {
+            height: 42px;
+            padding: 0 12px;
+        }
+
+        .source-concept-modal-body .swal2-textarea {
+            min-height: 111px;
+            height: 111px;
+            padding: 12px;
+            resize: vertical;
+        }
+
+        .source-concept-modal-body .swal2-input:focus,
+        .source-concept-modal-body .swal2-textarea:focus {
+            border-color: #7fa8db;
+            background: #ffffff;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.13);
+            outline: none;
+        }
+
+        .source-concept-modal-body .swal2-input::placeholder,
+        .source-concept-modal-body .swal2-textarea::placeholder {
+            color: #8da0b5;
+        }
+
+        .source-concept-swal-actions {
+            width: 100%;
+            margin: 0;
+            padding: 14px 28px 20px;
+            gap: 10px;
+            justify-content: flex-end;
+            border-top: 1px solid #e2ebf4;
+            background: #ffffff;
+        }
+
+        .source-concept-confirm-btn,
+        .source-concept-cancel-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-width: 132px;
+            height: 42px;
+            padding: 0 16px;
+            border: 1px solid transparent;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 900;
+            cursor: pointer;
+            transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease, border-color 160ms ease, color 160ms ease;
+        }
+
+        .source-concept-confirm-btn {
+            background: #0f172a;
+            color: #ffffff;
+            box-shadow: 0 8px 18px rgba(15, 23, 42, 0.17);
+        }
+
+        .source-concept-confirm-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 20px rgba(15, 23, 42, 0.22);
+        }
+
+        .source-concept-cancel-btn {
+            background: #f5f8fc;
+            border-color: #dbe5f0;
+            color: #334a63;
+        }
+
+        .source-concept-cancel-btn:hover {
+            background: #edf3f9;
+            border-color: #cbd9e7;
+        }
+
+        @media (max-width: 860px) {
+            .source-concept-grid-main {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .source-concept-bottom-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .source-concept-memo-section {
+                grid-column: 1 / -1;
+            }
+
+            .source-concept-modal-body .swal2-textarea {
+                min-height: 86px;
+                height: 86px;
+            }
+        }
+
+        @media (max-width: 620px) {
+            .source-review-bar {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+            .swal2-container .swal2-popup.source-concept-swal {
+                width: calc(100vw - 18px) !important;
+                max-height: calc(100vh - 18px);
+                overflow-y: auto;
+                border-radius: 17px;
+            }
+
+            .swal2-container .swal2-popup.source-concept-swal .swal2-title {
+                padding: 20px 18px 6px;
+                font-size: 23px;
+            }
+
+            .source-concept-swal-html {
+                padding: 0 18px 12px !important;
+            }
+
+            .source-concept-grid-main,
+            .source-concept-bottom-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .source-concept-memo-section {
+                grid-column: auto;
+            }
+
+            .source-concept-section {
+                padding: 14px;
+            }
+
+            .source-concept-swal-actions {
+                padding: 12px 18px 18px;
+                flex-direction: column-reverse;
+                align-items: stretch;
+            }
+
+            .source-concept-confirm-btn,
+            .source-concept-cancel-btn {
+                width: 100%;
+            }
+
+            .source-amortization-date-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .source-amortization-swal-actions {
+                padding: 12px 18px 18px;
+                flex-direction: column-reverse;
+                align-items: stretch;
+            }
+
+            .source-amortization-confirm-btn,
+            .source-amortization-cancel-btn {
+                width: 100%;
+            }
+        }
+    
+
+        /* XBFS PREPAID SOURCE STATUS FIX V5 */
+        .source-store-stack {
+            display: grid;
+            gap: 4px;
+            align-items: center;
+            justify-items: start;
+            line-height: 1.15;
+        }
+
+        .source-store-stack > strong {
+            color: #0d3157;
+            font-size: 12px;
+            font-weight: 900;
+        }
+
+        .source-store-status {
+            display: inline-flex;
+            align-items: center;
+            width: max-content;
+            max-width: 100%;
+            padding: 3px 7px;
+            border-radius: 999px;
+            font-size: 8px;
+            font-weight: 950;
+            letter-spacing: .03em;
+            line-height: 1;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+
+        .source-store-status.closeout {
+            border: 1px solid #fdba74;
+            background: #fff7ed;
+            color: #9a3412;
+        }
+
+        .source-store-status.custom {
+            border: 1px solid #bfdbfe;
+            background: #eff6ff;
+            color: #1d4f91;
+        }
+
+        .source-period-badge.closeout {
+            gap: 4px;
+            border: 1px solid #fdba74;
+            background: #fff1e6;
+            color: #9a3412;
+        }
+
+        .source-period-badge.custom {
+            gap: 4px;
+        }
+
+        .source-closeout-note {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            width: max-content;
+            max-width: 100%;
+            margin-top: 2px;
+            padding: 5px 8px;
+            border: 1px solid #fed7aa;
+            border-radius: 8px;
+            background: #fff7ed;
+            color: #9a3412;
+            font-size: 9px;
+            font-style: normal;
+            font-weight: 850;
+            line-height: 1.25;
+            white-space: normal;
+        }
+
+        .prepaid-source-table tbody tr.source-row-closeout > td {
+            border-top-color: #fed7aa;
+            border-bottom-color: #fed7aa;
+        }
+
+        .prepaid-source-table tbody tr.source-row-closeout .source-sticky-store,
+        .prepaid-source-table tbody tr.source-row-closeout .source-sticky-actions {
+            background: #fffaf5 !important;
+        }
+
+        .prepaid-source-table tbody tr.source-row-custom .source-sticky-store,
+        .prepaid-source-table tbody tr.source-row-custom .source-sticky-actions {
+            background: #f7fbff !important;
+        }
+
+        .prepaid-source-table .source-sticky-store {
+            width: 92px !important;
+            min-width: 92px !important;
+            max-width: 92px !important;
+            padding: 8px 10px !important;
+            text-align: left !important;
+        }
+
+        .prepaid-source-table .source-sticky-actions {
+            left: 92px !important;
+        }
