@@ -7,7 +7,6 @@ const currentYear = new Date().getFullYear();
 <BaseLayout title="Sign in | XBFS Operations Hub">
     <link rel="stylesheet" href="/styles/screens/login-graphite.css?v=20260715-login-graphite-layout-v2" />
     <link rel="stylesheet" href="/styles/screens/login-logo-premium.css?v=20260715-login-logo-clean-v4" />
-    <link rel="stylesheet" href="/styles/screens/login-right-white.css?v=20260715-login-right-white-v5" />
 <main class="login-screen">
         <div class="login-shell">
             <section class="login-brand-panel" aria-label="System overview">

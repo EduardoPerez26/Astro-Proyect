@@ -6,18 +6,17 @@ const currentYear = new Date().getFullYear();
 
 <BaseLayout title="Sign in | XBFS Operations Hub">
     <link rel="stylesheet" href="/styles/screens/login-graphite.css?v=20260715-login-graphite-layout-v2" />
-    <link rel="stylesheet" href="/styles/screens/login-logo-premium.css?v=20260715-login-logo-clean-v4" />
-    <link rel="stylesheet" href="/styles/screens/login-right-white.css?v=20260715-login-right-white-v5" />
+
 <main class="login-screen">
         <div class="login-shell">
             <section class="login-brand-panel" aria-label="System overview">
                 <div class="login-brand">
-                    <span class="login-brand-icon login-brand-monogram" aria-hidden="true">
-                        <span class="login-brand-monogram-text">XB</span>
+                    <span class="login-brand-icon" aria-hidden="true">
+                        <img src="/img/xb-logo.png" alt="" loading="eager" />
                     </span>
                     <span class="login-brand-copy">
-                        <strong>XBFS</strong>
-                        <small>Operations Hub</small>
+                        <strong>XB<span> Hub</span></strong>
+                        <small>Operations platform</small>
                     </span>
                 </div>
 
@@ -50,13 +49,10 @@ const currentYear = new Date().getFullYear();
 
                 <div class="login-form-wrap">
                     <div class="login-mobile-brand" aria-hidden="true">
-                        <span class="login-brand-icon login-brand-monogram">
-                            <span class="login-brand-monogram-text">XB</span>
+                        <span class="login-brand-icon">
+                            <img src="/img/xb-logo.png" alt="" loading="eager" />
                         </span>
-                        <span class="login-mobile-brand-copy">
-                            <strong>XBFS</strong>
-                            <small>Operations Hub</small>
-                        </span>
+                        <strong>XB<span> Hub</span></strong>
                     </div>
 
                     <div class="login-access-card">

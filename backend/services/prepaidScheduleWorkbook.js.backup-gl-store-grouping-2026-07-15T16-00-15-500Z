@@ -73,107 +73,6 @@ function money(value) {
     return Number(value || 0);
 }
 
-function buildStoreValidationRows(months = []) {
-    const groups = new Map();
-
-    for (const row of months) {
-        const key = [
-            Number(row.period_year || 0),
-            Number(row.period_month || 0),
-            String(row.store_number || '').trim()
-        ].join('|');
-
-        if (!groups.has(key)) {
-            groups.set(key, {
-                rows: [],
-                payees: new Set(),
-                documents: new Set()
-            });
-        }
-
-        const group = groups.get(key);
-        group.rows.push(row);
-
-        if (row.payee) {
-            group.payees.add(String(row.payee).trim());
-        }
-
-        if (row.doc_number) {
-            group.documents.add(
-                String(row.doc_number).trim()
-            );
-        }
-    }
-
-    return Array.from(groups.values())
-        .map(group => {
-            const rows = group.rows;
-            const first = rows[0] || {};
-
-            const expected = money(
-                rows.reduce(
-                    (sum, row) =>
-                        sum + money(row.expected_amount),
-                    0
-                )
-            );
-
-            const actual = money(
-                rows.reduce(
-                    (sum, row) =>
-                        sum + money(row.gl_actual_amount),
-                    0
-                )
-            );
-
-            const difference = money(actual - expected);
-
-            const statuses = rows.map(
-                row => String(
-                    row.status || 'PENDING_GL'
-                ).toUpperCase()
-            );
-
-            let status = 'MATCHED';
-
-            if (statuses.includes('MISSING_GL')) {
-                status = 'MISSING_GL';
-            } else if (statuses.includes('DIFFERENCE')) {
-                status = 'DIFFERENCE';
-            } else if (statuses.includes('PENDING_GL')) {
-                status = 'PENDING_GL';
-            }
-
-            const payees = Array.from(group.payees);
-            const documents =
-                Array.from(group.documents);
-
-            return {
-                ...first,
-                bill_count: rows.length,
-                payee: payees.length === 1
-                    ? payees[0]
-                    : `${payees.length} payees`,
-                doc_number: documents.length <= 2
-                    ? documents.join(' / ')
-                    : `${documents.length} bills`,
-                expected_amount: expected,
-                gl_actual_amount: actual,
-                difference,
-                status
-            };
-        })
-        .sort((a, b) =>
-            Number(a.period_year) - Number(b.period_year)
-            || Number(a.period_month) - Number(b.period_month)
-            || String(a.store_number).localeCompare(
-                String(b.store_number),
-                undefined,
-                { numeric: true }
-            )
-        );
-}
-
 function border(color = 'B7B7B7') {
     return {
         top: { style: 'thin', color: { argb: color } },
@@ -754,10 +653,8 @@ function buildValidationSheet(workbook, schedule, months) {
     headerRow.values = headers;
     styleHeaderRow(headerRow);
 
-    const validationRows = buildStoreValidationRows(months);
-
     let rowNumber = 5;
-    for (const month of validationRows) {
+    for (const month of months) {
         const row = sheet.getRow(rowNumber);
         row.values = [month.period_code || '', String(month.store_number || ''), month.payee || '', month.doc_number || '',
             money(month.expected_amount), money(month.gl_actual_amount), money(month.difference), month.status || 'PENDING_GL'];

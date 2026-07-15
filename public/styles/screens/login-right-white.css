@@ -1,0 +1,393 @@
+/* =========================================================
+   XBFS — LOGIN RIGHT PANEL WHITE FIX V5
+
+   Keeps:
+   - left brand panel black / graphite
+   - graphite primary actions
+   - clean XBFS monogram
+
+   Changes:
+   - right form panel to white
+   - dark text and light inputs
+   - neutral gray borders
+   - remember-session card to light gray
+   - audit and MFA cards to light gray
+   ========================================================= */
+
+/* ---------------------------------------------------------
+   RIGHT PANEL
+   --------------------------------------------------------- */
+
+html body .login-screen
+.login-shell.login-shell
+.login-form-panel.login-form-panel {
+    border-left: 1px solid #e2e5e9 !important;
+    background:
+        radial-gradient(
+            circle at 92% 8%,
+            rgba(0, 0, 0, 0.035),
+            transparent 26%
+        ),
+        linear-gradient(
+            180deg,
+            #ffffff 0%,
+            #f7f8fa 100%
+        ) !important;
+    color: #15181c !important;
+}
+
+/* ---------------------------------------------------------
+   LANGUAGE BUTTON
+   --------------------------------------------------------- */
+
+html body .login-form-panel
+.lang-toggle--login.lang-toggle--login {
+    border: 1px solid #d4d9df !important;
+    background: #ffffff !important;
+    color: #1c232b !important;
+    box-shadow:
+        0 8px 20px -18px rgba(0, 0, 0, 0.35) !important;
+}
+
+html body .login-form-panel
+.lang-toggle--login.lang-toggle--login:hover {
+    border-color: #bfc6cd !important;
+    background: #f0f2f4 !important;
+    color: #000000 !important;
+}
+
+/* ---------------------------------------------------------
+   HEADER
+   --------------------------------------------------------- */
+
+html body .login-form-panel
+.login-status.login-status {
+    border-color: #d6dbe0 !important;
+    background: #f0f2f4 !important;
+    color: #333a42 !important;
+}
+
+html body .login-form-panel
+.login-status-dot {
+    background: #242424 !important;
+    box-shadow:
+        0 0 0 4px rgba(0, 0, 0, 0.08) !important;
+}
+
+html body .login-form-panel
+.login-header h2 {
+    color: #111418 !important;
+    text-shadow: none !important;
+}
+
+html body .login-form-panel
+.login-header p {
+    color: #68727c !important;
+}
+
+/* ---------------------------------------------------------
+   FORM LABELS AND INPUTS
+   --------------------------------------------------------- */
+
+html body .login-form-panel
+.login-field label {
+    color: #313a44 !important;
+}
+
+html body .login-form-panel
+.login-input-wrap > i {
+    color: #67737f !important;
+}
+
+html body .login-form-panel
+.login-input-wrap input {
+    border: 1px solid #d4d9df !important;
+    background:
+        linear-gradient(
+            180deg,
+            #ffffff 0%,
+            #f8f9fa 100%
+        ) !important;
+    color: #17202a !important;
+    caret-color: #111111 !important;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.92),
+        0 9px 20px -20px rgba(0, 0, 0, 0.40) !important;
+}
+
+html body .login-form-panel
+.login-input-wrap input::placeholder {
+    color: #8c97a2 !important;
+}
+
+html body .login-form-panel
+.login-input-wrap input:hover {
+    border-color: #bdc5cd !important;
+    background: #ffffff !important;
+}
+
+html body .login-form-panel
+.login-input-wrap input:focus {
+    border-color: #2f343a !important;
+    background: #ffffff !important;
+    box-shadow:
+        0 0 0 4px rgba(0, 0, 0, 0.075),
+        inset 0 1px 0 rgba(255, 255, 255, 1) !important;
+}
+
+html body .login-form-panel
+.login-input-wrap:focus-within > i,
+html body .login-form-panel
+.login-password-toggle:hover {
+    color: #171a1e !important;
+}
+
+html body .login-form-panel
+.login-password-toggle {
+    background: transparent !important;
+    color: #65717c !important;
+}
+
+html body .login-form-panel
+.login-password-toggle:hover {
+    background: #eceff2 !important;
+    color: #111111 !important;
+}
+
+/* ---------------------------------------------------------
+   REMEMBER SESSION
+   --------------------------------------------------------- */
+
+html body .login-form-panel
+.login-remember-control.login-remember-control {
+    border: 1px solid #d5dbe1 !important;
+    background:
+        linear-gradient(
+            180deg,
+            #ffffff 0%,
+            #f1f3f5 100%
+        ) !important;
+    box-shadow:
+        0 12px 25px -23px rgba(0, 0, 0, 0.40),
+        inset 0 1px 0 rgba(255, 255, 255, 0.95) !important;
+}
+
+html body .login-form-panel
+.login-remember-control.login-remember-control:hover {
+    border-color: #bcc4cc !important;
+    background:
+        linear-gradient(
+            180deg,
+            #ffffff 0%,
+            #e9edf0 100%
+        ) !important;
+}
+
+html body .login-form-panel
+.login-remember-control.login-remember-control:focus-within {
+    border-color: #33383d !important;
+    box-shadow:
+        0 0 0 4px rgba(0, 0, 0, 0.07) !important;
+}
+
+html body .login-form-panel
+.login-remember-check.login-remember-check {
+    border-color: #c5ccd3 !important;
+    background: #ffffff !important;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 1) !important;
+}
+
+html body .login-form-panel
+.login-remember-check.login-remember-check::before {
+    border-color: #8e99a4 !important;
+    background: #ffffff !important;
+}
+
+html body .login-form-panel
+.login-remember-control input:checked
++ .login-remember-check {
+    border-color: #222222 !important;
+    background: #222222 !important;
+    color: #ffffff !important;
+}
+
+html body .login-form-panel
+.login-remember-control input:checked
++ .login-remember-check::before {
+    border-color: #ffffff !important;
+    background: #ffffff !important;
+}
+
+html body .login-form-panel
+.login-remember-control input:checked
++ .login-remember-check i {
+    color: #111111 !important;
+}
+
+html body .login-form-panel
+.login-remember-copy strong {
+    color: #19222c !important;
+}
+
+html body .login-form-panel
+.login-remember-copy small {
+    color: #66727e !important;
+}
+
+html body .login-form-panel
+.login-remember-control input:checked
+~ .login-remember-copy small::after {
+    color: #3f4851 !important;
+}
+
+/* ---------------------------------------------------------
+   PRIMARY AND SECONDARY ACTIONS
+   --------------------------------------------------------- */
+
+html body .login-form-panel
+.login-submit.login-submit {
+    border-color: #2b2b2b !important;
+    background:
+        linear-gradient(
+            180deg,
+            #303030 0%,
+            #080808 100%
+        ) !important;
+    color: #ffffff !important;
+    box-shadow:
+        0 17px 30px -23px rgba(0, 0, 0, 0.70),
+        inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
+}
+
+html body .login-form-panel
+.login-submit.login-submit:hover:not(:disabled) {
+    border-color: #4a4a4a !important;
+    background:
+        linear-gradient(
+            180deg,
+            #454545 0%,
+            #121212 100%
+        ) !important;
+}
+
+html body .login-form-panel
+.login-secondary-action.login-secondary-action {
+    border: 1px solid #ccd2d8 !important;
+    background:
+        linear-gradient(
+            180deg,
+            #ffffff 0%,
+            #eceff2 100%
+        ) !important;
+    color: #202830 !important;
+}
+
+html body .login-form-panel
+.login-secondary-action.login-secondary-action:hover,
+html body .login-form-panel
+.login-secondary-action.login-secondary-action:focus-visible {
+    border-color: #afb8c0 !important;
+    background:
+        linear-gradient(
+            180deg,
+            #f8f9fa 0%,
+            #e2e6e9 100%
+        ) !important;
+    color: #000000 !important;
+}
+
+/* ---------------------------------------------------------
+   MFA AND AUDIT CARDS
+   --------------------------------------------------------- */
+
+html body .login-form-panel
+.login-security-note,
+html body .login-form-panel
+.login-mfa-summary {
+    border: 1px solid #d5dbe0 !important;
+    background:
+        linear-gradient(
+            180deg,
+            #ffffff 0%,
+            #f0f2f4 100%
+        ) !important;
+    color: #5d6873 !important;
+    box-shadow:
+        0 10px 24px -24px rgba(0, 0, 0, 0.35) !important;
+}
+
+html body .login-form-panel
+.login-security-note i {
+    color: #2e343a !important;
+}
+
+html body .login-form-panel
+.login-mfa-icon {
+    border: 1px solid #cfd5db !important;
+    background:
+        linear-gradient(
+            145deg,
+            #ffffff 0%,
+            #e7eaed 100%
+        ) !important;
+    color: #20252a !important;
+}
+
+html body .login-form-panel
+.login-mfa-summary strong {
+    color: #171b20 !important;
+}
+
+html body .login-form-panel
+.login-mfa-summary p {
+    color: #68737e !important;
+}
+
+html body .login-form-panel
+.login-copyright {
+    color: #7d8791 !important;
+}
+
+/* ---------------------------------------------------------
+   MOBILE
+   --------------------------------------------------------- */
+
+@media (max-width: 920px) {
+    html body .login-shell
+    .login-form-panel.login-form-panel {
+        border-left: 0 !important;
+        background:
+            linear-gradient(
+                180deg,
+                #ffffff 0%,
+                #f5f6f8 100%
+            ) !important;
+    }
+
+    html body .login-form-panel
+    .login-mobile-brand-copy strong {
+        color: #111418 !important;
+    }
+
+    html body .login-form-panel
+    .login-mobile-brand-copy small {
+        color: #707b86 !important;
+    }
+
+    html body .login-form-panel
+    .login-brand-icon.login-brand-monogram {
+        border-color: #c8ced4 !important;
+        background:
+            radial-gradient(
+                circle at 28% 20%,
+                rgba(255, 255, 255, 0.70),
+                transparent 30%
+            ),
+            linear-gradient(
+                145deg,
+                #333333 0%,
+                #111111 100%
+            ) !important;
+    }
+}

@@ -44,8 +44,8 @@ const { title, includeSheetJS = false, stylesheets = [] } = Astro.props;
         </>
     )}
     <script is:inline src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script is:inline src="/js/swal-guard.js?v=20260715-alerts-clean-v6"></script>
-<script is:inline src="/js/i18n.js?v=20260626-enterprise-ui"></script>
+    <script is:inline src="/js/swal-guard.js?v=20260715-alerts-graphite-white-v5"></script>
+    <script is:inline src="/js/i18n.js?v=20260626-enterprise-ui"></script>
 <script is:inline src="/js/sticky-table-headers.js?v=20260713-floating-header-style-match"></script>
     <script is:inline src="/js/card-interactions.js?v=20260714-card-hover-v1"></script>
     <link rel="stylesheet" href="/styles/layout/view-standardization.css?v=20260714-view-standard-v1">
@@ -57,7 +57,7 @@ const { title, includeSheetJS = false, stylesheets = [] } = Astro.props;
 <script src="/js/sidebar-premium.js?v=20260715-full-black-buttons-tables-v4" defer></script>
     <link rel="stylesheet" href="/styles/components/black-admin-theme.css?v=20260715-selective-graphite-v5">
     <link rel="stylesheet" href="/styles/components/document-tabs-graphite.css?v=20260715-document-tabs-graphite-v1">
-    <link rel="stylesheet" href="/styles/alerts.css?v=20260715-alerts-clean-v6">
+    <link rel="stylesheet" href="/styles/alerts.css?v=20260715-alerts-graphite-white-v5">
 </head>
 <body>
     <slot />

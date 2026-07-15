@@ -1,0 +1,305 @@
+/* =========================================================
+   XBFS — LOGIN LOGO PREMIUM FIX V3
+
+   Improves only the brand lockup shown on the login screen.
+   The existing /img/xb-logo.png is preserved. CSS removes the
+   visible white rectangle by inverting and blending the image
+   into a graphite badge.
+   ========================================================= */
+
+/* Desktop brand lockup. */
+html body .login-screen
+.login-brand-panel
+.login-brand.login-brand {
+    position: relative !important;
+    z-index: 3 !important;
+    display: grid !important;
+    grid-template-columns: 68px minmax(0, 1fr) !important;
+    align-items: center !important;
+    gap: 16px !important;
+    width: max-content !important;
+    max-width: 100% !important;
+    min-height: 68px !important;
+    padding: 0 !important;
+}
+
+/* Premium graphite logo badge. */
+html body .login-screen
+.login-brand-panel
+.login-brand-icon.login-brand-icon,
+html body .login-screen
+.login-mobile-brand
+.login-brand-icon.login-brand-icon {
+    position: relative !important;
+    isolation: isolate !important;
+    display: grid !important;
+    place-items: center !important;
+    width: 64px !important;
+    height: 64px !important;
+    min-width: 64px !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+
+    border: 1px solid rgba(255, 255, 255, 0.20) !important;
+    border-radius: 18px !important;
+    background:
+        radial-gradient(
+            circle at 28% 20%,
+            rgba(255, 255, 255, 0.20),
+            transparent 31%
+        ),
+        linear-gradient(
+            145deg,
+            #303030 0%,
+            #111111 58%,
+            #030303 100%
+        ) !important;
+
+    box-shadow:
+        0 20px 38px -24px rgba(0, 0, 0, 1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.16),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.72) !important;
+}
+
+/* Inner border. */
+html body .login-screen
+.login-brand-panel
+.login-brand-icon.login-brand-icon::before,
+html body .login-screen
+.login-mobile-brand
+.login-brand-icon.login-brand-icon::before {
+    content: "" !important;
+    position: absolute !important;
+    inset: 5px !important;
+    z-index: 0 !important;
+
+    border: 1px solid rgba(255, 255, 255, 0.09) !important;
+    border-radius: 13px !important;
+    background: transparent !important;
+    pointer-events: none !important;
+}
+
+/* Small status accent. */
+html body .login-screen
+.login-brand-panel
+.login-brand-icon.login-brand-icon::after,
+html body .login-screen
+.login-mobile-brand
+.login-brand-icon.login-brand-icon::after {
+    content: "" !important;
+    position: absolute !important;
+    right: 7px !important;
+    bottom: 7px !important;
+    z-index: 3 !important;
+
+    width: 7px !important;
+    height: 7px !important;
+    border: 2px solid #111111 !important;
+    border-radius: 999px !important;
+    background: #f2f2f2 !important;
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.09) !important;
+}
+
+/*
+ * The original PNG contains a large white canvas.
+ * Invert turns that canvas black; screen blending makes black
+ * disappear over the badge while keeping the XB monogram bright.
+ */
+html body .login-screen
+.login-brand-icon.login-brand-icon img {
+    position: relative !important;
+    z-index: 2 !important;
+
+    display: block !important;
+    width: 118px !important;
+    height: 92px !important;
+    min-width: 118px !important;
+    max-width: none !important;
+    object-fit: contain !important;
+    object-position: center !important;
+
+    opacity: 0.96 !important;
+    filter:
+        grayscale(1)
+        invert(1)
+        brightness(1.18)
+        contrast(1.52) !important;
+    mix-blend-mode: screen !important;
+    transform: none !important;
+}
+
+/* Brand text. */
+html body .login-screen
+.login-brand-panel
+.login-brand-copy.login-brand-copy {
+    position: relative !important;
+    display: grid !important;
+    align-content: center !important;
+    gap: 5px !important;
+    min-width: 0 !important;
+    padding-left: 1px !important;
+}
+
+html body .login-screen
+.login-brand-panel
+.login-brand-copy.login-brand-copy::before {
+    content: "XB FRANCHISE SOLUTIONS" !important;
+    order: 2 !important;
+    display: block !important;
+
+    color: #8f8f8f !important;
+    font-size: 8px !important;
+    font-weight: 850 !important;
+    letter-spacing: 0.13em !important;
+    line-height: 1.2 !important;
+    text-transform: uppercase !important;
+    white-space: nowrap !important;
+}
+
+html body .login-screen
+.login-brand-panel
+.login-brand-copy.login-brand-copy strong {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    margin: 0 !important;
+
+    color: #ffffff !important;
+    font-size: 25px !important;
+    font-weight: 950 !important;
+    letter-spacing: -0.035em !important;
+    line-height: 1 !important;
+    white-space: nowrap !important;
+}
+
+html body .login-screen
+.login-brand-panel
+.login-brand-copy.login-brand-copy strong::after {
+    content: "OPS" !important;
+    display: inline-grid !important;
+    place-items: center !important;
+    min-width: 31px !important;
+    min-height: 18px !important;
+    padding: 0 6px !important;
+
+    border: 1px solid rgba(255, 255, 255, 0.13) !important;
+    border-radius: 999px !important;
+    background: rgba(255, 255, 255, 0.07) !important;
+    color: #bcbcbc !important;
+
+    font-size: 7px !important;
+    font-weight: 900 !important;
+    letter-spacing: 0.10em !important;
+    line-height: 1 !important;
+}
+
+html body .login-screen
+.login-brand-panel
+.login-brand-copy.login-brand-copy small {
+    order: 1 !important;
+    display: block !important;
+    margin: 0 !important;
+
+    color: #c4c4c4 !important;
+    font-size: 10px !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.09em !important;
+    line-height: 1.2 !important;
+    text-transform: uppercase !important;
+    white-space: nowrap !important;
+}
+
+/* A short divider gives the lockup more definition. */
+html body .login-screen
+.login-brand-panel
+.login-brand-copy.login-brand-copy::after {
+    content: "" !important;
+    order: 3 !important;
+    display: block !important;
+    width: 76px !important;
+    height: 1px !important;
+    margin-top: 2px !important;
+
+    background:
+        linear-gradient(
+            90deg,
+            rgba(255, 255, 255, 0.42),
+            rgba(255, 255, 255, 0.05)
+        ) !important;
+}
+
+/* Mobile brand lockup. */
+html body .login-screen
+.login-mobile-brand.login-mobile-brand {
+    display: none !important;
+}
+
+html body .login-screen
+.login-mobile-brand
+.login-mobile-brand-copy {
+    display: grid !important;
+    gap: 4px !important;
+    min-width: 0 !important;
+}
+
+html body .login-screen
+.login-mobile-brand
+.login-mobile-brand-copy strong {
+    color: #ffffff !important;
+    font-size: 22px !important;
+    font-weight: 950 !important;
+    letter-spacing: -0.03em !important;
+    line-height: 1 !important;
+}
+
+html body .login-screen
+.login-mobile-brand
+.login-mobile-brand-copy small {
+    color: #969696 !important;
+    font-size: 9px !important;
+    font-weight: 850 !important;
+    letter-spacing: 0.11em !important;
+    text-transform: uppercase !important;
+}
+
+@media (max-width: 920px) {
+    html body .login-screen
+    .login-mobile-brand.login-mobile-brand {
+        display: grid !important;
+        grid-template-columns: 58px minmax(0, 1fr) !important;
+        align-items: center !important;
+        gap: 14px !important;
+        margin-bottom: 31px !important;
+    }
+
+    html body .login-screen
+    .login-mobile-brand
+    .login-brand-icon.login-brand-icon {
+        width: 56px !important;
+        height: 56px !important;
+        min-width: 56px !important;
+        border-radius: 16px !important;
+    }
+
+    html body .login-screen
+    .login-mobile-brand
+    .login-brand-icon.login-brand-icon::before {
+        inset: 4px !important;
+        border-radius: 12px !important;
+    }
+
+    html body .login-screen
+    .login-mobile-brand
+    .login-brand-icon.login-brand-icon img {
+        width: 104px !important;
+        min-width: 104px !important;
+        height: 82px !important;
+    }
+}
+
+@media (max-width: 560px) {
+    html body .login-screen
+    .login-mobile-brand.login-mobile-brand {
+        margin-bottom: 27px !important;
+    }
+}

@@ -2,139 +2,35 @@
 const API_URL = window.API_URL;
 
 function obtenerRutaInicial(usuario) {
+    const permisos = usuario?.permisos || {};
     const rutas = {
         dashboardAdmin: '/views/dashboard-admin',
-        systemErrors: '/views/system-errors',
         tiendas: '/views/tiendas',
         documentos: '/views/documentos',
-        historial: '/views/historial',
-        propertyManagement:
-            '/views/departments/dashboard-property',
-        propertyManagementDocuments:
-            '/views/departments/property-management-documents',
-        chat: '/views/chat'
+        historial: '/views/historial'
     };
-
-    const aliases = {
-        propertySchedules: 'propertyManagement',
-        propertySchedule: 'propertyManagement',
-        propertyDocuments:
-            'propertyManagementDocuments',
-        propertyManagementSchedule:
-            'propertyManagement',
-        propertyManagementDocument:
-            'propertyManagementDocuments'
-    };
-
-    let permisos = usuario?.permisos || {};
-
-    if (typeof permisos === 'string') {
-        try {
-            permisos = JSON.parse(permisos);
-        } catch (error) {
-            permisos = {};
-        }
-    }
-
-    const acciones =
-        permisos?.acciones
-        && typeof permisos.acciones === 'object'
-            ? permisos.acciones
-            : {};
-
-    function normalizarModulo(value) {
-        const moduleName =
-            String(value || '').trim();
-
-        return aliases[moduleName] || moduleName;
-    }
-
-    function puedeVer(moduleName) {
-        const normalized =
-            normalizarModulo(moduleName);
-
-        if (!normalized) return false;
-
-        if (permisos[normalized] === true) {
-            return true;
-        }
-
-        return (
-            acciones?.[normalized]?.ver === true
-        );
-    }
-
-    const paginaConfigurada =
-        normalizarModulo(
-            permisos.paginaInicio
-            || permisos.pagina_inicio
-            || usuario?.paginaInicio
-            || usuario?.pagina_inicio
-            || usuario?.departamento?.paginaInicio
-            || usuario?.departamento?.pagina_inicio
-        );
+    const paginaConfigurada = permisos.paginaInicio;
 
     if (
-        paginaConfigurada
-        && rutas[paginaConfigurada]
-        && puedeVer(paginaConfigurada)
+        paginaConfigurada &&
+        permisos[paginaConfigurada] &&
+        rutas[paginaConfigurada]
     ) {
         return rutas[paginaConfigurada];
     }
 
-    const departmentCode =
-        String(
-            usuario?.departamento?.codigo || ''
-        ).toLowerCase();
-
-    const preferredOrder = [
-        'tiendas',
-        'documentos',
-        'historial',
-        'propertyManagement',
-        'propertyManagementDocuments',
-        'chat',
-        'dashboardAdmin',
-        'systemErrors'
-    ];
+    if (permisos.tiendas) return '/views/tiendas';
+    if (permisos.documentos) return '/views/documentos';
+    if (permisos.historial) return '/views/historial';
 
     if (
-        ['property-management', 'pm']
-            .includes(departmentCode)
+        usuario?.rol === 'admin' &&
+        permisos.dashboardAdmin
     ) {
-        preferredOrder.splice(
-            preferredOrder.indexOf(
-                'propertyManagement'
-            ),
-            1
-        );
-
-        preferredOrder.unshift(
-            'propertyManagement'
-        );
+        return '/views/dashboard-admin';
     }
 
-    for (const moduleName of preferredOrder) {
-        if (
-            rutas[moduleName]
-            && puedeVer(moduleName)
-        ) {
-            return rutas[moduleName];
-        }
-    }
-
-    /*
-     * Department fallback for legacy users whose permissions
-     * were created before action permissions were introduced.
-     */
-    if (
-        ['property-management', 'pm']
-            .includes(departmentCode)
-    ) {
-        return rutas.propertyManagement;
-    }
-
-    return null;
+    return '/';
 }
 
 function limpiarSesionLocal() {
@@ -267,23 +163,10 @@ async function mostrarVerificacionCodigo({
     });
 
     {
-                if (!rutaInicial) {
-                limpiarSesionLocal();
-
-                await Swal.fire({
-                    icon: 'warning',
-                    title: 'No available start page',
-                    text:
-                        'The account has no visible operational module. Review its View permissions and initial window.'
-                });
-
-                return;
-            }
-
-            const targetUrl = new URL(
-                rutaInicial,
-                window.location.origin
-            );
+                const targetUrl = new URL(
+                    rutaInicial || '/',
+                    window.location.origin
+                );
 
                 const targetPath =
                     targetUrl.pathname
@@ -457,23 +340,10 @@ document.addEventListener(
                     });
 
                     {
-                if (!rutaInicial) {
-                limpiarSesionLocal();
-
-                await Swal.fire({
-                    icon: 'warning',
-                    title: 'No available start page',
-                    text:
-                        'The account has no visible operational module. Review its View permissions and initial window.'
-                });
-
-                return;
-            }
-
-            const targetUrl = new URL(
-                rutaInicial,
-                window.location.origin
-            );
+                const targetUrl = new URL(
+                    rutaInicial || '/',
+                    window.location.origin
+                );
 
                 const targetPath =
                     targetUrl.pathname
@@ -638,23 +508,10 @@ async function verificarSesion(token) {
         const rutaInicial =
             obtenerRutaInicial(usuario);
 
-        if (!rutaInicial) {
-                limpiarSesionLocal();
-
-                await Swal.fire({
-                    icon: 'warning',
-                    title: 'No available start page',
-                    text:
-                        'The account has no visible operational module. Review its View permissions and initial window.'
-                });
-
-                return;
-            }
-
-            const targetUrl = new URL(
-                rutaInicial,
-                window.location.origin
-            );
+        const targetUrl = new URL(
+            rutaInicial || '/',
+            window.location.origin
+        );
 
         const currentPath =
             window.location.pathname

@@ -144,266 +144,29 @@ function isDraftScheduleId(scheduleId) {
     return Number(scheduleId) < 0;
 }
 
-function monthlyValidationKey(row = {}) {
-    return [
-        Number(row.period_year || 0),
-        Number(row.period_month || 0),
-        cleanText(row.store_number)
-    ].join('|');
-}
-
-function buildMonthlyValidationRows(months = []) {
-    const groups = new Map();
-
-    for (const row of months) {
-        const key = monthlyValidationKey(row);
-
-        if (!groups.has(key)) {
-            groups.set(key, {
-                rows: [],
-                period_year: Number(row.period_year || 0),
-                period_month: Number(row.period_month || 0),
-                period_code: row.period_code || '',
-                store_number: cleanText(row.store_number),
-                entity_code: cleanText(row.entity_code),
-                payees: new Set(),
-                documents: new Set()
-            });
-        }
-
-        const group = groups.get(key);
-        group.rows.push(row);
-
-        const payee = cleanText(row.payee);
-        const document = cleanText(row.doc_number);
-
-        if (payee) group.payees.add(payee);
-        if (document) group.documents.add(document);
-    }
-
-    return Array.from(groups.values())
-        .map(group => {
-            const expected = roundMoney(
-                group.rows.reduce(
-                    (sum, row) =>
-                        sum + Number(row.expected_amount || 0),
-                    0
-                )
-            );
-
-            const actual = roundMoney(
-                group.rows.reduce(
-                    (sum, row) =>
-                        sum + Number(row.gl_actual_amount || 0),
-                    0
-                )
-            );
-
-            const difference = roundMoney(actual - expected);
-
-            const statuses = group.rows.map(
-                row => String(row.status || 'PENDING_GL').toUpperCase()
-            );
-
-            let status = 'MATCHED';
-
-            if (statuses.includes('MISSING_GL')) {
-                status = 'MISSING_GL';
-            } else if (statuses.includes('DIFFERENCE')) {
-                status = 'DIFFERENCE';
-            } else if (statuses.includes('PENDING_GL')) {
-                status = 'PENDING_GL';
-            }
-
-            const payees = Array.from(group.payees);
-            const documents = Array.from(group.documents);
-            const first = group.rows[0] || {};
-
-            return {
-                ...first,
-                validation_group_key: monthlyValidationKey(first),
-                validation_basis: 'STORE_PERIOD_TOTAL',
-                bill_count: group.rows.length,
-                period_year: group.period_year,
-                period_month: group.period_month,
-                period_code: group.period_code,
-                store_number: group.store_number,
-                entity_code: group.entity_code,
-                payee: payees.length === 1
-                    ? payees[0]
-                    : `${payees.length} payees`,
-                doc_number: documents.length <= 2
-                    ? documents.join(' / ')
-                    : `${documents.length} bills`,
-                document_numbers: documents,
-                expected_amount: expected,
-                gl_actual_amount: actual,
-                difference,
-                status
-            };
-        })
-        .sort((a, b) =>
-            Number(a.period_year) - Number(b.period_year)
-            || Number(a.period_month) - Number(b.period_month)
-            || String(a.store_number).localeCompare(
-                String(b.store_number),
-                undefined,
-                { numeric: true }
-            )
-        );
-}
-
-function applyMonthlyGlByStore(
-    monthRows,
-    actualByStore,
-    glUpload = null
-) {
-    const groups = new Map();
-
-    for (const row of monthRows) {
-        const storeNumber = cleanText(row.store_number);
-
-        if (!groups.has(storeNumber)) {
-            groups.set(storeNumber, []);
-        }
-
-        groups.get(storeNumber).push(row);
-    }
-
-    let matched = 0;
-    let differences = 0;
-    let missing = 0;
-
-    for (const [storeNumber, rows] of groups) {
-        const expectedTotal = roundMoney(
-            rows.reduce(
-                (sum, row) =>
-                    sum + Number(row.expected_amount || 0),
-                0
-            )
-        );
-
-        const actualTotal = roundMoney(
-            actualByStore.get(String(storeNumber)) || 0
-        );
-
-        const storeDifference = roundMoney(
-            actualTotal - expectedTotal
-        );
-
-        let status = 'MATCHED';
-
-        if (
-            Math.abs(actualTotal) <= 0.01
-            && Math.abs(expectedTotal) > 0.01
-        ) {
-            status = 'MISSING_GL';
-            missing += 1;
-        } else if (Math.abs(storeDifference) > 0.01) {
-            status = 'DIFFERENCE';
-            differences += 1;
-        } else {
-            matched += 1;
-        }
-
-        let allocatedActual = 0;
-
-        rows.forEach((row, index) => {
-            const expected = roundMoney(row.expected_amount);
-
-            let actual = 0;
-
-            if (index === rows.length - 1) {
-                actual = roundMoney(
-                    actualTotal - allocatedActual
-                );
-            } else if (Math.abs(expectedTotal) > 0.01) {
-                actual = roundMoney(
-                    actualTotal * (expected / expectedTotal)
-                );
-                allocatedActual = roundMoney(
-                    allocatedActual + actual
-                );
-            }
-
-            row.gl_actual_amount = actual;
-            row.difference = roundMoney(actual - expected);
-            row.status = status;
-            row.validation_basis = 'STORE_PERIOD_TOTAL';
-            row.store_expected_amount = expectedTotal;
-            row.store_gl_actual_amount = actualTotal;
-            row.store_difference_amount = storeDifference;
-            row.store_bill_count = rows.length;
-
-            if (glUpload) {
-                row.gl_upload = glUpload;
-            }
-        });
-    }
-
-    const validationRows =
-        buildMonthlyValidationRows(monthRows);
-
-    return {
-        matched,
-        differences,
-        missing,
-        validationRows,
-        differenceRows: validationRows
-            .filter(row =>
-                ['DIFFERENCE', 'MISSING_GL'].includes(
-                    String(row.status).toUpperCase()
-                )
-            )
-            .sort((a, b) =>
-                Math.abs(Number(b.difference || 0))
-                - Math.abs(Number(a.difference || 0))
-            )
-    };
-}
-
 function summarizeMonths(months = []) {
-    return buildMonthlyValidationRows(months)
-        .reduce((summary, row) => {
-            const expected =
-                Number(row.expected_amount || 0);
-            const actual =
-                Number(row.gl_actual_amount || 0);
-            const difference =
-                Number(row.difference || 0);
-            const status =
-                String(row.status || '').toUpperCase();
-
-            summary.expected_total += expected;
-            summary.actual_total += actual;
-            summary.difference_total += difference;
-
-            if (status === 'MATCHED') {
-                summary.matched_count += 1;
-            }
-
-            if (status === 'DIFFERENCE') {
-                summary.difference_count += 1;
-            }
-
-            if (status === 'MISSING_GL') {
-                summary.missing_gl_count += 1;
-            }
-
-            if (status === 'PENDING_GL') {
-                summary.pending_count += 1;
-            }
-
-            return summary;
-        }, {
-            expected_total: 0,
-            actual_total: 0,
-            difference_total: 0,
-            matched_count: 0,
-            difference_count: 0,
-            missing_gl_count: 0,
-            pending_count: 0
-        });
+    return months.reduce((summary, row) => {
+        const expected = Number(row.expected_amount || 0);
+        const actual = Number(row.gl_actual_amount || 0);
+        const difference = Number(row.difference || 0);
+        const status = String(row.status || '').toUpperCase();
+        summary.expected_total += expected;
+        summary.actual_total += actual;
+        summary.difference_total += difference;
+        if (status === 'MATCHED') summary.matched_count += 1;
+        if (status === 'DIFFERENCE') summary.difference_count += 1;
+        if (status === 'MISSING_GL') summary.missing_gl_count += 1;
+        if (status === 'PENDING_GL') summary.pending_count += 1;
+        return summary;
+    }, {
+        expected_total: 0,
+        actual_total: 0,
+        difference_total: 0,
+        matched_count: 0,
+        difference_count: 0,
+        missing_gl_count: 0,
+        pending_count: 0
+    });
 }
 
 function refreshDraftCounts(draft) {
@@ -433,16 +196,11 @@ function getDraftSchedule(scheduleId) {
 
 function buildScheduleDataPayload(draft) {
     refreshDraftCounts(draft);
-
-    const comparisonRows =
-        buildMonthlyValidationRows(draft.months);
-
     return {
         schedule: draft.schedule,
         sourceRows: draft.sourceRows,
         bills: draft.bills,
         months: draft.months,
-        comparisonRows,
         summary: summarizeMonths(draft.months)
     };
 }
@@ -459,7 +217,7 @@ function draftForClient(draft) {
         bills: payload.bills,
         rows: payload.bills,
         months: payload.months,
-        comparison_rows: payload.comparisonRows,
+        comparison_rows: payload.months,
         summary: payload.summary
     };
 }
@@ -475,7 +233,7 @@ function scheduleDataFromRecord(schedule) {
         sourceRows,
         bills,
         months,
-        summary: summarizeMonths(months)
+        summary: data.summary || summarizeMonths(months)
     };
 }
 
@@ -887,7 +645,7 @@ router.get('/:scheduleId', ...access('ver'), async (req, res) => {
             bills,
             rows: bills,
             months,
-            comparison_rows: buildMonthlyValidationRows(months),
+            comparison_rows: months,
             summary
         });
     } catch (error) {
@@ -1541,183 +1299,172 @@ router.post('/upload-gl', ...access('crear'), upload.single('glFile'), async (re
 
     try {
         if (!req.file) {
-            return res.status(400).json({
-                success: false,
-                message: 'No monthly GL file was received'
-            });
+            return res.status(400).json({ success: false, message: 'No monthly GL file was received' });
         }
 
         const scheduleId = Number(req.body.schedule_id);
         const parsed = parseMonthlyGlActuals(req.file.buffer);
         const inferredPeriod = inferGlPeriod(parsed);
-        const periodYear = parseYear(
-            req.body.period_year
-                || req.body.schedule_year
-                || inferredPeriod.year,
-            inferredPeriod.year
-        );
-        const periodMonth = parseMonth(
-            req.body.period_month || inferredPeriod.month
-        );
+        const periodYear = parseYear(req.body.period_year || req.body.schedule_year || inferredPeriod.year, inferredPeriod.year);
+        const periodMonth = parseMonth(req.body.period_month || inferredPeriod.month);
 
         if (!scheduleId) {
-            return res.status(400).json({
-                success: false,
-                message: 'Select a schedule before uploading the monthly GL.'
-            });
+            return res.status(400).json({ success: false, message: 'Select a schedule before uploading the monthly GL.' });
         }
 
         if (!periodYear || !periodMonth) {
-            return res.status(400).json({
-                success: false,
-                message: 'The monthly GL period could not be inferred from the report dates.'
-            });
+            return res.status(400).json({ success: false, message: 'The monthly GL period could not be inferred from the report dates.' });
         }
 
-        const glUpload = {
-            file_name: req.file.originalname,
-            file_hash: hashBuffer(req.file.buffer),
-            sheet_name: parsed.sheetName,
-            parsed_row_count: parsed.details.length,
-            period_code: periodCode(periodMonth, periodYear),
-            uploaded_by: getUserId(req),
-            uploaded_at: new Date().toISOString()
-        };
-
         const draft = getDraftSchedule(scheduleId);
-
         if (draft) {
-            const periodRows = draft.months.filter(month =>
-                Number(month.period_year) === periodYear
-                && Number(month.period_month) === periodMonth
-            );
+            let matched = 0;
+            let differences = 0;
+            let missing = 0;
 
-            const validation = applyMonthlyGlByStore(
-                periodRows,
-                parsed.actualByStore,
-                glUpload
-            );
+            for (const row of draft.months.filter(month => Number(month.period_year) === periodYear && Number(month.period_month) === periodMonth)) {
+                const actual = roundMoney(parsed.actualByStore.get(String(row.store_number)) || 0);
+                const expected = roundMoney(row.expected_amount);
+                const difference = roundMoney(actual - expected);
+                let status = 'MATCHED';
+
+                if (Math.abs(actual) <= 0.01 && Math.abs(expected) > 0.01) {
+                    status = 'MISSING_GL';
+                    missing += 1;
+                } else if (Math.abs(difference) > 0.01) {
+                    status = 'DIFFERENCE';
+                    differences += 1;
+                } else {
+                    matched += 1;
+                }
+
+                row.gl_actual_amount = actual;
+                row.difference = difference;
+                row.status = status;
+            }
 
             refreshDraftCounts(draft);
+            const differenceRows = draft.months
+                .filter(month => Number(month.period_year) === periodYear
+                    && Number(month.period_month) === periodMonth
+                    && ['DIFFERENCE', 'MISSING_GL'].includes(String(month.status).toUpperCase()))
+                .sort((a, b) => Math.abs(Number(b.difference || 0)) - Math.abs(Number(a.difference || 0)));
 
             return res.json({
                 success: true,
                 schedule_id: scheduleId,
-                period_code: periodCode(
-                    periodMonth,
-                    periodYear
-                ),
+                period_code: periodCode(periodMonth, periodYear),
                 parsed_rows: parsed.details.length,
-                matched: validation.matched,
-                differences: validation.differences,
-                missing_gl: validation.missing,
-                difference_rows: validation.differenceRows,
-                comparison_rows: validation.validationRows,
-                validation_basis: 'STORE_PERIOD_TOTAL',
+                matched,
+                differences,
+                missing_gl: missing,
+                difference_rows: differenceRows,
                 saved_to_server: false,
                 needs_save: true
             });
         }
 
-        const schedule =
-            await loadScheduleOr404(scheduleId, res);
-
+        const schedule = await loadScheduleOr404(scheduleId, res);
         if (!schedule) return;
 
         const payload = scheduleDataFromRecord(schedule);
-
         const monthRows = payload.months.filter(row =>
-            Number(row.period_year) === periodYear
-            && Number(row.period_month) === periodMonth
+            Number(row.period_year) === periodYear &&
+            Number(row.period_month) === periodMonth
         );
 
-        const validation = applyMonthlyGlByStore(
-            monthRows,
-            parsed.actualByStore,
-            glUpload
-        );
+        let matched = 0;
+        let differences = 0;
+        let missing = 0;
+
+        for (const row of monthRows) {
+            const actual = roundMoney(parsed.actualByStore.get(String(row.store_number)) || 0);
+            const expected = roundMoney(row.expected_amount);
+            const difference = roundMoney(actual - expected);
+            let status = 'MATCHED';
+
+            if (Math.abs(actual) <= 0.01 && Math.abs(expected) > 0.01) {
+                status = 'MISSING_GL';
+                missing += 1;
+            } else if (Math.abs(difference) > 0.01) {
+                status = 'DIFFERENCE';
+                differences += 1;
+            } else {
+                matched += 1;
+            }
+
+            row.gl_actual_amount = actual;
+            row.difference = difference;
+            row.status = status;
+            row.gl_upload = {
+                file_name: req.file.originalname,
+                file_hash: hashBuffer(req.file.buffer),
+                sheet_name: parsed.sheetName,
+                parsed_row_count: parsed.details.length,
+                period_code: periodCode(periodMonth, periodYear),
+                uploaded_by: getUserId(req),
+                uploaded_at: new Date().toISOString()
+            };
+        }
 
         const summary = summarizeMonths(payload.months);
-
-        const status =
-            summary.difference_count
-            || summary.missing_gl_count
-                ? 'DIFFERENCE'
-                : summary.pending_count
-                    ? 'GENERATED'
-                    : 'VALIDATED';
-
-        const metadata =
-            parseJson(schedule.metadata_json, {}) || {};
-
+        const status = summary.difference_count || summary.missing_gl_count
+            ? 'DIFFERENCE'
+            : summary.pending_count
+                ? 'GENERATED'
+                : 'VALIDATED';
+        const metadata = parseJson(schedule.metadata_json, {}) || {};
         metadata.last_gl_upload = {
-            ...glUpload,
+            file_name: req.file.originalname,
+            file_hash: hashBuffer(req.file.buffer),
+            sheet_name: parsed.sheetName,
+            parsed_row_count: parsed.details.length,
             period_year: periodYear,
             period_month: periodMonth,
-            matched: validation.matched,
-            differences: validation.differences,
-            missing: validation.missing,
-            validation_basis: 'STORE_PERIOD_TOTAL'
+            period_code: periodCode(periodMonth, periodYear),
+            matched,
+            differences,
+            missing
         };
-
-        const nextPayload = buildPersistentScheduleData(
-            schedule,
-            {
-                sourceRows: payload.sourceRows,
-                bills: payload.bills,
-                months: payload.months,
-                status
-            }
-        );
+        const nextPayload = buildPersistentScheduleData(schedule, {
+            sourceRows: payload.sourceRows,
+            bills: payload.bills,
+            months: payload.months,
+            status
+        });
+        const differenceRows = payload.months
+            .filter(month => Number(month.period_year) === periodYear
+                && Number(month.period_month) === periodMonth
+                && ['DIFFERENCE', 'MISSING_GL'].includes(String(month.status).toUpperCase()))
+            .sort((a, b) => Math.abs(Number(b.difference || 0)) - Math.abs(Number(a.difference || 0)));
 
         await connection.beginTransaction();
-
-        await updatePrepaidScheduleJson(
-            connection,
-            scheduleId,
-            nextPayload,
-            {
-                status,
-                generated_at: schedule.generated_at,
-                metadata
-            }
-        );
-
+        await updatePrepaidScheduleJson(connection, scheduleId, nextPayload, {
+            status,
+            generated_at: schedule.generated_at,
+            metadata
+        });
         await connection.commit();
 
+        // GL validation updates database values only. It does not create or
+        // overwrite the saved Excel workbook until the user presses Save.
         res.json({
             success: true,
             schedule_id: scheduleId,
-            period_code: periodCode(
-                periodMonth,
-                periodYear
-            ),
+            period_code: periodCode(periodMonth, periodYear),
             parsed_rows: parsed.details.length,
-            matched: validation.matched,
-            differences: validation.differences,
-            missing_gl: validation.missing,
-            difference_rows: validation.differenceRows,
-            comparison_rows: validation.validationRows,
-            validation_basis: 'STORE_PERIOD_TOTAL',
+            matched,
+            differences,
+            missing_gl: missing,
+            difference_rows: differenceRows,
             saved_to_server: false,
             needs_save: true
         });
     } catch (error) {
         await connection.rollback();
-
-        console.error(
-            'Prepaid GL could not be uploaded:',
-            error
-        );
-
+        console.error('Prepaid GL could not be uploaded:', error);
         if (tableSetupMessage(error, res)) return;
-
-        res.status(500).json({
-            success: false,
-            message:
-                error.message
-                || 'Monthly GL could not be uploaded'
-        });
+        res.status(500).json({ success: false, message: error.message || 'Monthly GL could not be uploaded' });
     } finally {
         connection.release();
     }
