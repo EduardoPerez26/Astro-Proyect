@@ -57,7 +57,6 @@ const { title, includeSheetJS = false, stylesheets = [] } = Astro.props;
     <link rel="stylesheet" href="/styles/components/sidebar-premium.css?v=20260715-full-black-buttons-tables-v4">
 <script src="/js/sidebar-premium.js?v=20260715-full-black-buttons-tables-v4" defer></script>
     <link rel="stylesheet" href="/styles/components/black-admin-theme.css?v=20260715-selective-graphite-v5">
-    <link rel="stylesheet" href="/styles/components/document-tabs-graphite.css?v=20260715-document-tabs-graphite-v1">
 </head>
 <body>
     <slot />

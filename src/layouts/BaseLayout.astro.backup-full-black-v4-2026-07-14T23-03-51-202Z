@@ -54,10 +54,9 @@ const { title, includeSheetJS = false, stylesheets = [] } = Astro.props;
     <link rel="stylesheet" href="/styles/screens/login-session.css?v=20260714-remember-session-v1">
     <script is:inline src="/js/session-persistence.js?v=20260714-remember-session-v1"></script>
     <link rel="stylesheet" href="/styles/modal-premium-fixes.css?v=20260714-modal-premium-fixes-v2">
-    <link rel="stylesheet" href="/styles/components/sidebar-premium.css?v=20260715-full-black-buttons-tables-v4">
-<script src="/js/sidebar-premium.js?v=20260715-full-black-buttons-tables-v4" defer></script>
-    <link rel="stylesheet" href="/styles/components/black-admin-theme.css?v=20260715-selective-graphite-v5">
-    <link rel="stylesheet" href="/styles/components/document-tabs-graphite.css?v=20260715-document-tabs-graphite-v1">
+    <link rel="stylesheet" href="/styles/components/sidebar-premium.css?v=20260714-black-admin-theme-v3">
+    <link rel="stylesheet" href="/styles/components/black-admin-theme.css?v=20260714-black-admin-theme-v3">
+    <script src="/js/sidebar-premium.js?v=20260714-black-admin-theme-v3" defer></script>
 </head>
 <body>
     <slot />

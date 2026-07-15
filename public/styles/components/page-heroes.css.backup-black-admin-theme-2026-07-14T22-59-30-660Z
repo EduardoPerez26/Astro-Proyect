@@ -20,9 +20,9 @@
     --xbfs-hero-subtitle-color: #d9e8f3;
     --xbfs-hero-label-color: #dcecf7;
 
-    --xbfs-hero-bg-start: #030303;
-    --xbfs-hero-bg-middle: #0b0b0b;
-    --xbfs-hero-bg-end: #1a1a1a;
+    --xbfs-hero-bg-start: #101122;
+    --xbfs-hero-bg-middle: #111a2f;
+    --xbfs-hero-bg-end: #0b2f54;
 
     --xbfs-hero-surface: rgba(5, 24, 39, 0.42);
     --xbfs-hero-surface-hover: rgba(5, 24, 39, 0.54);
@@ -867,9 +867,9 @@ html body .main .status-pulse {
    ========================================================= */
 
 :root {
-    --xbfs-sidebar-hero-start: #030303;
-    --xbfs-sidebar-hero-middle: #0b0b0b;
-    --xbfs-sidebar-hero-end: #1a1a1a;
+    --xbfs-sidebar-hero-start: #101122;
+    --xbfs-sidebar-hero-middle: #111a2f;
+    --xbfs-sidebar-hero-end: #0b2f54;
     --xbfs-sidebar-hero-copy: rgba(226, 238, 249, 0.84);
 }
 

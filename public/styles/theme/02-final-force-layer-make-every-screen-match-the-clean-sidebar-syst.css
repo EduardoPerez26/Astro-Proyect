@@ -105,7 +105,7 @@ body .main :is(.filters-bar, .documents-filters, .property-documents-filters, .c
 
 body .main :is(input, select, textarea, .form-control, .search-field input) {
     min-height: 42px !important;
-    border: 1px solid #cbdbea !important;
+   
     border-radius: 8px !important;
     background: #ffffff !important;
     color: #102033 !important;
@@ -623,7 +623,7 @@ body {
 .sidebar.collapsed .nav-btn,
 .sidebar.collapsed .sidebar-logout,
 .sidebar.collapsed .sidebar-action {
-    border-radius: 999px !important
+    border-radius: 15px !important
 }
 
 body:not(.sidebar-collapsed) .main,
@@ -722,7 +722,7 @@ body .main :is(.admin-metric-icon, .summary-icon, .documents-type-icon, .pm-uplo
 
 body .main :is(input, select, textarea, .form-control, .search-field input) {
     min-height: 40px !important;
-    border: 1px solid var(--minimal-border-strong) !important;
+  
     border-radius: 10px !important;
     background: #ffffff !important;
     color: var(--minimal-text) !important;

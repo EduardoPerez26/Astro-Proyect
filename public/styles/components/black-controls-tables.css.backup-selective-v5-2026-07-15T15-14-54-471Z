@@ -1,0 +1,907 @@
+/* =========================================================
+   XBFS — FULL BLACK BUTTONS & TABLES V4
+
+   Global visual layer for all application views.
+   It intentionally uses high-specificity selectors and !important
+   because several Astro pages contain scoped component styles.
+
+   Scope:
+   - all application buttons outside the sidebar
+   - table action buttons
+   - tabs and pagination buttons
+   - modal and SweetAlert actions
+   - all application tables
+   - table filters, search and pagination controls
+
+   Semantic meaning is preserved through text/icon/border accents,
+   while every action keeps the same black/graphite background.
+   ========================================================= */
+
+:root {
+    --xbfs-control-black-0: #030303;
+    --xbfs-control-black-1: #090909;
+    --xbfs-control-black-2: #141414;
+    --xbfs-control-black-3: #232323;
+    --xbfs-control-black-4: #343434;
+
+    --xbfs-control-white: #ffffff;
+    --xbfs-control-text: #f7f7f7;
+    --xbfs-control-muted: #b9b9b9;
+
+    --xbfs-table-head-start: #030303;
+    --xbfs-table-head-end: #181818;
+    --xbfs-table-border: #d8dde3;
+    --xbfs-table-row: #ffffff;
+    --xbfs-table-row-alt: #f7f8fa;
+    --xbfs-table-row-hover: #eceff2;
+    --xbfs-table-text: #203247;
+    --xbfs-table-muted: #687b8d;
+
+    --xbfs-semantic-danger: #ff8d8d;
+    --xbfs-semantic-success: #6bd7a2;
+    --xbfs-semantic-warning: #f4c96a;
+    --xbfs-semantic-info: #b9d7f1;
+}
+
+/* ---------------------------------------------------------
+   GLOBAL BUTTON SYSTEM
+   --------------------------------------------------------- */
+
+/*
+ * Main application buttons. The repeated .main class deliberately
+ * raises specificity above Astro scoped selectors.
+ */
+html body .main.main.main :is(
+    button,
+    [role="button"],
+    a.btn,
+    a.button,
+    .btn,
+    .button,
+    .action-btn,
+    .action-button,
+    .tab-btn,
+    .tab-button,
+    .documents-type-tab,
+    .profile-settings-tab,
+    .admin-view-tab,
+    .pagination-btn,
+    .clear-filters,
+    .store-action,
+    .bk-tax-form-action,
+    .bk-tax-add-store,
+    .popeyes-tab-btn,
+    .pm-filter-reset,
+    .pm-card-action,
+    .pm-table-action,
+    .pm-full-action,
+    .pm-qc-button,
+    .reconciliation-compare-button,
+    .comparison-export-button,
+    .comparison-clear-button,
+    .system-errors-action-primary,
+    .system-error-clear,
+    .system-errors-action-link,
+    .operations-refresh,
+    .chat-new-icon-btn,
+    .chat-send-btn
+) {
+    border: 1px solid #303030 !important;
+    border-radius: 11px !important;
+    background:
+        linear-gradient(
+            180deg,
+            var(--xbfs-control-black-3) 0%,
+            var(--xbfs-control-black-1) 100%
+        ) !important;
+    color: var(--xbfs-control-text) !important;
+    box-shadow:
+        0 12px 24px -20px rgba(0, 0, 0, 0.95),
+        inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+    text-decoration: none !important;
+    text-shadow: none !important;
+    transition:
+        transform 150ms ease,
+        border-color 150ms ease,
+        background-color 150ms ease,
+        box-shadow 150ms ease !important;
+}
+
+/* Hover and focus remain graphite, never blue. */
+html body .main.main.main :is(
+    button,
+    [role="button"],
+    a.btn,
+    a.button,
+    .btn,
+    .button,
+    .action-btn,
+    .action-button,
+    .tab-btn,
+    .tab-button,
+    .documents-type-tab,
+    .profile-settings-tab,
+    .admin-view-tab,
+    .pagination-btn,
+    .clear-filters,
+    .store-action,
+    .bk-tax-form-action,
+    .bk-tax-add-store,
+    .popeyes-tab-btn,
+    .pm-filter-reset,
+    .pm-card-action,
+    .pm-table-action,
+    .pm-full-action,
+    .pm-qc-button,
+    .reconciliation-compare-button,
+    .comparison-export-button,
+    .comparison-clear-button,
+    .system-errors-action-primary,
+    .system-error-clear,
+    .system-errors-action-link,
+    .operations-refresh,
+    .chat-new-icon-btn,
+    .chat-send-btn
+):hover:not(:disabled):not([aria-disabled="true"]),
+html body .main.main.main :is(
+    button,
+    [role="button"],
+    a.btn,
+    a.button,
+    .btn,
+    .button,
+    .action-btn,
+    .action-button,
+    .tab-btn,
+    .tab-button,
+    .documents-type-tab,
+    .profile-settings-tab,
+    .admin-view-tab,
+    .pagination-btn,
+    .clear-filters,
+    .store-action,
+    .bk-tax-form-action,
+    .bk-tax-add-store,
+    .popeyes-tab-btn,
+    .pm-filter-reset,
+    .pm-card-action,
+    .pm-table-action,
+    .pm-full-action,
+    .pm-qc-button,
+    .reconciliation-compare-button,
+    .comparison-export-button,
+    .comparison-clear-button,
+    .system-errors-action-primary,
+    .system-error-clear,
+    .system-errors-action-link,
+    .operations-refresh,
+    .chat-new-icon-btn,
+    .chat-send-btn
+):focus-visible {
+    border-color: #555555 !important;
+    background:
+        linear-gradient(
+            180deg,
+            #333333 0%,
+            #111111 100%
+        ) !important;
+    color: #ffffff !important;
+    box-shadow:
+        0 15px 28px -20px rgba(0, 0, 0, 1),
+        0 0 0 3px rgba(0, 0, 0, 0.10),
+        inset 0 1px 0 rgba(255, 255, 255, 0.11) !important;
+    transform: translateY(-1px) !important;
+    outline: none !important;
+}
+
+/* Active tabs and toggles use a lighter black, not an accent color. */
+html body .main.main.main :is(
+    button,
+    [role="button"],
+    .btn,
+    .button,
+    .tab-btn,
+    .tab-button,
+    .documents-type-tab,
+    .profile-settings-tab,
+    .admin-view-tab,
+    .pagination-btn,
+    .popeyes-tab-btn
+):is(
+    .active,
+    .is-active,
+    [aria-selected="true"],
+    [aria-pressed="true"],
+    [aria-current="page"]
+) {
+    border-color: #606060 !important;
+    background:
+        linear-gradient(
+            180deg,
+            #3a3a3a 0%,
+            #141414 100%
+        ) !important;
+    color: #ffffff !important;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.13),
+        0 14px 28px -22px rgba(0, 0, 0, 1) !important;
+}
+
+/* Disabled buttons. */
+html body .main.main.main :is(
+    button,
+    [role="button"],
+    .btn,
+    .button
+):is(:disabled, [aria-disabled="true"]) {
+    border-color: #353535 !important;
+    background:
+        linear-gradient(
+            180deg,
+            #252525 0%,
+            #151515 100%
+        ) !important;
+    color: #858585 !important;
+    box-shadow: none !important;
+    opacity: 0.68 !important;
+    cursor: not-allowed !important;
+    transform: none !important;
+}
+
+/* Icons inherit the button color unless a semantic rule follows. */
+html body .main.main.main :is(
+    button,
+    [role="button"],
+    .btn,
+    .button,
+    .action-btn,
+    .action-button
+) :is(i, svg) {
+    color: currentColor !important;
+    fill: currentColor;
+}
+
+/* ---------------------------------------------------------
+   SEMANTIC BUTTONS — SAME BLACK BACKGROUND
+   --------------------------------------------------------- */
+
+html body .main.main.main :is(
+    .btn-danger,
+    .danger,
+    .danger-button,
+    .delete,
+    .delete-button,
+    .comparison-delete-button,
+    .upload-remove-btn,
+    .file-remove-btn,
+    .pm-remove-file-btn
+),
+html body :is(
+    .modal,
+    .modal-overlay,
+    .modal-backdrop,
+    .pm-modal,
+    .pm-schedule-modal,
+    .bk-tax-modal,
+    .file-comparison-modal,
+    .profile-crop-modal
+) :is(
+    .btn-danger,
+    .danger,
+    .danger-button,
+    .delete,
+    .delete-button,
+    .comparison-delete-button,
+    .upload-remove-btn,
+    .file-remove-btn,
+    .pm-remove-file-btn
+) {
+    border-color: rgba(255, 141, 141, 0.34) !important;
+    background:
+        linear-gradient(
+            180deg,
+            #242020 0%,
+            #090909 100%
+        ) !important;
+    color: var(--xbfs-semantic-danger) !important;
+}
+
+html body .main.main.main :is(
+    .btn-success,
+    .success,
+    .success-button,
+    .approve-button
+) {
+    border-color: rgba(107, 215, 162, 0.34) !important;
+    background:
+        linear-gradient(
+            180deg,
+            #1d2420 0%,
+            #090909 100%
+        ) !important;
+    color: var(--xbfs-semantic-success) !important;
+}
+
+html body .main.main.main :is(
+    .btn-warning,
+    .warning,
+    .warning-button
+) {
+    border-color: rgba(244, 201, 106, 0.36) !important;
+    background:
+        linear-gradient(
+            180deg,
+            #262319 0%,
+            #090909 100%
+        ) !important;
+    color: var(--xbfs-semantic-warning) !important;
+}
+
+/* ---------------------------------------------------------
+   MODAL BUTTONS
+   --------------------------------------------------------- */
+
+html body :is(
+    .modal,
+    .modal-overlay,
+    .modal-backdrop,
+    .pm-modal,
+    .pm-schedule-modal,
+    .bk-tax-modal,
+    .file-comparison-modal,
+    .profile-crop-modal,
+    .custom-confirm-modal,
+    .custom-alert-modal
+) :is(
+    button,
+    [role="button"],
+    .btn,
+    .button,
+    .modal-close,
+    .pm-modal-close,
+    .bk-tax-modal-close,
+    .file-comparison-close,
+    .profile-crop-close,
+    .replacement-file-confirm-button,
+    .replacement-file-cancel-button,
+    .source-amortization-confirm-btn,
+    .source-amortization-cancel-btn,
+    .source-concept-confirm-btn,
+    .source-concept-cancel-btn
+) {
+    border: 1px solid #363636 !important;
+    background:
+        linear-gradient(
+            180deg,
+            #222222 0%,
+            #080808 100%
+        ) !important;
+    color: #ffffff !important;
+    box-shadow:
+        0 12px 23px -20px rgba(0, 0, 0, 0.98),
+        inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+}
+
+/* SweetAlert actions. */
+html body .swal2-container.swal2-container :is(
+    .swal2-confirm,
+    .swal2-cancel,
+    .swal2-deny
+) {
+    border: 1px solid #383838 !important;
+    border-radius: 10px !important;
+    background:
+        linear-gradient(
+            180deg,
+            #252525 0%,
+            #080808 100%
+        ) !important;
+    color: #ffffff !important;
+    box-shadow:
+        0 12px 25px -20px rgba(0, 0, 0, 0.98),
+        inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+}
+
+html body .swal2-container.swal2-container :is(
+    .swal2-confirm,
+    .swal2-cancel,
+    .swal2-deny
+):hover {
+    background:
+        linear-gradient(
+            180deg,
+            #383838 0%,
+            #111111 100%
+        ) !important;
+}
+
+/* ---------------------------------------------------------
+   TABLE SHELLS
+   --------------------------------------------------------- */
+
+html body .main.main.main :is(
+    .table-container,
+    .table-wrapper,
+    .data-table-container,
+    .documents-table-container,
+    .comparison-table-container,
+    .admin-table-container,
+    .pm-table-container,
+    .system-errors-table-container,
+    .responsive-table,
+    .table-responsive
+) {
+    overflow: auto !important;
+    border: 1px solid var(--xbfs-table-border) !important;
+    border-radius: 15px !important;
+    background: #ffffff !important;
+    box-shadow:
+        0 18px 42px -34px rgba(0, 0, 0, 0.48) !important;
+}
+
+/* All application tables, including tables created dynamically. */
+html body .main.main.main :is(
+    table,
+    .data-table,
+    .conciliacion-table,
+    .admin-table,
+    .prepaid-table,
+    .prepaid-source-table,
+    .prepaid-schedule-matrix,
+    .pm-documents-table,
+    .pm-schedule-table,
+    .pm-entities-table,
+    .pm-quarter-modal-table,
+    .preview-excel-table,
+    .system-errors-table
+),
+html body :is(
+    .modal,
+    .modal-overlay,
+    .pm-modal,
+    .pm-schedule-modal,
+    .bk-tax-modal
+) :is(
+    table,
+    .data-table,
+    .prepaid-table,
+    .pm-quarter-modal-table,
+    .preview-excel-table
+) {
+    width: 100% !important;
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
+    background: #ffffff !important;
+    color: var(--xbfs-table-text) !important;
+    font-size: 12px !important;
+}
+
+/* Table headers. */
+html body .main.main.main :is(
+    table,
+    .data-table,
+    .conciliacion-table,
+    .admin-table,
+    .prepaid-table,
+    .prepaid-source-table,
+    .prepaid-schedule-matrix,
+    .pm-documents-table,
+    .pm-schedule-table,
+    .pm-entities-table,
+    .pm-quarter-modal-table,
+    .preview-excel-table,
+    .system-errors-table
+) :is(thead, .table-head),
+html body :is(
+    .modal,
+    .modal-overlay,
+    .pm-modal,
+    .pm-schedule-modal,
+    .bk-tax-modal
+) table thead {
+    background:
+        linear-gradient(
+            180deg,
+            var(--xbfs-table-head-end) 0%,
+            var(--xbfs-table-head-start) 100%
+        ) !important;
+}
+
+html body .main.main.main :is(
+    table,
+    .data-table,
+    .conciliacion-table,
+    .admin-table,
+    .prepaid-table,
+    .prepaid-source-table,
+    .prepaid-schedule-matrix,
+    .pm-documents-table,
+    .pm-schedule-table,
+    .pm-entities-table,
+    .pm-quarter-modal-table,
+    .preview-excel-table,
+    .system-errors-table
+) thead th,
+html body :is(
+    .modal,
+    .modal-overlay,
+    .pm-modal,
+    .pm-schedule-modal,
+    .bk-tax-modal
+) table thead th {
+    border-top: 0 !important;
+    border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-bottom: 1px solid #000000 !important;
+    background:
+        linear-gradient(
+            180deg,
+            #1c1c1c 0%,
+            #050505 100%
+        ) !important;
+    color: #ffffff !important;
+    font-size: 10px !important;
+    font-weight: 850 !important;
+    letter-spacing: 0.045em !important;
+    line-height: 1.25 !important;
+    text-transform: uppercase !important;
+    text-shadow: none !important;
+}
+
+/* Sticky table headers use the same black background. */
+html body .main.main.main table thead th,
+html body .main.main.main .sticky-table-header,
+html body .main.main.main .floating-table-header {
+    background-color: #090909 !important;
+    background-image:
+        linear-gradient(
+            180deg,
+            #1c1c1c 0%,
+            #050505 100%
+        ) !important;
+    color: #ffffff !important;
+}
+
+/* Header corners. */
+html body .main.main.main table thead tr:first-child th:first-child {
+    border-top-left-radius: 13px !important;
+}
+
+html body .main.main.main table thead tr:first-child th:last-child {
+    border-top-right-radius: 13px !important;
+    border-right: 0 !important;
+}
+
+/* Body cells. */
+html body .main.main.main table tbody tr,
+html body :is(
+    .modal,
+    .modal-overlay,
+    .pm-modal,
+    .pm-schedule-modal,
+    .bk-tax-modal
+) table tbody tr {
+    background: var(--xbfs-table-row) !important;
+    color: var(--xbfs-table-text) !important;
+    transition:
+        background-color 130ms ease,
+        box-shadow 130ms ease !important;
+}
+
+html body .main.main.main table tbody tr:nth-child(even),
+html body :is(
+    .modal,
+    .modal-overlay,
+    .pm-modal,
+    .pm-schedule-modal,
+    .bk-tax-modal
+) table tbody tr:nth-child(even) {
+    background: var(--xbfs-table-row-alt) !important;
+}
+
+html body .main.main.main table tbody tr:hover,
+html body :is(
+    .modal,
+    .modal-overlay,
+    .pm-modal,
+    .pm-schedule-modal,
+    .bk-tax-modal
+) table tbody tr:hover {
+    background: var(--xbfs-table-row-hover) !important;
+    box-shadow:
+        inset 3px 0 0 #181818 !important;
+}
+
+html body .main.main.main table tbody :is(td, th),
+html body :is(
+    .modal,
+    .modal-overlay,
+    .pm-modal,
+    .pm-schedule-modal,
+    .bk-tax-modal
+) table tbody :is(td, th) {
+    border-right: 1px solid #edf0f3 !important;
+    border-bottom: 1px solid var(--xbfs-table-border) !important;
+    background: inherit !important;
+    color: var(--xbfs-table-text) !important;
+    vertical-align: middle !important;
+}
+
+html body .main.main.main table tbody tr:last-child :is(td, th) {
+    border-bottom: 0 !important;
+}
+
+html body .main.main.main table tbody tr:last-child td:first-child {
+    border-bottom-left-radius: 13px !important;
+}
+
+html body .main.main.main table tbody tr:last-child td:last-child {
+    border-bottom-right-radius: 13px !important;
+}
+
+/* Sticky first/last columns keep the correct row background. */
+html body .main.main.main table tbody :is(
+    td:first-child,
+    th:first-child,
+    td:last-child,
+    th:last-child
+)[style*="sticky"],
+html body .main.main.main table tbody :is(
+    .sticky-column,
+    .sticky-left,
+    .sticky-right,
+    .actions-column
+) {
+    background: inherit !important;
+}
+
+/* Selected, active and flagged rows. */
+html body .main.main.main table tbody tr:is(
+    .selected,
+    .is-selected,
+    .active,
+    [aria-selected="true"]
+) {
+    background: #e4e7ea !important;
+    box-shadow:
+        inset 4px 0 0 #050505 !important;
+}
+
+/* Table footer and totals. */
+html body .main.main.main table tfoot :is(td, th) {
+    border-top: 2px solid #1a1a1a !important;
+    border-bottom: 0 !important;
+    background:
+        linear-gradient(
+            180deg,
+            #262626 0%,
+            #0b0b0b 100%
+        ) !important;
+    color: #ffffff !important;
+    font-weight: 800 !important;
+}
+
+/* ---------------------------------------------------------
+   TABLE ACTIONS, PAGINATION AND FILTERS
+   --------------------------------------------------------- */
+
+html body .main.main.main table :is(
+    button,
+    a.btn,
+    .btn,
+    .action-btn,
+    .action-button,
+    .table-action,
+    .pm-table-action,
+    .document-action
+),
+html body .main.main.main :is(
+    .table-actions,
+    .pagination,
+    .table-pagination,
+    .data-table-pagination,
+    .pagination-controls
+) :is(
+    button,
+    a,
+    .btn,
+    .pagination-btn
+) {
+    border: 1px solid #343434 !important;
+    background:
+        linear-gradient(
+            180deg,
+            #222222 0%,
+            #080808 100%
+        ) !important;
+    color: #ffffff !important;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.07) !important;
+}
+
+html body .main.main.main :is(
+    .pagination,
+    .table-pagination,
+    .data-table-pagination,
+    .pagination-controls
+) :is(
+    button,
+    a,
+    .btn,
+    .pagination-btn
+):is(
+    .active,
+    [aria-current="page"]
+) {
+    border-color: #686868 !important;
+    background:
+        linear-gradient(
+            180deg,
+            #444444 0%,
+            #181818 100%
+        ) !important;
+}
+
+/* Search and filters near tables. */
+html body .main.main.main :is(
+    .table-filters,
+    .filters-bar,
+    .filter-bar,
+    .table-toolbar,
+    .data-table-toolbar,
+    .documents-toolbar,
+    .admin-table-toolbar
+) :is(
+    input,
+    select,
+    textarea
+),
+html body .main.main.main :is(
+    .table-search,
+    .search-input,
+    .filter-input,
+    .filter-select
+) {
+    border: 1px solid #cfd5db !important;
+    border-radius: 10px !important;
+    background: #ffffff !important;
+    color: #1b2e42 !important;
+    box-shadow: none !important;
+}
+
+html body .main.main.main :is(
+    .table-filters,
+    .filters-bar,
+    .filter-bar,
+    .table-toolbar,
+    .data-table-toolbar,
+    .documents-toolbar,
+    .admin-table-toolbar
+) :is(
+    input,
+    select,
+    textarea
+):focus,
+html body .main.main.main :is(
+    .table-search,
+    .search-input,
+    .filter-input,
+    .filter-select
+):focus {
+    border-color: #1a1a1a !important;
+    box-shadow:
+        0 0 0 3px rgba(0, 0, 0, 0.09) !important;
+    outline: none !important;
+}
+
+/* Sorting indicators and table icons. */
+html body .main.main.main table thead th :is(
+    i,
+    svg,
+    .sort-icon,
+    .sorting-icon
+) {
+    color: #d7d7d7 !important;
+    fill: #d7d7d7 !important;
+}
+
+/* Empty states inside tables. */
+html body .main.main.main table :is(
+    .empty-state,
+    .no-data,
+    .no-results
+) {
+    background: #f8f9fa !important;
+    color: var(--xbfs-table-muted) !important;
+}
+
+/* ---------------------------------------------------------
+   DATA-TABLE LIBRARY COMPATIBILITY
+   --------------------------------------------------------- */
+
+html body .main.main.main :is(
+    .dataTables_wrapper,
+    .datatable-wrapper,
+    .simple-datatables,
+    .tabulator
+) {
+    color: var(--xbfs-table-text) !important;
+}
+
+html body .main.main.main :is(
+    .dataTables_wrapper,
+    .datatable-wrapper,
+    .simple-datatables
+) :is(
+    button,
+    .paginate_button,
+    .datatable-pagination a
+) {
+    border: 1px solid #333333 !important;
+    background:
+        linear-gradient(
+            180deg,
+            #222222 0%,
+            #080808 100%
+        ) !important;
+    color: #ffffff !important;
+}
+
+/* Tabulator support, should it be added later. */
+html body .main.main.main .tabulator .tabulator-header,
+html body .main.main.main .tabulator .tabulator-col {
+    border-color: #262626 !important;
+    background:
+        linear-gradient(
+            180deg,
+            #1c1c1c 0%,
+            #050505 100%
+        ) !important;
+    color: #ffffff !important;
+}
+
+html body .main.main.main .tabulator .tabulator-row {
+    border-color: var(--xbfs-table-border) !important;
+    background: #ffffff !important;
+    color: var(--xbfs-table-text) !important;
+}
+
+html body .main.main.main .tabulator .tabulator-row:nth-child(even) {
+    background: var(--xbfs-table-row-alt) !important;
+}
+
+/* ---------------------------------------------------------
+   SMALL-SCREEN TABLES
+   --------------------------------------------------------- */
+
+@media (max-width: 760px) {
+    html body .main.main.main :is(
+        .table-container,
+        .table-wrapper,
+        .data-table-container,
+        .documents-table-container,
+        .comparison-table-container,
+        .admin-table-container,
+        .pm-table-container,
+        .system-errors-table-container,
+        .responsive-table,
+        .table-responsive
+    ) {
+        border-radius: 12px !important;
+    }
+
+    html body .main.main.main table {
+        font-size: 11px !important;
+    }
+
+    html body .main.main.main table thead th {
+        font-size: 9px !important;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html body .main.main.main button,
+    html body .main.main.main .btn,
+    html body .main.main.main table tbody tr {
+        transition: none !important;
+    }
+}

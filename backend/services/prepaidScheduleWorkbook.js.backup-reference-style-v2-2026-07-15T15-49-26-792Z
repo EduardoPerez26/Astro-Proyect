@@ -9,22 +9,14 @@ const uploadRoot = process.env.PREPAID_SCHEDULE_UPLOAD_DIR
 const EXPORT_DIR = path.join(uploadRoot, 'prepaid-schedules');
 
 const COLORS = {
-    charcoal: '404040',
-    charcoalDark: '262626',
-    dark: '1F1F1F',
-    mediumGray: 'D9D9D9',
-    lightGray: 'F2F2F2',
-    softGray: 'F8F8F8',
+    navy: '336699',
+    green: '007E45',
+    header: 'E9E8DF',
+    subheader: 'D0D0D0',
+    light: 'F5F5F1',
     white: 'FFFFFF',
     black: '000000',
     red: 'FF0000',
-    blue: '0070C0',
-    purple: '7030A0',
-    yellow: 'FFFF00',
-    selectedMonth: 'FFF2CC',
-    selectedMonthText: '9C5700',
-    lightBlueBorder: '5B9BD5',
-    softBlueBorder: 'BDD7EE',
     matched: 'E2F0D9',
     warning: 'FFF2CC',
     difference: 'F4CCCC'
@@ -83,268 +75,43 @@ function border(color = 'B7B7B7') {
 }
 
 function styleMetadataLabel(cell) {
-    cell.font = {
-        name: 'Arial',
-        size: 10,
-        bold: true,
-        color: { argb: COLORS.black }
-    };
-    cell.alignment = {
-        horizontal: 'right',
-        vertical: 'middle'
-    };
+    cell.font = { name: 'Verdana', size: 10, bold: true, color: { argb: COLORS.navy } };
+    cell.alignment = { horizontal: 'right', vertical: 'middle' };
 }
 
 function styleMetadataValue(cell) {
-    cell.font = {
-        name: 'Arial',
-        size: 10,
-        color: { argb: COLORS.black }
-    };
-    cell.alignment = {
-        horizontal: 'left',
-        vertical: 'middle'
-    };
+    cell.font = { name: 'Verdana', size: 10, color: { argb: COLORS.black } };
+    cell.alignment = { horizontal: 'left', vertical: 'middle' };
 }
 
 function styleHeaderRow(row) {
-    row.height = 28;
-
-    row.eachCell({ includeEmpty: true }, cell => {
-        cell.font = {
-            name: 'Arial',
-            size: 8,
-            bold: true,
-            color: { argb: COLORS.white }
-        };
-        cell.fill = {
-            type: 'pattern',
-            pattern: 'solid',
-            fgColor: { argb: COLORS.charcoal }
-        };
-        cell.border = {
-            top: {
-                style: 'thin',
-                color: { argb: COLORS.charcoalDark }
-            },
-            bottom: {
-                style: 'thin',
-                color: { argb: COLORS.charcoalDark }
-            },
-            right: {
-                style: 'thin',
-                color: { argb: '707070' }
-            }
-        };
-        cell.alignment = {
-            horizontal: 'center',
-            vertical: 'middle',
-            wrapText: true
-        };
+    row.height = 23;
+    row.eachCell(cell => {
+        cell.font = { name: 'Verdana', size: 10, bold: true, color: { argb: COLORS.black } };
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLORS.header } };
+        cell.border = border();
+        cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
     });
 }
 
 function styleBodyRow(row) {
-    row.height = 18;
-
+    row.height = 19;
     row.eachCell({ includeEmpty: true }, cell => {
-        cell.font = {
-            name: 'Arial',
-            size: 8,
-            color: { argb: COLORS.black }
-        };
-        cell.border = {
-            bottom: {
-                style: 'thin',
-                color: { argb: COLORS.softBlueBorder }
-            }
-        };
-        cell.alignment = {
-            vertical: 'middle'
-        };
+        cell.font = { name: 'Verdana', size: 9, color: { argb: COLORS.black } };
+        cell.border = border('D9D9D9');
+        cell.alignment = { vertical: 'middle' };
     });
 }
 
 function setTitle(sheet, title, lastColumn) {
     sheet.mergeCells(1, 1, 1, lastColumn);
-
     const cell = sheet.getCell(1, 1);
     cell.value = title;
-    cell.font = {
-        name: 'Arial',
-        size: 14,
-        bold: true,
-        color: { argb: COLORS.white }
-    };
-    cell.fill = {
-        type: 'pattern',
-        pattern: 'solid',
-        fgColor: { argb: COLORS.charcoal }
-    };
-    cell.alignment = {
-        horizontal: 'center',
-        vertical: 'middle'
-    };
-    cell.border = border(COLORS.charcoalDark);
-
-    sheet.getRow(1).height = 28;
-}
-
-function getSelectedMonth(schedule) {
-    const endDate = asDate(schedule?.amortization_end);
-
-    if (endDate) {
-        return endDate.getUTCMonth() + 1;
-    }
-
-    return new Date().getMonth() + 1;
-}
-
-function setReferenceMoneyFormat(cell) {
-    cell.numFmt = '#,##0.00;[Red](#,##0.00);-';
-}
-
-function styleScheduleHeader(headerRow, selectedMonthColumn) {
-    styleHeaderRow(headerRow);
-
-    const selectedCell = headerRow.getCell(selectedMonthColumn);
-    selectedCell.fill = {
-        type: 'pattern',
-        pattern: 'solid',
-        fgColor: { argb: COLORS.selectedMonth }
-    };
-    selectedCell.font = {
-        name: 'Arial',
-        size: 8,
-        bold: true,
-        color: { argb: COLORS.selectedMonthText }
-    };
-}
-
-function styleScheduleDataRow(
-    row,
-    selectedMonthColumn,
-    lastColumn
-) {
-    styleBodyRow(row);
-
-    for (let col = 1; col <= lastColumn; col += 1) {
-        const cell = row.getCell(col);
-
-        if (col >= 8) {
-            setReferenceMoneyFormat(cell);
-            cell.alignment = {
-                horizontal: 'right',
-                vertical: 'middle'
-            };
-        }
-    }
-
-    const amountPaidCell = row.getCell(8);
-    amountPaidCell.fill = {
-        type: 'pattern',
-        pattern: 'solid',
-        fgColor: { argb: COLORS.lightGrayGray }
-    };
-    amountPaidCell.font = {
-        name: 'Arial',
-        size: 8,
-        bold: true,
-        color: { argb: COLORS.blue }
-    };
-
-    const priorBalanceCell = row.getCell(9);
-    priorBalanceCell.fill = {
-        type: 'pattern',
-        pattern: 'solid',
-        fgColor: { argb: COLORS.mediumGray }
-    };
-    priorBalanceCell.font = {
-        name: 'Arial',
-        size: 8,
-        bold: true,
-        color: {
-            argb: money(priorBalanceCell.value) < 0
-                ? COLORS.red
-                : COLORS.black
-        }
-    };
-
-    const monthlyAmountCell = row.getCell(10);
-    monthlyAmountCell.fill = {
-        type: 'pattern',
-        pattern: 'solid',
-        fgColor: { argb: COLORS.lightGrayGray }
-    };
-
-    for (let col = 11; col <= 22; col += 1) {
-        row.getCell(col).fill = {
-            type: 'pattern',
-            pattern: 'solid',
-            fgColor: {
-                argb: col === selectedMonthColumn
-                    ? COLORS.selectedMonth
-                    : COLORS.softGray
-            }
-        };
-
-        if (col === selectedMonthColumn) {
-            row.getCell(col).font = {
-                name: 'Arial',
-                size: 8,
-                color: { argb: COLORS.selectedMonthText }
-            };
-        }
-    }
-
-    for (let col = 23; col <= lastColumn; col += 1) {
-        row.getCell(col).fill = {
-            type: 'pattern',
-            pattern: 'solid',
-            fgColor: { argb: COLORS.mediumGray }
-        };
-    }
-}
-
-function styleReferenceTotalRow(
-    row,
-    selectedMonthColumn,
-    lastColumn
-) {
-    row.height = 20;
-
-    for (let col = 1; col <= lastColumn; col += 1) {
-        const cell = row.getCell(col);
-
-        cell.fill = {
-            type: 'pattern',
-            pattern: 'solid',
-            fgColor: {
-                argb: col === selectedMonthColumn
-                    ? COLORS.selectedMonth
-                    : COLORS.charcoal
-            }
-        };
-        cell.border = border(COLORS.charcoalDark);
-        cell.font = {
-            name: 'Arial',
-            size: 8,
-            bold: true,
-            color: {
-                argb: col === selectedMonthColumn
-                    ? COLORS.selectedMonthText
-                    : COLORS.white
-            }
-        };
-        cell.alignment = {
-            horizontal: col >= 8 ? 'right' : 'left',
-            vertical: 'middle'
-        };
-
-        if (col >= 8) {
-            setReferenceMoneyFormat(cell);
-        }
-    }
+    cell.font = { name: 'Verdana', size: 16, bold: true, color: { argb: COLORS.navy } };
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLORS.header } };
+    cell.alignment = { horizontal: 'center', vertical: 'middle' };
+    cell.border = border('A6A6A6');
+    sheet.getRow(1).height = 30;
 }
 
 function addMetadata(sheet, pairs) {
@@ -397,7 +164,7 @@ function displayNegativeAmount(value) {
 
 function buildScheduleSheet(workbook, schedule, bills, months) {
     const sheet = workbook.addWorksheet('Prepaid Schedule', {
-        views: [{ state: 'frozen', xSplit: 3, ySplit: 8, showGridLines: true }],
+        views: [{ state: 'frozen', xSplit: 3, ySplit: 8 }],
         pageSetup: { orientation: 'landscape', fitToPage: true, fitToWidth: 1, fitToHeight: 0, paperSize: 9 }
     });
 
@@ -421,14 +188,7 @@ function buildScheduleSheet(workbook, schedule, bills, months) {
 
     const headerRow = sheet.getRow(headerRowNumber);
     headerRow.values = headers;
-
-    const selectedMonth = getSelectedMonth(schedule);
-    const selectedMonthColumn = 10 + selectedMonth;
-
-    styleScheduleHeader(
-        headerRow,
-        selectedMonthColumn
-    );
+    styleHeaderRow(headerRow);
 
     const scheduleYear = Number(schedule.schedule_year || new Date().getFullYear());
     const monthsByBill = new Map();
@@ -460,23 +220,9 @@ function buildScheduleSheet(workbook, schedule, bills, months) {
             entityRow.getCell(1).value = `Entity: ${entity}`;
             sheet.mergeCells(currentRow, 1, currentRow, headers.length);
             entityRow.eachCell({ includeEmpty: true }, cell => {
-                cell.font = {
-                    name: 'Arial',
-                    size: 8,
-                    bold: true,
-                    color: { argb: COLORS.purple }
-                };
-                cell.fill = {
-                    type: 'pattern',
-                    pattern: 'solid',
-                    fgColor: { argb: COLORS.lightGrayGray }
-                };
-                cell.border = {
-                    bottom: {
-                        style: 'thin',
-                        color: { argb: COLORS.softBlueBorder }
-                    }
-                };
+                cell.font = { name: 'Verdana', size: 10, bold: true, color: { argb: COLORS.navy } };
+                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLORS.light } };
+                cell.border = border('D9D9D9');
             });
             previousEntity = entity;
             currentRow += 1;
@@ -515,13 +261,12 @@ function buildScheduleSheet(workbook, schedule, bills, months) {
             Math.max(endingBalance, 0),
             Math.max(storeEnding, 0)
         ];
-        styleScheduleDataRow(
-            row,
-            selectedMonthColumn,
-            headers.length
-        );
+        styleBodyRow(row);
         row.getCell(6).numFmt = 'mm/dd/yyyy';
-
+        for (let col = 8; col <= headers.length; col += 1) {
+            row.getCell(col).numFmt = '$#,##0.00;[Red]($#,##0.00)';
+            row.getCell(col).alignment = { horizontal: 'right', vertical: 'middle' };
+        }
         currentRow += 1;
     }
 
@@ -530,32 +275,19 @@ function buildScheduleSheet(workbook, schedule, bills, months) {
     const totalRow = sheet.getRow(currentRow);
     totalRow.getCell(1).value = 'Grand total';
     sheet.mergeCells(currentRow, 1, currentRow, 7);
-    styleReferenceTotalRow(
-        totalRow,
-        selectedMonthColumn,
-        headers.length
-    );
-
     for (let col = 1; col <= headers.length; col += 1) {
         const cell = totalRow.getCell(col);
-
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLORS.subheader } };
+        cell.border = border();
+        cell.font = { name: 'Verdana', size: 10, bold: true };
+        cell.alignment = { horizontal: col >= 8 ? 'right' : 'left', vertical: 'middle' };
         if (col === 25) {
-            cell.value = {
-                formula: totalRow.getCell(24).address
-            };
-            setReferenceMoneyFormat(cell);
-        } else if (
-            col >= 8
-            && col <= headers.length
-            && lastDataRow >= firstDataRow
-        ) {
-            const letter =
-                cell.address.replace(/\d+/g, '');
-
-            cell.value = {
-                formula: `SUM(${letter}${firstDataRow}:${letter}${lastDataRow})`
-            };
-            setReferenceMoneyFormat(cell);
+            cell.value = { formula: totalRow.getCell(24).address };
+            cell.numFmt = '$#,##0.00;[Red]($#,##0.00)';
+        } else if (col >= 8 && col <= headers.length && lastDataRow >= firstDataRow) {
+            const letter = cell.address.replace(/\d+/g, '');
+            cell.value = { formula: `SUM(${letter}${firstDataRow}:${letter}${lastDataRow})` };
+            cell.numFmt = '$#,##0.00;[Red]($#,##0.00)';
         }
     }
 
@@ -571,7 +303,7 @@ function buildScheduleSheet(workbook, schedule, bills, months) {
 function buildSourceSheet(workbook, schedule, sourceRows) {
     const headers = ['Posted dt.', 'Doc dt.', 'Doc', 'Memo/Description', 'Department', 'Location', 'Txn No', 'JNL', 'Debit', 'Credit', 'Balance'];
     const sheet = workbook.addWorksheet('Source Bills', {
-        views: [{ state: 'frozen', ySplit: 7, showGridLines: true }],
+        views: [{ state: 'frozen', ySplit: 7 }],
         pageSetup: { orientation: 'landscape', fitToPage: true, fitToWidth: 1, fitToHeight: 0, paperSize: 9 }
     });
     setTitle(sheet, `${schedule.source_account || '246000'} - PERSONAL PROPERTY TAX PAYABLE`, headers.length);
@@ -598,11 +330,7 @@ function buildSourceSheet(workbook, schedule, sourceRows) {
         styleBodyRow(row);
         row.getCell(1).numFmt = 'mm/dd/yyyy';
         row.getCell(2).numFmt = 'mm/dd/yyyy';
-        [9, 10, 11].forEach(index => {
-            setReferenceMoneyFormat(
-                row.getCell(index)
-            );
-        });
+        [9, 10, 11].forEach(index => { row.getCell(index).numFmt = '$#,##0.00;[Red]($#,##0.00)'; });
         if (!Number(source.include_in_schedule)) {
             row.eachCell(cell => { cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLORS.warning } }; });
         }
@@ -612,23 +340,16 @@ function buildSourceSheet(workbook, schedule, sourceRows) {
     const totalRow = sheet.getRow(rowNumber);
     totalRow.getCell(1).value = `Totals for ${schedule.source_account || '246000'} - PERSONAL PROPERTY TAX PAYABLE`;
     sheet.mergeCells(rowNumber, 1, rowNumber, 8);
-    styleReferenceTotalRow(
-        totalRow,
-        -1,
-        headers.length
-    );
-
+    for (let col = 1; col <= headers.length; col += 1) {
+        const cell = totalRow.getCell(col);
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLORS.subheader } };
+        cell.border = border();
+        cell.font = { name: 'Verdana', size: 10, bold: true };
+    }
     [9, 10, 11].forEach(col => {
-        const letter =
-            totalRow.getCell(col)
-                .address.replace(/\d+/g, '');
-
-        totalRow.getCell(col).value = {
-            formula: `SUM(${letter}${headerRowNumber + 1}:${letter}${rowNumber - 1})`
-        };
-        setReferenceMoneyFormat(
-            totalRow.getCell(col)
-        );
+        const letter = totalRow.getCell(col).address.replace(/\d+/g, '');
+        totalRow.getCell(col).value = { formula: `SUM(${letter}${headerRowNumber + 1}:${letter}${rowNumber - 1})` };
+        totalRow.getCell(col).numFmt = '$#,##0.00;[Red]($#,##0.00)';
     });
 
     [13, 13, 24, 62, 14, 12, 12, 9, 14, 14, 15].forEach((width, index) => { sheet.getColumn(index + 1).width = width; });
@@ -637,13 +358,7 @@ function buildSourceSheet(workbook, schedule, sourceRows) {
 
 function buildValidationSheet(workbook, schedule, months) {
     const headers = ['Period', 'Store', 'Payee', 'Doc', 'Expected', 'GL Actual', 'Difference', 'Status'];
-    const sheet = workbook.addWorksheet('Monthly Validation', {
-        views: [{
-            state: 'frozen',
-            ySplit: 4,
-            showGridLines: true
-        }]
-    });
+    const sheet = workbook.addWorksheet('Monthly Validation', { views: [{ state: 'frozen', ySplit: 4 }] });
     setTitle(sheet, 'Monthly GL Validation', headers.length);
     sheet.getCell(3, 1).value = 'Schedule:';
     sheet.getCell(3, 2).value = schedule.title || '';
@@ -659,15 +374,11 @@ function buildValidationSheet(workbook, schedule, months) {
         row.values = [month.period_code || '', String(month.store_number || ''), month.payee || '', month.doc_number || '',
             money(month.expected_amount), money(month.gl_actual_amount), money(month.difference), month.status || 'PENDING_GL'];
         styleBodyRow(row);
-        [5, 6, 7].forEach(index => {
-            setReferenceMoneyFormat(
-                row.getCell(index)
-            );
-        });
+        [5, 6, 7].forEach(index => { row.getCell(index).numFmt = '$#,##0.00;[Red]($#,##0.00)'; });
         const status = String(month.status || '').toUpperCase();
         const fill = status === 'MATCHED' ? COLORS.matched : status === 'PENDING_GL' ? COLORS.warning : COLORS.difference;
         row.getCell(8).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: fill } };
-        row.getCell(8).font = { name: 'Arial', size: 9, bold: true };
+        row.getCell(8).font = { name: 'Verdana', size: 9, bold: true };
         rowNumber += 1;
     }
     [12, 11, 34, 24, 15, 15, 15, 16].forEach((width, index) => { sheet.getColumn(index + 1).width = width; });

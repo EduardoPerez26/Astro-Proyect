@@ -1,0 +1,758 @@
+
+:root {
+    --sidebar-premium-width: 252px;
+    --sidebar-premium-collapsed: 78px;
+    --sidebar-premium-gap: 14px;
+    --sidebar-premium-start: #030303;
+    --sidebar-premium-mid: #0b0b0b;
+    --sidebar-premium-end: #181818;
+    --sidebar-premium-text: #eef6ff;
+    --sidebar-premium-muted: #91a8bf;
+    --sidebar-premium-accent: #f4f4f4;
+    --sidebar-premium-accent-2: #9e9e9e;
+    --sidebar-premium-ease: cubic-bezier(.22, 1, .36, 1);
+}
+
+html body .sidebar {
+    position: fixed !important;
+    top: var(--sidebar-premium-gap) !important;
+    bottom: var(--sidebar-premium-gap) !important;
+    left: var(--sidebar-premium-gap) !important;
+    z-index: 1000000 !important;
+    display: grid !important;
+    grid-template-rows: auto minmax(0, 1fr) auto !important;
+    width: var(--sidebar-premium-width) !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+    border: 1px solid rgba(255,255,255,.09) !important;
+    border-radius: 22px !important;
+    background:
+        radial-gradient(circle at 12% 4%, rgba(255,255,255,.08), transparent 28%),
+        radial-gradient(circle at 88% 96%, rgba(255,255,255,.045), transparent 31%),
+        linear-gradient(165deg, var(--sidebar-premium-start), var(--sidebar-premium-mid) 47%, var(--sidebar-premium-end)) !important;
+    color: var(--sidebar-premium-text) !important;
+    box-shadow: 0 30px 70px -42px rgba(2,9,24,.96), inset 0 1px 0 rgba(255,255,255,.04) !important;
+    transition: width 260ms var(--sidebar-premium-ease), transform 260ms var(--sidebar-premium-ease) !important;
+}
+
+html body .sidebar.collapsed {
+    width: var(--sidebar-premium-collapsed) !important;
+}
+
+html body .sidebar .sidebar-header {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    min-height: 78px !important;
+    padding: 13px 14px !important;
+    border-bottom: 1px solid rgba(255,255,255,.09) !important;
+    background: rgba(3,10,24,.16) !important;
+}
+
+html body .sidebar .sidebar-toggle {
+    display: inline-grid !important;
+    width: 42px !important;
+    height: 42px !important;
+    min-width: 42px !important;
+    place-items: center !important;
+    padding: 0 !important;
+    border: 1px solid rgba(255,255,255,.09) !important;
+    border-radius: 13px !important;
+    background: rgba(255,255,255,.065) !important;
+    color: #fff !important;
+    cursor: pointer !important;
+}
+
+html body .sidebar .sidebar-toggle:hover {
+    background: rgba(255,255,255,.10) !important;
+    transform: translateY(-1px) !important;
+}
+
+html body .sidebar .sidebar-logo {
+    display: grid !important;
+    min-width: 0 !important;
+    gap: 2px !important;
+}
+
+html body .sidebar .sidebar-logo::after {
+    content: "Operations hub" !important;
+    color: var(--sidebar-premium-muted) !important;
+    font-size: 9px !important;
+    font-weight: 800 !important;
+    letter-spacing: .12em !important;
+    text-transform: uppercase !important;
+}
+
+html body .sidebar .sidebar-logo-text {
+    color: #fff !important;
+    font-size: 19px !important;
+    font-weight: 950 !important;
+    letter-spacing: -.03em !important;
+}
+
+html body .sidebar .sidebar-nav {
+    min-height: 0 !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    padding: 14px 11px 16px !important;
+}
+
+html body .sidebar .sidebar-section {
+    margin: 0 0 16px !important;
+}
+
+html body .sidebar .sidebar-section-title {
+    display: flex !important;
+    align-items: center !important;
+    gap: 9px !important;
+    min-height: 28px !important;
+    margin: 0 7px 7px !important;
+    color: #7f99b2 !important;
+    font-size: 9px !important;
+    font-weight: 900 !important;
+    letter-spacing: .13em !important;
+    text-transform: uppercase !important;
+}
+
+html body .sidebar .sidebar-section-title::after {
+    content: "" !important;
+    height: 1px !important;
+    flex: 1 !important;
+    background: linear-gradient(90deg, rgba(255,255,255,.11), transparent) !important;
+}
+
+html body .sidebar .sidebar-menu {
+    display: grid !important;
+    gap: 6px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    list-style: none !important;
+}
+
+html body .sidebar :is(.sidebar-menu-link,.nav-btn,.sidebar-profile-link,.sidebar-action) {
+    position: relative !important;
+    display: grid !important;
+    grid-template-columns: 38px minmax(0,1fr) !important;
+    align-items: center !important;
+    gap: 10px !important;
+    width: 100% !important;
+    min-height: 50px !important;
+    padding: 6px 10px 6px 7px !important;
+    border: 1px solid transparent !important;
+    border-radius: 15px !important;
+    background: transparent !important;
+    color: #c7d7e6 !important;
+    font-size: 13px !important;
+    font-weight: 750 !important;
+    text-decoration: none !important;
+    transition: transform 170ms var(--sidebar-premium-ease), background-color 170ms ease, border-color 170ms ease !important;
+}
+
+html body .sidebar :is(.sidebar-menu-link,.nav-btn,.sidebar-profile-link,.sidebar-action)::before {
+    content: "" !important;
+    position: absolute !important;
+    inset: 7px auto 7px 0 !important;
+    width: 3px !important;
+    border-radius: 999px !important;
+    background: linear-gradient(180deg,var(--sidebar-premium-accent),var(--sidebar-premium-accent-2)) !important;
+    opacity: 0 !important;
+    transform: scaleY(.42) !important;
+}
+
+html body .sidebar :is(.sidebar-menu-link,.nav-btn,.sidebar-profile-link,.sidebar-action) > i {
+    display: grid !important;
+    width: 38px !important;
+    height: 38px !important;
+    place-items: center !important;
+    border: 1px solid rgba(255,255,255,.065) !important;
+    border-radius: 12px !important;
+    background: rgba(255,255,255,.055) !important;
+    color: #e7f3ff !important;
+    font-size: 14px !important;
+}
+
+html body .sidebar :is(.sidebar-menu-link,.nav-btn,.sidebar-profile-link,.sidebar-action):hover {
+    transform: translateX(2px) !important;
+    border-color: rgba(255,255,255,.07) !important;
+    background: rgba(255,255,255,.09) !important;
+    color: #fff !important;
+}
+
+html body .sidebar :is(.sidebar-menu-link,.nav-btn,.sidebar-profile-link,.sidebar-action).active,
+html body .sidebar :is(.sidebar-menu-link,.nav-btn,.sidebar-profile-link,.sidebar-action)[aria-current="page"] {
+    border-color: rgba(255,255,255,.18) !important;
+    background: linear-gradient(135deg,rgba(255,255,255,.13),rgba(255,255,255,.055)) !important;
+    color: #fff !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.055),0 14px 26px -24px rgba(255,255,255,.36) !important;
+}
+
+html body .sidebar :is(.sidebar-menu-link,.nav-btn,.sidebar-profile-link,.sidebar-action).active::before,
+html body .sidebar :is(.sidebar-menu-link,.nav-btn,.sidebar-profile-link,.sidebar-action)[aria-current="page"]::before {
+    opacity: 1 !important;
+    transform: scaleY(1) !important;
+}
+
+html body .sidebar .sidebar-footer {
+    display: grid !important;
+    gap: 9px !important;
+    padding: 11px !important;
+    border-top: 1px solid rgba(255,255,255,.09) !important;
+    background: rgba(3,10,24,.20) !important;
+}
+
+html body .sidebar .sidebar-user-card {
+    display: grid !important;
+    grid-template-columns: 42px minmax(0,1fr) !important;
+    align-items: center !important;
+    gap: 10px !important;
+    min-height: 62px !important;
+    padding: 9px !important;
+    border: 1px solid rgba(255,255,255,.09) !important;
+    border-radius: 15px !important;
+    background: rgba(255,255,255,.055) !important;
+    color: #fff !important;
+}
+
+html body .sidebar .sidebar-user-avatar {
+    display: grid !important;
+    width: 42px !important;
+    height: 42px !important;
+    place-items: center !important;
+    border-radius: 13px !important;
+    background: linear-gradient(135deg,#fff,#dcecff) !important;
+    color: #122c4c !important;
+    font-size: 12px !important;
+    font-weight: 900 !important;
+}
+
+html body .sidebar .sidebar-user-copy {
+    min-width: 0 !important;
+}
+
+html body .sidebar .sidebar-user-copy :is(strong,small) {
+    display: block !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+}
+
+html body .sidebar .sidebar-user-copy strong {
+    color: #fff !important;
+    font-size: 12px !important;
+}
+
+html body .sidebar .sidebar-user-copy small {
+    color: var(--sidebar-premium-muted) !important;
+    font-size: 10px !important;
+}
+
+html body .sidebar .sidebar-logout {
+    display: grid !important;
+    grid-template-columns: 38px minmax(0,1fr) !important;
+    align-items: center !important;
+    gap: 10px !important;
+    width: 100% !important;
+    min-height: 48px !important;
+    padding: 5px 9px 5px 7px !important;
+    border: 1px solid transparent !important;
+    border-radius: 14px !important;
+    background: transparent !important;
+    color: #d8e5f1 !important;
+    font-size: 12px !important;
+    font-weight: 800 !important;
+    text-align: left !important;
+    cursor: pointer !important;
+}
+
+html body .sidebar .sidebar-logout i {
+    display: grid !important;
+    width: 38px !important;
+    height: 38px !important;
+    place-items: center !important;
+    border-radius: 12px !important;
+    background: rgba(255,255,255,.055) !important;
+    color: #ffb1b1 !important;
+}
+
+html body .sidebar .sidebar-logout:hover {
+    background: rgba(255,96,96,.09) !important;
+    color: #fff !important;
+}
+
+html body .sidebar.collapsed .sidebar-logo,
+html body .sidebar.collapsed .sidebar-section-title,
+html body .sidebar.collapsed .sidebar-user-copy,
+html body .sidebar.collapsed :is(.sidebar-menu-link,.nav-btn,.sidebar-profile-link,.sidebar-action,.sidebar-logout) > span {
+    display: none !important;
+}
+
+html body .sidebar.collapsed .sidebar-header {
+    justify-content: center !important;
+}
+
+html body .sidebar.collapsed :is(.sidebar-menu-link,.nav-btn,.sidebar-profile-link,.sidebar-action,.sidebar-logout) {
+    grid-template-columns: 1fr !important;
+    width: 48px !important;
+    min-width: 48px !important;
+    height: 48px !important;
+    min-height: 48px !important;
+    margin-inline: auto !important;
+    padding: 5px !important;
+    place-items: center !important;
+}
+
+html body .sidebar.collapsed .sidebar-user-card {
+    grid-template-columns: 1fr !important;
+    width: 48px !important;
+    min-width: 48px !important;
+    min-height: 48px !important;
+    margin-inline: auto !important;
+    padding: 3px !important;
+    place-items: center !important;
+}
+
+html body .main,
+html body #mainContent {
+    width: calc(100% - var(--sidebar-premium-width) - 40px) !important;
+    margin-left: calc(var(--sidebar-premium-width) + 28px) !important;
+    transition: width 260ms var(--sidebar-premium-ease), margin-left 260ms var(--sidebar-premium-ease) !important;
+}
+
+html body.sidebar-collapsed .main,
+html body.sidebar-collapsed #mainContent,
+html body .main.sidebar-collapsed,
+html body #mainContent.sidebar-collapsed {
+    width: calc(100% - var(--sidebar-premium-collapsed) - 40px) !important;
+    margin-left: calc(var(--sidebar-premium-collapsed) + 28px) !important;
+}
+
+.xbfs-sidebar-backdrop {
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 999999 !important;
+    display: none !important;
+    border: 0 !important;
+    background: rgba(4,12,25,.54) !important;
+    backdrop-filter: blur(4px) !important;
+}
+
+@media (max-width: 1024px) {
+    html body .sidebar {
+        top: 10px !important;
+        bottom: 10px !important;
+        left: 10px !important;
+        width: min(286px,calc(100vw - 28px)) !important;
+        transform: translateX(calc(-100% - 24px)) !important;
+    }
+
+    html body .sidebar.open {
+        transform: translateX(0) !important;
+    }
+
+    html body.xbfs-sidebar-mobile-open .xbfs-sidebar-backdrop {
+        display: block !important;
+    }
+
+    html body .main,
+    html body #mainContent,
+    html body.sidebar-collapsed .main,
+    html body.sidebar-collapsed #mainContent {
+        width: 100% !important;
+        margin-left: 0 !important;
+    }
+}
+/* =========================================================
+   PREMIUM SIDEBAR V2 — STRUCTURE AND SEARCH FIX
+   The actual Sidebar.astro contains four direct rows:
+   header, search, navigation and footer.
+   V1 declared only three rows, which placed the search field
+   over the first navigation section.
+   ========================================================= */
+
+html body .sidebar {
+    grid-template-rows:
+        78px
+        58px
+        minmax(0, 1fr)
+        auto !important;
+}
+
+/* Dedicated search row. */
+html body .sidebar .sidebar-search {
+    position: relative !important;
+    display: grid !important;
+    grid-template-columns: 38px minmax(0, 1fr) !important;
+    align-items: center !important;
+    gap: 7px !important;
+
+    box-sizing: border-box !important;
+    width: auto !important;
+    height: 44px !important;
+    min-height: 44px !important;
+    margin: 7px 11px !important;
+    padding: 3px 8px 3px 4px !important;
+
+    overflow: hidden !important;
+    border: 1px solid rgba(255, 255, 255, 0.09) !important;
+    border-radius: 13px !important;
+    background: rgba(255, 255, 255, 0.055) !important;
+    color: #d9e8f5 !important;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.035) !important;
+}
+
+html body .sidebar .sidebar-search:focus-within {
+    border-color: rgba(255, 255, 255, 0.28) !important;
+    background: rgba(255, 255, 255, 0.075) !important;
+    box-shadow:
+        0 0 0 3px rgba(255, 255, 255, 0.06),
+        inset 0 1px 0 rgba(255, 255, 255, 0.04) !important;
+}
+
+html body .sidebar .sidebar-search i {
+    display: grid !important;
+    width: 36px !important;
+    height: 36px !important;
+    min-width: 36px !important;
+    place-items: center !important;
+
+    border: 0 !important;
+    border-radius: 10px !important;
+    background: transparent !important;
+    color: #dcecff !important;
+    font-size: 13px !important;
+    text-align: center !important;
+}
+
+html body .sidebar .sidebar-search input {
+    display: block !important;
+    box-sizing: border-box !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    height: 36px !important;
+    padding: 0 !important;
+
+    border: 0 !important;
+    outline: 0 !important;
+    background: transparent !important;
+    color: #ffffff !important;
+    box-shadow: none !important;
+
+    font-family: inherit !important;
+    font-size: 12px !important;
+    font-weight: 700 !important;
+    line-height: 36px !important;
+}
+
+html body .sidebar .sidebar-search input::placeholder {
+    color: #8198af !important;
+    opacity: 1 !important;
+}
+
+/* Navigation starts below the search field. */
+html body .sidebar .sidebar-nav {
+    grid-row: 3 !important;
+    padding-top: 6px !important;
+}
+
+/* Avoid the first section title touching the search field. */
+html body .sidebar .sidebar-nav > .sidebar-section:first-child {
+    margin-top: 0 !important;
+}
+
+/* Expanded sidebar gets slightly more room for long labels. */
+@media (min-width: 1025px) {
+    :root {
+        --sidebar-premium-width: 266px;
+    }
+}
+
+/* ---------------------------------------------------------
+   COLLAPSED MODE
+   --------------------------------------------------------- */
+
+html body .sidebar.collapsed,
+html.sidebar-collapsed-preset body .sidebar {
+    grid-template-rows:
+        78px
+        58px
+        minmax(0, 1fr)
+        auto !important;
+}
+
+html body .sidebar.collapsed .sidebar-search,
+html.sidebar-collapsed-preset body .sidebar .sidebar-search {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    width: 48px !important;
+    min-width: 48px !important;
+    height: 48px !important;
+    min-height: 48px !important;
+    margin: 5px auto !important;
+    padding: 5px !important;
+    place-items: center !important;
+
+    border-color: rgba(255, 255, 255, 0.08) !important;
+    border-radius: 14px !important;
+    background: rgba(255, 255, 255, 0.055) !important;
+}
+
+html body .sidebar.collapsed .sidebar-search input,
+html.sidebar-collapsed-preset body .sidebar .sidebar-search input {
+    display: none !important;
+}
+
+html body .sidebar.collapsed .sidebar-search i,
+html.sidebar-collapsed-preset body .sidebar .sidebar-search i {
+    display: grid !important;
+    width: 38px !important;
+    height: 38px !important;
+    min-width: 38px !important;
+    place-items: center !important;
+
+    border-radius: 11px !important;
+    background: rgba(255, 255, 255, 0.07) !important;
+    color: #ffffff !important;
+}
+
+/* Match preset state before sidebar-loader initializes. */
+html.sidebar-collapsed-preset body .sidebar {
+    width: var(--sidebar-premium-collapsed) !important;
+}
+
+html.sidebar-collapsed-preset body .sidebar .sidebar-logo,
+html.sidebar-collapsed-preset body .sidebar .sidebar-section-title,
+html.sidebar-collapsed-preset body .sidebar .sidebar-user-copy,
+html.sidebar-collapsed-preset body .sidebar :is(
+    .sidebar-menu-link,
+    .nav-btn,
+    .sidebar-profile-link,
+    .sidebar-action,
+    .sidebar-logout
+) > span {
+    display: none !important;
+}
+
+html.sidebar-collapsed-preset body .sidebar :is(
+    .sidebar-menu-link,
+    .nav-btn,
+    .sidebar-profile-link,
+    .sidebar-action,
+    .sidebar-logout
+) {
+    grid-template-columns: 1fr !important;
+    width: 48px !important;
+    min-width: 48px !important;
+    height: 48px !important;
+    min-height: 48px !important;
+    margin-inline: auto !important;
+    padding: 5px !important;
+    place-items: center !important;
+}
+
+html.sidebar-collapsed-preset body .sidebar .sidebar-user-card {
+    grid-template-columns: 1fr !important;
+    width: 48px !important;
+    min-width: 48px !important;
+    min-height: 48px !important;
+    margin-inline: auto !important;
+    padding: 3px !important;
+    place-items: center !important;
+}
+
+/* ---------------------------------------------------------
+   FOOTER AND LONG TEXT
+   --------------------------------------------------------- */
+
+html body .sidebar .sidebar-footer {
+    grid-row: 4 !important;
+}
+
+html body .sidebar .sidebar-user-copy strong,
+html body .sidebar .sidebar-user-copy small {
+    max-width: 158px !important;
+}
+
+html body .sidebar :is(
+    .sidebar-menu-link,
+    .nav-btn,
+    .sidebar-profile-link,
+    .sidebar-action
+) > span:not(.sidebar-chat-badge) {
+    min-width: 0 !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+}
+
+/* Keep unread badge on the right without changing the label width. */
+html body .sidebar .sidebar-chat-badge:not([hidden]) {
+    position: absolute !important;
+    right: 10px !important;
+    z-index: 3 !important;
+}
+
+/* Scrollbar remains inside navigation, never beside the search field. */
+html body .sidebar .sidebar-nav {
+    scrollbar-width: thin !important;
+    scrollbar-color:
+        rgba(145, 168, 191, 0.34)
+        transparent !important;
+}
+
+html body .sidebar .sidebar-nav::-webkit-scrollbar {
+    width: 5px !important;
+}
+
+html body .sidebar .sidebar-nav::-webkit-scrollbar-thumb {
+    border-radius: 999px !important;
+    background: rgba(145, 168, 191, 0.34) !important;
+}
+
+/* ---------------------------------------------------------
+   MOBILE
+   --------------------------------------------------------- */
+
+@media (max-width: 1024px) {
+    html body .sidebar,
+    html body .sidebar.collapsed {
+        grid-template-rows:
+            78px
+            58px
+            minmax(0, 1fr)
+            auto !important;
+        width: min(286px, calc(100vw - 28px)) !important;
+    }
+
+    html body .sidebar.collapsed .sidebar-search {
+        grid-template-columns: 38px minmax(0, 1fr) !important;
+        width: auto !important;
+        min-width: 0 !important;
+        height: 44px !important;
+        min-height: 44px !important;
+        margin: 7px 11px !important;
+        padding: 3px 8px 3px 4px !important;
+        place-items: initial !important;
+    }
+
+    html body .sidebar.collapsed .sidebar-search input {
+        display: block !important;
+    }
+
+    html body .sidebar.collapsed .sidebar-search i {
+        width: 36px !important;
+        height: 36px !important;
+        min-width: 36px !important;
+        background: transparent !important;
+    }
+}
+/* =========================================================
+   BLACK / GRAPHITE SIDEBAR THEME V3
+   ========================================================= */
+
+html body .sidebar {
+    border-color: rgba(255, 255, 255, 0.10) !important;
+    background:
+        radial-gradient(
+            circle at 12% 3%,
+            rgba(255, 255, 255, 0.075),
+            transparent 29%
+        ),
+        radial-gradient(
+            circle at 91% 96%,
+            rgba(255, 255, 255, 0.035),
+            transparent 32%
+        ),
+        linear-gradient(
+            165deg,
+            #020202 0%,
+            #090909 48%,
+            #171717 100%
+        ) !important;
+    box-shadow:
+        0 32px 72px -42px rgba(0, 0, 0, 0.98),
+        inset 0 1px 0 rgba(255, 255, 255, 0.045) !important;
+}
+
+html body .sidebar .sidebar-header,
+html body .sidebar .sidebar-footer {
+    background: rgba(0, 0, 0, 0.27) !important;
+}
+
+html body .sidebar .sidebar-toggle,
+html body .sidebar .sidebar-search,
+html body .sidebar .sidebar-user-card,
+html body .sidebar :is(
+    .sidebar-menu-link,
+    .nav-btn,
+    .sidebar-profile-link,
+    .sidebar-action
+) > i {
+    border-color: rgba(255, 255, 255, 0.09) !important;
+    background: rgba(255, 255, 255, 0.055) !important;
+}
+
+html body .sidebar .sidebar-toggle:hover,
+html body .sidebar .sidebar-search:focus-within {
+    border-color: rgba(255, 255, 255, 0.22) !important;
+    background: rgba(255, 255, 255, 0.09) !important;
+}
+
+html body .sidebar :is(
+    .sidebar-menu-link,
+    .nav-btn,
+    .sidebar-profile-link,
+    .sidebar-action
+).active,
+html body .sidebar :is(
+    .sidebar-menu-link,
+    .nav-btn,
+    .sidebar-profile-link,
+    .sidebar-action
+)[aria-current="page"] {
+    border-color: rgba(255, 255, 255, 0.19) !important;
+    background:
+        linear-gradient(
+            135deg,
+            rgba(255, 255, 255, 0.15),
+            rgba(255, 255, 255, 0.065)
+        ) !important;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.07),
+        0 15px 28px -24px rgba(255, 255, 255, 0.34) !important;
+}
+
+html body .sidebar :is(
+    .sidebar-menu-link,
+    .nav-btn,
+    .sidebar-profile-link,
+    .sidebar-action
+)::before {
+    background:
+        linear-gradient(
+            180deg,
+            #ffffff,
+            #8f8f8f
+        ) !important;
+}
+
+html body .sidebar .sidebar-section-title {
+    color: #929292 !important;
+}
+
+html body .sidebar .sidebar-logo::after,
+html body .sidebar .sidebar-user-copy small,
+html body .sidebar .sidebar-search input::placeholder {
+    color: #969696 !important;
+}
+
+html body .sidebar .sidebar-user-avatar {
+    background:
+        linear-gradient(
+            135deg,
+            #ffffff,
+            #bdbdbd
+        ) !important;
+    color: #090909 !important;
+}

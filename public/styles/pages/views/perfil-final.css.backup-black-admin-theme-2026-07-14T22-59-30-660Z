@@ -827,9 +827,9 @@ html body .main .profile-page.profile-professional-v3 .profile-tab-panel.is-prof
    ========================================================= */
 
 :root {
-    --xbfs-sidebar-hero-start: #030303;
-    --xbfs-sidebar-hero-middle: #0b0b0b;
-    --xbfs-sidebar-hero-end: #1a1a1a;
+    --xbfs-sidebar-hero-start: #101122;
+    --xbfs-sidebar-hero-middle: #111a2f;
+    --xbfs-sidebar-hero-end: #0b2f54;
     --xbfs-sidebar-hero-copy: rgba(226, 238, 249, 0.84);
 }
 

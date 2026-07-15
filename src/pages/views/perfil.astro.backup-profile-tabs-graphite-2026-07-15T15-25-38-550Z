@@ -609,5 +609,4 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
     <script src="/js/config.js" is:inline></script>
     <script src="/js/perfil.js?v=20260714-profile-segmented-premium-v6" is:inline></script>
     <link rel="stylesheet" href="/styles/pages/views/perfil-final.css?v=20260714-profile-segmented-premium-v6" />
-    <link rel="stylesheet" href="/styles/pages/views/profile-tabs-graphite.css?v=20260715-profile-tabs-graphite-v1" />
 </DashboardLayout>
