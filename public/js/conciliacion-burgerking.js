@@ -225,8 +225,6 @@ function prepararDiscrepanciesBurgerKingSalida(data = burgerKingDiscrepanciesDat
 }
 
 function renderBurgerKingTaxAnalysis() {
-    console.log('Renderizando Tax Analysis Burger King con porcentajes');
-
     renderArrayToMainTable(
         prepararTaxAnalysisBurgerKingSalida()
     );
@@ -2935,8 +2933,6 @@ async function generarTaxAnalysisBurgerKing() {
             rateDifference
         };
     });
-
-    console.log('Tax Review BK generado:', burgerKingTaxAnalysisData);
 }
 
 function generarDiscrepanciesBurgerKing() {

@@ -1,4 +1,4 @@
-﻿// ============================================
+// ============================================
 // PERMISSION SETTINGS
 // ============================================
 
@@ -6,6 +6,11 @@ let currentUserId = null;
 let currentUser = null;
 let originalPermissions = {};
 let viewerUser = null;
+let permissionFilterState = {
+    search: '',
+    group: '',
+    status: ''
+};
 
 const ACTION_LABELS = {
     ver: 'View',
@@ -365,23 +370,40 @@ function renderPermissions() {
             currentUser.rol === 'superadmin' ? 'Full access' : ''
         ].filter(Boolean);
 
+        const enabledActions = actions.filter(action =>
+            currentUser.rol === 'superadmin' ||
+            currentUser.permisos.acciones?.[section.id]?.[action] === true ||
+            (
+                section.id === 'perfil' &&
+                ['ver', 'editar'].includes(action)
+            )
+        ).length;
+
         return `
-            <div class="permission-card">
-                <div class="permission-info">
-                    <div class="permission-icon">
+            <div
+                class="access-policy-card"
+                data-permission-id="${section.id}"
+                data-permission-name="${section.name.toLowerCase()}"
+                data-permission-description="${section.description.toLowerCase()}"
+                data-access-policy-group="${section.department}"
+                data-permission-enabled="${enabledActions > 0}"
+                data-permission-locked="${isLocked}"
+            >
+                <div class="access-policy-info">
+                    <div class="access-policy-icon">
                         <i class="fa-solid ${section.icon}"></i>
                     </div>
-                    <div class="permission-details">
+                    <div class="access-policy-details">
                         <h4>${section.name}</h4>
                         <p>${section.description}</p>
                         ${tags.length ? `
-                            <div class="permission-tags">
+                            <div class="access-policy-tags">
                                 ${tags.map(tag => `<span>${tag}</span>`).join('')}
                             </div>
                         ` : ''}
                     </div>
                 </div>
-                <div class="permission-action-grid" aria-label="${section.name} permissions">
+                <div class="access-policy-actions" aria-label="${section.name} permissions">
                     ${actions.map(action => {
                         const requiredAction =
                             section.id === 'perfil' &&
@@ -393,7 +415,7 @@ function renderPermissions() {
                         const disabled = isLocked || requiredAction;
 
                         return `
-                            <label class="permission-action">
+                            <label class="access-policy-action">
                                 <input
                                     type="checkbox"
                                     id="perm_${section.id}_${action}"
@@ -417,12 +439,15 @@ function renderPermissions() {
         if (!sections.length) return '';
 
         return `
-            <section class="permission-group">
-                <div class="permission-group-header">
-                    <span>${groupName}</span>
+            <section class="access-policy-group" data-access-policy-group="${groupName}">
+                <div class="access-policy-group-header">
+                    <div>
+                        <i class="fa-solid fa-layer-group"></i>
+                        <span>${groupName}</span>
+                    </div>
                     <strong>${sections.length}</strong>
                 </div>
-                <div class="permission-group-grid">
+                <div class="access-policy-group-grid">
                     ${sections.map(renderCard).join('')}
                 </div>
             </section>
@@ -430,6 +455,9 @@ function renderPermissions() {
     }).join('');
 
     renderInitialWindow();
+    updatePermissionOverview();
+    applyPermissionFilters();
+    updatePermissionChangeState();
 
     const saveButton = document.querySelector('[onclick="savePermissions()"]');
     if (saveButton) {
@@ -463,11 +491,25 @@ function renderInitialWindow() {
         ? current
         : enabled[0]?.id || null;
     select.value = currentUser.permisos.paginaInicio || '';
+
+    const summary =
+        document.getElementById('initialWindowSummary');
+    const selectedSection = MENU_SECTIONS.find(
+        section =>
+            section.id === currentUser.permisos.paginaInicio
+    );
+
+    if (summary) {
+        summary.textContent =
+            selectedSection?.name || 'Not selected';
+    }
 }
 
 function changeInitialWindow(value) {
     if (!currentUser) return;
     currentUser.permisos.paginaInicio = value || null;
+    renderInitialWindow();
+    updatePermissionChangeState();
 }
 
 // ============================================
@@ -499,6 +541,10 @@ function toggleActionPermission(sectionId, action, enabled) {
     currentUser.permisos[sectionId] =
         currentUser.permisos.acciones[sectionId].ver === true;
     renderInitialWindow();
+    updatePermissionOverview();
+    updatePermissionChangeState();
+    refreshPermissionCardState(sectionId);
+    applyPermissionFilters();
 }
 
 // ============================================
@@ -508,6 +554,7 @@ function toggleActionPermission(sectionId, action, enabled) {
 function resetPermissions() {
     currentUser.permisos = JSON.parse(JSON.stringify(originalPermissions));
     renderPermissions();
+    updatePermissionChangeState();
 
     Swal.fire({
         icon: 'info',
@@ -566,6 +613,9 @@ async function savePermissions() {
         localStorage.setItem('userPermissions', JSON.stringify(savedPermissions));
 
         originalPermissions = JSON.parse(JSON.stringify(permissions));
+        currentUser.permisos = normalizeLegacyPermissions(permissions);
+        renderPermissions();
+        updatePermissionChangeState();
 
         Swal.fire({
             icon: 'success',
@@ -595,6 +645,7 @@ async function savePermissions() {
             );
             originalPermissions = JSON.parse(JSON.stringify(currentUser.permisos));
             renderPermissions();
+            updatePermissionChangeState();
 
             Swal.fire({
                 icon: 'success',
@@ -637,3 +688,417 @@ function getRoleLabel(role) {
     };
     return labels[role] || role;
 }
+
+
+// ============================================
+// PROFESSIONAL PERMISSION WORKSPACE
+// ============================================
+
+function getPermissionSnapshot() {
+    if (!currentUser?.permisos) return '{}';
+
+    const snapshot = {
+        paginaInicio:
+            currentUser.permisos.paginaInicio || null,
+        acciones: {}
+    };
+
+    MENU_SECTIONS.forEach(section => {
+        snapshot.acciones[section.id] = {};
+
+        (MODULE_ACTIONS[section.id] || ['ver'])
+            .forEach(action => {
+                snapshot.acciones[section.id][action] =
+                    currentUser.rol === 'superadmin' ||
+                    currentUser.permisos.acciones
+                        ?.[section.id]?.[action] === true;
+            });
+    });
+
+    return JSON.stringify(snapshot);
+}
+
+function getOriginalPermissionSnapshot() {
+    const original = {
+        paginaInicio:
+            originalPermissions?.paginaInicio || null,
+        acciones: {}
+    };
+
+    MENU_SECTIONS.forEach(section => {
+        original.acciones[section.id] = {};
+
+        (MODULE_ACTIONS[section.id] || ['ver'])
+            .forEach(action => {
+                original.acciones[section.id][action] =
+                    currentUser?.rol === 'superadmin' ||
+                    originalPermissions?.acciones
+                        ?.[section.id]?.[action] === true;
+            });
+    });
+
+    return JSON.stringify(original);
+}
+
+function updatePermissionChangeState() {
+    const hasChanges =
+        getPermissionSnapshot()
+        !== getOriginalPermissionSnapshot();
+
+    const headerState =
+        document.getElementById('permissionSaveState');
+    const footerState =
+        document.getElementById('permissionFooterState');
+    const stateContainer =
+        document.querySelector('.permission-change-state');
+
+    if (headerState) {
+        headerState.textContent = hasChanges
+            ? 'Unsaved policy changes'
+            : 'Policy synchronized';
+    }
+
+    if (footerState) {
+        footerState.textContent = hasChanges
+            ? 'Review and save the current changes'
+            : 'No unsaved changes';
+    }
+
+    stateContainer?.classList.toggle(
+        'is-dirty',
+        hasChanges
+    );
+}
+
+function updatePermissionOverview() {
+    if (!currentUser?.permisos) return;
+
+    let enabledModules = 0;
+    let enabledActions = 0;
+    let lockedControls = 0;
+
+    const viewerCanEdit =
+        window.AppPermissions
+            ?.can('permisos', 'editar', viewerUser)
+        === true;
+
+    const targetIsPrivileged =
+        ['superadmin', 'admin']
+            .includes(currentUser.rol);
+
+    const viewerCanManageTarget =
+        viewerCanEdit
+        && (
+            viewerUser?.rol === 'superadmin'
+            || !targetIsPrivileged
+        );
+
+    MENU_SECTIONS.forEach(section => {
+        const actions =
+            MODULE_ACTIONS[section.id] || ['ver'];
+
+        const sectionEnabled =
+            currentUser.rol === 'superadmin'
+            || currentUser.permisos.acciones
+                ?.[section.id]?.ver === true;
+
+        if (sectionEnabled) {
+            enabledModules += 1;
+        }
+
+        actions.forEach(action => {
+            const requiredAction =
+                section.id === 'perfil'
+                && ['ver', 'editar'].includes(action);
+
+            const targetCanUseSection =
+                !section.administrative
+                || ['superadmin', 'admin']
+                    .includes(currentUser.rol);
+
+            const isLocked =
+                currentUser.rol === 'superadmin'
+                || !viewerCanManageTarget
+                || !targetCanUseSection
+                || requiredAction;
+
+            const isEnabled =
+                currentUser.rol === 'superadmin'
+                || currentUser.permisos.acciones
+                    ?.[section.id]?.[action] === true
+                || requiredAction;
+
+            if (isEnabled) enabledActions += 1;
+            if (isLocked) lockedControls += 1;
+        });
+    });
+
+    const modulesElement =
+        document.getElementById('enabledModulesCount');
+    const actionsElement =
+        document.getElementById('enabledActionsCount');
+    const lockedElement =
+        document.getElementById('lockedPermissionsCount');
+
+    if (modulesElement) {
+        modulesElement.textContent =
+            String(enabledModules);
+    }
+
+    if (actionsElement) {
+        actionsElement.textContent =
+            String(enabledActions);
+    }
+
+    if (lockedElement) {
+        lockedElement.textContent =
+            String(lockedControls);
+    }
+}
+
+function refreshPermissionCardState(sectionId) {
+    const card = document.querySelector(
+        `.access-policy-card[data-permission-id="${sectionId}"]`
+    );
+
+    if (!card || !currentUser) return;
+
+    const actions =
+        MODULE_ACTIONS[sectionId] || ['ver'];
+
+    const enabled = actions.some(action =>
+        currentUser.rol === 'superadmin'
+        || currentUser.permisos.acciones
+            ?.[sectionId]?.[action] === true
+    );
+
+    card.dataset.permissionEnabled =
+        String(enabled);
+}
+
+function applyPermissionFilters() {
+    const searchInput =
+        document.getElementById('permissionSearch');
+    const groupSelect =
+        document.getElementById('permissionGroupFilter');
+    const statusSelect =
+        document.getElementById('permissionStatusFilter');
+
+    permissionFilterState = {
+        search:
+            String(searchInput?.value || '')
+                .trim()
+                .toLowerCase(),
+        group:
+            String(groupSelect?.value || ''),
+        status:
+            String(statusSelect?.value || '')
+    };
+
+    const cards = Array.from(
+        document.querySelectorAll('.access-policy-card')
+    );
+
+    let visibleCards = 0;
+
+    cards.forEach(card => {
+        const searchable = [
+            card.dataset.permissionName,
+            card.dataset.permissionDescription,
+            card.dataset.permissionGroup
+        ].join(' ');
+
+        const matchesSearch =
+            !permissionFilterState.search
+            || searchable.includes(
+                permissionFilterState.search
+            );
+
+        const matchesGroup =
+            !permissionFilterState.group
+            || card.dataset.permissionGroup
+                === permissionFilterState.group;
+
+        const matchesStatus =
+            !permissionFilterState.status
+            || (
+                permissionFilterState.status === 'enabled'
+                && card.dataset.permissionEnabled === 'true'
+            )
+            || (
+                permissionFilterState.status === 'disabled'
+                && card.dataset.permissionEnabled !== 'true'
+            )
+            || (
+                permissionFilterState.status === 'locked'
+                && card.dataset.permissionLocked === 'true'
+            );
+
+        const visible =
+            matchesSearch
+            && matchesGroup
+            && matchesStatus;
+
+        card.hidden = !visible;
+
+        if (visible) visibleCards += 1;
+    });
+
+    document
+        .querySelectorAll('.access-policy-group')
+        .forEach(group => {
+            const groupHasVisibleCards =
+                Array.from(
+                    group.querySelectorAll(
+                        '.access-policy-card'
+                    )
+                ).some(card => !card.hidden);
+
+            group.hidden = !groupHasVisibleCards;
+        });
+
+    const resultElement =
+        document.getElementById('permissionResultCount');
+
+    if (resultElement) {
+        resultElement.textContent =
+            String(visibleCards);
+    }
+}
+
+function resetPermissionFilters() {
+    const search =
+        document.getElementById('permissionSearch');
+    const group =
+        document.getElementById('permissionGroupFilter');
+    const status =
+        document.getElementById('permissionStatusFilter');
+
+    if (search) search.value = '';
+    if (group) group.value = '';
+    if (status) status.value = '';
+
+    applyPermissionFilters();
+    search?.focus();
+}
+
+function getVisiblePermissionSections() {
+    return Array.from(
+        document.querySelectorAll(
+            '.access-policy-card:not([hidden])'
+        )
+    )
+        .map(card => card.dataset.permissionId)
+        .filter(Boolean);
+}
+
+function enableVisiblePermissions() {
+    if (!currentUser) return;
+
+    const sectionIds =
+        getVisiblePermissionSections();
+
+    sectionIds.forEach(sectionId => {
+        const viewCheckbox =
+            document.getElementById(
+                `perm_${sectionId}_ver`
+            );
+
+        if (!viewCheckbox || viewCheckbox.disabled) {
+            return;
+        }
+
+        currentUser.permisos.acciones ||= {};
+        currentUser.permisos.acciones[sectionId] ||= {};
+        currentUser.permisos.acciones[sectionId].ver =
+            true;
+        currentUser.permisos[sectionId] = true;
+    });
+
+    renderPermissions();
+    updatePermissionChangeState();
+}
+
+function clearOptionalPermissions() {
+    if (!currentUser) return;
+
+    MENU_SECTIONS.forEach(section => {
+        const actions =
+            MODULE_ACTIONS[section.id] || ['ver'];
+
+        actions.forEach(action => {
+            const checkbox =
+                document.getElementById(
+                    `perm_${section.id}_${action}`
+                );
+
+            const requiredAction =
+                section.id === 'perfil'
+                && ['ver', 'editar'].includes(action);
+
+            if (
+                !checkbox
+                || checkbox.disabled
+                || requiredAction
+            ) {
+                return;
+            }
+
+            currentUser.permisos.acciones ||= {};
+            currentUser.permisos.acciones[section.id] ||= {};
+            currentUser.permisos.acciones[section.id][action] =
+                false;
+        });
+
+        currentUser.permisos[section.id] =
+            currentUser.permisos.acciones
+                ?.[section.id]?.ver === true;
+    });
+
+    renderPermissions();
+    updatePermissionChangeState();
+}
+
+
+// Layout V2: show a clear empty state when no permission module matches.
+(function installPermissionLayoutV2EmptyState() {
+    const originalApplyPermissionFilters =
+        window.applyPermissionFilters;
+
+    if (typeof originalApplyPermissionFilters !== 'function') {
+        return;
+    }
+
+    window.applyPermissionFilters = function () {
+        originalApplyPermissionFilters.apply(this, arguments);
+
+        const matrix =
+            document.getElementById('permissionsList');
+
+        if (!matrix) return;
+
+        let emptyState =
+            matrix.querySelector(
+                ':scope > .access-policy-filter-empty'
+            );
+
+        const visibleCards =
+            matrix.querySelectorAll(
+                '.access-policy-card:not([hidden])'
+            ).length;
+
+        if (!emptyState) {
+            emptyState = document.createElement('div');
+            emptyState.className =
+                'access-empty-state access-policy-filter-empty';
+            emptyState.innerHTML = `
+                <i class="fa-solid fa-filter-circle-xmark"></i>
+                <strong>No modules match the filters</strong>
+                <span>Clear the current filters to display the complete policy matrix.</span>
+            `;
+            matrix.appendChild(emptyState);
+        }
+
+        emptyState.hidden = visibleCards > 0;
+    };
+})();

@@ -1,17 +1,46 @@
-﻿let adminActivityLogRows = [];
+let adminActivityLogRows = [];
+let adminDashboardState = {
+    summary: {},
+    sessions: [],
+    movements: [],
+    users: [],
+    errors: {
+        open: 0,
+        critical: 0,
+        available: false
+    },
+    generatedAt: null,
+    compatibilityMode: false
+};
+let adminAutoRefreshTimer = null;
+let adminClockTimer = null;
 
 document.addEventListener('DOMContentLoaded', () => {
     redirectLegacySystemErrorsLink();
+
     document.getElementById('refreshAdminDashboard')
         ?.addEventListener('click', loadAdminDashboard);
+
+    document.getElementById('adminAutoRefresh')
+        ?.addEventListener('click', toggleAdminAutoRefresh);
+
+    document.getElementById('adminExportActivityLog')
+        ?.addEventListener('click', exportAdminActivityLog);
+
     document.getElementById('adminSessionsList')
         ?.addEventListener('click', onAdminSessionListClick);
+
     document.getElementById('adminDatabaseTables')
         ?.addEventListener('input', onAdminActivityLogFilterChange);
+
     document.getElementById('adminDatabaseTables')
         ?.addEventListener('change', onAdminActivityLogFilterChange);
+
     document.getElementById('adminDatabaseTables')
         ?.addEventListener('click', onAdminActivityLogClick);
+
+    startAdminDashboardClock();
+    initializeAdminAutoRefresh();
     loadAdminDashboard();
 });
 
@@ -52,15 +81,39 @@ async function loadAdminDashboard() {
             throw new Error(data.message || data.mensaje || 'Dashboard could not be loaded');
         }
 
-        renderAdminSummary(data.resumen || {}, data.modo_compatibilidad);
-        loadAdminErrorSummary(token);
-        renderAdminMovements(data.movimientos || []);
-        renderAdminSessions(data.sesiones_recientes || [], data.modo_compatibilidad);
-        renderAdminUserActivity(data.actividad_usuarios || []);
-        renderAdminDatabaseTables(data.tablas_base_datos || [], data.movimientos || []);
-        document.getElementById('adminDashboardUpdated').textContent = data.modo_compatibilidad
-            ? `Compatibility summary / ${formatAdminDate(data.generado_en, true)}`
-            : `Updated ${formatAdminDate(data.generado_en, true)}`;
+        adminDashboardState = {
+            ...adminDashboardState,
+            summary: data.resumen || {},
+            sessions: data.sesiones_recientes || [],
+            movements: data.movimientos || [],
+            users: data.actividad_usuarios || [],
+            generatedAt: data.generado_en || new Date().toISOString(),
+            compatibilityMode: Boolean(data.modo_compatibilidad)
+        };
+
+        renderAdminSummary(
+            adminDashboardState.summary,
+            adminDashboardState.compatibilityMode
+        );
+
+        renderAdminMovements(adminDashboardState.movements);
+        renderAdminSessions(
+            adminDashboardState.sessions,
+            adminDashboardState.compatibilityMode
+        );
+        renderAdminUserActivity(adminDashboardState.users);
+        renderAdminDatabaseTables(
+            data.tablas_base_datos || [],
+            adminDashboardState.movements
+        );
+
+        renderAdminExecutiveOverview();
+        await loadAdminErrorSummary(token);
+
+        document.getElementById('adminDashboardUpdated').textContent =
+            adminDashboardState.compatibilityMode
+                ? `Compatibility summary / ${formatAdminDate(adminDashboardState.generatedAt, true)}`
+                : `Updated ${formatAdminDate(adminDashboardState.generatedAt, true)}`;
     } catch (error) {
         console.error('Admin dashboard error:', error);
         await Swal.fire({
@@ -163,18 +216,57 @@ async function loadCompatibleAdminDashboard(token) {
 }
 
 function renderAdminSummary(summary, compatibilityMode = false) {
-    setAdminText('adminUsersTotal', summary.usuarios_activos);
-    setAdminText('adminUsersMeta', `${summary.usuarios_total || 0} registered`);
-    setAdminText('adminActiveSessions', compatibilityMode ? '-' : summary.sesiones_activas);
-    setAdminText('adminLoginsToday', compatibilityMode
-        ? 'Available after updating Railway'
-        : `${summary.inicios_hoy || 0} logins today`);
-    setAdminText('adminFilesToday', summary.archivos_hoy);
-    setAdminText('adminFilesMeta', `${summary.archivos_7_dias || 0} in the last 7 days`);
-    setAdminText('adminValidationsToday', summary.validaciones_hoy);
-    setAdminText('adminValidationMeta', `${summary.validaciones_con_incidencias || 0} with issues`);
-    setAdminText('adminDepartmentsActive', summary.departamentos_activos);
-    setAdminText('adminDepartmentsMeta', `${summary.departamentos_total || 0} registered`);
+    const usersTotal = Number(summary.usuarios_total || 0);
+    const usersActive = Number(summary.usuarios_activos || 0);
+    const sessionsActive = Number(summary.sesiones_activas || 0);
+    const filesToday = Number(summary.archivos_hoy || 0);
+    const filesSevenDays = Number(summary.archivos_7_dias || 0);
+    const validationsTotal = Number(summary.validaciones_total || 0);
+    const validationsToday = Number(summary.validaciones_hoy || 0);
+    const validationIssues = Number(summary.validaciones_con_incidencias || 0);
+    const departmentsTotal = Number(summary.departamentos_total || 0);
+    const departmentsActive = Number(summary.departamentos_activos || 0);
+
+    const usersRate = percentage(usersActive, usersTotal);
+    const departmentsRate = percentage(departmentsActive, departmentsTotal);
+    const validationRate = validationsTotal
+        ? clampPercentage(100 - percentage(validationIssues, validationsTotal))
+        : 100;
+    const sessionRate = usersActive
+        ? clampPercentage(percentage(sessionsActive, usersActive))
+        : 0;
+    const filePace = filesSevenDays / 7;
+
+    setAdminText('adminUsersTotal', usersActive);
+    setAdminText('adminUsersMeta', `${usersTotal} registered`);
+    setAdminText('adminUsersRate', `${usersRate}%`);
+
+    setAdminText(
+        'adminActiveSessions',
+        compatibilityMode ? '-' : sessionsActive
+    );
+    setAdminText(
+        'adminLoginsToday',
+        compatibilityMode
+            ? 'Detailed sessions unavailable'
+            : `${Number(summary.inicios_hoy || 0)} logins today`
+    );
+    setAdminText(
+        'adminSessionsRate',
+        compatibilityMode ? 'N/A' : `${sessionRate}%`
+    );
+
+    setAdminText('adminFilesToday', filesToday);
+    setAdminText('adminFilesMeta', `${filesSevenDays} in the last 7 days`);
+    setAdminText('adminFilesPace', `${formatCompactNumber(filePace, 1)}/day`);
+
+    setAdminText('adminValidationsToday', validationsToday);
+    setAdminText('adminValidationMeta', `${validationIssues} with issues`);
+    setAdminText('adminValidationRate', `${validationRate}%`);
+
+    setAdminText('adminDepartmentsActive', departmentsActive);
+    setAdminText('adminDepartmentsMeta', `${departmentsTotal} registered`);
+    setAdminText('adminDepartmentsRate', `${departmentsRate}%`);
 }
 
 
@@ -199,16 +291,30 @@ async function loadAdminErrorSummary(token) {
         const open = Number(summary.abiertos || 0);
         const critical = Number(summary.criticos_abiertos || 0);
 
+        adminDashboardState.errors = {
+            open,
+            critical,
+            available: true
+        };
+
         openElement.textContent = open.toLocaleString('en-US');
         metaElement.textContent = critical > 0
             ? `${critical.toLocaleString('en-US')} critical open`
             : 'No critical errors';
         metaElement.classList.toggle('is-error-meta', critical > 0);
+        renderAdminExecutiveOverview();
     } catch (error) {
         console.warn('System error summary could not be loaded:', error);
+        adminDashboardState.errors = {
+            open: 0,
+            critical: 0,
+            available: false
+        };
+
         openElement.textContent = '-';
-        metaElement.textContent = 'Update backend to enable';
+        metaElement.textContent = 'Health endpoint unavailable';
         metaElement.classList.remove('is-error-meta');
+        renderAdminExecutiveOverview();
     }
 }
 
@@ -242,40 +348,54 @@ function renderAdminMovements(movements) {
 
 function renderAdminSessions(sessions, compatibilityMode = false) {
     const container = document.getElementById('adminSessionsList');
+    const summaryElement = document.getElementById('adminSessionsSummary');
+
     if (!container) return;
+
+    const activeCount = sessions.filter(session => session.activa).length;
+
+    if (summaryElement) {
+        summaryElement.textContent = compatibilityMode
+            ? 'Session detail requires the current backend.'
+            : `${activeCount} active of ${sessions.length} recent sessions.`;
+    }
 
     if (!sessions.length) {
         container.innerHTML = compatibilityMode
-            ? '<div class="admin-loading">Publish the updated backend to view sessions.</div>'
+            ? '<div class="admin-loading">Update the backend to inspect active sessions.</div>'
             : '<div class="admin-loading">No sessions registered.</div>';
         return;
     }
 
-    container.innerHTML = sessions.map(session => `
-        <article class="admin-session-item">
-            <span class="admin-session-avatar">${getAdminInitials(session.usuario_nombre)}</span>
-            <div class="admin-session-copy">
-                <strong>${escapeAdminHtml(session.usuario_nombre || session.username)}</strong>
-                <span>${escapeAdminHtml(session.departamento_nombre || 'No department')} / ${escapeAdminHtml(formatAdminStateLabel(session.rol))}</span>
-                <small>${escapeAdminHtml(session.ip_address || 'IP unavailable')} / ${formatAdminDate(session.fecha_creacion)}</small>
-            </div>
-            <div class="admin-session-actions">
-                <span class="admin-session-dot ${session.activa ? 'active' : ''}" title="${session.activa ? 'Active' : 'Closed'}"></span>
-                ${session.activa && !session.sesion_actual ? `
-                    <button
-                        class="admin-session-logout"
-                        type="button"
-                        data-session-logout="${session.id}"
-                        data-session-user="${escapeAdminHtml(session.usuario_nombre || session.username)}"
-                        title="Log out"
-                    >
-                        <i class="fa-solid fa-right-from-bracket"></i>
-                    </button>
-                ` : ''}
-                ${session.sesion_actual ? '<small class="admin-current-session">Current</small>' : ''}
-            </div>
-        </article>
-    `).join('');
+    container.innerHTML = sessions.map(session => {
+        const device = getAdminSessionDevice(session.user_agent);
+
+        return `
+            <article class="admin-session-item">
+                <span class="admin-session-avatar">${getAdminInitials(session.usuario_nombre)}</span>
+                <div class="admin-session-copy">
+                    <strong>${escapeAdminHtml(session.usuario_nombre || session.username)}</strong>
+                    <span>${escapeAdminHtml(session.departamento_nombre || 'No department')} / ${escapeAdminHtml(formatAdminStateLabel(session.rol))}</span>
+                    <small>${escapeAdminHtml(session.ip_address || 'IP unavailable')} / ${escapeAdminHtml(device)} / ${formatAdminDate(session.fecha_creacion)}</small>
+                </div>
+                <div class="admin-session-actions">
+                    <span class="admin-session-dot ${session.activa ? 'active' : ''}" title="${session.activa ? 'Active' : 'Closed'}"></span>
+                    ${session.activa && !session.sesion_actual ? `
+                        <button
+                            class="admin-session-logout"
+                            type="button"
+                            data-session-logout="${session.id}"
+                            data-session-user="${escapeAdminHtml(session.usuario_nombre || session.username)}"
+                            title="Log out"
+                        >
+                            <i class="fa-solid fa-right-from-bracket"></i>
+                        </button>
+                    ` : ''}
+                    ${session.sesion_actual ? '<small class="admin-current-session">Current</small>' : ''}
+                </div>
+            </article>
+        `;
+    }).join('');
 }
 
 async function onAdminSessionListClick(event) {
@@ -347,20 +467,57 @@ function renderAdminUserActivity(users) {
     if (!tbody) return;
 
     if (!users.length) {
-        tbody.innerHTML = '<tr><td colspan="6" class="admin-loading">No user activity.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" class="admin-loading">No user activity.</td></tr>';
         return;
     }
 
-    tbody.innerHTML = users.map(user => `
-        <tr>
-            <td><strong>${escapeAdminHtml(user.nombre)}</strong><br><small>@${escapeAdminHtml(user.username)}</small></td>
-            <td>${escapeAdminHtml(user.departamento_nombre || 'No department')}</td>
-            <td><span class="admin-state">${escapeAdminHtml(formatAdminStateLabel(user.rol))}</span></td>
-            <td>${Number(user.total_sesiones || 0).toLocaleString('en-US')}</td>
-            <td>${Number(user.total_archivos || 0).toLocaleString('en-US')}</td>
-            <td>${user.ultimo_acceso ? formatAdminDate(user.ultimo_acceso) : 'Never'}</td>
-        </tr>
-    `).join('');
+    const rankedUsers = [...users]
+        .map(user => ({
+            ...user,
+            activityScore:
+                Number(user.total_sesiones || 0)
+                + Number(user.total_archivos || 0) * 2
+        }))
+        .sort((a, b) =>
+            b.activityScore - a.activityScore
+            || adminDateValue(b.ultimo_acceso) - adminDateValue(a.ultimo_acceso)
+        );
+
+    const maximumScore = Math.max(
+        ...rankedUsers.map(user => user.activityScore),
+        1
+    );
+
+    tbody.innerHTML = rankedUsers.map((user, index) => {
+        const activityPercentage = Math.round(
+            (user.activityScore / maximumScore) * 100
+        );
+
+        return `
+            <tr>
+                <td data-label="User">
+                    <div class="admin-user-rank">
+                        <span class="admin-user-rank-number">${index + 1}</span>
+                        <span class="admin-user-cell">
+                            <strong>${escapeAdminHtml(user.nombre)}</strong>
+                            <small>@${escapeAdminHtml(user.username)}</small>
+                        </span>
+                    </div>
+                </td>
+                <td data-label="Department">${escapeAdminHtml(user.departamento_nombre || 'No department')}</td>
+                <td data-label="Role"><span class="admin-state">${escapeAdminHtml(formatAdminStateLabel(user.rol))}</span></td>
+                <td data-label="Sessions">${Number(user.total_sesiones || 0).toLocaleString('en-US')}</td>
+                <td data-label="Files">${Number(user.total_archivos || 0).toLocaleString('en-US')}</td>
+                <td data-label="Activity">
+                    <div class="admin-user-activity-meter">
+                        <div><span style="width:${activityPercentage}%"></span></div>
+                        <small>${activityPercentage}% relative activity</small>
+                    </div>
+                </td>
+                <td data-label="Last access">${user.ultimo_acceso ? formatAdminDate(user.ultimo_acceso) : 'Never'}</td>
+            </tr>
+        `;
+    }).join('');
 }
 
 function renderAdminDatabaseTables(tables, movements = []) {
@@ -851,6 +1008,472 @@ function formatAdminMovementDetail(item) {
     const browser = userAgent.match(/(?:Edg|Chrome|Firefox|Safari)\/[\d.]+/)?.[0];
     const system = userAgent.match(/Windows NT [\d.]+|Android [\d.]+|iPhone OS [\d_]+|Mac OS X [\d_]+/)?.[0];
     return [ip, browser, system].filter(Boolean).join(' / ') || detail;
+}
+
+function renderAdminExecutiveOverview() {
+    const summary = adminDashboardState.summary || {};
+    const errors = adminDashboardState.errors || {};
+
+    const usersTotal = Number(summary.usuarios_total || 0);
+    const usersActive = Number(summary.usuarios_activos || 0);
+    const departmentsTotal = Number(summary.departamentos_total || 0);
+    const departmentsActive = Number(summary.departamentos_activos || 0);
+    const validationsTotal = Number(summary.validaciones_total || 0);
+    const validationIssues = Number(summary.validaciones_con_incidencias || 0);
+    const sessionsActive = Number(summary.sesiones_activas || 0);
+
+    const userCoverage = percentage(usersActive, usersTotal);
+    const departmentCoverage = percentage(departmentsActive, departmentsTotal);
+    const validationReliability = validationsTotal
+        ? clampPercentage(100 - percentage(validationIssues, validationsTotal))
+        : 100;
+    const sessionLoad = usersActive
+        ? clampPercentage(percentage(sessionsActive, usersActive))
+        : 0;
+
+    setAdminProgress(
+        'adminUsersCoverage',
+        userCoverage,
+        `${usersActive} of ${usersTotal} users active`
+    );
+
+    setAdminProgress(
+        'adminDepartmentCoverage',
+        departmentCoverage,
+        `${departmentsActive} of ${departmentsTotal} departments active`
+    );
+
+    setAdminProgress(
+        'adminValidationReliability',
+        validationReliability,
+        validationIssues
+            ? `${validationIssues} validations require review`
+            : 'No validation issues detected'
+    );
+
+    setAdminProgress(
+        'adminSessionLoad',
+        sessionLoad,
+        `${sessionsActive} sessions across ${usersActive} active users`
+    );
+
+    const inactiveDepartments = Math.max(
+        departmentsTotal - departmentsActive,
+        0
+    );
+
+    const validationIssueRate = validationsTotal
+        ? validationIssues / validationsTotal
+        : 0;
+
+    let healthScore = 100;
+    healthScore -= Math.min(Number(errors.critical || 0) * 15, 45);
+    healthScore -= Math.min(Number(errors.open || 0) * 2, 20);
+    healthScore -= Math.min(validationIssueRate * 38, 25);
+    healthScore -= Math.min(inactiveDepartments * 6, 18);
+    healthScore -= userCoverage < 75 ? 7 : 0;
+    healthScore = Math.round(Math.max(0, Math.min(100, healthScore)));
+
+    renderAdminHealthScore(healthScore, {
+        userCoverage,
+        departmentCoverage,
+        validationReliability,
+        inactiveDepartments,
+        validationIssues,
+        errors
+    });
+
+    renderAdminActivityTrend(adminDashboardState.movements || []);
+
+    const filesSevenDays = Number(summary.archivos_7_dias || 0);
+    const loginsSevenDays = Number(summary.inicios_7_dias || 0);
+    const movementCount = (adminDashboardState.movements || []).filter(item => {
+        const value = adminDateValue(item.fecha || item.fecha_creacion);
+        return value >= Date.now() - 7 * 24 * 60 * 60 * 1000;
+    }).length;
+
+    const workload = Math.max(
+        movementCount,
+        filesSevenDays + loginsSevenDays
+    );
+
+    setAdminText('adminHeroWorkload', `${workload.toLocaleString('en-US')} operations`);
+    setAdminText(
+        'adminHeroWorkloadDetail',
+        `${filesSevenDays.toLocaleString('en-US')} files / ${loginsSevenDays.toLocaleString('en-US')} sign-ins`
+    );
+}
+
+function renderAdminHealthScore(score, context) {
+    const ring = document.getElementById('adminHealthRing');
+    const scoreElement = document.getElementById('adminHealthScore');
+    const labelElement = document.getElementById('adminHealthLabel');
+    const descriptionElement = document.getElementById('adminHealthDescription');
+    const heroHealth = document.getElementById('adminHeroHealth');
+    const heroDetail = document.getElementById('adminHeroHealthDetail');
+    const list = document.getElementById('adminAttentionList');
+
+    const level = score >= 90
+        ? {
+            label: 'Excellent',
+            description: 'Core indicators are operating within the expected range.',
+            tone: 'success'
+        }
+        : score >= 75
+            ? {
+                label: 'Stable',
+                description: 'The system is stable with a small number of items to monitor.',
+                tone: 'success'
+            }
+            : score >= 55
+                ? {
+                    label: 'Attention required',
+                    description: 'One or more operational indicators should be reviewed.',
+                    tone: 'warning'
+                }
+                : {
+                    label: 'Critical attention',
+                    description: 'Immediate review is recommended for system reliability.',
+                    tone: 'danger'
+                };
+
+    if (ring) {
+        ring.style.setProperty('--admin-health-score', String(score));
+        ring.classList.toggle('is-warning', level.tone === 'warning');
+        ring.classList.toggle('is-danger', level.tone === 'danger');
+    }
+
+    setAdminText('adminHealthScore', score);
+    setAdminText('adminHealthLabel', level.label);
+    setAdminText('adminHealthDescription', level.description);
+    setAdminText('adminHeroHealth', level.label);
+    setAdminText('adminHeroHealthDetail', `${score}/100 operational health`);
+
+    if (!list) return;
+
+    const items = [];
+
+    if (!context.errors.available) {
+        items.push({
+            tone: 'warning',
+            icon: 'fa-plug-circle-exclamation',
+            text: 'System error summary is not available from the current backend.'
+        });
+    } else if (context.errors.critical > 0) {
+        items.push({
+            tone: 'danger',
+            icon: 'fa-circle-exclamation',
+            text: `${context.errors.critical} critical system error(s) remain open.`
+        });
+    } else if (context.errors.open > 0) {
+        items.push({
+            tone: 'warning',
+            icon: 'fa-triangle-exclamation',
+            text: `${context.errors.open} non-critical system error(s) remain open.`
+        });
+    }
+
+    if (context.validationIssues > 0) {
+        items.push({
+            tone: 'warning',
+            icon: 'fa-shield-halved',
+            text: `${context.validationIssues} validation(s) contain issues.`
+        });
+    }
+
+    if (context.inactiveDepartments > 0) {
+        items.push({
+            tone: 'warning',
+            icon: 'fa-building-circle-exclamation',
+            text: `${context.inactiveDepartments} department(s) are currently inactive.`
+        });
+    }
+
+    if (context.userCoverage < 75) {
+        items.push({
+            tone: 'warning',
+            icon: 'fa-user-clock',
+            text: `Only ${context.userCoverage}% of registered users are active.`
+        });
+    }
+
+    if (!items.length) {
+        items.push({
+            tone: 'success',
+            icon: 'fa-circle-check',
+            text: 'No immediate administrative attention points were detected.'
+        });
+    }
+
+    list.innerHTML = items.slice(0, 4).map(item => `
+        <li class="is-${item.tone}">
+            <i class="fa-solid ${item.icon}"></i>
+            <span>${escapeAdminHtml(item.text)}</span>
+        </li>
+    `).join('');
+}
+
+function renderAdminActivityTrend(movements) {
+    const container = document.getElementById('adminActivityTrend');
+    const summary = document.getElementById('adminTrendSummary');
+    if (!container) return;
+
+    const days = [];
+
+    for (let offset = 6; offset >= 0; offset -= 1) {
+        const date = new Date();
+        date.setHours(0, 0, 0, 0);
+        date.setDate(date.getDate() - offset);
+
+        days.push({
+            key: toAdminDateInputValue(date),
+            label: date.toLocaleDateString('en-US', { weekday: 'short' }),
+            files: 0,
+            validations: 0,
+            sessions: 0
+        });
+    }
+
+    const dayMap = new Map(days.map(day => [day.key, day]));
+
+    movements.forEach(item => {
+        const dateKey = toAdminDateInputValue(item.fecha || item.fecha_creacion);
+        const day = dayMap.get(dateKey);
+        if (!day) return;
+
+        const type = String(item.tipo || '').toLowerCase();
+        const action = String(item.accion || item.evento || '').toLowerCase();
+
+        if (type === 'archivo' || action.includes('file')) {
+            day.files += 1;
+        } else if (type === 'validacion' || action.includes('validation')) {
+            day.validations += 1;
+        } else if (type === 'sesion' || action.includes('sign-in') || action.includes('login')) {
+            day.sessions += 1;
+        }
+    });
+
+    const maximum = Math.max(
+        ...days.flatMap(day => [day.files, day.validations, day.sessions]),
+        1
+    );
+
+    container.innerHTML = days.map(day => {
+        const fileHeight = Math.max(3, Math.round((day.files / maximum) * 158));
+        const validationHeight = Math.max(3, Math.round((day.validations / maximum) * 158));
+        const sessionHeight = Math.max(3, Math.round((day.sessions / maximum) * 158));
+        const total = day.files + day.validations + day.sessions;
+
+        return `
+            <div class="admin-trend-day" title="${escapeAdminHtml(`${day.label}: ${total} operations`)}">
+                <div class="admin-trend-bars">
+                    <span class="admin-trend-bar files" style="height:${fileHeight}px" title="${day.files} files"></span>
+                    <span class="admin-trend-bar validations" style="height:${validationHeight}px" title="${day.validations} validations"></span>
+                    <span class="admin-trend-bar sessions" style="height:${sessionHeight}px" title="${day.sessions} sessions"></span>
+                </div>
+                <span>${escapeAdminHtml(day.label)}</span>
+            </div>
+        `;
+    }).join('');
+
+    const totalOperations = days.reduce(
+        (total, day) => total + day.files + day.validations + day.sessions,
+        0
+    );
+
+    const busiestDay = days.reduce(
+        (best, day) => {
+            const total = day.files + day.validations + day.sessions;
+            return total > best.total
+                ? { label: day.label, total }
+                : best;
+        },
+        { label: '-', total: 0 }
+    );
+
+    if (summary) {
+        summary.textContent = totalOperations
+            ? `${totalOperations} tracked operations. ${busiestDay.label} was the busiest day.`
+            : 'No tracked operations during the last seven days.';
+    }
+}
+
+function setAdminProgress(prefix, value, meta) {
+    const normalized = clampPercentage(value);
+    setAdminText(`${prefix}Value`, `${normalized}%`);
+    setAdminText(`${prefix}Meta`, meta);
+
+    const bar = document.getElementById(`${prefix}Bar`);
+    if (bar) {
+        bar.style.width = `${normalized}%`;
+    }
+}
+
+function startAdminDashboardClock() {
+    const update = () => {
+        const now = new Date();
+
+        setAdminText(
+            'adminDashboardClock',
+            now.toLocaleTimeString('en-US', {
+                hour: '2-digit',
+                minute: '2-digit'
+            })
+        );
+
+        setAdminText(
+            'adminDashboardDate',
+            now.toLocaleDateString('en-US', {
+                weekday: 'long',
+                month: 'long',
+                day: 'numeric'
+            })
+        );
+    };
+
+    update();
+
+    if (adminClockTimer) {
+        window.clearInterval(adminClockTimer);
+    }
+
+    adminClockTimer = window.setInterval(update, 30000);
+}
+
+function initializeAdminAutoRefresh() {
+    const enabled = localStorage.getItem('adminAutoRefresh') === 'true';
+    setAdminAutoRefresh(enabled);
+}
+
+function toggleAdminAutoRefresh() {
+    const enabled = localStorage.getItem('adminAutoRefresh') !== 'true';
+    setAdminAutoRefresh(enabled);
+}
+
+function setAdminAutoRefresh(enabled) {
+    localStorage.setItem('adminAutoRefresh', String(enabled));
+
+    const button = document.getElementById('adminAutoRefresh');
+
+    if (button) {
+        button.setAttribute('aria-pressed', String(enabled));
+        button.innerHTML = enabled
+            ? '<i class="fa-solid fa-clock"></i> Auto refresh on'
+            : '<i class="fa-solid fa-clock-rotate-left"></i> Auto refresh';
+    }
+
+    if (adminAutoRefreshTimer) {
+        window.clearInterval(adminAutoRefreshTimer);
+        adminAutoRefreshTimer = null;
+    }
+
+    if (enabled) {
+        adminAutoRefreshTimer = window.setInterval(
+            loadAdminDashboard,
+            5 * 60 * 1000
+        );
+    }
+}
+
+function exportAdminActivityLog() {
+    const rows = applyAdminActivityFilters(adminActivityLogRows);
+
+    if (!rows.length) {
+        Swal.fire({
+            icon: 'info',
+            title: 'No activity to export',
+            text: 'Adjust the selected filters and try again.'
+        });
+        return;
+    }
+
+    const headers = [
+        'User',
+        'Username',
+        'Department',
+        'Movement',
+        'Detail',
+        'IP',
+        'Status',
+        'Date'
+    ];
+
+    const csvRows = [
+        headers,
+        ...rows.map(row => [
+            row.usuario_nombre || 'System',
+            row.username || 'system',
+            row.departamento_nombre || 'No department',
+            row.movimiento || 'Movement',
+            row.detalle || '-',
+            row.ip_address || '-',
+            formatAdminStateLabel(row.estado || 'registered'),
+            formatAdminDate(row.fecha)
+        ])
+    ];
+
+    const csv = csvRows
+        .map(row => row.map(csvEscapeValue).join(','))
+        .join('\r\n');
+
+    const blob = new Blob([`\ufeff${csv}`], {
+        type: 'text/csv;charset=utf-8'
+    });
+
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    const date = new Date().toISOString().slice(0, 10);
+
+    anchor.href = url;
+    anchor.download = `admin-activity-${date}.csv`;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    URL.revokeObjectURL(url);
+}
+
+function csvEscapeValue(value) {
+    const text = String(value ?? '');
+    return `"${text.replaceAll('"', '""')}"`;
+}
+
+function getAdminSessionDevice(userAgent) {
+    const value = String(userAgent || '');
+
+    const browser = value.match(/(?:Edg|Chrome|Firefox|Safari)\/[\d.]+/)?.[0];
+    const system = value.match(/Windows NT [\d.]+|Android [\d.]+|iPhone OS [\d_]+|Mac OS X [\d_]+/)?.[0];
+
+    return [browser, system]
+        .filter(Boolean)
+        .join(' / ')
+        || 'Device unavailable';
+}
+
+function percentage(value, total) {
+    const numerator = Number(value || 0);
+    const denominator = Number(total || 0);
+
+    if (!denominator) return 0;
+
+    return clampPercentage(
+        Math.round((numerator / denominator) * 100)
+    );
+}
+
+function clampPercentage(value) {
+    return Math.max(
+        0,
+        Math.min(100, Math.round(Number(value || 0)))
+    );
+}
+
+function formatCompactNumber(value, decimals = 0) {
+    const number = Number(value || 0);
+
+    return number.toLocaleString('en-US', {
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals
+    });
 }
 
 function setAdminText(id, value) {

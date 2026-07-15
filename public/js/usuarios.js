@@ -1,4 +1,4 @@
-﻿// ============================================
+// ============================================
 // USER ADMINISTRATION
 // ============================================
 
@@ -10,6 +10,7 @@ let departments = [];
 document.addEventListener('DOMContentLoaded', async function () {
     await loadDepartments();
     await loadUsers();
+    initializeAccessAdministration();
 });
 
 async function loadDepartments() {
@@ -93,6 +94,7 @@ function renderDepartments() {
     const canEdit = window.AppPermissions?.can('usuarios', 'editar') === true;
     const canDelete = window.AppPermissions?.can('usuarios', 'eliminar') === true;
     if (total) total.textContent = departments.length;
+    updateDepartmentOverview();
     if (!tbody) return;
 
     if (!departments.length) {
@@ -158,8 +160,17 @@ function switchAdminView(view) {
     document.getElementById('btnNuevoDepartment').hidden =
         !isDepartments ||
         !window.AppPermissions?.can('usuarios', 'crear');
-    document.getElementById('tabUsers').classList.toggle('active', !isDepartments);
-    document.getElementById('tabDepartments').classList.toggle('active', isDepartments);
+    const usersTab = document.getElementById('tabUsers');
+    const departmentsTab = document.getElementById('tabDepartments');
+
+    usersTab.classList.toggle('active', !isDepartments);
+    departmentsTab.classList.toggle('active', isDepartments);
+    usersTab.setAttribute('aria-selected', String(!isDepartments));
+    departmentsTab.setAttribute('aria-selected', String(isDepartments));
+
+    updateDirectoryTimestamp(
+        isDepartments ? 'Department directory ready' : 'User directory ready'
+    );
 }
 
 // ============================================
@@ -179,6 +190,7 @@ async function loadUsers() {
             { id: 4, nombre: 'Carlos Lopez', email: 'carlos@example.com', username: 'clopez', rol: 'usuario', estado: 'inactivo', ultimo_acceso: '2024-01-10 14:00:00' }
         ];
         renderUsers(users);
+        updateStats();
         return;
     }
 
@@ -219,12 +231,17 @@ function renderUsers(usersToRender) {
     const viewer = window.AppPermissions?.getUser() || {};
     const viewerIsSuperAdmin = viewer.rol === 'superadmin';
 
+    updateUserResultCount(usersToRender?.length || 0);
+
     if (!usersToRender || usersToRender.length === 0) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="6" class="empty-state">
-                    <i class="fa-solid fa-users-slash"></i>
-                    <p>No users registered</p>
+                <td colspan="7">
+                    <div class="access-empty-state">
+                        <i class="fa-solid fa-users-slash"></i>
+                        <strong>No users found</strong>
+                        <span>Adjust the filters or create a new account.</span>
+                    </div>
                 </td>
             </tr>
         `;
@@ -263,12 +280,12 @@ function renderUsers(usersToRender) {
                     <div class="user-cell">
                         <div class="user-avatar">${initials}</div>
                         <div class="user-info">
-                            <span class="user-name">${user.nombre || user.nombre_completo || ''}</span>
-                            <span class="user-email">@${user.username || ''}</span>
+                            <span class="user-name">${escapeHtml(user.nombre || user.nombre_completo || '')}</span>
+                            <span class="user-email">@${escapeHtml(user.username || '')}</span>
                         </div>
                     </div>
                 </td>
-                <td>${user.email}</td>
+                <td>${escapeHtml(user.email || '')}</td>
                 <td><span class="status-badge ${roleClass}">${roleLabel}</span></td>
                 <td><span class="department-badge">${escapeHtml(departmentLabel)}</span></td>
                 <td><span class="status-badge ${statusClass}">${statusLabel}</span></td>
@@ -310,6 +327,27 @@ function updateStats() {
     document.getElementById('usuariosActivos').textContent = activos;
     document.getElementById('usuariosInactivos').textContent = inactivos;
     document.getElementById('usuariosAdmin').textContent = admins;
+
+    const activeCaption = document.getElementById('activeUsersCaption');
+    const adminCaption = document.getElementById('adminUsersCaption');
+
+    if (activeCaption) {
+        const activeRate = total
+            ? Math.round((activos / total) * 100)
+            : 0;
+        activeCaption.textContent = `${activeRate}% of directory`;
+    }
+
+    if (adminCaption) {
+        const adminRate = total
+            ? Math.round((admins / total) * 100)
+            : 0;
+        adminCaption.textContent =
+            `${adminRate}% privileged access exposure`;
+    }
+
+    updateAccessOverview();
+    updateDirectoryTimestamp('Directory synchronized');
 }
 
 // ============================================
@@ -338,6 +376,13 @@ function filterUsers() {
     });
 
     renderUsers(filtered);
+    updateUserFilterSummary({
+        searchTerm,
+        roleFilter,
+        statusFilter,
+        departmentFilter,
+        resultCount: filtered.length
+    });
 }
 
 // ============================================
@@ -775,7 +820,7 @@ async function deleteDepartment(departmentId) {
         title: 'Delete department',
         html: `
             <p><strong>${escapeHtml(department.nombre)}</strong> will be permanently deleted.</p>
-            <p style="margin-top:8px;color:#5C5C5C;">
+            <p style="margin-top:8px;color:#64748b;">
                 ${totalUsers
                     ? `${totalUsers} user(s) will remain without a department, but their accounts and permissions will stay active.`
                     : 'This department has no assigned users.'}
@@ -932,3 +977,163 @@ function formatDate(dateString) {
     }
 }
 
+
+
+// ============================================
+// PROFESSIONAL ACCESS ADMINISTRATION UI
+// ============================================
+
+function initializeAccessAdministration() {
+    updateAccessOverview();
+    updateDepartmentOverview();
+    updateUserResultCount(users.length);
+    updateUserFilterSummary({
+        searchTerm: '',
+        roleFilter: '',
+        statusFilter: '',
+        departmentFilter: '',
+        resultCount: users.length
+    });
+    updateDirectoryTimestamp('Directory ready');
+}
+
+function updateDirectoryTimestamp(message = 'Directory updated') {
+    const element = document.getElementById('accessUpdatedAt');
+    if (!element) return;
+
+    const time = new Intl.DateTimeFormat('en-US', {
+        hour: '2-digit',
+        minute: '2-digit'
+    }).format(new Date());
+
+    element.textContent = `${message} · ${time}`;
+}
+
+function updateUserResultCount(count) {
+    const element = document.getElementById('userResultCount');
+    const paginationInfo = document.getElementById('paginationInfo');
+
+    if (element) element.textContent = String(Number(count || 0));
+    if (paginationInfo) {
+        paginationInfo.textContent =
+            `Showing ${Number(count || 0)} of ${users.length} user accounts`;
+    }
+}
+
+function updateAccessOverview() {
+    const total = users.length;
+    const unassigned = users.filter(user =>
+        !user.departamento_id &&
+        !user.departamento_nombre
+    ).length;
+    const assigned = Math.max(0, total - unassigned);
+    const coverage = total
+        ? Math.round((assigned / total) * 100)
+        : 0;
+
+    const unassignedElement =
+        document.getElementById('unassignedUsers');
+    const coverageElement =
+        document.getElementById('departmentCoverageValue');
+
+    if (unassignedElement) {
+        unassignedElement.textContent = String(unassigned);
+    }
+
+    if (coverageElement) {
+        coverageElement.textContent = `${coverage}%`;
+    }
+}
+
+function updateDepartmentOverview() {
+    const activeDepartments = departments.filter(department =>
+        department.activo === true ||
+        department.activo === 1
+    ).length;
+
+    const assignedUsers = departments.reduce(
+        (total, department) =>
+            total + Number(department.total_usuarios || 0),
+        0
+    );
+
+    const activeElement =
+        document.getElementById('activeDepartmentsCount');
+    const panelActiveElement =
+        document.getElementById('departmentPanelActiveCount');
+    const assignedElement =
+        document.getElementById('departmentAssignedUsersCount');
+
+    if (activeElement) {
+        activeElement.textContent =
+            String(activeDepartments);
+    }
+
+    if (panelActiveElement) {
+        panelActiveElement.textContent =
+            String(activeDepartments);
+    }
+
+    if (assignedElement) {
+        assignedElement.textContent =
+            String(assignedUsers);
+    }
+}
+
+function updateUserFilterSummary(filters) {
+    const element = document.getElementById('userFilterState');
+    if (!element) return;
+
+    const labels = [];
+
+    if (filters.searchTerm) {
+        labels.push(`search “${filters.searchTerm}”`);
+    }
+
+    if (filters.roleFilter) {
+        labels.push(`role ${getRoleLabel(filters.roleFilter)}`);
+    }
+
+    if (filters.statusFilter) {
+        labels.push(
+            filters.statusFilter === 'activo'
+                ? 'active accounts'
+                : 'inactive accounts'
+        );
+    }
+
+    if (filters.departmentFilter) {
+        const department = departments.find(item =>
+            String(item.id) === String(filters.departmentFilter)
+        );
+
+        labels.push(
+            `department ${department?.nombre || filters.departmentFilter}`
+        );
+    }
+
+    if (!labels.length) {
+        element.textContent =
+            `Showing the complete directory · ${filters.resultCount} account(s).`;
+        return;
+    }
+
+    element.textContent =
+        `Filtered by ${labels.join(', ')} · ${filters.resultCount} result(s).`;
+}
+
+function resetUserFilters() {
+    const search = document.getElementById('searchUsers');
+    const role = document.getElementById('filterRole');
+    const status = document.getElementById('filterStatus');
+    const department =
+        document.getElementById('filterDepartment');
+
+    if (search) search.value = '';
+    if (role) role.value = '';
+    if (status) status.value = '';
+    if (department) department.value = '';
+
+    filterUsers();
+    search?.focus();
+}

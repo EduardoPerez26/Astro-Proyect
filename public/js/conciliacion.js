@@ -2021,7 +2021,6 @@ async function cargarRestaurants() {
             renderRestaurants();
         }
     } catch (error) {
-        console.log(restaurantes);
         console.error('Error loading restaurants:', error);
         Swal.fire('Error', 'Restaurants could not be loaded', 'error');
     }
@@ -2300,11 +2299,6 @@ async function procesarArchivo(file) {
         salesWorkbook =
             workbook;
 
-        console.log(
-            'Workbook cargado:',
-            workbook.SheetNames
-        );
-
         if (templateActual) {
 
             extraerDatos();
@@ -2360,10 +2354,6 @@ function combineTemplateWithUserExcel(
             'Conciliation'
             ],
             'Conciliation'
-        );
-
-        console.log(
-            'Conciliation copiada desde template'
         );
 
     } else {
@@ -2442,88 +2432,8 @@ function extraerDatos() {
     datosExtraidos = [];
     if (currentRestaurantConfig) {
 
-        console.log(
-            'Generating reconciliation from configuration'
-        );
-
         generarConciliacionDesdeTemplate();
         return;
-
-        const config = templateActual.configuracion;
-
-        let sheetName;
-
-        if (typeof config.hoja === 'number') {
-            sheetName = workbook.SheetNames[config.hoja];
-        } else if (typeof config.hoja === 'string') {
-            sheetName = config.hoja;
-        } else {
-            sheetName = workbook.SheetNames[0];
-        }
-
-        const sheet = workbook.Sheets[sheetName];
-
-        if (!sheet) {
-            Swal.fire(
-                'Error',
-                `Sheet "${config.hoja}" was not found in the file`,
-                'error'
-            );
-            return;
-        }
-
-        config.conceptos.forEach(concepto => {
-
-            let valorExcel = 0;
-
-            if (concepto.celdaValor) {
-
-                const cell = sheet[concepto.celdaValor];
-
-                valorExcel = cell
-                    ? parseFloat(
-                        String(cell.v || cell.w || 0)
-                            .replace(/[$,]/g, '')
-                    ) || 0
-                    : 0;
-
-            } else if (concepto.fila && config.columnas.valor) {
-
-                const cellRef =
-                    config.columnas.valor + concepto.fila;
-
-                const cell = sheet[cellRef];
-
-                valorExcel = cell
-                    ? parseFloat(
-                        String(cell.v || cell.w || 0)
-                            .replace(/[$,]/g, '')
-                    ) || 0
-                    : 0;
-            }
-
-            const esperadoInfo =
-                valoresEsperados[concepto.nombre] || {};
-
-            const valorEsperado =
-                esperadoInfo.valor || 0;
-
-            datosExtraidos.push({
-                concepto: concepto.nombre,
-                valorExcel,
-                valorEsperado,
-                diferencia: valorExcel - valorEsperado,
-                tipo: concepto.tipo || 'moneda'
-            });
-
-        });
-
-        document.getElementById(
-            'resultsSection'
-        ).style.display = 'block';
-
-        renderTablaSucursales();
-        actualizarResumen();
     }
 
     function extraerDailySales() {
@@ -2543,23 +2453,12 @@ function extraerDatos() {
                 { defval: 0 }
             );
 
-        console.log(
-            'Reconciliation rows:',
-            conciliationRows.length
-        );
-
-
-
         const rowsLimpios =
             conciliationRows.filter(
                 row =>
                     row['Store'] &&
                     String(row['Store']).trim() !== ''
             );
-
-        console.log('TOTAL FILAS:', conciliationRows.length);
-        console.log('FILAS LIMPIAS:', rowsLimpios.length);
-        console.log(rowsLimpios[0]);
 
         datosExtraidos = rowsLimpios.map(row => ({
 
@@ -2632,10 +2531,6 @@ function extraerDatos() {
             difference: row['Difference'] || 0
 
         }));
-
-        console.log('DESPUES DEL MAP');
-        console.log(datosExtraidos.length);
-        console.log(datosExtraidos[0]);
 
         renderTablaSucursales();
     }
@@ -3435,11 +3330,6 @@ function procesarEBT() {
                 )[0];
 
     }
-
-    console.log(
-        'Fecha EBT usada:',
-        fechaTexto
-    );
 
     ebtPorStore = {};
 

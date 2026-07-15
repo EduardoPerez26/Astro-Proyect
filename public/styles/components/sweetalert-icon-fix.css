@@ -1,0 +1,204 @@
+/* =========================================================
+   XBFS — SWEETALERT ICON GEOMETRY FIX V7
+   Fixes oversized/deformed native SweetAlert2 icon lines.
+   ========================================================= */
+
+html body .swal2-popup
+.swal2-icon.xbfs-swal-icon {
+    position: relative !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex: 0 0 auto !important;
+    box-sizing: border-box !important;
+    padding: 0 !important;
+    line-height: 1 !important;
+    text-align: center !important;
+    overflow: hidden !important;
+    isolation: isolate !important;
+}
+
+html body .swal2-popup
+.swal2-icon.xbfs-swal-icon *,
+html body .swal2-popup
+.swal2-icon.xbfs-swal-icon *::before,
+html body .swal2-popup
+.swal2-icon.xbfs-swal-icon *::after {
+    animation: none !important;
+}
+
+/* SUCCESS */
+html body .swal2-popup
+.swal2-icon.swal2-success.xbfs-swal-icon
+:is(
+    .swal2-success-ring,
+    .swal2-success-fix,
+    .swal2-success-circular-line-left,
+    .swal2-success-circular-line-right,
+    .swal2-success-line-tip,
+    .swal2-success-line-long
+) {
+    display: none !important;
+}
+
+html body .swal2-popup
+.swal2-icon.swal2-success.xbfs-swal-icon::before {
+    content: "" !important;
+    display: block !important;
+    width: 20px !important;
+    height: 10px !important;
+    border: 0 !important;
+    border-left: 3px solid
+        var(--xbfs-alert-accent, #16835f) !important;
+    border-bottom: 3px solid
+        var(--xbfs-alert-accent, #16835f) !important;
+    border-radius: 1px !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    transform:
+        translate(1px, -2px)
+        rotate(-45deg) !important;
+    transform-origin: center !important;
+}
+
+html body .swal2-popup
+.swal2-icon.swal2-success.xbfs-swal-icon::after {
+    content: none !important;
+    display: none !important;
+}
+
+/* ERROR */
+html body .swal2-popup
+.swal2-icon.swal2-error.xbfs-swal-icon
+:is(
+    .swal2-x-mark,
+    .swal2-x-mark-line-left,
+    .swal2-x-mark-line-right
+) {
+    display: none !important;
+}
+
+html body .swal2-popup
+.swal2-icon.swal2-error.xbfs-swal-icon::before,
+html body .swal2-popup
+.swal2-icon.swal2-error.xbfs-swal-icon::after {
+    content: "" !important;
+    position: absolute !important;
+    top: 50% !important;
+    left: 50% !important;
+    display: block !important;
+    width: 21px !important;
+    height: 3px !important;
+    border: 0 !important;
+    border-radius: 999px !important;
+    background:
+        var(--xbfs-alert-accent, #c83c35) !important;
+    box-shadow: none !important;
+    transform-origin: center !important;
+}
+
+html body .swal2-popup
+.swal2-icon.swal2-error.xbfs-swal-icon::before {
+    transform:
+        translate(-50%, -50%)
+        rotate(45deg) !important;
+}
+
+html body .swal2-popup
+.swal2-icon.swal2-error.xbfs-swal-icon::after {
+    transform:
+        translate(-50%, -50%)
+        rotate(-45deg) !important;
+}
+
+/* WARNING / INFO / QUESTION */
+html body .swal2-popup
+.swal2-icon.xbfs-swal-icon
+.swal2-icon-content {
+    position: static !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100% !important;
+    height: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    color:
+        var(--xbfs-alert-accent, #35414c) !important;
+    font-family:
+        Inter,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif !important;
+    font-size: 25px !important;
+    font-weight: 800 !important;
+    line-height: 1 !important;
+    text-align: center !important;
+    transform: none !important;
+}
+
+html body .swal2-popup
+.swal2-icon.swal2-warning.xbfs-swal-icon
+.swal2-icon-content {
+    padding-bottom: 1px !important;
+}
+
+html body .swal2-popup
+.swal2-icon.swal2-info.xbfs-swal-icon
+.swal2-icon-content {
+    padding-bottom: 1px !important;
+    font-family: Georgia, serif !important;
+    font-size: 24px !important;
+    font-weight: 700 !important;
+}
+
+html body .swal2-popup
+.swal2-icon.swal2-question.xbfs-swal-icon
+.swal2-icon-content {
+    padding-bottom: 1px !important;
+    font-size: 24px !important;
+}
+
+/* STANDARD DIALOG */
+html body .swal2-popup:not(.xbfs-toast-popup)
+.swal2-icon.xbfs-swal-icon {
+    width: 48px !important;
+    height: 48px !important;
+    min-width: 48px !important;
+    min-height: 48px !important;
+}
+
+/* TOAST */
+html body .swal2-popup.xbfs-toast-popup
+.swal2-icon.xbfs-swal-icon {
+    width: 34px !important;
+    height: 34px !important;
+    min-width: 34px !important;
+    min-height: 34px !important;
+}
+
+html body .swal2-popup.xbfs-toast-popup
+.swal2-icon.swal2-success.xbfs-swal-icon::before {
+    width: 14px !important;
+    height: 7px !important;
+    border-left-width: 2.5px !important;
+    border-bottom-width: 2.5px !important;
+    transform:
+        translate(1px, -1px)
+        rotate(-45deg) !important;
+}
+
+html body .swal2-popup.xbfs-toast-popup
+.swal2-icon.swal2-error.xbfs-swal-icon::before,
+html body .swal2-popup.xbfs-toast-popup
+.swal2-icon.swal2-error.xbfs-swal-icon::after {
+    width: 15px !important;
+    height: 2.5px !important;
+}
+
+html body .swal2-popup.xbfs-toast-popup
+.swal2-icon.xbfs-swal-icon
+.swal2-icon-content {
+    font-size: 19px !important;
+}

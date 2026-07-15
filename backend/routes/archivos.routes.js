@@ -600,10 +600,6 @@ router.get(
     async (req, res) => {
         try {
 
-            console.log('================================');
-            console.log('DESCARGAR ARCHIVO');
-            console.log('ID:', req.params.id);
-
             const archivos = await obtenerArchivoPorId(req, req.params.id);
 
             if (!archivos.length) {
@@ -677,27 +673,11 @@ router.delete(
 
             const archivo = archivos[0];
 
-            console.log('================================');
-            console.log('ELIMINANDO ARCHIVO');
-            console.log('ID:', archivo.id);
-            console.log('Ruta:', archivo.ruta_archivo);
-            console.log('================================');
-
             if (
                 archivo.ruta_archivo &&
                 fs.existsSync(archivo.ruta_archivo)
             ) {
                 fs.unlinkSync(archivo.ruta_archivo);
-
-                console.log(
-                    'Archivo físico eliminado:',
-                    archivo.ruta_archivo
-                );
-            } else {
-                console.log(
-                    'El archivo físico no existe:',
-                    archivo.ruta_archivo
-                );
             }
 
             await pool.query(

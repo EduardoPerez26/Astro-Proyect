@@ -1,0 +1,432 @@
+/* =========================================================
+   XBFS — FLAT BLACK THEME V2
+
+   Rules:
+   - Gradients are allowed only in page headers/heroes.
+   - Buttons, tabs, active permissions, badges and controls are flat.
+   - Primary interface color is pure black.
+   - Semantic success/error/warning colors remain unchanged.
+   ========================================================= */
+
+:root {
+    --xbfs-black: #000000;
+    --xbfs-black-hover: #181818;
+    --xbfs-black-soft: #111111;
+    --xbfs-white: #ffffff;
+    --xbfs-page: #f3f4f5;
+    --xbfs-border: #d7dce0;
+    --xbfs-border-strong: #b9c1c7;
+    --xbfs-text: #1c2228;
+    --xbfs-muted: #606a73;
+
+    --primary: #000000 !important;
+    --primary-dark: #000000 !important;
+    --primary-light: #f0f0f0 !important;
+
+    --blue: #000000 !important;
+    --blue-dark: #000000 !important;
+    --navy: #000000 !important;
+    --navy-dark: #000000 !important;
+
+    --sidebar-primary: #000000 !important;
+    --sidebar-secondary: #0b0b0b !important;
+    --sidebar-accent: #000000 !important;
+
+    --focus-color: #000000 !important;
+    --focus-ring: rgba(0, 0, 0, .12) !important;
+}
+
+/* ---------------------------------------------------------
+   HEADERS: THE ONLY PLACE WHERE A GRADIENT IS KEPT
+   --------------------------------------------------------- */
+
+html body :is(
+    .access-command-hero,
+    .admin-command-hero,
+    .admin-dashboard-hero,
+    .page-header,
+    .xbfs-page-hero,
+    .operations-header,
+    .schedule-header,
+    .documents-system-hero,
+    .comparison-history-hero,
+    .system-errors-hero,
+    .reconciliation-hero,
+    .stores-hero,
+    .property-management-hero,
+    .property-documents-hero,
+    .profile-account-hero,
+    .profile-settings-hero,
+    .login-brand-panel,
+    [class$="-hero"],
+    [class*="-hero "]
+) {
+    background-color: #000000 !important;
+    background-image:
+        linear-gradient(
+            135deg,
+            #000000 0%,
+            #0b0b0b 56%,
+            #252525 100%
+        ) !important;
+}
+
+/*
+ * Decorative header overlays are allowed, but no bevel or inset relief.
+ */
+html body :is(
+    .access-command-hero,
+    .admin-command-hero,
+    .admin-dashboard-hero,
+    .page-header,
+    .xbfs-page-hero,
+    .operations-header,
+    .schedule-header,
+    .documents-system-hero,
+    .comparison-history-hero,
+    .system-errors-hero,
+    .reconciliation-hero,
+    .stores-hero,
+    .property-management-hero,
+    .property-documents-hero,
+    .profile-account-hero,
+    .profile-settings-hero,
+    .login-brand-panel
+) {
+    box-shadow:
+        0 24px 54px -42px rgba(0, 0, 0, .72)
+        !important;
+}
+
+/* ---------------------------------------------------------
+   ALL NON-HEADER BUTTONS AND CONTROLS ARE FLAT
+   --------------------------------------------------------- */
+
+html body :is(
+    button,
+    input[type="button"],
+    input[type="submit"],
+    input[type="reset"],
+    .btn,
+    .action-btn,
+    .access-button,
+    .permission-bulk-button,
+    .permission-action,
+    .access-policy-action,
+    .swal2-styled,
+    [role="button"]
+) {
+    background-image: none !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+    filter: none !important;
+}
+
+html body :is(
+    button,
+    input[type="button"],
+    input[type="submit"],
+    input[type="reset"],
+    .btn,
+    .action-btn,
+    .access-button,
+    .permission-bulk-button,
+    .permission-action,
+    .access-policy-action,
+    .swal2-styled,
+    [role="button"]
+):is(:hover, :active) {
+    box-shadow: none !important;
+    filter: none !important;
+    transform: none !important;
+}
+
+/* ---------------------------------------------------------
+   PRIMARY ACTIONS
+   --------------------------------------------------------- */
+
+html body :is(
+    .btn-primary,
+    .primary-btn,
+    .primary-button,
+    .button-primary,
+    .access-button-primary,
+    .login-submit,
+    .swal2-confirm,
+    .modal-footer .btn-primary,
+    .access-modal-footer .btn-primary,
+    .save-button,
+    .submit-button,
+    .export-primary,
+    .action-primary
+) {
+    border: 1px solid #000000 !important;
+    background: #000000 !important;
+    background-color: #000000 !important;
+    background-image: none !important;
+    color: #ffffff !important;
+    box-shadow: none !important;
+}
+
+html body :is(
+    .btn-primary,
+    .primary-btn,
+    .primary-button,
+    .button-primary,
+    .access-button-primary,
+    .login-submit,
+    .swal2-confirm,
+    .modal-footer .btn-primary,
+    .access-modal-footer .btn-primary,
+    .save-button,
+    .submit-button,
+    .export-primary,
+    .action-primary
+):hover:not(:disabled) {
+    border-color: #181818 !important;
+    background: #181818 !important;
+    background-color: #181818 !important;
+}
+
+html body :is(
+    .btn-primary,
+    .primary-btn,
+    .primary-button,
+    .button-primary,
+    .access-button-primary,
+    .login-submit,
+    .swal2-confirm
+) :is(i, span, strong, small) {
+    color: #ffffff !important;
+}
+
+/* ---------------------------------------------------------
+   ACTIVE TABS / CHECKED PERMISSIONS
+   --------------------------------------------------------- */
+
+html body :is(
+    .access-segmented-tab.active,
+    .documents-type-tab.active,
+    .documents-type-tab[aria-selected="true"],
+    .profile-settings-tab.is-active,
+    .profile-settings-tab[aria-selected="true"],
+    .tab-button.active,
+    .filter-tab.active,
+    .view-tab.active,
+    .permission-action:has(input:checked),
+    .access-policy-action:has(input:checked)
+) {
+    border-color: #000000 !important;
+    background: #000000 !important;
+    background-color: #000000 !important;
+    background-image: none !important;
+    color: #ffffff !important;
+    box-shadow: none !important;
+}
+
+html body :is(
+    .access-segmented-tab.active,
+    .documents-type-tab.active,
+    .documents-type-tab[aria-selected="true"],
+    .profile-settings-tab.is-active,
+    .profile-settings-tab[aria-selected="true"],
+    .tab-button.active,
+    .filter-tab.active,
+    .view-tab.active,
+    .permission-action:has(input:checked),
+    .access-policy-action:has(input:checked)
+) :is(i, span, strong, small) {
+    color: #ffffff !important;
+}
+
+/* ---------------------------------------------------------
+   SECONDARY ACTIONS
+   --------------------------------------------------------- */
+
+html body :is(
+    .btn-secondary,
+    .secondary-btn,
+    .secondary-button,
+    .button-secondary,
+    .access-button-light,
+    .access-filter-reset,
+    .permission-bulk-button,
+    .swal2-cancel,
+    .swal2-deny,
+    .modal-footer .btn-secondary,
+    .access-modal-footer .btn-secondary
+) {
+    border: 1px solid var(--xbfs-border-strong) !important;
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    background-image: none !important;
+    color: #303840 !important;
+    box-shadow: none !important;
+}
+
+html body :is(
+    .btn-secondary,
+    .secondary-btn,
+    .secondary-button,
+    .button-secondary,
+    .access-button-light,
+    .access-filter-reset,
+    .permission-bulk-button,
+    .swal2-cancel,
+    .swal2-deny,
+    .modal-footer .btn-secondary,
+    .access-modal-footer .btn-secondary
+):hover:not(:disabled) {
+    border-color: #8d969d !important;
+    background: #f0f1f2 !important;
+    background-color: #f0f1f2 !important;
+    color: #111111 !important;
+}
+
+/* ---------------------------------------------------------
+   SEMANTIC BUTTONS: SOLID, NOT GRADIENT
+   --------------------------------------------------------- */
+
+html body :is(
+    .btn-danger,
+    .danger-button,
+    .button-danger,
+    .swal2-popup.xbfs-alert-danger-action .swal2-confirm
+) {
+    border-color: #a8322c !important;
+    background: #b83d36 !important;
+    background-color: #b83d36 !important;
+    background-image: none !important;
+    color: #ffffff !important;
+    box-shadow: none !important;
+}
+
+html body :is(
+    .btn-success,
+    .success-button,
+    .button-success
+) {
+    border-color: #116b50 !important;
+    background: #187b5d !important;
+    background-color: #187b5d !important;
+    background-image: none !important;
+    color: #ffffff !important;
+    box-shadow: none !important;
+}
+
+html body :is(
+    .btn-warning,
+    .warning-button,
+    .button-warning
+) {
+    border-color: #91600f !important;
+    background: #a66c16 !important;
+    background-color: #a66c16 !important;
+    background-image: none !important;
+    color: #ffffff !important;
+    box-shadow: none !important;
+}
+
+/* ---------------------------------------------------------
+   SIDEBAR: SOLID BLACK, NOT A HEADER
+   --------------------------------------------------------- */
+
+html body .sidebar {
+    background: #000000 !important;
+    background-color: #000000 !important;
+    background-image: none !important;
+    box-shadow: none !important;
+}
+
+html body .sidebar :is(
+    .sidebar-menu-link,
+    .sidebar-logout,
+    .nav-btn
+) {
+    background-image: none !important;
+    box-shadow: none !important;
+}
+
+html body .sidebar :is(
+    .sidebar-menu-link:hover,
+    .sidebar-logout:hover,
+    .nav-btn:hover
+) {
+    background: #151515 !important;
+    background-color: #151515 !important;
+}
+
+html body .sidebar :is(
+    .sidebar-menu-link.active,
+    .nav-btn.active
+) {
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    color: #111111 !important;
+    box-shadow: none !important;
+}
+
+/* ---------------------------------------------------------
+   BLACK ICON TILES WITHOUT RELIEF
+   --------------------------------------------------------- */
+
+html body :is(
+    .access-department-icon,
+    .permission-start-icon,
+    .permissions-user-avatar,
+    .login-brand-icon.login-brand-monogram,
+    .admin-command-icon,
+    .dashboard-command-icon
+) {
+    background: #000000 !important;
+    background-color: #000000 !important;
+    background-image: none !important;
+    box-shadow: none !important;
+}
+
+/* ---------------------------------------------------------
+   FORM CONTROLS
+   --------------------------------------------------------- */
+
+html body :is(input, select, textarea) {
+    box-shadow: none !important;
+}
+
+html body :is(input, select, textarea):focus {
+    border-color: #000000 !important;
+    box-shadow: 0 0 0 3px rgba(0, 0, 0, .10) !important;
+}
+
+/* ---------------------------------------------------------
+   CARDS DO NOT LIFT
+   --------------------------------------------------------- */
+
+html body :is(
+    .card,
+    .panel,
+    .access-metric-card,
+    .permission-summary-grid article,
+    .access-policy-card,
+    .permission-card,
+    .admin-metric-card,
+    .schedule-option-card,
+    .pm-card
+):hover {
+    transform: none !important;
+}
+
+/* ---------------------------------------------------------
+   ACCESSIBILITY
+   --------------------------------------------------------- */
+
+html body :is(
+    a,
+    button,
+    input,
+    select,
+    textarea,
+    [role="button"]
+):focus-visible {
+    outline: 2px solid #000000 !important;
+    outline-offset: 2px !important;
+}

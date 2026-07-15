@@ -1,67 +1,284 @@
-﻿---
+---
 import DashboardLayout from "../../layouts/DashboardLayout.astro";
 ---
 
-<DashboardLayout title="Permissions" stylesheets={["/styles/pages/views/permisos.css?v=20260714-style-refactor-v1"]}>
-    <div class="page-container">
-        <!-- Header -->
-        <div class="page-header">
-            <div class="page-header-info">
-                <h1>Permission settings</h1>
-                <p>Assign section access for this user</p>
-            </div>
-            <button class="btn btn-secondary" onclick="window.history.back()">
-                <i class="fa-solid fa-arrow-left"></i>
-                Back
-            </button>
-        </div>
+<DashboardLayout title="Permissions">
+    <link
+        rel="stylesheet"
+        href="/styles/pages/views/access-administration-premium.css?v=20260716-access-admin-v1"
+    />
 
-        <!-- Info User -->
-        <div class="permissions-container" id="userInfoCard">
-            <div class="permissions-header">
+    <link
+        rel="stylesheet"
+        href="/styles/pages/views/access-permissions-layout-fix.css?v=20260716-permissions-layout-v2"
+    />
+
+    <div class="access-admin-page permissions-admin-page">
+        <section class="access-command-hero access-permissions-hero">
+            <div class="access-hero-copy">
+                <span class="access-eyebrow">
+                    <i class="fa-solid fa-key"></i>
+                    Permission governance
+                </span>
+                <h1>Access policy editor</h1>
+                <p>
+                    Configure module visibility, operational actions, and the initial
+                    workspace assigned to an individual account.
+                </p>
+
+                <div class="access-hero-tags">
+                    <span><i class="fa-solid fa-eye"></i> Module visibility</span>
+                    <span><i class="fa-solid fa-sliders"></i> Action-level controls</span>
+                    <span><i class="fa-solid fa-house-laptop"></i> Initial workspace</span>
+                </div>
+            </div>
+
+            <div class="access-hero-actions">
+                <div class="access-governance-status">
+                    <span class="access-status-dot"></span>
+                    <div>
+                        <strong>Policy editor</strong>
+                        <small id="permissionSaveState">Loading account policy…</small>
+                    </div>
+                </div>
+
+                <div class="access-primary-actions">
+                    <button
+                        class="access-button access-button-secondary"
+                        type="button"
+                        onclick="window.location.href='/views/usuarios'"
+                    >
+                        <i class="fa-solid fa-arrow-left"></i>
+                        Users
+                    </button>
+                    <button
+                        class="access-button access-button-primary"
+                        type="button"
+                        onclick="savePermissions()"
+                    >
+                        <i class="fa-solid fa-floppy-disk"></i>
+                        Save policy
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <section class="permission-identity-card" id="userInfoCard">
+            <div class="permission-identity-main">
                 <div class="permissions-user-avatar" id="userAvatar">--</div>
                 <div class="permissions-user-info">
-                    <h2 id="permUserName">Loading...</h2>
+                    <span class="access-section-kicker">Target account</span>
+                    <h2 id="permUserName">Loading account…</h2>
                     <p id="permUserEmail">---</p>
                     <span class="status-badge" id="permUserRole">---</span>
                 </div>
             </div>
 
-            <!-- Permissions Grid -->
-            <div class="permissions-grid" id="permissionsList">
-                <!-- Se genera dinamicamente -->
+            <div class="permission-identity-policy">
+                <i class="fa-solid fa-shield-halved"></i>
+                <div>
+                    <strong>Least-privilege policy</strong>
+                    <span>
+                        Grant only the actions required for the user’s operational role.
+                    </span>
+                </div>
             </div>
+        </section>
 
-            <div class="permission-start-panel">
-                <div class="permission-start-icon">
+        <section class="permission-summary-grid" aria-label="Permission overview">
+            <article>
+                <div class="permission-summary-icon">
+                    <i class="fa-solid fa-window-restore"></i>
+                </div>
+                <div>
+                    <span>Enabled modules</span>
+                    <strong id="enabledModulesCount">0</strong>
+                    <small>Visible application areas</small>
+                </div>
+            </article>
+
+            <article>
+                <div class="permission-summary-icon">
+                    <i class="fa-solid fa-list-check"></i>
+                </div>
+                <div>
+                    <span>Granted actions</span>
+                    <strong id="enabledActionsCount">0</strong>
+                    <small>View, create, edit, delete, export</small>
+                </div>
+            </article>
+
+            <article>
+                <div class="permission-summary-icon">
+                    <i class="fa-solid fa-lock"></i>
+                </div>
+                <div>
+                    <span>Locked controls</span>
+                    <strong id="lockedPermissionsCount">0</strong>
+                    <small>Required or protected by policy</small>
+                </div>
+            </article>
+
+            <article>
+                <div class="permission-summary-icon">
                     <i class="fa-solid fa-house-laptop"></i>
                 </div>
-                <div class="permission-start-copy">
-                    <strong>Initial window</strong>
-                    <span
-                        >Select the screen this user sees after signing in.</span
-                    >
+                <div>
+                    <span>Initial workspace</span>
+                    <strong id="initialWindowSummary">Not selected</strong>
+                    <small>First page after authentication</small>
                 </div>
+            </article>
+        </section>
+
+        <section class="permission-workspace">
+            <div class="permission-workspace-header">
+                <div>
+                    <span class="access-section-kicker">Policy matrix</span>
+                    <h2>Modules and actions</h2>
+                    <p>
+                        Use filters to review the account policy by department or status.
+                    </p>
+                </div>
+
+                <div class="permission-result-counter">
+                    <strong id="permissionResultCount">0</strong>
+                    <span>modules shown</span>
+                </div>
+            </div>
+
+            <div class="permission-toolbar">
+                <label class="access-search-field permission-search-field">
+                    <span>Search modules</span>
+                    <div>
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input
+                            id="permissionSearch"
+                            type="search"
+                            placeholder="Search by module or description"
+                            autocomplete="off"
+                            oninput="applyPermissionFilters()"
+                        />
+                    </div>
+                </label>
+
+                <label class="access-filter-field">
+                    <span>Area</span>
+                    <select id="permissionGroupFilter" onchange="applyPermissionFilters()">
+                        <option value="">All areas</option>
+                        <option value="Accounts Receivable">Accounts Receivable</option>
+                        <option value="Property Management">Property Management</option>
+                        <option value="Information Technology">Information Technology</option>
+                        <option value="Account">Account</option>
+                    </select>
+                </label>
+
+                <label class="access-filter-field">
+                    <span>Access</span>
+                    <select id="permissionStatusFilter" onchange="applyPermissionFilters()">
+                        <option value="">All modules</option>
+                        <option value="enabled">Enabled</option>
+                        <option value="disabled">Disabled</option>
+                        <option value="locked">Locked</option>
+                    </select>
+                </label>
+
+                <button
+                    class="access-filter-reset"
+                    type="button"
+                    onclick="resetPermissionFilters()"
+                >
+                    <i class="fa-solid fa-filter-circle-xmark"></i>
+                    Clear
+                </button>
+            </div>
+
+            <div class="permission-bulk-toolbar">
+                <div>
+                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    <span>Bulk policy actions apply only to editable modules.</span>
+                </div>
+
+                <div>
+                    <button
+                        type="button"
+                        class="permission-bulk-button"
+                        onclick="enableVisiblePermissions()"
+                    >
+                        <i class="fa-solid fa-eye"></i>
+                        Enable visible
+                    </button>
+                    <button
+                        type="button"
+                        class="permission-bulk-button"
+                        onclick="clearOptionalPermissions()"
+                    >
+                        <i class="fa-solid fa-eraser"></i>
+                        Clear optional
+                    </button>
+                </div>
+            </div>
+
+            <div class="access-policy-matrix" id="permissionsList">
+                <div class="access-empty-state">
+                    <i class="fa-solid fa-spinner fa-spin"></i>
+                    <strong>Loading permission policy</strong>
+                    <span>Retrieving modules and action controls…</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="permission-start-panel">
+            <div class="permission-start-icon">
+                <i class="fa-solid fa-house-laptop"></i>
+            </div>
+            <div class="permission-start-copy">
+                <span class="access-section-kicker">Authentication routing</span>
+                <strong>Initial workspace</strong>
+                <p>
+                    Select the first enabled screen shown after this user signs in.
+                </p>
+            </div>
+            <label class="permission-start-select">
+                <span>Startup page</span>
                 <select
                     id="initialWindow"
                     class="form-control"
-                    onchange="changeInitialWindow(this.value)"></select>
-            </div>
-        </div>
+                    onchange="changeInitialWindow(this.value)"
+                ></select>
+            </label>
+        </section>
 
-        <!-- Actions -->
-        <div class="permission-actions">
-            <button class="btn btn-secondary" onclick="resetPermissions()">
-                <i class="fa-solid fa-rotate-left"></i>
-                Reset
-            </button>
-            <button class="btn btn-primary" onclick="savePermissions()">
-                <i class="fa-solid fa-floppy-disk"></i>
-                Save permissions
-            </button>
-        </div>
+        <section class="permission-sticky-actions">
+            <div class="permission-change-state">
+                <span class="permission-change-dot"></span>
+                <div>
+                    <strong>Policy changes</strong>
+                    <small id="permissionFooterState">No unsaved changes</small>
+                </div>
+            </div>
+
+            <div>
+                <button
+                    class="access-button access-button-light"
+                    type="button"
+                    onclick="resetPermissions()"
+                >
+                    <i class="fa-solid fa-rotate-left"></i>
+                    Reset
+                </button>
+                <button
+                    class="access-button access-button-primary"
+                    type="button"
+                    onclick="savePermissions()"
+                >
+                    <i class="fa-solid fa-floppy-disk"></i>
+                    Save permissions
+                </button>
+            </div>
+        </section>
     </div>
-<script src="/js/config.js" is:inline></script>
-    <script is:inline src="/js/permisos.js?v=20260707-chat-permissions"
-    ></script>
+
+    <script src="/js/config.js" is:inline></script>
+    <script is:inline src="/js/permisos.js?v=20260716-access-admin-v1"></script>
 </DashboardLayout>

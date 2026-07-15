@@ -813,7 +813,7 @@ async function previsualizarConciliacion(id) {
         Swal.fire({
             icon: 'error',
             title: 'Excel cannot be opened',
-            text: 'The XLSX library was not loaded. Check that xlsx.full.min.js is included in documentos.astro.'
+            text: 'The XLSX library was not loaded. Refresh the page or verify that SheetJS is enabled in the shared layout.'
         });
         return;
     }

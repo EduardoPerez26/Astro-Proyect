@@ -122,18 +122,6 @@ router.post('/', verificarToken, checkPermission('validate_files'), async (req, 
             duracion_segundos = null
         } = req.body;
 
-        console.log('================================');
-        console.log('NUEVA VALIDACION');
-        console.log({
-            archivo_id,
-            usuario_id: req.usuario.id,
-            tipo_validacion,
-            resultado,
-            total_errores,
-            detalle_errores,
-            duracion_segundos
-        });
-
         const detalleErroresSeguro = typeof detalle_errores === 'string'
             ? detalle_errores
             : JSON.stringify(detalle_errores || {});
@@ -187,9 +175,6 @@ router.post('/', verificarToken, checkPermission('validate_files'), async (req, 
             ]);
         }
 
-        console.log('VALIDACION GUARDADA');
-        console.log('INSERT ID:', result.insertId);
-
         // Refresh file status.
         if (archivo_id) {
 
@@ -208,15 +193,7 @@ router.post('/', verificarToken, checkPermission('validate_files'), async (req, 
                 'UPDATE archivos_excel SET estado = ? WHERE id = ?',
                 [nuevoStatus, archivo_id]
             );
-
-            console.log(
-                'ARCHIVO ACTUALIZADO',
-                archivo_id,
-                nuevoStatus
-            );
         }
-
-        console.log('================================');
 
         return res.status(201).json({
             success: true,
