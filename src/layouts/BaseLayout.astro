@@ -6,6 +6,7 @@ interface Props {
 }
 
 const { title, includeSheetJS = false, stylesheets = [] } = Astro.props;
+const pageStylesheets = stylesheets as string[];
 ---
 
 <!DOCTYPE html>
@@ -16,9 +17,9 @@ const { title, includeSheetJS = false, stylesheets = [] } = Astro.props;
     <title>{title}</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <link rel="stylesheet" href="/styles/app.css?v=20260714-style-repair-v2">
-<link rel="stylesheet" href="/styles/modals.css?v=20260714-style-repair-v2">
+    <link rel="stylesheet" href="/styles/modals.css?v=20260714-style-repair-v2">
     <link rel="stylesheet" href="/styles/components/card-interactions.css?v=20260714-card-hover-v1">
-    {stylesheets.map((stylesheet) => (
+    {pageStylesheets.map((stylesheet: string) => (
         <link rel="stylesheet" href={stylesheet} />
     ))}
     <script is:inline>
@@ -45,8 +46,8 @@ const { title, includeSheetJS = false, stylesheets = [] } = Astro.props;
     )}
     <script is:inline src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script is:inline src="/js/swal-guard.js?v=20260715-alerts-clean-v6"></script>
-<script is:inline src="/js/i18n.js?v=20260626-enterprise-ui"></script>
-<script is:inline src="/js/sticky-table-headers.js?v=20260713-floating-header-style-match"></script>
+    <script is:inline src="/js/i18n.js?v=20260626-enterprise-ui"></script>
+    <script is:inline src="/js/sticky-table-headers.js?v=20260713-floating-header-style-match"></script>
     <script is:inline src="/js/card-interactions.js?v=20260714-card-hover-v1"></script>
     <link rel="stylesheet" href="/styles/layout/view-standardization.css?v=20260714-view-standard-v1">
     <link rel="stylesheet" href="/styles/components/page-heroes.css?v=20260714-documents-profile-gradient-v4">
@@ -54,13 +55,11 @@ const { title, includeSheetJS = false, stylesheets = [] } = Astro.props;
     <script is:inline src="/js/session-persistence.js?v=20260714-remember-session-v1"></script>
     <link rel="stylesheet" href="/styles/modal-premium-fixes.css?v=20260714-modal-premium-fixes-v2">
     <link rel="stylesheet" href="/styles/components/sidebar-premium.css?v=20260715-full-black-buttons-tables-v4">
-<script src="/js/sidebar-premium.js?v=20260715-full-black-buttons-tables-v4" defer></script>
+    <script src="/js/sidebar-premium.js?v=20260715-full-black-buttons-tables-v4" defer></script>
     <link rel="stylesheet" href="/styles/components/black-admin-theme.css?v=20260715-selective-graphite-v5">
     <link rel="stylesheet" href="/styles/components/document-tabs-graphite.css?v=20260715-document-tabs-graphite-v1">
     <link rel="stylesheet" href="/styles/alerts.css?v=20260715-alerts-clean-v6">
     <link rel="stylesheet" href="/styles/theme/09-graphite-final-overrides.css?v=20260715-graphite-final-v1">
-    <link rel="stylesheet" href="/styles/components/complete-graphite-colors.css?v=20260715-complete-graphite-v1">
-    <link rel="stylesheet" href="/styles/components/graphite-contrast-fix.css?v=20260715-graphite-contrast-v2">
 </head>
 <body>
     <slot />
