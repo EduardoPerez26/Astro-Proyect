@@ -8,7 +8,7 @@
     height: auto !important;
     margin: 10px 0 18px !important;
     padding: 8px 10px 8px 16px !important;
-    border: 1px solid #dfe8f2 !important;
+    border: 1px solid #EBEBEB !important;
     border-radius: 14px !important;
     background: #ffffff !important
 }
@@ -27,7 +27,7 @@
 .topbar-eyebrow {
     display: block !important;
     margin-bottom: 2px !important;
-    color: #6c8197 !important;
+    color: #5C5C5C !important;
     font-size: 10px !important;
     font-weight: 850 !important;
     letter-spacing: .08em !important
@@ -36,7 +36,7 @@
 .topbar-title {
     margin: 0 !important;
     overflow: hidden !important;
-    color: #102033 !important;
+    color: #0F0F0F !important;
     font-size: 19px !important;
     font-weight: 850 !important;
     line-height: 1.15 !important;
@@ -59,9 +59,9 @@
 .department-pill,
 .lang-toggle {
     min-height: 40px !important;
-    border: 1px solid #dfe8f2 !important;
+    border: 1px solid #EBEBEB !important;
     border-radius: 12px !important;
-    background: #f9fbfe !important
+    background: #F7F7F7 !important
 }
 
 .department-pill {
@@ -70,17 +70,17 @@
 
 .department-pill span,
 .header-user-role {
-    color: #5c7188 !important;
+    color: #494949 !important;
     font-size: 11px !important
 }
 
 .department-pill strong {
     border-radius: 8px !important;
-    background: #101122 !important
+    background: #0F0F0F !important
 }
 
 .header-user-name {
-    color: #102033 !important;
+    color: #0F0F0F !important;
     font-size: 13px !important;
     line-height: 1.1 !important
 }
@@ -143,16 +143,16 @@ body .main :is(.profile-form-intro, .profile-settings-tabs, .profile-panel, .pro
     justify-content: space-between !important;
     gap: 18px !important;
     padding: 18px 20px !important;
-    border: 1px solid #dfe8f2 !important;
+    border: 1px solid #EBEBEB !important;
     border-radius: 14px !important;
     background: #ffffff !important;
-    color: #102033 !important;
+    color: #0F0F0F !important;
     box-shadow: none !important
 }
 
 .operations-eyebrow {
     margin-bottom: 5px !important;
-    color: #60768d !important;
+    color: #5C5C5C !important;
     font-size: 10px !important;
     font-weight: 850 !important;
     letter-spacing: .08em !important
@@ -160,7 +160,7 @@ body .main :is(.profile-form-intro, .profile-settings-tabs, .profile-panel, .pro
 
 .operations-header h1 {
     margin: 0 !important;
-    color: #102033 !important;
+    color: #0F0F0F !important;
     font-size: 24px !important;
     font-weight: 850 !important;
     letter-spacing: 0 !important
@@ -169,7 +169,7 @@ body .main :is(.profile-form-intro, .profile-settings-tabs, .profile-panel, .pro
 .operations-header p {
     max-width: 780px !important;
     margin: 8px 0 0 !important;
-    color: #60768d !important;
+    color: #5C5C5C !important;
     font-size: 13px !important;
     line-height: 1.5 !important
 }
@@ -177,14 +177,14 @@ body .main :is(.profile-form-intro, .profile-settings-tabs, .profile-panel, .pro
 .operations-refresh {
     min-height: 38px !important;
     padding: 0 13px !important;
-    border: 1px solid #cad8e6 !important;
+    border: 1px solid #EBEBEB !important;
     border-radius: 10px !important;
     background: #ffffff !important;
-    color: #0b2f54 !important
+    color: #1F1F1F !important
 }
 
 .operations-refresh:hover {
-    background: #f2f7fc !important
+    background: #F7F7F7 !important
 }
 
 .operations-summary {
@@ -195,18 +195,18 @@ body .main :is(.profile-form-intro, .profile-settings-tabs, .profile-panel, .pro
 .operations-summary article {
     min-height: 64px !important;
     padding: 14px 16px !important;
-    border: 1px solid #dfe8f2 !important;
+    border: 1px solid #EBEBEB !important;
     border-radius: 14px !important;
     background: #ffffff !important
 }
 
 .operations-summary strong {
-    color: #102033 !important;
+    color: #0F0F0F !important;
     font-size: 22px !important
 }
 
 .operations-summary span:not(.summary-icon) {
-    color: #60768d !important;
+    color: #5C5C5C !important;
     letter-spacing: .02em !important;
     text-transform: none !important
 }
@@ -216,13 +216,13 @@ body .main :is(.profile-form-intro, .profile-settings-tabs, .profile-panel, .pro
     height: 36px !important;
     flex-basis: 36px !important;
     border-radius: 10px !important;
-    background: #edf5ff !important;
-    color: #0b2f54 !important
+    background: #F7F7F7 !important;
+    color: #1F1F1F !important
 }
 
 .operations-panel {
     overflow: hidden !important;
-    border: 1px solid #dfe8f2 !important;
+    border: 1px solid #EBEBEB !important;
     border-radius: 14px !important;
     background: #ffffff !important
 }
@@ -233,13 +233,13 @@ body .main :is(.profile-form-intro, .profile-settings-tabs, .profile-panel, .pro
 }
 
 .operations-panel-heading h2 {
-    color: #102033 !important;
+    color: #0F0F0F !important;
     font-size: 16px !important
 }
 
 .operations-panel-heading p,
 .operations-panel-heading>span {
-    color: #60768d !important
+    color: #5C5C5C !important
 }
 
 .restaurant-control-list {
@@ -248,7 +248,7 @@ body .main :is(.profile-form-intro, .profile-settings-tabs, .profile-panel, .pro
 
 .restaurant-control-row {
     padding: 14px 0 !important;
-    border-bottom: 1px solid #edf2f7 !important
+    border-bottom: 1px solid #F7F7F7 !important
 }
 
 .restaurant-control-row:last-child {
@@ -261,8 +261,8 @@ body .main :is(.profile-form-intro, .profile-settings-tabs, .profile-panel, .pro
     flex-basis: 36px !important;
     border: 0 !important;
     border-radius: 10px !important;
-    background: #edf5ff !important;
-    color: #0b2f54 !important
+    background: #F7F7F7 !important;
+    color: #1F1F1F !important
 }
 
 .restaurant-state-badge {
@@ -302,15 +302,15 @@ body .main :is(.profile-form-intro, .profile-settings-tabs, .profile-panel, .pro
 }
 
 :root {
-    --clean-page: #edf4fb;
+    --clean-page: #F7F7F7;
     --clean-surface: #ffffff;
-    --clean-soft: #f6f9fd;
-    --clean-line: #dbe7f2;
-    --clean-line-soft: #edf2f7;
-    --clean-text: #0d2238;
-    --clean-muted: #60768d;
-    --clean-primary: #0e3558;
-    --clean-ink: #101122
+    --clean-soft: #F7F7F7;
+    --clean-line: #EBEBEB;
+    --clean-line-soft: #F7F7F7;
+    --clean-text: #0F0F0F;
+    --clean-muted: #5C5C5C;
+    --clean-primary: #1F1F1F;
+    --clean-ink: #0F0F0F
 }
 
 body {
@@ -334,7 +334,7 @@ body {
 }
 
 .topbar-eyebrow {
-    color: #667b91 !important
+    color: #5C5C5C !important
 }
 
 .department-pill,
@@ -342,7 +342,7 @@ body {
     border: 0 !important;
     border-radius: 14px !important;
     background: #ffffff !important;
-    box-shadow: 0 12px 32px -28px rgba(15, 36, 58, .55) !important
+    box-shadow: 0 12px 32px -28px rgba(15, 15, 15, .55) !important
 }
 
 .header-user-name,
@@ -365,7 +365,7 @@ body .main :is(.page-header, .table-container, .filters-bar, .config-card, .uplo
     display: grid !important;
     place-items: center !important;
     padding: 28px !important;
-    background: radial-gradient(circle at 50% 0%, rgba(17, 86, 137, .08), transparent 34%), var(--clean-page) !important
+    background: radial-gradient(circle at 50% 0%, rgba(46, 46, 46, .08), transparent 34%), var(--clean-page) !important
 }
 
 .login-shell {
@@ -375,7 +375,7 @@ body .main :is(.page-header, .table-container, .filters-bar, .config-card, .uplo
     border: 0 !important;
     border-radius: 24px !important;
     background: #ffffff !important;
-    box-shadow: 0 28px 70px -48px rgba(13, 34, 56, .85) !important
+    box-shadow: 0 28px 70px -48px rgba(15, 15, 15, .85) !important
 }
 
 .login-brand-panel {
@@ -409,7 +409,7 @@ body .main :is(.page-header, .table-container, .filters-bar, .config-card, .uplo
     width: 42px !important;
     height: 42px !important;
     border-radius: 12px !important;
-    background: #edf5ff !important;
+    background: #F7F7F7 !important;
     color: var(--clean-primary) !important
 }
 
@@ -436,7 +436,7 @@ body .main :is(.page-header, .table-container, .filters-bar, .config-card, .uplo
     margin-bottom: 14px !important;
     border: 0 !important;
     border-radius: 999px !important;
-    background: #edf5ff !important;
+    background: #F7F7F7 !important;
     color: var(--clean-primary) !important
 }
 
@@ -459,7 +459,7 @@ body .main :is(.page-header, .table-container, .filters-bar, .config-card, .uplo
 
 .login-field label {
     margin-bottom: 7px !important;
-    color: #4e667d !important;
+    color: #494949 !important;
     letter-spacing: .04em !important
 }
 
@@ -477,7 +477,7 @@ body .main :is(.page-header, .table-container, .filters-bar, .config-card, .uplo
 }
 
 .login-input-wrap input::placeholder {
-    color: #8aa0b5 !important
+    color: #8A8A8A !important
 }
 
 .login-submit,
@@ -493,7 +493,7 @@ body .main :is(.page-header, .table-container, .filters-bar, .config-card, .uplo
 }
 
 .login-submit:hover:not(:disabled) {
-    background: #18243c !important
+    background: #1F1F1F !important
 }
 
 .login-security-note,
@@ -502,12 +502,12 @@ body .main :is(.page-header, .table-container, .filters-bar, .config-card, .uplo
     border: 0 !important;
     border-radius: 14px !important;
     background: var(--clean-soft) !important;
-    color: #455f78 !important
+    color: #494949 !important
 }
 
 .login-copyright {
     margin: 0 0 26px !important;
-    color: #8aa0b5 !important
+    color: #8A8A8A !important
 }
 
 .profile-page {
@@ -542,12 +542,12 @@ body .main :is(.page-header, .table-container, .filters-bar, .config-card, .uplo
     place-items: center !important;
     padding: 20px 14px !important;
     border-radius: 18px !important;
-    background: #f7fbff !important
+    background: #F7F7F7 !important
 }
 
 .profile-card-kicker {
     margin-bottom: 14px !important;
-    color: #637a91 !important
+    color: #5C5C5C !important
 }
 
 .profile-photo-frame {
@@ -561,7 +561,7 @@ body .main :is(.page-header, .table-container, .filters-bar, .config-card, .uplo
     height: 112px !important;
     border: 4px solid #ffffff !important;
     border-radius: 999px !important;
-    box-shadow: 0 12px 34px -24px rgba(13, 34, 56, .65) !important
+    box-shadow: 0 12px 34px -24px rgba(15, 15, 15, .65) !important
 }
 
 .profile-photo-action {
@@ -571,7 +571,7 @@ body .main :is(.page-header, .table-container, .filters-bar, .config-card, .uplo
     border-radius: 999px !important;
     background: #ffffff !important;
     color: var(--clean-primary) !important;
-    box-shadow: 0 12px 28px -24px rgba(13, 34, 56, .65) !important
+    box-shadow: 0 12px 28px -24px rgba(15, 15, 15, .65) !important
 }
 
 .profile-summary-text {
@@ -601,7 +601,7 @@ body .main :is(.page-header, .table-container, .filters-bar, .config-card, .uplo
 .profile-facts div {
     border: 0 !important;
     border-radius: 14px !important;
-    background: #f7fbff !important
+    background: #F7F7F7 !important
 }
 
 .profile-form-intro {
@@ -636,8 +636,8 @@ body .main :is(.page-header, .table-container, .filters-bar, .config-card, .uplo
     padding: 0 15px !important;
     border: 0 !important;
     border-radius: 999px !important;
-    background: #f3f7fb !important;
-    color: #415b74 !important
+    background: #F7F7F7 !important;
+    color: #494949 !important
 }
 
 .profile-settings-tab.is-active {
@@ -653,7 +653,7 @@ body .main :is(.page-header, .table-container, .filters-bar, .config-card, .uplo
     padding: 20px !important;
     border: 0 !important;
     border-radius: 18px !important;
-    background: #f8fbfe !important
+    background: #F7F7F7 !important
 }
 
 .profile-panel-header {
@@ -673,7 +673,7 @@ body .main :is(.page-header, .table-container, .filters-bar, .config-card, .uplo
 
 .profile-page .form-label {
     margin-bottom: 7px !important;
-    color: #4e667d !important
+    color: #494949 !important
 }
 
 .profile-page .form-control {
@@ -686,7 +686,7 @@ body .main :is(.page-header, .table-container, .filters-bar, .config-card, .uplo
 }
 
 .profile-page .form-control:focus {
-    box-shadow: inset 0 0 0 1px #8dbbe4, 0 0 0 4px rgba(18, 89, 150, .1) !important
+    box-shadow: inset 0 0 0 1px #B8B8B8, 0 0 0 4px rgba(46, 46, 46, .1) !important
 }
 
 .profile-actions {
@@ -740,7 +740,7 @@ body .main :is(.page-header, .table-container, .filters-bar, .config-card, .uplo
 .operations-refresh {
     border: 0 !important;
     border-radius: 999px !important;
-    background: #f2f7fc !important
+    background: #F7F7F7 !important
 }
 
 .operations-summary article {
@@ -769,7 +769,7 @@ body .main :is(.page-header, .table-container, .filters-bar, .config-card, .uplo
 .restaurant-control-row {
     border: 0 !important;
     border-radius: 16px !important;
-    background: #f7fbff !important;
+    background: #F7F7F7 !important;
     padding: 14px !important
 }
 
@@ -847,7 +847,7 @@ body .main :is(.page-header, .table-container, .filters-bar, .config-card, .uplo
     padding: 14px !important;
     border: 0 !important;
     border-radius: 16px !important;
-    background: #f7fbff !important
+    background: #F7F7F7 !important
 }
 
 .stores-hero-metrics strong {
@@ -858,7 +858,7 @@ body .main :is(.page-header, .table-container, .filters-bar, .config-card, .uplo
 
 .stores-hero-metrics span {
     margin-top: 6px !important;
-    color: #6a7f94 !important;
+    color: #5C5C5C !important;
     font-size: 10px !important;
     letter-spacing: .03em !important
 }
@@ -898,7 +898,7 @@ body .main :is(.page-header, .table-container, .filters-bar, .config-card, .uplo
 .store-card:hover {
     transform: translateY(-2px) !important;
     border-color: transparent !important;
-    background: #fbfdff !important;
+    background: #F7F7F7 !important;
     box-shadow: none !important
 }
 
@@ -917,7 +917,7 @@ body .main :is(.page-header, .table-container, .filters-bar, .config-card, .uplo
     flex-basis: 46px !important;
     border: 0 !important;
     border-radius: 14px !important;
-    background: #edf5ff !important;
+    background: #F7F7F7 !important;
     color: var(--clean-primary) !important;
     box-shadow: none !important
 }
@@ -953,7 +953,7 @@ body .main :is(.page-header, .table-container, .filters-bar, .config-card, .uplo
 
 .store-card-kicker,
 .store-requirements-label {
-    color: #6c8197 !important;
+    color: #5C5C5C !important;
     font-size: 10px !important;
     letter-spacing: .07em !important
 }
@@ -975,7 +975,7 @@ body .main :is(.page-header, .table-container, .filters-bar, .config-card, .uplo
     padding: 14px !important;
     border: 0 !important;
     border-radius: 16px !important;
-    background: #f7fbff !important
+    background: #F7F7F7 !important
 }
 
 .store-file-list {
@@ -987,8 +987,8 @@ body .main :is(.page-header, .table-container, .filters-bar, .config-card, .uplo
     border: 0 !important;
     border-radius: 999px !important;
     background: #ffffff !important;
-    color: #34516d !important;
-    box-shadow: inset 0 0 0 1px #e5edf5 !important
+    color: #2E2E2E !important;
+    box-shadow: inset 0 0 0 1px #F7F7F7 !important
 }
 
 .store-card-footer {
@@ -1015,12 +1015,12 @@ body .main :is(.page-header, .table-container, .filters-bar, .config-card, .uplo
 }
 
 .store-action:hover {
-    background: #18243c !important
+    background: #1F1F1F !important
 }
 
 .store-action-disabled {
-    background: #f2f6fb !important;
-    color: #667b91 !important
+    background: #F7F7F7 !important;
+    color: #5C5C5C !important
 }
 
 .store-card-disabled {
@@ -1063,7 +1063,7 @@ body .main :is(.page-header, .table-container, .filters-bar, .config-card, .uplo
     border: 0 !important;
     border-right: 0 !important;
     border-radius: 16px !important;
-    background: #f7fbff !important
+    background: #F7F7F7 !important
 }
 
 .property-management-page .pm-upload-card {
@@ -1079,7 +1079,7 @@ body .main :is(.page-header, .table-container, .filters-bar, .config-card, .uplo
     width: 38px !important;
     height: 38px !important;
     border-radius: 12px !important;
-    background: #edf5ff !important;
+    background: #F7F7F7 !important;
     color: var(--clean-primary) !important
 }
 
@@ -1108,10 +1108,10 @@ body .main :is(.page-header, .table-container, .filters-bar, .config-card, .uplo
     border: 0 !important;
     border-radius: 12px !important;
     background: #ffffff !important;
-    color: #60768d !important;
+    color: #5C5C5C !important;
     font-size: 11px !important;
     font-weight: 700 !important;
-    box-shadow: inset 0 0 0 1px #dbe7f2 !important;
+    box-shadow: inset 0 0 0 1px #EBEBEB !important;
     cursor: pointer !important
 }
 
@@ -1188,7 +1188,7 @@ body .main :is(.page-header, .table-container, .filters-bar, .config-card, .uplo
     height: 38px !important;
     border: 0 !important;
     border-radius: 12px !important;
-    background: #f2f7fc !important;
+    background: #F7F7F7 !important;
     color: var(--clean-primary) !important;
     box-shadow: none !important
 }
@@ -1244,7 +1244,7 @@ body .main :is(.page-header, .table-container, .filters-bar, .config-card, .uplo
 .modal .form-control:focus,
 .modal .form-input:focus,
 .bk-tax-store-form .form-input:focus {
-    box-shadow: inset 0 0 0 1px #8dbbe4, 0 0 0 4px rgba(18, 89, 150, .1) !important
+    box-shadow: inset 0 0 0 1px #B8B8B8, 0 0 0 4px rgba(46, 46, 46, .1) !important
 }
 
 @media (max-width:900px) {
@@ -1291,7 +1291,7 @@ body .main :is(.page-header, .table-container, .filters-bar, .config-card, .uplo
     padding: 12px 28px !important;
     border: 0 !important;
     border-radius: 0 0 22px 22px !important;
-    background: #edf4fb !important;
+    background: #F7F7F7 !important;
     backdrop-filter: none !important;
     box-sizing: border-box !important
 }
@@ -1345,7 +1345,7 @@ body .main :is(.page-header, .table-container, .filters-bar, .config-card, .uplo
     margin: 10px 0 18px !important;
     padding: 8px 12px 8px 16px !important;
     border-radius: 14px !important;
-    background: #edf4fb !important;
+    background: #F7F7F7 !important;
     backdrop-filter: blur(12px) !important
 }
 

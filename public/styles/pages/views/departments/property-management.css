@@ -7,7 +7,7 @@
 
     .property-management-page .page-header-info p {
         margin: 6px 0 0;
-        color: var(--gray-500, #415a70);
+        color: var(--gray-500, #2E2E2E);
         font-size: 15px;
     }
 
@@ -51,18 +51,18 @@
         justify-content: space-between;
         gap: 24px;
         padding: 24px 26px;
-        border: 1px solid #cfdae5;
-        border-left: 4px solid #0f766e;
+        border: 1px solid #EBEBEB;
+        border-left: 4px solid #2E2E2E;
         border-radius: 8px;
         background: #ffffff;
-        box-shadow: 0 18px 44px -38px rgba(8, 31, 51, 0.55);
+        box-shadow: 0 18px 44px -38px rgba(15, 15, 15, 0.55);
     }
 
     .pm-eyebrow {
         display: inline-flex;
         align-items: center;
         gap: 8px;
-        color: #344f67;
+        color: #2E2E2E;
         font-size: 11px;
         font-weight: 850;
         text-transform: uppercase;
@@ -70,7 +70,7 @@
 
     .pm-hero h1 {
         margin: 6px 0 6px;
-        color: #082033;
+        color: #0F0F0F;
         font-size: 31px;
         font-weight: 900;
         letter-spacing: 0;
@@ -78,7 +78,7 @@
 
     .pm-hero p {
         margin: 0;
-        color: #415a70;
+        color: #2E2E2E;
         font-size: 14px;
         font-weight: 650;
     }
@@ -93,14 +93,14 @@
     .pm-metrics div {
         min-height: 82px;
         padding: 14px;
-        border: 1px solid #d7e2ec;
+        border: 1px solid #EBEBEB;
         border-radius: 8px;
-        background: #f8fbfd;
+        background: #F7F7F7;
     }
 
     .pm-metrics strong {
         display: block;
-        color: #09243b;
+        color: #0F0F0F;
         font-size: 28px;
         font-weight: 900;
         line-height: 1;
@@ -109,7 +109,7 @@
     .pm-metrics span {
         display: block;
         margin-top: 8px;
-        color: #415a70;
+        color: #2E2E2E;
         font-size: 11px;
         font-weight: 850;
         text-transform: uppercase;
@@ -126,10 +126,10 @@
         display: grid;
         gap: 16px;
         padding: 20px;
-        border: 1px solid #cfdae5;
+        border: 1px solid #EBEBEB;
         border-radius: 8px;
         background: #ffffff;
-        box-shadow: 0 18px 44px -40px rgba(8, 31, 51, 0.62);
+        box-shadow: 0 18px 44px -40px rgba(15, 15, 15, 0.62);
     }
 
     .pm-schedule-header {
@@ -141,14 +141,14 @@
 
     .pm-schedule-header h2 {
         margin: 6px 0;
-        color: #082033;
+        color: #0F0F0F;
         font-size: 22px;
         font-weight: 900;
     }
 
     .pm-schedule-header p {
         margin: 0;
-        color: #415a70;
+        color: #2E2E2E;
         font-size: 13px;
         font-weight: 650;
     }
@@ -171,9 +171,9 @@
     .pm-builder-card {
         min-height: 286px;
         padding: 20px;
-        border: 1px solid #d7e2ec;
+        border: 1px solid #EBEBEB;
         border-radius: 14px;
-        background: #f8fbfd;
+        background: #F7F7F7;
     }
 
     .pm-upload-card {
@@ -198,20 +198,20 @@
         flex: 0 0 auto;
         place-items: center;
         border-radius: 8px;
-        background: #102a43;
+        background: #1F1F1F;
         color: #ffffff;
     }
 
     .pm-upload-card strong,
     .pm-builder-card strong {
-        color: #082033;
+        color: #0F0F0F;
         font-size: 15px;
         font-weight: 900;
     }
 
     .pm-upload-card small,
     .pm-builder-card small {
-        color: #526b82;
+        color: #494949;
         font-size: 12px;
         font-weight: 650;
         line-height: 1.45;
@@ -223,7 +223,7 @@
         min-height: 128px;
         place-items: center;
         padding: 22px;
-        border: 1px dashed #b5c8db;
+        border: 1px dashed #D6D6D6;
         border-radius: 14px;
         text-align: center;
     }
@@ -269,7 +269,7 @@
     .pm-builder-card .pm-upload-card-head em {
         display: block;
         margin-bottom: 4px;
-        color: #344f67;
+        color: #2E2E2E;
         font-size: 11px;
         font-style: normal;
         font-weight: 850;
@@ -284,10 +284,10 @@
 
     .pm-schedule-status {
         padding: 12px 14px;
-        border: 1px solid #d7e2ec;
+        border: 1px solid #EBEBEB;
         border-radius: 8px;
-        background: #fbfdff;
-        color: #415a70;
+        background: #F7F7F7;
+        color: #2E2E2E;
         font-size: 13px;
         font-weight: 700;
     }
@@ -325,12 +325,12 @@
         gap: 10px;
         align-items: center;
         padding: 12px 13px;
-        border: 1px solid #d7e2ec;
+        border: 1px solid #EBEBEB;
         border-left-width: 4px;
         border-radius: 8px;
         background: #ffffff;
-        color: #173a59;
-        box-shadow: 0 14px 32px -30px rgba(8, 31, 51, 0.55);
+        color: #1F1F1F;
+        box-shadow: 0 14px 32px -30px rgba(15, 15, 15, 0.55);
     }
 
     .pm-alert > i {
@@ -339,13 +339,13 @@
         height: 30px;
         place-items: center;
         border-radius: 8px;
-        background: #edf4f9;
-        color: #173a59;
+        background: #F7F7F7;
+        color: #1F1F1F;
     }
 
     .pm-alert strong {
         display: block;
-        color: #082033;
+        color: #0F0F0F;
         font-size: 13px;
         font-weight: 900;
         line-height: 1.25;
@@ -354,7 +354,7 @@
     .pm-alert span {
         display: block;
         margin-top: 2px;
-        color: #415a70;
+        color: #2E2E2E;
         font-size: 12px;
         font-weight: 700;
         line-height: 1.35;
@@ -365,10 +365,10 @@
         width: 30px;
         height: 30px;
         place-items: center;
-        border: 1px solid #cbd9e6;
+        border: 1px solid #EBEBEB;
         border-radius: 7px;
         background: #ffffff;
-        color: #173a59;
+        color: #1F1F1F;
         cursor: pointer;
     }
 
@@ -411,9 +411,9 @@
         max-width: 100%;
         gap: 4px;
         padding: 4px;
-        border: 1px solid #d7e2ec;
+        border: 1px solid #EBEBEB;
         border-radius: 8px;
-        background: #f8fbfd;
+        background: #F7F7F7;
     }
 
     .pm-tab {
@@ -425,17 +425,17 @@
         border: 1px solid transparent;
         border-radius: 7px;
         background: transparent;
-        color: #344f67;
+        color: #2E2E2E;
         font-size: 12px;
         font-weight: 900;
         cursor: pointer;
     }
 
     .pm-tab.is-active {
-        border-color: #cbd9e6;
+        border-color: #EBEBEB;
         background: #ffffff;
-        color: #082033;
-        box-shadow: 0 10px 24px -22px rgba(8, 31, 51, 0.65);
+        color: #0F0F0F;
+        box-shadow: 0 10px 24px -22px rgba(15, 15, 15, 0.65);
     }
 
     .pm-tab-panel {
@@ -462,9 +462,9 @@
         gap: 14px;
         min-width: 0;
         padding: 16px;
-        border: 1px solid #d7e2ec;
+        border: 1px solid #EBEBEB;
         border-radius: 8px;
-        background: #fbfdff;
+        background: #F7F7F7;
     }
 
     .pm-manager-card[hidden] {
@@ -485,13 +485,13 @@
         flex: 0 0 auto;
         place-items: center;
         border-radius: 8px;
-        background: #102a43;
+        background: #1F1F1F;
         color: #ffffff;
     }
 
     .pm-manager-card-header span:not(.pm-manager-icon) {
         display: block;
-        color: #344f67;
+        color: #2E2E2E;
         font-size: 10px;
         font-weight: 900;
         text-transform: uppercase;
@@ -499,7 +499,7 @@
 
     .pm-manager-card-header h3 {
         margin: 2px 0 0;
-        color: #082033;
+        color: #0F0F0F;
         font-size: 15px;
         font-weight: 900;
     }
@@ -511,7 +511,7 @@
     }
 
     .pm-field span {
-        color: #344f67;
+        color: #2E2E2E;
         font-size: 11px;
         font-weight: 850;
         text-transform: uppercase;
@@ -524,10 +524,10 @@
         min-width: 0;
         height: 40px;
         padding: 0 11px;
-        border: 1px solid #bfd0df;
+        border: 1px solid #D6D6D6;
         border-radius: 7px;
         background: #ffffff;
-        color: #082033;
+        color: #0F0F0F;
         font: inherit;
         font-size: 13px;
         font-weight: 700;
@@ -536,9 +536,9 @@
     .pm-field input:focus,
     .pm-field select:focus,
     .pm-inline-controls select:focus {
-        border-color: #174a75;
+        border-color: #2E2E2E;
         outline: 0;
-        box-shadow: 0 0 0 3px rgba(23, 74, 117, 0.12);
+        box-shadow: 0 0 0 3px rgba(46, 46, 46, 0.12);
     }
 
     .pm-inline-controls {
@@ -573,7 +573,7 @@
 
     .pm-card-note {
         margin: 0;
-        color: #526b82;
+        color: #494949;
         font-size: 12px;
         font-weight: 650;
         line-height: 1.45;
@@ -584,7 +584,7 @@
         gap: 8px;
         max-height: 236px;
         overflow: auto;
-        color: #415a70;
+        color: #2E2E2E;
         font-size: 12px;
         font-weight: 700;
     }
@@ -594,7 +594,7 @@
         grid-template-columns: minmax(0, 1fr) auto;
         gap: 10px;
         padding: 10px;
-        border: 1px solid #d7e2ec;
+        border: 1px solid #EBEBEB;
         border-radius: 8px;
         background: #ffffff;
     }
@@ -602,7 +602,7 @@
     .pm-document-item strong {
         display: block;
         overflow: hidden;
-        color: #082033;
+        color: #0F0F0F;
         font-size: 12px;
         font-weight: 900;
         text-overflow: ellipsis;
@@ -612,7 +612,7 @@
     .pm-document-item span {
         display: block;
         margin-top: 4px;
-        color: #526b82;
+        color: #494949;
         font-size: 11px;
         font-weight: 750;
     }
@@ -620,7 +620,7 @@
     .pm-document-item small {
         display: block;
         margin-top: 4px;
-        color: #526b82;
+        color: #494949;
         font-size: 11px;
         font-weight: 750;
     }
@@ -633,10 +633,10 @@
         align-self: center;
         min-height: 32px;
         padding: 0 10px;
-        border: 1px solid #cbd9e6;
+        border: 1px solid #EBEBEB;
         border-radius: 7px;
         background: #ffffff;
-        color: #173a59;
+        color: #1F1F1F;
         font-size: 11px;
         font-weight: 850;
         cursor: pointer;
@@ -646,9 +646,9 @@
         display: grid;
         min-height: 76px;
         place-items: center;
-        border: 1px dashed #cbd9e6;
+        border: 1px dashed #EBEBEB;
         border-radius: 8px;
-        color: #526b82;
+        color: #494949;
         text-align: center;
     }
 
@@ -670,10 +670,10 @@
         min-width: 0;
         min-height: 82px;
         padding: 16px 18px;
-        border: 1px solid #d7e3ef;
+        border: 1px solid #EBEBEB;
         border-radius: 12px;
         background: #ffffff;
-        box-shadow: 0 10px 28px -26px rgba(7, 31, 52, 0.45);
+        box-shadow: 0 10px 28px -26px rgba(15, 15, 15, 0.45);
     }
 
     .pm-simple-stat-icon {
@@ -684,8 +684,8 @@
         height: 42px;
         min-width: 42px;
         border-radius: 11px;
-        background: #eef5fc;
-        color: #0b3a67;
+        background: #F7F7F7;
+        color: #1F1F1F;
     }
 
     .pm-simple-stat-icon i {
@@ -700,7 +700,7 @@
 
     .pm-simple-stat-copy strong {
         display: block;
-        color: #082033;
+        color: #0F0F0F;
         font-size: 24px;
         line-height: 1;
         font-weight: 950;
@@ -711,7 +711,7 @@
 
     .pm-simple-stat-copy span {
         display: block;
-        color: #102a43;
+        color: #1F1F1F;
         font-size: 12px;
         font-weight: 900;
         text-transform: none;
@@ -719,7 +719,7 @@
 
     .pm-simple-stat-copy small {
         display: block;
-        color: #6b8094;
+        color: #5C5C5C;
         font-size: 11px;
         font-weight: 700;
     }
@@ -735,10 +735,10 @@
         gap: 10px;
         min-width: 0;
         padding: 14px 16px;
-        border: 1px solid #d7e3ef;
+        border: 1px solid #EBEBEB;
         border-radius: 12px;
         background: #ffffff;
-        box-shadow: 0 10px 28px -26px rgba(7, 31, 52, 0.45);
+        box-shadow: 0 10px 28px -26px rgba(15, 15, 15, 0.45);
     }
 
     .pm-qc-header {
@@ -749,7 +749,7 @@
     }
 
     .pm-qc-quarter {
-        color: #173a59;
+        color: #1F1F1F;
         font-size: 12px;
         font-weight: 900;
         letter-spacing: 0.02em;
@@ -776,7 +776,7 @@
 
     .pm-qc-status.is-balanced {
         background: #e8f7f3;
-        color: #0f665f;
+        color: #1F1F1F;
     }
 
     .pm-qc-status i {
@@ -793,7 +793,7 @@
     .pm-qc-label {
         display: block;
         margin-bottom: 3px;
-        color: #6b8094;
+        color: #5C5C5C;
         font-size: 10px;
         font-weight: 850;
         text-transform: uppercase;
@@ -801,7 +801,7 @@
 
     .pm-qc-value {
         display: block;
-        color: #082033;
+        color: #0F0F0F;
         font-size: 18px;
         line-height: 1.05;
         font-weight: 950;
@@ -814,7 +814,7 @@
     }
 
     .pm-qc-card.is-balanced .pm-qc-value {
-        color: #0f665f;
+        color: #1F1F1F;
     }
 
     .pm-qc-button {
@@ -824,10 +824,10 @@
         min-width: 62px;
         min-height: 36px;
         padding: 0 14px;
-        border: 1px solid #bfd2e3;
+        border: 1px solid #D6D6D6;
         border-radius: 10px;
-        background: #f8fbfe;
-        color: #0b3a67;
+        background: #F7F7F7;
+        color: #1F1F1F;
         font-size: 12px;
         font-weight: 900;
         cursor: pointer;
@@ -837,17 +837,17 @@
     }
 
     .pm-qc-button:hover {
-        background: #edf5fc;
-        border-color: #9fbad3;
+        background: #F7F7F7;
+        border-color: #B8B8B8;
     }
 
     .pm-qc-metrics {
         display: grid;
         grid-template-columns: repeat(3, minmax(0, 1fr));
-        border: 1px solid #dfe9f2;
+        border: 1px solid #EBEBEB;
         border-radius: 10px;
         overflow: hidden;
-        background: #f8fbfe;
+        background: #F7F7F7;
     }
 
     .pm-qc-metrics div {
@@ -855,7 +855,7 @@
         gap: 4px;
         min-width: 0;
         padding: 10px 10px;
-        border-right: 1px solid #dfe9f2;
+        border-right: 1px solid #EBEBEB;
     }
 
     .pm-qc-metrics div:last-child {
@@ -863,7 +863,7 @@
     }
 
     .pm-qc-metrics span {
-        color: #6b8094;
+        color: #5C5C5C;
         font-size: 10px;
         font-weight: 800;
         text-transform: uppercase;
@@ -871,7 +871,7 @@
 
     .pm-qc-metrics strong {
         overflow: hidden;
-        color: #173a59;
+        color: #1F1F1F;
         font-size: 12px;
         font-weight: 900;
         text-overflow: ellipsis;
@@ -880,7 +880,7 @@
     }
 
     .pm-qc-footer {
-        color: #6b8094;
+        color: #5C5C5C;
         font-size: 11px;
         font-weight: 700;
     }
@@ -889,9 +889,9 @@
         display: grid;
         gap: 13px;
         padding: 14px;
-        border: 1px solid #d7e2ec;
+        border: 1px solid #EBEBEB;
         border-radius: 8px;
-        background: #fbfdff;
+        background: #F7F7F7;
     }
 
     .pm-table-toolbar-head {
@@ -903,7 +903,7 @@
 
     .pm-table-toolbar-head h3 {
         margin: 4px 0 0;
-        color: #082033;
+        color: #0F0F0F;
         font-size: 17px;
         font-weight: 900;
     }
@@ -913,10 +913,10 @@
         min-height: 30px;
         align-items: center;
         padding: 0 10px;
-        border: 1px solid #d7e2ec;
+        border: 1px solid #EBEBEB;
         border-radius: 7px;
         background: #ffffff;
-        color: #344f67;
+        color: #2E2E2E;
         font-size: 12px;
         font-weight: 850;
         white-space: nowrap;
@@ -953,7 +953,7 @@
     .pm-schedule-table-wrap {
         max-height: 520px;
         overflow: auto;
-        border: 1px solid #d7e2ec;
+        border: 1px solid #EBEBEB;
         border-radius: 8px;
         background: #ffffff;
     }
@@ -962,15 +962,15 @@
         width: max-content;
         min-width: 100%;
         border-collapse: collapse;
-        color: #082033;
+        color: #0F0F0F;
         font-size: 12px;
     }
 
     .pm-schedule-table th,
     .pm-schedule-table td {
         padding: 8px 10px;
-        border-bottom: 1px solid #e1ebf3;
-        border-right: 1px solid #e1ebf3;
+        border-bottom: 1px solid #EBEBEB;
+        border-right: 1px solid #EBEBEB;
         white-space: nowrap;
     }
 
@@ -978,7 +978,7 @@
         position: sticky;
         top: 0;
         z-index: 2;
-        background: #102a43;
+        background: #1F1F1F;
         color: #ffffff;
         font-size: 11px;
         font-weight: 900;
@@ -993,8 +993,8 @@
     .pm-schedule-table td.is-editable {
         background-image: linear-gradient(
             0deg,
-            rgba(15, 118, 110, 0.08),
-            rgba(15, 118, 110, 0.08)
+            rgba(46, 46, 46, 0.08),
+            rgba(46, 46, 46, 0.08)
         );
         cursor: text;
     }
@@ -1003,18 +1003,18 @@
         position: relative;
         z-index: 1;
         background: #ffffff;
-        outline: 2px solid #174a75;
+        outline: 2px solid #2E2E2E;
         outline-offset: -2px;
     }
 
     .pm-schedule-table tr.is-store-summary td {
-        background: #f8fbfd;
+        background: #F7F7F7;
         font-weight: 850;
     }
 
     .pm-table-empty {
         height: 82px;
-        color: #526b82;
+        color: #494949;
         font-size: 13px;
         font-weight: 800;
         text-align: center;
@@ -1027,7 +1027,7 @@
 
     .pm-documents-panel {
         overflow: hidden;
-        border: 1px solid #d7e2ec;
+        border: 1px solid #EBEBEB;
         border-radius: 8px;
         background: #ffffff;
     }
@@ -1038,13 +1038,13 @@
         justify-content: space-between;
         gap: 14px;
         padding: 16px;
-        border-bottom: 1px solid #d7e2ec;
-        background: #fbfdff;
+        border-bottom: 1px solid #EBEBEB;
+        background: #F7F7F7;
     }
 
     .pm-documents-panel-header h3 {
         margin: 5px 0 0;
-        color: #082033;
+        color: #0F0F0F;
         font-size: 18px;
         font-weight: 900;
     }
@@ -1057,20 +1057,20 @@
         width: 100%;
         min-width: 860px;
         border-collapse: collapse;
-        color: #082033;
+        color: #0F0F0F;
         font-size: 12px;
     }
 
     .pm-documents-table th,
     .pm-documents-table td {
         padding: 11px 12px;
-        border-bottom: 1px solid #e1ebf3;
+        border-bottom: 1px solid #EBEBEB;
         text-align: left;
         vertical-align: middle;
     }
 
     .pm-documents-table th {
-        background: #102a43;
+        background: #1F1F1F;
         color: #ffffff;
         font-size: 11px;
         font-weight: 900;
@@ -1079,7 +1079,7 @@
     }
 
     .pm-documents-table td {
-        color: #173a59;
+        color: #1F1F1F;
         font-weight: 750;
     }
 
@@ -1090,13 +1090,13 @@
     }
 
     .pm-document-name strong {
-        color: #082033;
+        color: #0F0F0F;
         font-size: 13px;
         font-weight: 900;
     }
 
     .pm-document-name span {
-        color: #526b82;
+        color: #494949;
         font-size: 11px;
         font-weight: 750;
     }
@@ -1114,10 +1114,10 @@
         justify-content: center;
         gap: 6px;
         padding: 0 10px;
-        border: 1px solid #cbd9e6;
+        border: 1px solid #EBEBEB;
         border-radius: 7px;
         background: #ffffff;
-        color: #173a59;
+        color: #1F1F1F;
         font-size: 11px;
         font-weight: 900;
         cursor: pointer;
@@ -1125,14 +1125,14 @@
     }
 
     .pm-table-action.is-primary {
-        border-color: #102a43;
-        background: #102a43;
+        border-color: #1F1F1F;
+        background: #1F1F1F;
         color: #ffffff;
     }
 
     .pm-doc-empty {
         height: 82px;
-        color: #526b82;
+        color: #494949;
         font-size: 13px;
         font-weight: 800;
         text-align: center;
@@ -1140,10 +1140,10 @@
 
     .pm-intake-panel,
     .pm-stage {
-        border: 1px solid #cfdae5;
+        border: 1px solid #EBEBEB;
         border-radius: 8px;
         background: #ffffff;
-        box-shadow: 0 18px 44px -40px rgba(8, 31, 51, 0.62);
+        box-shadow: 0 18px 44px -40px rgba(15, 15, 15, 0.62);
     }
 
     .pm-intake-panel {
@@ -1154,13 +1154,13 @@
 
     .pm-panel-header {
         padding: 18px;
-        border-bottom: 1px solid #d8e5ef;
-        background: #f8fbfd;
+        border-bottom: 1px solid #EBEBEB;
+        background: #F7F7F7;
     }
 
     .pm-panel-header span {
         display: block;
-        color: #344f67;
+        color: #2E2E2E;
         font-size: 11px;
         font-weight: 850;
         text-transform: uppercase;
@@ -1168,7 +1168,7 @@
 
     .pm-panel-header h2 {
         margin: 5px 0 0;
-        color: #082033;
+        color: #0F0F0F;
         font-size: 20px;
     }
 
@@ -1184,7 +1184,7 @@
     }
 
     .pm-form label span {
-        color: #344f67;
+        color: #2E2E2E;
         font-size: 11px;
         font-weight: 850;
         text-transform: uppercase;
@@ -1196,10 +1196,10 @@
     .pm-toolbar input,
     .pm-toolbar select {
         width: 100%;
-        border: 1px solid #bfd0df;
+        border: 1px solid #D6D6D6;
         border-radius: 7px;
         background: #ffffff;
-        color: #082033;
+        color: #0F0F0F;
         font: inherit;
         font-size: 14px;
     }
@@ -1223,9 +1223,9 @@
     .pm-form textarea:focus,
     .pm-toolbar input:focus,
     .pm-toolbar select:focus {
-        border-color: #174a75;
+        border-color: #2E2E2E;
         outline: 0;
-        box-shadow: 0 0 0 3px rgba(23, 74, 117, 0.12);
+        box-shadow: 0 0 0 3px rgba(46, 46, 46, 0.12);
     }
 
     .pm-form-row {
@@ -1250,7 +1250,7 @@
         grid-template-columns: minmax(0, 1fr) minmax(170px, 220px);
         gap: 12px;
         padding: 14px;
-        border: 1px solid #cfdae5;
+        border: 1px solid #EBEBEB;
         border-radius: 8px;
         background: #ffffff;
     }
@@ -1263,7 +1263,7 @@
         position: absolute;
         top: 50%;
         left: 12px;
-        color: #526b82;
+        color: #494949;
         transform: translateY(-50%);
     }
 
@@ -1290,8 +1290,8 @@
         justify-content: space-between;
         gap: 12px;
         padding: 14px;
-        border-bottom: 1px solid #d8e5ef;
-        background: #f8fbfd;
+        border-bottom: 1px solid #EBEBEB;
+        background: #F7F7F7;
     }
 
     .pm-stage header div {
@@ -1302,12 +1302,12 @@
     }
 
     .pm-stage header i {
-        color: #0f5f59;
+        color: #1F1F1F;
     }
 
     .pm-stage h2 {
         margin: 0;
-        color: #082033;
+        color: #0F0F0F;
         font-size: 15px;
         font-weight: 900;
     }
@@ -1317,10 +1317,10 @@
         min-width: 28px;
         height: 28px;
         place-items: center;
-        border: 1px solid #d7e2ec;
+        border: 1px solid #EBEBEB;
         border-radius: 999px;
         background: #ffffff;
-        color: #344f67;
+        color: #2E2E2E;
         font-size: 12px;
         font-weight: 900;
     }
@@ -1331,21 +1331,21 @@
         gap: 10px;
         min-height: 260px;
         padding: 12px;
-        background: #fbfdff;
+        background: #F7F7F7;
     }
 
     .pm-request-card {
         display: grid;
         gap: 10px;
         padding: 14px;
-        border: 1px solid #d7e2ec;
+        border: 1px solid #EBEBEB;
         border-radius: 8px;
         background: #ffffff;
     }
 
     .pm-request-card h3 {
         margin: 0;
-        color: #082033;
+        color: #0F0F0F;
         font-size: 14px;
         font-weight: 900;
         line-height: 1.35;
@@ -1353,7 +1353,7 @@
 
     .pm-request-card p {
         margin: 0;
-        color: #526b82;
+        color: #494949;
         font-size: 12px;
         font-weight: 650;
         line-height: 1.45;
@@ -1370,10 +1370,10 @@
         align-items: center;
         min-height: 24px;
         padding: 0 8px;
-        border: 1px solid #d7e2ec;
+        border: 1px solid #EBEBEB;
         border-radius: 999px;
-        background: #f8fbfd;
-        color: #344f67;
+        background: #F7F7F7;
+        color: #2E2E2E;
         font-size: 11px;
         font-weight: 800;
     }
@@ -1388,25 +1388,25 @@
         display: flex;
         flex-wrap: wrap;
         gap: 7px;
-        border-top: 1px solid #e1ebf3;
+        border-top: 1px solid #EBEBEB;
         padding-top: 10px;
     }
 
     .pm-card-action {
         min-height: 30px;
         padding: 0 9px;
-        border: 1px solid #cbd9e6;
+        border: 1px solid #EBEBEB;
         border-radius: 7px;
         background: #ffffff;
-        color: #173a59;
+        color: #1F1F1F;
         font-size: 11px;
         font-weight: 850;
         cursor: pointer;
     }
 
     .pm-card-action.is-primary {
-        border-color: #102a43;
-        background: #102a43;
+        border-color: #1F1F1F;
+        background: #1F1F1F;
         color: #ffffff;
     }
 
@@ -1419,9 +1419,9 @@
         display: grid;
         min-height: 96px;
         place-items: center;
-        border: 1px dashed #cbd9e6;
+        border: 1px dashed #EBEBEB;
         border-radius: 8px;
-        color: #60758a;
+        color: #5C5C5C;
         font-size: 12px;
         font-weight: 750;
         text-align: center;
@@ -1522,7 +1522,7 @@
         align-items: center;
         justify-content: center;
         padding: 24px;
-        background: rgba(8, 31, 51, 0.72);
+        background: rgba(15, 15, 15, 0.72);
         backdrop-filter: blur(4px);
         -webkit-backdrop-filter: blur(4px);
         overflow: hidden;
@@ -1540,10 +1540,10 @@
         width: min(1120px, 94vw);
         height: min(880px, 92vh);
         overflow: hidden;
-        border: 1px solid #d7e2ec;
+        border: 1px solid #EBEBEB;
         border-radius: 14px;
         background: #ffffff;
-        box-shadow: 0 32px 90px -34px rgba(8, 31, 51, 0.75);
+        box-shadow: 0 32px 90px -34px rgba(15, 15, 15, 0.75);
     }
 
     .pm-entities-header {
@@ -1553,13 +1553,13 @@
         justify-content: space-between;
         gap: 20px;
         padding: 24px 34px 20px;
-        border-bottom: 1px solid #d7e2ec;
+        border-bottom: 1px solid #EBEBEB;
         background: #ffffff;
     }
 
     .pm-entities-header h3 {
         margin: 6px 0 6px;
-        color: #082033;
+        color: #0F0F0F;
         font-size: 26px;
         font-weight: 900;
         letter-spacing: -0.02em;
@@ -1567,7 +1567,7 @@
 
     .pm-entities-header p {
         margin: 0;
-        color: #415a70;
+        color: #2E2E2E;
         font-size: 13px;
         font-weight: 650;
     }
@@ -1580,7 +1580,7 @@
         min-height: 0;
         overflow-y: auto;
         padding: 22px 34px;
-        background: #f8fbfd;
+        background: #F7F7F7;
     }
 
     .pm-entity-card {
@@ -1588,10 +1588,10 @@
         display: grid;
         gap: 14px;
         padding: 16px;
-        border: 1px solid #d7e2ec;
+        border: 1px solid #EBEBEB;
         border-radius: 12px;
         background: #ffffff;
-        box-shadow: 0 16px 38px -34px rgba(8, 31, 51, 0.6);
+        box-shadow: 0 16px 38px -34px rgba(15, 15, 15, 0.6);
     }
 
     .pm-entity-card[hidden],
@@ -1611,7 +1611,7 @@
     .pm-entity-card-header h4,
     .pm-entities-toolbar h4 {
         margin: 4px 0 0;
-        color: #082033;
+        color: #0F0F0F;
         font-size: 15px;
         font-weight: 900;
     }
@@ -1619,7 +1619,7 @@
     .pm-entity-card-header p,
     .pm-entities-toolbar p {
         margin: 4px 0 0;
-        color: #526b82;
+        color: #494949;
         font-size: 12px;
         font-weight: 650;
     }
@@ -1636,10 +1636,10 @@
         align-items: center;
         min-height: 40px;
         padding: 0 13px;
-        border: 1px solid #d7e2ec;
+        border: 1px solid #EBEBEB;
         border-radius: 9px;
-        background: #f8fbfd;
-        color: #415a70;
+        background: #F7F7F7;
+        color: #2E2E2E;
         font-size: 12px;
         font-weight: 750;
         overflow: hidden;
@@ -1673,7 +1673,7 @@
         min-height: 320px;
         max-height: 430px;
         overflow: auto;
-        border: 1px solid #d7e2ec;
+        border: 1px solid #EBEBEB;
         border-radius: 10px;
         background: #ffffff;
     }
@@ -1691,30 +1691,30 @@
         top: 0;
         z-index: 2;
         padding: 12px 13px;
-        background: #0d1021;
+        background: #0F0F0F;
         color: #ffffff;
         font-size: 11px;
         font-weight: 900;
         text-align: left;
         text-transform: uppercase;
-        border-bottom: 1px solid #0d1021;
+        border-bottom: 1px solid #0F0F0F;
     }
 
     .pm-entities-table tbody td {
         padding: 12px 13px;
-        border-bottom: 1px solid #e1ebf3;
-        border-right: 1px solid #e1ebf3;
-        color: #003057;
+        border-bottom: 1px solid #EBEBEB;
+        border-right: 1px solid #EBEBEB;
+        color: #1F1F1F;
         vertical-align: middle;
         background: #ffffff;
     }
 
     .pm-entities-table tbody tr:nth-child(even) td {
-        background: #f8fbfd;
+        background: #F7F7F7;
     }
 
     .pm-entities-table tbody tr:hover td {
-        background: #eef6fb;
+        background: #F7F7F7;
     }
 
     .pm-entities-table tbody td:last-child {
@@ -1727,8 +1727,8 @@
         justify-content: center;
         padding: 5px 9px;
         border-radius: 999px;
-        background: #edf4f9;
-        color: #173a59;
+        background: #F7F7F7;
+        color: #1F1F1F;
         font-size: 11px;
         font-weight: 900;
     }
@@ -1747,10 +1747,10 @@
         align-items: center;
         gap: 6px;
         padding: 0 10px;
-        border: 1px solid #cbd9e6;
+        border: 1px solid #EBEBEB;
         border-radius: 8px;
         background: #ffffff;
-        color: #102a43;
+        color: #1F1F1F;
         font-size: 11px;
         font-weight: 850;
         cursor: pointer;
@@ -1758,7 +1758,7 @@
     }
 
     .pm-table-action:hover {
-        background: #edf4f9;
+        background: #F7F7F7;
     }
 
     .pm-table-action.is-danger {
@@ -1777,7 +1777,7 @@
         justify-content: flex-end;
         gap: 10px;
         padding: 16px 34px 22px;
-        border-top: 1px solid #d7e2ec;
+        border-top: 1px solid #EBEBEB;
         background: #ffffff;
     }
 
@@ -1847,10 +1847,10 @@
         justify-content: center !important;
         padding: 0 !important;
         margin: 0 !important;
-        border: 1px solid #cbd9e6 !important;
+        border: 1px solid #EBEBEB !important;
         border-radius: 10px !important;
         background: #ffffff !important;
-        color: #244c6b !important;
+        color: #2E2E2E !important;
         font-size: 13px !important;
         line-height: 1 !important;
         cursor: pointer !important;
@@ -1867,14 +1867,14 @@
     }
 
     .pm-entities-modal .pm-icon-btn:hover {
-        background: #f3f8fc !important;
-        border-color: #9fb7cc !important;
-        color: #0f3554 !important;
+        background: #F7F7F7 !important;
+        border-color: #B8B8B8 !important;
+        color: #1F1F1F !important;
     }
 
     .pm-entities-modal .pm-icon-btn.is-danger {
-        color: #244c6b !important;
-        border-color: #cbd9e6 !important;
+        color: #2E2E2E !important;
+        border-color: #EBEBEB !important;
         background: #ffffff !important;
     }
 
@@ -1902,14 +1902,14 @@
 
     .pm-quarter-section-head h3 {
         margin: 5px 0 4px;
-        color: #082033;
+        color: #0F0F0F;
         font-size: 18px;
         font-weight: 900;
     }
 
     .pm-quarter-section-head p {
         margin: 0;
-        color: #526b82;
+        color: #494949;
         font-size: 12px;
         font-weight: 650;
     }
@@ -1918,16 +1918,16 @@
         display: grid;
         gap: 14px;
         padding: 16px;
-        border: 1px solid #d7e2ec;
+        border: 1px solid #EBEBEB;
         border-radius: 12px;
         background: #ffffff;
-        box-shadow: 0 18px 44px -40px rgba(8, 31, 51, 0.62);
+        box-shadow: 0 18px 44px -40px rgba(15, 15, 15, 0.62);
     }
 
     .pm-store-quarter-table-wrap {
         max-height: 420px;
         overflow: auto;
-        border: 1px solid #d7e2ec;
+        border: 1px solid #EBEBEB;
         border-radius: 10px;
         background: #ffffff;
     }
@@ -1945,7 +1945,7 @@
         top: 0;
         z-index: 2;
         padding: 12px 13px;
-        background: #0d1021;
+        background: #0F0F0F;
         color: #ffffff;
         font-size: 11px;
         font-weight: 900;
@@ -1955,14 +1955,14 @@
 
     .pm-store-quarter-table td {
         padding: 11px 13px;
-        border-bottom: 1px solid #e1ebf3;
-        border-right: 1px solid #e1ebf3;
-        color: #003057;
+        border-bottom: 1px solid #EBEBEB;
+        border-right: 1px solid #EBEBEB;
+        color: #1F1F1F;
         background: #ffffff;
     }
 
     .pm-store-quarter-table tr:nth-child(even) td {
-        background: #f8fbfd;
+        background: #F7F7F7;
     }
 
     .pm-store-quarter-table td.is-open,
@@ -1973,7 +1973,7 @@
 
     .pm-store-quarter-table td.is-balanced,
     .pm-quarter-modal-table td.is-balanced {
-        color: #0f665f;
+        color: #1F1F1F;
         font-weight: 900;
     }
 
@@ -1995,7 +1995,7 @@
 
     .pm-quarter-status.is-balanced {
         background: #f0fbf7;
-        color: #0f665f;
+        color: #1F1F1F;
     }
 
     .pm-store-detail-button {
@@ -2004,17 +2004,17 @@
         align-items: center;
         justify-content: center;
         padding: 0 13px;
-        border: 1px solid #cbd9e6;
+        border: 1px solid #EBEBEB;
         border-radius: 9px;
         background: #ffffff;
-        color: #102a43;
+        color: #1F1F1F;
         font-size: 12px;
         font-weight: 850;
         cursor: pointer;
     }
 
     .pm-store-detail-button:hover {
-        background: #edf4f9;
+        background: #F7F7F7;
     }
 
     /* Modal */
@@ -2026,7 +2026,7 @@
         align-items: center;
         justify-content: center;
         padding: 24px;
-        background: rgba(8, 31, 51, 0.72);
+        background: rgba(15, 15, 15, 0.72);
         backdrop-filter: blur(4px);
         overflow: hidden;
     }
@@ -2042,10 +2042,10 @@
         width: min(1180px, 95vw);
         height: min(860px, 92vh);
         overflow: hidden;
-        border: 1px solid #d7e2ec;
+        border: 1px solid #EBEBEB;
         border-radius: 14px;
         background: #ffffff;
-        box-shadow: 0 32px 90px -34px rgba(8, 31, 51, 0.75);
+        box-shadow: 0 32px 90px -34px rgba(15, 15, 15, 0.75);
     }
 
     .pm-quarter-store-header {
@@ -2055,20 +2055,20 @@
         justify-content: space-between;
         gap: 20px;
         padding: 24px 34px 20px;
-        border-bottom: 1px solid #d7e2ec;
+        border-bottom: 1px solid #EBEBEB;
         background: #ffffff;
     }
 
     .pm-quarter-store-header h3 {
         margin: 6px 0 6px;
-        color: #082033;
+        color: #0F0F0F;
         font-size: 26px;
         font-weight: 900;
     }
 
     .pm-quarter-store-header p {
         margin: 0;
-        color: #415a70;
+        color: #2E2E2E;
         font-size: 13px;
         font-weight: 650;
     }
@@ -2081,7 +2081,7 @@
         min-height: 0;
         overflow: hidden;
         padding: 22px 34px;
-        background: #f8fbfd;
+        background: #F7F7F7;
     }
 
     .pm-quarter-modal-filters {
@@ -2093,7 +2093,7 @@
         gap: 12px;
         align-items: end;
         padding: 16px;
-        border: 1px solid #d7e2ec;
+        border: 1px solid #EBEBEB;
         border-radius: 12px;
         background: #ffffff;
     }
@@ -2107,14 +2107,14 @@
 
     .pm-quarter-modal-summary article {
         padding: 14px;
-        border: 1px solid #d7e2ec;
+        border: 1px solid #EBEBEB;
         border-radius: 10px;
         background: #ffffff;
     }
 
     .pm-quarter-modal-summary span {
         display: block;
-        color: #526b82;
+        color: #494949;
         font-size: 11px;
         font-weight: 850;
         text-transform: uppercase;
@@ -2123,7 +2123,7 @@
     .pm-quarter-modal-summary strong {
         display: block;
         margin-top: 7px;
-        color: #082033;
+        color: #0F0F0F;
         font-size: 18px;
         font-weight: 900;
     }
@@ -2133,14 +2133,14 @@
     }
 
     .pm-quarter-modal-summary article.is-balanced strong {
-        color: #0f665f;
+        color: #1F1F1F;
     }
 
     .pm-quarter-modal-table-wrap {
         flex: 1 1 auto;
         min-height: 0;
         overflow: auto;
-        border: 1px solid #d7e2ec;
+        border: 1px solid #EBEBEB;
         border-radius: 10px;
         background: #ffffff;
     }
@@ -2158,7 +2158,7 @@
         top: 0;
         z-index: 2;
         padding: 12px 13px;
-        background: #0d1021;
+        background: #0F0F0F;
         color: #ffffff;
         font-size: 11px;
         font-weight: 900;
@@ -2168,14 +2168,14 @@
 
     .pm-quarter-modal-table td {
         padding: 11px 13px;
-        border-bottom: 1px solid #e1ebf3;
-        border-right: 1px solid #e1ebf3;
-        color: #003057;
+        border-bottom: 1px solid #EBEBEB;
+        border-right: 1px solid #EBEBEB;
+        color: #1F1F1F;
         background: #ffffff;
     }
 
     .pm-quarter-modal-table tr:nth-child(even) td {
-        background: #f8fbfd;
+        background: #F7F7F7;
     }
 
     @media (max-width: 980px) {
@@ -2243,14 +2243,14 @@
         flex-direction: column;
         gap: 22px;
         padding: 28px;
-        border: 1px solid #d7e2ec;
+        border: 1px solid #EBEBEB;
         border-radius: 18px;
         background: #ffffff;
     }
 
     .pm-saved-work-card .pm-manager-card-header {
         padding-bottom: 18px;
-        border-bottom: 1px solid #d7e2ec;
+        border-bottom: 1px solid #EBEBEB;
     }
 
     .pm-saved-work-card .pm-field {
@@ -2272,7 +2272,7 @@
         gap: 9px;
         margin-top: 12px;
         padding-top: 14px;
-        border-top: 1px solid #d7e2ec;
+        border-top: 1px solid #EBEBEB;
     }
 
     .pm-schedule-actions-bottom .btn {
@@ -2363,11 +2363,11 @@
         gap: 12px !important;
         margin: 0 !important;
         padding: 24px 24px 8px !important;
-        border: 1px solid #d7e2ec !important;
+        border: 1px solid #EBEBEB !important;
         border-bottom: 0 !important;
         border-radius: 18px 18px 0 0 !important;
         background: #ffffff !important;
-        box-shadow: 0 18px 44px -40px rgba(8, 31, 51, 0.62) !important;
+        box-shadow: 0 18px 44px -40px rgba(15, 15, 15, 0.62) !important;
     }
 
     .property-management-page
@@ -2386,11 +2386,11 @@
         max-width: none !important;
         margin: 0 !important;
         padding: 18px 24px 24px !important;
-        border: 1px solid #d7e2ec !important;
+        border: 1px solid #EBEBEB !important;
         border-top: 0 !important;
         border-radius: 0 0 18px 18px !important;
         background: #ffffff !important;
-        box-shadow: 0 18px 44px -40px rgba(8, 31, 51, 0.62) !important;
+        box-shadow: 0 18px 44px -40px rgba(15, 15, 15, 0.62) !important;
     }
 
     .property-management-page #salesUploadCard {
@@ -2423,7 +2423,7 @@
         gap: 12px !important;
         align-content: normal !important;
         padding: 18px !important;
-        border: 1px solid #e1ebf3 !important;
+        border: 1px solid #EBEBEB !important;
         border-radius: 16px !important;
         background: #ffffff !important;
     }
@@ -2456,14 +2456,14 @@
         flex-direction: column !important;
         gap: 18px !important;
         padding: 24px !important;
-        border: 1px solid #e1ebf3 !important;
+        border: 1px solid #EBEBEB !important;
         border-radius: 16px !important;
         background: #ffffff !important;
     }
 
     .property-management-page .pm-saved-work-card .pm-manager-card-header {
         padding-bottom: 16px !important;
-        border-bottom: 1px solid #d7e2ec !important;
+        border-bottom: 1px solid #EBEBEB !important;
     }
 
     .property-management-page .pm-saved-work-card .pm-inline-controls {
@@ -2490,10 +2490,10 @@
         gap: 16px !important;
         width: 100% !important;
         padding: 24px !important;
-        border: 1px solid #d7e2ec !important;
+        border: 1px solid #EBEBEB !important;
         border-radius: 18px !important;
         background: #ffffff !important;
-        box-shadow: 0 18px 44px -40px rgba(8, 31, 51, 0.62) !important;
+        box-shadow: 0 18px 44px -40px rgba(15, 15, 15, 0.62) !important;
     }
 
     .property-management-page #pmSchedulePreview.pm-schedule-preview[hidden] {
@@ -2526,7 +2526,7 @@
         gap: 9px !important;
         margin-top: 0 !important;
         padding-top: 14px !important;
-        border-top: 1px solid #d7e2ec !important;
+        border-top: 1px solid #EBEBEB !important;
     }
 
     @media (max-width: 1180px) {
@@ -2627,7 +2627,7 @@
 
         .pm-qc-metrics div {
             border-right: 0;
-            border-bottom: 1px solid #dfe9f2;
+            border-bottom: 1px solid #EBEBEB;
         }
 
         .pm-qc-metrics div:last-child {
@@ -2646,9 +2646,9 @@
         gap: 12px !important;
         margin-top: 12px !important;
         padding: 12px !important;
-        border: 1px solid #d7e3ef !important;
+        border: 1px solid #EBEBEB !important;
         border-radius: 14px !important;
-        background: #f8fbfe !important;
+        background: #F7F7F7 !important;
     }
 
     .property-management-page .pm-upload-file-summary {
@@ -2662,7 +2662,7 @@
         align-items: center !important;
         gap: 7px !important;
         width: fit-content !important;
-        color: #526b82 !important;
+        color: #494949 !important;
         font-size: 10px !important;
         font-weight: 900 !important;
         line-height: 1 !important;
@@ -2671,7 +2671,7 @@
     }
 
     .property-management-page .pm-upload-file-label i {
-        color: #0b3a67 !important;
+        color: #1F1F1F !important;
         font-size: 11px !important;
     }
 
@@ -2690,10 +2690,10 @@
         align-items: center !important;
         min-height: 28px !important;
         padding: 0 10px !important;
-        border: 1px dashed #cbd9e6 !important;
+        border: 1px dashed #EBEBEB !important;
         border-radius: 999px !important;
         background: #ffffff !important;
-        color: #60758a !important;
+        color: #5C5C5C !important;
         font-size: 12px !important;
         font-weight: 800 !important;
     }
@@ -2705,10 +2705,10 @@
         max-width: 210px !important;
         min-height: 28px !important;
         padding: 0 10px !important;
-        border: 1px solid #d7e3ef !important;
+        border: 1px solid #EBEBEB !important;
         border-radius: 999px !important;
         background: #ffffff !important;
-        color: #102a43 !important;
+        color: #1F1F1F !important;
         font-size: 12px !important;
         font-weight: 850 !important;
         line-height: 1 !important;
@@ -2716,7 +2716,7 @@
 
     .property-management-page .pm-upload-file-chip i {
         flex: 0 0 auto !important;
-        color: #0b3a67 !important;
+        color: #1F1F1F !important;
         font-size: 11px !important;
     }
 
@@ -2734,17 +2734,17 @@
         gap: 7px !important;
         min-height: 28px !important;
         padding: 0 10px !important;
-        border: 1px solid #cce7de !important;
+        border: 1px solid #EBEBEB !important;
         border-radius: 999px !important;
-        background: #eefaf6 !important;
-        color: #0f665f !important;
+        background: #F7F7F7 !important;
+        color: #1F1F1F !important;
         font-size: 12px !important;
         font-weight: 900 !important;
         line-height: 1 !important;
     }
 
     .property-management-page .pm-upload-file-count i {
-        color: #0f665f !important;
+        color: #1F1F1F !important;
         font-size: 11px !important;
     }
 
@@ -2753,10 +2753,10 @@
         align-items: center !important;
         min-height: 28px !important;
         padding: 0 10px !important;
-        border: 1px solid #d7e3ef !important;
+        border: 1px solid #EBEBEB !important;
         border-radius: 999px !important;
-        background: #edf4f9 !important;
-        color: #344f67 !important;
+        background: #F7F7F7 !important;
+        color: #2E2E2E !important;
         font-size: 12px !important;
         font-weight: 850 !important;
         line-height: 1 !important;
@@ -2809,9 +2809,9 @@
         display: grid;
         gap: 12px;
         padding: 14px 16px;
-        border: 1px solid #d7e2ec;
+        border: 1px solid #EBEBEB;
         border-radius: 14px;
-        background: #fbfdff;
+        background: #F7F7F7;
     }
 
     .pm-monthly-totals-header {
@@ -2823,14 +2823,14 @@
 
     .pm-monthly-totals-header h3 {
         margin: 4px 0 3px;
-        color: #082033;
+        color: #0F0F0F;
         font-size: 17px;
         font-weight: 900;
     }
 
     .pm-monthly-totals-header p {
         margin: 0;
-        color: #526b82;
+        color: #494949;
         font-size: 12px;
         font-weight: 700;
     }
@@ -2846,20 +2846,20 @@
         gap: 3px;
         min-width: 150px;
         padding: 10px 12px;
-        border: 1px solid #d7e2ec;
+        border: 1px solid #EBEBEB;
         border-radius: 12px;
         background: #ffffff;
     }
 
     .pm-monthly-totals-grand span {
-        color: #526b82;
+        color: #494949;
         font-size: 10px;
         font-weight: 850;
         text-transform: uppercase;
     }
 
     .pm-monthly-totals-grand strong {
-        color: #082033;
+        color: #0F0F0F;
         font-size: 17px;
         font-weight: 950;
         font-variant-numeric: tabular-nums;
@@ -2873,12 +2873,12 @@
         overflow-x: auto;
         overflow-y: hidden;
         padding: 2px 2px 10px;
-        scrollbar-color: #9fbad3 #edf4f9;
+        scrollbar-color: #B8B8B8 #F7F7F7;
         scrollbar-width: thin;
     }
 
     .pm-month-mini-values strong {
-        color: #082033;
+        color: #0F0F0F;
         font-size: 13px;
         font-weight: 950;
         white-space: nowrap;
@@ -2898,12 +2898,12 @@
 
     .pm-monthly-totals-strip::-webkit-scrollbar-track {
         border-radius: 999px;
-        background: #edf4f9;
+        background: #F7F7F7;
     }
 
     .pm-monthly-totals-strip::-webkit-scrollbar-thumb {
         border-radius: 999px;
-        background: #9fbad3;
+        background: #B8B8B8;
     }
 
     .pm-month-total-card {
@@ -2912,10 +2912,10 @@
         min-height: 148px;
         min-width: 0;
         padding: 14px;
-        border: 1px solid #d7e2ec;
+        border: 1px solid #EBEBEB;
         border-radius: 13px;
         background: #ffffff;
-        box-shadow: 0 10px 24px -24px rgba(8, 31, 51, 0.55);
+        box-shadow: 0 10px 24px -24px rgba(15, 15, 15, 0.55);
     }
 
     .pm-month-total-card.is-zero {
@@ -2925,7 +2925,7 @@
     .pm-month-total-card.is-empty {
         min-height: 90px;
         place-items: center;
-        color: #526b82;
+        color: #494949;
         font-size: 13px;
         font-weight: 800;
         text-align: center;
@@ -2950,7 +2950,7 @@
     .pm-month-total-head strong {
         display: block;
         overflow: hidden;
-        color: #082033;
+        color: #0F0F0F;
         font-size: 15px;
         font-weight: 950;
         text-overflow: ellipsis;
@@ -2971,7 +2971,7 @@
 
     .pm-month-total-status.is-balanced {
         background: #e8f7f3;
-        color: #0f665f;
+        color: #1F1F1F;
     }
 
     .pm-month-total-status.is-open {
@@ -2983,9 +2983,9 @@
         display: grid;
         grid-template-columns: 1fr 1fr;
         overflow: hidden;
-        border: 1px solid #e1ebf3;
+        border: 1px solid #EBEBEB;
         border-radius: 10px;
-        background: #f8fbfd;
+        background: #F7F7F7;
     }
 
     .pm-month-total-grid div {
@@ -2996,12 +2996,12 @@
     }
 
     .pm-month-total-grid div:first-child {
-        border-right: 1px solid #e1ebf3;
+        border-right: 1px solid #EBEBEB;
     }
 
     .pm-month-total-grid span,
     .pm-month-total-difference span {
-        color: #6b8094;
+        color: #5C5C5C;
         font-size: 9px;
         font-weight: 850;
         text-transform: uppercase;
@@ -3009,7 +3009,7 @@
 
     .pm-month-total-grid strong {
         overflow: visible;
-        color: #082033;
+        color: #0F0F0F;
         font-size: 13px;
         font-weight: 950;
         text-overflow: clip;
@@ -3023,11 +3023,11 @@
         justify-content: space-between;
         gap: 8px;
         padding-top: 8px;
-        border-top: 1px solid #e1ebf3;
+        border-top: 1px solid #EBEBEB;
     }
 
     .pm-month-total-difference strong {
-        color: #082033;
+        color: #0F0F0F;
         font-size: 14px;
         font-weight: 950;
         text-align: right;
@@ -3037,7 +3037,7 @@
     
         .pm-month-total-card.is-balanced .pm-month-total-difference strong
      {
-        color: #0f665f;
+        color: #1F1F1F;
     }
 
     .pm-month-total-card.is-open .pm-month-total-difference strong {

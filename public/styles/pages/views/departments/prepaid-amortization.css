@@ -13,9 +13,9 @@
             gap: 18px;
             margin: 14px 16px 0;
             padding: 14px 16px;
-            border: 1px solid #dfe8f2;
+            border: 1px solid #EBEBEB;
             border-radius: 14px;
-            background: #f8fbfe;
+            background: #F7F7F7;
         }
 
         .source-review-bar > div {
@@ -24,13 +24,13 @@
         }
 
         .source-review-bar strong {
-            color: #102033;
+            color: #0F0F0F;
             font-size: 13px;
         }
 
         .source-review-bar span,
         .source-review-bar small {
-            color: #60758b;
+            color: #5C5C5C;
             font-size: 12px;
             line-height: 1.4;
         }
@@ -65,11 +65,11 @@
             height: 32px;
             min-width: 58px;
             padding: 0 9px;
-            border: 1px solid #d5e0eb;
+            border: 1px solid #EBEBEB;
             border-radius: 8px;
             background: #ffffff;
-            box-shadow: 0 1px 2px rgba(15, 35, 55, 0.06);
-            color: #40576f;
+            box-shadow: 0 1px 2px rgba(15, 15, 15, 0.06);
+            color: #2E2E2E;
             font: inherit;
             font-size: 11px;
             font-weight: 800;
@@ -86,24 +86,24 @@
 
         .source-action-btn:hover {
             transform: translateY(-1px);
-            box-shadow: 0 4px 10px rgba(15, 35, 55, 0.1);
+            box-shadow: 0 4px 10px rgba(15, 15, 15, 0.1);
         }
 
         .source-action-btn:focus-visible {
-            outline: 3px solid rgba(37, 99, 235, 0.2);
+            outline: 3px solid rgba(58, 58, 58, 0.2);
             outline-offset: 2px;
         }
 
         .source-action-edit {
-            border-color: #cbdcf0;
-            background: #f4f8fd;
-            color: #245b96;
+            border-color: #EBEBEB;
+            background: #F7F7F7;
+            color: #343434;
         }
 
         .source-action-edit:hover {
-            border-color: #7da8d8;
-            background: #eaf3fd;
-            color: #174d85;
+            border-color: #B8B8B8;
+            background: #F7F7F7;
+            color: #2E2E2E;
         }
 
         .source-action-row:hover {
@@ -135,21 +135,21 @@
         }
 
         .source-amortization-range strong {
-            color: #17324f;
+            color: #1F1F1F;
             font-size: 11px;
             font-weight: 850;
         }
 
         .source-amortization-range strong span {
             margin: 0 4px;
-            color: #8ca0b5;
+            color: #8A8A8A;
         }
 
         .source-amortization-range small {
             display: flex;
             align-items: center;
             gap: 7px;
-            color: #647a91;
+            color: #5C5C5C;
             font-size: 10px;
             font-weight: 700;
         }
@@ -159,16 +159,16 @@
             align-items: center;
             padding: 2px 6px;
             border-radius: 999px;
-            background: #eef2f7;
-            color: #62758a;
+            background: #F7F7F7;
+            color: #5C5C5C;
             font-size: 9px;
             font-weight: 900;
             text-transform: uppercase;
         }
 
         .source-period-badge.custom {
-            background: #e8f3ff;
-            color: #1f609f;
+            background: #F7F7F7;
+            color: #343434;
         }
 
         /* SweetAlert must render above the global sticky topbar and table headers. */
@@ -190,14 +190,14 @@
             padding: 0;
             overflow: hidden;
             border-radius: 22px;
-            background: #f7faff;
-            box-shadow: 0 26px 60px rgba(15, 23, 42, 0.22);
+            background: #F7F7F7;
+            box-shadow: 0 26px 60px rgba(15, 15, 15, 0.22);
         }
 
         .source-amortization-swal .swal2-title {
             margin: 0;
             padding: 24px 26px 8px;
-            color: #10233c;
+            color: #0F0F0F;
             font-size: 25px;
             line-height: 1.15;
             font-weight: 900;
@@ -221,7 +221,7 @@
             gap: 12px;
             align-items: center;
             padding: 14px 16px;
-            border: 1px solid #dbe6f2;
+            border: 1px solid #EBEBEB;
             border-radius: 15px;
             background: #ffffff;
         }
@@ -233,20 +233,20 @@
             width: 40px;
             height: 40px;
             border-radius: 12px;
-            background: #10233c;
+            background: #0F0F0F;
             color: #ffffff;
         }
 
         .source-amortization-summary strong {
             display: block;
             margin-bottom: 3px;
-            color: #17324f;
+            color: #1F1F1F;
             font-size: 13px;
             font-weight: 900;
         }
 
         .source-amortization-summary span {
-            color: #687d92;
+            color: #5C5C5C;
             font-size: 12px;
         }
 
@@ -256,7 +256,7 @@
         }
 
         .source-amortization-presets > span {
-            color: #40566f;
+            color: #2E2E2E;
             font-size: 11px;
             font-weight: 900;
             text-transform: uppercase;
@@ -271,10 +271,10 @@
         .source-amortization-presets button {
             height: 34px;
             padding: 0 12px;
-            border: 1px solid #cfdae8;
+            border: 1px solid #EBEBEB;
             border-radius: 10px;
             background: #ffffff;
-            color: #40566f;
+            color: #2E2E2E;
             font: inherit;
             font-size: 11px;
             font-weight: 850;
@@ -283,9 +283,9 @@
 
         .source-amortization-presets button:hover,
         .source-amortization-presets button.active {
-            border-color: #7ca7d8;
-            background: #eaf3fd;
-            color: #174d85;
+            border-color: #B8B8B8;
+            background: #F7F7F7;
+            color: #2E2E2E;
         }
 
         .source-amortization-date-grid {
@@ -301,7 +301,7 @@
         }
 
         .source-amortization-date-grid label span {
-            color: #40566f;
+            color: #2E2E2E;
             font-size: 11px;
             font-weight: 850;
         }
@@ -312,16 +312,16 @@
             margin: 0;
             padding: 0 12px;
             box-sizing: border-box;
-            border: 1px solid #cfdae8;
+            border: 1px solid #EBEBEB;
             border-radius: 12px;
             background: #ffffff;
-            color: #10233c;
+            color: #0F0F0F;
             font-size: 13px;
         }
 
         .source-amortization-date-grid .swal2-input:focus {
-            border-color: #7fa8db;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.13);
+            border-color: #B8B8B8;
+            box-shadow: 0 0 0 3px rgba(138, 138, 138, 0.13);
             outline: none;
         }
 
@@ -331,8 +331,8 @@
             gap: 9px;
             padding: 12px 14px;
             border-radius: 12px;
-            background: #edf5ff;
-            color: #245b96;
+            background: #F7F7F7;
+            color: #343434;
             font-size: 12px;
             font-weight: 800;
         }
@@ -343,7 +343,7 @@
             padding: 14px 26px 22px;
             gap: 10px;
             justify-content: flex-end;
-            border-top: 1px solid #e2ebf4;
+            border-top: 1px solid #F7F7F7;
             background: #ffffff;
         }
 
@@ -364,15 +364,15 @@
         }
 
         .source-amortization-confirm-btn {
-            background: #0f172a;
+            background: #0F0F0F;
             color: #ffffff;
-            box-shadow: 0 8px 18px rgba(15, 23, 42, 0.17);
+            box-shadow: 0 8px 18px rgba(15, 15, 15, 0.17);
         }
 
         .source-amortization-cancel-btn {
-            border-color: #dbe5f0;
-            background: #f5f8fc;
-            color: #334a63;
+            border-color: #EBEBEB;
+            background: #F7F7F7;
+            color: #2E2E2E;
         }
 
         .source-manual-badge {
@@ -382,8 +382,8 @@
             margin-left: 6px;
             padding: 2px 6px;
             border-radius: 999px;
-            background: #eef5ff;
-            color: #245ea8;
+            background: #F7F7F7;
+            color: #343434;
             font-size: 9px;
             font-weight: 850;
             vertical-align: middle;
@@ -397,14 +397,14 @@
             padding: 0;
             overflow: hidden;
             border-radius: 22px;
-            background: #f7faff;
-            box-shadow: 0 26px 60px rgba(15, 23, 42, 0.22);
+            background: #F7F7F7;
+            box-shadow: 0 26px 60px rgba(15, 15, 15, 0.22);
         }
 
         .swal2-container .swal2-popup.source-concept-swal .swal2-title {
             margin: 0;
             padding: 22px 28px 6px;
-            color: #10233c;
+            color: #0F0F0F;
             font-size: 27px;
             line-height: 1.15;
             font-weight: 900;
@@ -427,7 +427,7 @@
 
         .source-modal-helper {
             margin: 0;
-            color: #60758c;
+            color: #5C5C5C;
             font-size: 13px;
             line-height: 1.45;
         }
@@ -437,17 +437,17 @@
             align-content: start;
             gap: 12px;
             padding: 15px 16px;
-            border: 1px solid #dbe6f2;
+            border: 1px solid #EBEBEB;
             border-radius: 16px;
             background: #ffffff;
-            box-shadow: 0 6px 16px rgba(16, 35, 60, 0.045);
+            box-shadow: 0 6px 16px rgba(15, 15, 15, 0.045);
         }
 
         .source-concept-section-title {
             display: flex;
             align-items: center;
             gap: 8px;
-            color: #10233c;
+            color: #0F0F0F;
             font-size: 12px;
             font-weight: 900;
             letter-spacing: 0.025em;
@@ -456,7 +456,7 @@
 
         .source-concept-section-title i {
             width: 15px;
-            color: #3b6ea8;
+            color: #343434;
             font-size: 13px;
             text-align: center;
         }
@@ -491,7 +491,7 @@
 
         .source-concept-modal-body label span,
         .source-memo-field span {
-            color: #40566f;
+            color: #2E2E2E;
             font-size: 11px;
             font-weight: 800;
         }
@@ -502,13 +502,13 @@
             min-width: 0;
             margin: 0;
             box-sizing: border-box;
-            border: 1px solid #cfdae8;
+            border: 1px solid #EBEBEB;
             border-radius: 12px;
-            background: #fbfdff;
-            color: #10233c;
+            background: #F7F7F7;
+            color: #0F0F0F;
             font-size: 13px;
             line-height: 1.35;
-            box-shadow: inset 0 1px 1px rgba(16, 35, 60, 0.03);
+            box-shadow: inset 0 1px 1px rgba(15, 15, 15, 0.03);
             transition: border-color 160ms ease, box-shadow 160ms ease, background 160ms ease;
         }
 
@@ -526,15 +526,15 @@
 
         .source-concept-modal-body .swal2-input:focus,
         .source-concept-modal-body .swal2-textarea:focus {
-            border-color: #7fa8db;
+            border-color: #B8B8B8;
             background: #ffffff;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.13);
+            box-shadow: 0 0 0 3px rgba(138, 138, 138, 0.13);
             outline: none;
         }
 
         .source-concept-modal-body .swal2-input::placeholder,
         .source-concept-modal-body .swal2-textarea::placeholder {
-            color: #8da0b5;
+            color: #8A8A8A;
         }
 
         .source-concept-swal-actions {
@@ -543,7 +543,7 @@
             padding: 14px 28px 20px;
             gap: 10px;
             justify-content: flex-end;
-            border-top: 1px solid #e2ebf4;
+            border-top: 1px solid #F7F7F7;
             background: #ffffff;
         }
 
@@ -565,25 +565,25 @@
         }
 
         .source-concept-confirm-btn {
-            background: #0f172a;
+            background: #0F0F0F;
             color: #ffffff;
-            box-shadow: 0 8px 18px rgba(15, 23, 42, 0.17);
+            box-shadow: 0 8px 18px rgba(15, 15, 15, 0.17);
         }
 
         .source-concept-confirm-btn:hover {
             transform: translateY(-1px);
-            box-shadow: 0 10px 20px rgba(15, 23, 42, 0.22);
+            box-shadow: 0 10px 20px rgba(15, 15, 15, 0.22);
         }
 
         .source-concept-cancel-btn {
-            background: #f5f8fc;
-            border-color: #dbe5f0;
-            color: #334a63;
+            background: #F7F7F7;
+            border-color: #EBEBEB;
+            color: #2E2E2E;
         }
 
         .source-concept-cancel-btn:hover {
-            background: #edf3f9;
-            border-color: #cbd9e7;
+            background: #F7F7F7;
+            border-color: #EBEBEB;
         }
 
         @media (max-width: 860px) {
@@ -678,7 +678,7 @@
         }
 
         .source-store-stack > strong {
-            color: #0d3157;
+            color: #1F1F1F;
             font-size: 12px;
             font-weight: 900;
         }
@@ -705,9 +705,9 @@
         }
 
         .source-store-status.custom {
-            border: 1px solid #bfdbfe;
-            background: #eff6ff;
-            color: #1d4f91;
+            border: 1px solid #EBEBEB;
+            background: #F7F7F7;
+            color: #2E2E2E;
         }
 
         .source-period-badge.closeout {
@@ -752,7 +752,7 @@
 
         .prepaid-source-table tbody tr.source-row-custom .source-sticky-store,
         .prepaid-source-table tbody tr.source-row-custom .source-sticky-actions {
-            background: #f7fbff !important;
+            background: #F7F7F7 !important;
         }
 
         .prepaid-source-table .source-sticky-store {

@@ -6,8 +6,8 @@
     --sidebar-premium-start: #030303;
     --sidebar-premium-mid: #0b0b0b;
     --sidebar-premium-end: #181818;
-    --sidebar-premium-text: #eef6ff;
-    --sidebar-premium-muted: #91a8bf;
+    --sidebar-premium-text: #F7F7F7;
+    --sidebar-premium-muted: #B8B8B8;
     --sidebar-premium-accent: #f4f4f4;
     --sidebar-premium-accent-2: #9e9e9e;
     --sidebar-premium-ease: cubic-bezier(.22, 1, .36, 1);
@@ -32,7 +32,7 @@ html body .sidebar {
         radial-gradient(circle at 88% 96%, rgba(255,255,255,.045), transparent 31%),
         linear-gradient(165deg, var(--sidebar-premium-start), var(--sidebar-premium-mid) 47%, var(--sidebar-premium-end)) !important;
     color: var(--sidebar-premium-text) !important;
-    box-shadow: 0 30px 70px -42px rgba(2,9,24,.96), inset 0 1px 0 rgba(255,255,255,.04) !important;
+    box-shadow: 0 30px 70px -42px rgba(15, 15, 15, .96), inset 0 1px 0 rgba(255,255,255,.04) !important;
     transition: width 260ms var(--sidebar-premium-ease), transform 260ms var(--sidebar-premium-ease) !important;
 }
 
@@ -47,7 +47,7 @@ html body .sidebar .sidebar-header {
     min-height: 78px !important;
     padding: 13px 14px !important;
     border-bottom: 1px solid rgba(255,255,255,.09) !important;
-    background: rgba(3,10,24,.16) !important;
+    background: rgba(15, 15, 15, .16) !important;
 }
 
 html body .sidebar .sidebar-toggle {
@@ -108,7 +108,7 @@ html body .sidebar .sidebar-section-title {
     gap: 9px !important;
     min-height: 28px !important;
     margin: 0 7px 7px !important;
-    color: #7f99b2 !important;
+    color: #8A8A8A !important;
     font-size: 9px !important;
     font-weight: 900 !important;
     letter-spacing: .13em !important;
@@ -142,7 +142,7 @@ html body .sidebar :is(.sidebar-menu-link,.nav-btn,.sidebar-profile-link,.sideba
     border: 1px solid transparent !important;
     border-radius: 15px !important;
     background: transparent !important;
-    color: #c7d7e6 !important;
+    color: #EBEBEB !important;
     font-size: 13px !important;
     font-weight: 750 !important;
     text-decoration: none !important;
@@ -168,7 +168,7 @@ html body .sidebar :is(.sidebar-menu-link,.nav-btn,.sidebar-profile-link,.sideba
     border: 1px solid rgba(255,255,255,.065) !important;
     border-radius: 12px !important;
     background: rgba(255,255,255,.055) !important;
-    color: #e7f3ff !important;
+    color: #F7F7F7 !important;
     font-size: 14px !important;
 }
 
@@ -198,7 +198,7 @@ html body .sidebar .sidebar-footer {
     gap: 9px !important;
     padding: 11px !important;
     border-top: 1px solid rgba(255,255,255,.09) !important;
-    background: rgba(3,10,24,.20) !important;
+    background: rgba(15, 15, 15, .20) !important;
 }
 
 html body .sidebar .sidebar-user-card {
@@ -220,8 +220,8 @@ html body .sidebar .sidebar-user-avatar {
     height: 42px !important;
     place-items: center !important;
     border-radius: 13px !important;
-    background: linear-gradient(135deg,#fff,#dcecff) !important;
-    color: #122c4c !important;
+    background: linear-gradient(135deg,#fff,#F7F7F7) !important;
+    color: #1F1F1F !important;
     font-size: 12px !important;
     font-weight: 900 !important;
 }
@@ -258,7 +258,7 @@ html body .sidebar .sidebar-logout {
     border: 1px solid transparent !important;
     border-radius: 14px !important;
     background: transparent !important;
-    color: #d8e5f1 !important;
+    color: #EBEBEB !important;
     font-size: 12px !important;
     font-weight: 800 !important;
     text-align: left !important;
@@ -333,7 +333,7 @@ html body #mainContent.sidebar-collapsed {
     z-index: 999999 !important;
     display: none !important;
     border: 0 !important;
-    background: rgba(4,12,25,.54) !important;
+    background: rgba(15, 15, 15, .54) !important;
     backdrop-filter: blur(4px) !important;
 }
 
@@ -397,7 +397,7 @@ html body .sidebar .sidebar-search {
     border: 1px solid rgba(255, 255, 255, 0.09) !important;
     border-radius: 13px !important;
     background: rgba(255, 255, 255, 0.055) !important;
-    color: #d9e8f5 !important;
+    color: #EBEBEB !important;
     box-shadow:
         inset 0 1px 0 rgba(255, 255, 255, 0.035) !important;
 }
@@ -420,7 +420,7 @@ html body .sidebar .sidebar-search i {
     border: 0 !important;
     border-radius: 10px !important;
     background: transparent !important;
-    color: #dcecff !important;
+    color: #F7F7F7 !important;
     font-size: 13px !important;
     text-align: center !important;
 }
@@ -446,7 +446,7 @@ html body .sidebar .sidebar-search input {
 }
 
 html body .sidebar .sidebar-search input::placeholder {
-    color: #8198af !important;
+    color: #8A8A8A !important;
     opacity: 1 !important;
 }
 
@@ -597,7 +597,7 @@ html body .sidebar .sidebar-chat-badge:not([hidden]) {
 html body .sidebar .sidebar-nav {
     scrollbar-width: thin !important;
     scrollbar-color:
-        rgba(145, 168, 191, 0.34)
+        rgba(184, 184, 184, 0.34)
         transparent !important;
 }
 
@@ -607,7 +607,7 @@ html body .sidebar .sidebar-nav::-webkit-scrollbar {
 
 html body .sidebar .sidebar-nav::-webkit-scrollbar-thumb {
     border-radius: 999px !important;
-    background: rgba(145, 168, 191, 0.34) !important;
+    background: rgba(184, 184, 184, 0.34) !important;
 }
 
 /* ---------------------------------------------------------

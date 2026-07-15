@@ -404,7 +404,7 @@ html body .main > .chat-page {
     --xbfs-sidebar-hero-start: #030303;
     --xbfs-sidebar-hero-middle: #0b0b0b;
     --xbfs-sidebar-hero-end: #1a1a1a;
-    --xbfs-sidebar-hero-copy: rgba(226, 238, 249, 0.84);
+    --xbfs-sidebar-hero-copy: rgba(247, 247, 247, 0.84);
 }
 
 /* ---------------------------------------------------------
@@ -418,12 +418,12 @@ html body .main
     background:
         radial-gradient(
             circle at 89% 13%,
-            rgba(69, 128, 190, 0.19),
+            rgba(58, 58, 58, 0.19),
             transparent 28%
         ),
         radial-gradient(
             circle at 7% 118%,
-            rgba(38, 82, 137, 0.18),
+            rgba(46, 46, 46, 0.18),
             transparent 37%
         ),
         linear-gradient(
@@ -455,7 +455,7 @@ html body .main
 .documents-system-action-primary {
     border-color: rgba(255, 255, 255, 0.25) !important;
     background: rgba(255, 255, 255, 0.96) !important;
-    color: #101a2f !important;
+    color: #0F0F0F !important;
 }
 
 html body .main
@@ -476,12 +476,12 @@ html body .main
     background:
         radial-gradient(
             circle at 88% 15%,
-            rgba(69, 128, 190, 0.18),
+            rgba(58, 58, 58, 0.18),
             transparent 27%
         ),
         radial-gradient(
             circle at 5% 118%,
-            rgba(38, 82, 137, 0.17),
+            rgba(46, 46, 46, 0.17),
             transparent 36%
         ),
         linear-gradient(
@@ -512,7 +512,7 @@ html body .main
 > .profile-account-hero.profile-account-hero
 .profile-hero-summary article {
     border-color: rgba(255, 255, 255, 0.16) !important;
-    background: rgba(5, 15, 32, 0.43) !important;
+    background: rgba(15, 15, 15, 0.43) !important;
     color: #ffffff !important;
 }
 
@@ -527,7 +527,7 @@ html body .main
 > .page-container.profile-page.profile-professional-v3.profile-professional-v3
 > .profile-account-hero.profile-account-hero
 .profile-hero-summary small {
-    color: rgba(226, 238, 249, 0.72) !important;
+    color: rgba(247, 247, 247, 0.72) !important;
 }
 
 html body .main
@@ -535,7 +535,7 @@ html body .main
 > .profile-account-hero.profile-account-hero
 .profile-hero-security span {
     border-color: rgba(255, 255, 255, 0.16) !important;
-    background: rgba(5, 15, 32, 0.36) !important;
+    background: rgba(15, 15, 15, 0.36) !important;
 }
 
 html body .main
@@ -555,12 +555,12 @@ html body .main
     background:
         radial-gradient(
             circle at 88% 15%,
-            rgba(69, 128, 190, 0.18),
+            rgba(58, 58, 58, 0.18),
             transparent 27%
         ),
         radial-gradient(
             circle at 5% 118%,
-            rgba(38, 82, 137, 0.17),
+            rgba(46, 46, 46, 0.17),
             transparent 36%
         ),
         linear-gradient(

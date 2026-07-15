@@ -7,11 +7,11 @@
 :root {
     --xbfs-card-motion-duration: 220ms;
     --xbfs-card-motion-easing: cubic-bezier(0.22, 1, 0.36, 1);
-    --xbfs-card-hover-border: rgba(31, 94, 148, 0.38);
-    --xbfs-card-hover-shadow: 0 22px 46px -30px rgba(9, 39, 68, 0.62),
-        0 10px 22px -18px rgba(9, 39, 68, 0.34);
-    --xbfs-card-soft-shadow: 0 16px 34px -28px rgba(9, 39, 68, 0.54),
-        0 7px 16px -16px rgba(9, 39, 68, 0.28);
+    --xbfs-card-hover-border: rgba(52, 52, 52, 0.38);
+    --xbfs-card-hover-shadow: 0 22px 46px -30px rgba(31, 31, 31, 0.62),
+        0 10px 22px -18px rgba(31, 31, 31, 0.34);
+    --xbfs-card-soft-shadow: 0 16px 34px -28px rgba(31, 31, 31, 0.54),
+        0 7px 16px -16px rgba(31, 31, 31, 0.28);
 }
 
 /* The JS helper adds this class only to known cards. */
@@ -38,8 +38,8 @@
     background:
         radial-gradient(
             360px circle at var(--xbfs-card-pointer-x, 50%) var(--xbfs-card-pointer-y, 50%),
-            rgba(38, 119, 183, 0.13),
-            rgba(38, 119, 183, 0.045) 34%,
+            rgba(52, 52, 52, 0.13),
+            rgba(52, 52, 52, 0.045) 34%,
             transparent 68%
         );
     transition: opacity 180ms ease;
@@ -68,7 +68,7 @@ html body .xbfs-dynamic-card.xbfs-card-hover--interactive:focus-within {
 html body .xbfs-dynamic-card.xbfs-card-hover--metric.xbfs-card-hovered,
 html body .xbfs-dynamic-card.xbfs-card-hover--metric:focus-within {
     transform: translate3d(0, -3px, 0) !important;
-    border-color: rgba(31, 94, 148, 0.27) !important;
+    border-color: rgba(52, 52, 52, 0.27) !important;
     box-shadow: var(--xbfs-card-soft-shadow) !important;
 }
 
@@ -188,7 +188,7 @@ html body :is(
 }
 
 .xbfs-hover-card-soft {
-    --xbfs-card-hover-border: rgba(31, 94, 148, 0.25);
+    --xbfs-card-hover-border: rgba(52, 52, 52, 0.25);
 }
 
 /* Touch screens should not retain desktop hover transforms. */

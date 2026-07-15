@@ -26,8 +26,8 @@ html body .stores-page.stores-page .stores-hero {
     background:
         radial-gradient(circle at 86% 20%, rgba(255, 255, 255, 0.18), transparent 25%),
         radial-gradient(circle at 8% 100%, rgba(45, 212, 191, 0.14), transparent 32%),
-        linear-gradient(125deg, #071b2d 0%, #0e3555 56%, #0f766e 100%) !important;
-    box-shadow: 0 30px 68px -48px rgba(7, 27, 45, 0.95) !important;
+        linear-gradient(125deg, #0F0F0F 0%, #1F1F1F 56%, #2E2E2E 100%) !important;
+    box-shadow: 0 30px 68px -48px rgba(15, 15, 15, 0.95) !important;
     color: #ffffff !important;
     opacity: 1 !important;
     filter: none !important;
@@ -69,7 +69,7 @@ html body .stores-page.stores-page .stores-eyebrow {
     border: 1px solid rgba(255, 255, 255, 0.24) !important;
     border-radius: 999px !important;
     background: rgba(255, 255, 255, 0.12) !important;
-    color: #f0f8ff !important;
+    color: #F7F7F7 !important;
     opacity: 1 !important;
     font-size: 10px !important;
     font-weight: 900 !important;
@@ -95,18 +95,18 @@ html body .stores-page.stores-page .stores-hero h1 {
     font-weight: 950 !important;
     letter-spacing: -0.045em !important;
     line-height: 1 !important;
-    text-shadow: 0 2px 12px rgba(3, 17, 30, 0.18) !important;
+    text-shadow: 0 2px 12px rgba(15, 15, 15, 0.18) !important;
 }
 
 html body .stores-page.stores-page .stores-hero-copy > p {
     max-width: 720px !important;
     margin: 0 !important;
-    color: #e1edf6 !important;
+    color: #F7F7F7 !important;
     opacity: 1 !important;
     font-size: 14px !important;
     font-weight: 650 !important;
     line-height: 1.65 !important;
-    text-shadow: 0 1px 1px rgba(3, 17, 30, 0.14) !important;
+    text-shadow: 0 1px 1px rgba(15, 15, 15, 0.14) !important;
 }
 
 html body .stores-page.stores-page .stores-hero-overview {
@@ -128,10 +128,10 @@ html body .stores-page.stores-page .stores-hero-overview article {
     overflow: hidden !important;
     border: 1px solid rgba(255, 255, 255, 0.24) !important;
     border-radius: 16px !important;
-    background: rgba(7, 27, 45, 0.40) !important;
+    background: rgba(15, 15, 15, 0.40) !important;
     box-shadow:
         inset 0 1px 0 rgba(255, 255, 255, 0.10),
-        0 16px 30px -26px rgba(1, 12, 22, 0.8) !important;
+        0 16px 30px -26px rgba(15, 15, 15, 0.8) !important;
     backdrop-filter: blur(12px) !important;
     -webkit-backdrop-filter: blur(12px) !important;
     color: #ffffff !important;
@@ -175,7 +175,7 @@ html body .stores-page.stores-page .stores-hero-icon i {
 html body .stores-page.stores-page .stores-hero-overview small {
     display: block !important;
     margin: 0 0 4px !important;
-    color: #d9ebf7 !important;
+    color: #EBEBEB !important;
     opacity: 1 !important;
     font-size: 9px !important;
     font-weight: 900 !important;
@@ -237,10 +237,10 @@ html body .stores-page.stores-page .status-pulse {
     html body .stores-page.stores-page .stores-hero-overview article:hover {
         transform: translateY(-2px) !important;
         border-color: rgba(255, 255, 255, 0.36) !important;
-        background: rgba(7, 27, 45, 0.50) !important;
+        background: rgba(15, 15, 15, 0.50) !important;
         box-shadow:
             inset 0 1px 0 rgba(255, 255, 255, 0.12),
-            0 20px 34px -26px rgba(1, 12, 22, 0.9) !important;
+            0 20px 34px -26px rgba(15, 15, 15, 0.9) !important;
     }
 }
 

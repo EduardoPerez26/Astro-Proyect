@@ -4244,8 +4244,8 @@ async function saveConciliacion() {
         denyButtonText:
             '<i class="fa-solid fa-cloud-arrow-up"></i> Save to server',
         cancelButtonText: 'Cancel',
-        confirmButtonColor: '#2563eb',
-        denyButtonColor: '#10b981'
+        confirmButtonColor: '#3A3A3A',
+        denyButtonColor: '#343434'
     }).then(async (result) => {
 
         if (result.isConfirmed) {

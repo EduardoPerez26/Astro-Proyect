@@ -947,7 +947,7 @@
             confirmButtonText: 'Delete',
             cancelButtonText: 'Cancel',
             confirmButtonColor: '#c81e1e',
-            cancelButtonColor: '#102a43'
+            cancelButtonColor: '#1F1F1F'
         });
 
         return result.isConfirmed;
@@ -1125,18 +1125,18 @@
                     <meta name="viewport" content="width=device-width, initial-scale=1">
                     <title>${escapeHtml(title)}</title>
                     <style>
-                        body { margin: 0; background: #eef4f8; color: #082033; font-family: Arial, sans-serif; }
-                        header { position: sticky; top: 0; z-index: 2; padding: 16px 20px; border-bottom: 1px solid #cbd9e6; background: #ffffff; }
+                        body { margin: 0; background: #F7F7F7; color: #0F0F0F; font-family: Arial, sans-serif; }
+                        header { position: sticky; top: 0; z-index: 2; padding: 16px 20px; border-bottom: 1px solid #EBEBEB; background: #ffffff; }
                         h1 { margin: 0; font-size: 18px; font-weight: 900; }
                         main { padding: 16px; }
-                        .viewer-meta { margin-bottom: 10px; color: #415a70; font-size: 12px; font-weight: 800; }
-                        .viewer-table-wrap { overflow: auto; border: 1px solid #cbd9e6; border-radius: 8px; background: #ffffff; }
+                        .viewer-meta { margin-bottom: 10px; color: #2E2E2E; font-size: 12px; font-weight: 800; }
+                        .viewer-table-wrap { overflow: auto; border: 1px solid #EBEBEB; border-radius: 8px; background: #ffffff; }
                         table { width: max-content; min-width: 100%; border-collapse: collapse; font-size: 12px; }
-                        th, td { padding: 8px 10px; border-right: 1px solid #e1ebf3; border-bottom: 1px solid #e1ebf3; white-space: nowrap; }
-                        th { position: sticky; top: 0; background: #102a43; color: #ffffff; text-align: left; }
-                        .viewer-frame { width: 100%; height: calc(100vh - 96px); border: 1px solid #cbd9e6; border-radius: 8px; background: #ffffff; }
+                        th, td { padding: 8px 10px; border-right: 1px solid #EBEBEB; border-bottom: 1px solid #EBEBEB; white-space: nowrap; }
+                        th { position: sticky; top: 0; background: #1F1F1F; color: #ffffff; text-align: left; }
+                        .viewer-frame { width: 100%; height: calc(100vh - 96px); border: 1px solid #EBEBEB; border-radius: 8px; background: #ffffff; }
                         .viewer-media { display: block; max-width: 100%; height: auto; margin: 0 auto; border-radius: 8px; background: #ffffff; }
-                        .viewer-text, .viewer-empty { padding: 18px; border: 1px solid #cbd9e6; border-radius: 8px; background: #ffffff; color: #173a59; font-size: 13px; font-weight: 700; }
+                        .viewer-text, .viewer-empty { padding: 18px; border: 1px solid #EBEBEB; border-radius: 8px; background: #ffffff; color: #1F1F1F; font-size: 13px; font-weight: 700; }
                         .viewer-empty.is-error { border-color: #f0c9c9; background: #fff8f8; color: #9f1d1d; }
                     </style>
                 </head>
@@ -1259,7 +1259,7 @@
             title,
             text,
             confirmButtonText: 'OK',
-            confirmButtonColor: '#102a43'
+            confirmButtonColor: '#1F1F1F'
         });
     }
 

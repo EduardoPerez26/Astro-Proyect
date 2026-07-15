@@ -110,7 +110,7 @@ function manejarChatSinPermiso(message) {
         icon: 'error',
         title: 'Chat access removed',
         text: message || 'You no longer have permission to access chat.',
-        confirmButtonColor: '#0b4778'
+        confirmButtonColor: '#2E2E2E'
     }).then(() => {
         window.location.href = obtenerDestinoSeguroChat();
     });
@@ -608,8 +608,8 @@ async function openNewChatModal() {
             showCancelButton: true,
             confirmButtonText: 'Mandar mensaje',
             cancelButtonText: 'Cancelar',
-            confirmButtonColor: '#0b4778',
-            cancelButtonColor: '#8a9aad',
+            confirmButtonColor: '#2E2E2E',
+            cancelButtonColor: '#8A8A8A',
             focusConfirm: false,
             didOpen: function () {
                 const searchInput = document.getElementById('newChatSearchInput');

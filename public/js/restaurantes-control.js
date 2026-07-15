@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
             icon: 'error',
             title: 'Restricted access',
             text: 'Only an administrator can enable or disable restaurants.',
-            confirmButtonColor: '#102A43'
+            confirmButtonColor: '#1F1F1F'
         }).then(() => {
             window.location.href = '/views/tiendas';
         });
@@ -184,7 +184,7 @@ async function toggleRestaurant(row) {
             : `The reconciliation button for ${restaurant.nombre} will be locked.`,
         showCancelButton: true,
         confirmButtonColor: nextActive ? '#18713B' : '#A83232',
-        cancelButtonColor: '#718096',
+        cancelButtonColor: '#5C5C5C',
         confirmButtonText: nextActive ? 'Yes, enable' : 'Yes, disable',
         cancelButtonText: 'Cancel'
     });
@@ -231,7 +231,7 @@ async function toggleRestaurant(row) {
             icon: 'error',
             title: 'Could not save',
             text: error.message,
-            confirmButtonColor: '#102A43'
+            confirmButtonColor: '#1F1F1F'
         });
         if (button) {
             button.disabled = false;

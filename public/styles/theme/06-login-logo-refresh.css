@@ -5,7 +5,7 @@
     display: grid !important;
     place-items: center !important;
     padding: 32px !important;
-    background: linear-gradient(rgba(11, 58, 103, .045) 1px, transparent 1px), linear-gradient(90deg, rgba(15, 118, 110, .038) 1px, transparent 1px), linear-gradient(180deg, #f7f9fb 0%, #edf3f7 100%) !important;
+    background: linear-gradient(rgba(31, 31, 31, .045) 1px, transparent 1px), linear-gradient(90deg, rgba(46, 46, 46, .038) 1px, transparent 1px), linear-gradient(180deg, #F7F7F7 0%, #F7F7F7 100%) !important;
     background-size: 38px 38px, 38px 38px, auto !important
 }
 
@@ -15,10 +15,10 @@
     display: grid !important;
     grid-template-columns: minmax(360px, .96fr) minmax(390px, .84fr) !important;
     overflow: hidden !important;
-    border: 1px solid #d7e1ea !important;
+    border: 1px solid #EBEBEB !important;
     border-radius: 50px !important;
     background: #ffffff !important;
-    box-shadow: 0 30px 82px -54px rgba(8, 28, 46, .82) !important
+    box-shadow: 0 30px 82px -54px rgba(15, 15, 15, .82) !important
 }
 
 .login-brand-panel {
@@ -28,7 +28,7 @@
     min-width: 0 !important;
     padding: 38px !important;
     border-radius: 0 !important;
-    background: linear-gradient(rgba(255, 255, 255, .055) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, .045) 1px, transparent 1px), #0b2438 !important;
+    background: linear-gradient(rgba(255, 255, 255, .055) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, .045) 1px, transparent 1px), #0F0F0F !important;
     color: #ffffff !important
 }
 
@@ -88,11 +88,11 @@
 
 .login-brand-copy strong span,
 .login-mobile-brand strong span {
-    color: #8fd0d0 !important
+    color: #B8B8B8 !important
 }
 
 .login-brand-copy small {
-    color: rgba(238, 246, 250, .68) !important;
+    color: rgba(247, 247, 247, .68) !important;
     font-size: 10px !important;
     font-weight: 800 !important;
     letter-spacing: .08em !important;
@@ -106,7 +106,7 @@
 
 .login-eyebrow {
     margin-bottom: 14px !important;
-    color: #8fd0d0 !important;
+    color: #B8B8B8 !important;
     font-size: 11px !important;
     font-weight: 850 !important;
     letter-spacing: .09em !important
@@ -125,7 +125,7 @@
 .login-brand-message p {
     max-width: 420px !important;
     margin-top: 18px !important;
-    color: rgba(238, 246, 250, .74) !important;
+    color: rgba(247, 247, 247, .74) !important;
     font-size: 14px !important;
     line-height: 1.65 !important
 }
@@ -137,12 +137,12 @@
     margin-top: auto !important;
     padding-top: 22px !important;
     border-top: 1px solid rgba(255, 255, 255, .12) !important;
-    color: rgba(238, 246, 250, .66) !important;
+    color: rgba(247, 247, 247, .66) !important;
     font-size: 12px !important
 }
 
 .login-brand-footnote i {
-    color: #8fd0d0 !important
+    color: #B8B8B8 !important
 }
 
 .login-form-panel {
@@ -153,7 +153,7 @@
     min-width: 0 !important;
     padding: 46px 52px 28px !important;
     border: 0 !important;
-    background: linear-gradient(180deg, #ffffff 0%, #f9fbfd 100%) !important
+    background: linear-gradient(180deg, #ffffff 0%, #F7F7F7 100%) !important
 }
 
 .lang-toggle--login {
@@ -190,23 +190,23 @@
     min-height: 30px !important;
     margin-bottom: 16px !important;
     padding: 0 12px !important;
-    border: 1px solid #dbe7f0 !important;
+    border: 1px solid #EBEBEB !important;
     border-radius: 999px !important;
-    background: #f2f7fb !important;
-    color: #275a82 !important;
+    background: #F7F7F7 !important;
+    color: #2E2E2E !important;
     font-size: 10px !important;
     font-weight: 850 !important;
     letter-spacing: .06em !important
 }
 
 .login-status-dot {
-    background: #0f766e !important;
-    box-shadow: 0 0 0 4px rgba(15, 118, 110, .12) !important
+    background: #2E2E2E !important;
+    box-shadow: 0 0 0 4px rgba(46, 46, 46, .12) !important
 }
 
 .login-header h2 {
     margin: 0 !important;
-    color: #102a43 !important;
+    color: #1F1F1F !important;
     font-size: 34px !important;
     font-weight: 850 !important;
     line-height: 1.08 !important;
@@ -215,7 +215,7 @@
 
 .login-header p {
     margin-top: 9px !important;
-    color: #61768a !important;
+    color: #5C5C5C !important;
     font-size: 14px !important
 }
 
@@ -225,7 +225,7 @@
 
 .login-field label {
     margin-bottom: 8px !important;
-    color: #40586f !important;
+    color: #2E2E2E !important;
     font-size: 11px !important;
     font-weight: 850 !important;
     letter-spacing: .04em !important;
@@ -241,42 +241,42 @@
 }
 
 .login-input-wrap>i {
-    color: #7e94a8 !important
+    color: #8A8A8A !important
 }
 
 .login-input-wrap input {
     height: 50px !important;
-    border: 1px solid #d6e1eb !important;
+    border: 1px solid #EBEBEB !important;
     border-radius: 8px !important;
     background: #ffffff !important;
-    color: #102a43 !important;
+    color: #1F1F1F !important;
     font-size: 14px !important;
     font-weight: 650 !important;
-    box-shadow: 0 1px 0 rgba(16, 42, 67, .03) !important
+    box-shadow: 0 1px 0 rgba(31, 31, 31, .03) !important
 }
 
 .login-input-wrap input::placeholder {
-    color: #8aa0b5 !important
+    color: #8A8A8A !important
 }
 
 .login-input-wrap input:focus {
-    border-color: #1d5f9f !important;
+    border-color: #343434 !important;
     background: #ffffff !important;
-    box-shadow: 0 0 0 4px rgba(29, 95, 159, .12) !important
+    box-shadow: 0 0 0 4px rgba(52, 52, 52, .12) !important
 }
 
 .login-input-wrap:focus-within>i,
 .login-password-toggle:hover {
-    color: #1d5f9f !important
+    color: #343434 !important
 }
 
 .login-password-toggle {
     border-radius: 8px !important;
-    color: #7e94a8 !important
+    color: #8A8A8A !important
 }
 
 .login-password-toggle:hover {
-    background: #eef5fb !important
+    background: #F7F7F7 !important
 }
 
 .login-submit,
@@ -290,33 +290,33 @@
 
 .login-submit {
     margin-top: 5px !important;
-    background: #102a43 !important;
+    background: #1F1F1F !important;
     color: #ffffff !important
 }
 
 .login-submit:hover:not(:disabled) {
     transform: translateY(-1px) !important;
-    background: #081f33 !important;
-    box-shadow: 0 14px 28px -22px rgba(8, 31, 51, .86) !important
+    background: #0F0F0F !important;
+    box-shadow: 0 14px 28px -22px rgba(15, 15, 15, .86) !important
 }
 
 .login-security-note,
 .login-mfa-summary {
     margin-top: 18px !important;
-    border: 1px solid #dce8f1 !important;
+    border: 1px solid #EBEBEB !important;
     border-radius: 8px !important;
-    background: #f7fafc !important;
-    color: #58708a !important
+    background: #F7F7F7 !important;
+    color: #494949 !important
 }
 
 .login-security-note i,
 .login-mfa-icon {
-    color: #0f766e !important
+    color: #2E2E2E !important
 }
 
 .login-copyright {
     margin: 28px 0 0 !important;
-    color: #8aa0b5 !important;
+    color: #8A8A8A !important;
     font-size: 12px !important;
     text-align: center !important
 }
@@ -350,19 +350,19 @@
         align-items: center !important;
         gap: 13px !important;
         margin: 0 0 30px !important;
-        color: #102a43 !important
+        color: #1F1F1F !important
     }
 
     .login-mobile-brand .login-brand-icon {
         width: 54px !important;
         height: 54px !important;
         flex-basis: 54px !important;
-        border-color: #d7e1ea !important;
+        border-color: #EBEBEB !important;
         box-shadow: none !important
     }
 
     .login-mobile-brand strong {
-        color: #102a43 !important
+        color: #1F1F1F !important
     }
 }
 
@@ -370,7 +370,7 @@
     .login-screen {
         display: block !important;
         padding: 0 !important;
-        background: #f2f6fa !important
+        background: #F7F7F7 !important
     }
 
     .login-shell {
@@ -420,7 +420,7 @@ html.sidebar-collapsed-preset body .sidebar .sidebar-menu-link .sidebar-chat-bad
     min-width: 18px !important;
     height: 18px !important;
     padding: 0 5px !important;
-    border: 2px solid #06243e !important;
+    border: 2px solid #0F0F0F !important;
     font-size: 10px !important;
     box-shadow: 0 8px 16px -10px rgba(0, 0, 0, .75) !important;
     z-index: 4 !important
@@ -448,10 +448,10 @@ html.sidebar-collapsed-preset body .sidebar .sidebar-menu-link .sidebar-chat-bad
     justify-content: center;
     width: 42px;
     height: 42px;
-    border: 1px solid rgba(148, 163, 184, 0.28);
+    border: 1px solid rgba(184, 184, 184, 0.28);
     border-radius: 14px;
     background: rgba(255, 255, 255, 0.92);
-    color: #0f172a;
+    color: #0F0F0F;
     cursor: pointer;
     transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease
 }
@@ -459,9 +459,9 @@ html.sidebar-collapsed-preset body .sidebar .sidebar-menu-link .sidebar-chat-bad
 .notification-toggle:hover,
 .notification-toggle:focus-visible,
 .notification-center.is-open .notification-toggle {
-    border-color: rgba(37, 99, 235, 0.38);
+    border-color: rgba(58, 58, 58, 0.38);
     background: #ffffff;
-    box-shadow: 0 16px 34px -24px rgba(15, 23, 42, 0.65);
+    box-shadow: 0 16px 34px -24px rgba(15, 15, 15, 0.65);
     transform: translateY(-1px);
     outline: none
 }
@@ -497,10 +497,10 @@ html.sidebar-collapsed-preset body .sidebar .sidebar-menu-link .sidebar-chat-bad
     z-index: 9999;
     width: min(380px, calc(100vw - 32px));
     overflow: hidden;
-    border: 1px solid rgba(148, 163, 184, 0.28);
+    border: 1px solid rgba(184, 184, 184, 0.28);
     border-radius: 22px;
     background: rgba(255, 255, 255, 0.98);
-    box-shadow: 0 28px 72px -34px rgba(15, 23, 42, 0.82);
+    box-shadow: 0 28px 72px -34px rgba(15, 15, 15, 0.82);
     backdrop-filter: blur(18px)
 }
 
@@ -514,12 +514,12 @@ html.sidebar-collapsed-preset body .sidebar .sidebar-menu-link .sidebar-chat-bad
     justify-content: space-between;
     gap: 16px;
     padding: 16px 16px 12px;
-    border-bottom: 1px solid rgba(226, 232, 240, 0.95)
+    border-bottom: 1px solid rgba(235, 235, 235, 0.95)
 }
 
 .notifications-panel-header strong {
     display: block;
-    color: #0f172a;
+    color: #0F0F0F;
     font-size: 15px;
     font-weight: 900
 }
@@ -527,7 +527,7 @@ html.sidebar-collapsed-preset body .sidebar .sidebar-menu-link .sidebar-chat-bad
 .notifications-panel-header span {
     display: block;
     margin-top: 2px;
-    color: #64748b;
+    color: #5C5C5C;
     font-size: 12px;
     font-weight: 700
 }
@@ -535,7 +535,7 @@ html.sidebar-collapsed-preset body .sidebar .sidebar-menu-link .sidebar-chat-bad
 .notifications-mark-all {
     border: 0;
     background: transparent;
-    color: #2563eb;
+    color: #3A3A3A;
     font-size: 12px;
     font-weight: 900;
     cursor: pointer;
@@ -544,7 +544,7 @@ html.sidebar-collapsed-preset body .sidebar .sidebar-menu-link .sidebar-chat-bad
 
 .notifications-mark-all:hover,
 .notifications-mark-all:focus-visible {
-    color: #1d4ed8;
+    color: #3A3A3A;
     text-decoration: underline;
     outline: none
 }
@@ -572,12 +572,12 @@ html.sidebar-collapsed-preset body .sidebar .sidebar-menu-link .sidebar-chat-bad
 
 .notification-item:hover,
 .notification-item:focus-visible {
-    background: #f8fafc;
+    background: #F7F7F7;
     outline: none
 }
 
 .notification-item.is-unread {
-    background: #eff6ff
+    background: #F7F7F7
 }
 
 .notification-item.priority-high {
@@ -591,8 +591,8 @@ html.sidebar-collapsed-preset body .sidebar .sidebar-menu-link .sidebar-chat-bad
     width: 38px;
     height: 38px;
     border-radius: 13px;
-    background: #e0ecff;
-    color: #2563eb
+    background: #F7F7F7;
+    color: #3A3A3A
 }
 
 .notification-item.priority-high .notification-item-icon {
@@ -620,7 +620,7 @@ html.sidebar-collapsed-preset body .sidebar .sidebar-menu-link .sidebar-chat-bad
 
 .notification-item-body strong {
     display: block;
-    color: #0f172a;
+    color: #0F0F0F;
     font-size: 13px;
     font-weight: 900;
     line-height: 1.25
@@ -630,7 +630,7 @@ html.sidebar-collapsed-preset body .sidebar .sidebar-menu-link .sidebar-chat-bad
     display: -webkit-box;
     margin-top: 3px;
     overflow: hidden;
-    color: #475569;
+    color: #2E2E2E;
     font-size: 12px;
     font-weight: 650;
     line-height: 1.35;
@@ -641,7 +641,7 @@ html.sidebar-collapsed-preset body .sidebar .sidebar-menu-link .sidebar-chat-bad
 .notification-item-body small {
     display: block;
     margin-top: 6px;
-    color: #94a3b8;
+    color: #B8B8B8;
     font-size: 11px;
     font-weight: 800
 }
@@ -659,7 +659,7 @@ html.sidebar-collapsed-preset body .sidebar .sidebar-menu-link .sidebar-chat-bad
     height: 9px;
     margin-top: 4px;
     border-radius: 999px;
-    background: #2563eb
+    background: #3A3A3A
 }
 
 .notification-dismiss {
@@ -669,7 +669,7 @@ html.sidebar-collapsed-preset body .sidebar .sidebar-menu-link .sidebar-chat-bad
     width: 22px;
     height: 22px;
     border-radius: 999px;
-    color: #94a3b8;
+    color: #B8B8B8;
     opacity: 0;
     transition: opacity 0.16s ease, background 0.16s ease, color 0.16s ease
 }
@@ -681,8 +681,8 @@ html.sidebar-collapsed-preset body .sidebar .sidebar-menu-link .sidebar-chat-bad
 
 .notification-dismiss:hover,
 .notification-dismiss:focus-visible {
-    background: #e2e8f0;
-    color: #0f172a;
+    background: #EBEBEB;
+    color: #0F0F0F;
     outline: none
 }
 
@@ -694,17 +694,17 @@ html.sidebar-collapsed-preset body .sidebar .sidebar-menu-link .sidebar-chat-bad
     justify-content: center;
     gap: 7px;
     padding: 26px 20px;
-    color: #64748b;
+    color: #5C5C5C;
     text-align: center
 }
 
 .notifications-empty i {
-    color: #94a3b8;
+    color: #B8B8B8;
     font-size: 26px
 }
 
 .notifications-empty strong {
-    color: #0f172a;
+    color: #0F0F0F;
     font-size: 13px;
     font-weight: 900
 }
@@ -729,16 +729,16 @@ html.sidebar-collapsed-preset body .sidebar .sidebar-menu-link .sidebar-chat-bad
 }
 
 body .main .prepaid-page {
-    --prepaid-page: var(--minimal-page, #eef4fb);
+    --prepaid-page: var(--minimal-page, #F7F7F7);
     --prepaid-surface: var(--minimal-surface, #ffffff);
-    --prepaid-surface-soft: var(--minimal-surface-soft, #f8fbff);
-    --prepaid-border: var(--minimal-border, #dfe8f2);
-    --prepaid-border-strong: var(--minimal-border-strong, #cad8e6);
-    --prepaid-text: var(--minimal-text, #102033);
-    --prepaid-muted: var(--minimal-muted, #61788f);
-    --prepaid-primary: var(--minimal-blue, #0b2f54);
-    --prepaid-primary-dark: var(--minimal-nav, #101122);
-    --prepaid-soft: var(--minimal-blue-soft, #edf5ff);
+    --prepaid-surface-soft: var(--minimal-surface-soft, #F7F7F7);
+    --prepaid-border: var(--minimal-border, #EBEBEB);
+    --prepaid-border-strong: var(--minimal-border-strong, #EBEBEB);
+    --prepaid-text: var(--minimal-text, #0F0F0F);
+    --prepaid-muted: var(--minimal-muted, #5C5C5C);
+    --prepaid-primary: var(--minimal-#2e2e2e, #1F1F1F);
+    --prepaid-primary-dark: var(--minimal-nav, #0F0F0F);
+    --prepaid-soft: var(--minimal-#2e2e2e-soft, #F7F7F7);
     --prepaid-danger: #b42318;
     --prepaid-warning: #9a6700;
     --prepaid-success: #08705f;
@@ -914,7 +914,7 @@ body .main .prepaid-page .prepaid-form {
 
 body .main .prepaid-page .prepaid-form label,
 body .main .prepaid-page .prepaid-filters label {
-    color: #405a73 !important;
+    color: #494949 !important;
     font-size: 11px !important;
     font-weight: 900 !important;
     letter-spacing: .04em !important;
@@ -929,7 +929,7 @@ body .main .prepaid-page .prepaid-filters select {
     min-height: 42px !important;
     margin-top: 6px !important;
     padding: 9px 11px !important;
-    border: 1px solid #cbdbea !important;
+    border: 1px solid #EBEBEB !important;
     border-radius: 10px !important;
     background: #ffffff !important;
     color: var(--prepaid-text) !important;
@@ -942,8 +942,8 @@ body .main .prepaid-page .prepaid-form input:focus,
 body .main .prepaid-page .prepaid-form select:focus,
 body .main .prepaid-page .prepaid-filters input:focus,
 body .main .prepaid-page .prepaid-filters select:focus {
-    border-color: #315d9a !important;
-    box-shadow: 0 0 0 4px rgba(49, 93, 154, .12) !important;
+    border-color: #343434 !important;
+    box-shadow: 0 0 0 4px rgba(52, 52, 52, .12) !important;
     outline: 0 !important
 }
 
@@ -1044,8 +1044,8 @@ body .main .prepaid-page .prepaid-table {
 body .main .prepaid-page .prepaid-table th,
 body .main .prepaid-page .prepaid-table td {
     padding: 10px 12px !important;
-    border-right: 1px solid #e1e9f2 !important;
-    border-bottom: 1px solid #e1e9f2 !important;
+    border-right: 1px solid #EBEBEB !important;
+    border-bottom: 1px solid #EBEBEB !important;
     white-space: nowrap !important;
     vertical-align: middle !important
 }
@@ -1054,7 +1054,7 @@ body .main .prepaid-page .prepaid-table th {
     position: sticky !important;
     top: 0 !important;
     z-index: 1 !important;
-    border-color: #1c2940 !important;
+    border-color: #1F1F1F !important;
     background: var(--prepaid-primary-dark) !important;
     color: #ffffff !important;
     font-size: 11px !important;
@@ -1064,15 +1064,15 @@ body .main .prepaid-page .prepaid-table th {
 }
 
 body .main .prepaid-page .prepaid-table td {
-    color: #173a59 !important
+    color: #1F1F1F !important
 }
 
 body .main .prepaid-page .prepaid-table tbody tr:nth-child(even) td {
-    background: #f8fbff !important
+    background: #F7F7F7 !important
 }
 
 body .main .prepaid-page .prepaid-table tbody tr:hover td {
-    background: #edf5ff !important
+    background: #F7F7F7 !important
 }
 
 body .main .prepaid-page .number {
@@ -1111,8 +1111,8 @@ body .main .prepaid-page .status-badge {
 }
 
 body .main .prepaid-page .status-pending-gl {
-    background: #eef2f7 !important;
-    color: #475569 !important
+    background: #F7F7F7 !important;
+    color: #2E2E2E !important
 }
 
 body .main .prepaid-page .status-matched {

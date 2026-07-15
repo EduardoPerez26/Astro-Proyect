@@ -1,0 +1,292 @@
+/* Extracted from pages/views/restaurantes.astro. Keep page/component-specific styling here. */
+.operations-admin { width: 100%; min-width: 0; padding-bottom: 18px; }
+
+        .operations-header {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 28px;
+            padding: 30px 32px;
+            border-radius: 18px;
+            color: #fff;
+            background: linear-gradient(135deg, #091f35 0%, #102f50 62%, #174a75 100%);
+            box-shadow: 0 24px 54px -40px rgba(5, 25, 45, .9);
+        }
+
+        .operations-eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+            color: #b9d6ef;
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: .11em;
+            text-transform: uppercase;
+        }
+
+        .operations-header h1 {
+            margin: 0;
+            font-family: 'Inter', sans-serif;
+            font-size: clamp(30px, 3vw, 42px);
+            font-weight: 600;
+            letter-spacing: -.025em;
+        }
+
+        .operations-header p {
+            max-width: 720px;
+            margin: 12px 0 0;
+            color: #cfdeeb;
+            font-size: 13px;
+            line-height: 1.7;
+        }
+
+        .operations-refresh {
+            min-height: 42px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 9px;
+            flex: 0 0 auto;
+            padding: 0 15px;
+            border: 1px solid rgba(255, 255, 255, .2);
+            border-radius: 9px;
+            color: #fff;
+            background: rgba(255, 255, 255, .09);
+            font-size: 11px;
+            font-weight: 800;
+        }
+
+        .operations-refresh:hover { background: rgba(255, 255, 255, .15); }
+
+        .operations-summary {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 14px;
+            margin: 20px 0;
+        }
+
+        .operations-summary article {
+            min-width: 0;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 18px;
+            border: 1px solid #dce5ee;
+            border-radius: 13px;
+            background: #fff;
+            box-shadow: 0 12px 28px -26px rgba(10, 37, 64, .7);
+        }
+
+        .summary-icon {
+            width: 42px;
+            height: 42px;
+            flex: 0 0 42px;
+            display: grid;
+            place-items: center;
+            border-radius: 10px;
+        }
+
+        .summary-icon.is-navy { color: #174a75; background: #e9f1f8; }
+        .summary-icon.is-green { color: #18713b; background: #eaf8ef; }
+        .summary-icon.is-amber { color: #966019; background: #fff5df; }
+
+        .operations-summary div { display: flex; flex-direction: column; gap: 3px; }
+        .operations-summary strong { color: #102a43; font-size: 24px; line-height: 1; }
+        .operations-summary span:not(.summary-icon) { color: #718096; font-size: 10px; font-weight: 800; text-transform: uppercase; }
+
+        .operations-panel {
+            overflow: hidden;
+            border: 1px solid #dce5ee;
+            border-radius: 15px;
+            background: #fff;
+            box-shadow: 0 18px 40px -34px rgba(10, 37, 64, .68);
+        }
+
+        .operations-panel-heading {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            padding: 20px 22px;
+            border-bottom: 1px solid #e4ebf2;
+            background: #f8fafc;
+        }
+
+        .operations-panel-heading h2 { margin: 0; color: #102a43; font-size: 16px; }
+        .operations-panel-heading p { margin: 5px 0 0; color: #718096; font-size: 11px; }
+        .operations-panel-heading > span { color: #60758a; font-size: 10px; font-weight: 800; text-transform: uppercase; }
+        .operations-panel-heading > span i { margin-right: 6px; color: #174a75; }
+
+        .restaurant-control-list { padding: 0 22px; }
+
+        .restaurant-control-row {
+            display: grid;
+            grid-template-columns: minmax(210px, 1fr) auto minmax(220px, 1fr) auto;
+            gap: 18px;
+            align-items: center;
+            padding: 22px 0;
+            border-bottom: 1px solid #e7edf3;
+        }
+
+        .restaurant-control-row:last-child { border-bottom: 0; }
+        .restaurant-identity { display: flex; align-items: center; gap: 12px; min-width: 0; }
+        .restaurant-mark { width: 44px; height: 44px; flex: 0 0 44px; display: grid; place-items: center; border: 1px solid #dce5ee; border-radius: 11px; color: #174a75; background: #f3f7fa; }
+        .restaurant-identity strong { display: block; overflow: hidden; color: #102a43; font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
+        .restaurant-identity small { display: block; margin-top: 4px; color: #8293a5; font-size: 10px; text-transform: uppercase; }
+
+        .restaurant-state-badge { display: inline-flex; align-items: center; gap: 7px; width: max-content; padding: 7px 10px; border: 1px solid; border-radius: 999px; font-size: 10px; font-weight: 800; text-transform: uppercase; }
+        .restaurant-state-badge.is-available { border-color: #b9dfc7; color: #18713b; background: #eefbf3; }
+        .restaurant-state-badge.is-disabled { border-color: #efc1c1; color: #a83232; background: #fff1f1; }
+        .restaurant-state-copy { margin: 0; color: #60758a; font-size: 11px; line-height: 1.5; }
+        .toggle-restaurant-state { min-width: 126px; min-height: 40px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 0 14px; border-radius: 8px; color: #fff; font-size: 10px; font-weight: 800; }
+        .toggle-restaurant-state.is-disable { background: #a83232; }
+        .toggle-restaurant-state.is-disable:hover { background: #872626; }
+        .toggle-restaurant-state.is-enable { background: #18713b; }
+        .toggle-restaurant-state.is-enable:hover { background: #105c2e; }
+        .toggle-restaurant-state:disabled { opacity: .62; cursor: wait; }
+
+        .state-selector { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; padding: 4px; border-radius: 9px; background: #edf2f7; }
+        .state-option { min-height: 34px; padding: 0 8px; border-radius: 7px; color: #60758a; font-size: 10px; font-weight: 800; }
+        .state-option:hover { color: #102a43; background: rgba(255, 255, 255, .7); }
+        .state-option.is-selected { color: #fff; background: #102a43; box-shadow: 0 7px 14px -11px rgba(10, 37, 64, .9); }
+        .state-option[data-state="mantenimiento"].is-selected { background: #9a641c; }
+        .state-option[data-state="falla"].is-selected { background: #a83232; }
+
+        .restaurant-reason { width: 100%; min-height: 40px; padding: 0 12px; border: 1px solid #d7e0e9; border-radius: 8px; outline: 0; color: #334e68; background: #fbfcfd; font-size: 11px; }
+        .restaurant-reason:focus { border-color: #174a75; box-shadow: 0 0 0 3px rgba(23, 74, 117, .1); background: #fff; }
+        .restaurant-reason:disabled { color: #9aa9b7; background: #f1f4f7; cursor: not-allowed; }
+
+        .save-restaurant-state { min-height: 40px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 0 14px; border-radius: 8px; color: #fff; background: #102a43; font-size: 10px; font-weight: 800; white-space: nowrap; }
+        .save-restaurant-state:hover { background: #081f33; }
+        .save-restaurant-state:disabled { opacity: .62; cursor: wait; }
+
+        .operations-loading,
+        .operations-error { display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 150px; color: #718096; font-size: 12px; }
+        .operations-error { color: #a83232; }
+
+        @media (max-width: 1120px) {
+            .restaurant-control-row { grid-template-columns: minmax(180px, .8fr) minmax(300px, 1.2fr); }
+            .save-restaurant-state { justify-self: end; }
+        }
+
+        @media (max-width: 760px) {
+            .operations-header { align-items: flex-start; flex-direction: column; padding: 26px 22px; }
+            .operations-refresh { width: 100%; }
+            .operations-summary { grid-template-columns: 1fr; }
+            .operations-panel-heading { align-items: flex-start; flex-direction: column; }
+            .restaurant-control-list { padding: 0 18px; }
+            .restaurant-control-row { grid-template-columns: 1fr; gap: 13px; }
+            .save-restaurant-state { width: 100%; justify-self: stretch; }
+        }
+
+        /* Apariencia de control contable */
+        .operations-header {
+            align-items: center;
+            padding: 20px 22px;
+            border: 1px solid #234864;
+            border-radius: 6px;
+            background: #102a43;
+            box-shadow: none;
+        }
+
+        .operations-eyebrow {
+            margin-bottom: 7px;
+            color: #9fc3df;
+            font-size: 10px;
+        }
+
+        .operations-header h1 {
+            font-family: 'Inter', sans-serif;
+            font-size: 26px;
+            font-weight: 700;
+            letter-spacing: -.015em;
+        }
+
+        .operations-header p {
+            margin-top: 7px;
+            color: #c7d8e6;
+            font-size: 12px;
+            line-height: 1.55;
+        }
+
+        .operations-refresh {
+            min-height: 34px;
+            padding: 0 11px;
+            border-radius: 4px;
+            font-size: 11px;
+        }
+
+        .operations-summary {
+            gap: 10px;
+            margin: 14px 0;
+        }
+
+        .operations-summary article {
+            gap: 10px;
+            min-height: 64px;
+            padding: 12px 14px;
+            border-radius: 5px;
+            box-shadow: none;
+        }
+
+        .summary-icon {
+            width: 34px;
+            height: 34px;
+            flex-basis: 34px;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+
+        .operations-summary strong { font-size: 23px; }
+        .operations-summary span:not(.summary-icon) { font-size: 10px; letter-spacing: .05em; }
+
+        .operations-panel {
+            border-color: #cfd9e3;
+            border-radius: 5px;
+            box-shadow: none;
+        }
+
+        .operations-panel-heading {
+            padding: 14px 16px;
+            background: #f5f7fa;
+        }
+
+        .operations-panel-heading h2 { font-size: 15px; }
+        .operations-panel-heading p { margin-top: 3px; font-size: 11px; }
+        .operations-panel-heading > span { font-size: 10px; }
+        .restaurant-control-list { padding: 0 16px; }
+
+        .restaurant-control-row {
+            gap: 14px;
+            padding: 14px 0;
+        }
+
+        .restaurant-mark {
+            width: 36px;
+            height: 36px;
+            flex-basis: 36px;
+            border-radius: 4px;
+        }
+
+        .restaurant-identity strong { font-size: 13px; }
+        .restaurant-identity small { margin-top: 2px; font-size: 10px; }
+        .restaurant-state-badge {
+            gap: 5px;
+            padding: 5px 7px;
+            border-radius: 3px;
+            font-size: 10px;
+        }
+
+        .restaurant-state-copy { font-size: 11px; }
+        .toggle-restaurant-state {
+            min-width: 112px;
+            min-height: 34px;
+            padding: 0 10px;
+            border-radius: 4px;
+            font-size: 11px;
+        }
+
+        @media (max-width: 760px) {
+            .operations-header { padding: 18px; }
+        }

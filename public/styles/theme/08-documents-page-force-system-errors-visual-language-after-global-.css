@@ -1,13 +1,13 @@
 /* Documents page: force System Errors visual language after global layout overrides — lossless migration, original cascade preserved. */
 html body .main>.page-container.documents-page {
-    --se-navy: #071b2d !important;
-    --se-muted: #64748b !important;
-    --se-line: #dbe5ef !important;
-    --se-soft: #f8fafc !important;
-    --se-shadow: 0 20px 50px -42px rgba(7, 27, 45, 0.7) !important;
-    --dept-start: #083344 !important;
-    --dept-mid: #0f766e !important;
-    --dept-end: #2563eb !important;
+    --se-navy: #0F0F0F !important;
+    --se-muted: #5C5C5C !important;
+    --se-line: #EBEBEB !important;
+    --se-soft: #F7F7F7 !important;
+    --se-shadow: 0 20px 50px -42px rgba(15, 15, 15, 0.7) !important;
+    --dept-start: #0F0F0F !important;
+    --dept-mid: #2E2E2E !important;
+    --dept-end: #3A3A3A !important;
     display: block !important;
     padding: 0 0 34px !important;
     background: transparent !important;
@@ -27,7 +27,7 @@ html body .main>.page-container.documents-page>.documents-system-hero {
     border: 1px solid rgba(255, 255, 255, 0.16) !important;
     border-radius: 22px !important;
     color: #ffffff !important;
-    background: radial-gradient(circle at 88% 10%, rgba(255, 255, 255, 0.16), transparent 28%), linear-gradient(135deg, var(--dept-start, #071b2d) 0%, var(--dept-mid, #0e395c) 54%, var(--dept-end, #8f1d1d) 100%) !important;
+    background: radial-gradient(circle at 88% 10%, rgba(255, 255, 255, 0.16), transparent 28%), linear-gradient(135deg, var(--dept-start, #0F0F0F) 0%, var(--dept-mid, #1F1F1F) 54%, var(--dept-end, #8f1d1d) 100%) !important;
     box-shadow: var(--se-shadow) !important
 }
 
@@ -100,7 +100,7 @@ html body .main>.page-container.documents-page>.documents-system-hero .documents
     border: 1px solid #ffffff !important;
     border-radius: 12px !important;
     background: #ffffff !important;
-    color: #102f4c !important;
+    color: #1F1F1F !important;
     text-decoration: none !important;
     font-size: 12px !important;
     font-weight: 900 !important;
@@ -110,7 +110,7 @@ html body .main>.page-container.documents-page>.documents-system-hero .documents
 
 html body .main>.page-container.documents-page>.documents-system-hero .documents-system-action-primary:hover {
     transform: translateY(-1px) !important;
-    background: #f3f7fb !important
+    background: #F7F7F7 !important
 }
 
 html body .main>.page-container.documents-page>.documents-filters {
@@ -145,13 +145,13 @@ html body .main>.page-container.documents-page>.documents-type-tabs .documents-t
     border: 0 !important;
     border-radius: 10px !important;
     background: transparent !important;
-    color: #102f4c !important;
+    color: #1F1F1F !important;
     box-shadow: none !important
 }
 
 html body .main>.page-container.documents-page>.documents-type-tabs .documents-type-tab.active {
     color: #ffffff !important;
-    background: #101122 !important
+    background: #0F0F0F !important
 }
 
 html body .main>.page-container.documents-page>.documents-type-tabs .documents-type-tab.active .documents-type-copy strong,
@@ -162,7 +162,7 @@ html body .main>.page-container.documents-page>.documents-type-tabs .documents-t
 html body .main>.page-container.documents-page>.documents-type-tabs .documents-type-tab.active .documents-type-icon,
 html body .main>.page-container.documents-page>.documents-type-tabs .documents-type-tab.active .documents-type-count {
     color: #ffffff !important;
-    background: #0b5cab !important
+    background: #343434 !important
 }
 
 html body .main>.page-container.documents-page>.table-container {
@@ -189,35 +189,35 @@ html body .main>.page-container.documents-page>.table-container>.table-header {
 }
 
 html body .main :is(.admin-dashboard-page, .admin-users-page, .operations-admin, .schedule-dashboard, .reconciliation-page, .property-documents-page, .property-management-page, .comparison-history-page, .stores-page) {
-    --se-navy: #071b2d !important;
-    --se-blue: #113d61 !important;
-    --se-muted: #64748b !important;
-    --se-line: #dbe5ef !important;
+    --se-navy: #0F0F0F !important;
+    --se-blue: #1F1F1F !important;
+    --se-muted: #5C5C5C !important;
+    --se-line: #EBEBEB !important;
     --se-panel: #ffffff !important;
-    --se-soft: #f8fafc !important;
+    --se-soft: #F7F7F7 !important;
     --se-red: #8f1d1d !important;
-    --se-shadow: 0 20px 50px -42px rgba(7, 27, 45, 0.7) !important;
-    --dept-start: #071b2d !important;
-    --dept-mid: #0e395c !important;
+    --se-shadow: 0 20px 50px -42px rgba(15, 15, 15, 0.7) !important;
+    --dept-start: #0F0F0F !important;
+    --dept-mid: #1F1F1F !important;
     --dept-end: #8f1d1d !important;
-    color: var(--se-navy) !important
+    color: var(--se-#171717) !important
 }
 
 html body .main :is(.stores-page, .documents-page, .reconciliation-page, .comparison-history-page) {
-    --dept-start: #083344 !important;
-    --dept-mid: #0f766e !important;
-    --dept-end: #2563eb !important
+    --dept-start: #0F0F0F !important;
+    --dept-mid: #2E2E2E !important;
+    --dept-end: #3A3A3A !important
 }
 
 html body .main :is(.schedule-dashboard, .property-documents-page, .property-management-page) {
-    --dept-start: #172554 !important;
+    --dept-start: #1F1F1F !important;
     --dept-mid: #365314 !important;
-    --dept-end: #0f766e !important
+    --dept-end: #2E2E2E !important
 }
 
 html body .main :is(.admin-dashboard-page, .admin-users-page, .operations-admin) {
-    --dept-start: #111827 !important;
-    --dept-mid: #4c1d95 !important;
+    --dept-start: #0F0F0F !important;
+    --dept-mid: #2E2E2E !important;
     --dept-end: #b42318 !important
 }
 
@@ -233,7 +233,7 @@ html body .main :is(.admin-dashboard-header, .admin-users-page>.page-header, .op
     border: 1px solid rgba(255, 255, 255, 0.16) !important;
     border-radius: 22px !important;
     color: #ffffff !important;
-    background: radial-gradient(circle at 88% 10%, rgba(255, 255, 255, 0.16), transparent 28%), linear-gradient(135deg, var(--dept-start, #071b2d) 0%, var(--dept-mid, #0e395c) 54%, var(--dept-end, #8f1d1d) 100%) !important;
+    background: radial-gradient(circle at 88% 10%, rgba(255, 255, 255, 0.16), transparent 28%), linear-gradient(135deg, var(--dept-start, #0F0F0F) 0%, var(--dept-mid, #1F1F1F) 54%, var(--dept-end, #8f1d1d) 100%) !important;
     box-shadow: var(--se-shadow) !important
 }
 
@@ -350,7 +350,7 @@ html body .main :is(.admin-dashboard-header-actions .btn, .admin-users-page>.pag
     border: 1px solid #ffffff !important;
     border-radius: 12px !important;
     background: #ffffff !important;
-    color: #102f4c !important;
+    color: #1F1F1F !important;
     font-size: 12px !important;
     font-weight: 900 !important;
     box-shadow: none !important;
@@ -379,11 +379,11 @@ html body .main :is(.admin-metric-icon, .history-stat-icon, .summary-icon, .sche
 html body .main :is(.admin-panel-header, .operations-panel-heading) {
     padding: 20px !important;
     border-bottom: 1px solid var(--se-line) !important;
-    background: linear-gradient(180deg, rgba(248, 251, 254, 0.95), rgba(255, 255, 255, 0.95)) !important
+    background: linear-gradient(180deg, rgba(247, 247, 247, 0.95), rgba(255, 255, 255, 0.95)) !important
 }
 
 html body .main :is(.admin-panel-header span, .operations-panel-heading>span) {
-    color: #667085 !important;
+    color: #5C5C5C !important;
     font-size: 10px !important;
     font-weight: 900 !important;
     letter-spacing: 0.1em !important;
@@ -392,7 +392,7 @@ html body .main :is(.admin-panel-header span, .operations-panel-heading>span) {
 
 html body .main :is(.admin-panel-header h2, .operations-panel-heading h2) {
     margin: 4px 0 0 !important;
-    color: var(--se-navy) !important;
+    color: var(--se-#171717) !important;
     font-size: 20px !important;
     letter-spacing: -0.02em !important
 }
@@ -422,11 +422,11 @@ html body .main :is(#usuariosPanel .filters-bar input, #usuariosPanel .filters-b
     width: 100% !important;
     min-height: 40px !important;
     padding: 8px 12px !important;
-    border: 1px solid #cfdce8 !important;
+    border: 1px solid #EBEBEB !important;
     border-radius: 12px !important;
     outline: none !important;
     background: #ffffff !important;
-    color: #102f4c !important;
+    color: #1F1F1F !important;
     font-size: 12px !important;
     font-weight: 700 !important;
     box-shadow: none !important
@@ -454,9 +454,9 @@ html body .main :is(#usersTable, .admin-table) thead th {
     z-index: 2 !important;
     padding: 13px 14px !important;
     border: 0 !important;
-    border-bottom: 1px solid #071b2d !important;
-    background: #071b2d !important;
-    color: #dbeafe !important;
+    border-bottom: 1px solid #0F0F0F !important;
+    background: #0F0F0F !important;
+    color: #F7F7F7 !important;
     font-size: 10px !important;
     font-weight: 900 !important;
     letter-spacing: 0.06em !important;
@@ -467,14 +467,14 @@ html body .main :is(#usersTable, .admin-table) thead th {
 html body .main :is(#usersTable, .admin-table) tbody td {
     padding: 14px !important;
     border: 0 !important;
-    border-bottom: 1px solid #edf2f7 !important;
-    color: #344054 !important;
+    border-bottom: 1px solid #F7F7F7 !important;
+    color: #2E2E2E !important;
     background: #ffffff !important;
     font-size: 12px !important
 }
 
 html body .main :is(#usersTable, .admin-table) tbody tr:hover td {
-    background: #f8fbff !important
+    background: #F7F7F7 !important
 }
 
 html body .main .store-grid {
@@ -484,7 +484,7 @@ html body .main .store-grid {
 html body .main [data-store-card] {
     border: 1px solid var(--se-line) !important;
     border-radius: 18px !important;
-    background: linear-gradient(180deg, #ffffff, #f8fbfe) !important;
+    background: linear-gradient(180deg, #ffffff, #F7F7F7) !important;
     box-shadow: var(--se-shadow) !important
 }
 
@@ -513,16 +513,16 @@ html body .main :is(.prepaid-table, .prepaid-source-table, .prepaid-schedule-mat
     z-index: 90 !important;
     background-clip: padding-box !important;
     transform: translateZ(0) !important;
-    box-shadow: 0 1px 0 rgba(255, 255, 255, .16), 0 2px 0 rgba(7, 27, 45, .18) !important
+    box-shadow: 0 1px 0 rgba(255, 255, 255, .16), 0 2px 0 rgba(15, 15, 15, .18) !important
 }
 
 html body .main :is(#pmDocumentsTable, .pm-documents-table, .pm-schedule-table, .preview-table, .preview-excel-table) thead th {
-    background: #071b2d !important;
+    background: #0F0F0F !important;
     color: #ffffff !important
 }
 
 html body .main :is(.prepaid-table, .prepaid-source-table, .prepaid-schedule-matrix, .prepaid-difference-modal-table table) thead th {
-    background: #101122 !important;
+    background: #0F0F0F !important;
     color: #ffffff !important
 }
 
@@ -552,13 +552,13 @@ html body .main :is(.prepaid-table, .prepaid-source-table, .prepaid-schedule-mat
 }
 
 .floating-table-header.is-prepaid-header .floating-table-header-table :is(thead, tr, th) {
-    background: #101122 !important
+    background: #0F0F0F !important
 }
 
 .floating-table-header.is-prepaid-header .floating-table-header-table thead th {
     padding: 10px 9px !important;
-    border: 1px solid #1c2940 !important;
-    background: #101122 !important;
+    border: 1px solid #1F1F1F !important;
+    background: #0F0F0F !important;
     color: #ffffff !important;
     font-size: 10px !important;
     font-weight: 950 !important;
@@ -566,7 +566,7 @@ html body .main :is(.prepaid-table, .prepaid-source-table, .prepaid-schedule-mat
     text-align: center !important;
     text-transform: uppercase !important;
     white-space: nowrap !important;
-    box-shadow: 0 1px 0 rgba(255, 255, 255, .16), 0 2px 0 rgba(7, 27, 45, .18) !important
+    box-shadow: 0 1px 0 rgba(255, 255, 255, .16), 0 2px 0 rgba(15, 15, 15, .18) !important
 }
 
 .floating-table-header.is-prepaid-header .prepaid-schedule-matrix thead th {
@@ -598,7 +598,7 @@ html body .main :is(.prepaid-table, .prepaid-source-table, .prepaid-schedule-mat
     --xbfs-sidebar-hero-start: #030303;
     --xbfs-sidebar-hero-middle: #0b0b0b;
     --xbfs-sidebar-hero-end: #1a1a1a;
-    --xbfs-sidebar-hero-copy: rgba(226, 238, 249, 0.84);
+    --xbfs-sidebar-hero-copy: rgba(247, 247, 247, 0.84);
 }
 
 /* ---------------------------------------------------------
@@ -612,12 +612,12 @@ html body .main
     background:
         radial-gradient(
             circle at 89% 13%,
-            rgba(69, 128, 190, 0.19),
+            rgba(58, 58, 58, 0.19),
             transparent 28%
         ),
         radial-gradient(
             circle at 7% 118%,
-            rgba(38, 82, 137, 0.18),
+            rgba(46, 46, 46, 0.18),
             transparent 37%
         ),
         linear-gradient(
@@ -649,7 +649,7 @@ html body .main
 .documents-system-action-primary {
     border-color: rgba(255, 255, 255, 0.25) !important;
     background: rgba(255, 255, 255, 0.96) !important;
-    color: #101a2f !important;
+    color: #0F0F0F !important;
 }
 
 html body .main
@@ -670,12 +670,12 @@ html body .main
     background:
         radial-gradient(
             circle at 88% 15%,
-            rgba(69, 128, 190, 0.18),
+            rgba(58, 58, 58, 0.18),
             transparent 27%
         ),
         radial-gradient(
             circle at 5% 118%,
-            rgba(38, 82, 137, 0.17),
+            rgba(46, 46, 46, 0.17),
             transparent 36%
         ),
         linear-gradient(
@@ -706,7 +706,7 @@ html body .main
 > .profile-account-hero.profile-account-hero
 .profile-hero-summary article {
     border-color: rgba(255, 255, 255, 0.16) !important;
-    background: rgba(5, 15, 32, 0.43) !important;
+    background: rgba(15, 15, 15, 0.43) !important;
     color: #ffffff !important;
 }
 
@@ -721,7 +721,7 @@ html body .main
 > .page-container.profile-page.profile-professional-v3.profile-professional-v3
 > .profile-account-hero.profile-account-hero
 .profile-hero-summary small {
-    color: rgba(226, 238, 249, 0.72) !important;
+    color: rgba(247, 247, 247, 0.72) !important;
 }
 
 html body .main
@@ -729,7 +729,7 @@ html body .main
 > .profile-account-hero.profile-account-hero
 .profile-hero-security span {
     border-color: rgba(255, 255, 255, 0.16) !important;
-    background: rgba(5, 15, 32, 0.36) !important;
+    background: rgba(15, 15, 15, 0.36) !important;
 }
 
 html body .main
@@ -749,12 +749,12 @@ html body .main
     background:
         radial-gradient(
             circle at 88% 15%,
-            rgba(69, 128, 190, 0.18),
+            rgba(58, 58, 58, 0.18),
             transparent 27%
         ),
         radial-gradient(
             circle at 5% 118%,
-            rgba(38, 82, 137, 0.17),
+            rgba(46, 46, 46, 0.17),
             transparent 36%
         ),
         linear-gradient(

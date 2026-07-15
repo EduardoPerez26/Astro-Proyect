@@ -601,7 +601,7 @@
                 icon: 'error',
                 title: 'Session unavailable',
                 text: 'Sign in again to configure Microsoft Authenticator.',
-                confirmButtonColor: '#102A43'
+                confirmButtonColor: '#1F1F1F'
             });
             return;
         }
@@ -629,7 +629,7 @@
                 icon: 'error',
                 title: 'Authenticator setup failed',
                 text: error.message || 'Try again.',
-                confirmButtonColor: '#102A43'
+                confirmButtonColor: '#1F1F1F'
             });
         } finally {
             setButtonBusy(setupBtn, false);
@@ -843,7 +843,7 @@
                 icon: 'warning',
                 title: 'Unsupported format',
                 text: 'Choose a JPG, PNG, or WebP image.',
-                confirmButtonColor: '#102A43'
+                confirmButtonColor: '#1F1F1F'
             });
             return;
         }
@@ -854,7 +854,7 @@
                 icon: 'warning',
                 title: 'Image is too large',
                 text: 'The photo cannot exceed 3 MB.',
-                confirmButtonColor: '#102A43'
+                confirmButtonColor: '#1F1F1F'
             });
             return;
         }
@@ -1061,7 +1061,7 @@
                 icon: 'error',
                 title: 'Photo could not be framed',
                 text: error.message || 'Try another image.',
-                confirmButtonColor: '#102A43'
+                confirmButtonColor: '#1F1F1F'
             });
         }
     }
@@ -1083,7 +1083,7 @@
                 icon: 'error',
                 title: 'Session unavailable',
                 text: 'Sign in again to save changes.',
-                confirmButtonColor: '#102A43'
+                confirmButtonColor: '#1F1F1F'
             });
             return;
         }
@@ -1093,7 +1093,7 @@
                 icon: 'warning',
                 title: 'Full name required',
                 text: 'Enter your full name.',
-                confirmButtonColor: '#102A43'
+                confirmButtonColor: '#1F1F1F'
             });
             return;
         }
@@ -1104,7 +1104,7 @@
                     icon: 'warning',
                     title: 'Complete password fields',
                     text: 'Fill in all three password fields to change it.',
-                    confirmButtonColor: '#102A43'
+                    confirmButtonColor: '#1F1F1F'
                 });
                 return;
             }
@@ -1114,7 +1114,7 @@
                     icon: 'warning',
                     title: 'Password is too short',
                     text: 'The new password must have at least 6 characters.',
-                    confirmButtonColor: '#102A43'
+                    confirmButtonColor: '#1F1F1F'
                 });
                 return;
             }
@@ -1124,7 +1124,7 @@
                     icon: 'warning',
                     title: 'Passwords do not match',
                     text: 'The confirmation must match the new password.',
-                    confirmButtonColor: '#102A43'
+                    confirmButtonColor: '#1F1F1F'
                 });
                 return;
             }
@@ -1185,7 +1185,7 @@
                 icon: 'error',
                 title: 'Could not save',
                 text: error.message || 'Try again.',
-                confirmButtonColor: '#102A43'
+                confirmButtonColor: '#1F1F1F'
             });
         } finally {
             setSaving(false, saveBtn);

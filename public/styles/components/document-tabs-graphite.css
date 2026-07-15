@@ -13,12 +13,12 @@ html body .main
     .property-documents-page
 )
 .documents-type-tabs {
-    border-color: #cfd5db !important;
+    border-color: #D6D6D6 !important;
     background:
         linear-gradient(
             180deg,
-            #f7f8f9 0%,
-            #edf0f2 100%
+            #F7F7F7 0%,
+            #F7F7F7 100%
         ) !important;
     box-shadow:
         inset 0 1px 2px rgba(0, 0, 0, 0.06),
@@ -34,7 +34,7 @@ html body .main
 .documents-type-tab {
     border-color: transparent !important;
     background: transparent !important;
-    color: #202b35 !important;
+    color: #1F1F1F !important;
     box-shadow: none !important;
 }
 
@@ -51,7 +51,7 @@ html body .main
     .property-documents-page
 )
 .documents-type-tab:focus-visible {
-    border-color: #c7cdd3 !important;
+    border-color: #D6D6D6 !important;
     background: rgba(255, 255, 255, 0.72) !important;
     box-shadow:
         0 10px 22px -20px rgba(0, 0, 0, 0.55) !important;
@@ -97,12 +97,12 @@ html body .main
     .property-documents-page
 )
 .documents-type-icon {
-    border: 1px solid #d2d8de !important;
+    border: 1px solid #EBEBEB !important;
     background:
         linear-gradient(
             145deg,
             #ffffff 0%,
-            #e9edf0 100%
+            #F7F7F7 100%
         ) !important;
     color: #222222 !important;
     box-shadow:
@@ -141,7 +141,7 @@ html body .main
     .property-documents-page
 )
 .documents-type-copy strong {
-    color: #172737 !important;
+    color: #1F1F1F !important;
 }
 
 html body .main
@@ -150,7 +150,7 @@ html body .main
     .property-documents-page
 )
 .documents-type-copy small {
-    color: #687682 !important;
+    color: #5C5C5C !important;
 }
 
 /* Active text. */
@@ -195,9 +195,9 @@ html body .main
     .property-documents-page
 )
 .documents-type-count {
-    border-color: #d1d7dc !important;
-    background: #f0f3f5 !important;
-    color: #1f2b35 !important;
+    border-color: #EBEBEB !important;
+    background: #F7F7F7 !important;
+    color: #1F1F1F !important;
 }
 
 /* Active counters. */

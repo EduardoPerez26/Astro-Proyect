@@ -21,7 +21,7 @@
 html body .login-screen
 .login-shell.login-shell
 .login-form-panel.login-form-panel {
-    border-left: 1px solid #e2e5e9 !important;
+    border-left: 1px solid #EBEBEB !important;
     background:
         radial-gradient(
             circle at 92% 8%,
@@ -31,9 +31,9 @@ html body .login-screen
         linear-gradient(
             180deg,
             #ffffff 0%,
-            #f7f8fa 100%
+            #F7F7F7 100%
         ) !important;
-    color: #15181c !important;
+    color: #0F0F0F !important;
 }
 
 /* ---------------------------------------------------------
@@ -42,17 +42,17 @@ html body .login-screen
 
 html body .login-form-panel
 .lang-toggle--login.lang-toggle--login {
-    border: 1px solid #d4d9df !important;
+    border: 1px solid #EBEBEB !important;
     background: #ffffff !important;
-    color: #1c232b !important;
+    color: #0F0F0F !important;
     box-shadow:
         0 8px 20px -18px rgba(0, 0, 0, 0.35) !important;
 }
 
 html body .login-form-panel
 .lang-toggle--login.lang-toggle--login:hover {
-    border-color: #bfc6cd !important;
-    background: #f0f2f4 !important;
+    border-color: #D6D6D6 !important;
+    background: #F7F7F7 !important;
     color: #000000 !important;
 }
 
@@ -62,9 +62,9 @@ html body .login-form-panel
 
 html body .login-form-panel
 .login-status.login-status {
-    border-color: #d6dbe0 !important;
-    background: #f0f2f4 !important;
-    color: #333a42 !important;
+    border-color: #EBEBEB !important;
+    background: #F7F7F7 !important;
+    color: #1F1F1F !important;
 }
 
 html body .login-form-panel
@@ -76,7 +76,7 @@ html body .login-form-panel
 
 html body .login-form-panel
 .login-header h2 {
-    color: #111418 !important;
+    color: #0F0F0F !important;
     text-shadow: none !important;
 }
 
@@ -91,24 +91,24 @@ html body .login-form-panel
 
 html body .login-form-panel
 .login-field label {
-    color: #313a44 !important;
+    color: #1F1F1F !important;
 }
 
 html body .login-form-panel
 .login-input-wrap > i {
-    color: #67737f !important;
+    color: #5C5C5C !important;
 }
 
 html body .login-form-panel
 .login-input-wrap input {
-    border: 1px solid #d4d9df !important;
+    border: 1px solid #EBEBEB !important;
     background:
         linear-gradient(
             180deg,
             #ffffff 0%,
-            #f8f9fa 100%
+            #F7F7F7 100%
         ) !important;
-    color: #17202a !important;
+    color: #0F0F0F !important;
     caret-color: #111111 !important;
     box-shadow:
         inset 0 1px 0 rgba(255, 255, 255, 0.92),
@@ -117,18 +117,18 @@ html body .login-form-panel
 
 html body .login-form-panel
 .login-input-wrap input::placeholder {
-    color: #8c97a2 !important;
+    color: #8A8A8A !important;
 }
 
 html body .login-form-panel
 .login-input-wrap input:hover {
-    border-color: #bdc5cd !important;
+    border-color: #D6D6D6 !important;
     background: #ffffff !important;
 }
 
 html body .login-form-panel
 .login-input-wrap input:focus {
-    border-color: #2f343a !important;
+    border-color: #1F1F1F !important;
     background: #ffffff !important;
     box-shadow:
         0 0 0 4px rgba(0, 0, 0, 0.075),
@@ -139,18 +139,18 @@ html body .login-form-panel
 .login-input-wrap:focus-within > i,
 html body .login-form-panel
 .login-password-toggle:hover {
-    color: #171a1e !important;
+    color: #0F0F0F !important;
 }
 
 html body .login-form-panel
 .login-password-toggle {
     background: transparent !important;
-    color: #65717c !important;
+    color: #494949 !important;
 }
 
 html body .login-form-panel
 .login-password-toggle:hover {
-    background: #eceff2 !important;
+    background: #F7F7F7 !important;
     color: #111111 !important;
 }
 
@@ -160,12 +160,12 @@ html body .login-form-panel
 
 html body .login-form-panel
 .login-remember-control.login-remember-control {
-    border: 1px solid #d5dbe1 !important;
+    border: 1px solid #EBEBEB !important;
     background:
         linear-gradient(
             180deg,
             #ffffff 0%,
-            #f1f3f5 100%
+            #F7F7F7 100%
         ) !important;
     box-shadow:
         0 12px 25px -23px rgba(0, 0, 0, 0.40),
@@ -174,12 +174,12 @@ html body .login-form-panel
 
 html body .login-form-panel
 .login-remember-control.login-remember-control:hover {
-    border-color: #bcc4cc !important;
+    border-color: #D6D6D6 !important;
     background:
         linear-gradient(
             180deg,
             #ffffff 0%,
-            #e9edf0 100%
+            #F7F7F7 100%
         ) !important;
 }
 
@@ -192,7 +192,7 @@ html body .login-form-panel
 
 html body .login-form-panel
 .login-remember-check.login-remember-check {
-    border-color: #c5ccd3 !important;
+    border-color: #D6D6D6 !important;
     background: #ffffff !important;
     box-shadow:
         inset 0 1px 0 rgba(255, 255, 255, 1) !important;
@@ -200,7 +200,7 @@ html body .login-form-panel
 
 html body .login-form-panel
 .login-remember-check.login-remember-check::before {
-    border-color: #8e99a4 !important;
+    border-color: #8A8A8A !important;
     background: #ffffff !important;
 }
 
@@ -227,18 +227,18 @@ html body .login-form-panel
 
 html body .login-form-panel
 .login-remember-copy strong {
-    color: #19222c !important;
+    color: #0F0F0F !important;
 }
 
 html body .login-form-panel
 .login-remember-copy small {
-    color: #66727e !important;
+    color: #494949 !important;
 }
 
 html body .login-form-panel
 .login-remember-control input:checked
 ~ .login-remember-copy small::after {
-    color: #3f4851 !important;
+    color: #2E2E2E !important;
 }
 
 /* ---------------------------------------------------------
@@ -273,26 +273,26 @@ html body .login-form-panel
 
 html body .login-form-panel
 .login-secondary-action.login-secondary-action {
-    border: 1px solid #ccd2d8 !important;
+    border: 1px solid #D6D6D6 !important;
     background:
         linear-gradient(
             180deg,
             #ffffff 0%,
-            #eceff2 100%
+            #F7F7F7 100%
         ) !important;
-    color: #202830 !important;
+    color: #1F1F1F !important;
 }
 
 html body .login-form-panel
 .login-secondary-action.login-secondary-action:hover,
 html body .login-form-panel
 .login-secondary-action.login-secondary-action:focus-visible {
-    border-color: #afb8c0 !important;
+    border-color: #B8B8B8 !important;
     background:
         linear-gradient(
             180deg,
-            #f8f9fa 0%,
-            #e2e6e9 100%
+            #F7F7F7 0%,
+            #EBEBEB 100%
         ) !important;
     color: #000000 !important;
 }
@@ -305,38 +305,38 @@ html body .login-form-panel
 .login-security-note,
 html body .login-form-panel
 .login-mfa-summary {
-    border: 1px solid #d5dbe0 !important;
+    border: 1px solid #EBEBEB !important;
     background:
         linear-gradient(
             180deg,
             #ffffff 0%,
-            #f0f2f4 100%
+            #F7F7F7 100%
         ) !important;
-    color: #5d6873 !important;
+    color: #494949 !important;
     box-shadow:
         0 10px 24px -24px rgba(0, 0, 0, 0.35) !important;
 }
 
 html body .login-form-panel
 .login-security-note i {
-    color: #2e343a !important;
+    color: #1F1F1F !important;
 }
 
 html body .login-form-panel
 .login-mfa-icon {
-    border: 1px solid #cfd5db !important;
+    border: 1px solid #D6D6D6 !important;
     background:
         linear-gradient(
             145deg,
             #ffffff 0%,
-            #e7eaed 100%
+            #EBEBEB 100%
         ) !important;
-    color: #20252a !important;
+    color: #0F0F0F !important;
 }
 
 html body .login-form-panel
 .login-mfa-summary strong {
-    color: #171b20 !important;
+    color: #0F0F0F !important;
 }
 
 html body .login-form-panel
@@ -361,13 +361,13 @@ html body .login-form-panel
             linear-gradient(
                 180deg,
                 #ffffff 0%,
-                #f5f6f8 100%
+                #F7F7F7 100%
             ) !important;
     }
 
     html body .login-form-panel
     .login-mobile-brand-copy strong {
-        color: #111418 !important;
+        color: #0F0F0F !important;
     }
 
     html body .login-form-panel
@@ -377,7 +377,7 @@ html body .login-form-panel
 
     html body .login-form-panel
     .login-brand-icon.login-brand-monogram {
-        border-color: #c8ced4 !important;
+        border-color: #D6D6D6 !important;
         background:
             radial-gradient(
                 circle at 28% 20%,

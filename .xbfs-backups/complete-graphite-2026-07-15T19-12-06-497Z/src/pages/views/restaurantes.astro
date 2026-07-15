@@ -1,0 +1,60 @@
+---
+import DashboardLayout from '../../layouts/DashboardLayout.astro';
+---
+
+<DashboardLayout title="Restaurant control" stylesheets={["/styles/pages/views/restaurantes.css?v=20260714-style-refactor-v1"]}>
+    <section class="operations-admin" aria-labelledby="operationsTitle">
+        <header class="operations-header">
+            <div>
+                <span class="operations-eyebrow">
+                    <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
+                    Administrator-only access
+                </span>
+                <h1 id="operationsTitle">Restaurant availability</h1>
+                <p>
+                    Enable or disable access to each flow using the existing database status.
+                    No extra tables or settings are created.
+                </p>
+            </div>
+            <button class="operations-refresh" id="refreshRestaurants" type="button">
+                <i class="fa-solid fa-rotate" aria-hidden="true"></i>
+                Refresh statuses
+            </button>
+        </header>
+
+        <div class="operations-summary" aria-label="Operational summary">
+            <article>
+                <span class="summary-icon is-navy"><i class="fa-solid fa-store"></i></span>
+                <div><strong id="restaurantsTotal">0</strong><span>Restaurants</span></div>
+            </article>
+            <article>
+                <span class="summary-icon is-green"><i class="fa-solid fa-circle-check"></i></span>
+                <div><strong id="restaurantsAvailable">0</strong><span>Available</span></div>
+            </article>
+            <article>
+                <span class="summary-icon is-amber"><i class="fa-solid fa-triangle-exclamation"></i></span>
+                <div><strong id="restaurantsAffected">0</strong><span>Restricted</span></div>
+            </article>
+        </div>
+
+        <div class="operations-panel">
+            <div class="operations-panel-heading">
+                <div>
+                    <h2>Status by restaurant</h2>
+                    <p>Use each row control to allow or block its reconciliation.</p>
+                </div>
+                <span><i class="fa-solid fa-clock"></i> Immediate application</span>
+            </div>
+
+            <div class="restaurant-control-list" id="restaurantControlList" aria-live="polite">
+                <div class="operations-loading">
+                    <i class="fa-solid fa-circle-notch fa-spin" aria-hidden="true"></i>
+                    Querying restaurants...
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script src="/js/config.js" is:inline></script>
+    <script src="/js/restaurantes-control.js" is:inline></script>
+</DashboardLayout>

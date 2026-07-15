@@ -7,12 +7,12 @@
 html body .main
 .profile-page.profile-professional-v3
 .profile-settings-tabs {
-    border-color: #ccd3da !important;
+    border-color: #D6D6D6 !important;
     background:
         linear-gradient(
             180deg,
-            #f3f5f7 0%,
-            #e8ecef 100%
+            #F7F7F7 0%,
+            #F7F7F7 100%
         ) !important;
     box-shadow:
         inset 0 1px 2px rgba(0, 0, 0, 0.07),
@@ -60,7 +60,7 @@ html body .main
 html body .main
 .profile-page.profile-professional-v3
 .profile-settings-tab {
-    color: #202b35 !important;
+    color: #1F1F1F !important;
 }
 
 /* Neutral hover instead of blue/teal. */
@@ -82,7 +82,7 @@ html body .main
 html body .main
 .profile-page.profile-professional-v3
 .profile-tab-number {
-    border-color: #c8d0d7 !important;
+    border-color: #D6D6D6 !important;
     background: rgba(255, 255, 255, 0.76) !important;
     color: #6b747d !important;
 }
@@ -100,12 +100,12 @@ html body .main
 html body .main
 .profile-page.profile-professional-v3
 .profile-tab-icon {
-    border-color: #d0d6dc !important;
+    border-color: #D6D6D6 !important;
     background:
         linear-gradient(
             145deg,
             #ffffff 0%,
-            #edf0f2 100%
+            #F7F7F7 100%
         ) !important;
     color: #222222 !important;
     box-shadow:
@@ -117,7 +117,7 @@ html body .main
 .profile-page.profile-professional-v3
 .profile-settings-tab:hover
 .profile-tab-icon {
-    border-color: #bfc6cd !important;
+    border-color: #D6D6D6 !important;
     color: #000000 !important;
 }
 
@@ -142,7 +142,7 @@ html body .main
 html body .main
 .profile-page.profile-professional-v3
 .profile-tab-copy small {
-    color: #697681 !important;
+    color: #5C5C5C !important;
 }
 
 html body .main
@@ -165,6 +165,6 @@ html body .main
     html body .main
     .profile-page.profile-professional-v3
     .profile-settings-tabs {
-        border-color: #cbd2d8 !important;
+        border-color: #D6D6D6 !important;
     }
 }

@@ -3,6 +3,7 @@ const router = express.Router();
 
 const { pool } = require('../config/database');
 const { verificarToken, esAdmin } = require('../middleware/auth.middleware');
+const { isAdminRole } = require('../config/permissions');
 const { createNotificationsForUsers } = require('../services/notifications.service');
 
 router.use(verificarToken);
@@ -172,16 +173,51 @@ function normalizeNotification(row) {
     };
 }
 
-async function countUnread(usuarioId) {
+function canSeeErrorNotifications(req) {
+    return isAdminRole(req.usuario || req.user);
+}
+
+function buildNotificationVisibilityFilter(req, alias = null) {
+    const column = alias ? `${alias}.tipo` : 'tipo';
+
+    return canSeeErrorNotifications(req)
+        ? ''
+        : `AND COALESCE(${column}, '') <> 'error'`;
+}
+
+async function countUnread(usuarioId, req) {
+    const visibilityFilter = buildNotificationVisibilityFilter(req);
+
     const [[row]] = await pool.query(`
         SELECT COUNT(*) AS total
         FROM notificaciones
         WHERE usuario_id = ?
           AND leida = FALSE
           AND archivada = FALSE
+          ${visibilityFilter}
     `, [usuarioId]);
 
     return Number(row?.total || 0);
+}
+
+async function filterAdminRecipientIds(userIds = []) {
+    const uniqueIds = Array.from(new Set(
+        userIds
+            .map(id => Number(id))
+            .filter(id => Number.isInteger(id) && id > 0)
+    ));
+
+    if (!uniqueIds.length) return [];
+
+    const [rows] = await pool.query(`
+        SELECT id
+        FROM usuarios
+        WHERE activo = TRUE
+          AND rol IN ('superadmin', 'admin')
+          AND id IN (?)
+    `, [uniqueIds]);
+
+    return rows.map(row => row.id);
 }
 
 router.get('/', async (req, res) => {
@@ -199,6 +235,7 @@ router.get('/', async (req, res) => {
         const includeRead = req.query.include_read !== '0';
         const params = [usuarioId];
         let readFilter = '';
+        const visibilityFilter = buildNotificationVisibilityFilter(req, 'n');
 
         if (!includeRead) {
             readFilter = 'AND n.leida = FALSE';
@@ -224,13 +261,14 @@ router.get('/', async (req, res) => {
             WHERE n.usuario_id = ?
               AND n.archivada = FALSE
               ${readFilter}
+              ${visibilityFilter}
             ORDER BY n.fecha_creacion DESC, n.id DESC
             LIMIT ?
         `, params);
 
         res.json({
             success: true,
-            total_no_leidas: await countUnread(usuarioId),
+            total_no_leidas: await countUnread(usuarioId, req),
             notificaciones: rows.map(normalizeNotification)
         });
     } catch (error) {
@@ -255,7 +293,7 @@ router.get('/no-leidas', async (req, res) => {
 
         res.json({
             success: true,
-            total: await countUnread(usuarioId)
+            total: await countUnread(usuarioId, req)
         });
     } catch (error) {
         console.error('Notification count error:', error);
@@ -482,6 +520,7 @@ router.put('/system-errors/:id/reopen', esAdmin, async (req, res) => {
 router.put('/leidas', async (req, res) => {
     try {
         const usuarioId = getUsuarioId(req);
+        const visibilityFilter = buildNotificationVisibilityFilter(req);
 
         if (!usuarioId) {
             return res.status(401).json({
@@ -497,6 +536,7 @@ router.put('/leidas', async (req, res) => {
             WHERE usuario_id = ?
               AND leida = FALSE
               AND archivada = FALSE
+              ${visibilityFilter}
         `, [usuarioId]);
 
         res.json({
@@ -516,6 +556,7 @@ router.put('/:id/leida', async (req, res) => {
     try {
         const usuarioId = getUsuarioId(req);
         const notificationId = Number(req.params.id);
+        const visibilityFilter = buildNotificationVisibilityFilter(req);
 
         if (!usuarioId) {
             return res.status(401).json({
@@ -538,6 +579,7 @@ router.put('/:id/leida', async (req, res) => {
             WHERE id = ?
               AND usuario_id = ?
               AND archivada = FALSE
+              ${visibilityFilter}
         `, [notificationId, usuarioId]);
 
         if (!result.affectedRows) {
@@ -563,6 +605,7 @@ router.delete('/:id', async (req, res) => {
     try {
         const usuarioId = getUsuarioId(req);
         const notificationId = Number(req.params.id);
+        const visibilityFilter = buildNotificationVisibilityFilter(req);
 
         if (!usuarioId) {
             return res.status(401).json({
@@ -585,6 +628,7 @@ router.delete('/:id', async (req, res) => {
             WHERE id = ?
               AND usuario_id = ?
               AND archivada = FALSE
+              ${visibilityFilter}
         `, [notificationId, usuarioId]);
 
         if (!result.affectedRows) {
@@ -611,7 +655,7 @@ router.post('/', esAdmin, async (req, res) => {
         const creadorId = getUsuarioId(req);
         const titulo = String(req.body.titulo || req.body.title || '').trim();
         const mensaje = String(req.body.mensaje || req.body.message || '').trim();
-        const tipo = String(req.body.tipo || req.body.type || 'system').trim();
+        const tipo = String(req.body.tipo || req.body.type || 'system').trim().toLowerCase();
         const prioridad = String(req.body.prioridad || req.body.priority || 'normal').trim();
         const urlAccion = req.body.url_accion || req.body.urlAccion || req.body.actionUrl || null;
 
@@ -661,7 +705,11 @@ router.post('/', esAdmin, async (req, res) => {
             usuarios = directIds;
         }
 
-        const result = await createNotificationsForUsers(usuarios, {
+        const recipientIds = tipo === 'error'
+            ? await filterAdminRecipientIds(usuarios)
+            : usuarios;
+
+        const result = await createNotificationsForUsers(recipientIds, {
             creadoPor: creadorId,
             titulo,
             mensaje,

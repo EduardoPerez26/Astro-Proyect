@@ -329,10 +329,10 @@ html body .main .profile-page.profile-professional-v3 .profile-settings-tab {
     gap: 14px !important;
     min-height: 88px !important;
     padding: 17px 18px !important;
-    border: 1px solid #d6e3ec !important;
+    border: 1px solid #EBEBEB !important;
     border-radius: 18px !important;
-    background: linear-gradient(180deg, #ffffff 0%, #f8fbfd 100%) !important;
-    box-shadow: 0 10px 24px -24px rgba(8, 46, 77, 0.55) !important;
+    background: linear-gradient(180deg, #ffffff 0%, #F7F7F7 100%) !important;
+    box-shadow: 0 10px 24px -24px rgba(31, 31, 31, 0.55) !important;
     overflow: hidden !important;
 }
 
@@ -341,7 +341,7 @@ html body .main .profile-page.profile-professional-v3 .profile-settings-tab::bef
     position: absolute !important;
     inset: 0 !important;
     border-radius: inherit !important;
-    background: linear-gradient(135deg, rgba(28, 118, 149, 0.05), rgba(27, 170, 149, 0.04)) !important;
+    background: linear-gradient(135deg, rgba(46, 46, 46, 0.05), rgba(52, 52, 52, 0.04)) !important;
     opacity: 0 !important;
     transition: opacity 180ms ease !important;
     pointer-events: none !important;
@@ -349,8 +349,8 @@ html body .main .profile-page.profile-professional-v3 .profile-settings-tab::bef
 
 html body .main .profile-page.profile-professional-v3 .profile-settings-tab:hover {
     transform: translateY(-2px) !important;
-    border-color: #a8c8d9 !important;
-    box-shadow: 0 18px 30px -24px rgba(7, 46, 77, 0.35) !important;
+    border-color: #D6D6D6 !important;
+    box-shadow: 0 18px 30px -24px rgba(31, 31, 31, 0.35) !important;
 }
 
 html body .main .profile-page.profile-professional-v3 .profile-settings-tab:hover::before {
@@ -358,9 +358,9 @@ html body .main .profile-page.profile-professional-v3 .profile-settings-tab:hove
 }
 
 html body .main .profile-page.profile-professional-v3 .profile-settings-tab.is-active {
-    background: linear-gradient(135deg, #0e1a3b 0%, #112751 52%, #0f5f73 100%) !important;
+    background: linear-gradient(135deg, #0F0F0F 0%, #1F1F1F 52%, #2E2E2E 100%) !important;
     border-color: transparent !important;
-    box-shadow: 0 22px 42px -28px rgba(5, 15, 37, 0.92) !important;
+    box-shadow: 0 22px 42px -28px rgba(15, 15, 15, 0.92) !important;
     transform: none !important;
 }
 
@@ -376,7 +376,7 @@ html body .main .profile-page.profile-professional-v3 .profile-settings-tab.is-a
     bottom: 0 !important;
     height: 3px !important;
     border-radius: 999px !important;
-    background: linear-gradient(90deg, #7ee7df 0%, #62c4ff 100%) !important;
+    background: linear-gradient(90deg, #B8B8B8 0%, #B8B8B8 100%) !important;
 }
 
 html body .main .profile-page.profile-professional-v3 .profile-tab-number {
@@ -391,8 +391,8 @@ html body .main .profile-page.profile-professional-v3 .profile-tab-number {
     height: 24px !important;
     padding: 0 8px !important;
     border-radius: 999px !important;
-    background: #edf4f8 !important;
-    color: #6f87a0 !important;
+    background: #F7F7F7 !important;
+    color: #5C5C5C !important;
     font-size: 10px !important;
     font-weight: 900 !important;
     letter-spacing: 0.11em !important;
@@ -410,8 +410,8 @@ html body .main .profile-page.profile-professional-v3 .profile-tab-icon {
     width: 50px !important;
     height: 50px !important;
     border-radius: 16px !important;
-    background: #eaf3f7 !important;
-    color: #0d6a7c !important;
+    background: #F7F7F7 !important;
+    color: #2E2E2E !important;
     box-shadow: inset 0 1px 0 rgba(255,255,255,0.65) !important;
 }
 
@@ -443,7 +443,7 @@ html body .main .profile-page.profile-professional-v3 .profile-tab-copy small {
     margin-top: 5px !important;
     font-size: 12px !important;
     line-height: 1.28 !important;
-    color: #688399 !important;
+    color: #5C5C5C !important;
 }
 
 html body .main .profile-page.profile-professional-v3 .profile-settings-tab.is-active .profile-tab-copy small {
@@ -476,13 +476,13 @@ html body .main .profile-page.profile-professional-v3 .profile-settings-tabs {
     padding: 6px !important;
     margin: 18px 26px 0 !important;
     overflow: hidden !important;
-    border: 1px solid #cfdee8 !important;
+    border: 1px solid #EBEBEB !important;
     border-radius: 20px !important;
     background:
-        linear-gradient(180deg, #edf4f8 0%, #e7eff5 100%) !important;
+        linear-gradient(180deg, #F7F7F7 0%, #F7F7F7 100%) !important;
     box-shadow:
-        inset 0 1px 2px rgba(15, 48, 74, 0.08),
-        0 12px 28px -26px rgba(5, 38, 65, 0.62) !important;
+        inset 0 1px 2px rgba(31, 31, 31, 0.08),
+        0 12px 28px -26px rgba(15, 15, 15, 0.62) !important;
 }
 
 /* Sliding active segment. */
@@ -499,17 +499,17 @@ html body .main .profile-page.profile-professional-v3 .profile-settings-tabs::be
     background:
         radial-gradient(
             circle at 88% 5%,
-            rgba(116, 228, 220, 0.20),
+            rgba(184, 184, 184, 0.20),
             transparent 32%
         ),
         linear-gradient(
             135deg,
-            #0b1834 0%,
-            #112b52 53%,
-            #0d6171 100%
+            #0F0F0F 0%,
+            #1F1F1F 53%,
+            #1F1F1F 100%
         ) !important;
     box-shadow:
-        0 18px 34px -22px rgba(4, 18, 40, 0.92),
+        0 18px 34px -22px rgba(15, 15, 15, 0.92),
         inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
     transform:
         translateX(
@@ -538,8 +538,8 @@ html body .main .profile-page.profile-professional-v3 .profile-settings-tabs::af
         linear-gradient(
             90deg,
             transparent 0%,
-            rgba(129, 238, 226, 0.86) 34%,
-            rgba(114, 196, 255, 0.90) 68%,
+            rgba(184, 184, 184, 0.86) 34%,
+            rgba(184, 184, 184, 0.90) 68%,
             transparent 100%
         ) !important;
     transform:
@@ -569,7 +569,7 @@ html body .main .profile-page.profile-professional-v3 .profile-settings-tab {
     border-radius: 15px !important;
     background: transparent !important;
     box-shadow: none !important;
-    color: #173650 !important;
+    color: #1F1F1F !important;
     transform: none !important;
     transition:
         color 220ms ease,
@@ -612,10 +612,10 @@ html body .main .profile-page.profile-professional-v3 .profile-tab-number {
     min-width: 34px !important;
     height: 27px !important;
     padding: 0 !important;
-    border: 1px solid #cfdee8 !important;
+    border: 1px solid #EBEBEB !important;
     border-radius: 999px !important;
     background: rgba(255, 255, 255, 0.64) !important;
-    color: #71899e !important;
+    color: #5C5C5C !important;
     font-size: 9px !important;
     font-weight: 950 !important;
     letter-spacing: 0.10em !important;
@@ -638,13 +638,13 @@ html body .main .profile-page.profile-professional-v3 .profile-tab-icon {
     width: 48px !important;
     height: 48px !important;
     place-items: center !important;
-    border: 1px solid #d4e3ec !important;
+    border: 1px solid #EBEBEB !important;
     border-radius: 15px !important;
     background:
-        linear-gradient(145deg, #ffffff 0%, #e9f3f7 100%) !important;
-    color: #087081 !important;
+        linear-gradient(145deg, #ffffff 0%, #F7F7F7 100%) !important;
+    color: #2E2E2E !important;
     box-shadow:
-        0 10px 20px -18px rgba(8, 68, 96, 0.66),
+        0 10px 20px -18px rgba(31, 31, 31, 0.66),
         inset 0 1px 0 rgba(255, 255, 255, 0.88) !important;
     transition:
         transform 280ms cubic-bezier(0.22, 1, 0.36, 1),
@@ -698,7 +698,7 @@ html body .main .profile-page.profile-professional-v3 .profile-tab-copy small {
     display: block !important;
     margin-top: 5px !important;
     overflow: hidden !important;
-    color: #688298 !important;
+    color: #5C5C5C !important;
     font-size: 11px !important;
     font-weight: 700 !important;
     line-height: 1.25 !important;
@@ -760,7 +760,7 @@ html body .main .profile-page.profile-professional-v3 .profile-tab-panel.is-prof
 
     html body .main .profile-page.profile-professional-v3 .profile-settings-tab {
         min-height: 76px !important;
-        border: 1px solid #d4e1eb !important;
+        border: 1px solid #EBEBEB !important;
         background: #ffffff !important;
     }
 
@@ -769,14 +769,14 @@ html body .main .profile-page.profile-professional-v3 .profile-tab-panel.is-prof
         background:
             radial-gradient(
                 circle at 88% 5%,
-                rgba(116, 228, 220, 0.18),
+                rgba(184, 184, 184, 0.18),
                 transparent 32%
             ),
             linear-gradient(
                 135deg,
-                #0b1834 0%,
-                #112b52 53%,
-                #0d6171 100%
+                #0F0F0F 0%,
+                #1F1F1F 53%,
+                #1F1F1F 100%
             ) !important;
     }
 }
@@ -830,7 +830,7 @@ html body .main .profile-page.profile-professional-v3 .profile-tab-panel.is-prof
     --xbfs-sidebar-hero-start: #030303;
     --xbfs-sidebar-hero-middle: #0b0b0b;
     --xbfs-sidebar-hero-end: #1a1a1a;
-    --xbfs-sidebar-hero-copy: rgba(226, 238, 249, 0.84);
+    --xbfs-sidebar-hero-copy: rgba(247, 247, 247, 0.84);
 }
 
 /* ---------------------------------------------------------
@@ -844,12 +844,12 @@ html body .main
     background:
         radial-gradient(
             circle at 89% 13%,
-            rgba(69, 128, 190, 0.19),
+            rgba(58, 58, 58, 0.19),
             transparent 28%
         ),
         radial-gradient(
             circle at 7% 118%,
-            rgba(38, 82, 137, 0.18),
+            rgba(46, 46, 46, 0.18),
             transparent 37%
         ),
         linear-gradient(
@@ -881,7 +881,7 @@ html body .main
 .documents-system-action-primary {
     border-color: rgba(255, 255, 255, 0.25) !important;
     background: rgba(255, 255, 255, 0.96) !important;
-    color: #101a2f !important;
+    color: #0F0F0F !important;
 }
 
 html body .main
@@ -902,12 +902,12 @@ html body .main
     background:
         radial-gradient(
             circle at 88% 15%,
-            rgba(69, 128, 190, 0.18),
+            rgba(58, 58, 58, 0.18),
             transparent 27%
         ),
         radial-gradient(
             circle at 5% 118%,
-            rgba(38, 82, 137, 0.17),
+            rgba(46, 46, 46, 0.17),
             transparent 36%
         ),
         linear-gradient(
@@ -938,7 +938,7 @@ html body .main
 > .profile-account-hero.profile-account-hero
 .profile-hero-summary article {
     border-color: rgba(255, 255, 255, 0.16) !important;
-    background: rgba(5, 15, 32, 0.43) !important;
+    background: rgba(15, 15, 15, 0.43) !important;
     color: #ffffff !important;
 }
 
@@ -953,7 +953,7 @@ html body .main
 > .page-container.profile-page.profile-professional-v3.profile-professional-v3
 > .profile-account-hero.profile-account-hero
 .profile-hero-summary small {
-    color: rgba(226, 238, 249, 0.72) !important;
+    color: rgba(247, 247, 247, 0.72) !important;
 }
 
 html body .main
@@ -961,7 +961,7 @@ html body .main
 > .profile-account-hero.profile-account-hero
 .profile-hero-security span {
     border-color: rgba(255, 255, 255, 0.16) !important;
-    background: rgba(5, 15, 32, 0.36) !important;
+    background: rgba(15, 15, 15, 0.36) !important;
 }
 
 html body .main
@@ -981,12 +981,12 @@ html body .main
     background:
         radial-gradient(
             circle at 88% 15%,
-            rgba(69, 128, 190, 0.18),
+            rgba(58, 58, 58, 0.18),
             transparent 27%
         ),
         radial-gradient(
             circle at 5% 118%,
-            rgba(38, 82, 137, 0.17),
+            rgba(46, 46, 46, 0.17),
             transparent 36%
         ),
         linear-gradient(

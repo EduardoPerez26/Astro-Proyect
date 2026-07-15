@@ -10,7 +10,7 @@ body .main .prepaid-page {
 body .main .prepaid-page .prepaid-hero,
 body .main .prepaid-page .prepaid-panel,
 body .main .prepaid-page .prepaid-kpi-card {
-    border: 1px solid #d8e4f0 !important;
+    border: 1px solid #EBEBEB !important;
     border-radius: 8px !important;
     box-shadow: none !important
 }
@@ -21,13 +21,13 @@ body .main .prepaid-page .prepaid-hero {
     align-items: flex-start !important;
     gap: 18px !important;
     padding: 22px 24px !important;
-    background: linear-gradient(135deg, #101122 0%, #111a2f 54%, #0b2f54 100%) !important;
+    background: linear-gradient(135deg, #0F0F0F 0%, #0F0F0F 54%, #1F1F1F 100%) !important;
     color: #ffffff !important
 }
 
 body .main .prepaid-page .prepaid-eyebrow {
     display: block !important;
-    color: #cbd8ea !important;
+    color: #EBEBEB !important;
     font-size: 11px !important;
     font-weight: 900 !important;
     letter-spacing: .04em !important;
@@ -45,7 +45,7 @@ body .main .prepaid-page .prepaid-hero h1 {
 body .main .prepaid-page .prepaid-hero p {
     max-width: 780px !important;
     margin: 0 !important;
-    color: #d5e0ee !important;
+    color: #EBEBEB !important;
     font-size: 14px !important;
     line-height: 1.55 !important;
     font-weight: 700 !important
@@ -75,7 +75,7 @@ body .main .prepaid-page .prepaid-kpi-card {
 
 body .main .prepaid-page .prepaid-kpi-card span {
     display: block !important;
-    color: #405a73 !important;
+    color: #494949 !important;
     font-size: 11px !important;
     font-weight: 900 !important;
     letter-spacing: .04em !important;
@@ -86,7 +86,7 @@ body .main .prepaid-page .prepaid-kpi-card strong {
     display: block !important;
     margin-top: 8px !important;
     overflow: hidden !important;
-    color: #102033 !important;
+    color: #0F0F0F !important;
     font-size: 28px !important;
     line-height: 1 !important;
     font-weight: 950 !important;
@@ -97,7 +97,7 @@ body .main .prepaid-page .prepaid-kpi-card strong {
 body .main .prepaid-page .prepaid-kpi-card small {
     display: block !important;
     margin-top: 8px !important;
-    color: #607b94 !important;
+    color: #5C5C5C !important;
     font-size: 12px !important;
     font-weight: 700 !important
 }
@@ -117,8 +117,8 @@ body .main .prepaid-page .panel-header {
     align-items: center !important;
     gap: 14px !important;
     padding: 16px 18px !important;
-    border-bottom: 1px solid #dbe6f0 !important;
-    background: #f8fbff !important
+    border-bottom: 1px solid #EBEBEB !important;
+    background: #F7F7F7 !important
 }
 
 body .main .prepaid-page .panel-header.stackable {
@@ -127,7 +127,7 @@ body .main .prepaid-page .panel-header.stackable {
 
 body .main .prepaid-page .panel-header h2 {
     margin: 0 !important;
-    color: #102033 !important;
+    color: #0F0F0F !important;
     font-size: 18px !important;
     font-weight: 950 !important
 }
@@ -135,7 +135,7 @@ body .main .prepaid-page .panel-header h2 {
 body .main .prepaid-page .panel-header p {
     max-width: 840px !important;
     margin: 4px 0 0 !important;
-    color: #607b94 !important;
+    color: #5C5C5C !important;
     font-size: 13px !important;
     line-height: 1.45 !important;
     font-weight: 700 !important
@@ -151,7 +151,7 @@ body .main .prepaid-page .prepaid-form {
 body .main .prepaid-page .prepaid-form label {
     display: grid !important;
     gap: 6px !important;
-    color: #405a73 !important;
+    color: #494949 !important;
     font-size: 11px !important;
     font-weight: 900 !important;
     letter-spacing: .04em !important;
@@ -159,7 +159,7 @@ body .main .prepaid-page .prepaid-form label {
 }
 
 body .main .prepaid-page .prepaid-form label small {
-    color: #6a8299 !important;
+    color: #5C5C5C !important;
     font-size: 11px !important;
     font-weight: 700 !important;
     letter-spacing: 0 !important;
@@ -188,22 +188,22 @@ body .main .prepaid-page .empty-card {
     gap: 12px !important;
     width: 100% !important;
     padding: 13px 14px !important;
-    border: 1px solid #dbe6f0 !important;
+    border: 1px solid #EBEBEB !important;
     border-radius: 8px !important;
     background: #ffffff !important;
-    color: #102033 !important;
+    color: #0F0F0F !important;
     text-align: left !important
 }
 
 body .main .prepaid-page .schedule-card:hover,
 body .main .prepaid-page .schedule-card.selected {
-    border-color: #101122 !important;
-    background: #f8fbff !important
+    border-color: #0F0F0F !important;
+    background: #F7F7F7 !important
 }
 
 body .main .prepaid-page .schedule-card strong {
     display: block !important;
-    color: #102033 !important;
+    color: #0F0F0F !important;
     font-size: 14px !important;
     font-weight: 950 !important
 }
@@ -212,7 +212,7 @@ body .main .prepaid-page .schedule-card span,
 body .main .prepaid-page .schedule-card small {
     display: block !important;
     margin-top: 3px !important;
-    color: #607b94 !important;
+    color: #5C5C5C !important;
     font-size: 12px !important;
     font-weight: 750 !important
 }
@@ -232,8 +232,8 @@ body .main .prepaid-page .status-badge {
     min-height: 24px !important;
     padding: 0 9px !important;
     border-radius: 999px !important;
-    background: #edf5ff !important;
-    color: #0b2f54 !important;
+    background: #F7F7F7 !important;
+    color: #1F1F1F !important;
     font-size: 11px !important;
     font-weight: 900 !important;
     white-space: nowrap !important
@@ -264,7 +264,7 @@ body .main .prepaid-page .prepaid-tabs {
     flex-wrap: wrap !important;
     gap: 6px !important;
     padding: 10px 14px !important;
-    border-bottom: 1px solid #dbe6f0 !important;
+    border-bottom: 1px solid #EBEBEB !important;
     background: #ffffff !important
 }
 
@@ -274,14 +274,14 @@ body .main .prepaid-page .prepaid-tabs .tab-button {
     border: 1px solid transparent !important;
     border-radius: 8px !important;
     background: transparent !important;
-    color: #405a73 !important;
+    color: #494949 !important;
     font-size: 12px !important;
     font-weight: 900 !important
 }
 
 body .main .prepaid-page .prepaid-tabs .tab-button.active {
-    border-color: #101122 !important;
-    background: #101122 !important;
+    border-color: #0F0F0F !important;
+    background: #0F0F0F !important;
     color: #ffffff !important
 }
 
@@ -307,8 +307,8 @@ body .main .prepaid-page .prepaid-table th {
     top: 0 !important;
     z-index: 2 !important;
     padding: 10px 9px !important;
-    border: 1px solid #1c2940 !important;
-    background: #101122 !important;
+    border: 1px solid #1F1F1F !important;
+    background: #0F0F0F !important;
     color: #ffffff !important;
     font-size: 10px !important;
     font-weight: 950 !important;
@@ -318,9 +318,9 @@ body .main .prepaid-page .prepaid-table th {
 
 body .main .prepaid-page .prepaid-table td {
     padding: 8px 9px !important;
-    border-right: 1px solid #e1e9f2 !important;
-    border-bottom: 1px solid #e1e9f2 !important;
-    color: #173a59 !important;
+    border-right: 1px solid #EBEBEB !important;
+    border-bottom: 1px solid #EBEBEB !important;
+    color: #1F1F1F !important;
     font-size: 12px !important;
     font-weight: 700 !important;
     vertical-align: middle !important;
@@ -328,7 +328,7 @@ body .main .prepaid-page .prepaid-table td {
 }
 
 body .main .prepaid-page .prepaid-table tbody tr:nth-child(even) td {
-    background: #f8fbff !important
+    background: #F7F7F7 !important
 }
 
 body .main .prepaid-page .prepaid-table tr.is-excluded td {
@@ -343,7 +343,7 @@ body .main .prepaid-page .prepaid-table td.number {
 }
 
 body .main .prepaid-page .prepaid-table td.emphasis {
-    color: #0b2f54 !important;
+    color: #1F1F1F !important;
     font-weight: 950 !important
 }
 
@@ -358,7 +358,7 @@ body .main .prepaid-page .danger-text {
 
 body .main .prepaid-page .empty-cell {
     padding: 26px !important;
-    color: #607b94 !important;
+    color: #5C5C5C !important;
     text-align: center !important
 }
 
@@ -367,10 +367,10 @@ body .main .prepaid-page .source-classification-select {
     width: 100% !important;
     min-height: 32px !important;
     padding: 0 8px !important;
-    border: 1px solid #cbdbea !important;
+    border: 1px solid #EBEBEB !important;
     border-radius: 6px !important;
     background: #ffffff !important;
-    color: #102033 !important;
+    color: #0F0F0F !important;
     font-size: 12px !important;
     font-weight: 750 !important
 }
@@ -435,11 +435,11 @@ body .main .prepaid-page .hidden {
 
 body .main .prepaid-page {
     gap: 16px !important;
-    background: #eef5fc !important
+    background: #F7F7F7 !important
 }
 
 body .main .prepaid-page .prepaid-panel {
-    border: 1px solid #cddceb !important;
+    border: 1px solid #EBEBEB !important;
     border-radius: 8px !important;
     background: #ffffff !important
 }
@@ -447,7 +447,7 @@ body .main .prepaid-page .prepaid-panel {
 body .main .prepaid-page .panel-header {
     min-height: 78px !important;
     padding: 18px 20px !important;
-    background: #f6faff !important
+    background: #F7F7F7 !important
 }
 
 body .main .prepaid-page .panel-header h2 {
@@ -457,7 +457,7 @@ body .main .prepaid-page .panel-header h2 {
 
 body .main .prepaid-page .panel-header p {
     max-width: 880px !important;
-    color: #466580 !important
+    color: #494949 !important
 }
 
 body .main .prepaid-page .prepaid-form {
@@ -475,7 +475,7 @@ body .main .prepaid-page .prepaid-form label {
 }
 
 body .main .prepaid-page .prepaid-form label>span:not(.file-drop-heading) {
-    color: #193b5a !important;
+    color: #1F1F1F !important;
     font-size: 11px !important;
     font-weight: 950 !important;
     letter-spacing: .03em !important;
@@ -483,7 +483,7 @@ body .main .prepaid-page .prepaid-form label>span:not(.file-drop-heading) {
 }
 
 body .main .prepaid-page .prepaid-form label small {
-    color: #5d748c !important;
+    color: #5C5C5C !important;
     font-size: 11px !important;
     line-height: 1.35 !important
 }
@@ -549,10 +549,10 @@ body .main .prepaid-page .prepaid-form select {
     min-width: 0 !important;
     min-height: 42px !important;
     padding: 0 12px !important;
-    border: 1px solid #bdd0e3 !important;
+    border: 1px solid #D6D6D6 !important;
     border-radius: 8px !important;
     background: #ffffff !important;
-    color: #061b31 !important;
+    color: #0F0F0F !important;
     font-size: 13px !important;
     font-weight: 800 !important;
     box-shadow: none !important
@@ -560,31 +560,31 @@ body .main .prepaid-page .prepaid-form select {
 
 body .main .prepaid-page .prepaid-form input:not([type="file"]):focus,
 body .main .prepaid-page .prepaid-form select:focus {
-    border-color: #316b9d !important;
-    outline: 3px solid rgba(49, 107, 157, .14) !important
+    border-color: #343434 !important;
+    outline: 3px solid rgba(52, 52, 52, .14) !important
 }
 
 body .main .prepaid-page .file-drop {
     min-height: 128px !important;
     padding: 14px !important;
-    border: 1px dashed #7ea7cb !important;
+    border: 1px dashed #8A8A8A !important;
     border-radius: 8px !important;
-    background: #f5faff !important;
+    background: #F7F7F7 !important;
     align-content: center !important;
     cursor: pointer !important
 }
 
 body .main .prepaid-page .file-drop:hover,
 body .main .prepaid-page .file-drop.is-dragging {
-    border-color: #245f91 !important;
-    background: #eef7ff !important
+    border-color: #343434 !important;
+    background: #F7F7F7 !important
 }
 
 body .main .prepaid-page .file-drop-heading {
     display: inline-flex !important;
     align-items: center !important;
     gap: 8px !important;
-    color: #153957 !important;
+    color: #1F1F1F !important;
     font-size: 13px !important;
     font-weight: 950 !important
 }
@@ -596,7 +596,7 @@ body .main .prepaid-page .file-drop-heading i {
     width: 30px !important;
     height: 30px !important;
     border-radius: 8px !important;
-    background: #102033 !important;
+    background: #0F0F0F !important;
     color: #ffffff !important
 }
 
@@ -618,10 +618,10 @@ body .main .prepaid-page .file-drop-name {
     max-width: 100% !important;
     margin-top: 8px !important;
     padding: 0 10px !important;
-    border: 1px solid #d4e2ef !important;
+    border: 1px solid #EBEBEB !important;
     border-radius: 7px !important;
     background: #ffffff !important;
-    color: #284762 !important;
+    color: #2E2E2E !important;
     font-size: 12px !important;
     font-weight: 850 !important;
     overflow: hidden !important;
@@ -660,7 +660,7 @@ body .main .prepaid-page .schedule-card {
     grid-template-columns: minmax(360px, 1fr) minmax(320px, auto) !important;
     align-items: center !important;
     padding: 16px !important;
-    border-color: #cbdbea !important;
+    border-color: #EBEBEB !important;
     cursor: pointer !important
 }
 
@@ -746,7 +746,7 @@ body .main .prepaid-page .prepaid-filters input {
     display: flex;
     justify-content: flex-end;
     padding: 18px 18px 18px;
-    border-top: 1px solid var(--border-color, #dbe4ec);
+    border-top: 1px solid var(--border-color, #EBEBEB);
     margin-top: 14px
 }
 
@@ -819,13 +819,13 @@ body .main .prepaid-page .prepaid-upload-grid .file-drop {
 .prepaid-schedule-matrix tbody td {
     white-space: nowrap;
     padding: 5px 7px;
-    border-bottom: 1px solid #70c9ef;
-    border-right: 1px solid #d9eef8
+    border-bottom: 1px solid #B8B8B8;
+    border-right: 1px solid #EBEBEB
 }
 
 .prepaid-schedule-matrix .schedule-entity-row td {
     background: #fff;
-    color: #344054;
+    color: #2E2E2E;
     font-weight: 800;
     text-align: left;
     border-top: 2px solid #343434
@@ -837,7 +837,7 @@ body .main .prepaid-page .prepaid-upload-grid .file-drop {
 }
 
 .prepaid-schedule-matrix .amount-paid {
-    color: #1677c8;
+    color: #343434;
     font-weight: 800
 }
 
@@ -901,9 +901,9 @@ body .main .prepaid-page .file-remove-btn {
     flex: 0 0 40px;
     width: 40px;
     height: 40px;
-    border: 1px solid #d5deea;
+    border: 1px solid #EBEBEB;
     border-radius: 10px;
-    background: #f4f6f9;
+    background: #F7F7F7;
     color: #7b8492;
     cursor: pointer;
     transition: background-color .2s ease, color .2s ease, border-color .2s ease
@@ -964,7 +964,7 @@ body .main .property-management-page #pmUploadSection .pm-intake-grid>.pm-upload
     min-height: 340px !important;
     padding: 0 !important;
     overflow: hidden !important;
-    border: 1px solid #d7e2ec !important;
+    border: 1px solid #EBEBEB !important;
     border-radius: 14px !important;
     background: #ffffff !important;
     box-shadow: none !important
@@ -977,8 +977,8 @@ body .main .property-management-page #pmUploadSection .pm-upload-panel .pm-uploa
     gap: 16px !important;
     min-height: 112px !important;
     padding: 20px !important;
-    border-bottom: 1px solid #dbe6f0 !important;
-    background: #f8fbfe !important;
+    border-bottom: 1px solid #EBEBEB !important;
+    background: #F7F7F7 !important;
     text-align: left !important
 }
 
@@ -988,7 +988,7 @@ body .main .property-management-page #pmUploadSection .pm-upload-panel .pm-uploa
 
 body .main .property-management-page #pmUploadSection .pm-upload-panel .pm-upload-panel-header h3 {
     margin: 0 !important;
-    color: #082033 !important;
+    color: #0F0F0F !important;
     font-size: 18px !important;
     line-height: 1.25 !important;
     font-weight: 900 !important;
@@ -998,7 +998,7 @@ body .main .property-management-page #pmUploadSection .pm-upload-panel .pm-uploa
 
 body .main .property-management-page #pmUploadSection .pm-upload-panel .pm-upload-panel-header p {
     margin: 6px 0 0 !important;
-    color: #526b82 !important;
+    color: #494949 !important;
     font-size: 13px !important;
     line-height: 1.45 !important;
     font-weight: 650 !important;
@@ -1031,10 +1031,10 @@ body .main .property-management-page #pmUploadSection .pm-upload-panel .pm-uploa
     min-height: 145px !important;
     margin: 0 !important;
     padding: 22px !important;
-    border: 1px dashed #9fc0de !important;
+    border: 1px dashed #B8B8B8 !important;
     border-radius: 12px !important;
-    background: #fbfdff !important;
-    color: #173a59 !important;
+    background: #F7F7F7 !important;
+    color: #1F1F1F !important;
     text-align: center !important;
     cursor: pointer !important;
     box-sizing: border-box !important
@@ -1042,8 +1042,8 @@ body .main .property-management-page #pmUploadSection .pm-upload-panel .pm-uploa
 
 body .main .property-management-page #pmUploadSection .pm-upload-panel .pm-upload-drop-area:hover,
 body .main .property-management-page #pmUploadSection .pm-upload-panel .pm-upload-drop-area.is-dragover {
-    border-color: #1d5f9f !important;
-    background: #f1f8ff !important
+    border-color: #343434 !important;
+    background: #F7F7F7 !important
 }
 
 body .main .property-management-page #pmUploadSection .pm-upload-panel .pm-upload-drop-icon {
@@ -1053,7 +1053,7 @@ body .main .property-management-page #pmUploadSection .pm-upload-panel .pm-uploa
     height: 40px !important;
     margin: 0 !important;
     border-radius: 10px !important;
-    background: #102a43 !important;
+    background: #1F1F1F !important;
     color: #ffffff !important;
     font-size: 16px !important
 }
@@ -1061,7 +1061,7 @@ body .main .property-management-page #pmUploadSection .pm-upload-panel .pm-uploa
 body .main .property-management-page #pmUploadSection .pm-upload-panel .pm-upload-drop-area strong {
     display: block !important;
     margin: 0 !important;
-    color: #082033 !important;
+    color: #0F0F0F !important;
     font-size: 14px !important;
     line-height: 1.3 !important;
     font-weight: 900 !important;
@@ -1072,7 +1072,7 @@ body .main .property-management-page #pmUploadSection .pm-upload-panel .pm-uploa
 body .main .property-management-page #pmUploadSection .pm-upload-panel .pm-upload-drop-area>span:last-child {
     display: block !important;
     margin: 0 !important;
-    color: #60758a !important;
+    color: #5C5C5C !important;
     font-size: 12px !important;
     line-height: 1.35 !important;
     font-weight: 700 !important;
@@ -1106,10 +1106,10 @@ body .main .property-management-page #pmUploadSection .pm-upload-panel .pm-uploa
     min-height: 42px !important;
     padding: 0 13px !important;
     overflow: hidden !important;
-    border: 1px solid #cbdbea !important;
+    border: 1px solid #EBEBEB !important;
     border-radius: 9px !important;
     background: #ffffff !important;
-    color: #173a59 !important;
+    color: #1F1F1F !important;
     font-size: 12px !important;
     font-weight: 800 !important;
     text-overflow: ellipsis !important;
@@ -1139,7 +1139,7 @@ body .main .property-management-page #pmUploadSection .pm-upload-panel .pm-remov
 body .main .property-management-page #pmUploadSection .pm-upload-panel .pm-upload-format {
     display: block !important;
     margin: 0 !important;
-    color: #60758a !important;
+    color: #5C5C5C !important;
     font-size: 11px !important;
     line-height: 1.35 !important;
     font-weight: 700 !important;

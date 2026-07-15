@@ -14,9 +14,9 @@
     gap: 12px;
     min-height: 64px;
     padding: 10px 13px;
-    border: 1px solid #d7e3ec;
+    border: 1px solid #EBEBEB;
     border-radius: 13px;
-    background: #f7fafc;
+    background: #F7F7F7;
     cursor: pointer;
     transition:
         border-color 160ms ease,
@@ -27,18 +27,18 @@
 
 .login-remember-control:hover {
     transform: translateY(-1px);
-    border-color: #abc8dc;
-    background: #f2f8fb;
+    border-color: #D6D6D6;
+    background: #F7F7F7;
     box-shadow:
         0 14px 26px -24px
-        rgba(8, 50, 82, 0.54);
+        rgba(31, 31, 31, 0.54);
 }
 
 .login-remember-control:focus-within {
-    border-color: #2c739f;
+    border-color: #343434;
     box-shadow:
         0 0 0 4px
-        rgba(44, 115, 159, 0.12);
+        rgba(52, 52, 52, 0.12);
 }
 
 .login-remember-control input {
@@ -56,7 +56,7 @@
     width: 42px;
     height: 42px;
     place-items: center;
-    border: 1px solid #c9d9e5;
+    border: 1px solid #EBEBEB;
     border-radius: 12px;
     background: #ffffff;
     color: transparent;
@@ -74,7 +74,7 @@
     content: "";
     width: 18px;
     height: 18px;
-    border: 2px solid #8aa1b4;
+    border: 2px solid #8A8A8A;
     border-radius: 6px;
     background: #ffffff;
     transition:
@@ -94,15 +94,15 @@
 
 .login-remember-control input:checked +
 .login-remember-check {
-    border-color: #1d5e86;
-    background: #eaf5fa;
+    border-color: #2E2E2E;
+    background: #F7F7F7;
     color: #ffffff;
 }
 
 .login-remember-control input:checked +
 .login-remember-check::before {
-    border-color: #123e60;
-    background: #123e60;
+    border-color: #1F1F1F;
+    background: #1F1F1F;
 }
 
 .login-remember-control input:checked +
@@ -118,14 +118,14 @@
 }
 
 .login-remember-copy strong {
-    color: #17334f;
+    color: #1F1F1F;
     font-size: 13px;
     font-weight: 850;
     line-height: 1.25;
 }
 
 .login-remember-copy small {
-    color: #627c92;
+    color: #5C5C5C;
     font-size: 11px;
     font-weight: 600;
     line-height: 1.4;

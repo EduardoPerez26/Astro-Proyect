@@ -775,7 +775,7 @@ async function deleteDepartment(departmentId) {
         title: 'Delete department',
         html: `
             <p><strong>${escapeHtml(department.nombre)}</strong> will be permanently deleted.</p>
-            <p style="margin-top:8px;color:#64748b;">
+            <p style="margin-top:8px;color:#5C5C5C;">
                 ${totalUsers
                     ? `${totalUsers} user(s) will remain without a department, but their accounts and permissions will stay active.`
                     : 'This department has no assigned users.'}

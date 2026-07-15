@@ -63,7 +63,7 @@ html body .pm-schedule-info-copy h4 {
     display: -webkit-box !important;
     margin: 4px 0 !important;
     overflow: hidden !important;
-    color: #143653 !important;
+    color: #1F1F1F !important;
     font-size: 16px !important;
     line-height: 1.27 !important;
     text-overflow: initial !important;
@@ -100,7 +100,7 @@ html body .pm-schedule-info-card-icon {
 
 html body .pm-schedule-info-grid strong {
     margin-top: 3px !important;
-    color: #173a59 !important;
+    color: #1F1F1F !important;
     font-size: 12px !important;
     line-height: 1.28 !important;
     word-break: normal !important;

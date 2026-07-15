@@ -664,13 +664,13 @@ function ensureAmortizationModalStyles() {
             overflow: hidden !important;
             border-radius: 22px !important;
             background: #ffffff !important;
-            box-shadow: 0 28px 70px rgba(15, 23, 42, 0.28) !important;
+            box-shadow: 0 28px 70px rgba(15, 15, 15, 0.28) !important;
         }
 
         .source-amortization-swal .swal2-title {
             margin: 0 !important;
             padding: 26px 28px 8px !important;
-            color: #10233c !important;
+            color: #0F0F0F !important;
             font-size: 27px !important;
             line-height: 1.15 !important;
             font-weight: 900 !important;
@@ -699,9 +699,9 @@ function ensureAmortizationModalStyles() {
             gap: 14px !important;
             align-items: center !important;
             padding: 16px 18px !important;
-            border: 1px solid #d9e5f1 !important;
+            border: 1px solid #EBEBEB !important;
             border-radius: 16px !important;
-            background: linear-gradient(180deg, #f8fbff 0%, #f1f6fc 100%) !important;
+            background: linear-gradient(180deg, #F7F7F7 0%, #F7F7F7 100%) !important;
             box-sizing: border-box !important;
         }
 
@@ -712,16 +712,16 @@ function ensureAmortizationModalStyles() {
             width: 46px !important;
             height: 46px !important;
             border-radius: 14px !important;
-            background: #10233c !important;
+            background: #0F0F0F !important;
             color: #ffffff !important;
             font-size: 17px !important;
-            box-shadow: 0 9px 18px rgba(16, 35, 60, 0.18) !important;
+            box-shadow: 0 9px 18px rgba(15, 15, 15, 0.18) !important;
         }
 
         .source-amortization-summary strong {
             display: block !important;
             margin: 0 0 4px !important;
-            color: #17324f !important;
+            color: #1F1F1F !important;
             font-size: 14px !important;
             line-height: 1.4 !important;
             font-weight: 900 !important;
@@ -729,7 +729,7 @@ function ensureAmortizationModalStyles() {
 
         .source-amortization-summary span {
             display: block !important;
-            color: #687d92 !important;
+            color: #5C5C5C !important;
             font-size: 13px !important;
             line-height: 1.4 !important;
         }
@@ -738,14 +738,14 @@ function ensureAmortizationModalStyles() {
             display: grid !important;
             gap: 9px !important;
             padding: 14px 16px !important;
-            border: 1px solid #e0e8f1 !important;
+            border: 1px solid #EBEBEB !important;
             border-radius: 15px !important;
             background: #ffffff !important;
         }
 
         .source-amortization-presets > span {
             display: block !important;
-            color: #40566f !important;
+            color: #2E2E2E !important;
             font-size: 11px !important;
             line-height: 1 !important;
             font-weight: 900 !important;
@@ -767,10 +767,10 @@ function ensureAmortizationModalStyles() {
             height: 38px !important;
             margin: 0 !important;
             padding: 0 10px !important;
-            border: 1px solid #ccd9e8 !important;
+            border: 1px solid #EBEBEB !important;
             border-radius: 11px !important;
             background: #ffffff !important;
-            color: #40566f !important;
+            color: #2E2E2E !important;
             font-family: inherit !important;
             font-size: 12px !important;
             line-height: 1 !important;
@@ -782,17 +782,17 @@ function ensureAmortizationModalStyles() {
 
         .source-amortization-presets button:hover {
             transform: translateY(-1px) !important;
-            border-color: #86aee0 !important;
-            background: #f2f7fd !important;
-            color: #174d85 !important;
-            box-shadow: 0 5px 12px rgba(42, 91, 145, 0.10) !important;
+            border-color: #B8B8B8 !important;
+            background: #F7F7F7 !important;
+            color: #2E2E2E !important;
+            box-shadow: 0 5px 12px rgba(52, 52, 52, 0.10) !important;
         }
 
         .source-amortization-presets button.active {
-            border-color: #315f94 !important;
-            background: #173b63 !important;
+            border-color: #343434 !important;
+            background: #1F1F1F !important;
             color: #ffffff !important;
-            box-shadow: 0 7px 15px rgba(23, 59, 99, 0.20) !important;
+            box-shadow: 0 7px 15px rgba(31, 31, 31, 0.20) !important;
         }
 
         .source-amortization-date-grid {
@@ -809,7 +809,7 @@ function ensureAmortizationModalStyles() {
         }
 
         .source-amortization-date-grid label span {
-            color: #40566f !important;
+            color: #2E2E2E !important;
             font-size: 12px !important;
             font-weight: 850 !important;
         }
@@ -821,19 +821,19 @@ function ensureAmortizationModalStyles() {
             margin: 0 !important;
             padding: 0 14px !important;
             box-sizing: border-box !important;
-            border: 1px solid #ccd9e8 !important;
+            border: 1px solid #EBEBEB !important;
             border-radius: 13px !important;
-            background: #fbfdff !important;
-            color: #10233c !important;
+            background: #F7F7F7 !important;
+            color: #0F0F0F !important;
             font-family: inherit !important;
             font-size: 14px !important;
-            box-shadow: inset 0 1px 1px rgba(16, 35, 60, 0.03) !important;
+            box-shadow: inset 0 1px 1px rgba(15, 15, 15, 0.03) !important;
         }
 
         .source-amortization-date-grid .swal2-input:focus {
-            border-color: #7fa8db !important;
+            border-color: #B8B8B8 !important;
             background: #ffffff !important;
-            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.13) !important;
+            box-shadow: 0 0 0 4px rgba(138, 138, 138, 0.13) !important;
             outline: none !important;
         }
 
@@ -842,10 +842,10 @@ function ensureAmortizationModalStyles() {
             align-items: center !important;
             gap: 10px !important;
             padding: 13px 15px !important;
-            border: 1px solid #d6e7fa !important;
+            border: 1px solid #EBEBEB !important;
             border-radius: 13px !important;
-            background: #edf5ff !important;
-            color: #245b96 !important;
+            background: #F7F7F7 !important;
+            color: #343434 !important;
             font-size: 13px !important;
             line-height: 1.35 !important;
             font-weight: 800 !important;
@@ -860,8 +860,8 @@ function ensureAmortizationModalStyles() {
             gap: 10px !important;
             justify-content: flex-end !important;
             box-sizing: border-box !important;
-            border-top: 1px solid #e2ebf4 !important;
-            background: #f8fbff !important;
+            border-top: 1px solid #F7F7F7 !important;
+            background: #F7F7F7 !important;
         }
 
         .source-amortization-confirm-btn,
@@ -883,24 +883,24 @@ function ensureAmortizationModalStyles() {
         }
 
         .source-amortization-confirm-btn {
-            background: #0f172a !important;
+            background: #0F0F0F !important;
             color: #ffffff !important;
-            box-shadow: 0 8px 18px rgba(15, 23, 42, 0.18) !important;
+            box-shadow: 0 8px 18px rgba(15, 15, 15, 0.18) !important;
         }
 
         .source-amortization-confirm-btn:hover {
             transform: translateY(-1px) !important;
-            box-shadow: 0 11px 22px rgba(15, 23, 42, 0.24) !important;
+            box-shadow: 0 11px 22px rgba(15, 15, 15, 0.24) !important;
         }
 
         .source-amortization-cancel-btn {
-            border-color: #d7e2ee !important;
+            border-color: #EBEBEB !important;
             background: #ffffff !important;
-            color: #334a63 !important;
+            color: #2E2E2E !important;
         }
 
         .source-amortization-cancel-btn:hover {
-            background: #f3f7fb !important;
+            background: #F7F7F7 !important;
         }
 
         @media (max-width: 620px) {

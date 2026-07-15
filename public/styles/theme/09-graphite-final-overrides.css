@@ -1,0 +1,296 @@
+/* =========================================================
+   XBFS - GRAPHITE FINAL OVERRIDES
+   Last visual layer for removing legacy blue accents.
+   ========================================================= */
+
+:root {
+    --primary: #111111;
+    --primary-dark: #050505;
+    --primary-light: #f0f0f0;
+    --info: #171717;
+    --info-light: #f4f4f4;
+    --gray-800: #151515;
+    --gray-900: #070707;
+
+    --modern-blue-25: #fafafa;
+    --modern-blue-50: #f5f5f5;
+    --modern-blue-100: #e8e8e8;
+    --modern-blue-500: #202020;
+    --modern-blue-700: #111111;
+    --modern-blue-900: #050505;
+
+    --xbfs-modal-navy: #111111;
+    --xbfs-modal-navy-hover: #1e1e1e;
+    --xbfs-modal-blue: #151515;
+    --xbfs-modal-blue-soft: #f3f3f3;
+    --xbfs-modal-text: #171717;
+    --xbfs-modal-text-strong: #050505;
+    --xbfs-modal-border: #d7d7d7;
+
+    --xbfs-hero-bg-start: #020202;
+    --xbfs-hero-bg-middle: #0a0a0a;
+    --xbfs-hero-bg-end: #1a1a1a;
+    --xbfs-sidebar-hero-start: #020202;
+    --xbfs-sidebar-hero-middle: #0a0a0a;
+    --xbfs-sidebar-hero-end: #1a1a1a;
+    --dept-start: #020202;
+    --dept-mid: #0a0a0a;
+    --dept-end: #1a1a1a;
+}
+
+html body {
+    background:
+        linear-gradient(180deg, #f8f8f8 0%, #f2f2f2 42%, #ececec 100%) !important;
+}
+
+html body * {
+    scrollbar-color: #8f8f8f #f0f0f0;
+}
+
+html body *::-webkit-scrollbar-track {
+    background: #f0f0f0 !important;
+}
+
+html body *::-webkit-scrollbar-thumb {
+    border-color: #f0f0f0 !important;
+    background: #8f8f8f !important;
+}
+
+html body *:focus-visible {
+    outline-color: rgba(17, 17, 17, 0.22) !important;
+}
+
+/* Primary headers and page heroes. */
+html body .main :is(
+    .xbfs-page-hero,
+    .page-container > .page-header,
+    .stores-hero,
+    .profile-settings-hero,
+    .profile-account-hero,
+    .documents-system-hero,
+    .comparison-history-hero,
+    .admin-dashboard-header,
+    .admin-users-hero,
+    .operations-header,
+    .system-errors-hero,
+    .schedule-header,
+    .prepaid-hero,
+    .pm-hero,
+    .property-management-hero,
+    .property-documents-hero,
+    .reconciliation-hero
+) {
+    border-color: rgba(255, 255, 255, 0.10) !important;
+    background:
+        radial-gradient(circle at 86% 16%, rgba(255, 255, 255, 0.13), transparent 25%),
+        radial-gradient(circle at 8% 118%, rgba(255, 255, 255, 0.055), transparent 36%),
+        linear-gradient(128deg, #020202 0%, #0a0a0a 56%, #1b1b1b 100%) !important;
+    box-shadow:
+        0 28px 64px -48px rgba(0, 0, 0, 0.98),
+        inset 0 1px 0 rgba(255, 255, 255, 0.045) !important;
+}
+
+html body .main :is(
+    .xbfs-page-hero,
+    .page-container > .page-header,
+    .stores-hero,
+    .profile-settings-hero,
+    .profile-account-hero,
+    .documents-system-hero,
+    .comparison-history-hero,
+    .admin-dashboard-header,
+    .admin-users-hero,
+    .operations-header,
+    .system-errors-hero,
+    .schedule-header,
+    .prepaid-hero,
+    .pm-hero,
+    .property-management-hero,
+    .property-documents-hero,
+    .reconciliation-hero
+) :is(h1, h2, h3, .page-title, strong) {
+    color: #ffffff !important;
+}
+
+html body .main :is(
+    .xbfs-page-hero,
+    .page-container > .page-header,
+    .stores-hero,
+    .profile-settings-hero,
+    .profile-account-hero,
+    .documents-system-hero,
+    .comparison-history-hero,
+    .admin-dashboard-header,
+    .admin-users-hero,
+    .operations-header,
+    .system-errors-hero,
+    .schedule-header,
+    .prepaid-hero,
+    .pm-hero,
+    .property-management-hero,
+    .property-documents-hero,
+    .reconciliation-hero
+) :is(p, small, span, .page-subtitle, .hero-subtitle) {
+    color: #cfcfcf !important;
+}
+
+html body .main :is(
+    .topbar-eyebrow,
+    .stores-eyebrow,
+    .profile-eyebrow,
+    .pm-eyebrow,
+    .prepaid-eyebrow,
+    .operations-eyebrow,
+    .admin-dashboard-eyebrow,
+    .admin-users-eyebrow,
+    .documents-eyebrow,
+    .comparison-history-eyebrow,
+    .system-errors-eyebrow,
+    .schedule-eyebrow,
+    .xbfs-page-hero__eyebrow
+) {
+    border-color: rgba(255, 255, 255, 0.18) !important;
+    background: rgba(255, 255, 255, 0.10) !important;
+    color: #f2f2f2 !important;
+}
+
+/* Topbar and sidebar accents. */
+html body :is(.department-pill strong, .avatar, .user-avatar) {
+    background: #111111 !important;
+    color: #ffffff !important;
+}
+
+html body :is(.menu-toggle, .sidebar-toggle) {
+    color: #2b2b2b !important;
+}
+
+html body :is(.menu-toggle, .sidebar-toggle):hover {
+    border-color: #d7d7d7 !important;
+    background: #f1f1f1 !important;
+    color: #111111 !important;
+}
+
+html body .sidebar {
+    background: linear-gradient(180deg, #020202 0%, #090909 50%, #141414 100%) !important;
+}
+
+html body :is(.sidebar-menu-link i, .sidebar-logout i) {
+    color: #d0d0d0 !important;
+}
+
+html body :is(.sidebar-menu-link.active, .nav-btn.active) {
+    color: #111111 !important;
+}
+
+html body :is(.sidebar-menu-link.active i, .nav-btn.active i) {
+    color: #111111 !important;
+}
+
+/* Primary actions, selected tabs and old blue utility classes. */
+html body :is(
+    .btn-primary,
+    .primary-btn,
+    .primary-button,
+    .pm-primary-button,
+    .save-button,
+    .submit-button,
+    .start-button,
+    .export-button,
+    .refresh-button,
+    .comparison-export-button,
+    .documents-system-action-primary,
+    .replacement-file-confirm-button,
+    .source-amortization-confirm-btn,
+    .source-concept-confirm-btn,
+    .pm-qc-button,
+    .pm-full-action,
+    .chat-send-btn,
+    .save-restaurant-state,
+    .stat-icon.blue,
+    .summary-icon.is-#171717,
+    .restaurant-mark,
+    .admin-view-tab.active,
+    .document-tab.active,
+    .profile-tab.active,
+    .state-option.is-selected
+) {
+    border-color: #2d2d2d !important;
+    background:
+        linear-gradient(180deg, #2a2a2a 0%, #090909 100%) !important;
+    color: #ffffff !important;
+    box-shadow:
+        0 14px 26px -21px rgba(0, 0, 0, 0.92),
+        inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+}
+
+html body :is(
+    .btn-primary,
+    .primary-btn,
+    .primary-button,
+    .pm-primary-button,
+    .save-button,
+    .submit-button,
+    .start-button,
+    .export-button,
+    .refresh-button,
+    .comparison-export-button,
+    .documents-system-action-primary,
+    .replacement-file-confirm-button,
+    .source-amortization-confirm-btn,
+    .source-concept-confirm-btn,
+    .pm-qc-button,
+    .pm-full-action,
+    .chat-send-btn,
+    .save-restaurant-state,
+    .admin-view-tab.active,
+    .document-tab.active,
+    .profile-tab.active
+):hover:not(:disabled) {
+    border-color: #555555 !important;
+    background:
+        linear-gradient(180deg, #3b3b3b 0%, #141414 100%) !important;
+    color: #ffffff !important;
+}
+
+html body :is(
+    .btn-outline-primary,
+    .secondary-btn,
+    .filter-btn,
+    .admin-view-tab,
+    .document-tab,
+    .profile-tab
+) {
+    color: #252525 !important;
+}
+
+html body :is(
+    a,
+    .link-button,
+    .table-action,
+    .operation-link
+) {
+    color: #1f1f1f;
+}
+
+html body :is(
+    input,
+    select,
+    textarea,
+    .restaurant-reason
+):focus {
+    border-color: #3a3a3a !important;
+    box-shadow: 0 0 0 3px rgba(17, 17, 17, 0.12) !important;
+}
+
+/* Table headers that still inherited navy/blue. */
+html body :is(
+    table thead th,
+    .table thead th,
+    .documents-table thead th,
+    .history-table thead th,
+    .property-documents-table thead th
+) {
+    background: #111111 !important;
+    color: #f4f4f4 !important;
+    border-color: #232323 !important;
+}

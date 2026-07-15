@@ -2872,7 +2872,7 @@
                     border-radius: 14px !important;
                     overflow: hidden !important;
                     background: #ffffff !important;
-                    box-shadow: 0 34px 90px -50px rgba(8, 28, 46, 0.88) !important;
+                    box-shadow: 0 34px 90px -50px rgba(15, 15, 15, 0.88) !important;
                 }
 
                 .swal2-popup.pm-reclass-popup .swal2-title {
@@ -2886,10 +2886,10 @@
                     z-index: 5 !important;
                     width: 42px !important;
                     height: 42px !important;
-                    border: 1px solid #d7e3ef !important;
+                    border: 1px solid #EBEBEB !important;
                     border-radius: 10px !important;
-                    background: #f7fbff !important;
-                    color: #0d2238 !important;
+                    background: #F7F7F7 !important;
+                    color: #0F0F0F !important;
                     font-size: 24px !important;
                     font-weight: 500 !important;
                     line-height: 1 !important;
@@ -2897,9 +2897,9 @@
                 }
 
                 .swal2-popup.pm-reclass-popup .swal2-close:hover {
-                    border-color: #b8c9d9 !important;
-                    background: #edf5fb !important;
-                    color: #071a2b !important;
+                    border-color: #D6D6D6 !important;
+                    background: #F7F7F7 !important;
+                    color: #0F0F0F !important;
                 }
 
                 .swal2-html-container.pm-reclass-html {
@@ -2931,15 +2931,15 @@
                     justify-content: space-between !important;
                     gap: 16px !important;
                     padding: 34px 92px 24px 34px !important;
-                    border-bottom: 1px solid #e3ecf5 !important;
-                    color: #0d2238 !important;
+                    border-bottom: 1px solid #F7F7F7 !important;
+                    color: #0F0F0F !important;
                     box-sizing: border-box !important;
                 }
 
                 .pm-reclass-eyebrow-v2 {
                     display: block !important;
                     margin-bottom: 10px !important;
-                    color: #0b1d31 !important;
+                    color: #0F0F0F !important;
                     font-size: 11px !important;
                     font-weight: 900 !important;
                     letter-spacing: 0 !important;
@@ -2948,7 +2948,7 @@
 
                 .pm-reclass-modal-header-v2 h2 {
                     margin: 0 !important;
-                    color: #0d2238 !important;
+                    color: #0F0F0F !important;
                     font-size: 25px !important;
                     font-weight: 950 !important;
                     line-height: 1.08 !important;
@@ -2956,7 +2956,7 @@
 
                 .pm-reclass-modal-header-v2 p {
                     margin: 10px 0 0 !important;
-                    color: #0d2238 !important;
+                    color: #0F0F0F !important;
                     font-size: 13px !important;
                     font-weight: 750 !important;
                 }
@@ -3009,16 +3009,16 @@
                     min-width: 0 !important;
                     min-height: 70px !important;
                     padding: 12px !important;
-                    border: 1px solid #dfe8f2 !important;
+                    border: 1px solid #EBEBEB !important;
                     border-radius: 12px !important;
-                    background: #f8fbff !important;
+                    background: #F7F7F7 !important;
                     box-sizing: border-box !important;
                 }
 
                 .pm-reclass-grid-v2 .pm-field span {
                     display: block !important;
                     margin: 0 !important;
-                    color: #667d93 !important;
+                    color: #5C5C5C !important;
                     font-size: 10px !important;
                     font-weight: 850 !important;
                     text-transform: uppercase !important;
@@ -3035,7 +3035,7 @@
                     border: 1px !important;
                     border-radius: 9px !important;
                     background: transparent !important;
-                    color: #0d3d68 !important;
+                    color: #1F1F1F !important;
                     font-size: 15px !important;
                     font-weight: 850 !important;
                     box-sizing: border-box !important;
@@ -3045,7 +3045,7 @@
                 .pm-reclass-grid-v2 .pm-field select:focus,
                 .pm-reclass-grid-v2 .pm-field input:focus,
                 .pm-reclass-store-list-v2 textarea:focus {
-                    box-shadow: 0 0 0 3px rgba(23, 74, 117, 0.12) !important;
+                    box-shadow: 0 0 0 3px rgba(46, 46, 46, 0.12) !important;
                 }
 
                 .pm-reclass-reason-v2 {
@@ -3066,7 +3066,7 @@
 
                 .pm-reclass-concepts-header-v2 strong {
                     display: block !important;
-                    color: #0b2236 !important;
+                    color: #0F0F0F !important;
                     font-size: 18px !important;
                     font-weight: 900 !important;
                 }
@@ -3074,7 +3074,7 @@
                 .pm-reclass-concepts-header-v2 span {
                     display: block !important;
                     margin-top: 2px !important;
-                    color: #60768d !important;
+                    color: #5C5C5C !important;
                     font-size: 12px !important;
                     font-weight: 700 !important;
                 }
@@ -3085,10 +3085,10 @@
                     gap: 8px !important;
                     min-height: 32px !important;
                     padding: 0 9px !important;
-                    border: 1px solid #d3e0eb !important;
+                    border: 1px solid #EBEBEB !important;
                     border-radius: 9px !important;
-                    background: #f8fbff !important;
-                    color: #0d2238 !important;
+                    background: #F7F7F7 !important;
+                    color: #0F0F0F !important;
                     font-size: 13px !important;
                     font-weight: 800 !important;
                     white-space: nowrap !important;
@@ -3103,7 +3103,7 @@
                     min-height: 0 !important;
                     max-height: none !important;
                     overflow: auto !important;
-                    border: 1px solid #dfe8f2 !important;
+                    border: 1px solid #EBEBEB !important;
                     border-radius: 12px !important;
                     background: #ffffff !important;
                     box-shadow: none !important;
@@ -3122,8 +3122,8 @@
                     top: 0 !important;
                     z-index: 2 !important;
                     padding: 11px 10px !important;
-                    border-bottom: 1px solid #20233a !important;
-                    background: #101122 !important;
+                    border-bottom: 1px solid #1F1F1F !important;
+                    background: #0F0F0F !important;
                     color: #ffffff !important;
                     font-size: 11px !important;
                     font-weight: 900 !important;
@@ -3155,20 +3155,20 @@
 
                 .pm-reclass-table-v2 td {
                     padding: 10px 11px !important;
-                    border-bottom: 1px solid #e8eef5 !important;
-                    border-right: 1px solid #e8eef5 !important;
-                    color: #0b2236 !important;
+                    border-bottom: 1px solid #F7F7F7 !important;
+                    border-right: 1px solid #F7F7F7 !important;
+                    color: #0F0F0F !important;
                     vertical-align: middle !important;
                     white-space: nowrap !important;
                     word-break: normal !important;
                 }
 
                 .pm-reclass-table-v2 tr:nth-child(even) td {
-                    background: #f8fbfd !important;
+                    background: #F7F7F7 !important;
                 }
 
                 .pm-reclass-table-v2 tr:hover td {
-                    background: #eef6fc !important;
+                    background: #F7F7F7 !important;
                 }
 
                 .pm-reclass-table-v2 td:first-child,
@@ -3193,10 +3193,10 @@
                     width: 108px !important;
                     height: 34px !important;
                     padding: 0 8px !important;
-                    border: 1px solid #d2dfec !important;
+                    border: 1px solid #EBEBEB !important;
                     border-radius: 9px !important;
                     background: #ffffff !important;
-                    color: #0d3d68 !important;
+                    color: #1F1F1F !important;
                     font-size: 12px !important;
                     font-weight: 700 !important;
                     box-sizing: border-box !important;
@@ -3204,8 +3204,8 @@
                 }
 
                 .pm-reclass-table-v2 input[type="number"]:focus {
-                    border-color: #174a75 !important;
-                    box-shadow: 0 0 0 3px rgba(23, 74, 117, 0.12) !important;
+                    border-color: #2E2E2E !important;
+                    box-shadow: 0 0 0 3px rgba(46, 46, 46, 0.12) !important;
                 }
 
                 .pm-reclass-type-v2 {
@@ -3220,8 +3220,8 @@
                 }
 
                 .pm-reclass-type-v2.is-paid {
-                    background: #e0f2fe !important;
-                    color: #075985 !important;
+                    background: #F7F7F7 !important;
+                    color: #2E2E2E !important;
                 }
 
                 .pm-reclass-type-v2.is-collected {
@@ -3233,10 +3233,10 @@
                     flex: 0 0 auto !important;
                     margin: 10px 0 0 !important;
                     padding: 12px 14px !important;
-                    border: 1px solid #dfe8f2 !important;
+                    border: 1px solid #EBEBEB !important;
                     border-radius: 12px !important;
-                    background: #f8fbff !important;
-                    color: #0f2b43 !important;
+                    background: #F7F7F7 !important;
+                    color: #1F1F1F !important;
                     font-size: 13px !important;
                     font-weight: 850 !important;
                 }
@@ -3250,10 +3250,10 @@
                     min-height: 54px !important;
                     height: 54px !important;
                     padding: 8px 10px !important;
-                    border: 1px solid #d2dfec !important;
+                    border: 1px solid #EBEBEB !important;
                     border-radius: 9px !important;
                     background: #ffffff !important;
-                    color: #0b2236 !important;
+                    color: #0F0F0F !important;
                     font-size: 12px !important;
                     font-weight: 700 !important;
                     resize: vertical !important;
@@ -3267,7 +3267,7 @@
 
                 .pm-reclass-store-list-v2 small {
                     margin-top: 0 !important;
-                    color: #60768d !important;
+                    color: #5C5C5C !important;
                     font-size: 11px !important;
                     font-weight: 700 !important;
                     line-height: 1.35 !important;
@@ -3287,9 +3287,9 @@
                     min-width: 0 !important;
                     height: 70px !important;
                     justify-content: center !important;
-                    border: 1px solid #101122 !important;
+                    border: 1px solid #0F0F0F !important;
                     border-radius: 12px !important;
-                    background: #101122 !important;
+                    background: #0F0F0F !important;
                     color: #ffffff !important;
                     cursor: pointer !important;
                     font-size: 13px !important;
@@ -3302,9 +3302,9 @@
                 }
 
                 .pm-reclass-load-stores-v2 .pm-reclass-load-btn-v2:hover {
-                    background: #173a56 !important;
+                    background: #1F1F1F !important;
                     transform: translateY(-1px) !important;
-                    box-shadow: 0 14px 24px -20px rgba(15, 43, 67, 0.86) !important;
+                    box-shadow: 0 14px 24px -20px rgba(31, 31, 31, 0.86) !important;
                 }
 
                 .pm-reclass-load-stores-v2 .pm-reclass-load-btn-v2 i {
@@ -3316,7 +3316,7 @@
                     width: 100% !important;
                     margin: 0 !important;
                     padding: 20px 34px 28px !important;
-                    border-top: 1px solid #e3ecf5 !important;
+                    border-top: 1px solid #F7F7F7 !important;
                     
                     box-sizing: border-box !important;
                     gap: 10px !important;
@@ -3336,12 +3336,12 @@
 
                 .swal2-popup.pm-reclass-popup .swal2-confirm {
                     min-width: 180px !important;
-                    background: #101122 !important;
+                    background: #0F0F0F !important;
                 }
 
                 .swal2-popup.pm-reclass-popup .swal2-cancel {
                     background: #ffffff !important;
-                    color: #101122 !important;
+                    color: #0F0F0F !important;
                 }
 
                 @media (max-width: 900px) {
@@ -3581,8 +3581,8 @@
             showCloseButton: true,
             confirmButtonText: 'Move selected amounts',
             cancelButtonText: 'Cancel',
-            confirmButtonColor: '#102a43',
-            cancelButtonColor: '#64748b',
+            confirmButtonColor: '#1F1F1F',
+            cancelButtonColor: '#5C5C5C',
             focusConfirm: false,
             didOpen: (popup) => {
                 forceMonthReclassDialogWidth(popup);
@@ -3686,7 +3686,7 @@
                 icon: 'info',
                 title: 'No amounts moved',
                 text: 'No selected concepts had available amounts in the source month.',
-                confirmButtonColor: '#102a43'
+                confirmButtonColor: '#1F1F1F'
             });
             return;
         }
@@ -5513,8 +5513,8 @@
                     <style>
                         body {
                             margin: 0;
-                            background: #eef4f8;
-                            color: #082033;
+                            background: #F7F7F7;
+                            color: #0F0F0F;
                             font-family: Arial, sans-serif;
                         }
                         header {
@@ -5522,7 +5522,7 @@
                             top: 0;
                             z-index: 2;
                             padding: 16px 20px;
-                            border-bottom: 1px solid #cbd9e6;
+                            border-bottom: 1px solid #EBEBEB;
                             background: #ffffff;
                         }
                         h1 {
@@ -5535,13 +5535,13 @@
                         }
                         .viewer-meta {
                             margin-bottom: 10px;
-                            color: #415a70;
+                            color: #2E2E2E;
                             font-size: 12px;
                             font-weight: 800;
                         }
                         .viewer-table-wrap {
                             overflow: auto;
-                            border: 1px solid #cbd9e6;
+                            border: 1px solid #EBEBEB;
                             border-radius: 8px;
                             background: #ffffff;
                         }
@@ -5553,21 +5553,21 @@
                         }
                         th, td {
                             padding: 8px 10px;
-                            border-right: 1px solid #e1ebf3;
-                            border-bottom: 1px solid #e1ebf3;
+                            border-right: 1px solid #EBEBEB;
+                            border-bottom: 1px solid #EBEBEB;
                             white-space: nowrap;
                         }
                         th {
                             position: sticky;
                             top: 0;
-                            background: #102a43;
+                            background: #1F1F1F;
                             color: #ffffff;
                             text-align: left;
                         }
                         .viewer-frame {
                             width: 100%;
                             height: calc(100vh - 96px);
-                            border: 1px solid #cbd9e6;
+                            border: 1px solid #EBEBEB;
                             border-radius: 8px;
                             background: #ffffff;
                         }
@@ -5582,10 +5582,10 @@
                         .viewer-text,
                         .viewer-empty {
                             padding: 18px;
-                            border: 1px solid #cbd9e6;
+                            border: 1px solid #EBEBEB;
                             border-radius: 8px;
                             background: #ffffff;
-                            color: #173a59;
+                            color: #1F1F1F;
                             font-size: 13px;
                             font-weight: 700;
                         }
@@ -5799,9 +5799,9 @@
                 confirmButtonText: 'Subir schedule',
                 denyButtonText: 'Descargar Excel',
                 cancelButtonText: 'Cancelar',
-                confirmButtonColor: '#102a43',
-                denyButtonColor: '#244c6b',
-                cancelButtonColor: '#64748b',
+                confirmButtonColor: '#1F1F1F',
+                denyButtonColor: '#2E2E2E',
+                cancelButtonColor: '#5C5C5C',
                 reverseButtons: true
             });
 
@@ -6852,7 +6852,7 @@
             text: message,
             showConfirmButton: !autoClose,
             confirmButtonText: 'OK',
-            confirmButtonColor: '#102a43',
+            confirmButtonColor: '#1F1F1F',
             timer: autoClose ? 1700 : undefined,
             timerProgressBar: autoClose
         });

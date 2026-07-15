@@ -27,8 +27,8 @@ html body .stores-page .stores-hero {
     background:
         radial-gradient(circle at 86% 20%, rgba(255, 255, 255, 0.18), transparent 25%),
         radial-gradient(circle at 8% 100%, rgba(45, 212, 191, 0.14), transparent 32%),
-        linear-gradient(125deg, #071b2d 0%, #0e3555 56%, #0f766e 100%);
-    box-shadow: 0 30px 68px -48px rgba(7, 27, 45, 0.95);
+        linear-gradient(125deg, #0F0F0F 0%, #1F1F1F 56%, #2E2E2E 100%);
+    box-shadow: 0 30px 68px -48px rgba(15, 15, 15, 0.95);
     color: #ffffff;
 }
 
@@ -64,7 +64,7 @@ html body .stores-page .stores-eyebrow {
     border: 1px solid rgba(255, 255, 255, 0.18);
     border-radius: 999px;
     background: rgba(255, 255, 255, 0.1);
-    color: #d7edf8 !important;
+    color: #EBEBEB !important;
     font-size: 10px;
     font-weight: 900;
     letter-spacing: 0.09em;
@@ -72,7 +72,7 @@ html body .stores-page .stores-eyebrow {
 }
 
 html body .stores-page .stores-eyebrow i {
-    color: #d7edf8 !important;
+    color: #EBEBEB !important;
     font-size: 10px;
 }
 
@@ -90,7 +90,7 @@ html body .stores-page .stores-hero h1 {
 html body .stores-page .stores-hero p {
     max-width: 720px;
     margin: 0;
-    color: #d7e6f2 !important;
+    color: #EBEBEB !important;
     font-size: 14px;
     font-weight: 650;
     line-height: 1.65;
@@ -150,7 +150,7 @@ html body .stores-page .stores-hero-overview strong {
 
 html body .stores-page .stores-hero-overview small {
     margin: 0 0 3px;
-    color: #bad3e5 !important;
+    color: #D6D6D6 !important;
     font-size: 9px;
     font-weight: 900;
     letter-spacing: 0.08em;
@@ -171,7 +171,7 @@ html body .stores-page .stores-hero-status {
     align-items: center;
     gap: 7px;
     margin-top: 7px;
-    color: #d7e6f2 !important;
+    color: #EBEBEB !important;
     font-size: 9px;
     font-weight: 850;
     letter-spacing: 0.035em;
@@ -201,22 +201,22 @@ html body .stores-page .store-grid {
 
 html body .stores-page .stores-empty {
     padding: 54px 24px;
-    border: 1px dashed #c9d5e1;
+    border: 1px dashed #D6D6D6;
     border-radius: 16px;
     background: rgba(255, 255, 255, 0.72);
-    color: #718096;
+    color: #5C5C5C;
     text-align: center;
 }
 
 html body .stores-page .stores-empty i {
     margin-bottom: 14px;
-    color: var(--primary, #0f4c75);
+    color: var(--primary, #2E2E2E);
     font-size: 24px;
 }
 
 html body .stores-page .stores-empty h2 {
     margin: 0 0 6px;
-    color: #243b53;
+    color: #1F1F1F;
     font-size: 18px;
 }
 
@@ -231,13 +231,13 @@ html body .stores-page .stores-footer-note {
     gap: 9px;
     margin-top: 20px;
     padding: 14px 4px 0;
-    border-top: 1px solid #d7e0e9;
-    color: #718096;
+    border-top: 1px solid #EBEBEB;
+    color: #5C5C5C;
     font-size: 11px;
 }
 
 html body .stores-page .stores-footer-note i {
-    color: var(--primary, #0f4c75);
+    color: var(--primary, #2E2E2E);
 }
 
 @media (max-width: 1100px) {

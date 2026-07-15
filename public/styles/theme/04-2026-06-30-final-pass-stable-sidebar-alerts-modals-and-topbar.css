@@ -58,8 +58,8 @@ html body .main>.header {
     overflow: visible !important;
     border: 0 !important;
     border-radius: 0 0 20px 20px !important;
-    background: #edf4fb !important;
-    box-shadow: 0 18px 42px -36px rgba(13, 34, 56, .78) !important;
+    background: #F7F7F7 !important;
+    box-shadow: 0 18px 42px -36px rgba(15, 15, 15, .78) !important;
     backdrop-filter: none !important;
     isolation: isolate !important
 }
@@ -71,7 +71,7 @@ html body .main>.header::before {
     inset: 0 !important;
     z-index: -1 !important;
     border-radius: inherit !important;
-    background: #edf4fb !important
+    background: #F7F7F7 !important
 }
 
 html body .main :is(.page-header, .steps-container, .upload-section, .comparison-files-section, .results-section, .validation-results, .pm-page-shell, .pm-schedule-shell, .pm-workspace, .profile-page, .documents-page, .admin-page, .restaurant-card, .store-card) {
@@ -92,7 +92,7 @@ html body .main>.topbar .lang-toggle {
 html body .modal-overlay .modal-header {
     border: 0 !important;
     background: #ffffff !important;
-    color: #0d2238 !important
+    color: #0F0F0F !important
 }
 
 html body .modal-overlay .modal-body {
@@ -100,14 +100,14 @@ html body .modal-overlay .modal-body {
 }
 
 html body .modal-overlay .modal-footer {
-    border-top: 1px solid #e3ecf5 !important;
+    border-top: 1px solid #F7F7F7 !important;
     background: #ffffff !important
 }
 
 html body #userModal .admin-form-modal .modal-header h3,
 html body #departmentModal .admin-form-modal .modal-header h3 {
     margin: 8px 0 0 !important;
-    color: #0d2238 !important;
+    color: #0F0F0F !important;
     font-size: 27px !important;
     font-weight: 900 !important;
     line-height: 1.08 !important
@@ -115,7 +115,7 @@ html body #departmentModal .admin-form-modal .modal-header h3 {
 
 html body #userModal .admin-modal-kicker,
 html body #departmentModal .admin-modal-kicker {
-    color: #0b5f97 !important;
+    color: #2E2E2E !important;
     font-size: 10px !important;
     font-weight: 900 !important;
     letter-spacing: .12em !important
@@ -125,7 +125,7 @@ html body #userModal .admin-modal-summary,
 html body #departmentModal .admin-modal-summary {
     max-width: 420px !important;
     margin: 12px 0 0 !important;
-    color: #60768d !important;
+    color: #5C5C5C !important;
     font-size: 14px !important;
     font-weight: 600 !important;
     line-height: 1.55 !important
@@ -174,7 +174,7 @@ html body #departmentModal #departmentForm>.form-group {
 html body #userModal .admin-form-modal .form-label,
 html body #departmentModal .admin-form-modal .form-label {
     margin-bottom: 8px !important;
-    color: #4a647d !important;
+    color: #494949 !important;
     font-size: 11px !important;
     font-weight: 850 !important;
     letter-spacing: 0 !important;
@@ -186,21 +186,21 @@ html body #departmentModal .admin-form-modal .form-control {
     min-height: 44px !important;
     border: 0 !important;
     border-radius: 14px !important;
-    background: #f8fbff !important;
-    color: #0d2238 !important;
-    box-shadow: inset 0 0 0 1px #cad8e6 !important
+    background: #F7F7F7 !important;
+    color: #0F0F0F !important;
+    box-shadow: inset 0 0 0 1px #EBEBEB !important
 }
 
 html body #userModal .admin-form-modal .form-control:focus,
 html body #departmentModal .admin-form-modal .form-control:focus {
     background: #ffffff !important;
-    box-shadow: inset 0 0 0 1px #7db2df, 0 0 0 4px rgba(18, 89, 150, .10) !important;
+    box-shadow: inset 0 0 0 1px #B8B8B8, 0 0 0 4px rgba(46, 46, 46, .10) !important;
     outline: 0 !important
 }
 
 html body #userModal .admin-form-modal .form-text,
 html body #departmentModal .admin-form-modal .form-text {
-    color: #60768d !important;
+    color: #5C5C5C !important;
     font-size: 12px !important;
     font-weight: 600 !important
 }
@@ -213,7 +213,7 @@ html body #departmentModal .admin-form-modal .modal-footer {
     justify-content: flex-end !important;
     gap: 12px !important;
     padding: 22px 34px 30px !important;
-    border-top: 1px solid #e3ecf5 !important;
+    border-top: 1px solid #F7F7F7 !important;
     background: #ffffff !important
 }
 
@@ -240,7 +240,7 @@ html body .profile-page .profile-form-intro {
 
 html body .profile-page .profile-form-intro p {
     margin-top: 8px !important;
-    color: #60768d !important
+    color: #5C5C5C !important
 }
 
 html body .profile-page .profile-settings-tabs {
@@ -254,11 +254,11 @@ html body .profile-page .profile-settings-tab {
     min-height: 42px !important;
     padding: 0 16px !important;
     border-radius: 13px !important;
-    color: #173a59 !important
+    color: #1F1F1F !important
 }
 
 html body .profile-page .profile-settings-tab.is-active {
-    background: #101122 !important;
+    background: #0F0F0F !important;
     color: #ffffff !important
 }
 
@@ -268,7 +268,7 @@ html body .profile-page .profile-settings-tab-panels {
 
 html body .profile-page .profile-panel {
     padding: 24px !important;
-    border: 1px solid #e3ecf5 !important;
+    border: 1px solid #F7F7F7 !important;
     border-radius: 20px !important;
     background: #ffffff !important
 }
@@ -276,7 +276,7 @@ html body .profile-page .profile-panel {
 html body .profile-page .profile-panel-header {
     margin-bottom: 22px !important;
     padding: 0 0 18px !important;
-    border-bottom: 1px solid #e3ecf5 !important;
+    border-bottom: 1px solid #F7F7F7 !important;
     background: transparent !important
 }
 
@@ -329,7 +329,7 @@ html body .main>.topbar .lang-toggle {
 }
 
 html body dialog::backdrop {
-    background: rgba(12, 31, 50, .48) !important;
+    background: rgba(15, 15, 15, .48) !important;
     backdrop-filter: blur(8px) !important
 }
 
@@ -340,72 +340,72 @@ html body .comparison-detail-modal {
     border: 0 !important;
     border-radius: 24px !important;
     background: #ffffff !important;
-    box-shadow: 0 34px 90px -50px rgba(8, 28, 46, .88) !important
+    box-shadow: 0 34px 90px -50px rgba(15, 15, 15, .88) !important
 }
 
 html body .comparison-detail-modal>header {
     padding: 30px 34px 22px !important;
     border: 0 !important;
-    border-bottom: 1px solid #e3ecf5 !important;
+    border-bottom: 1px solid #F7F7F7 !important;
     background: #ffffff !important;
-    color: #0d2238 !important
+    color: #0F0F0F !important
 }
 
 html body .comparison-detail-modal>header span {
-    color: #0b5f97 !important
+    color: #2E2E2E !important
 }
 
 html body .comparison-detail-modal>header h2 {
-    color: #0d2238 !important;
+    color: #0F0F0F !important;
     font-size: 24px !important;
     font-weight: 900 !important
 }
 
 html body .comparison-detail-modal>header p {
-    color: #60768d !important
+    color: #5C5C5C !important
 }
 
 html body .comparison-detail-modal>header button {
     width: 42px !important;
     height: 42px !important;
-    border: 1px solid #d7e3ef !important;
+    border: 1px solid #EBEBEB !important;
     border-radius: 13px !important;
-    background: #f7fbff !important;
-    color: #0d2238 !important
+    background: #F7F7F7 !important;
+    color: #0F0F0F !important
 }
 
 html body .comparison-detail-modal>footer {
     padding: 20px 34px 28px !important;
-    border-top: 1px solid #e3ecf5 !important;
+    border-top: 1px solid #F7F7F7 !important;
     background: #ffffff !important
 }
 
 html body .comparison-detail-summary>div,
 html body .comparison-detail-table-wrap {
-    border-color: #dfe8f2 !important;
+    border-color: #EBEBEB !important;
     border-radius: 14px !important;
-    background: #f8fbff !important
+    background: #F7F7F7 !important
 }
 
 html body .comparison-detail-table th {
-    background: #101122 !important
+    background: #0F0F0F !important
 }
 
 html body .sidebar-profile-link {
     margin: 0 0 8px !important;
-    background: #1a1a2f !important;
-    color: #f2f6ff !important
+    background: #0F0F0F !important;
+    color: #F7F7F7 !important
 }
 
 html body .sidebar-profile-link:hover,
 html body .sidebar-profile-link.active {
     background: #ffffff !important;
-    color: #111224 !important
+    color: #0F0F0F !important
 }
 
 html body .sidebar-profile-link:hover i,
 html body .sidebar-profile-link.active i {
-    color: #111224 !important
+    color: #0F0F0F !important
 }
 
 html.sidebar-collapsed-preset body .sidebar .sidebar-profile-link,
@@ -495,7 +495,7 @@ body .preview-excel-table tbody tr {
 body .data-table tbody tr:hover,
 body .comparison-detail-table tbody tr:hover,
 body .preview-excel-table tbody tr:hover {
-    background: #f7fbff !important
+    background: #F7F7F7 !important
 }
 
 @media (prefers-reduced-motion:reduce) {
@@ -523,7 +523,7 @@ html body .property-management-page .pm-schedule-panel {
 html body .property-management-page .pm-schedule-header {
     align-items: center !important;
     padding: 24px 28px 18px !important;
-    border-bottom: 1px solid #e3ecf5 !important;
+    border-bottom: 1px solid #F7F7F7 !important;
     background: #ffffff !important
 }
 
@@ -535,7 +535,7 @@ html body .property-management-page .pm-schedule-header h2 {
 
 html body .property-management-page .pm-schedule-header p {
     max-width: 620px !important;
-    color: #60768d !important
+    color: #5C5C5C !important
 }
 
 html body .property-management-page .pm-schedule-actions {
@@ -554,7 +554,7 @@ html body .property-management-page .pm-upload-grid {
     grid-template-columns: minmax(280px, 1fr) minmax(280px, 1fr) minmax(260px, .72fr) !important;
     gap: 14px !important;
     padding: 18px 20px !important;
-    border-bottom: 1px solid #e3ecf5 !important;
+    border-bottom: 1px solid #F7F7F7 !important;
     background: #ffffff !important
 }
 
@@ -562,9 +562,9 @@ html body .property-management-page .pm-upload-card,
 html body .property-management-page .pm-builder-card {
     min-height: 94px !important;
     padding: 15px 16px !important;
-    border: 1px solid #e1ebf5 !important;
+    border: 1px solid #F7F7F7 !important;
     border-radius: 18px !important;
-    background: #f8fbff !important;
+    background: #F7F7F7 !important;
     box-shadow: none !important
 }
 
@@ -581,8 +581,8 @@ html body .property-management-page .pm-manager-icon {
     width: 42px !important;
     height: 42px !important;
     border-radius: 13px !important;
-    background: #edf5ff !important;
-    color: #0b3a67 !important
+    background: #F7F7F7 !important;
+    color: #1F1F1F !important
 }
 
 html body .property-management-page .pm-upload-card strong,
@@ -593,7 +593,7 @@ html body .property-management-page .pm-builder-card strong {
 
 html body .property-management-page .pm-upload-card small,
 html body .property-management-page .pm-builder-card small {
-    color: #60768d !important;
+    color: #5C5C5C !important;
     font-size: 11px !important
 }
 
@@ -618,9 +618,9 @@ html body .property-management-page .pm-builder-card .btn {
 html body .property-management-page .pm-schedule-status {
     margin: 0 20px 18px !important;
     padding: 13px 15px !important;
-    border: 1px solid #dfe8f2 !important;
+    border: 1px solid #EBEBEB !important;
     border-radius: 15px !important;
-    background: #f8fbff !important
+    background: #F7F7F7 !important
 }
 
 html body .property-management-page .pm-alert-stack {
@@ -645,14 +645,14 @@ html body .property-management-page .pm-schedule-management:has(#pmMonthEditor[h
 
 html body .property-management-page .pm-manager-card {
     padding: 18px !important;
-    border: 1px solid #e1ebf5 !important;
+    border: 1px solid #F7F7F7 !important;
     border-radius: 18px !important;
     background: #ffffff !important
 }
 
 html body .property-management-page .pm-manager-card-header {
     padding-bottom: 14px !important;
-    border-bottom: 1px solid #e3ecf5 !important
+    border-bottom: 1px solid #F7F7F7 !important
 }
 
 html body .property-management-page .pm-inline-controls {
@@ -696,7 +696,7 @@ html body .mfa-swal-setup .mfa-modal-titlebar {
 html body .mfa-swal-setup .mfa-modal-titlebar h2,
 html body .mfa-swal-danger .mfa-modal-titlebar h2 {
     margin: 0 !important;
-    color: #0d2238 !important;
+    color: #0F0F0F !important;
     font-size: 26px !important;
     font-weight: 900 !important;
     line-height: 1.1 !important
@@ -709,9 +709,9 @@ html body .mfa-swal-setup .mfa-qr-panel {
     min-height: 0 !important;
     padding: 18px !important;
     place-items: center !important;
-    border: 1px solid #e1ebf5 !important;
+    border: 1px solid #F7F7F7 !important;
     border-radius: 20px !important;
-    background: #f8fbff !important
+    background: #F7F7F7 !important
 }
 
 html body .mfa-swal-setup .mfa-setup-qr {
@@ -724,9 +724,9 @@ html body .mfa-swal-setup .mfa-setup-qr {
 html body .mfa-swal-setup .mfa-modal-banner {
     grid-column: 2 !important;
     padding: 14px !important;
-    border: 1px solid #e1ebf5 !important;
+    border: 1px solid #F7F7F7 !important;
     border-radius: 18px !important;
-    background: #f8fbff !important
+    background: #F7F7F7 !important
 }
 
 html body .mfa-swal-setup .mfa-modal-icon,
@@ -734,14 +734,14 @@ html body .mfa-swal-danger .mfa-modal-icon {
     width: 44px !important;
     height: 44px !important;
     border-radius: 14px !important;
-    background: #0b2f54 !important;
+    background: #1F1F1F !important;
     color: #ffffff !important
 }
 
 html body .mfa-swal-setup .mfa-modal-lead {
     grid-column: 2 !important;
     margin: 0 !important;
-    color: #60768d !important;
+    color: #5C5C5C !important;
     font-size: 13px !important;
     font-weight: 650 !important;
     line-height: 1.55 !important
@@ -750,13 +750,13 @@ html body .mfa-swal-setup .mfa-modal-lead {
 html body .mfa-swal-setup .mfa-setup-secret {
     grid-column: 2 !important;
     padding: 14px !important;
-    border: 1px solid #e1ebf5 !important;
+    border: 1px solid #F7F7F7 !important;
     border-radius: 18px !important;
-    background: #f8fbff !important
+    background: #F7F7F7 !important
 }
 
 html body .mfa-swal-setup .mfa-setup-secret strong {
-    color: #0d2238 !important;
+    color: #0F0F0F !important;
     font-size: 12px !important;
     line-height: 1.5 !important
 }
@@ -764,7 +764,7 @@ html body .mfa-swal-setup .mfa-setup-secret strong {
 html body .mfa-swal-setup .mfa-field-label {
     grid-column: 2 !important;
     margin: 0 !important;
-    color: #4a647d !important;
+    color: #494949 !important;
     font-size: 11px !important;
     font-weight: 850 !important;
     text-transform: none !important
@@ -792,7 +792,7 @@ html body .mfa-swal-danger .mfa-modal-banner {
 
 html body .mfa-swal-danger .mfa-modal-lead {
     margin: 0 !important;
-    color: #60768d !important;
+    color: #5C5C5C !important;
     font-size: 13px !important;
     line-height: 1.55 !important
 }

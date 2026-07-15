@@ -12,10 +12,10 @@
 
 :root {
     --xbfs-alert-bg: #ffffff;
-    --xbfs-alert-bg-soft: #f7f8f9;
-    --xbfs-alert-border: #d8dde2;
-    --xbfs-alert-border-soft: #e8ebee;
-    --xbfs-alert-text: #161a1e;
+    --xbfs-alert-bg-soft: #F7F7F7;
+    --xbfs-alert-border: #EBEBEB;
+    --xbfs-alert-border-soft: #F7F7F7;
+    --xbfs-alert-text: #0F0F0F;
     --xbfs-alert-muted: #66717c;
     --xbfs-alert-graphite: #171717;
     --xbfs-alert-graphite-hover: #303030;
@@ -29,8 +29,8 @@
     --xbfs-alert-warning: #b87412;
     --xbfs-alert-warning-soft: #fff7e8;
 
-    --xbfs-alert-info: #35414c;
-    --xbfs-alert-info-soft: #eef1f4;
+    --xbfs-alert-info: #2E2E2E;
+    --xbfs-alert-info-soft: #F7F7F7;
 
     --xbfs-alert-shadow:
         0 30px 72px -42px rgba(0, 0, 0, 0.72),
@@ -124,13 +124,13 @@ html body .swal2-container.xbfs-toast-container {
 
 html body .swal2-container.xbfs-swal-container {
     padding: 20px !important;
-    background: rgba(7, 9, 11, .50) !important;
+    background: rgba(15, 15, 15, .50) !important;
     backdrop-filter: blur(5px) saturate(90%) !important;
     -webkit-backdrop-filter: blur(5px) saturate(90%) !important;
 }
 
 html body .swal2-container.xbfs-swal-container.swal2-backdrop-hide {
-    background: rgba(7, 9, 11, 0) !important;
+    background: rgba(15, 15, 15, 0) !important;
 }
 
 /* ------------------------------------------------------------
@@ -158,7 +158,7 @@ html body .swal2-popup.xbfs-swal-popup {
         linear-gradient(
             180deg,
             #ffffff 0%,
-            #fcfcfd 100%
+            #F7F7F7 100%
         ) !important;
 
     color: var(--xbfs-alert-text) !important;
@@ -358,7 +358,7 @@ html body .swal2-popup:not(.xbfs-alert-preserve-layout)
 
 html body .swal2-popup:not(.xbfs-alert-preserve-layout)
 .swal2-html-container.xbfs-swal-html strong {
-    color: #22282e !important;
+    color: #1F1F1F !important;
     font-weight: 800 !important;
 }
 
@@ -375,7 +375,7 @@ html body .swal2-popup:not(.xbfs-alert-preserve-layout)
     margin: 20px 0 7px !important;
     padding: 0 !important;
 
-    color: #343b42 !important;
+    color: #1F1F1F !important;
     font-family: inherit !important;
     font-size: 10px !important;
     font-weight: 850 !important;
@@ -400,16 +400,16 @@ html body .swal2-popup:not(.xbfs-alert-preserve-layout)
     margin: 0 !important;
     box-sizing: border-box !important;
 
-    border: 1px solid #cfd5da !important;
+    border: 1px solid #D6D6D6 !important;
     border-radius: 10px !important;
     background:
         linear-gradient(
             180deg,
             #ffffff 0%,
-            #f8f9fa 100%
+            #F7F7F7 100%
         ) !important;
 
-    color: #182029 !important;
+    color: #0F0F0F !important;
     box-shadow: none !important;
     font-family: inherit !important;
     font-size: 13px !important;
@@ -441,7 +441,7 @@ html body .swal2-popup:not(.xbfs-alert-preserve-layout)
     .swal2-select.xbfs-swal-input,
     .swal2-file.xbfs-swal-input
 ):focus {
-    border-color: #2a2f34 !important;
+    border-color: #1F1F1F !important;
     background: #ffffff !important;
     box-shadow: 0 0 0 4px rgba(0, 0, 0, .075) !important;
     outline: none !important;
@@ -455,10 +455,10 @@ html body .swal2-popup:not(.xbfs-alert-preserve-layout)
     margin: 0 !important;
     padding: 13px !important;
 
-    border: 1px solid #d7dce0 !important;
+    border: 1px solid #EBEBEB !important;
     border-radius: 10px !important;
-    background: #f7f8f9 !important;
-    color: #303840 !important;
+    background: #F7F7F7 !important;
+    color: #1F1F1F !important;
     box-sizing: border-box !important;
 }
 
@@ -575,14 +575,14 @@ html body .swal2-popup:not(.xbfs-alert-preserve-layout)
 .swal2-cancel.xbfs-swal-cancel,
 html body .swal2-popup:not(.xbfs-alert-preserve-layout)
 .swal2-deny.xbfs-swal-deny {
-    border: 1px solid #cbd1d6 !important;
+    border: 1px solid #D6D6D6 !important;
     background:
         linear-gradient(
             180deg,
             #ffffff 0%,
-            #eef0f2 100%
+            #F7F7F7 100%
         ) !important;
-    color: #313940 !important;
+    color: #1F1F1F !important;
     box-shadow: none !important;
 }
 
@@ -591,12 +591,12 @@ html body .swal2-popup:not(.xbfs-alert-preserve-layout)
     .swal2-cancel.xbfs-swal-cancel,
     .swal2-deny.xbfs-swal-deny
 ):hover:not(:disabled) {
-    border-color: #adb5bc !important;
+    border-color: #B8B8B8 !important;
     background:
         linear-gradient(
             180deg,
-            #f8f9fa 0%,
-            #e4e7e9 100%
+            #F7F7F7 0%,
+            #EBEBEB 100%
         ) !important;
     color: #000000 !important;
     transform: translateY(-1px) !important;
@@ -620,9 +620,9 @@ html body .swal2-popup:not(.xbfs-alert-preserve-layout)
     width: 34px !important;
     height: 34px !important;
 
-    border: 1px solid #d5dadd !important;
+    border: 1px solid #EBEBEB !important;
     border-radius: 9px !important;
-    background: #f5f6f7 !important;
+    background: #F7F7F7 !important;
 
     color: #626c75 !important;
     font-size: 22px !important;
@@ -630,9 +630,9 @@ html body .swal2-popup:not(.xbfs-alert-preserve-layout)
 
 html body .swal2-popup:not(.xbfs-alert-preserve-layout)
 .swal2-close.xbfs-swal-close:hover {
-    border-color: #b8c0c6 !important;
-    background: #e9ecee !important;
-    color: #121518 !important;
+    border-color: #B8B8B8 !important;
+    background: #F7F7F7 !important;
+    color: #0F0F0F !important;
 }
 
 html body .swal2-popup:not(.xbfs-alert-preserve-layout)
@@ -723,7 +723,7 @@ html body .swal2-popup.xbfs-toast-popup {
     padding: 14px 14px 12px !important;
 
     overflow: hidden !important;
-    border: 1px solid #d6dbe0 !important;
+    border: 1px solid #EBEBEB !important;
     border-left: 4px solid var(--xbfs-alert-accent) !important;
     border-radius: 14px !important;
 
@@ -781,7 +781,7 @@ html body .swal2-popup.xbfs-toast-popup
     margin: 0 !important;
     padding: 0 !important;
 
-    color: #171b1f !important;
+    color: #0F0F0F !important;
     font-size: 13px !important;
     font-weight: 800 !important;
     line-height: 1.35 !important;
@@ -819,8 +819,8 @@ html body .swal2-popup.xbfs-toast-popup
 
 html body .swal2-popup.xbfs-toast-popup
 .swal2-close.xbfs-swal-close:hover {
-    background: #eef0f2 !important;
-    color: #15191d !important;
+    background: #F7F7F7 !important;
+    color: #0F0F0F !important;
 }
 
 html body .swal2-popup.xbfs-toast-popup
@@ -872,7 +872,7 @@ html body .swal2-popup.xbfs-alert-preserve-layout
     html body .swal2-container.xbfs-swal-container {
         align-items: flex-end !important;
         padding: 0 !important;
-        background: rgba(7, 9, 11, .46) !important;
+        background: rgba(15, 15, 15, .46) !important;
     }
 
     html body .swal2-popup.xbfs-alert-simple:not(.xbfs-alert-preserve-layout),

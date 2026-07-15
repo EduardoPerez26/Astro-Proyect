@@ -142,7 +142,7 @@
     :is(html body .sidebar-profile-link:hover),
     :is(html body .sidebar-logout:hover) {
         transform: translate3d(4px, 0, 0) !important;
-        box-shadow: 0 12px 28px -22px rgba(5, 18, 32, 0.85) !important;
+        box-shadow: 0 12px 28px -22px rgba(15, 15, 15, 0.85) !important;
     }
 
     :is(html body .sidebar-menu-link:hover::before),
@@ -278,7 +278,7 @@
         min-width: 18px !important;
         height: 18px !important;
         padding: 0 5px !important;
-        border: 2px solid #06243e !important;
+        border: 2px solid #0F0F0F !important;
         font-size: 10px !important;
         box-shadow: 0 8px 16px -10px rgba(0, 0, 0, 0.75) !important;
         z-index: 4 !important;

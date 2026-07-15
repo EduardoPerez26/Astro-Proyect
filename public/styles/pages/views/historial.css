@@ -1,6 +1,6 @@
 /* Extracted from pages/views/historial.astro. Keep page/component-specific styling here. */
 .comparison-history-page {
-            color: #102f4c;
+            color: #1F1F1F;
         }
         .comparison-history-hero {
             display: flex;
@@ -11,10 +11,10 @@
             padding: 23px 25px;
             border-radius: 9px;
             color: #fff;
-            background: linear-gradient(120deg, #0b2943, #174d78);
+            background: linear-gradient(120deg, #1F1F1F, #2E2E2E);
         }
         .comparison-history-hero > div > span {
-            color: #a9d5f4;
+            color: #D6D6D6;
             font-size: 10px;
             font-weight: 800;
             letter-spacing: 0.1em;
@@ -26,11 +26,11 @@
         }
         .comparison-history-hero p {
             margin: 0;
-            color: #d6e6f2;
+            color: #EBEBEB;
             font-size: 13px;
         }
         .comparison-export-button {
-            border: 1px solid #7699b5;
+            border: 1px solid #8A8A8A;
             color: #fff;
             background: #ffffff12;
             white-space: nowrap;
@@ -47,7 +47,7 @@
             gap: 12px;
             min-height: 84px;
             padding: 15px;
-            border: 1px solid #d2dde7;
+            border: 1px solid #EBEBEB;
             border-radius: 7px;
             background: #fff;
         }
@@ -59,8 +59,8 @@
             border-radius: 7px;
         }
         .history-stat-icon.total {
-            color: #174f7d;
-            background: #e4eef7;
+            color: #2E2E2E;
+            background: #F7F7F7;
         }
         .history-stat-icon.changed {
             color: #a32632;
@@ -72,7 +72,7 @@
         }
         .history-stat-icon.stores {
             color: #6c4b99;
-            background: #eee8fa;
+            background: #F7F7F7;
         }
         .comparison-history-stats strong {
             display: block;
@@ -80,7 +80,7 @@
         }
         .comparison-history-stats p {
             margin: 2px 0 0;
-            color: #667b8f;
+            color: #5C5C5C;
             font-size: 11px;
             font-weight: 700;
         }
@@ -94,7 +94,7 @@
             align-items: end;
             margin-bottom: 18px;
             padding: 14px;
-            border: 1px solid #d2dde7;
+            border: 1px solid #EBEBEB;
             border-radius: 7px;
             background: #fff;
         }
@@ -104,7 +104,7 @@
         .comparison-filter label {
             display: block;
             margin-bottom: 5px;
-            color: #5d7185;
+            color: #494949;
             font-size: 9px;
             font-weight: 800;
             letter-spacing: 0.06em;
@@ -114,10 +114,10 @@
         .comparison-filter select {
             width: 100%;
             height: 38px;
-            border: 1px solid #c8d5e0;
+            border: 1px solid #D6D6D6;
             border-radius: 5px;
             padding: 0 10px;
-            color: #233f59;
+            color: #1F1F1F;
             background: #fff;
         }
         .comparison-filter.search > div {
@@ -128,7 +128,7 @@
             top: 50%;
             left: 11px;
             transform: translateY(-50%);
-            color: #7b8da0;
+            color: #8A8A8A;
         }
         .comparison-filter.search input {
             padding-left: 34px;
@@ -136,10 +136,10 @@
         .comparison-clear-button {
             height: 38px;
             padding: 0 13px;
-            border: 1px solid #c8d5e0;
+            border: 1px solid #D6D6D6;
             border-radius: 5px;
-            color: #405a72;
-            background: #f7f9fb;
+            color: #2E2E2E;
+            background: #F7F7F7;
             font-weight: 700;
             cursor: pointer;
             white-space: nowrap;
@@ -151,7 +151,7 @@
         }
         .comparison-date-group {
             overflow: hidden;
-            border: 1px solid #d1dce6;
+            border: 1px solid #EBEBEB;
             border-radius: 8px;
             background: #fff;
         }
@@ -161,8 +161,8 @@
             align-items: center;
             gap: 12px;
             padding: 13px 16px;
-            border-bottom: 1px solid #dce5ed;
-            background: #f6f8fa;
+            border-bottom: 1px solid #EBEBEB;
+            background: #F7F7F7;
         }
         .comparison-date-icon {
             display: grid;
@@ -170,11 +170,11 @@
             height: 34px;
             place-items: center;
             border-radius: 6px;
-            color: #174f7d;
-            background: #e1ebf4;
+            color: #2E2E2E;
+            background: #EBEBEB;
         }
         .comparison-date-header span {
-            color: #6b8093;
+            color: #5C5C5C;
             font-size: 9px;
             font-weight: 800;
             letter-spacing: 0.07em;
@@ -185,7 +185,7 @@
             text-transform: capitalize;
         }
         .comparison-date-header > strong {
-            color: #64788b;
+            color: #5C5C5C;
             font-size: 11px;
         }
         .comparison-date-list {
@@ -200,8 +200,8 @@
             align-items: center;
             gap: 15px;
             padding: 14px 16px;
-            border-bottom: 1px solid #e4ebf1;
-            border-left: 3px solid #8093a5;
+            border-bottom: 1px solid #EBEBEB;
+            border-left: 3px solid #8A8A8A;
         }
         .comparison-history-item:last-child {
             border-bottom: 0;
@@ -213,7 +213,7 @@
             border-left-color: #28a565;
         }
         .comparison-history-item.first {
-            border-left-color: #327ab1;
+            border-left-color: #343434;
         }
         .comparison-history-item.warning {
             border-left-color: #d08a24;
@@ -224,8 +224,8 @@
             height: 38px;
             place-items: center;
             border-radius: 7px;
-            color: #174f7d;
-            background: #e8eff6;
+            color: #2E2E2E;
+            background: #F7F7F7;
         }
         .comparison-title-line {
             display: flex;
@@ -239,11 +239,11 @@
         }
         .comparison-main p {
             margin: 4px 0;
-            color: #63788c;
+            color: #5C5C5C;
             font-size: 11px;
         }
         .comparison-main small {
-            color: #8393a2;
+            color: #8A8A8A;
             font-size: 10px;
         }
         .comparison-status {
@@ -262,16 +262,16 @@
             background: #e0f4e8;
         }
         .comparison-status.first {
-            color: #235f8f;
-            background: #e1edf7;
+            color: #2E2E2E;
+            background: #F7F7F7;
         }
         .comparison-status.warning {
             color: #895813;
             background: #fff0d3;
         }
         .comparison-status.neutral {
-            color: #53697d;
-            background: #edf2f7;
+            color: #494949;
+            background: #F7F7F7;
         }
         .comparison-metrics {
             display: grid;
@@ -280,9 +280,9 @@
         }
         .comparison-metrics div {
             padding: 8px;
-            border: 1px solid #dce5ed;
+            border: 1px solid #EBEBEB;
             border-radius: 5px;
-            background: #f9fafb;
+            background: #F7F7F7;
         }
         .comparison-metrics strong {
             display: block;
@@ -291,7 +291,7 @@
         .comparison-metrics span {
             display: block;
             margin-top: 2px;
-            color: #728496;
+            color: #5C5C5C;
             font-size: 8px;
             font-weight: 700;
             text-transform: uppercase;
@@ -310,7 +310,7 @@
             gap: 7px;
             height: 34px;
             padding: 0 11px;
-            border: 1px solid #bdccda;
+            border: 1px solid #D6D6D6;
             border-radius: 5px;
             background: #fff;
             font-size: 10px;
@@ -319,11 +319,11 @@
             white-space: nowrap;
         }
         .comparison-detail-button {
-            color: #174a75;
+            color: #2E2E2E;
         }
         .comparison-detail-button:hover {
             color: #fff;
-            background: #123b5e;
+            background: #1F1F1F;
         }
         .comparison-delete-button {
             color: #a62a35;
@@ -335,10 +335,10 @@
         }
         .comparison-history-message {
             padding: 50px 20px;
-            border: 1px dashed #c7d4df;
+            border: 1px dashed #D6D6D6;
             border-radius: 8px;
             text-align: center;
-            color: #6c8093;
+            color: #5C5C5C;
             background: #fff;
         }
         .comparison-history-message i {
@@ -346,7 +346,7 @@
         }
         .comparison-history-message h3 {
             margin: 10px 0 4px;
-            color: #28465f;
+            color: #2E2E2E;
         }
         .comparison-history-message p {
             margin: 8px 0 0;
@@ -363,7 +363,7 @@
             align-items: center;
             justify-content: center;
             padding: 24px;
-            background: #0b2236a8;
+            background: #0F0F0FA8;
             backdrop-filter: blur(3px);
         }
         .comparison-detail-overlay.active {
@@ -377,7 +377,7 @@
             overflow: hidden;
             border-radius: 9px;
             background: #fff;
-            box-shadow: 0 24px 70px #071b2c66;
+            box-shadow: 0 24px 70px #0F0F0F66;
         }
         .comparison-detail-modal > header {
             display: flex;
@@ -386,10 +386,10 @@
             gap: 15px;
             padding: 18px 20px;
             color: #fff;
-            background: #102f4c;
+            background: #1F1F1F;
         }
         .comparison-detail-modal > header span {
-            color: #a9d5f4;
+            color: #D6D6D6;
             font-size: 9px;
             font-weight: 800;
             letter-spacing: 0.09em;
@@ -400,7 +400,7 @@
         }
         .comparison-detail-modal > header p {
             margin: 0;
-            color: #caddea;
+            color: #EBEBEB;
             font-size: 11px;
         }
         .comparison-detail-modal > header button {
@@ -420,7 +420,7 @@
         }
         .comparison-detail-modal > footer {
             padding: 12px 18px;
-            border-top: 1px solid #dce5ed;
+            border-top: 1px solid #EBEBEB;
             text-align: right;
         }
         .comparison-detail-summary {
@@ -431,13 +431,13 @@
         }
         .comparison-detail-summary > div {
             padding: 11px;
-            border: 1px solid #d7e1ea;
+            border: 1px solid #EBEBEB;
             border-radius: 6px;
-            background: #f8fafb;
+            background: #F7F7F7;
         }
         .comparison-detail-summary span {
             display: block;
-            color: #6b7f92;
+            color: #5C5C5C;
             font-size: 9px;
             font-weight: 800;
             text-transform: uppercase;
@@ -450,7 +450,7 @@
         .comparison-detail-table-wrap {
             max-height: 54vh;
             overflow: auto;
-            border: 1px solid #d7e1ea;
+            border: 1px solid #EBEBEB;
             border-radius: 6px;
         }
         .comparison-detail-table {
@@ -464,11 +464,11 @@
             padding: 9px 11px;
             text-align: left;
             color: #fff;
-            background: #143a5b;
+            background: #1F1F1F;
         }
         .comparison-detail-table td {
             padding: 9px 11px;
-            border-bottom: 1px solid #e2e9ef;
+            border-bottom: 1px solid #EBEBEB;
         }
         .comparison-detail-table td.positive {
             color: #16834b;
@@ -482,7 +482,7 @@
         .comparison-detail-loading {
             padding: 45px;
             text-align: center;
-            color: #6f8294;
+            color: #5C5C5C;
         }
         .comparison-detail-empty i,
         .comparison-detail-loading i {
@@ -547,48 +547,48 @@
         }
 
         .comparison-detail-modal {
-            border: 1px solid #d4dfeb;
-            border-top: 5px solid #102a43;
+            border: 1px solid #EBEBEB;
+            border-top: 5px solid #1F1F1F;
             border-radius: 12px;
-            box-shadow: 0 30px 80px -36px rgba(8, 31, 51, 0.72);
+            box-shadow: 0 30px 80px -36px rgba(15, 15, 15, 0.72);
             animation: appModalIn 0.22s cubic-bezier(0.2, 0.8, 0.2, 1) both;
         }
 
         .comparison-detail-modal > header {
-            border-bottom: 1px solid #dbe5ef;
-            color: #102a43;
+            border-bottom: 1px solid #EBEBEB;
+            color: #1F1F1F;
             background:
                 linear-gradient(
                     135deg,
-                    rgba(16, 42, 67, 0.07),
+                    rgba(31, 31, 31, 0.07),
                     transparent 58%
                 ),
                 #fff;
         }
 
         .comparison-detail-modal > header h2 {
-            color: #102a43;
+            color: #1F1F1F;
             font-family: "Inter", sans-serif;
         }
 
         .comparison-detail-modal > header p {
-            color: #415a70;
+            color: #2E2E2E;
             font-weight: 650;
         }
 
         .comparison-detail-modal > header button {
-            border: 1px solid #d1ddea;
-            color: #42617c;
+            border: 1px solid #EBEBEB;
+            color: #343434;
             background: #fff;
         }
 
         /* System Errors filter visual parity */
         .comparison-history-page {
-            --se-navy: #071b2d;
-            --se-muted: #64748b;
-            --se-line: #dbe5ef;
-            --se-soft: #f8fafc;
-            --se-shadow: 0 20px 50px -42px rgba(7, 27, 45, 0.7);
+            --se-navy: #0F0F0F;
+            --se-muted: #5C5C5C;
+            --se-line: #EBEBEB;
+            --se-soft: #F7F7F7;
+            --se-shadow: 0 20px 50px -42px rgba(15, 15, 15, 0.7);
         }
 
         .comparison-history-filters {
@@ -630,7 +630,7 @@
             left: 13px !important;
             z-index: 1 !important;
             transform: translateY(-50%) !important;
-            color: #7b8ea3 !important;
+            color: #8A8A8A !important;
             font-size: 13px !important;
             pointer-events: none !important;
         }
@@ -640,11 +640,11 @@
             width: 100% !important;
             min-height: 40px !important;
             padding: 8px 12px !important;
-            border: 1px solid #cfdce8 !important;
+            border: 1px solid #EBEBEB !important;
             border-radius: 12px !important;
             outline: none !important;
             background: #ffffff !important;
-            color: #102f4c !important;
+            color: #1F1F1F !important;
             font-size: 12px !important;
             font-weight: 700 !important;
             box-shadow: none !important;
@@ -656,8 +656,8 @@
 
         .comparison-filter input:focus,
         .comparison-filter select:focus {
-            border-color: #7aa7ca !important;
-            box-shadow: 0 0 0 4px rgba(23, 92, 145, 0.11) !important;
+            border-color: #8A8A8A !important;
+            box-shadow: 0 0 0 4px rgba(46, 46, 46, 0.11) !important;
         }
 
         .comparison-clear-button {
@@ -667,10 +667,10 @@
             gap: 8px !important;
             min-height: 40px !important;
             padding: 0 13px !important;
-            border: 1px solid #cfdce8 !important;
+            border: 1px solid #EBEBEB !important;
             border-radius: 12px !important;
             background: #ffffff !important;
-            color: #113d61 !important;
+            color: #1F1F1F !important;
             font-size: 12px !important;
             font-weight: 900 !important;
             white-space: nowrap !important;
@@ -680,7 +680,7 @@
 
         .comparison-clear-button:hover {
             transform: translateY(-1px) !important;
-            background: #eef5fb !important;
+            background: #F7F7F7 !important;
         }
 
         @media (max-width: 1200px) {

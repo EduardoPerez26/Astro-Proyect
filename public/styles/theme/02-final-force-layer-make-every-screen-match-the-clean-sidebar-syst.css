@@ -1,6 +1,6 @@
 /* Final force layer: make every screen match the clean sidebar system — lossless migration, original cascade preserved. */
 body .main {
-    background: radial-gradient(circle at 100%0, rgba(53, 111, 171, 0.09), transparent 320px), linear-gradient(180deg, #f8fbff 0%, #eef4fb 220px, #edf3fa 100%) !important
+    background: radial-gradient(circle at 100%0, rgba(52, 52, 52, 0.09), transparent 320px), linear-gradient(180deg, #F7F7F7 0%, #F7F7F7 220px, #F7F7F7 100%) !important
 }
 
 body .main>.page-container,
@@ -15,9 +15,9 @@ body .main :is(.page-header, .admin-dashboard-header, .comparison-history-hero, 
     min-height: 132px !important;
     padding: 24px 26px !important;
     border-radius: 8px !important;
-    background: radial-gradient(circle at calc(100% - 80px) 18px, rgba(77, 142, 207, 0.22), transparent 80px), linear-gradient(135deg, #101122 0%, #111a2f 48%, #0b2f54 100%) !important;
+    background: radial-gradient(circle at calc(100% - 80px) 18px, rgba(138, 138, 138, 0.22), transparent 80px), linear-gradient(135deg, #0F0F0F 0%, #0F0F0F 48%, #1F1F1F 100%) !important;
     color: #ffffff !important;
-    box-shadow: 0 22px 54px -42px rgba(8, 16, 32, 0.9) !important
+    box-shadow: 0 22px 54px -42px rgba(15, 15, 15, 0.9) !important
 }
 
 body .main :is(.page-header, .admin-dashboard-header, .comparison-history-hero, .stores-hero, .pm-hero, .profile-settings-hero, .documents-hero, .hero-section, .hero-card)::after {
@@ -41,7 +41,7 @@ body .main :is(.page-header, .admin-dashboard-header, .comparison-history-hero, 
 }
 
 body .main :is(.page-header, .admin-dashboard-header, .comparison-history-hero, .stores-hero, .pm-hero, .profile-settings-hero, .documents-hero, .hero-section, .hero-card) :is(p, small, span:not(.badge):not(.status-badge):not(.document-status)) {
-    color: #cbd8ea !important
+    color: #EBEBEB !important
 }
 
 body .main :is(.page-header, .admin-dashboard-header, .comparison-history-hero, .stores-hero, .pm-hero, .profile-settings-hero, .documents-hero, .hero-section, .hero-card) .btn {
@@ -52,7 +52,7 @@ body .main :is(.page-header, .admin-dashboard-header, .comparison-history-hero, 
 
 body .main :is(.page-header, .admin-dashboard-header, .comparison-history-hero, .stores-hero, .pm-hero, .profile-settings-hero, .documents-hero, .hero-section, .hero-card) .btn:hover {
     background: #ffffff !important;
-    color: #101122 !important
+    color: #0F0F0F !important
 }
 
 body .main :is(.admin-metrics, .stats-grid, .summary-grid, .documents-type-tabs, .pm-tabs, .profile-settings-tabs) {
@@ -60,44 +60,44 @@ body .main :is(.admin-metrics, .stats-grid, .summary-grid, .documents-type-tabs,
 }
 
 body .main :is(.admin-metric-card, .admin-dashboard-panel, .admin-db-card, .comparison-date-group, .comparison-history-filters, .comparison-history-message, .documents-filters, .property-documents-filters, .documents-type-tab, .table-container, .profile-summary-card, .profile-form-grid, .profile-panel, .profile-mfa-card, .pm-schedule-panel, .pm-upload-card, .pm-builder-card, .pm-manager-card, .pm-table-toolbar, .pm-documents-panel, .pm-intake-panel, .pm-request-card, .store-card, .restaurant-card, .upload-section, .steps-container, .results-section, .validation-results, .document-card, .metric-card, .stat-card, .summary-card, .card, .panel) {
-    border: 1px solid #d8e4f0 !important;
+    border: 1px solid #EBEBEB !important;
     border-radius: 8px !important;
     background: #ffffff !important;
-    color: #102033 !important;
-    box-shadow: 0 12px 32px -30px rgba(12, 17, 36, 0.78) !important
+    color: #0F0F0F !important;
+    box-shadow: 0 12px 32px -30px rgba(15, 15, 15, 0.78) !important
 }
 
 body .main :is(.admin-metric-card, .admin-dashboard-panel, .admin-db-card, .comparison-date-group, .documents-type-tab, .table-container, .profile-summary-card, .profile-panel, .pm-manager-card, .pm-documents-panel, .store-card, .restaurant-card, .document-card, .card, .panel):hover {
-    border-color: #c1d3e5 !important;
-    box-shadow: 0 20px 42px -34px rgba(12, 17, 36, 0.86) !important
+    border-color: #D6D6D6 !important;
+    box-shadow: 0 20px 42px -34px rgba(15, 15, 15, 0.86) !important
 }
 
 body .main :is(.admin-panel-header, .table-header, .comparison-date-header, .profile-panel-header, .pm-schedule-header, .pm-manager-card-header, .pm-documents-panel-header, .pm-panel-header, .card-header, .panel-header) {
     padding: 16px 18px !important;
-    border-bottom: 1px solid #dbe6f0 !important;
+    border-bottom: 1px solid #EBEBEB !important;
     border-radius: 8px 8px 0 0 !important;
-    background: #f8fbff !important;
-    color: #102033 !important
+    background: #F7F7F7 !important;
+    color: #0F0F0F !important
 }
 
 body .main :is(.admin-panel-header, .table-header, .comparison-date-header, .profile-panel-header, .pm-schedule-header, .pm-manager-card-header, .pm-documents-panel-header, .pm-panel-header, .card-header, .panel-header) :is(h2, h3, strong) {
-    color: #102033 !important;
+    color: #0F0F0F !important;
     font-weight: 900 !important
 }
 
 body .main :is(.admin-panel-header, .table-header, .comparison-date-header, .profile-panel-header, .pm-schedule-header, .pm-manager-card-header, .pm-documents-panel-header, .pm-panel-header, .card-header, .panel-header) :is(span, small, p) {
-    color: #607b94 !important
+    color: #5C5C5C !important
 }
 
 body .main :is(.admin-metric-icon, .summary-icon, .documents-type-icon, .pm-manager-icon, .profile-mfa-icon, .comparison-date-icon, .store-card-icon, .restaurant-icon) {
     border-radius: 8px !important;
-    background: #f0f5fb !important;
-    color: #0b2f54 !important
+    background: #F7F7F7 !important;
+    color: #1F1F1F !important
 }
 
 body .main :is(.filters-bar, .documents-filters, .property-documents-filters, .comparison-history-filters, .pm-table-toolbar, .filter-panel, .filter-section) {
     padding: 14px !important;
-    border: 1px solid #d8e4f0 !important;
+    border: 1px solid #EBEBEB !important;
     border-radius: 8px !important;
     background: #ffffff !important;
     box-shadow: none !important
@@ -108,17 +108,17 @@ body .main :is(input, select, textarea, .form-control, .search-field input) {
    
     border-radius: 8px !important;
     background: #ffffff !important;
-    color: #102033 !important;
+    color: #0F0F0F !important;
     font-weight: 650 !important
 }
 
 body .main :is(input, select, textarea, .form-control, .search-field input):focus {
-    border-color: #315d9a !important;
-    box-shadow: 0 0 0 4px rgba(49, 93, 154, 0.12) !important
+    border-color: #343434 !important;
+    box-shadow: 0 0 0 4px rgba(52, 52, 52, 0.12) !important
 }
 
 body .main :is(label, .form-label, .filter-group label, .comparison-filter label, .pm-field label) {
-    color: #405a73 !important;
+    color: #494949 !important;
     font-size: 11px !important;
     font-weight: 900 !important;
     letter-spacing: 0.04em !important;
@@ -133,26 +133,26 @@ body .main :is(.btn, button:not(.sidebar-toggle):not(.menu-toggle):not(.sidebar-
 }
 
 body .main :is(.btn-primary, .primary-button, .save-button, .export-button, .pm-card-action.is-primary, .pm-table-action.is-primary, .start-button, button[type="submit"]) {
-    border-color: #101122 !important;
-    background: #101122 !important;
+    border-color: #0F0F0F !important;
+    background: #0F0F0F !important;
     color: #ffffff !important
 }
 
 body .main :is(.btn-primary, .primary-button, .save-button, .export-button, .pm-card-action.is-primary, .pm-table-action.is-primary, .start-button, button[type="submit"]):hover {
-    border-color: #0b2f54 !important;
-    background: #0b2f54 !important;
+    border-color: #1F1F1F !important;
+    background: #1F1F1F !important;
     color: #ffffff !important
 }
 
 body .main :is(.btn-secondary, .secondary-button, .reset-button, .refresh-button, .cancel-button, .pm-table-action, .pm-card-action) {
-    border-color: #cbdbea !important;
+    border-color: #EBEBEB !important;
     background: #ffffff !important;
-    color: #0b2f54 !important
+    color: #1F1F1F !important
 }
 
 body .main :is(.btn-secondary, .secondary-button, .reset-button, .refresh-button, .cancel-button, .pm-table-action, .pm-card-action):hover {
-    background: #f2f7fc !important;
-    color: #101122 !important
+    background: #F7F7F7 !important;
+    color: #0F0F0F !important
 }
 
 body .main :is(table, .admin-table, .data-table, .documents-table, .pm-schedule-table, .pm-documents-table, .comparison-detail-table) {
@@ -166,8 +166,8 @@ body .main :is(table, .admin-table, .data-table, .documents-table, .pm-schedule-
 body .main :is(table, .admin-table, .data-table, .documents-table, .pm-schedule-table, .pm-documents-table, .comparison-detail-table) th {
     position: sticky !important;
     top: 0 !important;
-    border-color: #1c2940 !important;
-    background: #101122 !important;
+    border-color: #1F1F1F !important;
+    background: #0F0F0F !important;
     color: #ffffff !important;
     font-size: 11px !important;
     font-weight: 900 !important;
@@ -176,22 +176,22 @@ body .main :is(table, .admin-table, .data-table, .documents-table, .pm-schedule-
 }
 
 body .main :is(table, .admin-table, .data-table, .documents-table, .pm-schedule-table, .pm-documents-table, .comparison-detail-table) td {
-    border-color: #e1e9f2 !important;
-    color: #173a59 !important;
+    border-color: #EBEBEB !important;
+    color: #1F1F1F !important;
     font-size: 13px !important
 }
 
 body .main :is(table, .admin-table, .data-table, .documents-table, .pm-schedule-table, .pm-documents-table, .comparison-detail-table) tbody tr:nth-child(even) td {
-    background: #f8fbff !important
+    background: #F7F7F7 !important
 }
 
 body .main :is(table, .admin-table, .data-table, .documents-table, .pm-schedule-table, .pm-documents-table, .comparison-detail-table) tbody tr:hover td {
-    background: #edf5ff !important
+    background: #F7F7F7 !important
 }
 
 body .main :is(.tabs, .tab-buttons, .pm-tabs, .documents-type-tabs, .profile-settings-tabs) {
     padding: 6px !important;
-    border: 1px solid #d8e4f0 !important;
+    border: 1px solid #EBEBEB !important;
     border-radius: 8px !important;
     background: #ffffff !important
 }
@@ -200,12 +200,12 @@ body .main :is(.tab, .tab-button, .pm-tab, .documents-type-tab, .profile-setting
     border: 1px solid transparent !important;
     border-radius: 8px !important;
     background: transparent !important;
-    color: #405a73 !important
+    color: #494949 !important
 }
 
 body .main :is(.tab.active, .tab-button.active, .pm-tab.is-active, .documents-type-tab.active, .profile-settings-tab.is-active) {
-    border-color: #101122 !important;
-    background: #101122 !important;
+    border-color: #0F0F0F !important;
+    background: #0F0F0F !important;
     color: #ffffff !important;
     box-shadow: none !important
 }
@@ -217,8 +217,8 @@ body .main :is(.tab.active, .tab-button.active, .pm-tab.is-active, .documents-ty
 body .main :is(.badge, .status-badge, .document-status, .documents-type-count, .profile-mfa-status) {
     border: 0 !important;
     border-radius: 999px !important;
-    background: #edf5ff !important;
-    color: #0b2f54 !important
+    background: #F7F7F7 !important;
+    color: #1F1F1F !important
 }
 
 body .main :is(.is-success, .status-success, .loaded, .available) {
@@ -230,14 +230,14 @@ body .main :is(.is-error, .status-error, .danger, .comparison-delete-button, .pm
 }
 
 body .main :is(.pm-table-action.is-primary, .pm-card-action.is-primary) {
-    border-color: #101122 !important;
-    background: #101122 !important;
+    border-color: #0F0F0F !important;
+    background: #0F0F0F !important;
     color: #ffffff !important
 }
 
 body .main :is(.pm-table-action.is-primary, .pm-card-action.is-primary):hover {
-    border-color: #0b2f54 !important;
-    background: #0b2f54 !important;
+    border-color: #1F1F1F !important;
+    background: #1F1F1F !important;
     color: #ffffff !important
 }
 
@@ -254,15 +254,15 @@ body .main :is(.pm-card-action.is-danger, .comparison-delete-button):hover {
 }
 
 body .main :is(.modal, .comparison-detail-modal, .document-detail-modal, .profile-crop-dialog, .tax-store-dialog, .bk-tax-store-dialog, .tb-tax-store-dialog, .py-tax-store-dialog) {
-    border: 1px solid #d8e4f0 !important;
+    border: 1px solid #EBEBEB !important;
     border-radius: 8px !important;
     background: #ffffff !important;
-    box-shadow: 0 34px 80px -48px rgba(12, 17, 36, 0.95) !important
+    box-shadow: 0 34px 80px -48px rgba(15, 15, 15, 0.95) !important
 }
 
 body .main :is(.modal-header, .comparison-detail-modal>header, .document-detail-modal-header, .profile-crop-header) {
-    border-bottom: 1px solid #d8e4f0 !important;
-    background: #101122 !important;
+    border-bottom: 1px solid #EBEBEB !important;
+    background: #0F0F0F !important;
     color: #ffffff !important
 }
 
@@ -279,7 +279,7 @@ body .main :is(.modal-header, .comparison-detail-modal>header, .document-detail-
 
 body,
 body .main {
-    background: #eef4fb !important
+    background: #F7F7F7 !important
 }
 
 body .main :is(.page-header, .admin-dashboard-header, .comparison-history-hero, .stores-hero, .pm-hero, .profile-settings-hero, .documents-hero, .hero-section, .hero-card, .login-brand-panel)::after {
@@ -290,12 +290,12 @@ body .main :is(.page-header, .admin-dashboard-header, .comparison-history-hero, 
     min-height: auto !important;
     margin-bottom: 14px !important;
     padding: 22px 24px !important;
-    background: linear-gradient(135deg, #101122 0%, #111a2f 54%, #0b2f54 100%) !important;
+    background: linear-gradient(135deg, #0F0F0F 0%, #0F0F0F 54%, #1F1F1F 100%) !important;
     box-shadow: none !important
 }
 
 body .main :is(.card, .panel, .table-container, .admin-dashboard-panel, .admin-metric-card, .comparison-date-group, .comparison-history-filters, .documents-filters, .property-documents-filters, .profile-summary-card, .profile-form-grid, .profile-panel, .pm-schedule-panel, .pm-manager-card, .pm-documents-panel, .pm-table-toolbar, .pm-upload-card, .pm-builder-card, .store-card, .restaurant-card, .document-card) {
-    border-color: #d9e5f0 !important;
+    border-color: #EBEBEB !important;
     box-shadow: none !important
 }
 
@@ -336,7 +336,7 @@ body .main :is(.btn, button, input, select, textarea) {
 
 .property-management-page .pm-hero p {
     max-width: 680px !important;
-    color: #d5e0ee !important
+    color: #EBEBEB !important
 }
 
 .property-management-page .pm-metrics {
@@ -356,7 +356,7 @@ body .main :is(.btn, button, input, select, textarea) {
     align-items: center !important;
     gap: 18px !important;
     padding: 18px !important;
-    border-bottom: 1px solid #dbe6f0 !important;
+    border-bottom: 1px solid #EBEBEB !important;
     background: #ffffff !important
 }
 
@@ -386,7 +386,7 @@ body .main :is(.btn, button, input, select, textarea) {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(230px, .7fr) !important;
     gap: 0 !important;
     padding: 0 !important;
-    border-bottom: 1px solid #dbe6f0 !important
+    border-bottom: 1px solid #EBEBEB !important
 }
 
 .property-management-page .pm-upload-card,
@@ -394,7 +394,7 @@ body .main :is(.btn, button, input, select, textarea) {
     min-height: 0 !important;
     padding: 18px !important;
     border: 0 !important;
-    border-right: 1px solid #e2ebf3 !important;
+    border-right: 1px solid #EBEBEB !important;
     border-radius: 0 !important;
     background: #ffffff !important
 }
@@ -408,7 +408,7 @@ body .main :is(.btn, button, input, select, textarea) {
 .property-management-page .pm-manager-icon {
     width: 34px !important;
     height: 34px !important;
-    background: #101122 !important;
+    background: #0F0F0F !important;
     color: #ffffff !important
 }
 
@@ -423,14 +423,14 @@ body .main :is(.btn, button, input, select, textarea) {
 .property-management-page .pm-upload-card strong,
 .property-management-page .pm-builder-card strong {
     margin-top: 10px !important;
-    color: #102033 !important;
+    color: #0F0F0F !important;
     font-size: 15px !important
 }
 
 .property-management-page .pm-upload-card small,
 .property-management-page .pm-builder-card small {
     margin-top: 4px !important;
-    color: #55708a !important;
+    color: #494949 !important;
     font-size: 12px !important;
     line-height: 1.45 !important
 }
@@ -473,8 +473,8 @@ body .main :is(.btn, button, input, select, textarea) {
 
 .property-management-page .pm-manager-card-header {
     padding: 14px 16px !important;
-    border-bottom: 1px solid #dbe6f0 !important;
-    background: #f8fbff !important
+    border-bottom: 1px solid #EBEBEB !important;
+    background: #F7F7F7 !important
 }
 
 .property-management-page .pm-manager-card-header h3 {
@@ -498,7 +498,7 @@ body .main :is(.btn, button, input, select, textarea) {
 }
 
 .property-management-page :is(.pm-document-item, .pm-request-card) {
-    border-color: #dbe6f0 !important;
+    border-color: #EBEBEB !important;
     border-radius: 8px !important;
     background: #ffffff !important
 }
@@ -528,7 +528,7 @@ body .main :is(.btn, button, input, select, textarea) {
     .property-management-page .pm-upload-card,
     .property-management-page .pm-builder-card {
         border-right: 0 !important;
-        border-bottom: 1px solid #e2ebf3 !important
+        border-bottom: 1px solid #EBEBEB !important
     }
 
     .property-management-page .pm-builder-card {
@@ -543,17 +543,17 @@ body .main :is(.btn, button, input, select, textarea) {
 :root {
     --sidebar-width: 224px;
     --sidebar-collapsed-width: 72px;
-    --minimal-page: #f3f7fb;
+    --minimal-page: #F7F7F7;
     --minimal-surface: #ffffff;
-    --minimal-surface-soft: #f8fbff;
-    --minimal-border: #dfe8f2;
-    --minimal-border-strong: #cad8e6;
-    --minimal-text: #102033;
-    --minimal-muted: #61788f;
-    --minimal-blue: #0b2f54;
-    --minimal-blue-soft: #edf5ff;
-    --minimal-nav: #101122;
-    --minimal-nav-soft: #1a1a2f
+    --minimal-surface-soft: #F7F7F7;
+    --minimal-border: #EBEBEB;
+    --minimal-border-strong: #EBEBEB;
+    --minimal-text: #0F0F0F;
+    --minimal-muted: #5C5C5C;
+    --minimal-blue: #1F1F1F;
+    --minimal-blue-soft: #F7F7F7;
+    --minimal-nav: #0F0F0F;
+    --minimal-nav-soft: #0F0F0F
 }
 
 html,
@@ -572,7 +572,7 @@ body {
     height: calc(100vh - 20px) !important;
     border: 1px solid rgba(255, 255, 255, 0.08) !important;
     border-radius: 14px !important;
-    background: linear-gradient(180deg, #111224 0%, #0d1326 100%) !important;
+    background: linear-gradient(180deg, #0F0F0F 0%, #0F0F0F 100%) !important;
     box-shadow: none !important
 }
 
@@ -601,12 +601,12 @@ body {
 .sidebar-menu-link.active,
 .nav-btn.active {
     background: #ffffff !important;
-    color: #111224 !important
+    color: #0F0F0F !important
 }
 
 .sidebar-menu-link.active i,
 .nav-btn.active i {
-    color: #111224 !important
+    color: #0F0F0F !important
 }
 
 .sidebar-footer {
@@ -614,7 +614,7 @@ body {
 }
 
 .sidebar-user-card {
-    background: #1a1a2f !important
+    background: #0F0F0F !important
 }
 
 .sidebar.collapsed .sidebar-user-card,
@@ -716,8 +716,8 @@ body .main :is(.card-header, .panel-header, .table-header, .admin-panel-header, 
 
 body .main :is(.admin-metric-icon, .summary-icon, .documents-type-icon, .pm-upload-icon, .pm-manager-icon, .profile-mfa-icon, .comparison-date-icon, .store-card-icon, .restaurant-icon) {
     border-radius: 10px !important;
-    background: var(--minimal-blue-soft) !important;
-    color: var(--minimal-blue) !important
+    background: var(--minimal-#2e2e2e-soft) !important;
+    color: var(--minimal-#2e2e2e) !important
 }
 
 body .main :is(input, select, textarea, .form-control, .search-field input) {
@@ -730,12 +730,12 @@ body .main :is(input, select, textarea, .form-control, .search-field input) {
 }
 
 body .main :is(input, select, textarea, .form-control, .search-field input):focus {
-    border-color: #6b9dcc !important;
-    box-shadow: 0 0 0 3px rgba(11, 47, 84, 0.10) !important
+    border-color: #8A8A8A !important;
+    box-shadow: 0 0 0 3px rgba(31, 31, 31, 0.10) !important
 }
 
 body .main :is(label, .form-label, .filter-group label, .comparison-filter label, .pm-field label, .pm-field span) {
-    color: #506a82 !important;
+    color: #494949 !important;
     font-size: 11px !important;
     font-weight: 800 !important;
     letter-spacing: 0.02em !important;
@@ -781,25 +781,25 @@ body .main :is(table, .admin-table, .data-table, .documents-table, .pm-schedule-
 
 body .main :is(table, .admin-table, .data-table, .documents-table, .pm-schedule-table, .pm-documents-table) th {
     background: var(--minimal-nav) !important;
-    border-color: #24243b !important
+    border-color: #1F1F1F !important
 }
 
 body .main :is(table, .admin-table, .data-table, .documents-table, .pm-schedule-table, .pm-documents-table) td {
-    border-color: #e6edf5 !important
+    border-color: #F7F7F7 !important
 }
 
 body .main :is(table, .admin-table, .data-table, .documents-table, .pm-schedule-table, .pm-documents-table) tbody tr:nth-child(even) td {
-    background: #f9fbfe !important
+    background: #F7F7F7 !important
 }
 
 body .main :is(table, .admin-table, .data-table, .documents-table, .pm-schedule-table, .pm-documents-table) tbody tr:hover td {
-    background: #f0f6fd !important
+    background: #F7F7F7 !important
 }
 
 body .main :is(.modal, .comparison-detail-modal, .document-detail-modal, .profile-crop-dialog, .tax-store-dialog, .bk-tax-store-dialog, .tb-tax-store-dialog, .py-tax-store-dialog) {
     border-radius: 12px !important;
     border-color: var(--minimal-border) !important;
-    box-shadow: 0 20px 54px -44px rgba(16, 17, 34, 0.9) !important
+    box-shadow: 0 20px 54px -44px rgba(15, 15, 15, 0.9) !important
 }
 
 body .main :is(.modal-header, .comparison-detail-modal>header, .document-detail-modal-header, .profile-crop-header) {
@@ -826,7 +826,7 @@ body .main :is(.modal-header, .comparison-detail-modal>header, .document-detail-
 
 .login-brand-panel {
     border-radius: 14px 0 0 14px !important;
-    background: linear-gradient(180deg, #111224 0%, #0d1326 100%) !important
+    background: linear-gradient(180deg, #0F0F0F 0%, #0F0F0F 100%) !important
 }
 
 .login-brand-panel::after,

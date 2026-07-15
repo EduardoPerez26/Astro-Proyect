@@ -627,7 +627,7 @@ function verificarAccesoPagina(permisos) {
             icon: 'error',
             title: 'Access denied',
             text: 'You do not have permission to access this section.',
-            confirmButtonColor: '#2563eb'
+            confirmButtonColor: '#3A3A3A'
         }).then(() => {
             const rutasDepartment = {
                 dashboardAdmin: '/views/dashboard-admin',

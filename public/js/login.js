@@ -195,7 +195,7 @@ async function mostrarVerificacionCodigo({
         confirmButtonText: 'Verificar',
         showCancelButton: true,
         cancelButtonText: 'Cancelar',
-        confirmButtonColor: '#102A43',
+        confirmButtonColor: '#1F1F1F',
         allowOutsideClick: false,
         preConfirm: async (codigo) => {
             const codigoLimpio =
@@ -393,7 +393,7 @@ document.addEventListener(
                         title: 'Completa los campos',
                         text:
                             'Ingresa tu usuario y contrasena para continuar.',
-                        confirmButtonColor: '#102A43'
+                        confirmButtonColor: '#1F1F1F'
                     });
                     return;
                 }
@@ -515,7 +515,7 @@ document.addEventListener(
                         text:
                             error.message ||
                             'No se pudieron validar tus credenciales.',
-                        confirmButtonColor: '#102A43'
+                        confirmButtonColor: '#1F1F1F'
                     });
                 } finally {
                     setLoading(false);

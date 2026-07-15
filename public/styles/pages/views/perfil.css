@@ -27,8 +27,8 @@ html body .main .profile-page.profile-professional-v3 > .profile-account-hero {
     background:
         radial-gradient(circle at 86% 22%, rgba(255, 255, 255, 0.16), transparent 22%),
         radial-gradient(circle at 4% 120%, rgba(45, 212, 191, 0.18), transparent 36%),
-        linear-gradient(124deg, #071d31 0%, #0d4166 58%, #0f766e 100%);
-    box-shadow: 0 32px 74px -52px rgba(3, 18, 31, 0.98);
+        linear-gradient(124deg, #0F0F0F 0%, #1F1F1F 58%, #2E2E2E 100%);
+    box-shadow: 0 32px 74px -52px rgba(15, 15, 15, 0.98);
     color: #ffffff;
 }
 
@@ -62,7 +62,7 @@ html body .main .profile-page.profile-professional-v3 > .profile-account-hero::a
     border: 1px solid rgba(255, 255, 255, 0.24);
     border-radius: 999px;
     background: rgba(255, 255, 255, 0.11);
-    color: #f2f9fd;
+    color: #F7F7F7;
     font-size: 10px;
     font-weight: 900;
     letter-spacing: 0.085em;
@@ -77,12 +77,12 @@ html body .main .profile-page.profile-professional-v3 > .profile-account-hero::a
     font-weight: 950 !important;
     letter-spacing: -0.045em !important;
     line-height: 1 !important;
-    text-shadow: 0 2px 14px rgba(2, 16, 28, 0.22);
+    text-shadow: 0 2px 14px rgba(15, 15, 15, 0.22);
 }
 
 .profile-hero-identity > p {
     margin: 0;
-    color: #dcebf5 !important;
+    color: #EBEBEB !important;
     font-size: 15px;
     font-weight: 650;
 }
@@ -102,8 +102,8 @@ html body .main .profile-page.profile-professional-v3 > .profile-account-hero::a
     padding: 0 11px;
     border: 1px solid rgba(255, 255, 255, 0.17);
     border-radius: 999px;
-    background: rgba(5, 24, 39, 0.30);
-    color: #edf8fd;
+    background: rgba(15, 15, 15, 0.30);
+    color: #F7F7F7;
     font-size: 11px;
     font-weight: 800;
 }
@@ -130,11 +130,11 @@ html body .main .profile-page.profile-professional-v3 > .profile-account-hero::a
     border: 6px solid #ffffff;
     border-radius: 50%;
     background:
-        linear-gradient(135deg, #dce9f2 0%, #edf4f8 100%);
+        linear-gradient(135deg, #EBEBEB 0%, #F7F7F7 100%);
     box-shadow:
-        0 24px 44px -24px rgba(1, 12, 22, 0.86),
-        0 0 0 3px rgba(198, 220, 235, 0.9);
-    color: #41647f;
+        0 24px 44px -24px rgba(15, 15, 15, 0.86),
+        0 0 0 3px rgba(235, 235, 235, 0.9);
+    color: #343434;
     font-size: 40px;
     font-weight: 900;
     background-position: center;
@@ -159,7 +159,7 @@ html body .main .profile-page.profile-professional-v3 > .profile-account-hero::a
     background: #ffffff;
     color: #ffffff;
     cursor: pointer;
-    box-shadow: 0 12px 24px -14px rgba(3, 18, 31, 0.9);
+    box-shadow: 0 12px 24px -14px rgba(15, 15, 15, 0.9);
     transition: transform 160ms ease, background-color 160ms ease;
 }
 
@@ -183,7 +183,7 @@ html body .main .profile-page.profile-professional-v3 > .profile-account-hero::a
     padding: 13px 14px;
     border: 1px solid rgba(255, 255, 255, 0.20);
     border-radius: 16px;
-    background: rgba(5, 24, 39, 0.38);
+    background: rgba(15, 15, 15, 0.38);
     color: #ffffff;
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
@@ -203,7 +203,7 @@ html body .main .profile-page.profile-professional-v3 > .profile-account-hero::a
 .profile-hero-readiness-head span,
 .profile-hero-readiness > small {
     display: block;
-    color: #d8eaf6;
+    color: #EBEBEB;
     font-size: 9px;
     font-weight: 900;
     letter-spacing: 0.07em;
@@ -254,7 +254,7 @@ html body .main .profile-page.profile-professional-v3 > .profile-account-hero::a
     width: 0;
     height: 100%;
     border-radius: inherit;
-    background: linear-gradient(90deg, #74e6af 0%, #8ee4ff 100%);
+    background: linear-gradient(90deg, #74e6af 0%, #D6D6D6 100%);
     transition: width 200ms ease;
 }
 
@@ -265,10 +265,10 @@ html body .main .profile-page.profile-professional-v3 > .profile-account-hero::a
     z-index: 3;
     margin-top: 64px;
     overflow: hidden;
-    border: 1px solid #d6e3ed;
+    border: 1px solid #EBEBEB;
     border-radius: 22px;
     background: #ffffff;
-    box-shadow: 0 28px 60px -48px rgba(7, 27, 45, 0.62);
+    box-shadow: 0 28px 60px -48px rgba(15, 15, 15, 0.62);
 }
 
 .profile-workspace-header {
@@ -277,13 +277,13 @@ html body .main .profile-page.profile-professional-v3 > .profile-account-hero::a
     justify-content: space-between;
     gap: 20px;
     padding: 26px 28px 20px;
-    border-bottom: 1px solid #dce7ef;
+    border-bottom: 1px solid #EBEBEB;
 }
 
 .profile-section-kicker {
     display: block;
     margin-bottom: 6px;
-    color: #5f7c94;
+    color: #5C5C5C;
     font-size: 10px;
     font-weight: 900;
     letter-spacing: 0.08em;
@@ -292,7 +292,7 @@ html body .main .profile-page.profile-professional-v3 > .profile-account-hero::a
 
 .profile-workspace-header h2 {
     margin: 0 0 7px;
-    color: #102b46;
+    color: #1F1F1F;
     font-size: 24px;
     font-weight: 920;
     letter-spacing: -0.025em;
@@ -301,7 +301,7 @@ html body .main .profile-page.profile-professional-v3 > .profile-account-hero::a
 .profile-workspace-header p {
     max-width: 760px;
     margin: 0;
-    color: #60798f;
+    color: #5C5C5C;
     font-size: 14px;
     font-weight: 600;
     line-height: 1.5;
@@ -352,10 +352,10 @@ html body .main .profile-page.profile-professional-v3 > .profile-account-hero::a
     gap: 11px;
     min-height: 76px;
     padding: 12px 14px;
-    border: 1px solid #d5e2ec;
+    border: 1px solid #EBEBEB;
     border-radius: 16px;
-    background: #f7fafc;
-    color: #15314d;
+    background: #F7F7F7;
+    color: #1F1F1F;
     cursor: pointer;
     text-align: left;
     transition:
@@ -367,19 +367,19 @@ html body .main .profile-page.profile-professional-v3 > .profile-account-hero::a
 
 .profile-settings-tab:hover {
     transform: translateY(-1px);
-    border-color: #a9c7dc;
-    box-shadow: 0 14px 26px -24px rgba(9, 50, 82, 0.65);
+    border-color: #D6D6D6;
+    box-shadow: 0 14px 26px -24px rgba(31, 31, 31, 0.65);
 }
 
 .profile-settings-tab.is-active {
     border-color: transparent;
-    background: linear-gradient(135deg, #0d3d61 0%, #0b2b47 100%);
+    background: linear-gradient(135deg, #1F1F1F 0%, #1F1F1F 100%);
     color: #ffffff;
-    box-shadow: 0 18px 34px -25px rgba(4, 25, 42, 0.80);
+    box-shadow: 0 18px 34px -25px rgba(15, 15, 15, 0.80);
 }
 
 .profile-tab-number {
-    color: #89a0b4;
+    color: #8A8A8A;
     font-size: 10px;
     font-weight: 900;
     letter-spacing: 0.08em;
@@ -395,8 +395,8 @@ html body .main .profile-page.profile-professional-v3 > .profile-account-hero::a
     height: 42px;
     place-items: center;
     border-radius: 13px;
-    background: #e7f1f7;
-    color: #16608b;
+    background: #F7F7F7;
+    color: #2E2E2E;
 }
 
 .profile-settings-tab.is-active .profile-tab-icon {
@@ -415,7 +415,7 @@ html body .main .profile-page.profile-professional-v3 > .profile-account-hero::a
 .profile-tab-copy small {
     display: block;
     margin-top: 4px;
-    color: #668198;
+    color: #5C5C5C;
     font-size: 11px;
     font-weight: 700;
     line-height: 1.25;
@@ -434,10 +434,10 @@ html body .main .profile-page.profile-professional-v3 > .profile-account-hero::a
     gap: 20px;
     min-height: 430px;
     padding: 22px;
-    border: 1px solid #d9e5ee;
+    border: 1px solid #EBEBEB;
     border-radius: 18px;
     background:
-        linear-gradient(180deg, #fbfdff 0%, #f7fafc 100%);
+        linear-gradient(180deg, #F7F7F7 0%, #F7F7F7 100%);
 }
 
 .profile-panel[hidden] {
@@ -456,16 +456,16 @@ html body .main .profile-page.profile-professional-v3 > .profile-account-hero::a
     height: 46px;
     place-items: center;
     flex: 0 0 46px;
-    border: 1px solid #d3e1eb;
+    border: 1px solid #EBEBEB;
     border-radius: 14px;
     background: #ffffff;
-    color: #155a84;
+    color: #2E2E2E;
     font-size: 18px;
 }
 
 .profile-panel-heading h3 {
     margin: 1px 0 6px;
-    color: #102c47;
+    color: #1F1F1F;
     font-size: 21px;
     font-weight: 920;
     letter-spacing: -0.02em;
@@ -473,7 +473,7 @@ html body .main .profile-page.profile-professional-v3 > .profile-account-hero::a
 
 .profile-panel-heading p {
     margin: 0;
-    color: #627c93;
+    color: #5C5C5C;
     font-size: 13px;
     font-weight: 600;
     line-height: 1.45;
@@ -496,10 +496,10 @@ html body .main .profile-page.profile-professional-v3 > .profile-account-hero::a
 .profile-card {
     min-width: 0;
     padding: 19px;
-    border: 1px solid #d8e4ed;
+    border: 1px solid #EBEBEB;
     border-radius: 17px;
     background: #ffffff;
-    box-shadow: 0 14px 30px -30px rgba(7, 27, 45, 0.45);
+    box-shadow: 0 14px 30px -30px rgba(15, 15, 15, 0.45);
 }
 
 .profile-card-header {
@@ -513,7 +513,7 @@ html body .main .profile-page.profile-professional-v3 > .profile-account-hero::a
 .profile-card-header h4,
 .profile-card--guidance h4 {
     margin: 0;
-    color: #12304c;
+    color: #1F1F1F;
     font-size: 17px;
     font-weight: 900;
 }
@@ -524,10 +524,10 @@ html body .main .profile-page.profile-professional-v3 > .profile-account-hero::a
     gap: 6px;
     min-height: 28px;
     padding: 0 9px;
-    border: 1px solid #c9dfeb;
+    border: 1px solid #EBEBEB;
     border-radius: 999px;
-    background: #eff7fb;
-    color: #1b5d84;
+    background: #F7F7F7;
+    color: #2E2E2E;
     font-size: 9px;
     font-weight: 900;
     letter-spacing: 0.035em;
@@ -535,9 +535,9 @@ html body .main .profile-page.profile-professional-v3 > .profile-account-hero::a
 }
 
 .profile-card-badge--managed {
-    border-color: #d9e0e8;
-    background: #f5f7f9;
-    color: #5a7185;
+    border-color: #EBEBEB;
+    background: #F7F7F7;
+    color: #494949;
 }
 
 .profile-field-grid {
@@ -553,7 +553,7 @@ html body .main .profile-page.profile-professional-v3 > .profile-account-hero::a
 
 .profile-field .form-label,
 .profile-label-row .form-label {
-    color: #314e68;
+    color: #2E2E2E;
     font-size: 12px;
     font-weight: 850;
 }
@@ -563,25 +563,25 @@ html body .main .profile-page.profile-professional-v3 > .profile-account-hero::a
     align-items: center;
     min-height: 48px;
     padding: 0 13px;
-    border: 1px solid #bfd1df;
+    border: 1px solid #D6D6D6;
     border-radius: 13px;
     background: #ffffff;
     transition: border-color 150ms ease, box-shadow 150ms ease;
 }
 
 .profile-input-shell:focus-within {
-    border-color: #4d8ab6;
-    box-shadow: 0 0 0 4px rgba(65, 131, 179, 0.12);
+    border-color: #3A3A3A;
+    box-shadow: 0 0 0 4px rgba(58, 58, 58, 0.12);
 }
 
 .profile-input-shell.is-readonly {
-    background: #f4f8fb;
+    background: #F7F7F7;
 }
 
 .profile-input-shell > i:first-child {
     width: 18px;
     margin-right: 9px;
-    color: #67839a;
+    color: #5C5C5C;
     text-align: center;
 }
 
@@ -594,21 +594,21 @@ html body .main .profile-page.profile-professional-v3 > .profile-account-hero::a
     outline: none !important;
     background: transparent !important;
     box-shadow: none !important;
-    color: #18334e;
+    color: #1F1F1F;
     font-size: 13px;
     font-weight: 750;
 }
 
 .profile-input-shell .profile-readonly {
-    color: #668198;
+    color: #5C5C5C;
 }
 
 .profile-field-lock {
-    color: #718a9f;
+    color: #5C5C5C;
 }
 
 .profile-field small {
-    color: #6b849a;
+    color: #5C5C5C;
     font-size: 11px;
     font-weight: 600;
     line-height: 1.42;
@@ -622,10 +622,10 @@ html body .main .profile-page.profile-professional-v3 > .profile-account-hero::a
     gap: 10px;
     margin-top: 16px;
     padding: 13px 14px;
-    border: 1px solid #d6e5ee;
+    border: 1px solid #EBEBEB;
     border-radius: 13px;
-    background: #f4f9fc;
-    color: #55738d;
+    background: #F7F7F7;
+    color: #494949;
     font-size: 11px;
     font-weight: 650;
     line-height: 1.4;
@@ -635,7 +635,7 @@ html body .main .profile-page.profile-professional-v3 > .profile-account-hero::a
 .profile-managed-note i,
 .profile-security-tip i {
     margin-top: 2px;
-    color: #2877a5;
+    color: #343434;
 }
 
 .profile-photo-guidance div {
@@ -644,7 +644,7 @@ html body .main .profile-page.profile-professional-v3 > .profile-account-hero::a
 }
 
 .profile-photo-guidance strong {
-    color: #1c4565;
+    color: #2E2E2E;
     font-size: 12px;
 }
 
@@ -659,9 +659,9 @@ html body .main .profile-page.profile-professional-v3 > .profile-account-hero::a
     align-items: center;
     gap: 11px;
     padding: 12px;
-    border: 1px solid #dce6ee;
+    border: 1px solid #EBEBEB;
     border-radius: 14px;
-    background: #f9fbfd;
+    background: #F7F7F7;
 }
 
 .profile-assignment-icon {
@@ -670,13 +670,13 @@ html body .main .profile-page.profile-professional-v3 > .profile-account-hero::a
     height: 40px;
     place-items: center;
     border-radius: 12px;
-    background: #e9f3f8;
-    color: #1b6088;
+    background: #F7F7F7;
+    color: #2E2E2E;
 }
 
 .profile-assignment-list small {
     display: block;
-    color: #6a8399;
+    color: #5C5C5C;
     font-size: 9px;
     font-weight: 900;
     letter-spacing: 0.07em;
@@ -686,7 +686,7 @@ html body .main .profile-page.profile-professional-v3 > .profile-account-hero::a
 .profile-assignment-list strong {
     display: block;
     margin-top: 3px;
-    color: #16324e;
+    color: #1F1F1F;
     font-size: 13px;
     font-weight: 850;
     line-height: 1.3;
@@ -715,13 +715,13 @@ html body .main .profile-page.profile-professional-v3 > .profile-account-hero::a
     border: none;
     border-radius: 10px;
     background: transparent;
-    color: #658097;
+    color: #5C5C5C;
     cursor: pointer;
 }
 
 .profile-password-shell button:hover {
-    background: #edf5fa;
-    color: #175e88;
+    background: #F7F7F7;
+    color: #2E2E2E;
 }
 
 .profile-label-row {
@@ -732,7 +732,7 @@ html body .main .profile-page.profile-professional-v3 > .profile-account-hero::a
 }
 
 #profilePasswordMatchStatus {
-    color: #71899d;
+    color: #5C5C5C;
     font-size: 10px;
     font-weight: 850;
 }
@@ -748,9 +748,9 @@ html body .main .profile-page.profile-professional-v3 > .profile-account-hero::a
 .profile-password-strength {
     margin-top: 18px;
     padding: 14px;
-    border: 1px solid #d8e4ed;
+    border: 1px solid #EBEBEB;
     border-radius: 14px;
-    background: #f7fafc;
+    background: #F7F7F7;
 }
 
 .profile-password-strength > div:first-child {
@@ -761,7 +761,7 @@ html body .main .profile-page.profile-professional-v3 > .profile-account-hero::a
 }
 
 .profile-password-strength span {
-    color: #678096;
+    color: #5C5C5C;
     font-size: 10px;
     font-weight: 900;
     letter-spacing: 0.06em;
@@ -769,7 +769,7 @@ html body .main .profile-page.profile-professional-v3 > .profile-account-hero::a
 }
 
 .profile-password-strength strong {
-    color: #19364f;
+    color: #1F1F1F;
     font-size: 12px;
     font-weight: 900;
 }
@@ -779,7 +779,7 @@ html body .main .profile-page.profile-professional-v3 > .profile-account-hero::a
     margin-top: 10px;
     overflow: hidden;
     border-radius: 999px;
-    background: #dce6ed;
+    background: #EBEBEB;
 }
 
 .profile-password-strength-track span {
@@ -787,7 +787,7 @@ html body .main .profile-page.profile-professional-v3 > .profile-account-hero::a
     width: 0;
     height: 100%;
     border-radius: inherit;
-    background: #8ca0b1;
+    background: #8A8A8A;
     transition: width 180ms ease, background-color 180ms ease;
 }
 
@@ -810,8 +810,8 @@ html body .main .profile-page.profile-professional-v3 > .profile-account-hero::a
 
 .profile-card--guidance {
     background:
-        radial-gradient(circle at 100% 0%, rgba(53, 132, 178, 0.10), transparent 32%),
-        #f9fcfe;
+        radial-gradient(circle at 100% 0%, rgba(58, 58, 58, 0.10), transparent 32%),
+        #F7F7F7;
 }
 
 .profile-guidance-icon {
@@ -821,14 +821,14 @@ html body .main .profile-page.profile-professional-v3 > .profile-account-hero::a
     margin-bottom: 13px;
     place-items: center;
     border-radius: 14px;
-    background: #0f3d60;
+    background: #1F1F1F;
     color: #ffffff;
     font-size: 18px;
 }
 
 .profile-card--guidance > p {
     margin: 7px 0 17px;
-    color: #607b91;
+    color: #5C5C5C;
     font-size: 12px;
     line-height: 1.5;
 }
@@ -845,13 +845,13 @@ html body .main .profile-page.profile-professional-v3 > .profile-account-hero::a
     display: flex;
     align-items: center;
     gap: 8px;
-    color: #627b90;
+    color: #5C5C5C;
     font-size: 11px;
     font-weight: 700;
 }
 
 .profile-password-rules li i {
-    color: #9baebd;
+    color: #B8B8B8;
 }
 
 .profile-password-rules li.is-met {
@@ -868,11 +868,11 @@ html body .main .profile-page.profile-professional-v3 > .profile-account-hero::a
     align-items: center;
     gap: 14px;
     padding: 16px;
-    border: 1px solid #cfe1ec;
+    border: 1px solid #EBEBEB;
     border-radius: 16px;
     background:
-        radial-gradient(circle at 100% 0%, rgba(42, 121, 169, 0.12), transparent 34%),
-        linear-gradient(135deg, #f8fcfe 0%, #edf6fb 100%);
+        radial-gradient(circle at 100% 0%, rgba(52, 52, 52, 0.12), transparent 34%),
+        linear-gradient(135deg, #F7F7F7 0%, #F7F7F7 100%);
 }
 
 .profile-security-overview-icon {
@@ -881,13 +881,13 @@ html body .main .profile-page.profile-professional-v3 > .profile-account-hero::a
     height: 48px;
     place-items: center;
     border-radius: 14px;
-    background: #0e456d;
+    background: #1F1F1F;
     color: #ffffff;
     font-size: 18px;
 }
 
 .profile-security-overview > div > span {
-    color: #607e95;
+    color: #5C5C5C;
     font-size: 9px;
     font-weight: 900;
     letter-spacing: 0.07em;
@@ -896,14 +896,14 @@ html body .main .profile-page.profile-professional-v3 > .profile-account-hero::a
 
 .profile-security-overview h4 {
     margin: 4px 0 4px;
-    color: #12314e;
+    color: #1F1F1F;
     font-size: 17px;
     font-weight: 900;
 }
 
 .profile-security-overview p {
     margin: 0;
-    color: #617c92;
+    color: #5C5C5C;
     font-size: 11px;
     font-weight: 650;
 }
@@ -928,7 +928,7 @@ html body .main .profile-page.profile-professional-v3 > .profile-account-hero::a
     justify-content: space-between;
     gap: 20px;
     padding: 20px;
-    border: 1px solid #d6e3ed;
+    border: 1px solid #EBEBEB;
     border-radius: 17px;
     background: #ffffff;
 }
@@ -947,21 +947,21 @@ html body .main .profile-page.profile-professional-v3 > .profile-account-hero::a
     place-items: center;
     flex: 0 0 48px;
     border-radius: 14px;
-    background: #0e456d;
+    background: #1F1F1F;
     color: #ffffff;
     font-size: 18px;
 }
 
 .profile-mfa-copy h4 {
     margin: 2px 0 5px;
-    color: #12314e;
+    color: #1F1F1F;
     font-size: 17px;
     font-weight: 900;
 }
 
 .profile-mfa-copy p {
     margin: 0;
-    color: #617b91;
+    color: #5C5C5C;
     font-size: 11px;
     font-weight: 650;
 }
@@ -979,10 +979,10 @@ html body .main .profile-page.profile-professional-v3 > .profile-account-hero::a
     align-items: center;
     min-height: 31px;
     padding: 0 10px;
-    border: 1px solid #d7e1e8;
+    border: 1px solid #EBEBEB;
     border-radius: 999px;
-    background: #f6f8fa;
-    color: #5f7588;
+    background: #F7F7F7;
+    color: #5C5C5C;
     font-size: 10px;
     font-weight: 900;
 }
@@ -1005,7 +1005,7 @@ html body .main .profile-page.profile-professional-v3 > .profile-account-hero::a
     gap: 10px;
     align-items: center;
     padding: 13px;
-    border: 1px solid #dae5ed;
+    border: 1px solid #EBEBEB;
     border-radius: 14px;
     background: #ffffff;
 }
@@ -1016,13 +1016,13 @@ html body .main .profile-page.profile-professional-v3 > .profile-account-hero::a
     height: 38px;
     place-items: center;
     border-radius: 11px;
-    background: #edf5f9;
-    color: #1c668f;
+    background: #F7F7F7;
+    color: #2E2E2E;
 }
 
 .profile-mfa-benefits strong {
     display: block;
-    color: #17334f;
+    color: #1F1F1F;
     font-size: 11px;
     font-weight: 900;
 }
@@ -1030,7 +1030,7 @@ html body .main .profile-page.profile-professional-v3 > .profile-account-hero::a
 .profile-mfa-benefits span {
     display: block;
     margin-top: 3px;
-    color: #698297;
+    color: #5C5C5C;
     font-size: 10px;
     font-weight: 600;
     line-height: 1.35;
@@ -1043,8 +1043,8 @@ html body .main .profile-page.profile-professional-v3 > .profile-account-hero::a
     gap: 16px;
     margin-top: 18px;
     padding: 17px 28px 20px;
-    border-top: 1px solid #dce7ef;
-    background: #fbfdfe;
+    border-top: 1px solid #EBEBEB;
+    background: #F7F7F7;
 }
 
 .profile-actions > div {
@@ -1057,7 +1057,7 @@ html body .main .profile-page.profile-professional-v3 > .profile-account-hero::a
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    color: #627c92;
+    color: #5C5C5C;
     font-size: 11px;
     font-weight: 700;
 }
@@ -1083,15 +1083,15 @@ html body .main .profile-page.profile-professional-v3 > .profile-account-hero::a
 }
 
 .profile-professional-v3 .btn-primary {
-    background: #0d2d49;
+    background: #1F1F1F;
     color: #ffffff;
-    box-shadow: 0 14px 28px -20px rgba(4, 25, 42, 0.82);
+    box-shadow: 0 14px 28px -20px rgba(15, 15, 15, 0.82);
 }
 
 .profile-professional-v3 .btn-secondary {
-    border-color: #cbdbe7;
+    border-color: #EBEBEB;
     background: #ffffff;
-    color: #25445f;
+    color: #2E2E2E;
 }
 
 /* -------------------- PHOTO CROP MODAL -------------------- */
@@ -1115,7 +1115,7 @@ html body .main .profile-page.profile-professional-v3 > .profile-account-hero::a
     width: 100%;
     height: 100%;
     border: none;
-    background: rgba(7, 18, 31, 0.72);
+    background: rgba(15, 15, 15, 0.72);
     backdrop-filter: blur(7px);
 }
 
@@ -1124,10 +1124,10 @@ html body .main .profile-page.profile-professional-v3 > .profile-account-hero::a
     z-index: 2;
     width: min(520px, calc(100vw - 28px));
     overflow: hidden;
-    border: 1px solid #d6e2ec;
+    border: 1px solid #EBEBEB;
     border-radius: 20px;
     background: #ffffff;
-    box-shadow: 0 34px 80px rgba(1, 12, 22, 0.34);
+    box-shadow: 0 34px 80px rgba(15, 15, 15, 0.34);
 }
 
 .profile-crop-header {
@@ -1136,12 +1136,12 @@ html body .main .profile-page.profile-professional-v3 > .profile-account-hero::a
     justify-content: space-between;
     gap: 16px;
     padding: 18px 20px;
-    border-bottom: 1px solid #dce7ef;
+    border-bottom: 1px solid #EBEBEB;
 }
 
 .profile-crop-header span {
     display: block;
-    color: #668095;
+    color: #5C5C5C;
     font-size: 9px;
     font-weight: 900;
     letter-spacing: 0.08em;
@@ -1151,7 +1151,7 @@ html body .main .profile-page.profile-professional-v3 > .profile-account-hero::a
 .profile-crop-header strong {
     display: block;
     margin-top: 3px;
-    color: #15314c;
+    color: #1F1F1F;
     font-size: 18px;
     font-weight: 900;
 }
@@ -1161,10 +1161,10 @@ html body .main .profile-page.profile-professional-v3 > .profile-account-hero::a
     width: 38px;
     height: 38px;
     place-items: center;
-    border: 1px solid #d3e0e9;
+    border: 1px solid #EBEBEB;
     border-radius: 11px;
     background: #ffffff;
-    color: #536f86;
+    color: #494949;
     cursor: pointer;
 }
 
@@ -1175,7 +1175,7 @@ html body .main .profile-page.profile-professional-v3 > .profile-account-hero::a
     margin: 24px auto;
     overflow: hidden;
     border-radius: 18px;
-    background: #0d2438;
+    background: #0F0F0F;
     touch-action: none;
     cursor: grab;
 }
@@ -1199,7 +1199,7 @@ html body .main .profile-page.profile-professional-v3 > .profile-account-hero::a
     inset: 8%;
     border: 3px solid #ffffff;
     border-radius: 50%;
-    box-shadow: 0 0 0 999px rgba(4, 17, 29, 0.52);
+    box-shadow: 0 0 0 999px rgba(15, 15, 15, 0.52);
     pointer-events: none;
 }
 
@@ -1210,7 +1210,7 @@ html body .main .profile-page.profile-professional-v3 > .profile-account-hero::a
 }
 
 .profile-crop-controls label {
-    color: #38556f;
+    color: #2E2E2E;
     font-size: 11px;
     font-weight: 850;
 }
@@ -1224,8 +1224,8 @@ html body .main .profile-page.profile-professional-v3 > .profile-account-hero::a
     justify-content: flex-end;
     gap: 9px;
     padding: 16px 20px 20px;
-    border-top: 1px solid #dce7ef;
-    background: #f8fbfd;
+    border-top: 1px solid #EBEBEB;
+    background: #F7F7F7;
 }
 
 /* -------------------- RESPONSIVE -------------------- */
@@ -1363,7 +1363,7 @@ html body .main .profile-page.profile-professional-v3 > .profile-account-hero::a
     --xbfs-sidebar-hero-start: #030303;
     --xbfs-sidebar-hero-middle: #0b0b0b;
     --xbfs-sidebar-hero-end: #1a1a1a;
-    --xbfs-sidebar-hero-copy: rgba(226, 238, 249, 0.84);
+    --xbfs-sidebar-hero-copy: rgba(247, 247, 247, 0.84);
 }
 
 /* ---------------------------------------------------------
@@ -1377,12 +1377,12 @@ html body .main
     background:
         radial-gradient(
             circle at 89% 13%,
-            rgba(69, 128, 190, 0.19),
+            rgba(58, 58, 58, 0.19),
             transparent 28%
         ),
         radial-gradient(
             circle at 7% 118%,
-            rgba(38, 82, 137, 0.18),
+            rgba(46, 46, 46, 0.18),
             transparent 37%
         ),
         linear-gradient(
@@ -1414,7 +1414,7 @@ html body .main
 .documents-system-action-primary {
     border-color: rgba(255, 255, 255, 0.25) !important;
     background: rgba(255, 255, 255, 0.96) !important;
-    color: #101a2f !important;
+    color: #0F0F0F !important;
 }
 
 html body .main
@@ -1435,12 +1435,12 @@ html body .main
     background:
         radial-gradient(
             circle at 88% 15%,
-            rgba(69, 128, 190, 0.18),
+            rgba(58, 58, 58, 0.18),
             transparent 27%
         ),
         radial-gradient(
             circle at 5% 118%,
-            rgba(38, 82, 137, 0.17),
+            rgba(46, 46, 46, 0.17),
             transparent 36%
         ),
         linear-gradient(
@@ -1471,7 +1471,7 @@ html body .main
 > .profile-account-hero.profile-account-hero
 .profile-hero-summary article {
     border-color: rgba(255, 255, 255, 0.16) !important;
-    background: rgba(5, 15, 32, 0.43) !important;
+    background: rgba(15, 15, 15, 0.43) !important;
     color: #ffffff !important;
 }
 
@@ -1486,7 +1486,7 @@ html body .main
 > .page-container.profile-page.profile-professional-v3.profile-professional-v3
 > .profile-account-hero.profile-account-hero
 .profile-hero-summary small {
-    color: rgba(226, 238, 249, 0.72) !important;
+    color: rgba(247, 247, 247, 0.72) !important;
 }
 
 html body .main
@@ -1494,7 +1494,7 @@ html body .main
 > .profile-account-hero.profile-account-hero
 .profile-hero-security span {
     border-color: rgba(255, 255, 255, 0.16) !important;
-    background: rgba(5, 15, 32, 0.36) !important;
+    background: rgba(15, 15, 15, 0.36) !important;
 }
 
 html body .main
@@ -1514,12 +1514,12 @@ html body .main
     background:
         radial-gradient(
             circle at 88% 15%,
-            rgba(69, 128, 190, 0.18),
+            rgba(58, 58, 58, 0.18),
             transparent 27%
         ),
         radial-gradient(
             circle at 5% 118%,
-            rgba(38, 82, 137, 0.17),
+            rgba(46, 46, 46, 0.17),
             transparent 36%
         ),
         linear-gradient(

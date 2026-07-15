@@ -5,20 +5,20 @@
    ============================================================ */
 
 :root {
-    --xbfs-modal-navy: #0d1123;
-    --xbfs-modal-navy-hover: #171c34;
-    --xbfs-modal-blue: #1d5f9f;
-    --xbfs-modal-blue-soft: #eef7ff;
-    --xbfs-modal-text: #102a43;
-    --xbfs-modal-text-strong: #061d33;
-    --xbfs-modal-muted: #61768a;
-    --xbfs-modal-border: #cfdeeb;
-    --xbfs-modal-border-soft: #e4edf5;
+    --xbfs-modal-navy: #0F0F0F;
+    --xbfs-modal-navy-hover: #0F0F0F;
+    --xbfs-modal-blue: #343434;
+    --xbfs-modal-blue-soft: #F7F7F7;
+    --xbfs-modal-text: #1F1F1F;
+    --xbfs-modal-text-strong: #0F0F0F;
+    --xbfs-modal-muted: #5C5C5C;
+    --xbfs-modal-border: #EBEBEB;
+    --xbfs-modal-border-soft: #F7F7F7;
     --xbfs-modal-surface: #ffffff;
-    --xbfs-modal-surface-soft: #f7fafc;
+    --xbfs-modal-surface-soft: #F7F7F7;
     --xbfs-modal-danger: #b42318;
     --xbfs-modal-danger-soft: #fff1f1;
-    --xbfs-modal-shadow: 0 34px 90px -48px rgba(6, 29, 51, .88);
+    --xbfs-modal-shadow: 0 34px 90px -48px rgba(15, 15, 15, .88);
     --xbfs-modal-radius: 16px;
     --xbfs-modal-radius-sm: 11px;
     --xbfs-modal-z: 2147482000;
@@ -78,7 +78,7 @@ html body .xbfs-modal-overlay {
     z-index: var(--xbfs-modal-z) !important;
     box-sizing: border-box !important;
     padding: 24px !important;
-    background: rgba(6, 29, 51, .50) !important;
+    background: rgba(15, 15, 15, .50) !important;
     backdrop-filter: blur(5px) saturate(108%) !important;
     -webkit-backdrop-filter: blur(5px) saturate(108%) !important;
 }
@@ -109,7 +109,7 @@ html body dialog.tax-store-dialog::backdrop,
 html body dialog.tb-tax-store-dialog::backdrop,
 html body dialog.py-tax-store-dialog::backdrop,
 html body dialog.xbfs-modal-dialog::backdrop {
-    background: rgba(6, 29, 51, .50) !important;
+    background: rgba(15, 15, 15, .50) !important;
     backdrop-filter: blur(5px) saturate(108%) !important;
     -webkit-backdrop-filter: blur(5px) saturate(108%) !important;
 }
@@ -194,7 +194,7 @@ html body .xbfs-modal::before {
     inset: 0 0 auto;
     z-index: 8;
     height: 4px;
-    background: var(--xbfs-modal-blue);
+    background: var(--xbfs-modal-#2e2e2e);
     pointer-events: none;
 }
 
@@ -275,7 +275,7 @@ html body :is(
 ) {
     display: block !important;
     margin: 0 0 6px !important;
-    color: var(--xbfs-modal-blue) !important;
+    color: var(--xbfs-modal-#2e2e2e) !important;
     font-size: 10px !important;
     font-weight: 900 !important;
     line-height: 1.2 !important;
@@ -310,7 +310,7 @@ html body :is(
     border: 1px solid var(--xbfs-modal-border) !important;
     border-radius: 10px !important;
     background: var(--xbfs-modal-surface-soft) !important;
-    color: #405a72 !important;
+    color: #2E2E2E !important;
     box-shadow: none !important;
     cursor: pointer !important;
     transition: border-color 150ms ease, background 150ms ease, color 150ms ease, transform 150ms ease !important;
@@ -328,8 +328,8 @@ html body :is(
     .xbfs-modal-close
 ):hover {
     transform: translateY(-1px) !important;
-    border-color: #a9bfd3 !important;
-    background: #eef5fb !important;
+    border-color: #B8B8B8 !important;
+    background: #F7F7F7 !important;
     color: var(--xbfs-modal-text-strong) !important;
 }
 
@@ -344,7 +344,7 @@ html body :is(
     .system-error-detail-close,
     .xbfs-modal-close
 ):focus-visible {
-    outline: 3px solid rgba(29, 95, 159, .18) !important;
+    outline: 3px solid rgba(52, 52, 52, .18) !important;
     outline-offset: 2px !important;
 }
 
@@ -405,7 +405,7 @@ html body :is(
     .system-error-detail-scroll,
     .xbfs-modal-body
 )::-webkit-scrollbar-track {
-    background: #f0f5f9;
+    background: #F7F7F7;
 }
 
 html body :is(
@@ -416,9 +416,9 @@ html body :is(
     .system-error-detail-scroll,
     .xbfs-modal-body
 )::-webkit-scrollbar-thumb {
-    border: 2px solid #f0f5f9;
+    border: 2px solid #F7F7F7;
     border-radius: 999px;
-    background: #9eb9cf;
+    background: #B8B8B8;
 }
 
 /* ============================================================
@@ -480,15 +480,15 @@ html body :is(.pm-schedule-modal-primary, .pm-schedule-modal-secondary, .system-
 }
 
 html body :is(.pm-schedule-modal-primary, .system-error-detail-confirm) {
-    border: 1px solid var(--xbfs-modal-navy) !important;
-    background: var(--xbfs-modal-navy) !important;
+    border: 1px solid var(--xbfs-modal-#171717) !important;
+    background: var(--xbfs-modal-#171717) !important;
     color: #ffffff !important;
 }
 
 html body :is(.pm-schedule-modal-secondary, .system-error-detail-cancel) {
     border: 1px solid var(--xbfs-modal-border) !important;
     background: #ffffff !important;
-    color: #38536b !important;
+    color: #2E2E2E !important;
 }
 
 /* ============================================================
@@ -515,7 +515,7 @@ html body :is(
     border-radius: 10px !important;
     background: #ffffff !important;
     color: var(--xbfs-modal-text) !important;
-    box-shadow: inset 0 1px 1px rgba(6, 29, 51, .025) !important;
+    box-shadow: inset 0 1px 1px rgba(15, 15, 15, .025) !important;
     font-family: inherit !important;
     font-size: 13px !important;
     outline: none !important;
@@ -548,9 +548,9 @@ html body :is(
     .system-error-detail-dialog,
     .xbfs-modal
 ) :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]), select, textarea, .form-control, .form-input):focus {
-    border-color: #78a9d2 !important;
+    border-color: #8A8A8A !important;
     background: #ffffff !important;
-    box-shadow: 0 0 0 3px rgba(29, 95, 159, .11) !important;
+    box-shadow: 0 0 0 3px rgba(52, 52, 52, .11) !important;
 }
 
 html body :is(
@@ -564,7 +564,7 @@ html body :is(
     .system-error-detail-dialog,
     .xbfs-modal
 ) :is(label, .form-label, .pm-field > span) {
-    color: #405a72 !important;
+    color: #2E2E2E !important;
     font-family: inherit !important;
     font-size: 11px !important;
     font-weight: 800 !important;

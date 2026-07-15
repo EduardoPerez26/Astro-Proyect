@@ -2625,7 +2625,7 @@ async function refrescarTaxRatesBurgerKing() {
             showCancelButton: true,
             confirmButtonText: 'Refresh',
             cancelButtonText: 'Cancel',
-            confirmButtonColor: '#0b2d4d',
+            confirmButtonColor: '#1F1F1F',
             cancelButtonColor: '#6c757d',
             reverseButtons: true,
             focusCancel: true

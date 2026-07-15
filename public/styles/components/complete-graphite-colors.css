@@ -1,0 +1,177 @@
+/* =========================================================
+   XBFS — COMPLETE GRAPHITE COLOR SYSTEM V1
+
+   Final fallback layer loaded after the project styles.
+   The installer also converts blue, navy and cyan literals
+   directly in frontend source files.
+   ========================================================= */
+
+:root {
+    --primary: #1f1f1f !important;
+    --primary-dark: #0f0f0f !important;
+    --primary-light: #eeeeee !important;
+
+    --info: #484848 !important;
+    --info-light: #f2f2f2 !important;
+
+    --blue: #2e2e2e !important;
+    --blue-dark: #161616 !important;
+    --blue-light: #eeeeee !important;
+
+    --navy: #171717 !important;
+    --navy-dark: #090909 !important;
+    --navy-light: #e9e9e9 !important;
+
+    --enterprise-ink: #1f1f1f !important;
+    --enterprise-ink-2: #2e2e2e !important;
+    --enterprise-muted: #686868 !important;
+    --enterprise-border: #dddddd !important;
+    --enterprise-soft: #f7f7f7 !important;
+
+    --sidebar-primary: #0a0a0a !important;
+    --sidebar-secondary: #181818 !important;
+    --sidebar-accent: #343434 !important;
+
+    --focus-color: #292929 !important;
+    --focus-ring: rgba(0, 0, 0, 0.12) !important;
+}
+
+/* Native controls. */
+html body {
+    accent-color: #242424 !important;
+}
+
+html body ::selection {
+    background: #2a2a2a !important;
+    color: #ffffff !important;
+}
+
+/* Common utility and framework-style classes. */
+html body :is(
+    .text-primary,
+    .text-info,
+    .color-primary,
+    .color-info,
+    .link-primary,
+    .link-info
+) {
+    color: #343434 !important;
+}
+
+html body :is(
+    .bg-primary,
+    .bg-info,
+    .background-primary,
+    .background-info
+) {
+    background-color: #1f1f1f !important;
+    color: #ffffff !important;
+}
+
+html body :is(
+    .border-primary,
+    .border-info
+) {
+    border-color: #444444 !important;
+}
+
+/* Primary buttons remain graphite. Semantic buttons are untouched. */
+html body :is(
+    .btn-primary,
+    .button-primary,
+    .primary-button,
+    .primary-btn
+):not(
+    .btn-success,
+    .btn-warning,
+    .btn-danger,
+    .success,
+    .warning,
+    .danger
+) {
+    border-color: #303030 !important;
+    background:
+        linear-gradient(
+            180deg,
+            #303030 0%,
+            #090909 100%
+        ) !important;
+    color: #ffffff !important;
+}
+
+html body :is(
+    .btn-primary,
+    .button-primary,
+    .primary-button,
+    .primary-btn
+):not(
+    .btn-success,
+    .btn-warning,
+    .btn-danger,
+    .success,
+    .warning,
+    .danger
+):hover:not(:disabled) {
+    border-color: #505050 !important;
+    background:
+        linear-gradient(
+            180deg,
+            #444444 0%,
+            #121212 100%
+        ) !important;
+}
+
+/* Common selected/active controls that previously used blue. */
+html body :is(
+    .is-selected,
+    .selected,
+    .is-active,
+    [aria-selected="true"],
+    [aria-current="page"]
+):not(
+    .status-success,
+    .status-warning,
+    .status-danger,
+    .success,
+    .warning,
+    .danger
+) {
+    --active-accent: #242424;
+}
+
+/* Links use neutral graphite unless a component explicitly
+   defines a semantic status color. */
+html body a:not(
+    .btn-success,
+    .btn-warning,
+    .btn-danger,
+    .success,
+    .warning,
+    .danger
+) {
+    --link-accent: #333333;
+}
+
+/* Inputs and controls use a neutral focus ring. */
+html body :is(
+    input,
+    select,
+    textarea,
+    button,
+    [role="button"]
+):focus-visible {
+    outline-color: #303030;
+}
+
+/* Scrollbars no longer use a blue thumb. */
+html {
+    scrollbar-color: #575757 #ededed;
+}
+
+html body *::-webkit-scrollbar-thumb {
+    background: #575757;
+}
+
+html body *::-webkit-scrollbar-track {
+    background: #ededed;
+}

@@ -5,17 +5,17 @@
         min-width: 0;
         min-height: 350px;
         overflow: hidden;
-        border: 1px solid #dbe4ee;
+        border: 1px solid #EBEBEB;
         border-radius: 16px;
         background: rgba(255, 255, 255, .98);
-        box-shadow: 0 14px 34px -28px rgba(10, 37, 64, .6);
+        box-shadow: 0 14px 34px -28px rgba(15, 15, 15, .6);
         transition: transform .22s ease, box-shadow .22s ease, border-color .22s ease;
     }
 
     .store-card:hover {
         transform: translateY(-4px);
-        border-color: rgba(16, 42, 67, .3);
-        box-shadow: 0 24px 48px -30px rgba(10, 37, 64, .7);
+        border-color: rgba(31, 31, 31, .3);
+        box-shadow: 0 24px 48px -30px rgba(15, 15, 15, .7);
     }
 
     .store-card-warning { --brand-color: #c16b21; }
@@ -47,10 +47,10 @@
         flex: 0 0 58px;
         display: grid;
         place-items: center;
-        border: 1px solid #dce6f0;
+        border: 1px solid #EBEBEB;
         border-radius: 15px;
         color: var(--brand-color);
-        background: #f8fafc;
+        background: #F7F7F7;
         box-shadow: inset 0 0 0 5px #fff;
     }
 
@@ -111,7 +111,7 @@
 
     .store-card-kicker,
     .store-requirements-label {
-        color: #718096;
+        color: #5C5C5C;
         font-size: 10px;
         font-weight: 800;
         letter-spacing: .1em;
@@ -120,7 +120,7 @@
 
     .store-card-copy h2 {
         margin: 7px 0 8px;
-        color: #102a43;
+        color: #1F1F1F;
         font-family: 'Inter', sans-serif;
         font-size: 27px;
         line-height: 1.1;
@@ -128,16 +128,16 @@
 
     .store-card-copy p {
         margin: 0;
-        color: #52667a;
+        color: #494949;
         font-size: 13px;
         line-height: 1.65;
     }
 
     .store-requirements {
         padding: 16px;
-        border: 1px solid #e5ebf2;
+        border: 1px solid #F7F7F7;
         border-radius: 12px;
-        background: #f8fafc;
+        background: #F7F7F7;
     }
 
     .store-file-list {
@@ -153,9 +153,9 @@
         gap: 6px;
         padding: 5px 8px;
         border-radius: 7px;
-        color: #334e68;
+        color: #2E2E2E;
         background: #fff;
-        border: 1px solid #dfe7ef;
+        border: 1px solid #EBEBEB;
         font-size: 11px;
         font-weight: 600;
     }
@@ -168,7 +168,7 @@
     }
 
     .store-file-count {
-        color: #718096;
+        color: #5C5C5C;
         font-size: 11px;
         font-weight: 700;
     }
@@ -193,7 +193,7 @@
     .store-action {
         color: #fff;
         background: var(--primary);
-        box-shadow: 0 10px 20px -14px rgba(10, 37, 64, .8);
+        box-shadow: 0 10px 20px -14px rgba(15, 15, 15, .8);
     }
 
     .store-action:hover { background: var(--primary-dark); }
@@ -201,18 +201,18 @@
     .store-action:hover i { transform: translateX(3px); }
 
     .store-action-disabled {
-        color: #718096;
-        background: #edf2f7;
+        color: #5C5C5C;
+        background: #F7F7F7;
     }
 
     .store-card-disabled {
-        background: #f8fafc;
+        background: #F7F7F7;
     }
 
     .store-card-disabled:hover {
         transform: none;
-        border-color: #dbe4ee;
-        box-shadow: 0 14px 34px -28px rgba(10, 37, 64, .6);
+        border-color: #EBEBEB;
+        box-shadow: 0 14px 34px -28px rgba(15, 15, 15, .6);
     }
 
     @media (max-width: 520px) {
@@ -224,15 +224,15 @@
     /* Tarjeta de modulo contable */
     .store-card {
         min-height: 318px;
-        border-color: #d3dde7;
+        border-color: #EBEBEB;
         border-radius: 6px;
         box-shadow: none;
     }
 
     .store-card:hover {
         transform: none;
-        border-color: #9fb2c4;
-        box-shadow: 0 3px 10px rgba(8, 31, 51, .07);
+        border-color: #B8B8B8;
+        box-shadow: 0 3px 10px rgba(15, 15, 15, .07);
     }
 
     .store-card-accent { height: 3px; }
@@ -246,7 +246,7 @@
         height: 46px;
         flex-basis: 46px;
         border-radius: 5px;
-        background: #f5f7fa;
+        background: #F7F7F7;
         box-shadow: none;
     }
 
@@ -274,7 +274,7 @@
     .store-requirements {
         padding: 11px;
         border-radius: 4px;
-        background: #f6f8fa;
+        background: #F7F7F7;
     }
 
     .store-file-list { gap: 5px; margin-top: 8px; }

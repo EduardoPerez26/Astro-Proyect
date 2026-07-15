@@ -17,15 +17,15 @@
     --xbfs-hero-eyebrow-size: 10px;
 
     --xbfs-hero-title-color: #ffffff;
-    --xbfs-hero-subtitle-color: #d9e8f3;
-    --xbfs-hero-label-color: #dcecf7;
+    --xbfs-hero-subtitle-color: #EBEBEB;
+    --xbfs-hero-label-color: #EBEBEB;
 
     --xbfs-hero-bg-start: #030303;
     --xbfs-hero-bg-middle: #0b0b0b;
     --xbfs-hero-bg-end: #1a1a1a;
 
-    --xbfs-hero-surface: rgba(5, 24, 39, 0.42);
-    --xbfs-hero-surface-hover: rgba(5, 24, 39, 0.54);
+    --xbfs-hero-surface: rgba(15, 15, 15, 0.42);
+    --xbfs-hero-surface-hover: rgba(15, 15, 15, 0.54);
     --xbfs-hero-surface-border: rgba(255, 255, 255, 0.22);
     --xbfs-hero-surface-border-hover: rgba(255, 255, 255, 0.34);
 }
@@ -79,7 +79,7 @@ html body .main :is(
         ),
         radial-gradient(
             circle at 7% 118%,
-            rgba(62, 118, 177, 0.15),
+            rgba(58, 58, 58, 0.15),
             transparent 34%
         ),
         linear-gradient(
@@ -89,7 +89,7 @@ html body .main :is(
             var(--xbfs-hero-bg-end) 100%
         ) !important;
     box-shadow:
-        0 28px 64px -48px rgba(3, 18, 31, 0.95),
+        0 28px 64px -48px rgba(15, 15, 15, 0.95),
         inset 0 1px 0 rgba(255, 255, 255, 0.04) !important;
 
     color: var(--xbfs-hero-title-color) !important;
@@ -266,7 +266,7 @@ html body .main :is(
     letter-spacing: -0.045em !important;
     line-height: 1.02 !important;
     text-wrap: balance !important;
-    text-shadow: 0 2px 12px rgba(2, 16, 28, 0.20) !important;
+    text-shadow: 0 2px 12px rgba(15, 15, 15, 0.20) !important;
 }
 
 /* Main view description only. */
@@ -313,7 +313,7 @@ html body .main :is(
     font-weight: 600 !important;
     letter-spacing: 0 !important;
     line-height: 1.58 !important;
-    text-shadow: 0 1px 1px rgba(2, 16, 28, 0.16) !important;
+    text-shadow: 0 1px 1px rgba(15, 15, 15, 0.16) !important;
 }
 
 /* ---------------------------------------------------------
@@ -372,7 +372,7 @@ html body .main :is(
     background: var(--xbfs-hero-surface) !important;
     box-shadow:
         inset 0 1px 0 rgba(255, 255, 255, 0.09),
-        0 18px 32px -28px rgba(0, 10, 20, 0.9) !important;
+        0 18px 32px -28px rgba(15, 15, 15, 0.9) !important;
     backdrop-filter: blur(12px) !important;
     -webkit-backdrop-filter: blur(12px) !important;
 
@@ -525,7 +525,7 @@ html body .main :is(
 
     border: 1px solid rgba(255, 255, 255, 0.28) !important;
     border-radius: 12px !important;
-    background: rgba(7, 27, 45, 0.32) !important;
+    background: rgba(15, 15, 15, 0.32) !important;
     box-shadow: none !important;
 
     color: #ffffff !important;
@@ -559,7 +559,7 @@ html body .main :is(
 ) :is(.btn-primary, button.primary, [data-hero-primary]) {
     border-color: #ffffff !important;
     background: #ffffff !important;
-    color: #0b2d47 !important;
+    color: #1F1F1F !important;
     box-shadow: 0 14px 26px -20px rgba(0, 0, 0, 0.72) !important;
 }
 
@@ -648,7 +648,7 @@ html body .main .status-pulse {
         background: var(--xbfs-hero-surface-hover) !important;
         box-shadow:
             inset 0 1px 0 rgba(255, 255, 255, 0.11),
-            0 22px 36px -28px rgba(0, 10, 20, 0.95) !important;
+            0 22px 36px -28px rgba(15, 15, 15, 0.95) !important;
     }
 
     html body .main :is(
@@ -671,7 +671,7 @@ html body .main .status-pulse {
     ) :is(button, .btn, a.btn):hover {
         transform: translateY(-1px) !important;
         border-color: rgba(255, 255, 255, 0.48) !important;
-        background: rgba(7, 27, 45, 0.48) !important;
+        background: rgba(15, 15, 15, 0.48) !important;
     }
 
     html body .main :is(
@@ -692,8 +692,8 @@ html body .main .status-pulse {
         .schedule-dashboard > .schedule-header,
         .prepaid-page > .prepaid-hero
     ) :is(.btn-primary, button.primary, [data-hero-primary]):hover {
-        background: #f3f8fc !important;
-        color: #071f34 !important;
+        background: #F7F7F7 !important;
+        color: #0F0F0F !important;
     }
 }
 
@@ -870,7 +870,7 @@ html body .main .status-pulse {
     --xbfs-sidebar-hero-start: #030303;
     --xbfs-sidebar-hero-middle: #0b0b0b;
     --xbfs-sidebar-hero-end: #1a1a1a;
-    --xbfs-sidebar-hero-copy: rgba(226, 238, 249, 0.84);
+    --xbfs-sidebar-hero-copy: rgba(247, 247, 247, 0.84);
 }
 
 /* ---------------------------------------------------------
@@ -884,12 +884,12 @@ html body .main
     background:
         radial-gradient(
             circle at 89% 13%,
-            rgba(69, 128, 190, 0.19),
+            rgba(58, 58, 58, 0.19),
             transparent 28%
         ),
         radial-gradient(
             circle at 7% 118%,
-            rgba(38, 82, 137, 0.18),
+            rgba(46, 46, 46, 0.18),
             transparent 37%
         ),
         linear-gradient(
@@ -921,7 +921,7 @@ html body .main
 .documents-system-action-primary {
     border-color: rgba(255, 255, 255, 0.25) !important;
     background: rgba(255, 255, 255, 0.96) !important;
-    color: #101a2f !important;
+    color: #0F0F0F !important;
 }
 
 html body .main
@@ -942,12 +942,12 @@ html body .main
     background:
         radial-gradient(
             circle at 88% 15%,
-            rgba(69, 128, 190, 0.18),
+            rgba(58, 58, 58, 0.18),
             transparent 27%
         ),
         radial-gradient(
             circle at 5% 118%,
-            rgba(38, 82, 137, 0.17),
+            rgba(46, 46, 46, 0.17),
             transparent 36%
         ),
         linear-gradient(
@@ -978,7 +978,7 @@ html body .main
 > .profile-account-hero.profile-account-hero
 .profile-hero-summary article {
     border-color: rgba(255, 255, 255, 0.16) !important;
-    background: rgba(5, 15, 32, 0.43) !important;
+    background: rgba(15, 15, 15, 0.43) !important;
     color: #ffffff !important;
 }
 
@@ -993,7 +993,7 @@ html body .main
 > .page-container.profile-page.profile-professional-v3.profile-professional-v3
 > .profile-account-hero.profile-account-hero
 .profile-hero-summary small {
-    color: rgba(226, 238, 249, 0.72) !important;
+    color: rgba(247, 247, 247, 0.72) !important;
 }
 
 html body .main
@@ -1001,7 +1001,7 @@ html body .main
 > .profile-account-hero.profile-account-hero
 .profile-hero-security span {
     border-color: rgba(255, 255, 255, 0.16) !important;
-    background: rgba(5, 15, 32, 0.36) !important;
+    background: rgba(15, 15, 15, 0.36) !important;
 }
 
 html body .main
@@ -1021,12 +1021,12 @@ html body .main
     background:
         radial-gradient(
             circle at 88% 15%,
-            rgba(69, 128, 190, 0.18),
+            rgba(58, 58, 58, 0.18),
             transparent 27%
         ),
         radial-gradient(
             circle at 5% 118%,
-            rgba(38, 82, 137, 0.17),
+            rgba(46, 46, 46, 0.17),
             transparent 36%
         ),
         linear-gradient(
