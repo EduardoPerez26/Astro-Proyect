@@ -1415,3 +1415,1167 @@
         color: #ffffff !important;
         background-clip: padding-box !important;
     }
+
+
+/* Property documents actions and info modal section */
+/* =========================================================
+   PROPERTY DOCUMENTS — ACTIONS + INFO MODAL FIX V1
+   ========================================================= */
+
+:root {
+    --pm-doc-fix-navy: #0F0F0F;
+    --pm-doc-fix-blue: #343434;
+    --pm-doc-fix-text: #1F1F1F;
+    --pm-doc-fix-muted: #5C5C5C;
+    --pm-doc-fix-border: #EBEBEB;
+    --pm-doc-fix-soft: #F7F7F7;
+}
+
+/* ---------------------------------------------------------
+   TABLE: keep the complete action group visible
+   --------------------------------------------------------- */
+
+html body .property-documents-page .table-container {
+    position: relative !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: auto !important;
+    overflow-y: auto !important;
+    scrollbar-gutter: stable !important;
+}
+
+html body .property-documents-page #pmDocumentsTable {
+    width: 100% !important;
+    min-width: 1410px !important;
+    table-layout: fixed !important;
+}
+
+html body .property-documents-page #pmDocumentsTable th:nth-child(8),
+html body .property-documents-page #pmDocumentsTable td:nth-child(8) {
+    width: 210px !important;
+    min-width: 210px !important;
+    max-width: 210px !important;
+}
+
+html body .property-documents-page #pmDocumentsTable th:nth-child(8) {
+    position: sticky !important;
+    right: 0 !important;
+    z-index: 120 !important;
+    padding-right: 16px !important;
+    background: var(--pm-doc-fix-#171717) !important;
+    box-shadow: -12px 0 18px -18px rgba(15, 15, 15, 0.9) !important;
+}
+
+html body .property-documents-page #pmDocumentsTable td:nth-child(8) {
+    position: sticky !important;
+    right: 0 !important;
+    z-index: 8 !important;
+    padding: 10px 14px !important;
+    background: #ffffff !important;
+    box-shadow: -12px 0 18px -18px rgba(15, 15, 15, 0.48) !important;
+}
+
+html body .property-documents-page #pmDocumentsTable tbody tr:nth-child(even) td:nth-child(8) {
+    background: #F7F7F7 !important;
+}
+
+html body .property-documents-page #pmDocumentsTable tbody tr:hover td:nth-child(8) {
+    background: #F7F7F7 !important;
+}
+
+html body .property-documents-page #pmDocumentsTable .action-buttons {
+    position: relative !important;
+    z-index: 2 !important;
+    display: flex !important;
+    width: 100% !important;
+    min-width: 176px !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    flex-wrap: nowrap !important;
+    gap: 8px !important;
+    overflow: visible !important;
+    white-space: nowrap !important;
+}
+
+html body .property-documents-page #pmDocumentsTable .action-btn {
+    display: inline-grid !important;
+    width: 38px !important;
+    height: 38px !important;
+    min-width: 38px !important;
+    min-height: 38px !important;
+    flex: 0 0 38px !important;
+    place-items: center !important;
+    padding: 0 !important;
+    pointer-events: auto !important;
+    cursor: pointer !important;
+}
+
+html body .property-documents-page #pmDocumentsTable .action-btn:focus-visible {
+    outline: 0 !important;
+    border-color: #8A8A8A !important;
+    box-shadow: 0 0 0 4px rgba(52, 52, 52, 0.14) !important;
+}
+
+/* ---------------------------------------------------------
+   SCHEDULE / PREPAID INFORMATION MODAL
+   These elements are created dynamically by JavaScript, so
+   their styles must live in a global external stylesheet.
+   --------------------------------------------------------- */
+
+html body.pm-schedule-modal-open {
+    overflow: hidden !important;
+}
+
+html body .pm-schedule-modal[hidden] {
+    display: none !important;
+}
+
+html body .pm-schedule-modal {
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 2147482600 !important;
+    display: grid !important;
+    place-items: center !important;
+    box-sizing: border-box !important;
+    padding: 24px !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    transition: opacity 170ms ease !important;
+}
+
+html body .pm-schedule-modal.is-open {
+    opacity: 1 !important;
+    pointer-events: auto !important;
+}
+
+html body .pm-schedule-modal-backdrop {
+    position: absolute !important;
+    inset: 0 !important;
+    border: 0 !important;
+    background: rgba(15, 15, 15, 0.58) !important;
+    backdrop-filter: blur(7px) saturate(110%) !important;
+    -webkit-backdrop-filter: blur(7px) saturate(110%) !important;
+}
+
+html body .pm-schedule-modal-dialog {
+    position: relative !important;
+    z-index: 2 !important;
+    display: grid !important;
+    grid-template-rows: auto minmax(0, 1fr) auto !important;
+    width: min(860px, calc(100vw - 48px)) !important;
+    max-width: min(860px, calc(100vw - 48px)) !important;
+    max-height: min(88dvh, 820px) !important;
+    overflow: hidden !important;
+    border: 1px solid #EBEBEB !important;
+    border-radius: 20px !important;
+    background: #ffffff !important;
+    color: var(--pm-doc-fix-text) !important;
+    box-shadow: 0 38px 90px -42px rgba(15, 15, 15, 0.92) !important;
+    opacity: 0 !important;
+    transform: translateY(14px) scale(0.982) !important;
+    transition:
+        transform 190ms cubic-bezier(0.16, 1, 0.3, 1),
+        opacity 160ms ease !important;
+}
+
+html body .pm-schedule-modal-dialog::before {
+    content: "" !important;
+    position: absolute !important;
+    inset: 0 0 auto !important;
+    z-index: 5 !important;
+    height: 4px !important;
+    background: linear-gradient(90deg, #3A3A3A 0%, #1F1F1F 55%, #2E2E2E 100%) !important;
+    pointer-events: none !important;
+}
+
+html body .pm-schedule-modal.is-open .pm-schedule-modal-dialog {
+    opacity: 1 !important;
+    transform: translateY(0) scale(1) !important;
+}
+
+html body .pm-schedule-modal-dialog > h3 {
+    margin: 0 !important;
+    padding: 27px 78px 20px 28px !important;
+    border-bottom: 1px solid #EBEBEB !important;
+    background: linear-gradient(180deg, #ffffff 0%, #F7F7F7 100%) !important;
+    color: #1F1F1F !important;
+    font-size: 23px !important;
+    font-weight: 900 !important;
+    letter-spacing: -0.025em !important;
+    line-height: 1.15 !important;
+    text-align: left !important;
+}
+
+html body .pm-schedule-modal-close {
+    position: absolute !important;
+    top: 17px !important;
+    right: 18px !important;
+    z-index: 10 !important;
+    display: grid !important;
+    width: 40px !important;
+    height: 40px !important;
+    place-items: center !important;
+    padding: 0 !important;
+    border: 1px solid #EBEBEB !important;
+    border-radius: 12px !important;
+    background: #F7F7F7 !important;
+    color: #1F1F1F !important;
+    cursor: pointer !important;
+}
+
+html body .pm-schedule-modal-close:hover,
+html body .pm-schedule-modal-close:focus-visible {
+    border-color: #D6D6D6 !important;
+    background: #F7F7F7 !important;
+    outline: 0 !important;
+}
+
+html body .pm-schedule-info {
+    min-width: 0 !important;
+    min-height: 0 !important;
+    padding: 20px 28px 24px !important;
+    overflow: auto !important;
+    overscroll-behavior: contain !important;
+    scrollbar-gutter: stable !important;
+    background: #ffffff !important;
+    text-align: left !important;
+}
+
+html body .pm-schedule-info-overview {
+    display: grid !important;
+    grid-template-columns: 52px minmax(0, 1fr) auto !important;
+    align-items: center !important;
+    gap: 14px !important;
+    margin: 0 0 14px !important;
+    padding: 16px !important;
+    border: 1px solid var(--pm-doc-fix-border) !important;
+    border-radius: 16px !important;
+    background:
+        radial-gradient(circle at 100% 0%, rgba(58, 58, 58, 0.08), transparent 34%),
+        #F7F7F7 !important;
+}
+
+html body .pm-schedule-info-icon {
+    display: grid !important;
+    width: 48px !important;
+    height: 48px !important;
+    place-items: center !important;
+    border-radius: 14px !important;
+    background: #e7f5ef !important;
+    color: #12835a !important;
+    font-size: 20px !important;
+}
+
+html body .pm-schedule-info-copy {
+    min-width: 0 !important;
+}
+
+html body .pm-schedule-info-copy > span,
+html body .pm-schedule-info-grid small,
+html body .pm-schedule-info-section header > span,
+html body .pm-schedule-info-list dt {
+    display: block !important;
+    color: #5C5C5C !important;
+    font-size: 10px !important;
+    font-weight: 900 !important;
+    letter-spacing: 0.07em !important;
+    line-height: 1.25 !important;
+    text-transform: uppercase !important;
+}
+
+html body .pm-schedule-info-copy h4 {
+    margin: 5px 0 4px !important;
+    overflow: hidden !important;
+    color: #1F1F1F !important;
+    font-size: 17px !important;
+    font-weight: 900 !important;
+    line-height: 1.25 !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+}
+
+html body .pm-schedule-info-copy p {
+    margin: 0 !important;
+    color: #494949 !important;
+    font-size: 12px !important;
+    font-weight: 700 !important;
+}
+
+html body .pm-schedule-info-status {
+    display: inline-flex !important;
+    min-height: 30px !important;
+    align-items: center !important;
+    padding: 0 11px !important;
+    border: 1px solid #EBEBEB !important;
+    border-radius: 999px !important;
+    background: #F7F7F7 !important;
+    color: #2E2E2E !important;
+    font-size: 11px !important;
+    font-weight: 900 !important;
+    white-space: nowrap !important;
+}
+
+html body .pm-schedule-info-grid {
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+    margin: 0 0 14px !important;
+}
+
+html body .pm-schedule-info-grid article {
+    display: grid !important;
+    grid-template-columns: 36px minmax(0, 1fr) !important;
+    align-items: center !important;
+    gap: 10px !important;
+    min-width: 0 !important;
+    padding: 12px !important;
+    border: 1px solid var(--pm-doc-fix-border) !important;
+    border-radius: 14px !important;
+    background: #ffffff !important;
+}
+
+html body .pm-schedule-info-card-icon {
+    display: grid !important;
+    width: 36px !important;
+    height: 36px !important;
+    place-items: center !important;
+    border-radius: 11px !important;
+    background: #F7F7F7 !important;
+    color: #343434 !important;
+}
+
+html body .pm-schedule-info-grid strong {
+    display: block !important;
+    margin-top: 4px !important;
+    overflow-wrap: anywhere !important;
+    color: #1F1F1F !important;
+    font-size: 12px !important;
+    font-weight: 900 !important;
+    line-height: 1.3 !important;
+}
+
+html body .pm-schedule-info-section {
+    overflow: hidden !important;
+    border: 1px solid var(--pm-doc-fix-border) !important;
+    border-radius: 15px !important;
+    background: #ffffff !important;
+}
+
+html body .pm-schedule-info-section header {
+    padding: 13px 15px !important;
+    border-bottom: 1px solid #EBEBEB !important;
+    background: var(--pm-doc-fix-soft) !important;
+}
+
+html body .pm-schedule-info-section h4 {
+    margin: 4px 0 0 !important;
+    color: #1F1F1F !important;
+    font-size: 15px !important;
+    font-weight: 900 !important;
+}
+
+html body .pm-schedule-info-list {
+    margin: 0 !important;
+}
+
+html body .pm-schedule-info-list > div {
+    display: grid !important;
+    grid-template-columns: minmax(150px, 0.34fr) minmax(0, 1fr) !important;
+    gap: 16px !important;
+    padding: 11px 15px !important;
+    border-bottom: 1px solid #F7F7F7 !important;
+}
+
+html body .pm-schedule-info-list > div:last-child {
+    border-bottom: 0 !important;
+}
+
+html body .pm-schedule-info-list dd {
+    margin: 0 !important;
+    overflow-wrap: anywhere !important;
+    color: #1F1F1F !important;
+    font-size: 12px !important;
+    font-weight: 750 !important;
+    line-height: 1.4 !important;
+}
+
+html body .pm-schedule-modal-actions {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    gap: 10px !important;
+    margin: 0 !important;
+    padding: 16px 28px 20px !important;
+    border-top: 1px solid #EBEBEB !important;
+    background: #F7F7F7 !important;
+}
+
+html body .pm-schedule-modal-primary,
+html body .pm-schedule-modal-secondary {
+    display: inline-flex !important;
+    min-width: 130px !important;
+    min-height: 42px !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0 16px !important;
+    border-radius: 12px !important;
+    font-size: 12px !important;
+    font-weight: 850 !important;
+    cursor: pointer !important;
+}
+
+html body .pm-schedule-modal-primary {
+    border: 1px solid #1F1F1F !important;
+    background: #1F1F1F !important;
+    color: #ffffff !important;
+}
+
+html body .pm-schedule-modal-secondary {
+    border: 1px solid #EBEBEB !important;
+    background: #ffffff !important;
+    color: #2E2E2E !important;
+}
+
+@media (max-width: 920px) {
+    html body .property-documents-page #pmDocumentsTable {
+        min-width: 1320px !important;
+    }
+
+    html body .pm-schedule-info-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    }
+}
+
+@media (max-width: 640px) {
+    html body .pm-schedule-modal {
+        align-items: end !important;
+        padding: 10px !important;
+    }
+
+    html body .pm-schedule-modal-dialog {
+        width: calc(100vw - 20px) !important;
+        max-width: calc(100vw - 20px) !important;
+        max-height: calc(100dvh - 20px) !important;
+        border-radius: 16px !important;
+    }
+
+    html body .pm-schedule-modal-dialog > h3 {
+        padding: 24px 70px 17px 18px !important;
+        font-size: 20px !important;
+    }
+
+    html body .pm-schedule-info {
+        padding: 17px !important;
+    }
+
+    html body .pm-schedule-info-overview {
+        grid-template-columns: 46px minmax(0, 1fr) !important;
+    }
+
+    html body .pm-schedule-info-status {
+        grid-column: 1 / -1 !important;
+        justify-self: start !important;
+    }
+
+    html body .pm-schedule-info-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    html body .pm-schedule-info-list > div {
+        grid-template-columns: 1fr !important;
+        gap: 5px !important;
+    }
+
+    html body .pm-schedule-modal-actions {
+        flex-direction: column-reverse !important;
+        align-items: stretch !important;
+        padding: 14px 17px 17px !important;
+    }
+
+    html body .pm-schedule-modal-primary,
+    html body .pm-schedule-modal-secondary {
+        width: 100% !important;
+    }
+}
+
+
+/* =========================================================
+   PREPAID / SCHEDULE DETAIL MODAL — LAYOUT FIX V2
+   Prevents compressed cards, broken words and excess scroll.
+   ========================================================= */
+
+html body .pm-schedule-modal {
+    padding: 12px !important;
+}
+
+html body .pm-schedule-modal-dialog {
+    width: min(940px, calc(100vw - 24px)) !important;
+    max-width: min(940px, calc(100vw - 24px)) !important;
+    max-height: calc(100dvh - 24px) !important;
+    border-radius: 18px !important;
+}
+
+html body .pm-schedule-modal-dialog > h3 {
+    padding: 24px 72px 17px 26px !important;
+    font-size: 22px !important;
+}
+
+html body .pm-schedule-info {
+    padding: 18px 26px 20px !important;
+}
+
+html body .pm-schedule-info-overview {
+    grid-template-columns: 50px minmax(0, 1fr) auto !important;
+    gap: 13px !important;
+    margin-bottom: 12px !important;
+    padding: 14px 16px !important;
+}
+
+html body .pm-schedule-info-copy h4 {
+    display: -webkit-box !important;
+    margin: 4px 0 !important;
+    overflow: hidden !important;
+    font-size: 16px !important;
+    line-height: 1.25 !important;
+    text-overflow: initial !important;
+    white-space: normal !important;
+    overflow-wrap: break-word !important;
+    word-break: normal !important;
+    -webkit-box-orient: vertical !important;
+    -webkit-line-clamp: 2 !important;
+}
+
+html body .pm-schedule-info-copy p {
+    font-size: 11px !important;
+}
+
+/*
+ * Two columns are more readable than four narrow cards.
+ * On very wide screens the modal may use four columns.
+ */
+html body .pm-schedule-info-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+    margin-bottom: 12px !important;
+}
+
+html body .pm-schedule-info-grid article {
+    grid-template-columns: 40px minmax(0, 1fr) !important;
+    min-height: 68px !important;
+    padding: 11px 13px !important;
+}
+
+html body .pm-schedule-info-card-icon {
+    width: 40px !important;
+    height: 40px !important;
+}
+
+html body .pm-schedule-info-grid strong {
+    margin-top: 3px !important;
+    overflow-wrap: break-word !important;
+    word-break: normal !important;
+    hyphens: none !important;
+    font-size: 12px !important;
+    line-height: 1.25 !important;
+}
+
+html body .pm-schedule-info-grid article:nth-child(1) strong,
+html body .pm-schedule-info-grid article:nth-child(2) strong,
+html body .pm-schedule-info-grid article:nth-child(3) strong {
+    white-space: nowrap !important;
+}
+
+html body .pm-schedule-info-grid article:nth-child(4) strong {
+    white-space: normal !important;
+    overflow-wrap: normal !important;
+    word-break: normal !important;
+}
+
+html body .pm-schedule-info-section header {
+    padding: 11px 14px !important;
+}
+
+html body .pm-schedule-info-section h4 {
+    font-size: 14px !important;
+}
+
+html body .pm-schedule-info-list > div {
+    grid-template-columns: minmax(130px, 0.30fr) minmax(0, 1fr) !important;
+    gap: 14px !important;
+    padding: 9px 14px !important;
+}
+
+html body .pm-schedule-info-list dd {
+    word-break: normal !important;
+    overflow-wrap: break-word !important;
+}
+
+html body .pm-schedule-modal-actions {
+    padding: 14px 24px 17px !important;
+}
+
+html body .pm-schedule-modal-primary,
+html body .pm-schedule-modal-secondary {
+    min-width: 120px !important;
+    min-height: 40px !important;
+}
+
+/* Four cards only when there is enough viewport width. */
+@media (min-width: 1180px) {
+    html body .pm-schedule-info-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    }
+}
+
+/*
+ * The previous breakpoint started at 640px, which was too late.
+ * This layout covers medium and narrow windows before cards collapse.
+ */
+@media (max-width: 780px) {
+    html body .pm-schedule-modal {
+        align-items: center !important;
+        padding: 8px !important;
+    }
+
+    html body .pm-schedule-modal-dialog {
+        width: calc(100vw - 16px) !important;
+        max-width: calc(100vw - 16px) !important;
+        max-height: calc(100dvh - 16px) !important;
+        border-radius: 15px !important;
+    }
+
+    html body .pm-schedule-modal-dialog > h3 {
+        padding: 21px 64px 15px 18px !important;
+        font-size: 19px !important;
+    }
+
+    html body .pm-schedule-modal-close {
+        top: 13px !important;
+        right: 13px !important;
+        width: 38px !important;
+        height: 38px !important;
+    }
+
+    html body .pm-schedule-info {
+        padding: 15px 18px 17px !important;
+    }
+
+    html body .pm-schedule-info-overview {
+        grid-template-columns: 44px minmax(0, 1fr) !important;
+        padding: 13px !important;
+    }
+
+    html body .pm-schedule-info-icon {
+        width: 44px !important;
+        height: 44px !important;
+    }
+
+    html body .pm-schedule-info-status {
+        grid-column: 1 / -1 !important;
+        justify-self: start !important;
+    }
+
+    html body .pm-schedule-info-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    }
+
+    html body .pm-schedule-info-list > div {
+        grid-template-columns: minmax(110px, 0.34fr) minmax(0, 1fr) !important;
+        gap: 10px !important;
+    }
+}
+
+@media (max-width: 480px) {
+    html body .pm-schedule-info-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    html body .pm-schedule-info-list > div {
+        grid-template-columns: 1fr !important;
+        gap: 4px !important;
+    }
+
+    html body .pm-schedule-modal-actions {
+        flex-direction: column-reverse !important;
+        align-items: stretch !important;
+        padding: 12px 16px 15px !important;
+    }
+
+    html body .pm-schedule-modal-primary,
+    html body .pm-schedule-modal-secondary {
+        width: 100% !important;
+    }
+}
+
+
+/* Property documents detail modal landscape section */
+/* =========================================================
+   PROPERTY DOCUMENTS DETAIL MODAL — LANDSCAPE V3
+   Final layout loaded after previous Property Documents styles.
+   ========================================================= */
+
+html body .pm-schedule-modal {
+    padding: 16px !important;
+}
+
+html body .pm-schedule-modal-dialog {
+    width: min(1060px, calc(100vw - 32px)) !important;
+    max-width: min(1060px, calc(100vw - 32px)) !important;
+    max-height: min(88dvh, 780px) !important;
+    border-radius: 20px !important;
+}
+
+html body .pm-schedule-modal-dialog > h3 {
+    padding: 23px 76px 17px 28px !important;
+    font-size: 22px !important;
+}
+
+/*
+ * The modal body becomes a horizontal administrative workspace:
+ *
+ * LEFT:
+ * - document overview
+ * - four summary metrics in a 2x2 grid
+ *
+ * RIGHT:
+ * - technical information
+ */
+html body .pm-schedule-info {
+    display: grid !important;
+    grid-template-columns:
+        minmax(350px, 0.88fr)
+        minmax(440px, 1.12fr) !important;
+    grid-template-areas:
+        "overview technical"
+        "metrics technical" !important;
+    gap: 14px 16px !important;
+    align-items: start !important;
+    min-height: 0 !important;
+    padding: 18px 24px 20px !important;
+    overflow: auto !important;
+}
+
+html body .pm-schedule-info-overview {
+    grid-area: overview !important;
+    grid-template-columns: 50px minmax(0, 1fr) !important;
+    align-items: center !important;
+    gap: 13px !important;
+    margin: 0 !important;
+    padding: 15px !important;
+}
+
+html body .pm-schedule-info-status {
+    grid-column: 1 / -1 !important;
+    justify-self: start !important;
+    margin-top: 2px !important;
+}
+
+html body .pm-schedule-info-copy h4 {
+    display: -webkit-box !important;
+    margin: 4px 0 !important;
+    overflow: hidden !important;
+    color: #1F1F1F !important;
+    font-size: 16px !important;
+    line-height: 1.27 !important;
+    text-overflow: initial !important;
+    white-space: normal !important;
+    overflow-wrap: break-word !important;
+    word-break: normal !important;
+    -webkit-box-orient: vertical !important;
+    -webkit-line-clamp: 2 !important;
+}
+
+html body .pm-schedule-info-copy p {
+    font-size: 11px !important;
+    line-height: 1.35 !important;
+}
+
+html body .pm-schedule-info-grid {
+    grid-area: metrics !important;
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+    margin: 0 !important;
+}
+
+html body .pm-schedule-info-grid article {
+    grid-template-columns: 40px minmax(0, 1fr) !important;
+    min-height: 70px !important;
+    padding: 11px 12px !important;
+}
+
+html body .pm-schedule-info-card-icon {
+    width: 40px !important;
+    height: 40px !important;
+}
+
+html body .pm-schedule-info-grid strong {
+    margin-top: 3px !important;
+    color: #1F1F1F !important;
+    font-size: 12px !important;
+    line-height: 1.28 !important;
+    word-break: normal !important;
+    overflow-wrap: break-word !important;
+    hyphens: none !important;
+    white-space: normal !important;
+}
+
+/* Numeric/date summary values remain on one line where possible. */
+html body .pm-schedule-info-grid article:nth-child(1) strong,
+html body .pm-schedule-info-grid article:nth-child(2) strong,
+html body .pm-schedule-info-grid article:nth-child(3) strong {
+    white-space: nowrap !important;
+}
+
+/* Type may wrap naturally, but never letter-by-letter. */
+html body .pm-schedule-info-grid article:nth-child(4) strong {
+    word-break: keep-all !important;
+    overflow-wrap: normal !important;
+}
+
+html body .pm-schedule-info-section {
+    grid-area: technical !important;
+    align-self: stretch !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+}
+
+html body .pm-schedule-info-section header {
+    padding: 12px 15px !important;
+}
+
+html body .pm-schedule-info-section h4 {
+    font-size: 15px !important;
+}
+
+html body .pm-schedule-info-list > div {
+    grid-template-columns:
+        minmax(128px, 0.31fr)
+        minmax(0, 1fr) !important;
+    gap: 14px !important;
+    padding: 9px 14px !important;
+}
+
+html body .pm-schedule-info-list dt {
+    align-self: center !important;
+}
+
+html body .pm-schedule-info-list dd {
+    align-self: center !important;
+    word-break: normal !important;
+    overflow-wrap: break-word !important;
+}
+
+html body .pm-schedule-modal-actions {
+    padding: 14px 24px 17px !important;
+}
+
+html body .pm-schedule-modal-primary,
+html body .pm-schedule-modal-secondary {
+    min-width: 126px !important;
+    min-height: 40px !important;
+}
+
+/* Medium screens: return to one column without compressed cards. */
+@media (max-width: 920px) {
+    html body .pm-schedule-modal-dialog {
+        width: min(720px, calc(100vw - 24px)) !important;
+        max-width: min(720px, calc(100vw - 24px)) !important;
+        max-height: calc(100dvh - 24px) !important;
+    }
+
+    html body .pm-schedule-info {
+        grid-template-columns: 1fr !important;
+        grid-template-areas:
+            "overview"
+            "metrics"
+            "technical" !important;
+    }
+
+    html body .pm-schedule-info-overview {
+        grid-template-columns: 50px minmax(0, 1fr) auto !important;
+    }
+
+    html body .pm-schedule-info-status {
+        grid-column: auto !important;
+        justify-self: end !important;
+        margin-top: 0 !important;
+    }
+}
+
+@media (max-width: 620px) {
+    html body .pm-schedule-modal {
+        align-items: end !important;
+        padding: 8px !important;
+    }
+
+    html body .pm-schedule-modal-dialog {
+        width: calc(100vw - 16px) !important;
+        max-width: calc(100vw - 16px) !important;
+        max-height: calc(100dvh - 16px) !important;
+        border-radius: 16px !important;
+    }
+
+    html body .pm-schedule-modal-dialog > h3 {
+        padding: 21px 64px 15px 18px !important;
+        font-size: 19px !important;
+    }
+
+    html body .pm-schedule-info {
+        padding: 15px 17px 17px !important;
+    }
+
+    html body .pm-schedule-info-overview {
+        grid-template-columns: 44px minmax(0, 1fr) !important;
+    }
+
+    html body .pm-schedule-info-status {
+        grid-column: 1 / -1 !important;
+        justify-self: start !important;
+    }
+
+    html body .pm-schedule-info-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    html body .pm-schedule-info-list > div {
+        grid-template-columns: 1fr !important;
+        gap: 4px !important;
+    }
+
+    html body .pm-schedule-modal-actions {
+        flex-direction: column-reverse !important;
+        align-items: stretch !important;
+        padding: 13px 17px 16px !important;
+    }
+
+    html body .pm-schedule-modal-primary,
+    html body .pm-schedule-modal-secondary {
+        width: 100% !important;
+    }
+}
+
+
+/* Property documents detail modal size section */
+/* =========================================================
+   PROPERTY DOCUMENTS DETAIL MODAL — SIZE FIX V4
+   Loaded after V1/V2/V3 to override previous modal dimensions.
+   ========================================================= */
+
+html body .pm-schedule-modal,
+html body .property-documents-page .pm-schedule-modal {
+    align-items: center !important;
+    justify-items: center !important;
+    padding: 20px !important;
+    overflow: hidden !important;
+}
+
+html body .pm-schedule-modal-dialog,
+html body .property-documents-page .pm-schedule-modal-dialog {
+    box-sizing: border-box !important;
+    width: min(1120px, calc(100vw - 40px)) !important;
+    min-width: 0 !important;
+    max-width: min(1120px, calc(100vw - 40px)) !important;
+    max-height: min(90dvh, 860px) !important;
+    margin: 0 auto !important;
+    overflow: hidden !important;
+    border-radius: 20px !important;
+}
+
+html body .pm-schedule-modal-dialog > h3,
+html body .property-documents-page .pm-schedule-modal-dialog > h3 {
+    padding: 25px 78px 18px 30px !important;
+    font-size: 23px !important;
+}
+
+/*
+ * Both columns may shrink. Previous min-width values forced the body
+ * to overflow horizontally and made the visible modal look smaller.
+ */
+html body .pm-schedule-info,
+html body .property-documents-page .pm-schedule-info {
+    box-sizing: border-box !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    grid-template-columns:
+        minmax(0, 0.92fr)
+        minmax(0, 1.08fr) !important;
+    gap: 16px !important;
+    padding: 20px 28px 22px !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    scrollbar-gutter: stable !important;
+}
+
+html body .pm-schedule-info-overview,
+html body .pm-schedule-info-grid,
+html body .pm-schedule-info-section,
+html body .pm-schedule-info-list,
+html body .pm-schedule-info-list > div,
+html body .pm-schedule-info-list dd,
+html body .pm-schedule-info-copy {
+    min-width: 0 !important;
+    max-width: 100% !important;
+}
+
+html body .pm-schedule-info-overview {
+    padding: 17px !important;
+}
+
+html body .pm-schedule-info-copy h4 {
+    font-size: 17px !important;
+}
+
+html body .pm-schedule-info-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 11px !important;
+}
+
+html body .pm-schedule-info-grid article {
+    min-width: 0 !important;
+    min-height: 74px !important;
+    padding: 13px !important;
+}
+
+html body .pm-schedule-info-grid strong {
+    max-width: 100% !important;
+    overflow: hidden !important;
+    word-break: normal !important;
+    overflow-wrap: break-word !important;
+    white-space: normal !important;
+    text-overflow: ellipsis !important;
+}
+
+html body .pm-schedule-info-grid article:nth-child(1) strong,
+html body .pm-schedule-info-grid article:nth-child(2) strong,
+html body .pm-schedule-info-grid article:nth-child(3) strong {
+    white-space: normal !important;
+}
+
+html body .pm-schedule-info-grid article:nth-child(4) strong {
+    word-break: normal !important;
+    overflow-wrap: break-word !important;
+}
+
+html body .pm-schedule-info-section {
+    overflow: hidden !important;
+}
+
+html body .pm-schedule-info-list > div {
+    grid-template-columns:
+        minmax(135px, 0.31fr)
+        minmax(0, 1fr) !important;
+}
+
+html body .pm-schedule-info-list dd {
+    overflow-wrap: anywhere !important;
+    word-break: normal !important;
+}
+
+html body .pm-schedule-modal-actions {
+    padding: 16px 28px 20px !important;
+}
+
+/*
+ * Below 1050px, using one column is better than compressing two panels.
+ * This removes the horizontal scrollbar entirely.
+ */
+@media (max-width: 1050px) {
+    html body .pm-schedule-modal-dialog,
+    html body .property-documents-page .pm-schedule-modal-dialog {
+        width: min(820px, calc(100vw - 28px)) !important;
+        max-width: min(820px, calc(100vw - 28px)) !important;
+        max-height: calc(100dvh - 28px) !important;
+    }
+
+    html body .pm-schedule-info,
+    html body .property-documents-page .pm-schedule-info {
+        grid-template-columns: 1fr !important;
+        grid-template-areas:
+            "overview"
+            "metrics"
+            "technical" !important;
+        overflow-x: hidden !important;
+    }
+
+    html body .pm-schedule-info-overview {
+        grid-template-columns:
+            50px minmax(0, 1fr) auto !important;
+    }
+
+    html body .pm-schedule-info-status {
+        grid-column: auto !important;
+        justify-self: end !important;
+    }
+
+    html body .pm-schedule-info-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    }
+}
+
+@media (max-width: 760px) {
+    html body .pm-schedule-modal,
+    html body .property-documents-page .pm-schedule-modal {
+        align-items: end !important;
+        padding: 8px !important;
+    }
+
+    html body .pm-schedule-modal-dialog,
+    html body .property-documents-page .pm-schedule-modal-dialog {
+        width: calc(100vw - 16px) !important;
+        max-width: calc(100vw - 16px) !important;
+        max-height: calc(100dvh - 16px) !important;
+        border-radius: 16px !important;
+    }
+
+    html body .pm-schedule-modal-dialog > h3 {
+        padding: 21px 64px 15px 18px !important;
+        font-size: 20px !important;
+    }
+
+    html body .pm-schedule-info {
+        padding: 16px 18px 18px !important;
+    }
+
+    html body .pm-schedule-info-overview {
+        grid-template-columns: 46px minmax(0, 1fr) !important;
+    }
+
+    html body .pm-schedule-info-status {
+        grid-column: 1 / -1 !important;
+        justify-self: start !important;
+    }
+
+    html body .pm-schedule-info-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    }
+
+    html body .pm-schedule-info-list > div {
+        grid-template-columns:
+            minmax(115px, 0.34fr)
+            minmax(0, 1fr) !important;
+    }
+}
+
+@media (max-width: 480px) {
+    html body .pm-schedule-info-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    html body .pm-schedule-info-list > div {
+        grid-template-columns: 1fr !important;
+        gap: 4px !important;
+    }
+
+    html body .pm-schedule-modal-actions {
+        flex-direction: column-reverse !important;
+        align-items: stretch !important;
+        padding: 13px 16px 16px !important;
+    }
+
+    html body .pm-schedule-modal-primary,
+    html body .pm-schedule-modal-secondary {
+        width: 100% !important;
+    }
+}

@@ -62,10 +62,10 @@ const pageStylesheets = stylesheets as string[];
     <link rel="stylesheet" href="/styles/theme/09-graphite-final-overrides.css?v=20260715-graphite-final-v1">
     <link rel="stylesheet" href="/styles/components/sweetalert-icon-fix.css?v=20260716-sweetalert-icon-fix-v7">
     <link rel="stylesheet" href="/styles/components/flat-black-theme.css?v=20260716-flat-black-v2">
+    <link rel="stylesheet" href="/styles/components/toast-clean-compact.css?v=20260716-toast-clean-v10">
+    <script is:inline src="/js/toast-clean-compact.js?v=20260716-toast-clean-v10"></script>
 </head>
 <body>
     <slot />
-    <link rel="stylesheet" href="/styles/components/ui-final-polish.css?v=20260716-ui-final-polish-v3">
-    <script is:inline src="/js/ui-final-polish.js?v=20260716-ui-final-polish-v3"></script>
 </body>
 </html>
