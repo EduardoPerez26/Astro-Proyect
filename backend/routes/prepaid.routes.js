@@ -704,6 +704,10 @@ router.get('/schedules', ...access('ver'), async (req, res) => {
     try {
         const where = [];
         const params = [];
+        const requestedLimit = Number.parseInt(req.query.limit, 10);
+        const limit = Number.isInteger(requestedLimit)
+            ? Math.max(1, Math.min(requestedLimit, 500))
+            : 200;
 
         if (['1', 'true', 'yes'].includes(String(req.query.saved || '').toLowerCase())) {
             where.push(`JSON_EXTRACT(ps.metadata_json, '$.saved_workbook.saved_at') IS NOT NULL`);
@@ -723,8 +727,9 @@ router.get('/schedules', ...access('ver'), async (req, res) => {
             `SELECT ps.*
              FROM prepaid_schedules ps
              ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
-             ORDER BY ps.created_at DESC, ps.id DESC`,
-            params
+             ORDER BY ps.id DESC
+             LIMIT ?`,
+            [...params, limit]
         );
 
         const schedules = records.map(record => {

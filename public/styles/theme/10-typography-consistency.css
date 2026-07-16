@@ -1,0 +1,140 @@
+/* Global readability pass.
+   Keeps the compact corporate layout, but removes tiny 7-11px text from core UI. */
+:root {
+    --type-xs: 12px;
+    --type-sm: 13px;
+    --type-md: 14px;
+    --type-lg: 16px;
+    --type-xl: 18px;
+}
+
+html {
+    font-size: 16px;
+}
+
+body {
+    font-size: var(--type-md);
+}
+
+button,
+input,
+select,
+textarea,
+.btn,
+.form-control,
+.form-input {
+    font-size: var(--type-md) !important;
+}
+
+.topbar-eyebrow,
+.sidebar-section-title,
+[class*="eyebrow"],
+[class*="-eyebrow"],
+[class*="kicker"],
+[class*="-kicker"],
+[class*="badge"],
+[class*="-badge"],
+[class*="pill"],
+[class*="-pill"],
+[class*="status"],
+[class*="-status"],
+[class*="indicator"],
+[class*="-indicator"],
+[class*="meta"],
+[class*="-meta"],
+[class*="small"],
+[class*="-small"],
+small {
+    font-size: var(--type-xs) !important;
+    line-height: 1.35;
+}
+
+.sidebar-menu-link,
+.nav-btn,
+.topbar-title,
+.card-title,
+.admin-panel-header h2,
+.approval-panel > header h2,
+.system-center-panel > header h2,
+.pm-panel-title,
+.document-panel-title {
+    font-size: var(--type-lg) !important;
+}
+
+.sidebar-menu-link span,
+.admin-quick-actions strong,
+.admin-metric-copy > span,
+.admin-progress-item span,
+.approval-task-copy strong,
+.system-center-row-copy strong,
+.admin-user-cell strong,
+.admin-movement,
+.form-label,
+.login-field label {
+    font-size: var(--type-sm) !important;
+}
+
+.admin-command-hero p,
+.approval-hero p,
+.system-center-hero p,
+.card-body,
+.admin-panel-header p,
+.approval-panel > header p,
+.system-center-panel > header p,
+.approval-task-copy small,
+.approval-task-copy em,
+.approval-task-meta small,
+.system-center-row-copy small,
+.admin-detail-cell,
+.admin-date-cell,
+.admin-table,
+.admin-table td,
+.admin-table th,
+table,
+td,
+th {
+    font-size: var(--type-sm) !important;
+    line-height: 1.45;
+}
+
+.admin-table th,
+.security-audit-table th,
+.admin-user-activity-table th,
+th {
+    font-size: var(--type-xs) !important;
+}
+
+.admin-metric-copy > strong,
+.approval-metrics strong,
+.system-center-status-card strong {
+    font-size: 30px !important;
+}
+
+.admin-command-hero h1,
+.approval-hero h1,
+.system-center-hero h1 {
+    font-size: clamp(38px, 4vw, 56px) !important;
+}
+
+.admin-hero-strip strong,
+.system-center-health-body > div:last-child > strong,
+.approval-task-meta b,
+.system-center-row-value,
+.admin-state {
+    font-size: var(--type-sm) !important;
+}
+
+@media (max-width: 760px) {
+    :root {
+        --type-xs: 12px;
+        --type-sm: 13px;
+        --type-md: 14px;
+        --type-lg: 15px;
+    }
+
+    .admin-command-hero h1,
+    .approval-hero h1,
+    .system-center-hero h1 {
+        font-size: 36px !important;
+    }
+}

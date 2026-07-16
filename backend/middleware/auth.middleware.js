@@ -81,6 +81,9 @@ async function cargarIdentidadActual(decoded) {
     try {
         [usuarios] = await pool.query(
             `SELECT u.id,
+                    u.username,
+                    u.email,
+                    u.nombre_completo,
                     u.rol,
                     u.activo,
                     u.departamento_id,
@@ -99,7 +102,7 @@ async function cargarIdentidadActual(decoded) {
         }
 
         [usuarios] = await pool.query(
-            `SELECT id, rol, activo
+            `SELECT id, username, email, nombre_completo, rol, activo
              FROM usuarios
              WHERE id = ?
              LIMIT 1`,
@@ -117,6 +120,9 @@ async function cargarIdentidadActual(decoded) {
 
     return {
         ...decoded,
+        username: usuario.username || decoded.username || null,
+        email: usuario.email || decoded.email || null,
+        nombre_completo: usuario.nombre_completo || decoded.nombre || decoded.nombre_completo || null,
         rol: usuario.rol,
         departamento_id: usuario.departamento_id || null,
         departamento: buildDepartmentContext({
@@ -193,9 +199,14 @@ const esSupervisorOAdmin = (req, res, next) => {
 };
 
 const PERMISSION_MAPPING = {
-    view_dashboard: ['dashboardAdmin', 'ver'],
+    view_dashboard: [
+        ['dashboardAdmin', 'ver'],
+        ['systemCenter', 'ver']
+    ],
     manage_sessions: ['dashboardAdmin', 'editar'],
     export_dashboard: ['dashboardAdmin', 'exportar'],
+    view_approval_center: ['approvalCenter', 'ver'],
+    manage_approval_center: ['approvalCenter', 'editar'],
 
     view_archivos: ['documentos', 'ver'],
     upload_files: ['documentos', 'crear'],

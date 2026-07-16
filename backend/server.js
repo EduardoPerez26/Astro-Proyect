@@ -11,6 +11,13 @@ require('dotenv').config({
     path: path.join(__dirname, '.env')
 });
 
+const {
+    getConfigurationStatus,
+    validateEnvironment
+} = require('./config/env.validation');
+
+validateEnvironment();
+
 // Rutas
 const authRoutes = require('./routes/auth.routes');
 const archivosRoutes = require('./routes/archivos.routes');
@@ -134,6 +141,17 @@ app.get('/api', (req, res) => {
             systemErrors: '/api/notificaciones/system-errors',
             prepaids: '/api/prepaids'
         }
+    });
+});
+
+app.get('/api/health', (req, res) => {
+    const config = getConfigurationStatus();
+
+    res.status(config.ok ? 200 : 503).json({
+        success: config.ok,
+        status: config.ok ? 'ok' : 'configuration_attention',
+        service: 'XBFS Operations Hub API',
+        timestamp: new Date().toISOString()
     });
 });
 

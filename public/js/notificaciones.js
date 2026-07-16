@@ -3,12 +3,15 @@
     let pollInterval = null;
     let previousUnreadTotal = null;
     let isLoading = false;
+    let notificationFilter = 'all';
+    let lastNotifications = [];
 
     document.addEventListener('DOMContentLoaded', () => {
         const center = document.getElementById('notificationCenter');
         const toggle = document.getElementById('notificationsToggle');
         const panel = document.getElementById('notificationsPanel');
         const markAllButton = document.getElementById('notificationsMarkAll');
+        const filterBar = document.getElementById('notificationsFilter');
 
         if (!center || !toggle || !panel) return;
 
@@ -42,6 +45,15 @@
             event.preventDefault();
             event.stopPropagation();
             await markAllAsRead();
+        });
+
+        filterBar?.addEventListener('click', (event) => {
+            const button = event.target.closest('[data-notification-filter]');
+            if (!button) return;
+
+            notificationFilter = button.dataset.notificationFilter || 'all';
+            updateNotificationFilterState();
+            renderNotifications(lastNotifications);
         });
 
         loadNotifications({ silent: true });
@@ -96,9 +108,11 @@
         try {
             const data = await requestJson('/notificaciones?limit=12&include_read=1');
             const total = Number(data.total_no_leidas || 0);
+            lastNotifications = data.notificaciones || [];
 
             renderNotificationBadge(total);
-            renderNotifications(data.notificaciones || []);
+            updateNotificationFilterState();
+            renderNotifications(lastNotifications);
 
             const panelIsClosed = document.getElementById('notificationsPanel')?.hidden !== false;
 
@@ -138,18 +152,20 @@
         const list = document.getElementById('notificationsList');
         if (!list) return;
 
-        if (!notifications.length) {
+        const visibleNotifications = filterNotifications(notifications);
+
+        if (!visibleNotifications.length) {
             list.innerHTML = `
                 <div class="notifications-empty">
                     <i class="fa-regular fa-bell-slash" aria-hidden="true"></i>
                     <strong>No notifications</strong>
-                    <span>You are all caught up.</span>
+                    <span>${getNotificationEmptyCopy()}</span>
                 </div>
             `;
             return;
         }
 
-        list.innerHTML = notifications.map(renderNotificationItem).join('');
+        list.innerHTML = visibleNotifications.map(renderNotificationItem).join('');
 
         list.querySelectorAll('[data-notification-id]').forEach(item => {
             item.addEventListener('click', async () => {
@@ -214,10 +230,53 @@
         `;
     }
 
+    function filterNotifications(notifications) {
+        const systemTypes = ['error', 'warning', 'system', 'security'];
+
+        return notifications.filter(notification => {
+            if (notificationFilter === 'unread') {
+                return notification.leida !== true;
+            }
+
+            if (notificationFilter === 'approval') {
+                return notification.tipo === 'approval';
+            }
+
+            if (notificationFilter === 'system') {
+                return systemTypes.includes(notification.tipo);
+            }
+
+            return true;
+        });
+    }
+
+    function updateNotificationFilterState() {
+        const filterBar = document.getElementById('notificationsFilter');
+        if (!filterBar) return;
+
+        filterBar
+            .querySelectorAll('[data-notification-filter]')
+            .forEach(button => {
+                button.classList.toggle(
+                    'is-active',
+                    button.dataset.notificationFilter === notificationFilter
+                );
+            });
+    }
+
+    function getNotificationEmptyCopy() {
+        return {
+            unread: 'No unread items in your queue.',
+            approval: 'No approval updates are pending.',
+            system: 'No system alerts are visible.'
+        }[notificationFilter] || 'You are all caught up.';
+    }
+
     function getNotificationIcon(type) {
         const icons = {
             chat: 'fa-solid fa-comments',
             document: 'fa-solid fa-file-excel',
+            approval: 'fa-solid fa-clipboard-check',
             reconciliation: 'fa-solid fa-scale-balanced',
             security: 'fa-solid fa-shield-halved',
             error: 'fa-solid fa-bug',

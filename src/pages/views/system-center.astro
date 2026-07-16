@@ -1,0 +1,179 @@
+---
+import DashboardLayout from '../../layouts/DashboardLayout.astro';
+---
+
+<DashboardLayout title="System center" stylesheets={["/styles/pages/views/system-center.css?v=20260716-system-center-v1"]}>
+    <div class="page-container system-center-page">
+        <header class="system-center-hero">
+            <div class="system-center-copy">
+                <span class="system-center-eyebrow">
+                    <i class="fa-solid fa-tower-broadcast"></i>
+                    CORPORATE OPERATIONS
+                </span>
+                <h1>System center</h1>
+                <p>
+                    Executive control surface for API readiness, configuration posture,
+                    integrations, incidents, access load, and administrative next actions.
+                </p>
+            </div>
+
+            <div class="system-center-actions">
+                <span id="systemCenterUpdated">Not refreshed</span>
+                <a href="/views/dashboard-admin">
+                    <i class="fa-solid fa-chart-line"></i>
+                    Admin dashboard
+                </a>
+                <button id="exportSystemCenter" type="button">
+                    <i class="fa-solid fa-file-arrow-down"></i>
+                    Export report
+                </button>
+                <button id="refreshSystemCenter" type="button">
+                    <i class="fa-solid fa-rotate"></i>
+                    Refresh
+                </button>
+            </div>
+        </header>
+
+        <section class="system-center-status-grid" aria-label="System readiness summary">
+            <article class="system-center-status-card is-primary">
+                <span><i class="fa-solid fa-heart-pulse"></i></span>
+                <div>
+                    <small>Platform readiness</small>
+                    <strong id="systemReadinessScore">--</strong>
+                    <p id="systemReadinessLabel">Checking services</p>
+                </div>
+            </article>
+
+            <article class="system-center-status-card">
+                <span><i class="fa-solid fa-server"></i></span>
+                <div>
+                    <small>API status</small>
+                    <strong id="systemApiStatus">--</strong>
+                    <p id="systemApiMeta">Awaiting health response</p>
+                </div>
+            </article>
+
+            <article class="system-center-status-card">
+                <span><i class="fa-solid fa-plug-circle-check"></i></span>
+                <div>
+                    <small>Integrations</small>
+                    <strong id="systemIntegrationCount">--</strong>
+                    <p id="systemIntegrationMeta">Reviewing connectors</p>
+                </div>
+            </article>
+
+            <article class="system-center-status-card">
+                <span><i class="fa-solid fa-triangle-exclamation"></i></span>
+                <div>
+                    <small>Attention queue</small>
+                    <strong id="systemAttentionCount">--</strong>
+                    <p id="systemAttentionMeta">Open items across system</p>
+                </div>
+            </article>
+        </section>
+
+        <section class="system-center-layout">
+            <article class="system-center-panel system-center-health-panel">
+                <header>
+                    <div>
+                        <span>READINESS</span>
+                        <h2>Corporate health posture</h2>
+                        <p>Configuration, incidents, sessions, and integration signals in one score.</p>
+                    </div>
+                    <i class="fa-solid fa-shield-halved"></i>
+                </header>
+
+                <div class="system-center-health-body">
+                    <div class="system-center-ring" id="systemCenterRing" style="--score: 0">
+                        <strong id="systemCenterRingScore">--</strong>
+                        <span>ready</span>
+                    </div>
+
+                    <div>
+                        <strong id="systemCenterHealthTitle">Waiting for data</strong>
+                        <p id="systemCenterHealthText">
+                            The system center is collecting current platform signals.
+                        </p>
+                        <ul id="systemCenterChecklist" class="system-center-checklist">
+                            <li><i class="fa-solid fa-circle-notch fa-spin"></i> Loading readiness checklist</li>
+                        </ul>
+                    </div>
+                </div>
+            </article>
+
+            <article class="system-center-panel">
+                <header>
+                    <div>
+                        <span>CONFIGURATION</span>
+                        <h2>Environment readiness</h2>
+                        <p>Required and recommended backend configuration keys.</p>
+                    </div>
+                    <i class="fa-solid fa-sliders"></i>
+                </header>
+                <div class="system-center-config-list" id="systemConfigList">
+                    <div class="system-center-loading">Loading configuration status...</div>
+                </div>
+            </article>
+        </section>
+
+        <section class="system-center-grid">
+            <article class="system-center-panel">
+                <header>
+                    <div>
+                        <span>INTEGRATIONS</span>
+                        <h2>Connector posture</h2>
+                        <p>Sage Intacct, AI assistant, and other service readiness.</p>
+                    </div>
+                    <i class="fa-solid fa-diagram-project"></i>
+                </header>
+                <div class="system-center-integration-list" id="systemIntegrationList">
+                    <div class="system-center-loading">Loading integrations...</div>
+                </div>
+            </article>
+
+            <article class="system-center-panel">
+                <header>
+                    <div>
+                        <span>INCIDENTS</span>
+                        <h2>System attention</h2>
+                        <p>Open backend incidents and critical operational warnings.</p>
+                    </div>
+                    <i class="fa-solid fa-bug"></i>
+                </header>
+                <div class="system-center-incident-list" id="systemIncidentList">
+                    <div class="system-center-loading">Loading incidents...</div>
+                </div>
+            </article>
+
+            <article class="system-center-panel">
+                <header>
+                    <div>
+                        <span>ACCESS</span>
+                        <h2>Active access load</h2>
+                        <p>Current session and user availability from the admin dashboard.</p>
+                    </div>
+                    <i class="fa-solid fa-fingerprint"></i>
+                </header>
+                <div class="system-center-access-list" id="systemAccessList">
+                    <div class="system-center-loading">Loading access load...</div>
+                </div>
+            </article>
+        </section>
+
+        <section class="system-center-panel system-center-actions-panel">
+            <header>
+                <div>
+                    <span>NEXT ACTIONS</span>
+                    <h2>Recommended corporate controls</h2>
+                    <p>Prioritized improvements based on the current state of the platform.</p>
+                </div>
+                <i class="fa-solid fa-list-check"></i>
+            </header>
+            <div class="system-center-action-list" id="systemActionList">
+                <div class="system-center-loading">Preparing recommendations...</div>
+            </div>
+        </section>
+    </div>
+
+    <script src="/js/system-center.js?v=20260716-system-center-v3" is:inline></script>
+</DashboardLayout>

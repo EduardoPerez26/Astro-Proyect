@@ -20,15 +20,36 @@
         <input
             id="sidebarSearch"
             type="search"
-            placeholder="Search..."
+            placeholder="Search or jump..."
             autocomplete="off"
             aria-label="Search menu"
         />
     </div>
     <nav class="sidebar-nav">
+        <div class="sidebar-section sidebar-favorites-section" id="sidebarFavoritesSection" hidden>
+            <button
+                class="sidebar-section-title sidebar-section-toggle"
+                type="button"
+                data-sidebar-section-toggle
+                aria-expanded="true"
+            >
+                <span>Favorites</span>
+                <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
+            </button>
+            <ul class="sidebar-menu" id="sidebarFavoritesMenu"></ul>
+        </div>
+
         <!-- GENERAL -->
         <div class="sidebar-section">
-            <div class="sidebar-section-title">Accounts Receivable</div>
+            <button
+                class="sidebar-section-title sidebar-section-toggle"
+                type="button"
+                data-sidebar-section-toggle
+                aria-expanded="true"
+            >
+                <span>Accounts Receivable</span>
+                <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
+            </button>
             <ul class="sidebar-menu" id="menuGeneral">
                 <li class="sidebar-menu-item" data-permission="tiendas">
                     <a class="sidebar-menu-link" href="/views/tiendas">
@@ -53,7 +74,15 @@
 
         <!-- DEPARTMENTS -->
         <div class="sidebar-section">
-            <div class="sidebar-section-title">Property Management</div>
+            <button
+                class="sidebar-section-title sidebar-section-toggle"
+                type="button"
+                data-sidebar-section-toggle
+                aria-expanded="true"
+            >
+                <span>Property Management</span>
+                <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
+            </button>
             <ul class="sidebar-menu" id="menuDepartments">
                 <li
                     class="sidebar-menu-item"
@@ -84,7 +113,15 @@
 
         <!-- ADMINISTRACION -->
         <div class="sidebar-section" id="sectionAdmin">
-            <div class="sidebar-section-title">Information Technology</div>
+            <button
+                class="sidebar-section-title sidebar-section-toggle"
+                type="button"
+                data-sidebar-section-toggle
+                aria-expanded="true"
+            >
+                <span>Information Technology</span>
+                <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
+            </button>
             <ul class="sidebar-menu">
                 <li
                     class="sidebar-menu-item"
@@ -94,6 +131,25 @@
                     <a class="sidebar-menu-link" href="/views/dashboard-admin">
                         <i class="fa-solid fa-chart-line"></i>
                         <span>Dashboard</span>
+                    </a>
+                </li>
+                <li
+                    class="sidebar-menu-item"
+                    data-permission="systemCenter"
+                    data-admin-only
+                >
+                    <a class="sidebar-menu-link" href="/views/system-center">
+                        <i class="fa-solid fa-tower-broadcast"></i>
+                        <span>System center</span>
+                    </a>
+                </li>
+                <li
+                    class="sidebar-menu-item"
+                    data-permission="approvalCenter"
+                >
+                    <a class="sidebar-menu-link" href="/views/approval-center">
+                        <i class="fa-solid fa-clipboard-check"></i>
+                        <span>Approval center</span>
                     </a>
                 </li>
                 <li
@@ -131,7 +187,15 @@
 
         <!-- ACCOUNT -->
         <div class="sidebar-section">
-            <div class="sidebar-section-title">Account</div>
+            <button
+                class="sidebar-section-title sidebar-section-toggle"
+                type="button"
+                data-sidebar-section-toggle
+                aria-expanded="true"
+            >
+                <span>Account</span>
+                <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
+            </button>
             <ul class="sidebar-menu">
                 <li class="sidebar-menu-item" data-permission="perfil">
                     <a

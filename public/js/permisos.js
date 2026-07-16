@@ -22,6 +22,8 @@ const ACTION_LABELS = {
 
 const MODULE_ACTIONS = {
     dashboardAdmin: ['ver', 'editar', 'exportar'],
+    systemCenter: ['ver', 'editar', 'exportar'],
+    approvalCenter: ['ver', 'crear', 'editar', 'exportar'],
     systemErrors: ['ver', 'crear', 'editar', 'exportar'],
     tiendas: ['ver', 'crear', 'editar', 'eliminar', 'exportar'],
     documentos: ['ver', 'crear', 'editar', 'eliminar', 'exportar'],
@@ -34,6 +36,26 @@ const MODULE_ACTIONS = {
     perfil: ['ver', 'editar'],
     chat: ['ver', 'crear', 'editar', 'eliminar', 'exportar']
 };
+
+const MODULE_ROLE_LIMITS = {
+    approvalCenter: ['supervisor']
+};
+
+function targetRoleCanUseModule(section, user = currentUser) {
+    if (!section || !user) return true;
+    if (user.rol === 'superadmin') return true;
+
+    const allowedRoles = section.allowedRoles || MODULE_ROLE_LIMITS[section.id];
+    if (Array.isArray(allowedRoles) && allowedRoles.length) {
+        return allowedRoles.includes(user.rol);
+    }
+
+    if (section.administrative) {
+        return ['superadmin', 'admin'].includes(user.rol);
+    }
+
+    return true;
+}
 
 // System sections shown in the permission editor.
 const MENU_SECTIONS = [
@@ -59,6 +81,30 @@ const MENU_SECTIONS = [
         path: '/views/system-errors',
         required: false,
         administrative: true
+    },
+    {
+        id: 'systemCenter',
+        name: 'System center',
+        description: 'Platform readiness, integrations, incidents, and access load',
+        icon: 'fa-tower-broadcast',
+        iconClass: 'system-center',
+        department: 'Information Technology',
+        path: '/views/system-center',
+        required: false,
+        administrative: true,
+        initialOption: true
+    },
+    {
+        id: 'approvalCenter',
+        name: 'Approval center',
+        description: 'Corporate approval queue for documents, prepaids, schedules, and decisions',
+        icon: 'fa-clipboard-check',
+        iconClass: 'approval-center',
+        department: 'Information Technology',
+        path: '/views/approval-center',
+        required: false,
+        allowedRoles: ['supervisor'],
+        initialOption: true
     },
     {
         id: 'tiendas',
@@ -178,6 +224,69 @@ const MENU_GROUP_ORDER = [
     'Account'
 ];
 
+const PERMISSION_TEMPLATES = {
+    supervisor: {
+        label: 'Supervisor review',
+        startup: 'approvalCenter',
+        modules: {
+            approvalCenter: ['ver', 'crear', 'editar', 'exportar'],
+            tiendas: ['ver', 'exportar'],
+            documentos: ['ver', 'editar', 'exportar'],
+            historial: ['ver', 'exportar'],
+            propertyManagementDocuments: ['ver', 'exportar'],
+            perfil: ['ver', 'editar'],
+            chat: ['ver', 'crear']
+        }
+    },
+    arOperator: {
+        label: 'AR operator',
+        startup: 'tiendas',
+        modules: {
+            tiendas: ['ver', 'crear', 'editar', 'exportar'],
+            documentos: ['ver', 'crear', 'editar', 'exportar'],
+            historial: ['ver', 'exportar'],
+            perfil: ['ver', 'editar'],
+            chat: ['ver', 'crear']
+        }
+    },
+    propertyManagement: {
+        label: 'Property management',
+        startup: 'propertyManagement',
+        modules: {
+            propertyManagement: ['ver', 'crear', 'editar', 'exportar'],
+            propertyManagementDocuments: ['ver', 'crear', 'editar', 'exportar'],
+            historial: ['ver', 'exportar'],
+            perfil: ['ver', 'editar'],
+            chat: ['ver', 'crear']
+        }
+    },
+    itAdmin: {
+        label: 'IT administration',
+        startup: 'systemCenter',
+        modules: {
+            dashboardAdmin: ['ver', 'editar', 'exportar'],
+            systemCenter: ['ver', 'editar', 'exportar'],
+            systemErrors: ['ver', 'crear', 'editar', 'exportar'],
+            usuarios: ['ver', 'crear', 'editar', 'eliminar', 'exportar'],
+            controlRestaurants: ['ver', 'crear', 'editar', 'eliminar'],
+            permisos: ['ver', 'editar'],
+            perfil: ['ver', 'editar'],
+            chat: ['ver', 'crear', 'editar']
+        }
+    },
+    readOnly: {
+        label: 'Read only',
+        startup: 'documentos',
+        modules: {
+            tiendas: ['ver'],
+            documentos: ['ver'],
+            historial: ['ver'],
+            propertyManagementDocuments: ['ver'],
+            perfil: ['ver']
+        }
+    }
+};
+
 function normalizeLegacyPermissions(permisos = {}) {
     const normalized = {
         ...permisos,
@@ -195,13 +304,14 @@ function normalizeLegacyPermissions(permisos = {}) {
         const actions = MODULE_ACTIONS[section.id] || ['ver'];
         const existing = normalized.acciones[section.id] || {};
         const legacyEnabled = normalized[section.id] === true;
+        const targetCanUseSection = targetRoleCanUseModule(section);
 
         normalized.acciones[section.id] = Object.fromEntries(
             actions.map(action => [
                 action,
-                typeof existing[action] === 'boolean'
+                targetCanUseSection && typeof existing[action] === 'boolean'
                     ? existing[action]
-                    : legacyEnabled
+                    : targetCanUseSection && legacyEnabled
             ])
         );
         normalized[section.id] =
@@ -262,8 +372,8 @@ async function loadUserData() {
 
         // Sample permissions
         const defaultPermissions = {
-            1: { dashboardAdmin: true, systemErrors: true, tiendas: true, documentos: true, perfil: true, permisos: true, historial: true, usuarios: true, controlRestaurants: true, propertyManagement: true, propertyManagementDocuments: true, chat: true, paginaInicio: 'dashboardAdmin' },
-            2: { tiendas: true, documentos: true, perfil: true, permisos: false, historial: true, usuarios: false, controlRestaurants: false, propertyManagement: false, propertyManagementDocuments: false, chat: false, paginaInicio: 'tiendas' },
+            1: { dashboardAdmin: true, systemCenter: true, approvalCenter: true, systemErrors: true, tiendas: true, documentos: true, perfil: true, permisos: true, historial: true, usuarios: true, controlRestaurants: true, propertyManagement: true, propertyManagementDocuments: true, chat: true, paginaInicio: 'dashboardAdmin' },
+            2: { approvalCenter: true, tiendas: true, documentos: true, perfil: true, permisos: false, historial: true, usuarios: false, controlRestaurants: false, propertyManagement: false, propertyManagementDocuments: false, chat: false, paginaInicio: 'approvalCenter' },
             3: { tiendas: true, documentos: true, perfil: true, permisos: false, historial: false, usuarios: false, controlRestaurants: false, propertyManagement: false, propertyManagementDocuments: false, chat: false, paginaInicio: 'tiendas' },
             4: { tiendas: true, documentos: false, perfil: true, permisos: false, historial: false, usuarios: false, controlRestaurants: false, propertyManagement: true, propertyManagementDocuments: true, chat: false, paginaInicio: 'propertyManagement' }
         };
@@ -356,9 +466,7 @@ function renderPermissions() {
     const renderCard = (section) => {
         const isRequired = section.required;
         const isAdministrative = section.administrative;
-        const targetCanUseSection =
-            !isAdministrative ||
-            ['superadmin', 'admin'].includes(currentUser.rol);
+        const targetCanUseSection = targetRoleCanUseModule(section);
         const actions = MODULE_ACTIONS[section.id] || ['ver'];
         const isLocked =
             currentUser.rol === 'superadmin' ||
@@ -367,6 +475,7 @@ function renderPermissions() {
         const tags = [
             isRequired ? 'Required' : '',
             isAdministrative ? 'Administrative' : '',
+            section.allowedRoles?.includes('supervisor') ? 'Supervisor only' : '',
             currentUser.rol === 'superadmin' ? 'Full access' : ''
         ].filter(Boolean);
 
@@ -409,9 +518,11 @@ function renderPermissions() {
                             section.id === 'perfil' &&
                             ['ver', 'editar'].includes(action);
                         const checked =
-                            currentUser.rol === 'superadmin' ||
-                            currentUser.permisos.acciones?.[section.id]?.[action] === true ||
-                            requiredAction;
+                            targetCanUseSection && (
+                                currentUser.rol === 'superadmin' ||
+                                currentUser.permisos.acciones?.[section.id]?.[action] === true ||
+                                requiredAction
+                            );
                         const disabled = isLocked || requiredAction;
 
                         return `
@@ -576,13 +687,16 @@ async function savePermissions() {
     const permissions = { acciones: {} };
     MENU_SECTIONS.forEach(section => {
         permissions.acciones[section.id] = {};
+        const targetCanUseSection = targetRoleCanUseModule(section);
         (MODULE_ACTIONS[section.id] || ['ver']).forEach(action => {
             const checkbox = document.getElementById(
                 `perm_${section.id}_${action}`
             );
             permissions.acciones[section.id][action] =
-                currentUser.rol === 'superadmin' ||
-                checkbox?.checked === true;
+                targetCanUseSection && (
+                    currentUser.rol === 'superadmin' ||
+                    checkbox?.checked === true
+                );
         });
         permissions[section.id] =
             permissions.acciones[section.id].ver === true;
@@ -811,10 +925,7 @@ function updatePermissionOverview() {
                 section.id === 'perfil'
                 && ['ver', 'editar'].includes(action);
 
-            const targetCanUseSection =
-                !section.administrative
-                || ['superadmin', 'admin']
-                    .includes(currentUser.rol);
+            const targetCanUseSection = targetRoleCanUseModule(section);
 
             const isLocked =
                 currentUser.rol === 'superadmin'
@@ -1017,6 +1128,85 @@ function enableVisiblePermissions() {
 
     renderPermissions();
     updatePermissionChangeState();
+}
+
+function applyPermissionTemplate(templateId = null) {
+    if (!currentUser) return;
+
+    const selectedTemplateId =
+        templateId || document.getElementById('permissionTemplateSelect')?.value;
+    const template = PERMISSION_TEMPLATES[selectedTemplateId];
+
+    if (!template) {
+        Swal.fire({
+            icon: 'info',
+            title: 'Select a template',
+            text: 'Choose a corporate access template before applying it.'
+        });
+        return;
+    }
+
+    currentUser.permisos ||= { acciones: {} };
+    currentUser.permisos.acciones ||= {};
+
+    MENU_SECTIONS.forEach(section => {
+        currentUser.permisos.acciones[section.id] ||= {};
+
+        const actions = MODULE_ACTIONS[section.id] || ['ver'];
+        const allowedTemplateActions =
+            template.modules[section.id] || [];
+        const targetCanUseSection =
+            targetRoleCanUseModule(section);
+
+        actions.forEach(action => {
+            const checkbox =
+                document.getElementById(
+                    `perm_${section.id}_${action}`
+                );
+            const requiredAction =
+                section.id === 'perfil'
+                && ['ver', 'editar'].includes(action);
+
+            if (
+                checkbox?.disabled
+                && !requiredAction
+            ) {
+                return;
+            }
+
+            currentUser.permisos.acciones[section.id][action] =
+                targetCanUseSection
+                && (
+                    requiredAction
+                    || allowedTemplateActions.includes(action)
+                );
+        });
+
+        currentUser.permisos[section.id] =
+            currentUser.permisos.acciones[section.id].ver === true;
+    });
+
+    const enabledStartup =
+        MENU_SECTIONS.some(section =>
+            section.id === template.startup
+            && section.initialOption
+            && currentUser.permisos[section.id] === true
+        );
+
+    currentUser.permisos.paginaInicio = enabledStartup
+        ? template.startup
+        : getEnabledInitialSections()[0]?.id || null;
+
+    renderPermissions();
+    updatePermissionChangeState();
+
+    Swal.fire({
+        icon: 'success',
+        title: 'Template applied',
+        text: `${template.label} policy was applied to editable modules.`,
+        timer: 2200,
+        showConfirmButton: false
+    });
 }
 
 function clearOptionalPermissions() {

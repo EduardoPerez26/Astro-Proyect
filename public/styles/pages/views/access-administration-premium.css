@@ -1205,7 +1205,34 @@
 
 .permission-bulk-toolbar > div:last-child {
     display: flex;
+    align-items: center;
     gap: 7px;
+}
+
+.permission-template-control {
+    display: inline-grid;
+    grid-template-columns: auto minmax(150px, 190px);
+    align-items: center;
+    gap: 8px;
+    min-height: 34px;
+}
+
+.permission-template-control span {
+    color: #4f5962 !important;
+    font-size: 9px;
+    font-weight: 900;
+    text-transform: uppercase;
+}
+
+.permission-template-control select {
+    min-height: 34px;
+    padding: 0 30px 0 10px;
+    border: 1px solid #d6dde1;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #1f2529;
+    font-size: 11px;
+    font-weight: 800;
 }
 
 .permission-bulk-button {
@@ -1945,6 +1972,15 @@
     .permission-sticky-actions > div:last-child {
         display: grid;
         grid-template-columns: 1fr;
+    }
+
+    .permission-template-control {
+        grid-template-columns: 1fr;
+        width: 100%;
+    }
+
+    .permission-template-control select {
+        width: 100%;
     }
 
     .permission-sticky-actions {

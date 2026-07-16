@@ -549,6 +549,35 @@ html.sidebar-collapsed-preset body .sidebar .sidebar-menu-link .sidebar-chat-bad
     outline: none
 }
 
+.notifications-filter {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 6px;
+    padding: 10px 12px;
+    border-bottom: 1px solid rgba(235, 235, 235, 0.95);
+    background: #ffffff
+}
+
+.notifications-filter button {
+    min-height: 30px;
+    border: 1px solid #EBEBEB;
+    border-radius: 999px;
+    background: #ffffff;
+    color: #494949;
+    font-size: 11px;
+    font-weight: 900;
+    cursor: pointer
+}
+
+.notifications-filter button:hover,
+.notifications-filter button:focus-visible,
+.notifications-filter button.is-active {
+    border-color: #1F1F1F;
+    background: #1F1F1F;
+    color: #ffffff;
+    outline: none
+}
+
 .notifications-list {
     max-height: 430px;
     overflow-y: auto;

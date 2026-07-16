@@ -2,6 +2,8 @@ const PERMISSION_ACTIONS = ['ver', 'crear', 'editar', 'eliminar', 'exportar'];
 
 const MODULE_ACTIONS = {
     dashboardAdmin: ['ver', 'editar', 'exportar'],
+    systemCenter: ['ver', 'editar', 'exportar'],
+    approvalCenter: ['ver', 'crear', 'editar', 'exportar'],
     systemErrors: ['ver', 'crear', 'editar', 'exportar'],
     tiendas: [...PERMISSION_ACTIONS],
     documentos: [...PERMISSION_ACTIONS],
@@ -17,14 +19,21 @@ const MODULE_ACTIONS = {
 
 const ADMIN_MODULES = new Set([
     'dashboardAdmin',
+    'systemCenter',
     'systemErrors',
     'usuarios',
     'controlRestaurants',
     'permisos'
 ]);
 
+const MODULE_ROLE_LIMITS = {
+    approvalCenter: new Set(['supervisor'])
+};
+
 const START_MODULES = [
     'dashboardAdmin',
+    'systemCenter',
+    'approvalCenter',
     'systemErrors',
     'tiendas',
     'documentos',
@@ -37,6 +46,7 @@ const START_MODULES = [
 const ROLE_DEFAULT_MODULES = {
     admin: {
         dashboardAdmin: true,
+        systemCenter: true,
         systemErrors: true,
         usuarios: true,
         controlRestaurants: true,
@@ -44,6 +54,7 @@ const ROLE_DEFAULT_MODULES = {
         perfil: true
     },
     supervisor: {
+        approvalCenter: true,
         tiendas: true,
         documentos: true,
         historial: true,
@@ -121,9 +132,11 @@ function normalizeUserPermissions(value, role = 'usuario', options = {}) {
     const result = { acciones };
 
     Object.keys(MODULE_ACTIONS).forEach(module => {
+        const roleLimit = MODULE_ROLE_LIMITS[module];
         const roleCanUseModule =
-            !ADMIN_MODULES.has(module) ||
-            normalizedRole === 'admin';
+            roleLimit
+                ? roleLimit.has(normalizedRole)
+                : (!ADMIN_MODULES.has(module) || normalizedRole === 'admin');
         const explicitActions = permissions.acciones?.[module];
         const hasExplicitActions =
             explicitActions &&
@@ -190,6 +203,7 @@ module.exports = {
     PERMISSION_ACTIONS,
     MODULE_ACTIONS,
     ADMIN_MODULES,
+    MODULE_ROLE_LIMITS,
     START_MODULES,
     fullPermissions,
     normalizeUserPermissions,

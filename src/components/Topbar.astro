@@ -20,9 +20,33 @@ const { title = "Panel", placeholder = "Search..." } = Astro.props;
 
         <div class="topbar-page">
             <span class="topbar-eyebrow">XB Franchise Solutions</span>
+            <nav class="topbar-breadcrumbs" id="topbarBreadcrumbs" aria-label="Breadcrumb">
+                <span>Operations</span>
+            </nav>
             <h2 class="topbar-title">{title.replace(" - XBFS Hub", "")}</h2>
         </div>
     </div>
+
+        <div class="topbar-global-search" role="search">
+            <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+            <input
+                id="globalNavSearch"
+                type="search"
+                placeholder={placeholder}
+                autocomplete="off"
+                aria-label="Global search"
+                aria-controls="globalSearchResults"
+                aria-expanded="false"
+            />
+            <span class="topbar-search-shortcut">Ctrl K</span>
+            <div
+                class="global-search-results"
+                id="globalSearchResults"
+                role="listbox"
+                aria-label="Search results"
+                hidden
+            ></div>
+        </div>
 
         <div class="header-user">
             <div class="notification-center" id="notificationCenter">
@@ -62,6 +86,12 @@ const { title = "Panel", placeholder = "Search..." } = Astro.props;
                             Mark all read
                         </button>
                     </div>
+                    <div class="notifications-filter" id="notificationsFilter" aria-label="Notification filters">
+                        <button type="button" class="is-active" data-notification-filter="all">All</button>
+                        <button type="button" data-notification-filter="unread">Unread</button>
+                        <button type="button" data-notification-filter="approval">Approvals</button>
+                        <button type="button" data-notification-filter="system">System</button>
+                    </div>
                     <div
                         class="notifications-list"
                         id="notificationsList"
@@ -91,4 +121,3 @@ const { title = "Panel", placeholder = "Search..." } = Astro.props;
             </button>
         </div>
 </header>
-

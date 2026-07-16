@@ -5,7 +5,7 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
 <DashboardLayout title="Admin dashboard">
     <link
         rel="stylesheet"
-        href="/styles/pages/views/dashboard-admin-premium.css?v=20260715-admin-dashboard-professional-v1"
+        href="/styles/pages/views/dashboard-admin-premium.css?v=20260716-admin-dashboard-admin-focus-v1"
     />
 
     <div class="page-container admin-dashboard-page">
@@ -13,12 +13,12 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
             <div class="admin-hero-copy">
                 <span class="admin-dashboard-eyebrow">
                     <i class="fa-solid fa-shield-halved"></i>
-                    SYSTEM COMMAND CENTER
+                    ADMIN OPERATIONS
                 </span>
                 <h1>Admin dashboard</h1>
                 <p>
-                    A consolidated view of system health, operational activity,
-                    access, validations, and administrative attention points.
+                    A consolidated view of users, departments, documents,
+                    validations, and administrative activity.
                 </p>
             </div>
 
@@ -54,11 +54,6 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
 
             <div class="admin-hero-strip" aria-label="Executive summary">
                 <article>
-                    <span>System status</span>
-                    <strong id="adminHeroHealth">Checking</strong>
-                    <small id="adminHeroHealthDetail">Evaluating current indicators</small>
-                </article>
-                <article>
                     <span>7-day workload</span>
                     <strong id="adminHeroWorkload">0 operations</strong>
                     <small id="adminHeroWorkloadDetail">No recent movement yet</small>
@@ -82,9 +77,9 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
                 <span><strong>Manage stores</strong><small>Locations and operational scope</small></span>
                 <i class="fa-solid fa-arrow-right"></i>
             </a>
-            <a href="/views/system-errors">
-                <span class="admin-quick-icon"><i class="fa-solid fa-triangle-exclamation"></i></span>
-                <span><strong>System errors</strong><small>Review incidents and exceptions</small></span>
+            <a href="/views/system-center">
+                <span class="admin-quick-icon"><i class="fa-solid fa-tower-broadcast"></i></span>
+                <span><strong>System center</strong><small>Health, incidents and integrations</small></span>
                 <i class="fa-solid fa-arrow-right"></i>
             </a>
             <a href="/views/documentos">
@@ -103,16 +98,6 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
                     <small id="adminUsersMeta">0 registered</small>
                 </div>
                 <span class="admin-metric-indicator" id="adminUsersRate">0%</span>
-            </article>
-
-            <article class="admin-metric-card">
-                <span class="admin-metric-icon sessions"><i class="fa-solid fa-right-to-bracket"></i></span>
-                <div class="admin-metric-copy">
-                    <span>Active sessions</span>
-                    <strong id="adminActiveSessions">0</strong>
-                    <small id="adminLoginsToday">0 logins today</small>
-                </div>
-                <span class="admin-metric-indicator" id="adminSessionsRate">0%</span>
             </article>
 
             <article class="admin-metric-card">
@@ -144,51 +129,9 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
                 </div>
                 <span class="admin-metric-indicator" id="adminDepartmentsRate">0%</span>
             </article>
-
-            <a
-                class="admin-metric-card admin-metric-link"
-                href="/views/system-errors"
-                aria-label="Open system errors"
-            >
-                <span class="admin-metric-icon errors"><i class="fa-solid fa-bug"></i></span>
-                <div class="admin-metric-copy">
-                    <span>Open errors</span>
-                    <strong id="adminSystemErrorsOpen">0</strong>
-                    <small id="adminSystemErrorsMeta">Loading system health</small>
-                </div>
-                <span class="admin-metric-arrow"><i class="fa-solid fa-arrow-up-right-from-square"></i></span>
-            </a>
         </section>
 
-        <section class="admin-overview-grid" aria-label="System overview">
-            <article class="admin-dashboard-panel admin-health-panel">
-                <header class="admin-panel-header">
-                    <div>
-                        <span>CONTROL</span>
-                        <h2>System health</h2>
-                        <p>Weighted score based on incidents, coverage, and validations.</p>
-                    </div>
-                    <span class="admin-panel-icon"><i class="fa-solid fa-heart-pulse"></i></span>
-                </header>
-
-                <div class="admin-health-content">
-                    <div class="admin-health-ring" id="adminHealthRing" style="--admin-health-score: 0">
-                        <div>
-                            <strong id="adminHealthScore">--</strong>
-                            <span>health score</span>
-                        </div>
-                    </div>
-
-                    <div class="admin-health-summary">
-                        <strong id="adminHealthLabel">Calculating</strong>
-                        <p id="adminHealthDescription">Waiting for system indicators.</p>
-                        <ul class="admin-attention-list" id="adminAttentionList">
-                            <li><i class="fa-solid fa-circle-notch fa-spin"></i> Loading attention points</li>
-                        </ul>
-                    </div>
-                </div>
-            </article>
-
+        <section class="admin-overview-grid" aria-label="Administrative overview">
             <article class="admin-dashboard-panel admin-coverage-panel">
                 <header class="admin-panel-header">
                     <div>
@@ -214,11 +157,6 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
                         <div><span>Validation reliability</span><strong id="adminValidationReliabilityValue">100%</strong></div>
                         <div class="admin-progress-track"><span id="adminValidationReliabilityBar"></span></div>
                         <small id="adminValidationReliabilityMeta">No validation issues detected</small>
-                    </div>
-                    <div class="admin-progress-item">
-                        <div><span>Session load</span><strong id="adminSessionLoadValue">0%</strong></div>
-                        <div class="admin-progress-track"><span id="adminSessionLoadBar"></span></div>
-                        <small id="adminSessionLoadMeta">0 sessions across 0 active users</small>
                     </div>
                 </div>
             </article>
@@ -260,20 +198,6 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
                     <div class="admin-loading">Loading activity log...</div>
                 </div>
             </section>
-
-            <section class="admin-dashboard-panel sessions-panel">
-                <header class="admin-panel-header">
-                    <div>
-                        <span>SECURITY</span>
-                        <h2>Recent sessions</h2>
-                        <p id="adminSessionsSummary">Loading session activity.</p>
-                    </div>
-                    <span class="admin-panel-icon"><i class="fa-solid fa-fingerprint"></i></span>
-                </header>
-                <div class="admin-session-list" id="adminSessionsList">
-                    <div class="admin-loading">Loading sessions...</div>
-                </div>
-            </section>
         </div>
 
         <section class="admin-dashboard-panel user-activity-panel">
@@ -306,6 +230,5 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
         </section>
     </div>
 
-    <script src="/js/config.js" is:inline></script>
-    <script src="/js/dashboard-admin.js?v=20260715-admin-dashboard-professional-v1" is:inline></script>
+    <script src="/js/dashboard-admin.js?v=20260716-admin-dashboard-movements-v2" is:inline></script>
 </DashboardLayout>

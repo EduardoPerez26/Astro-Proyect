@@ -399,6 +399,8 @@ window.cargarInfoUser = cargarInfoUser;
 
 const START_PERMISSION_ORDER = [
     'dashboardAdmin',
+    'systemCenter',
+    'approvalCenter',
     'systemErrors',
     'tiendas',
     'documentos',
@@ -455,6 +457,8 @@ function aplicarPermissions(opciones = {}) {
         ?.classList.remove('sidebar-permissions-pending');
 
     window.applySidebarSearch?.();
+    window.XBFSNavigation?.refreshFavorites?.();
+    window.XBFSNavigation?.refreshBadges?.();
 
     // Check access to the current page.
     if (opciones.verificarPagina !== false) {
@@ -468,6 +472,8 @@ function obtenerPermissions(usuario) {
     const esPropertyManagement = departmentCode === 'property-management' || departmentCode === 'pm';
     const modules = [
         'dashboardAdmin',
+        'systemCenter',
+        'approvalCenter',
         'systemErrors',
         'tiendas',
         'documentos',
@@ -483,6 +489,8 @@ function obtenerPermissions(usuario) {
     const defaultPermissions = {
         'superadmin': {
             dashboardAdmin: true,
+            systemCenter: true,
+            approvalCenter: true,
             systemErrors: true,
             tiendas: true,
             documentos: true,
@@ -497,6 +505,8 @@ function obtenerPermissions(usuario) {
         },
         'admin': {
             dashboardAdmin: true,
+            systemCenter: true,
+            approvalCenter: false,
             systemErrors: true,
             tiendas: false,
             documentos: false,
@@ -510,12 +520,15 @@ function obtenerPermissions(usuario) {
             chat: false
         },
         'supervisor': {
+            approvalCenter: true,
             tiendas: true,
             documentos: true,
             perfil: true,
             permisos: false,
             historial: true,
             usuarios: false,
+            systemCenter: false,
+            approvalCenter: false,
             systemErrors: false,
             controlRestaurants: false,
             propertyManagement: false,
@@ -530,6 +543,8 @@ function obtenerPermissions(usuario) {
             permisos: false,
             historial: false,
             usuarios: false,
+            systemCenter: false,
+            approvalCenter: false,
             systemErrors: false,
             controlRestaurants: false,
             propertyManagement: false,
@@ -566,6 +581,13 @@ function obtenerPermissions(usuario) {
                 permissionUser
             ) === true;
         }
+
+        if (
+            module === 'approvalCenter' &&
+            !['supervisor', 'superadmin'].includes(String(usuario.rol || '').toLowerCase())
+        ) {
+            permisos[module] = false;
+        }
     });
 
     if (
@@ -593,6 +615,8 @@ function verificarAccesoPagina(permisos) {
         '/views/tiendas': 'tiendas',
         '/views/conciliacion': 'tiendas',
         '/views/dashboard-admin': 'dashboardAdmin',
+        '/views/system-center': 'systemCenter',
+        '/views/approval-center': 'approvalCenter',
         '/views/system-errors': 'systemErrors',
         '/views/documentos': 'documentos',
         '/views/perfil': 'perfil',
@@ -614,6 +638,7 @@ function verificarAccesoPagina(permisos) {
     const requiereAdmin = [
         '/views/restaurantes',
         '/views/dashboard-admin',
+        '/views/system-center',
         '/views/system-errors',
         '/views/usuarios',
         '/views/permisos'
@@ -631,6 +656,8 @@ function verificarAccesoPagina(permisos) {
         }).then(() => {
             const rutasDepartment = {
                 dashboardAdmin: '/views/dashboard-admin',
+                systemCenter: '/views/system-center',
+                approvalCenter: '/views/approval-center',
                 systemErrors: '/views/system-errors',
                 tiendas: '/views/tiendas',
                 documentos: '/views/documentos',

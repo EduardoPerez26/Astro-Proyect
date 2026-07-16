@@ -623,7 +623,7 @@ body {
 .sidebar.collapsed .nav-btn,
 .sidebar.collapsed .sidebar-logout,
 .sidebar.collapsed .sidebar-action {
-    border-radius: 15px !important
+    border-radius: 99px !important
 }
 
 body:not(.sidebar-collapsed) .main,
@@ -716,7 +716,7 @@ body .main :is(.card-header, .panel-header, .table-header, .admin-panel-header, 
 
 body .main :is(.admin-metric-icon, .summary-icon, .documents-type-icon, .pm-upload-icon, .pm-manager-icon, .profile-mfa-icon, .comparison-date-icon, .store-card-icon, .restaurant-icon) {
     border-radius: 10px !important;
-    background: var(--minimal-#2e2e2e-soft) !important;
+    background: var(--minimal- #2e2e2e -soft) !important;
     color: var(--minimal-#2e2e2e) !important
 }
 

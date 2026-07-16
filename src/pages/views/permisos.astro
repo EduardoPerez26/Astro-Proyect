@@ -191,10 +191,29 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
             <div class="permission-bulk-toolbar">
                 <div>
                     <i class="fa-solid fa-wand-magic-sparkles"></i>
-                    <span>Bulk policy actions apply only to editable modules.</span>
+                    <span>Bulk policy actions and templates apply only to editable modules.</span>
                 </div>
 
                 <div>
+                    <label class="permission-template-control">
+                        <span>Template</span>
+                        <select id="permissionTemplateSelect">
+                            <option value="">Select policy</option>
+                            <option value="supervisor">Supervisor review</option>
+                            <option value="arOperator">AR operator</option>
+                            <option value="propertyManagement">Property management</option>
+                            <option value="itAdmin">IT administration</option>
+                            <option value="readOnly">Read only</option>
+                        </select>
+                    </label>
+                    <button
+                        type="button"
+                        class="permission-bulk-button"
+                        onclick="applyPermissionTemplate()"
+                    >
+                        <i class="fa-solid fa-stamp"></i>
+                        Apply template
+                    </button>
                     <button
                         type="button"
                         class="permission-bulk-button"
@@ -274,6 +293,5 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
         </section>
     </div>
 
-    <script src="/js/config.js" is:inline></script>
-    <script is:inline src="/js/permisos.js?v=20260716-access-admin-v1"></script>
+    <script is:inline src="/js/permisos.js?v=20260716-corporate-templates-v1"></script>
 </DashboardLayout>

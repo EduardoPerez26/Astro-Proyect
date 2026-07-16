@@ -331,7 +331,9 @@ function renderAdminMovements(movements) {
         const icon = {
             sesion: 'fa-right-to-bracket',
             archivo: 'fa-file-arrow-up',
-            validacion: 'fa-shield-halved'
+            validacion: 'fa-shield-halved',
+            prepaid: 'fa-building-columns',
+            property_management: 'fa-building-user'
         }[item.tipo] || 'fa-circle-info';
 
         return `

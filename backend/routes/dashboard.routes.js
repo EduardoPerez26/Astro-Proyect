@@ -3,6 +3,8 @@ const router = express.Router();
 const { pool } = require('../config/database');
 const { verificarToken, esAdmin, checkPermission } = require('../middleware/auth.middleware');
 const { tokenHash, isSchemaError } = require('../services/securityAudit.service');
+const { createNotificationsForUsers } = require('../services/notifications.service');
+const { getConfigurationStatus } = require('../config/env.validation');
 
 const PERIODOS = {
     '30d': 30,
@@ -84,6 +86,317 @@ function normalizarFilaTabla(row) {
     );
 }
 
+async function ensureApprovalWorkflowTable() {
+    await pool.query(`
+        CREATE TABLE IF NOT EXISTS approval_task_decisions (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            task_id VARCHAR(160) NOT NULL,
+            task_type VARCHAR(60) NOT NULL,
+            task_title VARCHAR(255) NOT NULL,
+            task_context VARCHAR(255) NULL,
+            source_url VARCHAR(500) NULL,
+            decision_status ENUM(
+                'pending_review',
+                'in_review',
+                'approved',
+                'rejected',
+                'changes_requested',
+                'resolved'
+            ) NOT NULL DEFAULT 'pending_review',
+            priority VARCHAR(40) NOT NULL DEFAULT 'normal',
+            notes TEXT NULL,
+            decided_by INT NULL,
+            decided_at TIMESTAMP NULL,
+            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            UNIQUE KEY uk_approval_task_decisions_task (task_id),
+            INDEX idx_approval_task_decisions_status (decision_status),
+            INDEX idx_approval_task_decisions_type (task_type),
+            INDEX idx_approval_task_decisions_decider (decided_by)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+
+    await pool.query(`
+        CREATE TABLE IF NOT EXISTS approval_task_events (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            task_id VARCHAR(160) NOT NULL,
+            task_type VARCHAR(60) NOT NULL,
+            event_type VARCHAR(60) NOT NULL DEFAULT 'decision',
+            previous_status VARCHAR(60) NULL,
+            new_status VARCHAR(60) NOT NULL,
+            comment TEXT NULL,
+            actor_id INT NULL,
+            actor_name VARCHAR(255) NULL,
+            metadata JSON NULL,
+            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            INDEX idx_approval_task_events_task (task_id, created_at),
+            INDEX idx_approval_task_events_actor (actor_id),
+            INDEX idx_approval_task_events_status (new_status)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+}
+
+async function obtenerApprovalEvents(taskIds = []) {
+    try {
+        await ensureApprovalWorkflowTable();
+
+        const ids = [...new Set(taskIds.filter(Boolean))].slice(0, 500);
+        if (!ids.length) return [];
+
+        const [rows] = await pool.query(
+            `SELECT e.*
+             FROM approval_task_events e
+             WHERE e.task_id IN (?)
+             ORDER BY e.created_at DESC, e.id DESC`,
+            [ids]
+        );
+
+        return rows;
+    } catch (error) {
+        if (isSchemaError(error)) return [];
+        throw error;
+    }
+}
+
+async function obtenerApprovalEventsPorTask(taskId) {
+    try {
+        await ensureApprovalWorkflowTable();
+
+        const [rows] = await pool.query(
+            `SELECT e.*
+             FROM approval_task_events e
+             WHERE e.task_id = ?
+             ORDER BY e.created_at DESC, e.id DESC
+             LIMIT 100`,
+            [taskId]
+        );
+
+        return rows;
+    } catch (error) {
+        if (isSchemaError(error)) return [];
+        throw error;
+    }
+}
+
+async function obtenerApprovalDecisions() {
+    try {
+        await ensureApprovalWorkflowTable();
+
+        const [rows] = await pool.query(`
+            SELECT a.*,
+                   COALESCE(u.nombre_completo, u.username, u.email) AS decided_by_nombre
+            FROM approval_task_decisions a
+            LEFT JOIN usuarios u ON u.id = a.decided_by
+            ORDER BY a.updated_at DESC, a.id DESC
+            LIMIT 500
+        `);
+
+        return rows;
+    } catch (error) {
+        if (isSchemaError(error)) return [];
+        throw error;
+    }
+}
+
+function normalizarDecisionStatus(value) {
+    const status = String(value || '').trim().toLowerCase();
+    const allowed = new Set([
+        'pending_review',
+        'in_review',
+        'approved',
+        'rejected',
+        'changes_requested',
+        'resolved'
+    ]);
+
+    return allowed.has(status) ? status : null;
+}
+
+function formatDocumentApprovalStatus(value) {
+    const labels = {
+        pendiente: 'Pending review',
+        validado: 'Validated',
+        con_errores: 'With issues',
+        fallido: 'Failed',
+        procesado: 'Processed',
+        registrado: 'Registered'
+    };
+
+    return labels[String(value || '').toLowerCase()] || String(value || 'Review');
+}
+
+function estadoDocumentoPorDecision(status) {
+    return {
+        pending_review: 'pendiente',
+        in_review: 'pendiente',
+        approved: 'validado',
+        rejected: 'fallido',
+        changes_requested: 'con_errores',
+        resolved: 'procesado'
+    }[status] || null;
+}
+
+function formatApprovalDecisionLabel(status) {
+    return {
+        pending_review: 'Submitted',
+        in_review: 'In review',
+        approved: 'Approved',
+        rejected: 'Rejected',
+        changes_requested: 'Changes requested',
+        resolved: 'Resolved'
+    }[status] || 'Approval update';
+}
+
+function calcularApprovalDueAt(dateValue, priority = 'normal') {
+    const base = dateValue ? new Date(dateValue) : new Date();
+    if (Number.isNaN(base.getTime())) return null;
+
+    const days = priority === 'critical' ? 1 : priority === 'high' ? 2 : 4;
+    base.setDate(base.getDate() + days);
+    return base.toISOString();
+}
+
+function calcularApprovalSla(dateValue, priority = 'normal', workflowStatus = 'pending_review') {
+    const dueAt = calcularApprovalDueAt(dateValue, priority);
+    if (!dueAt) {
+        return { due_at: null, sla_status: 'unknown', sla_days_remaining: null };
+    }
+
+    if (['approved', 'rejected', 'resolved'].includes(workflowStatus)) {
+        return { due_at: dueAt, sla_status: 'closed', sla_days_remaining: null };
+    }
+
+    const diffMs = new Date(dueAt).getTime() - Date.now();
+    const daysRemaining = Math.ceil(diffMs / (24 * 60 * 60 * 1000));
+
+    return {
+        due_at: dueAt,
+        sla_status: diffMs < 0 ? 'overdue' : daysRemaining <= 1 ? 'due_soon' : 'on_track',
+        sla_days_remaining: daysRemaining
+    };
+}
+
+function prioridadNotificacionApproval(status, priority) {
+    if (['rejected', 'changes_requested'].includes(status)) return 'high';
+    if (priority === 'critical' || priority === 'high') return 'high';
+    return 'normal';
+}
+
+function extraerArchivoIdDesdeTask(taskId) {
+    const match = String(taskId || '').match(/^file-(\d+)$/);
+    return match ? Number(match[1]) : null;
+}
+
+async function actualizarEstadoDocumentoPorApproval(taskId, status) {
+    const archivoId = extraerArchivoIdDesdeTask(taskId);
+    const estado = estadoDocumentoPorDecision(status);
+
+    if (!archivoId || !estado) {
+        return null;
+    }
+
+    const [result] = await pool.query(
+        `UPDATE archivos_excel
+         SET estado = ?,
+             fecha_actualizacion = CURRENT_TIMESTAMP
+         WHERE id = ?`,
+        [estado, archivoId]
+    );
+
+    return {
+        archivo_id: archivoId,
+        estado,
+        updated: result.affectedRows || 0
+    };
+}
+
+async function obtenerDuenoApprovalTask(taskId, taskType) {
+    const archivoId = extraerArchivoIdDesdeTask(taskId);
+
+    if (taskType === 'document' && archivoId) {
+        const [rows] = await pool.query(
+            `SELECT a.usuario_id,
+                    a.nombre_original AS titulo,
+                    '/views/documentos' AS url_accion
+             FROM archivos_excel a
+             WHERE a.id = ?
+             LIMIT 1`,
+            [archivoId]
+        );
+        return rows[0] || null;
+    }
+
+    const prepaidMatch = String(taskId || '').match(/^prepaid-(\d+)$/);
+    if (taskType === 'prepaid' && prepaidMatch) {
+        const scheduleId = Number(prepaidMatch[1]);
+        const selectPrepaidOwner = userColumn => pool.query(
+            `SELECT ps.${userColumn} AS usuario_id,
+                    ps.title AS titulo,
+                    CONCAT('/views/departments/prepaid-amortization?schedule=', ps.id) AS url_accion
+             FROM prepaid_schedules ps
+             WHERE ps.id = ?
+             LIMIT 1`,
+            [scheduleId]
+        );
+
+        try {
+            const [rows] = await selectPrepaidOwner('created_by');
+            return rows[0] || null;
+        } catch (error) {
+            if (!isSchemaError(error)) throw error;
+            const [rows] = await selectPrepaidOwner('usuario_id');
+            return rows[0] || null;
+        }
+    }
+
+    const scheduleMatch = String(taskId || '').match(/^schedule-(\d+)$/);
+    if (taskType === 'schedule' && scheduleMatch) {
+        const scheduleId = Number(scheduleMatch[1]);
+        const [rows] = await pool.query(
+            `SELECT s.usuario_id,
+                    s.nombre AS titulo,
+                    CONCAT('/views/departments/property-management?schedule=', s.id) AS url_accion
+             FROM property_management_schedules s
+             WHERE s.id = ?
+             LIMIT 1`,
+            [scheduleId]
+        );
+        return rows[0] || null;
+    }
+
+    return null;
+}
+
+async function notificarComentarioApproval({ taskId, taskType, taskTitle, status, priority, notes, actorId }) {
+    if (!notes) return { inserted: 0, userIds: [] };
+
+    const owner = await obtenerDuenoApprovalTask(taskId, taskType);
+    const ownerId = Number(owner?.usuario_id || 0);
+
+    if (!ownerId || ownerId === Number(actorId || 0)) {
+        return { inserted: 0, userIds: [] };
+    }
+
+    const statusLabel = formatApprovalDecisionLabel(status);
+    const title = owner?.titulo || taskTitle || 'Approval item';
+    const preview = notes.length > 220 ? `${notes.slice(0, 217)}...` : notes;
+
+    return createNotificationsForUsers([ownerId], {
+        creadoPor: actorId,
+        tipo: 'approval',
+        prioridad: prioridadNotificacionApproval(status, priority),
+        titulo: `Approval Center: ${statusLabel}`,
+        mensaje: `${title}: ${preview}`,
+        urlAccion: owner?.url_accion || '/views/approval-center',
+        metadata: {
+            task_id: taskId,
+            task_type: taskType,
+            decision_status: status,
+            comment: notes
+        }
+    });
+}
+
 function tablaPendiente(config) {
     return {
         nombre: config.nombre,
@@ -96,6 +409,146 @@ function tablaPendiente(config) {
         columnas_muestra: [],
         registros: []
     };
+}
+
+async function obtenerMovimientosSistema(limit = 200) {
+    const [
+        sesiones,
+        archivos,
+        validaciones,
+        prepaidSchedules,
+        propertySchedules
+    ] = await Promise.all([
+        consultaSegura(
+            `SELECT CONCAT('sesion-', s.id) AS id,
+                    'sesion' AS tipo,
+                    'Sign-in' AS accion,
+                    COALESCE(u.nombre_completo, u.username, 'System') AS usuario_nombre,
+                    COALESCE(u.username, 'system') AS username,
+                    d.nombre AS departamento_nombre,
+                    s.ip_address AS ip_address,
+                    s.fecha_creacion AS fecha,
+                    CONCAT_WS(' | ', s.ip_address, LEFT(s.user_agent, 90)) AS detalle,
+                    IF(s.activa = TRUE AND s.fecha_expiracion > NOW(), 'activo', 'cerrado') AS estado
+             FROM sesiones s
+             LEFT JOIN usuarios u ON u.id = s.usuario_id
+             LEFT JOIN departamentos d ON d.id = u.departamento_id
+             ORDER BY s.fecha_creacion DESC, s.id DESC
+             LIMIT ?`,
+            [limit],
+            []
+        ),
+        consultaSegura(
+            `SELECT CONCAT('archivo-', a.id) AS id,
+                    'archivo' AS tipo,
+                    'File saved' AS accion,
+                    COALESCE(u.nombre_completo, u.username, 'System') AS usuario_nombre,
+                    COALESCE(u.username, 'system') AS username,
+                    d.nombre AS departamento_nombre,
+                    NULL AS ip_address,
+                    a.fecha_subida AS fecha,
+                    CONCAT_WS(' | ', a.nombre_original, r.nombre) AS detalle,
+                    a.estado AS estado
+             FROM archivos_excel a
+             LEFT JOIN usuarios u ON u.id = a.usuario_id
+             LEFT JOIN departamentos d ON d.id = a.departamento_id
+             LEFT JOIN restaurantes r ON r.id = a.restaurante_id
+             ORDER BY a.fecha_subida DESC, a.id DESC
+             LIMIT ?`,
+            [limit],
+            []
+        ),
+        consultaSegura(
+            `SELECT CONCAT('validacion-', hv.id) AS id,
+                    'validacion' AS tipo,
+                    'Validation executed' AS accion,
+                    COALESCE(u.nombre_completo, u.username, 'System') AS usuario_nombre,
+                    COALESCE(u.username, 'system') AS username,
+                    d.nombre AS departamento_nombre,
+                    NULL AS ip_address,
+                    hv.fecha_validacion AS fecha,
+                    CONCAT(hv.tipo_validacion, ' | ', hv.total_errores, ' error(s)') AS detalle,
+                    hv.resultado AS estado
+             FROM historial_validaciones hv
+             LEFT JOIN usuarios u ON u.id = hv.usuario_id
+             LEFT JOIN departamentos d ON d.id = u.departamento_id
+             ORDER BY hv.fecha_validacion DESC, hv.id DESC
+             LIMIT ?`,
+            [limit],
+            []
+        ),
+        obtenerMovimientosPrepaid(limit),
+        consultaSegura(
+            `SELECT CONCAT('pm-schedule-', s.id) AS id,
+                    'property_management' AS tipo,
+                    'Property Management schedule updated' AS accion,
+                    COALESCE(u.nombre_completo, u.username, 'Property Management') AS usuario_nombre,
+                    COALESCE(u.username, 'pm') AS username,
+                    COALESCE(d.nombre, 'Property Management') AS departamento_nombre,
+                    NULL AS ip_address,
+                    COALESCE(s.fecha_actualizacion, s.fecha_creacion) AS fecha,
+                    CONCAT_WS(' | ', s.nombre, s.periodo_anio, s.periodo_mes) AS detalle,
+                    s.estado AS estado
+             FROM property_management_schedules s
+             LEFT JOIN usuarios u ON u.id = s.usuario_id
+             LEFT JOIN departamentos d ON d.id = COALESCE(s.departamento_id, u.departamento_id)
+             ORDER BY COALESCE(s.fecha_actualizacion, s.fecha_creacion) DESC, s.id DESC
+             LIMIT ?`,
+            [limit],
+            []
+        )
+    ]);
+
+    return [
+        ...sesiones,
+        ...archivos,
+        ...validaciones,
+        ...prepaidSchedules,
+        ...propertySchedules
+    ]
+        .filter(row => row.fecha)
+        .sort((a, b) => new Date(b.fecha) - new Date(a.fecha))
+        .slice(0, limit);
+}
+
+async function obtenerMovimientosPrepaid(limit = 200) {
+    const buildQuery = userColumn => `
+        SELECT CONCAT('prepaid-', ps.id) AS id,
+                'prepaid' AS tipo,
+                CASE
+                    WHEN UPPER(ps.status) = 'SOURCE_LOADED' THEN 'Prepaid source uploaded'
+                    WHEN UPPER(ps.status) = 'GENERATED' THEN 'Prepaid schedule generated'
+                    WHEN UPPER(ps.status) = 'VALIDATED' THEN 'Prepaid schedule validated'
+                    WHEN UPPER(ps.status) = 'DIFFERENCE' THEN 'Prepaid GL difference detected'
+                    ELSE 'Prepaid schedule updated'
+                END AS accion,
+                COALESCE(u.nombre_completo, u.username, 'Property Management') AS usuario_nombre,
+                COALESCE(u.username, 'pm') AS username,
+                COALESCE(d.nombre, 'Property Management') AS departamento_nombre,
+                NULL AS ip_address,
+                COALESCE(ps.updated_at, ps.created_at) AS fecha,
+                CONCAT_WS(' | ', ps.title, ps.brand, ps.schedule_year) AS detalle,
+                ps.status AS estado
+         FROM prepaid_schedules ps
+         LEFT JOIN usuarios u ON u.id = ps.${userColumn}
+         LEFT JOIN departamentos d ON d.id = COALESCE(ps.departamento_id, u.departamento_id)
+         ORDER BY COALESCE(ps.updated_at, ps.created_at) DESC, ps.id DESC
+         LIMIT ?`;
+
+    try {
+        const [rows] = await pool.query(buildQuery('created_by'), [limit]);
+        return rows;
+    } catch (error) {
+        if (!isSchemaError(error)) throw error;
+
+        try {
+            const [rows] = await pool.query(buildQuery('usuario_id'), [limit]);
+            return rows;
+        } catch (fallbackError) {
+            if (isSchemaError(fallbackError)) return [];
+            throw fallbackError;
+        }
+    }
 }
 
 
@@ -375,43 +828,7 @@ async function obtenerDashboardAdminBasico(tokenActual) {
             [tokenActual],
             []
         ),
-        consultaSegura(
-            `SELECT movimientos.*
-             FROM (
-                SELECT CONCAT('sesion-', s.id) AS id,
-                       'sesion' AS tipo,
-                       'Sign-in' AS accion,
-                       u.nombre_completo AS usuario_nombre,
-                       u.username,
-                       NULL AS departamento_nombre,
-                       s.ip_address AS ip_address,
-                       s.fecha_creacion AS fecha,
-                       CONCAT_WS(' | ', s.ip_address, LEFT(s.user_agent, 90)) AS detalle,
-                       IF(s.activa = TRUE AND s.fecha_expiracion > NOW(), 'activo', 'cerrado') AS estado
-                FROM sesiones s
-                JOIN usuarios u ON u.id = s.usuario_id
-
-                UNION ALL
-
-                SELECT CONCAT('archivo-', a.id) AS id,
-                       'archivo' AS tipo,
-                       'File saved' AS accion,
-                       u.nombre_completo AS usuario_nombre,
-                       u.username,
-                       NULL AS departamento_nombre,
-                       NULL AS ip_address,
-                       a.fecha_subida AS fecha,
-                       CONCAT_WS(' | ', a.nombre_original, r.nombre) AS detalle,
-                       a.estado AS estado
-                FROM archivos_excel a
-                LEFT JOIN usuarios u ON u.id = a.usuario_id
-                LEFT JOIN restaurantes r ON r.id = a.restaurante_id
-             ) movimientos
-             ORDER BY movimientos.fecha DESC
-             LIMIT 200`,
-            [],
-            []
-        ),
+        obtenerMovimientosSistema(200),
         consultaSegura(
             `SELECT u.id,
                     u.nombre_completo AS nombre,
@@ -653,7 +1070,7 @@ router.get('/admin', verificarToken, esAdmin, checkPermission('view_dashboard'),
             [validacionesRows],
             [departamentosRows],
             [sesionesRecientes],
-            [movimientos],
+            movimientos,
             [actividadUsers],
             tablasBaseDatos
         ] = await Promise.all([
@@ -706,59 +1123,7 @@ router.get('/admin', verificarToken, esAdmin, checkPermission('view_dashboard'),
                  LIMIT 20`,
                 [tokenActual]
             ),
-            pool.query(
-                `SELECT movimientos.*
-                 FROM (
-                    SELECT CONCAT('sesion-', s.id) AS id,
-                           'sesion' AS tipo,
-                           'Sign-in' AS accion,
-                           u.nombre_completo AS usuario_nombre,
-                           u.username,
-                           d.nombre AS departamento_nombre,
-                           s.ip_address AS ip_address,
-                           s.fecha_creacion AS fecha,
-                           CONCAT_WS(' | ', s.ip_address, LEFT(s.user_agent, 90)) AS detalle,
-                           IF(s.activa = TRUE AND s.fecha_expiracion > NOW(), 'activo', 'cerrado') AS estado
-                    FROM sesiones s
-                    JOIN usuarios u ON u.id = s.usuario_id
-                    LEFT JOIN departamentos d ON d.id = u.departamento_id
-
-                    UNION ALL
-
-                    SELECT CONCAT('archivo-', a.id) AS id,
-                           'archivo' AS tipo,
-                           'File saved' AS accion,
-                           u.nombre_completo AS usuario_nombre,
-                           u.username,
-                           d.nombre AS departamento_nombre,
-                           NULL AS ip_address,
-                           a.fecha_subida AS fecha,
-                           CONCAT_WS(' | ', a.nombre_original, r.nombre) AS detalle,
-                           a.estado AS estado
-                    FROM archivos_excel a
-                    LEFT JOIN usuarios u ON u.id = a.usuario_id
-                    LEFT JOIN departamentos d ON d.id = u.departamento_id
-                    LEFT JOIN restaurantes r ON r.id = a.restaurante_id
-
-                    UNION ALL
-
-                    SELECT CONCAT('validacion-', hv.id) AS id,
-                           'validacion' AS tipo,
-                           'Validation executed' AS accion,
-                           u.nombre_completo AS usuario_nombre,
-                           u.username,
-                           d.nombre AS departamento_nombre,
-                           NULL AS ip_address,
-                           hv.fecha_validacion AS fecha,
-                           CONCAT(hv.tipo_validacion, ' | ', hv.total_errores, ' error(s)') AS detalle,
-                           hv.resultado AS estado
-                    FROM historial_validaciones hv
-                    LEFT JOIN usuarios u ON u.id = hv.usuario_id
-                    LEFT JOIN departamentos d ON d.id = u.departamento_id
-                 ) movimientos
-                 ORDER BY movimientos.fecha DESC
-                 LIMIT 200`
-            ),
+            obtenerMovimientosSistema(200),
             pool.query(
                 `SELECT u.id,
                         u.nombre_completo AS nombre,
@@ -932,6 +1297,415 @@ router.patch('/admin/sessions/:sessionId/logout', verificarToken, esAdmin, check
         res.status(500).json({
             success: false,
             message: 'The session could not be closed'
+        });
+    }
+});
+
+router.get('/system-health', verificarToken, checkPermission('systemCenter', 'ver'), async (req, res) => {
+    const config = getConfigurationStatus();
+
+    res.status(config.ok ? 200 : 503).json({
+        success: config.ok,
+        status: config.ok ? 'ok' : 'configuration_attention',
+        service: 'XBFS Operations Hub API',
+        timestamp: new Date().toISOString(),
+        configuration: {
+            missingRequired: config.missingRequired,
+            missingRecommended: config.missingRecommended,
+            integrations: config.integrations.map(integration => ({
+                name: integration.name,
+                enabled: integration.enabled,
+                configured: integration.configured,
+                configuredKeys: integration.configuredKeys,
+                expectedKeys: integration.expectedKeys
+            }))
+        }
+    });
+});
+
+router.get('/approval-center', verificarToken, checkPermission('view_approval_center'), async (req, res) => {
+    try {
+        const [
+            files,
+            prepaidSchedules,
+            propertySchedules,
+            openErrors,
+            recentMovements,
+            approvals
+        ] = await Promise.all([
+            consultaSegura(
+                `SELECT a.id,
+                        a.nombre_original,
+                        a.estado,
+                        a.fecha_subida,
+                        r.nombre AS restaurante_nombre,
+                        u.nombre_completo AS usuario_nombre,
+                        COALESCE(d.nombre, du.nombre, 'No department') AS departamento_nombre
+                 FROM archivos_excel a
+                 LEFT JOIN restaurantes r ON r.id = a.restaurante_id
+                 LEFT JOIN usuarios u ON u.id = a.usuario_id
+                 LEFT JOIN departamentos d ON d.id = a.departamento_id
+                 LEFT JOIN departamentos du ON du.id = u.departamento_id
+                 ORDER BY a.fecha_subida DESC, a.id DESC
+                 LIMIT 500`,
+                [],
+                []
+            ),
+            consultaSegura(
+                `SELECT id,
+                        title,
+                        brand,
+                        schedule_year,
+                        status,
+                        source_row_count,
+                        included_row_count,
+                        generated_month_count,
+                        created_at,
+                        updated_at,
+                        metadata_json
+                 FROM prepaid_schedules
+                 ORDER BY id DESC
+                 LIMIT 500`,
+                [],
+                []
+            ),
+            consultaSegura(
+                `SELECT s.id,
+                        s.nombre,
+                        s.periodo_anio,
+                        s.periodo_mes,
+                        s.total_tiendas,
+                        s.total_filas,
+                        s.balance_total,
+                        s.estado,
+                        s.fecha_creacion,
+                        s.fecha_actualizacion,
+                        COALESCE(u.nombre_completo, u.username, 'Property Management') AS usuario_nombre,
+                        COALESCE(d.nombre, du.nombre, 'Property Management') AS departamento_nombre
+                 FROM property_management_schedules s
+                 LEFT JOIN usuarios u ON u.id = s.usuario_id
+                 LEFT JOIN departamentos d ON d.id = s.departamento_id
+                 LEFT JOIN departamentos du ON du.id = u.departamento_id
+                 ORDER BY COALESCE(s.fecha_actualizacion, s.fecha_creacion) DESC, s.id DESC
+                 LIMIT 500`,
+                [],
+                []
+            ),
+            consultaSegura(
+                `SELECT id,
+                        status_code,
+                        method,
+                        normalized_path,
+                        request_path,
+                        error_message,
+                        occurrences,
+                        last_seen_at
+                 FROM system_error_logs
+                 WHERE resolved_at IS NULL
+                 ORDER BY last_seen_at DESC, id DESC
+                 LIMIT 20`,
+                [],
+                []
+            ),
+            obtenerMovimientosSistema(20),
+            obtenerApprovalDecisions()
+        ]);
+
+        const pendingFiles = files.filter(file => String(file.estado || '').toLowerCase() === 'pendiente');
+        const issueFiles = files.filter(file =>
+            ['con_errores', 'fallido'].includes(String(file.estado || '').toLowerCase())
+        );
+
+        const tasks = [
+            ...files.map(file => {
+                const status = String(file.estado || 'pendiente').toLowerCase();
+                const hasIssues = ['con_errores', 'fallido'].includes(status);
+                const isPending = status === 'pendiente';
+
+                return {
+                id: `file-${file.id}`,
+                type: 'document',
+                priority: hasIssues ? 'high' : 'normal',
+                status: formatDocumentApprovalStatus(file.estado),
+                title: file.nombre_original,
+                context: [
+                    file.departamento_nombre,
+                    file.restaurante_nombre
+                ].filter(Boolean).join(' / ') || 'Documents',
+                owner: file.usuario_nombre || 'System',
+                date: file.fecha_subida,
+                actionUrl: '/views/documentos',
+                detail: hasIssues
+                    ? 'Document has validation errors that require review.'
+                    : isPending
+                        ? 'Uploaded document is waiting for validation or processing.'
+                        : 'Department document is available in the system.'
+                };
+            }),
+            ...prepaidSchedules.map(schedule => {
+                let metadata = {};
+                try {
+                    metadata = typeof schedule.metadata_json === 'string'
+                        ? JSON.parse(schedule.metadata_json || '{}')
+                        : schedule.metadata_json || {};
+                } catch {
+                    metadata = {};
+                }
+
+                const saved = Boolean(metadata.saved_workbook?.saved_at);
+
+                return {
+                    id: `prepaid-${schedule.id}`,
+                    type: 'prepaid',
+                    priority: schedule.status === 'DIFFERENCE' ? 'high' : 'normal',
+                    status: saved ? schedule.status : 'Needs save',
+                    title: schedule.title || `Prepaid schedule #${schedule.id}`,
+                    context: [schedule.brand, schedule.schedule_year].filter(Boolean).join(' / ') || 'Property Management',
+                    owner: 'Property Management',
+                    date: schedule.updated_at || schedule.created_at,
+                    actionUrl: `/views/departments/prepaid-amortization?schedule=${encodeURIComponent(schedule.id)}`,
+                    detail: saved
+                        ? 'Schedule requires operational review based on current status.'
+                        : 'Generated workbook has not been saved to the server.'
+                };
+            }),
+            ...propertySchedules.map(schedule => ({
+                id: `schedule-${schedule.id}`,
+                type: 'schedule',
+                priority: ['con_errores', 'fallido', 'error', 'failed'].includes(String(schedule.estado || '').toLowerCase())
+                    ? 'high'
+                    : 'normal',
+                status: formatDocumentApprovalStatus(schedule.estado || 'draft'),
+                title: schedule.nombre || `Schedule #${schedule.id}`,
+                context: [
+                    schedule.departamento_nombre,
+                    [schedule.periodo_anio, schedule.periodo_mes].filter(Boolean).join(' / ')
+                ].filter(Boolean).join(' / ') || 'Property Management',
+                owner: schedule.usuario_nombre || 'Property Management',
+                date: schedule.fecha_actualizacion || schedule.fecha_creacion,
+                actionUrl: `/views/departments/property-management?schedule=${encodeURIComponent(schedule.id)}`,
+                detail: `${Number(schedule.total_tiendas || 0)} stores / ${Number(schedule.total_filas || 0)} rows / balance ${Number(schedule.balance_total || 0).toLocaleString('en-US')}`
+            })),
+            ...openErrors.map(error => ({
+                id: `error-${error.id}`,
+                type: 'incident',
+                priority: Number(error.status_code || 0) >= 500 ? 'critical' : 'high',
+                status: Number(error.status_code || 0) >= 500 ? 'Critical' : 'Open',
+                title: `${error.method || 'API'} ${error.normalized_path || error.request_path || 'Unknown route'}`,
+                context: 'System errors',
+                owner: 'Information Technology',
+                date: error.last_seen_at,
+                actionUrl: '/views/system-errors',
+                detail: error.error_message || `${error.occurrences || 1} occurrence(s)`
+            }))
+        ].sort((a, b) => {
+            const priority = { critical: 3, high: 2, normal: 1 };
+            return (priority[b.priority] || 0) - (priority[a.priority] || 0)
+                || new Date(b.date || 0) - new Date(a.date || 0);
+        });
+
+        const decisionMap = new Map((approvals || []).map(decision => [decision.task_id, decision]));
+        const eventRows = await obtenerApprovalEvents(tasks.map(task => task.id));
+        const eventCountMap = eventRows.reduce((map, event) => {
+            map.set(event.task_id, (map.get(event.task_id) || 0) + 1);
+            return map;
+        }, new Map());
+        const enrichedTasks = tasks.map(task => {
+            const decision = decisionMap.get(task.id);
+            const workflowStatus = decision?.decision_status || 'pending_review';
+            const sla = calcularApprovalSla(task.date, task.priority, workflowStatus);
+
+            return {
+                ...task,
+                workflowStatus,
+                workflowNotes: decision?.notes || '',
+                workflowBy: decision?.decided_by_nombre || '',
+                workflowAt: decision?.decided_at || decision?.updated_at || '',
+                history_count: eventCountMap.get(task.id) || 0,
+                ...sla
+            };
+        });
+
+        res.json({
+            success: true,
+            generated_at: new Date().toISOString(),
+            summary: {
+                total_tasks: enrichedTasks.length,
+                critical: enrichedTasks.filter(task => task.priority === 'critical').length,
+                high: enrichedTasks.filter(task => task.priority === 'high').length,
+                documents_pending: pendingFiles.length,
+                documents_with_issues: issueFiles.length,
+                documents_total: files.length,
+                prepaid_attention: prepaidSchedules.length,
+                schedules_total: propertySchedules.length,
+                incidents_open: openErrors.length,
+                overdue: enrichedTasks.filter(task => task.sla_status === 'overdue').length,
+                due_soon: enrichedTasks.filter(task => task.sla_status === 'due_soon').length,
+                approved: enrichedTasks.filter(task => task.workflowStatus === 'approved').length,
+                changes_requested: enrichedTasks.filter(task => task.workflowStatus === 'changes_requested').length
+            },
+            tasks: enrichedTasks.slice(0, 500),
+            recent_activity: recentMovements,
+            approvals,
+            history: eventRows
+        });
+    } catch (error) {
+        console.error('Approval center could not be loaded:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Approval center could not be loaded'
+        });
+    }
+});
+
+router.get('/approval-center/decisions', verificarToken, checkPermission('view_approval_center'), async (req, res) => {
+    try {
+        res.json({
+            success: true,
+            decisions: await obtenerApprovalDecisions()
+        });
+    } catch (error) {
+        console.error('Approval decisions could not be loaded:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Approval decisions could not be loaded'
+        });
+    }
+});
+
+router.post('/approval-center/decision', verificarToken, checkPermission('manage_approval_center'), async (req, res) => {
+    try {
+        await ensureApprovalWorkflowTable();
+
+        const taskId = String(req.body.task_id || req.body.taskId || '').trim().slice(0, 160);
+        const taskType = String(req.body.task_type || req.body.taskType || 'task').trim().slice(0, 60);
+        const taskTitle = String(req.body.task_title || req.body.taskTitle || 'Approval task').trim().slice(0, 255);
+        const taskContext = String(req.body.task_context || req.body.taskContext || '').trim().slice(0, 255) || null;
+        const sourceUrl = String(req.body.source_url || req.body.sourceUrl || '').trim().slice(0, 500) || null;
+        const priority = String(req.body.priority || 'normal').trim().slice(0, 40) || 'normal';
+        const notes = String(req.body.notes || req.body.comment || '').trim().slice(0, 2000) || null;
+        const status = normalizarDecisionStatus(req.body.decision_status || req.body.status);
+
+        if (!taskId) {
+            return res.status(400).json({
+                success: false,
+                message: 'Task id is required'
+            });
+        }
+
+        if (!status) {
+            return res.status(400).json({
+                success: false,
+                message: 'A valid approval status is required'
+            });
+        }
+
+        const previousDecisions = await obtenerApprovalDecisions();
+        const previousDecision = previousDecisions.find(row => row.task_id === taskId) || null;
+        const previousStatus = previousDecision?.decision_status || 'pending_review';
+
+        await pool.query(
+            `INSERT INTO approval_task_decisions
+             (task_id, task_type, task_title, task_context, source_url, decision_status, priority, notes, decided_by, decided_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+             ON DUPLICATE KEY UPDATE
+                task_type = VALUES(task_type),
+                task_title = VALUES(task_title),
+                task_context = VALUES(task_context),
+                source_url = VALUES(source_url),
+                decision_status = VALUES(decision_status),
+                priority = VALUES(priority),
+                notes = VALUES(notes),
+                decided_by = VALUES(decided_by),
+                decided_at = NOW()`,
+            [
+                taskId,
+                taskType,
+                taskTitle,
+                taskContext,
+                sourceUrl,
+                status,
+                priority,
+                notes,
+                req.usuario.id
+            ]
+        );
+
+        await pool.query(
+            `INSERT INTO approval_task_events
+             (task_id, task_type, event_type, previous_status, new_status, comment, actor_id, actor_name, metadata)
+             VALUES (?, ?, 'decision', ?, ?, ?, ?, ?, ?)`,
+            [
+                taskId,
+                taskType,
+                previousStatus,
+                status,
+                notes,
+                req.usuario.id,
+                req.usuario.nombre_completo || req.usuario.username || req.usuario.email || null,
+                JSON.stringify({
+                    task_title: taskTitle,
+                    task_context: taskContext,
+                    source_url: sourceUrl,
+                    priority
+                })
+            ]
+        );
+
+        const sourceUpdate = taskType === 'document'
+            ? await actualizarEstadoDocumentoPorApproval(taskId, status)
+            : null;
+        const notificationResult = await notificarComentarioApproval({
+            taskId,
+            taskType,
+            taskTitle,
+            status,
+            priority,
+            notes,
+            actorId: req.usuario.id
+        });
+
+        const decisions = await obtenerApprovalDecisions();
+        const decision = decisions.find(row => row.task_id === taskId) || null;
+        const history = await obtenerApprovalEventsPorTask(taskId);
+
+        res.json({
+            success: true,
+            decision,
+            history,
+            source_update: sourceUpdate,
+            notification: notificationResult
+        });
+    } catch (error) {
+        console.error('Approval decision could not be saved:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Approval decision could not be saved'
+        });
+    }
+});
+
+router.get('/approval-center/history/:taskId', verificarToken, checkPermission('view_approval_center'), async (req, res) => {
+    try {
+        const taskId = String(req.params.taskId || '').trim().slice(0, 160);
+
+        if (!taskId) {
+            return res.status(400).json({
+                success: false,
+                message: 'Task id is required'
+            });
+        }
+
+        res.json({
+            success: true,
+            task_id: taskId,
+            history: await obtenerApprovalEventsPorTask(taskId)
+        });
+    } catch (error) {
+        console.error('Approval history could not be loaded:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Approval history could not be loaded'
         });
     }
 });

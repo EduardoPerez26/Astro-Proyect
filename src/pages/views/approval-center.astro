@@ -1,0 +1,181 @@
+---
+import DashboardLayout from '../../layouts/DashboardLayout.astro';
+---
+
+<DashboardLayout title="Approval center" stylesheets={["/styles/pages/views/approval-center.css?v=20260716-approval-center-v1"]}>
+    <div class="page-container approval-center-page">
+        <header class="approval-hero">
+            <div>
+                <span class="approval-eyebrow">
+                    <i class="fa-solid fa-clipboard-check"></i>
+                    GOVERNANCE WORKFLOW
+                </span>
+                <h1>Approval center</h1>
+                <p>
+                    Review pending documents, prepaid schedules, incidents, and operational
+                    exceptions from a single corporate queue.
+                </p>
+            </div>
+
+            <div class="approval-hero-actions">
+                <span id="approvalUpdated">Not refreshed</span>
+                <a href="/views/system-center">
+                    <i class="fa-solid fa-tower-broadcast"></i>
+                    System center
+                </a>
+                <button id="exportApprovalCenter" type="button">
+                    <i class="fa-solid fa-file-csv"></i>
+                    Export CSV
+                </button>
+                <button id="refreshApprovalCenter" type="button">
+                    <i class="fa-solid fa-rotate"></i>
+                    Refresh
+                </button>
+            </div>
+        </header>
+
+        <section class="approval-metrics" aria-label="Approval summary">
+            <article>
+                <span><i class="fa-solid fa-list-check"></i></span>
+                <div>
+                    <small>Total queue</small>
+                    <strong id="approvalTotalTasks">0</strong>
+                    <p>Items requiring review</p>
+                </div>
+            </article>
+            <article class="is-critical">
+                <span><i class="fa-solid fa-clock"></i></span>
+                <div>
+                    <small>SLA risk</small>
+                    <strong id="approvalSlaRiskTasks">0</strong>
+                    <p id="approvalSlaMeta">Overdue and due soon</p>
+                </div>
+            </article>
+            <article class="is-warning">
+                <span><i class="fa-solid fa-file-circle-exclamation"></i></span>
+                <div>
+                    <small>Documents</small>
+                    <strong id="approvalDocumentTasks">0</strong>
+                    <p>Uploaded files</p>
+                </div>
+            </article>
+            <article>
+                <span><i class="fa-solid fa-money-check-dollar"></i></span>
+                <div>
+                    <small>Prepaids</small>
+                    <strong id="approvalPrepaidTasks">0</strong>
+                    <p>Payment schedules</p>
+                </div>
+            </article>
+            <article>
+                <span><i class="fa-solid fa-building-user"></i></span>
+                <div>
+                    <small>Schedules</small>
+                    <strong id="approvalScheduleTasks">0</strong>
+                    <p>Property management</p>
+                </div>
+            </article>
+        </section>
+
+        <section class="approval-layout">
+            <article class="approval-panel approval-queue-panel">
+                <header>
+                    <div>
+                        <span>WORK QUEUE</span>
+                        <h2>Corporate approval queue</h2>
+                        <p>Filter by priority or workflow type, then open the source module to resolve.</p>
+                    </div>
+                    <i class="fa-solid fa-layer-group"></i>
+                </header>
+
+                <div class="approval-toolbar">
+                    <label>
+                        <span>Search</span>
+                        <input id="approvalSearch" type="search" placeholder="Search task, owner, context..." autocomplete="off" />
+                    </label>
+                    <label>
+                        <span>Priority</span>
+                        <select id="approvalPriorityFilter">
+                            <option value="">All</option>
+                            <option value="critical">Critical</option>
+                            <option value="high">High</option>
+                            <option value="normal">Normal</option>
+                        </select>
+                    </label>
+                    <label>
+                        <span>Type</span>
+                        <select id="approvalTypeFilter">
+                            <option value="">All</option>
+                            <option value="document">Documents</option>
+                            <option value="prepaid">Prepaids</option>
+                            <option value="schedule">Schedules</option>
+                            <option value="incident">Incidents</option>
+                        </select>
+                    </label>
+                    <label>
+                        <span>Workflow</span>
+                        <select id="approvalWorkflowFilter">
+                            <option value="all">All workflow states</option>
+                            <option value="">Active</option>
+                            <option value="pending_review">Submitted</option>
+                            <option value="in_review">In review</option>
+                            <option value="changes_requested">Changes requested</option>
+                            <option value="approved">Approved</option>
+                            <option value="rejected">Rejected</option>
+                            <option value="resolved">Resolved</option>
+                        </select>
+                    </label>
+                    <label>
+                        <span>SLA</span>
+                        <select id="approvalSlaFilter">
+                            <option value="">All SLA</option>
+                            <option value="overdue">Overdue</option>
+                            <option value="due_soon">Due soon</option>
+                            <option value="on_track">On track</option>
+                            <option value="closed">Closed</option>
+                        </select>
+                    </label>
+                    <button id="clearApprovalFilters" type="button">
+                        <i class="fa-solid fa-filter-circle-xmark"></i>
+                        Clear
+                    </button>
+                </div>
+
+                <div class="approval-bulk-bar">
+                    <div>
+                        <strong id="approvalSelectedCount">0 selected</strong>
+                        <span>Apply one workflow decision to visible selected items.</span>
+                    </div>
+                    <div>
+                        <button id="selectVisibleApprovalTasks" type="button">
+                            <i class="fa-solid fa-check-double"></i>
+                            Select visible
+                        </button>
+                        <button id="clearSelectedApprovalTasks" type="button">
+                            <i class="fa-solid fa-xmark"></i>
+                            Clear
+                        </button>
+                        <select id="bulkApprovalStatus">
+                            <option value="">Decision</option>
+                            <option value="in_review">Move to review</option>
+                            <option value="approved">Approve</option>
+                            <option value="changes_requested">Request changes</option>
+                            <option value="rejected">Reject</option>
+                            <option value="resolved">Resolve</option>
+                        </select>
+                        <button id="applyBulkApproval" type="button" disabled>
+                            <i class="fa-solid fa-layer-group"></i>
+                            Apply
+                        </button>
+                    </div>
+                </div>
+
+                <div class="approval-task-list" id="approvalTaskList">
+                    <div class="approval-loading">Loading approval queue...</div>
+                </div>
+            </article>
+        </section>
+    </div>
+
+    <script src="/js/approval-center.js?v=20260716-corporate-workflow-v3" is:inline></script>
+</DashboardLayout>
