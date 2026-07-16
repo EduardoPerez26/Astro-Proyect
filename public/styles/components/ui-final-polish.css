@@ -786,13 +786,16 @@ html body .swal2-popup:is(
     .xbfs-toast-final
 ) {
     --toast-accent: #24292e;
-    --toast-soft: #eef0f2;
-    --toast-border: #cfd5da;
+    --toast-soft: #f4f5f6;
+    --toast-border: #c9d0d6;
+    --toast-title: #0f1113;
+    --toast-copy: #4d5963;
+    --xbfs-alert-accent: var(--toast-accent);
 
     position: relative !important;
 
     display: grid !important;
-    grid-template-columns: 38px minmax(0, 1fr) !important;
+    grid-template-columns: 40px minmax(0, 1fr) !important;
     grid-template-rows: auto auto !important;
     grid-template-areas:
         "icon title"
@@ -800,33 +803,33 @@ html body .swal2-popup:is(
 
     align-items: center !important;
     column-gap: 12px !important;
-    row-gap: 2px !important;
+    row-gap: 3px !important;
 
-    width: min(360px, calc(100vw - 24px)) !important;
+    width: min(380px, calc(100vw - 24px)) !important;
     min-width: 0 !important;
-    max-width: 360px !important;
-    min-height: 68px !important;
+    max-width: 380px !important;
+    min-height: 72px !important;
     height: auto !important;
     max-height: none !important;
 
-    margin: 0 0 9px !important;
-    padding: 14px 42px 15px 14px !important;
+    margin: 0 0 12px !important;
+    padding: 15px 44px 17px 16px !important;
 
     overflow: hidden !important;
 
     border: 1px solid var(--toast-border) !important;
     border-left: 4px solid var(--toast-accent) !important;
-    border-radius: 13px !important;
+    border-radius: 12px !important;
 
     background: #ffffff !important;
     background-color: #ffffff !important;
     background-image: none !important;
 
-    color: #171b1f !important;
+    color: var(--toast-title) !important;
 
     box-shadow:
-        0 22px 48px -30px rgba(0, 0, 0, .48),
-        0 8px 18px -16px rgba(0, 0, 0, .28)
+        0 22px 44px -32px rgba(0, 0, 0, .52),
+        0 8px 18px -17px rgba(0, 0, 0, .25)
         !important;
 
     pointer-events: auto !important;
@@ -855,8 +858,8 @@ html body .swal2-popup:is(
     .xbfs-alert-success
 ) {
     --toast-accent: #16835f;
-    --toast-soft: #e9f7f1;
-    --toast-border: #b9ddd0;
+    --toast-soft: #ecf8f3;
+    --toast-border: #a9dccb;
 }
 
 html body .swal2-popup:is(
@@ -867,7 +870,7 @@ html body .swal2-popup:is(
     .swal2-icon-error,
     .xbfs-alert-error
 ) {
-    --toast-accent: #c83c35;
+    --toast-accent: #b3261e;
     --toast-soft: #fff0ef;
     --toast-border: #edc0bd;
 }
@@ -883,6 +886,22 @@ html body .swal2-popup:is(
     --toast-accent: #b87412;
     --toast-soft: #fff5e4;
     --toast-border: #ead0a5;
+}
+
+html body .swal2-popup:is(
+    .swal2-toast,
+    .xbfs-toast-popup,
+    .xbfs-toast-final
+):is(
+    .swal2-icon-info,
+    .swal2-icon-question,
+    .xbfs-alert-info,
+    .xbfs-alert-question,
+    .xbfs-alert-neutral
+) {
+    --toast-accent: #24292e;
+    --toast-soft: #f4f5f6;
+    --toast-border: #c9d0d6;
 }
 
 html body .swal2-popup:is(
@@ -928,19 +947,40 @@ html body .swal2-popup:is(
     margin: 0 !important;
     padding: 0 !important;
 
-    border: 1px solid
-        color-mix(
-            in srgb,
-            var(--toast-accent) 27%,
-            transparent
-        ) !important;
-    border-radius: 11px !important;
+    border: 1px solid color-mix(in srgb, var(--toast-accent) 28%, #ffffff) !important;
+    border-radius: 50% !important;
 
     background: var(--toast-soft) !important;
     background-image: none !important;
     color: var(--toast-accent) !important;
 
     box-shadow: none !important;
+    overflow: hidden !important;
+}
+
+html body .swal2-popup:is(
+    .swal2-toast,
+    .xbfs-toast-popup,
+    .xbfs-toast-final
+):is(.swal2-icon-info, .xbfs-alert-info, .xbfs-alert-neutral)
+.swal2-icon {
+    background: #f7f8f9 !important;
+}
+
+html body .swal2-popup:is(
+    .swal2-toast,
+    .xbfs-toast-popup,
+    .xbfs-toast-final
+) .swal2-icon .swal2-icon-content {
+    display: grid !important;
+    width: 100% !important;
+    height: 100% !important;
+    place-items: center !important;
+    margin: 0 !important;
+    color: var(--toast-accent) !important;
+    font-size: 19px !important;
+    font-weight: 800 !important;
+    line-height: 1 !important;
 }
 
 html body .swal2-popup:is(
@@ -957,11 +997,12 @@ html body .swal2-popup:is(
     margin: 0 !important;
     padding: 0 !important;
 
-    color: #171b1f !important;
+    color: var(--toast-title) !important;
 
     font-size: 14px !important;
-    font-weight: 850 !important;
-    line-height: 1.28 !important;
+    font-weight: 800 !important;
+    line-height: 1.25 !important;
+    letter-spacing: 0 !important;
     text-align: left !important;
 
     white-space: normal !important;
@@ -982,9 +1023,10 @@ html body .swal2-popup:is(
     margin: 1px 0 0 !important;
     padding: 0 !important;
 
-    color: #606a73 !important;
+    color: var(--toast-copy) !important;
 
     font-size: 11px !important;
+    font-weight: 500 !important;
     line-height: 1.4 !important;
     text-align: left !important;
 
@@ -1003,18 +1045,36 @@ html body .swal2-popup:is(
     .swal2-toast,
     .xbfs-toast-popup,
     .xbfs-toast-final
+):has(.swal2-html-container:empty) {
+    grid-template-rows: auto !important;
+    grid-template-areas: "icon title" !important;
+    min-height: 74px !important;
+}
+
+html body .swal2-popup:is(
+    .swal2-toast,
+    .xbfs-toast-popup,
+    .xbfs-toast-final
+):has(.swal2-html-container:empty) .swal2-title {
+    align-self: center !important;
+}
+
+html body .swal2-popup:is(
+    .swal2-toast,
+    .xbfs-toast-popup,
+    .xbfs-toast-final
 ) .swal2-close {
     position: absolute !important;
-    top: 8px !important;
-    right: 8px !important;
+    top: 10px !important;
+    right: 10px !important;
     bottom: auto !important;
     left: auto !important;
 
     display: grid !important;
-    width: 27px !important;
-    height: 27px !important;
-    min-width: 27px !important;
-    min-height: 27px !important;
+    width: 25px !important;
+    height: 25px !important;
+    min-width: 25px !important;
+    min-height: 25px !important;
     place-items: center !important;
 
     margin: 0 !important;
@@ -1025,14 +1085,24 @@ html body .swal2-popup:is(
 
     background: transparent !important;
     background-image: none !important;
-    color: #7b848c !important;
+    color: #6d7780 !important;
 
     box-shadow: none !important;
 
-    font-size: 19px !important;
+    font-size: 18px !important;
+    font-weight: 400 !important;
     line-height: 1 !important;
 
-    opacity: .88 !important;
+    opacity: .95 !important;
+}
+
+html body .swal2-popup:is(
+    .swal2-toast,
+    .xbfs-toast-popup,
+    .xbfs-toast-final
+) .swal2-close:hover {
+    background: #eef1f3 !important;
+    color: #111315 !important;
 }
 
 html body .swal2-popup:is(
@@ -1058,7 +1128,7 @@ html body .swal2-popup:is(
     background:
         color-mix(
             in srgb,
-            var(--toast-accent) 11%,
+            var(--toast-accent) 10%,
             transparent
         ) !important;
 }
