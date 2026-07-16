@@ -35,6 +35,25 @@ html body .main {
 }
 
 /*
+ * Keep the topbar aligned with the visible application windows.
+ * Page wrappers have horizontal gutters, so the topbar uses the same
+ * inner width instead of stretching edge-to-edge across the main area.
+ */
+html body .main > .topbar {
+    width: min(
+        calc(100% - (var(--xbfs-view-gutter-x) * 2)),
+        calc(var(--xbfs-view-max-width) - (var(--xbfs-view-gutter-x) * 2))
+    ) !important;
+    max-width: calc(var(--xbfs-view-max-width) - (var(--xbfs-view-gutter-x) * 2)) !important;
+    min-width: 0 !important;
+    margin:
+        0
+        auto
+        0 !important;
+    box-sizing: border-box !important;
+}
+
+/*
  * These are the first-level wrappers used by the project.
  * The rule does not modify internal tables, dialogs, or form widths.
  */
