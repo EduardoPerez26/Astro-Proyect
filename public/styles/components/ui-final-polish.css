@@ -8,7 +8,7 @@
    - compact SweetAlert toast notifications
    - System incident detail modal contrast and spacing
    - New User / Department modal width and two-column layout
-   - Property Schedules hero metric visibility
+   - Property Schedules hero metric visibility and contrast
    ========================================================= */
 
 :root {
@@ -729,29 +729,32 @@ html body .schedule-header-summary {
     gap: 11px !important;
 }
 
+html body .main .schedule-header .schedule-header-summary > div,
 html body .schedule-header-summary > div {
     min-width: 170px !important;
     min-height: 92px !important;
     padding: 16px 17px !important;
 
-    border: 1px solid #d8dde1 !important;
+    border: 1px solid rgba(255, 255, 255, .18) !important;
     border-radius: 13px !important;
 
-    background: #ffffff !important;
+    background: rgba(255, 255, 255, .08) !important;
     background-image: none !important;
 
     box-shadow: none !important;
 }
 
+html body .main .schedule-header .schedule-header-summary strong,
 html body .schedule-header-summary strong {
-    color: #15191d !important;
+    color: #ffffff !important;
     font-size: 27px !important;
     line-height: 1.05 !important;
 }
 
+html body .main .schedule-header .schedule-header-summary span,
 html body .schedule-header-summary span {
     margin-top: 8px !important;
-    color: #626c75 !important;
+    color: #c7cdd2 !important;
     font-size: 9px !important;
 }
 

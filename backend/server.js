@@ -3,11 +3,13 @@
 // SERVIDOR PRINCIPAL - EXPRESS
 // ============================================
 
-require('dotenv').config();
-
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+
+require('dotenv').config({
+    path: path.join(__dirname, '.env')
+});
 
 // Rutas
 const authRoutes = require('./routes/auth.routes');
@@ -22,6 +24,7 @@ const comparacionesRoutes = require('./routes/comparaciones.routes');
 const taxRatesRoutes = require('./routes/taxRates.routes');
 const propertyManagementRoutes = require('./routes/propertyManagement.routes');
 const chatRoutes = require('./routes/chat.routes');
+const chatbotRoutes = require('./routes/chatbot.routes');
 const notificacionesRoutes = require('./routes/notificaciones.routes');
 const prepaidRoutes = require('./routes/prepaid.routes');
 const { attachErrorNotificationCapture } = require('./middleware/error-notification.middleware');
@@ -126,6 +129,7 @@ app.get('/api', (req, res) => {
             dashboard: '/api/dashboard/resumen',
             propertyManagement: '/api/property-management',
             chat: '/api/chat',
+            chatbot: '/api/chatbot',
             notificaciones: '/api/notificaciones',
             systemErrors: '/api/notificaciones/system-errors',
             prepaids: '/api/prepaids'
@@ -146,6 +150,7 @@ app.use('/api/comparaciones', comparacionesRoutes);
 app.use('/api/tax-rates', taxRatesRoutes);
 app.use('/api/property-management', propertyManagementRoutes);
 app.use('/api/chat', chatRoutes);
+app.use('/api/chatbot', chatbotRoutes);
 app.use('/api/notificaciones', notificacionesRoutes);
 app.use('/api/prepaids', prepaidRoutes);
 

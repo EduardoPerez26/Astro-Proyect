@@ -14,6 +14,9 @@ const {
     checkPermission,
     requireDepartment
 } = require('../middleware/auth.middleware');
+const {
+    getIntacctConfigStatus
+} = require('../services/intacctConfig.service');
 
 const router = express.Router();
 const upload = multer({
@@ -31,6 +34,18 @@ const VALID_DOCUMENT_TYPES = new Set([
     'schedule_export',
     'supporting_file'
 ]);
+
+router.get('/intacct/status', ...access('propertyManagement', 'ver'), (req, res) => {
+    const status = getIntacctConfigStatus();
+
+    res.json({
+        success: true,
+        intacct: status,
+        next_step: status.ready
+            ? 'Install the Sage Intacct SDK and run a connection test.'
+            : 'Add the missing INTACCT_* values to the backend environment.'
+    });
+});
 
 function parseJson(value, fallback = null) {
     if (value === undefined || value === null || value === '') return fallback;
