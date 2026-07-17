@@ -38,7 +38,7 @@ function obtenerRutaInicial(usuario) {
 
     const acciones =
         permisos?.acciones
-        && typeof permisos.acciones === 'object'
+            && typeof permisos.acciones === 'object'
             ? permisos.acciones
             : {};
 
@@ -153,38 +153,59 @@ function limpiarSesionLocal() {
 }
 
 function guardarSesion(data, mantenerSesion) {
+    const token =
+        typeof data?.token === 'string'
+            ? data.token.trim()
+            : '';
+
+    const usuario =
+        data?.usuario &&
+            typeof data.usuario === 'object'
+            ? data.usuario
+            : null;
+
+    if (!token || !usuario?.id) {
+        throw new Error('El servidor no devolvi una sesion valida' +
+            'Falta el token o la informacion del usuario'
+        );
+    }
+
+    const sesion = {
+        ...data,
+        token,
+        usuario
+    };
+
     if (
         window.XBFSSessionPersistence &&
         typeof window.XBFSSessionPersistence.save === 'function'
     ) {
         window.XBFSSessionPersistence.save(
-            data,
+            sesion,
             Boolean(mantenerSesion)
         );
         return;
     }
 
-    localStorage.setItem('token', data.token);
-    localStorage.setItem(
-        'usuario',
-        JSON.stringify(data.usuario)
-    );
+    localStorage.setItem('token', token);
+    localStorage.setItem('usuario', JSON.stringify(usuario));
     localStorage.setItem('isLoggedIn', 'true');
-    localStorage.removeItem('modoOffline');
+    localStorage.removeItem('modoOffline')
 }
 
 async function mostrarVerificacionCodigo({
     mfaToken,
-    destino,
     mantenerSesion
 }) {
     const resultado = await Swal.fire({
         icon: 'info',
-        title: 'Verificación de identidad',
+        title: 'Microsoft Authenticator',
         html: `
-            <p>Enviamos un código de 6 dígitos a:</p>
-            <strong>${destino || 'tu correo registrado'}</strong>
-        `,
+    <p>
+        Ingresa el código de 6 dígitos generado
+        por tu aplicación de autenticación.
+    </p>
+`,
         input: 'text',
         inputPlaceholder: 'Código de 6 dígitos',
         inputAttributes: {
@@ -210,7 +231,7 @@ async function mostrarVerificacionCodigo({
 
             try {
                 const response = await fetch(
-                    `${API_URL}/auth/verificar-codigo`,
+                    `${API_URL}/auth/mfa/login`,
                     {
                         method: 'POST',
                         credentials: 'include',
@@ -219,11 +240,10 @@ async function mostrarVerificacionCodigo({
                         },
                         body: JSON.stringify({
                             mfaToken,
-                            codigo: codigoLimpio
+                            code: codigoLimpio
                         })
                     }
                 );
-
                 const data = await response
                     .json()
                     .catch(() => ({}));
@@ -267,51 +287,51 @@ async function mostrarVerificacionCodigo({
     });
 
     {
-                if (!rutaInicial) {
-                limpiarSesionLocal();
+        if (!rutaInicial) {
+            limpiarSesionLocal();
 
-                await Swal.fire({
-                    icon: 'warning',
-                    title: 'No available start page',
-                    text:
-                        'The account has no visible operational module. Review its View permissions and initial window.'
-                });
+            await Swal.fire({
+                icon: 'warning',
+                title: 'No available start page',
+                text:
+                    'The account has no visible operational module. Review its View permissions and initial window.'
+            });
 
-                return;
-            }
+            return;
+        }
 
-            const targetUrl = new URL(
-                rutaInicial,
-                window.location.origin
-            );
+        const targetUrl = new URL(
+            rutaInicial,
+            window.location.origin
+        );
 
-                const targetPath =
-                    targetUrl.pathname
-                        .replace(/\/+$/, '')
-                    || '/';
+        const targetPath =
+            targetUrl.pathname
+                .replace(/\/+$/, '')
+            || '/';
 
-                if (
-                    ['/', '/index', '/index.html']
-                        .includes(targetPath)
-                ) {
-                    limpiarSesionLocal();
+        if (
+            ['/', '/index', '/index.html']
+                .includes(targetPath)
+        ) {
+            limpiarSesionLocal();
 
-                    await Swal.fire({
-                        icon: 'warning',
-                        title: 'No initial page assigned',
-                        text:
-                            'Your account does not have an available start page. Contact an administrator to review its permissions.'
-                    });
+            await Swal.fire({
+                icon: 'warning',
+                title: 'No initial page assigned',
+                text:
+                    'Your account does not have an available start page. Contact an administrator to review its permissions.'
+            });
 
-                    return;
-                }
+            return;
+        }
 
-                window.location.replace(
-                    targetUrl.pathname
-                    + targetUrl.search
-                    + targetUrl.hash
-                );
-            }
+        window.location.replace(
+            targetUrl.pathname
+            + targetUrl.search
+            + targetUrl.hash
+        );
+    }
 }
 
 document.addEventListener(
@@ -430,10 +450,18 @@ document.addEventListener(
                         );
                     }
 
-                    if (data.requiere_verificacion) {
+                    if (
+                        data.mfa_required === true ||
+                        data.require_verificacion === true
+                    ) {
+                        if (!data.mfaToken) {
+                            throw new Error(
+                                'El servidor solicito MFA, pero no devolvio un token de verificacion.'
+                            )
+                        }
+
                         await mostrarVerificacionCodigo({
                             mfaToken: data.mfaToken,
-                            destino: data.destino,
                             mantenerSesion
                         });
                         return;
@@ -457,51 +485,51 @@ document.addEventListener(
                     });
 
                     {
-                if (!rutaInicial) {
-                limpiarSesionLocal();
+                        if (!rutaInicial) {
+                            limpiarSesionLocal();
 
-                await Swal.fire({
-                    icon: 'warning',
-                    title: 'No available start page',
-                    text:
-                        'The account has no visible operational module. Review its View permissions and initial window.'
-                });
+                            await Swal.fire({
+                                icon: 'warning',
+                                title: 'No available start page',
+                                text:
+                                    'The account has no visible operational module. Review its View permissions and initial window.'
+                            });
 
-                return;
-            }
+                            return;
+                        }
 
-            const targetUrl = new URL(
-                rutaInicial,
-                window.location.origin
-            );
+                        const targetUrl = new URL(
+                            rutaInicial,
+                            window.location.origin
+                        );
 
-                const targetPath =
-                    targetUrl.pathname
-                        .replace(/\/+$/, '')
-                    || '/';
+                        const targetPath =
+                            targetUrl.pathname
+                                .replace(/\/+$/, '')
+                            || '/';
 
-                if (
-                    ['/', '/index', '/index.html']
-                        .includes(targetPath)
-                ) {
-                    limpiarSesionLocal();
+                        if (
+                            ['/', '/index', '/index.html']
+                                .includes(targetPath)
+                        ) {
+                            limpiarSesionLocal();
 
-                    await Swal.fire({
-                        icon: 'warning',
-                        title: 'No initial page assigned',
-                        text:
-                            'Your account does not have an available start page. Contact an administrator to review its permissions.'
-                    });
+                            await Swal.fire({
+                                icon: 'warning',
+                                title: 'No initial page assigned',
+                                text:
+                                    'Your account does not have an available start page. Contact an administrator to review its permissions.'
+                            });
 
-                    return;
-                }
+                            return;
+                        }
 
-                window.location.replace(
-                    targetUrl.pathname
-                    + targetUrl.search
-                    + targetUrl.hash
-                );
-            }
+                        window.location.replace(
+                            targetUrl.pathname
+                            + targetUrl.search
+                            + targetUrl.hash
+                        );
+                    }
                 } catch (error) {
                     console.error(
                         'Error de login:',
@@ -639,22 +667,22 @@ async function verificarSesion(token) {
             obtenerRutaInicial(usuario);
 
         if (!rutaInicial) {
-                limpiarSesionLocal();
+            limpiarSesionLocal();
 
-                await Swal.fire({
-                    icon: 'warning',
-                    title: 'No available start page',
-                    text:
-                        'The account has no visible operational module. Review its View permissions and initial window.'
-                });
+            await Swal.fire({
+                icon: 'warning',
+                title: 'No available start page',
+                text:
+                    'The account has no visible operational module. Review its View permissions and initial window.'
+            });
 
-                return;
-            }
+            return;
+        }
 
-            const targetUrl = new URL(
-                rutaInicial,
-                window.location.origin
-            );
+        const targetUrl = new URL(
+            rutaInicial,
+            window.location.origin
+        );
 
         const currentPath =
             window.location.pathname
