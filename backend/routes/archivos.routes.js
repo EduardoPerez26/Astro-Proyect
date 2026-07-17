@@ -59,10 +59,6 @@ function cargarArchivoExcel(req, res, next) {
     });
 }
 
-function debeFiltrarPorDepartment(req) {
-    return req.usuario?.rol !== 'superadmin' && Boolean(req.departamento?.id);
-}
-
 async function registrarVersionDocumento({
     archivoId,
     req,
@@ -159,33 +155,14 @@ async function registrarVersionDocumento({
     }
 }
 
+// Documents are exclusively an Accounts Receivable workflow (Property Management
+// has its own separate documents table), so no department filtering applies here.
 async function obtenerArchivoPorId(req, archivoId) {
-    if (!debeFiltrarPorDepartment(req)) {
-        const [archivos] = await pool.query(
-            'SELECT * FROM archivos_excel WHERE id = ?',
-            [archivoId]
-        );
-        return archivos;
-    }
-
-    try {
-        const [archivos] = await pool.query(
-            `SELECT *
-             FROM archivos_excel
-             WHERE id = ?
-               AND (departamento_id = ? OR departamento_id IS NULL)`,
-            [archivoId, req.departamento.id]
-        );
-        return archivos;
-    } catch (error) {
-        if (error.code !== 'ER_BAD_FIELD_ERROR') throw error;
-
-        const [archivos] = await pool.query(
-            'SELECT * FROM archivos_excel WHERE id = ?',
-            [archivoId]
-        );
-        return archivos;
-    }
+    const [archivos] = await pool.query(
+        'SELECT * FROM archivos_excel WHERE id = ?',
+        [archivoId]
+    );
+    return archivos;
 }
 
 router.get(
@@ -195,13 +172,10 @@ router.get(
     async (req, res) => {
         try {
 
+            // Documents are exclusively an Accounts Receivable workflow (Property
+            // Management has its own separate documents table), so every AR user
+            // sees the full list without department filtering.
             let rows;
-            const whereDepartment = debeFiltrarPorDepartment(req)
-                ? 'WHERE (a.departamento_id = ? OR a.departamento_id IS NULL)'
-                : '';
-            const paramsDepartment = debeFiltrarPorDepartment(req)
-                ? [req.departamento.id]
-                : [];
 
             try {
                 [rows] = await pool.query(`
@@ -232,9 +206,8 @@ router.get(
                         ON r.id = a.restaurante_id
                     LEFT JOIN usuarios u
                         ON u.id = a.usuario_id
-                    ${whereDepartment}
                     ORDER BY a.id DESC
-                `, paramsDepartment);
+                `);
             } catch (error) {
                 if (error.code !== 'ER_BAD_FIELD_ERROR') throw error;
 

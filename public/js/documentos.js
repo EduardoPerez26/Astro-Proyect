@@ -761,21 +761,25 @@ async function administrarCicloDocumento(id) {
 
         const controls = canEdit ? `
             <section class="corporate-lifecycle-controls">
-                <label for="documentWorkflowStatus">New status</label>
-                <select id="documentWorkflowStatus" class="swal2-select">
-                    ${[
-                        ['draft', 'Draft'],
-                        ['uploaded', 'Uploaded'],
-                        ['under_review', 'Under review'],
-                        ['changes_requested', 'Changes requested'],
-                        ['approved', 'Approved'],
-                        ['posted', 'Posted'],
-                        ['archived', 'Archived'],
-                        ['rejected', 'Rejected']
-                    ].map(([value, label]) => `<option value="${value}" ${value === currentStatus ? 'selected' : ''}>${label}</option>`).join('')}
-                </select>
-                <label for="documentWorkflowNotes">Decision comment</label>
-                <textarea id="documentWorkflowNotes" class="swal2-textarea" maxlength="5000" placeholder="Add review evidence, approval notes, or a rejection reason."></textarea>
+                <div class="corporate-lifecycle-field">
+                    <label for="documentWorkflowStatus">New status</label>
+                    <select id="documentWorkflowStatus" class="swal2-select">
+                        ${[
+                            ['draft', 'Draft'],
+                            ['uploaded', 'Uploaded'],
+                            ['under_review', 'Under review'],
+                            ['changes_requested', 'Changes requested'],
+                            ['approved', 'Approved'],
+                            ['posted', 'Posted'],
+                            ['archived', 'Archived'],
+                            ['rejected', 'Rejected']
+                        ].map(([value, label]) => `<option value="${value}" ${value === currentStatus ? 'selected' : ''}>${label}</option>`).join('')}
+                    </select>
+                </div>
+                <div class="corporate-lifecycle-field">
+                    <label for="documentWorkflowNotes">Decision comment</label>
+                    <textarea id="documentWorkflowNotes" class="swal2-textarea" maxlength="5000" placeholder="Add review evidence, approval notes, or a rejection reason."></textarea>
+                </div>
                 ${canCreate ? '<button type="button" id="createDocumentVersion" class="corporate-inline-action"><i class="fa-solid fa-plus"></i> Create draft version</button>' : ''}
             </section>
         ` : '';

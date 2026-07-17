@@ -46,11 +46,7 @@ button,
     text-shadow: none !important;
 }
 
-button:not(.swal2-close):not(.sidebar-toggle):not(.menu-toggle):not(.notification-toggle),
-.btn,
-[class*="-button"] {
-    background-image: none !important;
-}
+
 
 input,
 select,

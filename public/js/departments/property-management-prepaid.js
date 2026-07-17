@@ -1690,7 +1690,7 @@ async function loadScheduleDetail(scheduleId) {
 
     els.selectedScheduleTitle.textContent = detail.schedule?.title || 'Schedule Detail';
     els.selectedScheduleSubtitle.textContent = `Group ${detail.schedule?.brand || ''} - PTAX ${detail.schedule?.tax_year || ''} - ${shortDate(detail.schedule?.amortization_start)} to ${shortDate(detail.schedule?.amortization_end)} - ${detail.schedule?.status || ''}`;
-    els.exportScheduleBtn.disabled = !state.bills.length;
+    if (els.exportScheduleBtn) els.exportScheduleBtn.disabled = !state.bills.length;
     if (els.glScheduleSelect) els.glScheduleSelect.value = String(scheduleId);
 
     renderKpis(detail.summary || {});

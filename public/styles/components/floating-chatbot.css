@@ -7,6 +7,7 @@
 }
 
 .floating-chatbot-toggle {
+    position: relative;
     display: grid;
     width: 56px;
     height: 56px;
@@ -21,12 +22,109 @@
     cursor: pointer;
 }
 
+/* Franchie's grand entrance right after login. */
+.floating-chatbot-toggle.is-entrance {
+    animation: franchie-entrance .9s cubic-bezier(.34, 1.56, .64, 1) both;
+}
+
+.floating-chatbot-toggle.is-entrance::after {
+    content: "";
+    position: absolute;
+    inset: -8px;
+    border: 2px solid rgba(0, 0, 0, .3);
+    border-radius: 50%;
+    animation: franchie-ping .9s ease-out both;
+}
+
+@keyframes franchie-entrance {
+    0% { transform: scale(0) rotate(-60deg); opacity: 0; }
+    55% { transform: scale(1.18) rotate(10deg); opacity: 1; }
+    75% { transform: scale(.94) rotate(-5deg); }
+    100% { transform: scale(1) rotate(0deg); }
+}
+
+@keyframes franchie-ping {
+    0% { transform: scale(.6); opacity: .9; }
+    100% { transform: scale(1.7); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .floating-chatbot-toggle.is-entrance,
+    .floating-chatbot-toggle.is-entrance::after {
+        animation: none;
+    }
+}
+
 .floating-chatbot-toggle:hover {
     background: #171717;
 }
 
 .floating-chatbot-toggle i {
     font-size: 18px;
+}
+
+/* Franchie mascot */
+.floating-chatbot-mascot {
+    --franchie-ink: #15191d;
+    display: grid;
+    place-items: center;
+    color: #ffffff;
+}
+
+.floating-chatbot-mascot-svg {
+    width: 30px;
+    height: 30px;
+}
+
+.floating-chatbot-toggle .floating-chatbot-mascot-svg {
+    animation: franchie-bob 2.6s ease-in-out infinite;
+}
+
+@keyframes franchie-bob {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-2px) rotate(-3deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .floating-chatbot-toggle .floating-chatbot-mascot-svg {
+        animation: none;
+    }
+}
+
+.floating-chatbot-header .floating-chatbot-header-identity {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.floating-chatbot-header-identity > div {
+    display: grid;
+    gap: 3px;
+}
+
+.floating-chatbot-mascot--header {
+    flex: 0 0 auto;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, .12);
+}
+
+.floating-chatbot-mascot--header .floating-chatbot-mascot-svg {
+    width: 22px;
+    height: 22px;
+}
+
+.floating-chatbot-mascot--empty {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: #111111;
+}
+
+.floating-chatbot-mascot--empty .floating-chatbot-mascot-svg {
+    width: 36px;
+    height: 36px;
 }
 
 .floating-chatbot-panel {
@@ -42,10 +140,23 @@
     border-radius: 16px;
     background: #ffffff;
     box-shadow: 0 26px 76px -42px rgba(0, 0, 0, .82);
+    transform-origin: bottom right;
+    animation: franchie-panel-in .26s ease both;
 }
 
 .floating-chatbot-panel[hidden] {
     display: none;
+}
+
+@keyframes franchie-panel-in {
+    from { transform: scale(.94) translateY(10px); opacity: 0; }
+    to { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .floating-chatbot-panel {
+        animation: none;
+    }
 }
 
 .floating-chatbot-header {

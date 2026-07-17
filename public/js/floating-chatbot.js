@@ -1,6 +1,20 @@
 (function () {
     const STORAGE_KEY = 'xbfsFloatingChatbotMessages';
     const MAX_STORED_MESSAGES = 12;
+    const CLEAR_AT_KEY = 'xbfsFloatingChatbotClearAt';
+    const CONVERSATION_TTL_MS = 5 * 60 * 1000;
+    let autoClearTimer = null;
+
+    const MASCOT_SVG = `
+        <svg class="floating-chatbot-mascot-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <line x1="12" y1="2" x2="12" y2="4.2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+            <circle cx="12" cy="1.6" r="1.1" fill="currentColor"/>
+            <circle class="floating-chatbot-mascot-face" cx="12" cy="13" r="9.5" fill="currentColor"/>
+            <circle cx="8.6" cy="11.8" r="1.4" fill="var(--franchie-ink, #15191d)"/>
+            <circle cx="15.4" cy="11.8" r="1.4" fill="var(--franchie-ink, #15191d)"/>
+            <path d="M8 15.4c1.2 1.6 2.6 2.4 4 2.4s2.8-.8 4-2.4" stroke="var(--franchie-ink, #15191d)" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+        </svg>
+    `;
 
     const state = {
         isOpen: false,
@@ -22,22 +36,25 @@
                 type="button"
                 class="floating-chatbot-toggle"
                 id="floatingChatbotToggle"
-                aria-label="Open AI assistant"
-                title="AI assistant"
+                aria-label="Open Franchie, your AI assistant"
+                title="Franchie"
             >
-                <i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i>
+                <span class="floating-chatbot-mascot">${MASCOT_SVG}</span>
             </button>
 
             <section
                 class="floating-chatbot-panel"
                 id="floatingChatbotPanel"
-                aria-label="AI assistant"
+                aria-label="Franchie, your AI assistant"
                 hidden
             >
                 <header class="floating-chatbot-header">
-                    <div>
-                        <strong>XBFS Assistant</strong>
-                        <span>AI support</span>
+                    <div class="floating-chatbot-header-identity">
+                        <span class="floating-chatbot-mascot floating-chatbot-mascot--header">${MASCOT_SVG}</span>
+                        <div>
+                            <strong>Franchie</strong>
+                            <span>Your XBFS assistant</span>
+                        </div>
                     </div>
 
                     <button
@@ -92,6 +109,103 @@
             ?.addEventListener('keydown', handleInputKeydown);
 
         renderMessages();
+        triggerLoginWelcome();
+        scheduleAutoClear();
+        window.addEventListener('beforeunload', () => {
+            if (autoClearTimer) window.clearTimeout(autoClearTimer);
+        });
+    }
+
+    function scheduleAutoClear() {
+        let clearAt = Number(localStorage.getItem(CLEAR_AT_KEY) || 0);
+        const now = Date.now();
+
+        if (!clearAt || Number.isNaN(clearAt)) {
+            clearAt = now + CONVERSATION_TTL_MS;
+            try {
+                localStorage.setItem(CLEAR_AT_KEY, String(clearAt));
+            } catch {
+                // Ignore storage failures; the timer still runs for this page view.
+            }
+        }
+
+        if (autoClearTimer) window.clearTimeout(autoClearTimer);
+
+        if (now >= clearAt) {
+            performAutoClear();
+            return;
+        }
+
+        autoClearTimer = window.setTimeout(performAutoClear, clearAt - now);
+    }
+
+    function performAutoClear() {
+        const hasUserActivity = state.messages.some(message => message.role === 'user');
+
+        if (hasUserActivity) {
+            state.messages = [];
+            saveMessages();
+            renderMessages();
+            addMessage(
+                'assistant',
+                "Just a heads-up: I clear our conversation every 5 minutes to keep things tidy. " +
+                "Feel free to ask me anything again!"
+            );
+        }
+
+        const nextClearAt = Date.now() + CONVERSATION_TTL_MS;
+        try {
+            localStorage.setItem(CLEAR_AT_KEY, String(nextClearAt));
+        } catch {
+            // Ignore storage failures; the next check will simply restart the countdown.
+        }
+        autoClearTimer = window.setTimeout(performAutoClear, CONVERSATION_TTL_MS);
+    }
+
+    function triggerLoginWelcome() {
+        let pending = false;
+        try {
+            pending = sessionStorage.getItem('franchieWelcomePending') === '1';
+            if (pending) sessionStorage.removeItem('franchieWelcomePending');
+        } catch {
+            pending = false;
+        }
+
+        if (!pending) return;
+
+        const toggle = document.getElementById('floatingChatbotToggle');
+        if (toggle) {
+            toggle.classList.add('is-entrance');
+            toggle.addEventListener(
+                'animationend',
+                () => toggle.classList.remove('is-entrance'),
+                { once: true }
+            );
+        }
+
+        window.setTimeout(() => {
+            openPanel();
+            addMessage('assistant', buildWelcomeMessage());
+        }, 900);
+    }
+
+    function buildWelcomeMessage() {
+        const firstName = getUserFirstName();
+        const greeting = firstName ? `Welcome back, ${firstName}!` : 'Welcome back!';
+
+        return `${greeting} I'm Franchie, your XBFS assistant. I can help you find any screen or answer ` +
+            'questions about reconciliations, documents, permissions, reports, or Property Management. ' +
+            'What can I help you with today?';
+    }
+
+    function getUserFirstName() {
+        try {
+            const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
+            const fullName = String(usuario?.nombre || '').trim();
+            return fullName ? fullName.split(/\s+/)[0] : '';
+        } catch {
+            return '';
+        }
     }
 
     function togglePanel() {
@@ -205,9 +319,9 @@
         if (!state.messages.length) {
             container.innerHTML = `
                 <div class="floating-chatbot-empty">
-                    <i class="fa-solid fa-sparkles" aria-hidden="true"></i>
-                    <strong>How can I help?</strong>
-                    <span>Ask about reconciliations, documents, permissions, or workflows.</span>
+                    <span class="floating-chatbot-mascot floating-chatbot-mascot--empty">${MASCOT_SVG}</span>
+                    <strong>Hi, I'm Franchie!</strong>
+                    <span>Ask me about reconciliations, documents, permissions, or any workflow in the app.</span>
                 </div>
             `;
             return;

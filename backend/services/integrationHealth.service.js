@@ -112,7 +112,70 @@ function checkSmtp() {
     });
 }
 
-function checkOpenAi() {
+function checkAiAssistant() {
+    const provider = String(process.env.AI_PROVIDER || 'openai').trim().toLowerCase();
+
+    if (provider === 'ollama') {
+        return runProbe(async () => {
+            const base = String(process.env.OLLAMA_URL || 'http://127.0.0.1:11434/api/chat').replace(/\/api\/chat$/, '');
+            const response = await fetchWithTimeout(`${base}/api/tags`, { headers: { Accept: 'application/json' } });
+            if (!response.ok) {
+                return { status: STATUS.WARNING, detail: `Ollama responded with HTTP ${response.status}.`, configured: true };
+            }
+            return { status: STATUS.ONLINE, detail: 'Ollama is reachable and serving local models.', configured: true };
+        });
+    }
+
+    if (provider === 'gemini') {
+        const apiKey = String(process.env.GEMINI_API_KEY || '').trim();
+        if (!apiKey) {
+            return Promise.resolve({
+                status: STATUS.WARNING,
+                detail: 'GEMINI_API_KEY is not set. The AI assistant is disabled.',
+                latency_ms: null,
+                configured: false
+            });
+        }
+        return runProbe(async () => {
+            const response = await fetchWithTimeout(
+                `https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(apiKey)}`
+            );
+            if (!response.ok) {
+                return {
+                    status: response.status === 400 || response.status === 401 ? STATUS.OFFLINE : STATUS.WARNING,
+                    detail: `Gemini responded with HTTP ${response.status}.`,
+                    configured: true
+                };
+            }
+            return { status: STATUS.ONLINE, detail: 'Gemini API key is valid and the service is reachable.', configured: true };
+        });
+    }
+
+    if (provider === 'claude' || provider === 'anthropic') {
+        const apiKey = String(process.env.ANTHROPIC_API_KEY || '').trim();
+        if (!apiKey) {
+            return Promise.resolve({
+                status: STATUS.WARNING,
+                detail: 'ANTHROPIC_API_KEY is not set. The AI assistant is disabled.',
+                latency_ms: null,
+                configured: false
+            });
+        }
+        return runProbe(async () => {
+            const response = await fetchWithTimeout('https://api.anthropic.com/v1/models', {
+                headers: { 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' }
+            });
+            if (!response.ok) {
+                return {
+                    status: response.status === 401 ? STATUS.OFFLINE : STATUS.WARNING,
+                    detail: `Claude responded with HTTP ${response.status}.`,
+                    configured: true
+                };
+            }
+            return { status: STATUS.ONLINE, detail: 'Claude API key is valid and the service is reachable.', configured: true };
+        });
+    }
+
     const apiKey = String(process.env.OPENAI_API_KEY || '').trim();
     if (!apiKey) {
         return Promise.resolve({
@@ -152,11 +215,24 @@ function checkCdtfa() {
 // -----------------------------------------------------------------------------
 // Aggregate monitor
 // -----------------------------------------------------------------------------
+const AI_PROVIDER_LABELS = {
+    openai: 'OpenAI',
+    gemini: 'Gemini',
+    claude: 'Claude',
+    anthropic: 'Claude',
+    ollama: 'Ollama'
+};
+
+function aiAssistantName() {
+    const provider = String(process.env.AI_PROVIDER || 'openai').trim().toLowerCase();
+    return AI_PROVIDER_LABELS[provider] || 'AI assistant';
+}
+
 const PROVIDERS = [
     { provider: 'database', name: 'Base de datos', icon: 'fa-database', probe: checkDatabase },
     { provider: 'sage-intacct', name: 'Sage Intacct', icon: 'fa-building-columns', probe: checkSageIntacct },
     { provider: 'smtp', name: 'SMTP', icon: 'fa-envelope', probe: checkSmtp },
-    { provider: 'openai', name: 'OpenAI', icon: 'fa-robot', probe: checkOpenAi },
+    { provider: 'ai-assistant', get name() { return aiAssistantName(); }, icon: 'fa-robot', probe: checkAiAssistant },
     { provider: 'cdtfa', name: 'CDTFA Tax API', icon: 'fa-percent', probe: checkCdtfa }
 ];
 

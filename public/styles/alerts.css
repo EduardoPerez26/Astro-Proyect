@@ -219,6 +219,19 @@ html body .swal2-popup.xbfs-alert-confirm:not(.xbfs-alert-preserve-layout) {
     width: min(500px, calc(100vw - 28px)) !important;
 }
 
+/* Rich, application-shaped dialogs (tables, forms, custom sections) still need
+   the same breathing room as the standard layout, just without the fixed
+   icon/label/input grid — their own markup handles internal structure. */
+html body .swal2-popup.xbfs-alert-complex:not(.xbfs-alert-preserve-layout) {
+    padding: 26px 28px 22px !important;
+    text-align: left !important;
+}
+
+html body .swal2-popup.xbfs-alert-complex:not(.xbfs-alert-preserve-layout)
+> .swal2-html-container.xbfs-swal-html {
+    margin-top: 16px !important;
+}
+
 html body .swal2-popup.xbfs-alert-form:not(.xbfs-alert-preserve-layout) {
     width: min(530px, calc(100vw - 28px)) !important;
 }

@@ -186,6 +186,12 @@ function guardarSesion(data, mantenerSesion) {
         usuario
     };
 
+    try {
+        sessionStorage.setItem('franchieWelcomePending', '1');
+    } catch {
+        // Ignore storage failures; Franchie simply skips the welcome animation.
+    }
+
     if (
         window.XBFSSessionPersistence &&
         typeof window.XBFSSessionPersistence.save === 'function'
@@ -200,7 +206,7 @@ function guardarSesion(data, mantenerSesion) {
     localStorage.setItem('token', token);
     localStorage.setItem('usuario', JSON.stringify(usuario));
     localStorage.setItem('isLoggedIn', 'true');
-    localStorage.removeItem('modoOffline')
+    localStorage.removeItem('modoOffline');
 }
 
 async function mostrarVerificacionCodigo({

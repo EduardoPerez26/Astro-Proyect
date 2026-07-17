@@ -31,6 +31,10 @@ const TABLAS_ADMIN_BASE_DATOS = [
     }
 ];
 
+function debeFiltrarPorDepartment(req) {
+    return req.usuario?.rol !== 'superadmin' && Boolean(req.departamento?.id);
+}
+
 function obtenerFechaDesde(periodo) {
     const dias = PERIODOS[periodo];
 
@@ -1325,6 +1329,19 @@ router.get('/system-health', verificarToken, checkPermission('systemCenter', 've
 
 router.get('/approval-center', verificarToken, checkPermission('view_approval_center'), async (req, res) => {
     try {
+        const filtrarPorDepartment = debeFiltrarPorDepartment(req);
+        const departmentId = req.departamento?.id || null;
+        const whereArchivos = filtrarPorDepartment
+            ? 'WHERE (a.departamento_id = ? OR a.departamento_id IS NULL)'
+            : '';
+        const wherePrepaid = filtrarPorDepartment
+            ? 'WHERE (departamento_id = ? OR departamento_id IS NULL)'
+            : '';
+        const whereProperty = filtrarPorDepartment
+            ? 'WHERE (s.departamento_id = ? OR s.departamento_id IS NULL)'
+            : '';
+        const paramsDepartment = filtrarPorDepartment ? [departmentId] : [];
+
         const [
             files,
             prepaidSchedules,
@@ -1346,9 +1363,10 @@ router.get('/approval-center', verificarToken, checkPermission('view_approval_ce
                  LEFT JOIN usuarios u ON u.id = a.usuario_id
                  LEFT JOIN departamentos d ON d.id = a.departamento_id
                  LEFT JOIN departamentos du ON du.id = u.departamento_id
+                 ${whereArchivos}
                  ORDER BY a.fecha_subida DESC, a.id DESC
                  LIMIT 500`,
-                [],
+                paramsDepartment,
                 []
             ),
             consultaSegura(
@@ -1364,9 +1382,10 @@ router.get('/approval-center', verificarToken, checkPermission('view_approval_ce
                         updated_at,
                         metadata_json
                  FROM prepaid_schedules
+                 ${wherePrepaid}
                  ORDER BY id DESC
                  LIMIT 500`,
-                [],
+                paramsDepartment,
                 []
             ),
             consultaSegura(
@@ -1386,9 +1405,10 @@ router.get('/approval-center', verificarToken, checkPermission('view_approval_ce
                  LEFT JOIN usuarios u ON u.id = s.usuario_id
                  LEFT JOIN departamentos d ON d.id = s.departamento_id
                  LEFT JOIN departamentos du ON du.id = u.departamento_id
+                 ${whereProperty}
                  ORDER BY COALESCE(s.fecha_actualizacion, s.fecha_creacion) DESC, s.id DESC
                  LIMIT 500`,
-                [],
+                paramsDepartment,
                 []
             ),
             consultaSegura(
