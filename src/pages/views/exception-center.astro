@@ -1,0 +1,67 @@
+---
+import DashboardLayout from '../../layouts/DashboardLayout.astro';
+import PageHeader from '../../components/corporate/PageHeader.astro';
+import MetricCard from '../../components/corporate/MetricCard.astro';
+---
+
+<DashboardLayout title="Exception center">
+    <div class="page-container corporate-page" data-corporate-center="exceptions">
+        <PageHeader
+            eyebrow="Governance & Control"
+            title="Exception center"
+            description="Prioritize material differences, assign ownership, document root cause, attach evidence, and verify resolution before closing."
+            icon="fa-triangle-exclamation"
+        >
+            <button slot="actions" id="exceptionRefresh" type="button"><i class="fa-solid fa-rotate"></i> Refresh</button>
+            <button slot="actions" id="exceptionExport" type="button"><i class="fa-solid fa-file-csv"></i> Export</button>
+        </PageHeader>
+
+        <section class="xb-metric-grid">
+            <MetricCard label="Open exceptions" value="0" meta="Awaiting resolution" icon="fa-folder-open" valueId="exceptionOpen" />
+            <MetricCard label="Critical" value="0" meta="Immediate attention" icon="fa-circle-exclamation" valueId="exceptionCritical" />
+            <MetricCard label="Overdue" value="0" meta="Past assigned SLA" icon="fa-clock" valueId="exceptionOverdue" />
+            <MetricCard label="Open exposure" value="$0" meta="Absolute monetary impact" icon="fa-dollar-sign" valueId="exceptionAmount" />
+        </section>
+
+        <section class="xb-split-grid">
+            <article class="xb-panel">
+                <header class="xb-panel__header">
+                    <div>
+                        <span class="xb-panel__eyebrow">Investigation queue</span>
+                        <h2>Operational exceptions</h2>
+                        <p>Severity is automatically calculated from the monetary amount unless explicitly selected.</p>
+                    </div>
+                </header>
+                <div class="xb-toolbar" data-saved-view-module="exceptions">
+                    <label class="xb-field xb-field--grow"><span>Search</span><input id="exceptionSearch" type="search" placeholder="Reference, title, account..." /></label>
+                    <label class="xb-field"><span>Status</span><select id="exceptionStatusFilter"><option value="all">All</option><option value="open">Open</option><option value="assigned">Assigned</option><option value="investigating">Investigating</option><option value="resolved">Resolved</option><option value="verified">Verified</option><option value="closed">Closed</option></select></label>
+                    <label class="xb-field"><span>Severity</span><select id="exceptionSeverityFilter"><option value="all">All</option><option value="critical">Critical</option><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option></select></label>
+                </div>
+                <div class="xb-table-wrap">
+                    <table class="xb-table">
+                        <thead><tr><th>Reference</th><th>Exception</th><th>Store / account</th><th>Amount</th><th>Owner</th><th>Due</th><th>Severity</th><th>Status</th><th>Action</th></tr></thead>
+                        <tbody id="exceptionBody"><tr><td colspan="9"><div class="xb-loading-state"><div><i class="fa-solid fa-spinner fa-spin"></i><strong>Loading exceptions</strong></div></div></td></tr></tbody>
+                    </table>
+                </div>
+            </article>
+
+            <aside class="xb-panel">
+                <header class="xb-panel__header"><div><span class="xb-panel__eyebrow">New investigation</span><h2>Record exception</h2><p>Create a controlled case with materiality and ownership.</p></div></header>
+                <div class="xb-panel__body">
+                    <form id="exceptionForm" class="xb-stack" data-track-changes>
+                        <label class="xb-field"><span>Title</span><input name="title" required maxlength="180" /></label>
+                        <label class="xb-field"><span>Description</span><textarea name="description" rows="4" required></textarea></label>
+                        <div class="xb-form-grid">
+                            <label class="xb-field"><span>Amount</span><input name="amount" type="number" step="0.01" value="0" /></label>
+                            <label class="xb-field"><span>Account</span><input name="account_code" /></label>
+                            <label class="xb-field"><span>Due date</span><input name="due_at" type="datetime-local" /></label>
+                            <label class="xb-field"><span>Severity</span><select name="severity"><option value="">Automatic</option><option value="critical">Critical</option><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option></select></label>
+                        </div>
+                        <button class="xb-button xb-button--primary" type="submit"><i class="fa-solid fa-plus"></i> Create exception</button>
+                    </form>
+                </div>
+            </aside>
+        </section>
+    </div>
+    <script src="/js/corporate-centers.js?v=20260717-corporate-v1" is:inline></script>
+</DashboardLayout>

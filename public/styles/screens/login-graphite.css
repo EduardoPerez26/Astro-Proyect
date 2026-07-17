@@ -1626,3 +1626,53 @@ html body .login-form-panel
             ) !important;
     }
 }
+
+
+.login-enterprise-access {
+    margin-top: 18px;
+}
+.login-enterprise-divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 0 0 14px;
+    color: #7a818c;
+    font-size: .72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+}
+.login-enterprise-divider::before,
+.login-enterprise-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: #dfe3e8;
+}
+.login-enterprise-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    min-height: 48px;
+    border: 1px solid #cfd4dc;
+    border-radius: 8px;
+    background: #fff;
+    color: #17191d;
+    font: inherit;
+    font-weight: 750;
+    cursor: pointer;
+    transition: border-color .18s ease, background .18s ease;
+}
+.login-enterprise-button:hover { border-color: #858d99; background: #f7f8fa; }
+.login-enterprise-button:disabled { cursor: wait; opacity: .7; }
+.login-enterprise-button i { font-size: 1.05rem; }
+.login-enterprise-access > small {
+    display: block;
+    margin-top: 8px;
+    color: #757d88;
+    font-size: .72rem;
+    line-height: 1.45;
+    text-align: center;
+}

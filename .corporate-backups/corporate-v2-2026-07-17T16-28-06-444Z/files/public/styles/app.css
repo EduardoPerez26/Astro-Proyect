@@ -1,0 +1,18 @@
+/* XBFS modular stylesheet entry point.
+   This version preserves every legacy base/theme rule in its original order.
+   Alerts, modals, components, and page styles remain separate files. */
+@import url("/styles/system/01-variables-y-reset.css?v=20260714-style-repair-v2");
+@import url("/styles/system/02-responsive.css?v=20260714-style-repair-v2");
+@import url("/styles/system/03-plataforma-global-y-sistema-unico-de-modales.css?v=20260714-style-repair-v2");
+@import url("/styles/system/04-profile-simple-tab-redesign.css?v=20260714-style-repair-v2");
+@import url("/styles/theme/01-modern-blue-theme-global-visual-layer-for-xbfs-operations-hub.css?v=20260714-style-repair-v2");
+@import url("/styles/theme/02-final-force-layer-make-every-screen-match-the-clean-sidebar-syst.css?v=20260714-style-repair-v2");
+@import url("/styles/theme/03-topbar-and-remaining-screen-cleanup.css?v=20260714-style-repair-v2");
+@import url("/styles/theme/04-2026-06-30-final-pass-stable-sidebar-alerts-modals-and-topbar.css?v=20260714-style-repair-v2");
+@import url("/styles/theme/05-2026-07-01-dashboard-page-sizing-and-upload-window-repairs.css?v=20260714-style-repair-v2");
+@import url("/styles/theme/06-login-logo-refresh.css?v=20260714-style-repair-v2");
+@import url("/styles/theme/07-prepaid-bill-source-generator-scoped-to-views-departments-prepai.css?v=20260714-style-repair-v2");
+@import url("/styles/theme/08-documents-page-force-system-errors-visual-language-after-global-.css?v=20260714-style-repair-v2");
+@import url("/styles/components/sidebar.css?v=20260714-style-repair-v2");
+@import url("/styles/components/store-card.css?v=20260714-style-repair-v2");
+@import url("/styles/theme/10-typography-consistency.css?v=20260716-readable-type-v1");

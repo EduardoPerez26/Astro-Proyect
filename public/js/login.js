@@ -4,6 +4,14 @@ const API_URL = window.API_URL;
 function obtenerRutaInicial(usuario) {
     const rutas = {
         dashboardAdmin: '/views/dashboard-admin',
+        systemCenter: '/views/system-center',
+        approvalCenter: '/views/approval-center',
+        closeCenter: '/views/close-center',
+        exceptionCenter: '/views/exception-center',
+        reportCenter: '/views/report-center',
+        auditCenter: '/views/audit-center',
+        integrationCenter: '/views/integration-center',
+        governanceSettings: '/views/governance-center',
         systemErrors: '/views/system-errors',
         tiendas: '/views/tiendas',
         documentos: '/views/documentos',
@@ -94,7 +102,14 @@ function obtenerRutaInicial(usuario) {
         'propertyManagement',
         'propertyManagementDocuments',
         'chat',
+        'closeCenter',
+        'exceptionCenter',
+        'reportCenter',
         'dashboardAdmin',
+        'systemCenter',
+        'auditCenter',
+        'integrationCenter',
+        'governanceSettings',
         'systemErrors'
     ];
 
@@ -165,8 +180,9 @@ function guardarSesion(data, mantenerSesion) {
             : null;
 
     if (!token || !usuario?.id) {
-        throw new Error('El servidor no devolvi una sesion valida' +
-            'Falta el token o la informacion del usuario'
+        throw new Error(
+            'El servidor no devolvió una sesión válida. ' +
+            'Falta el token o la información del usuario.'
         );
     }
 
@@ -334,9 +350,117 @@ async function mostrarVerificacionCodigo({
     }
 }
 
+
+function limpiarParametrosEntra() {
+    const url = new URL(window.location.href);
+    url.searchParams.delete('entra_ticket');
+    url.searchParams.delete('entra_error');
+    window.history.replaceState({}, document.title, url.pathname + url.search + url.hash);
+}
+
+function mensajeErrorEntra(code) {
+    const messages = {
+        'not-configured': 'Microsoft corporate access is not configured on the server.',
+        'access-denied': 'Microsoft sign-in was cancelled or denied.',
+        'account-not-provisioned': 'Your Microsoft account is valid, but it is not linked to an active user in this system.',
+        'department-inactive': 'Your department is inactive. Contact an administrator.',
+        'callback-invalid': 'The Microsoft sign-in response was incomplete.',
+        'ENTRA_DOMAIN_NOT_ALLOWED': 'This Microsoft account domain is not authorized.',
+        'ENTRA_STATE_INVALID': 'The Microsoft sign-in session could not be validated.',
+        'ENTRA_NONCE_INVALID': 'The Microsoft identity response could not be validated.'
+    };
+    return messages[code] || 'Microsoft sign-in could not be completed. Try again or use your local credentials.';
+}
+
+async function procesarRetornoEntra() {
+    const params = new URLSearchParams(window.location.search);
+    const errorCode = params.get('entra_error');
+    const ticket = params.get('entra_ticket');
+
+    if (errorCode) {
+        limpiarParametrosEntra();
+        await Swal.fire({
+            icon: 'error',
+            title: 'Microsoft sign-in unavailable',
+            text: mensajeErrorEntra(errorCode),
+            confirmButtonColor: '#17191c'
+        });
+        return false;
+    }
+
+    if (!ticket) return false;
+
+    try {
+        const response = await fetch(`${API_URL}/auth/entra/exchange`, {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ticket })
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok || data.error) {
+            throw new Error(data.mensaje || data.message || 'Microsoft sign-in ticket is invalid or expired.');
+        }
+
+        const persistent = data.session?.mode === 'persistent';
+        guardarSesion(data, persistent);
+        limpiarParametrosEntra();
+
+        const rutaInicial = obtenerRutaInicial(data.usuario);
+        if (!rutaInicial) {
+            limpiarSesionLocal();
+            throw new Error('The account has no visible operational module assigned.');
+        }
+
+        await Swal.fire({
+            icon: 'success',
+            title: 'Corporate access confirmed',
+            text: `Welcome, ${data.usuario.nombre}`,
+            timer: 1100,
+            showConfirmButton: false
+        });
+
+        window.location.replace(rutaInicial);
+        return true;
+    } catch (error) {
+        limpiarParametrosEntra();
+        await Swal.fire({
+            icon: 'error',
+            title: 'Microsoft sign-in failed',
+            text: error.message || 'The corporate session could not be created.',
+            confirmButtonColor: '#17191c'
+        });
+        return false;
+    }
+}
+
+async function configurarInicioEntra(rememberSessionInput) {
+    const block = document.getElementById('entraLoginBlock');
+    const button = document.getElementById('entraLoginBtn');
+    if (!block || !button || !API_URL) return;
+
+    try {
+        const response = await fetch(`${API_URL}/auth/entra/config`, {
+            credentials: 'include'
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok || data.enabled !== true) return;
+
+        block.hidden = false;
+        button.addEventListener('click', () => {
+            button.disabled = true;
+            button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i><span>Opening Microsoft...</span>';
+            const remember = Boolean(rememberSessionInput?.checked);
+            window.location.assign(`${API_URL}/auth/entra/login?remember=${remember}`);
+        });
+    } catch (error) {
+        console.warn('Microsoft Entra configuration could not be loaded:', error);
+    }
+}
+
 document.addEventListener(
     'DOMContentLoaded',
-    function () {
+    async function () {
         const loginForm =
             document.getElementById('loginForm');
 
@@ -354,6 +478,10 @@ document.addEventListener(
 
         const rememberSessionInput =
             document.getElementById('rememberSession');
+
+        await configurarInicioEntra(rememberSessionInput);
+        const entraHandled = await procesarRetornoEntra();
+        if (entraHandled) return;
 
         const token = localStorage.getItem('token');
 

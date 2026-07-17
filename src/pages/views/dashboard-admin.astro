@@ -141,6 +141,51 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
             </article>
         </section>
 
+        <section class="corporate-command-overview" id="corporateExecutiveSummary" aria-label="Corporate control summary">
+            <header class="corporate-command-header">
+                <div>
+                    <span>GOVERNANCE &amp; CONTROL</span>
+                    <h2>Corporate operating status</h2>
+                    <p>Close execution, financial exceptions, document workflow, scheduled reporting, and integration reliability.</p>
+                </div>
+                <a href="/views/close-center" class="corporate-command-link">Open control center <i class="fa-solid fa-arrow-right"></i></a>
+            </header>
+
+            <div class="corporate-command-metrics">
+                <a href="/views/close-center" class="corporate-command-metric">
+                    <span><i class="fa-solid fa-calendar-check"></i> Close completion</span>
+                    <strong id="corporateCloseRate">0%</strong>
+                    <div class="corporate-command-progress"><i id="corporateCloseBar"></i></div>
+                    <small id="corporateCloseMeta">No close tasks configured</small>
+                </a>
+                <a href="/views/exception-center" class="corporate-command-metric">
+                    <span><i class="fa-solid fa-triangle-exclamation"></i> Open exceptions</span>
+                    <strong id="corporateOpenExceptions">0</strong>
+                    <small id="corporateCriticalExceptions">0 critical</small>
+                </a>
+                <a href="/views/exception-center" class="corporate-command-metric">
+                    <span><i class="fa-solid fa-scale-balanced"></i> Financial exposure</span>
+                    <strong id="corporateExposure">$0</strong>
+                    <small id="corporateExposureMeta">Open exception exposure</small>
+                </a>
+                <a href="/views/documentos" class="corporate-command-metric">
+                    <span><i class="fa-solid fa-code-branch"></i> Under review</span>
+                    <strong id="corporateDocumentsReview">0</strong>
+                    <small id="corporateDocumentsMeta">0 changes requested</small>
+                </a>
+                <a href="/views/report-center" class="corporate-command-metric">
+                    <span><i class="fa-solid fa-file-waveform"></i> Active reports</span>
+                    <strong id="corporateScheduledReports">0</strong>
+                    <small id="corporateReportsMeta">0 currently due</small>
+                </a>
+                <a href="/views/integration-center" class="corporate-command-metric">
+                    <span><i class="fa-solid fa-plug-circle-check"></i> Integrations</span>
+                    <strong id="corporateIntegrationHealth">Healthy</strong>
+                    <small id="corporateIntegrationMeta">0 runs in 30 days</small>
+                </a>
+            </div>
+        </section>
+
         <section class="admin-overview-grid" aria-label="Administrative overview">
             <article class="admin-dashboard-panel admin-coverage-panel">
                 <header class="admin-panel-header">
@@ -255,4 +300,5 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
     </div>
 
     <script src="/js/dashboard-admin.js?v=20260716-admin-dashboard-movements-v2" is:inline></script>
+    <script src="/js/corporate-dashboard.js?v=20260717-corporate-summary-v1" is:inline></script>
 </DashboardLayout>

@@ -23,6 +23,16 @@ const OPTIONAL_INTEGRATIONS = [
         ]
     },
     {
+        name: 'Microsoft Entra ID',
+        enabledBy: 'ENTRA_CLIENT_ID',
+        keys: [
+            'ENTRA_TENANT_ID',
+            'ENTRA_CLIENT_ID',
+            'ENTRA_CLIENT_SECRET',
+            'ENTRA_REDIRECT_URI'
+        ]
+    },
+    {
         name: 'AI assistant',
         enabledBy: 'AI_PROVIDER',
         keys: ['OPENAI_API_KEY', 'GEMINI_API_KEY', 'ANTHROPIC_API_KEY']

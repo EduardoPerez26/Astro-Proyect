@@ -338,6 +338,9 @@ function mostrarDocumentos() {
 <button class="action-btn view" onclick="verDetalles(${doc.id})" title="View details">
     <i class="fa-solid fa-circle-info"></i>
 </button>
+<button class="action-btn view" onclick="administrarCicloDocumento(${doc.id})" title="Version and approval history">
+    <i class="fa-solid fa-code-branch"></i>
+</button>
                     <button class="action-btn download" onclick="descargarArchivo(${doc.id})" title="Download" ${canExport ? '' : 'hidden'}>
                         <i class="fa-solid fa-download"></i>
                     </button>
@@ -686,6 +689,199 @@ async function eliminarArchivo(id) {
     }
 }
 
+
+function escaparCicloDocumento(value) {
+    return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
+function fechaCicloDocumento(value) {
+    if (!value) return 'Not recorded';
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) return escaparCicloDocumento(value);
+    return parsed.toLocaleString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
+
+async function administrarCicloDocumento(id) {
+    const token = localStorage.getItem('token');
+    const canEdit = window.AppPermissions?.can('documentos', 'editar') === true;
+    const canCreate = window.AppPermissions?.can('documentos', 'crear') === true;
+
+    try {
+        const response = await fetch(`${window.API_URL}/corporate/documents/${id}/lifecycle`, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        const data = await response.json().catch(() => ({}));
+
+        if (!response.ok || data.success === false) {
+            throw new Error(data.message || 'The document history could not be loaded.');
+        }
+
+        const versions = Array.isArray(data.versions) ? data.versions : [];
+        const events = Array.isArray(data.events) ? data.events : [];
+        const latest = versions[0] || null;
+        const currentStatus = latest?.workflow_status || documentos.find(item => Number(item.id) === Number(id))?.estado || 'uploaded';
+
+        const versionRows = versions.length
+            ? versions.map(version => `
+                <article class="corporate-lifecycle-version">
+                    <div>
+                        <strong>Version ${Number(version.version_number || 1)}</strong>
+                        <span class="status-badge ${escaparCicloDocumento(version.workflow_status)}">${escaparCicloDocumento(formatearStatus(version.workflow_status))}</span>
+                    </div>
+                    <small>${escaparCicloDocumento(version.source_filename || 'Registered file')} · ${fechaCicloDocumento(version.created_at)}</small>
+                    <small>Owner: ${escaparCicloDocumento(version.owner_name || 'Not assigned')}</small>
+                    ${version.file_hash ? `<code title="SHA-256">${escaparCicloDocumento(String(version.file_hash).slice(0, 20))}…</code>` : ''}
+                </article>
+            `).join('')
+            : '<p class="corporate-lifecycle-empty">No version history has been recorded yet.</p>';
+
+        const eventRows = events.length
+            ? events.slice(0, 12).map(event => `
+                <li>
+                    <span class="corporate-lifecycle-dot"></span>
+                    <div>
+                        <strong>${escaparCicloDocumento(formatearStatus(event.new_status || event.event_type))}</strong>
+                        <small>${escaparCicloDocumento(event.actor_name || 'System')} · ${fechaCicloDocumento(event.created_at)}</small>
+                        ${event.notes ? `<p>${escaparCicloDocumento(event.notes)}</p>` : ''}
+                    </div>
+                </li>
+            `).join('')
+            : '<li class="corporate-lifecycle-empty">No workflow events have been registered.</li>';
+
+        const controls = canEdit ? `
+            <section class="corporate-lifecycle-controls">
+                <label for="documentWorkflowStatus">New status</label>
+                <select id="documentWorkflowStatus" class="swal2-select">
+                    ${[
+                        ['draft', 'Draft'],
+                        ['uploaded', 'Uploaded'],
+                        ['under_review', 'Under review'],
+                        ['changes_requested', 'Changes requested'],
+                        ['approved', 'Approved'],
+                        ['posted', 'Posted'],
+                        ['archived', 'Archived'],
+                        ['rejected', 'Rejected']
+                    ].map(([value, label]) => `<option value="${value}" ${value === currentStatus ? 'selected' : ''}>${label}</option>`).join('')}
+                </select>
+                <label for="documentWorkflowNotes">Decision comment</label>
+                <textarea id="documentWorkflowNotes" class="swal2-textarea" maxlength="5000" placeholder="Add review evidence, approval notes, or a rejection reason."></textarea>
+                ${canCreate ? '<button type="button" id="createDocumentVersion" class="corporate-inline-action"><i class="fa-solid fa-plus"></i> Create draft version</button>' : ''}
+            </section>
+        ` : '';
+
+        const result = await Swal.fire({
+            title: `Document #${Number(id)} lifecycle`,
+            width: 900,
+            html: `
+                <div class="corporate-lifecycle-shell">
+                    <section>
+                        <header><span>VERSIONS</span><strong>${versions.length}</strong></header>
+                        <div class="corporate-lifecycle-versions">${versionRows}</div>
+                    </section>
+                    <section>
+                        <header><span>RECENT ACTIVITY</span><strong>${events.length}</strong></header>
+                        <ol class="corporate-lifecycle-events">${eventRows}</ol>
+                    </section>
+                    ${controls}
+                </div>
+            `,
+            showCancelButton: true,
+            showConfirmButton: canEdit,
+            confirmButtonText: 'Update workflow',
+            cancelButtonText: 'Close',
+            confirmButtonColor: '#17191c',
+            focusConfirm: false,
+            didOpen: () => {
+                const createButton = document.getElementById('createDocumentVersion');
+                createButton?.addEventListener('click', async () => {
+                    const versionPrompt = await Swal.fire({
+                        title: 'Create draft version',
+                        input: 'textarea',
+                        inputLabel: 'Version notes',
+                        inputPlaceholder: 'Describe why a new version is required.',
+                        showCancelButton: true,
+                        confirmButtonText: 'Create version',
+                        confirmButtonColor: '#17191c'
+                    });
+                    if (!versionPrompt.isConfirmed) return;
+
+                    const versionResponse = await fetch(`${window.API_URL}/corporate/documents/${id}/versions`, {
+                        method: 'POST',
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ comments: versionPrompt.value || '' })
+                    });
+                    const versionData = await versionResponse.json().catch(() => ({}));
+                    if (!versionResponse.ok || versionData.success === false) {
+                        await Swal.fire('Version not created', versionData.message || 'The new version could not be created.', 'error');
+                        return;
+                    }
+                    await Swal.fire('Version created', `Draft version ${versionData.version_number} is ready.`, 'success');
+                    administrarCicloDocumento(id);
+                });
+            },
+            preConfirm: () => {
+                const status = document.getElementById('documentWorkflowStatus')?.value || '';
+                const notes = document.getElementById('documentWorkflowNotes')?.value.trim() || '';
+                if (['changes_requested', 'rejected'].includes(status) && !notes) {
+                    Swal.showValidationMessage('A comment is required when requesting changes or rejecting a document.');
+                    return false;
+                }
+                return { status, notes };
+            }
+        });
+
+        if (!result.isConfirmed || !result.value) return;
+
+        const updateResponse = await fetch(`${window.API_URL}/corporate/documents/${id}/transition`, {
+            method: 'POST',
+            headers: {
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(result.value)
+        });
+        const updateData = await updateResponse.json().catch(() => ({}));
+        if (!updateResponse.ok || updateData.success === false) {
+            throw new Error(updateData.message || 'The document workflow could not be updated.');
+        }
+
+        const localDocument = documentos.find(item => Number(item.id) === Number(id));
+        if (localDocument) localDocument.estado = updateData.status;
+        mostrarDocumentos();
+
+        await Swal.fire({
+            icon: 'success',
+            title: 'Workflow updated',
+            text: `The document is now ${formatearStatus(updateData.status).toLowerCase()}.`,
+            timer: 1800,
+            showConfirmButton: false
+        });
+    } catch (error) {
+        console.error('Document lifecycle error:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Lifecycle unavailable',
+            text: error.message || 'The document history could not be loaded.'
+        });
+    }
+}
+
+window.administrarCicloDocumento = administrarCicloDocumento;
+
 // ============================================
 // UTILIDADES
 // ============================================
@@ -702,7 +898,15 @@ function formatearStatus(estado) {
         'pendiente': 'Pending',
         'validado': 'Validated',
         'con_errores': 'With errors',
-        'procesado': 'Processed'
+        'procesado': 'Processed',
+        'draft': 'Draft',
+        'uploaded': 'Uploaded',
+        'under_review': 'Under review',
+        'changes_requested': 'Changes requested',
+        'approved': 'Approved',
+        'posted': 'Posted',
+        'archived': 'Archived',
+        'rejected': 'Rejected'
     };
     return estados[estado] || estado;
 }

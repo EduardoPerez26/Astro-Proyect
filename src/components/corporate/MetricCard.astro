@@ -1,0 +1,30 @@
+---
+interface Props {
+    label: string;
+    value?: string | number;
+    meta?: string;
+    icon?: string;
+    valueId?: string;
+    metaId?: string;
+}
+
+const {
+    label,
+    value = '0',
+    meta = '',
+    icon = 'fa-chart-simple',
+    valueId,
+    metaId
+} = Astro.props;
+---
+
+<article class="xb-metric-card">
+    <span class="xb-metric-card__icon">
+        <i class={`fa-solid ${icon}`} aria-hidden="true"></i>
+    </span>
+    <div>
+        <small>{label}</small>
+        <strong id={valueId}>{value}</strong>
+        <span id={metaId}>{meta}</span>
+    </div>
+</article>

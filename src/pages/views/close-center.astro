@@ -1,0 +1,129 @@
+---
+import DashboardLayout from '../../layouts/DashboardLayout.astro';
+import PageHeader from '../../components/corporate/PageHeader.astro';
+import MetricCard from '../../components/corporate/MetricCard.astro';
+---
+
+<DashboardLayout title="Close center">
+    <div class="page-container corporate-page" data-corporate-center="close">
+        <PageHeader
+            eyebrow="Governance & Control"
+            title="Close center"
+            description="Manage period-close ownership, deadlines, store reconciliations, review status, and completion evidence from one controlled workspace."
+            icon="fa-calendar-check"
+        >
+            <button slot="actions" id="closeRefresh" type="button">
+                <i class="fa-solid fa-rotate"></i> Refresh
+            </button>
+            <button slot="actions" id="closeExport" type="button">
+                <i class="fa-solid fa-file-csv"></i> Export
+            </button>
+        </PageHeader>
+
+        <section class="xb-metric-grid" aria-label="Close summary">
+            <MetricCard label="Completion" value="0%" meta="Selected close period" icon="fa-chart-pie" valueId="closeCompletion" metaId="closeCompletionMeta" />
+            <MetricCard label="Completed tasks" value="0" meta="0 total" icon="fa-list-check" valueId="closeCompleted" metaId="closeCompletedMeta" />
+            <MetricCard label="Blocked" value="0" meta="Requires intervention" icon="fa-ban" valueId="closeBlocked" metaId="closeBlockedMeta" />
+            <MetricCard label="Days remaining" value="-" meta="No due date selected" icon="fa-hourglass-half" valueId="closeDays" metaId="closeDaysMeta" />
+        </section>
+
+        <section class="xb-split-grid">
+            <article class="xb-panel">
+                <header class="xb-panel__header">
+                    <div>
+                        <span class="xb-panel__eyebrow">Period control</span>
+                        <h2>Close work queue</h2>
+                        <p>Select a period, filter tasks, and update operational status.</p>
+                    </div>
+                    <span id="closeUpdated" class="xb-text-muted">Not refreshed</span>
+                </header>
+                <div class="xb-toolbar" data-saved-view-module="close-center">
+                    <label class="xb-field xb-field--grow">
+                        <span>Close period</span>
+                        <select id="closePeriodSelect"><option value="">Select a period</option></select>
+                    </label>
+                    <label class="xb-field">
+                        <span>Status</span>
+                        <select id="closeTaskStatusFilter">
+                            <option value="">All statuses</option>
+                            <option value="pending">Pending</option>
+                            <option value="in_progress">In progress</option>
+                            <option value="blocked">Blocked</option>
+                            <option value="completed">Completed</option>
+                            <option value="verified">Verified</option>
+                            <option value="closed">Closed</option>
+                        </select>
+                    </label>
+                    <label class="xb-field xb-field--grow">
+                        <span>Search</span>
+                        <input id="closeTaskSearch" type="search" placeholder="Store, task, owner..." />
+                    </label>
+                    <button class="xb-button" id="closePeriodStatus" type="button" disabled>
+                        <i class="fa-solid fa-lock"></i> Close period
+                    </button>
+                </div>
+                <div class="xb-table-wrap">
+                    <table class="xb-table">
+                        <thead>
+                            <tr>
+                                <th>Task</th>
+                                <th>Store</th>
+                                <th>Owner</th>
+                                <th>Due</th>
+                                <th>Priority</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="closeTaskBody">
+                            <tr><td colspan="7"><div class="xb-loading-state"><div><i class="fa-solid fa-spinner fa-spin"></i><strong>Loading close periods</strong><p>Retrieving governance data.</p></div></div></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </article>
+
+            <aside class="xb-panel">
+                <header class="xb-panel__header">
+                    <div>
+                        <span class="xb-panel__eyebrow">New close</span>
+                        <h2>Create period</h2>
+                        <p>Generate one reconciliation task per active store.</p>
+                    </div>
+                </header>
+                <div class="xb-panel__body">
+                    <form id="closePeriodForm" class="xb-stack" data-track-changes>
+                        <label class="xb-field">
+                            <span>Period year</span>
+                            <input name="period_year" type="number" min="2020" max="2100" required />
+                        </label>
+                        <label class="xb-field">
+                            <span>Period month</span>
+                            <select name="period_month" required>
+                                <option value="">Select month</option>
+                                {Array.from({ length: 12 }, (_, index) => (
+                                    <option value={index + 1}>{new Date(2026, index, 1).toLocaleString('en', { month: 'long' })}</option>
+                                ))}
+                            </select>
+                        </label>
+                        <label class="xb-field">
+                            <span>Due date</span>
+                            <input name="due_date" type="date" required />
+                        </label>
+                        <label class="xb-field">
+                            <span>Period name</span>
+                            <input name="name" type="text" placeholder="Example: July 2026 Close" />
+                        </label>
+                        <label class="xb-callout">
+                            <input name="create_store_tasks" type="checkbox" checked />
+                            Create reconciliation tasks for every active store.
+                        </label>
+                        <button class="xb-button xb-button--primary" type="submit">
+                            <i class="fa-solid fa-plus"></i> Create close period
+                        </button>
+                    </form>
+                </div>
+            </aside>
+        </section>
+    </div>
+    <script src="/js/corporate-centers.js?v=20260717-corporate-v1" is:inline></script>
+</DashboardLayout>

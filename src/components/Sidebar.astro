@@ -111,6 +111,45 @@
             </ul>
         </div>
 
+        <!-- GOVERNANCE & CONTROL -->
+        <div class="sidebar-section" id="sectionGovernance">
+            <button
+                class="sidebar-section-title sidebar-section-toggle"
+                type="button"
+                data-sidebar-section-toggle
+                aria-expanded="true"
+            >
+                <span>Governance &amp; Control</span>
+                <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
+            </button>
+            <ul class="sidebar-menu">
+                <li class="sidebar-menu-item" data-permission="approvalCenter">
+                    <a class="sidebar-menu-link" href="/views/approval-center">
+                        <i class="fa-solid fa-clipboard-check"></i>
+                        <span>Approval center</span>
+                    </a>
+                </li>
+                <li class="sidebar-menu-item" data-permission="closeCenter">
+                    <a class="sidebar-menu-link" href="/views/close-center">
+                        <i class="fa-solid fa-calendar-check"></i>
+                        <span>Close center</span>
+                    </a>
+                </li>
+                <li class="sidebar-menu-item" data-permission="exceptionCenter">
+                    <a class="sidebar-menu-link" href="/views/exception-center">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                        <span>Exception center</span>
+                    </a>
+                </li>
+                <li class="sidebar-menu-item" data-permission="reportCenter">
+                    <a class="sidebar-menu-link" href="/views/report-center">
+                        <i class="fa-solid fa-file-waveform"></i>
+                        <span>Scheduled reports</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
         <!-- ADMINISTRACION -->
         <div class="sidebar-section" id="sectionAdmin">
             <button
@@ -145,11 +184,32 @@
                 </li>
                 <li
                     class="sidebar-menu-item"
-                    data-permission="approvalCenter"
+                    data-permission="auditCenter"
+                    data-admin-only
                 >
-                    <a class="sidebar-menu-link" href="/views/approval-center">
-                        <i class="fa-solid fa-clipboard-check"></i>
-                        <span>Approval center</span>
+                    <a class="sidebar-menu-link" href="/views/audit-center">
+                        <i class="fa-solid fa-timeline"></i>
+                        <span>Operational audit</span>
+                    </a>
+                </li>
+                <li
+                    class="sidebar-menu-item"
+                    data-permission="integrationCenter"
+                    data-admin-only
+                >
+                    <a class="sidebar-menu-link" href="/views/integration-center">
+                        <i class="fa-solid fa-plug-circle-check"></i>
+                        <span>Integration center</span>
+                    </a>
+                </li>
+                <li
+                    class="sidebar-menu-item"
+                    data-permission="governanceSettings"
+                    data-admin-only
+                >
+                    <a class="sidebar-menu-link" href="/views/governance-center">
+                        <i class="fa-solid fa-scale-balanced"></i>
+                        <span>Governance settings</span>
                     </a>
                 </li>
                 <li

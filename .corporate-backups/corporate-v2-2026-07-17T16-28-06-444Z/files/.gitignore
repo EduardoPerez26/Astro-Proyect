@@ -1,0 +1,12 @@
+node_modules
+.astro
+dist
+.env
+*.env
+backend/.env
+!*.env.example
+!backend/.env.example
+.codex-*
+outputs/
+backend/backend.zip
+backend/uploads/

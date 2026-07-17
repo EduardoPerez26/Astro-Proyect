@@ -1,0 +1,8 @@
+---
+interface Props {
+    status: string;
+    tone?: 'neutral' | 'success' | 'warning' | 'danger' | 'info';
+}
+const { status, tone = 'neutral' } = Astro.props;
+---
+<span class={`xb-status ${tone === 'neutral' ? '' : `xb-status--${tone}`}`}>{status}</span>

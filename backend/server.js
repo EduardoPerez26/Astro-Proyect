@@ -34,14 +34,40 @@ const chatRoutes = require('./routes/chat.routes');
 const chatbotRoutes = require('./routes/chatbot.routes');
 const notificacionesRoutes = require('./routes/notificaciones.routes');
 const prepaidRoutes = require('./routes/prepaid.routes');
+const corporateRoutes = require('./routes/corporate.routes');
 const { attachErrorNotificationCapture } = require('./middleware/error-notification.middleware');
+const {
+    requestContext,
+    securityHeaders,
+    sanitizeRequest,
+    createRateLimiter,
+    csrfOriginGuard,
+    uploadStaticHeaders
+} = require('./middleware/security.middleware');
 
 const app = express();
 app.disable('x-powered-by');
+app.set('trust proxy', 1);
 const requestBodyLimit = process.env.REQUEST_BODY_LIMIT || '10mb';
 const uploadRoot = process.env.UPLOAD_FOLDER
     ? path.resolve(__dirname, process.env.UPLOAD_FOLDER)
     : path.join(__dirname, 'uploads');
+
+// Corporate request context and baseline HTTP security.
+app.use(requestContext);
+app.use(securityHeaders);
+app.use(createRateLimiter({
+    windowMs: Number(process.env.API_RATE_LIMIT_WINDOW_MS || 15 * 60 * 1000),
+    max: Number(process.env.API_RATE_LIMIT_MAX || 600),
+    keyPrefix: 'api',
+    skip: req => req.path === '/api/health'
+}));
+app.use('/api/auth', createRateLimiter({
+    windowMs: Number(process.env.AUTH_RATE_LIMIT_WINDOW_MS || 15 * 60 * 1000),
+    max: Number(process.env.AUTH_RATE_LIMIT_MAX || 40),
+    keyPrefix: 'auth',
+    message: 'Too many authentication requests. Wait a few minutes and try again.'
+}));
 
 // Captures 5xx / critical backend errors and notifies administrators.
 app.use(attachErrorNotificationCapture());
@@ -75,38 +101,14 @@ app.use(cors({
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization']
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-ID']
 }));
 
 // Preflight requests
 app.options('*', cors());
 
-app.use((req, res, next) => {
-    const isProduction = process.env.NODE_ENV === 'production';
-
-    res.setHeader('X-Content-Type-Options', 'nosniff');
-    res.setHeader('X-Frame-Options', 'DENY');
-    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
-    res.setHeader(
-        'Permissions-Policy',
-        'camera=(), microphone=(), geolocation=(), payment=()'
-    );
-    res.setHeader(
-        'Cache-Control',
-        req.path.startsWith('/api/auth')
-            ? 'no-store'
-            : 'private, max-age=0, must-revalidate'
-    );
-
-    if (isProduction) {
-        res.setHeader(
-            'Strict-Transport-Security',
-            'max-age=15552000; includeSubDomains'
-        );
-    }
-
-    next();
-});
+// Protect state-changing cookie-authenticated requests from CSRF.
+app.use('/api', csrfOriginGuard);
 
 // Parse JSON and URL-encoded bodies
 app.use(express.json({ limit: requestBodyLimit }));
@@ -114,9 +116,14 @@ app.use(express.urlencoded({
     extended: true,
     limit: requestBodyLimit
 }));
+app.use(sanitizeRequest);
 
 // Static files
-app.use('/uploads', express.static(uploadRoot));
+app.use('/uploads', express.static(uploadRoot, {
+    dotfiles: 'deny',
+    fallthrough: false,
+    setHeaders: uploadStaticHeaders
+}));
 
 // ============================================
 // RUTAS DE LA API
@@ -125,7 +132,7 @@ app.use('/uploads', express.static(uploadRoot));
 app.get('/api', (req, res) => {
     res.json({
         mensaje: 'Excel Validation System API',
-        version: '1.0.0',
+        version: '2.0.0',
         endpoints: {
             auth: '/api/auth',
             archivos: '/api/archivos',
@@ -139,7 +146,12 @@ app.get('/api', (req, res) => {
             chatbot: '/api/chatbot',
             notificaciones: '/api/notificaciones',
             systemErrors: '/api/notificaciones/system-errors',
-            prepaids: '/api/prepaids'
+            prepaids: '/api/prepaids',
+            corporate: '/api/corporate',
+            closeCenter: '/api/corporate/close-center',
+            exceptions: '/api/corporate/exceptions',
+            integrations: '/api/corporate/integrations',
+            audit: '/api/corporate/audit'
         }
     });
 });
@@ -171,6 +183,7 @@ app.use('/api/chat', chatRoutes);
 app.use('/api/chatbot', chatbotRoutes);
 app.use('/api/notificaciones', notificacionesRoutes);
 app.use('/api/prepaids', prepaidRoutes);
+app.use('/api/corporate', corporateRoutes);
 
 
 // ============================================
@@ -182,7 +195,8 @@ app.use((req, res, next) => {
     res.status(404).json({
         error: true,
         mensaje: 'Route not found',
-        ruta: req.originalUrl
+        ruta: req.originalUrl,
+        request_id: req.requestId || null
     });
 });
 
@@ -200,7 +214,8 @@ app.use((err, req, res, next) => {
             ? 'The reconciliation contains too much data to send to the server'
             : 'Internal server error',
         code: err.code || err.type || 'INTERNAL_SERVER_ERROR',
-        detalle: process.env.NODE_ENV === 'development' ? err.message : undefined
+        detalle: process.env.NODE_ENV === 'development' ? err.message : undefined,
+        request_id: req.requestId || null
     });
 });
 
@@ -209,9 +224,19 @@ app.use((err, req, res, next) => {
 // ============================================
 
 const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
     console.log('============================================');
     console.log(`Server running at http://localhost:${PORT}`);
     console.log(`API available at http://localhost:${PORT}/api`);
     console.log('============================================');
 });
+
+
+function shutdown(signal) {
+    console.log(`[shutdown] ${signal} received. Closing HTTP server.`);
+    server.close(() => process.exit(0));
+    setTimeout(() => process.exit(1), 10000).unref();
+}
+
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => shutdown('SIGINT'));

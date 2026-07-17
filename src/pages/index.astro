@@ -156,6 +156,15 @@ const currentYear = new Date().getFullYear();
                             </button>
                         </form>
 
+                        <div class="login-enterprise-access" id="entraLoginBlock" hidden>
+                            <div class="login-enterprise-divider"><span>or use corporate access</span></div>
+                            <button type="button" class="login-enterprise-button" id="entraLoginBtn">
+                                <i class="fa-brands fa-microsoft" aria-hidden="true"></i>
+                                <span>Continue with Microsoft</span>
+                            </button>
+                            <small>Uses your organization account and Microsoft Entra ID policies.</small>
+                        </div>
+
                         <form
                             class="login-form login-mfa-form"
                             id="mfaForm"
@@ -234,5 +243,5 @@ const currentYear = new Date().getFullYear();
     </main>
 
     <script src="/js/config.js" is:inline></script>
-    <script src="/js/login.js?v=20260717-mfa-session-v2" is:inline></script>
+    <script src="/js/login.js?v=20260717-entra-sso-v1" is:inline></script>
     </BaseLayout>

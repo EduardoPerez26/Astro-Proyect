@@ -1,0 +1,15 @@
+---
+interface Props {
+    title: string;
+    description: string;
+    icon?: string;
+}
+const { title, description, icon = 'fa-inbox' } = Astro.props;
+---
+<div class="xb-empty-state">
+    <div>
+        <i class={`fa-solid ${icon}`} aria-hidden="true"></i>
+        <strong>{title}</strong>
+        <p>{description}</p>
+    </div>
+</div>

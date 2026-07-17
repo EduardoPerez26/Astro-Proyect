@@ -1,0 +1,338 @@
+{
+  "installer": "XBFS Corporate Direct Rework v2",
+  "version": "2026.07.17-v2",
+  "createdAt": "2026-07-17T16:28:06.445Z",
+  "targetDir": "C:\\Users\\EduardoPérez\\OneDrive - XB Franchise Solutions\\Desktop\\astro",
+  "files": [
+    {
+      "path": ".dockerignore",
+      "existed": false,
+      "originalSha256": null
+    },
+    {
+      "path": ".editorconfig",
+      "existed": false,
+      "originalSha256": null
+    },
+    {
+      "path": ".github/workflows/ci.yml",
+      "existed": false,
+      "originalSha256": null
+    },
+    {
+      "path": ".gitignore",
+      "existed": true,
+      "originalSha256": "17e7bd820909c8e1d62a527efec0580f28eba34519ad89d02f0487299b520fbb"
+    },
+    {
+      "path": "CHANGELOG-CORPORATE.md",
+      "existed": false,
+      "originalSha256": null
+    },
+    {
+      "path": "README.md",
+      "existed": false,
+      "originalSha256": null
+    },
+    {
+      "path": "SECURITY.md",
+      "existed": false,
+      "originalSha256": null
+    },
+    {
+      "path": "backend/.env.example",
+      "existed": true,
+      "originalSha256": "9b698eca8623d83642214f2f078c89b460d9ad9889151ca8723b59c0ea2a95c3"
+    },
+    {
+      "path": "backend/config/departments.js",
+      "existed": true,
+      "originalSha256": "97f9bc1b29d0f59fa53ec40b47195c31ec2acb3fbf85e281f41f8dfa9f9a7947"
+    },
+    {
+      "path": "backend/config/env.validation.js",
+      "existed": true,
+      "originalSha256": "73ea94bfb1a6d5d4ee4e2f6a5251fcbe8d4a0ddae4a27fc33fd55da59454352d"
+    },
+    {
+      "path": "backend/config/permissions.js",
+      "existed": true,
+      "originalSha256": "6f5caf1e18746ac7a0529a6ab5283ffafef60fce02e8026f757aff3efd5b5cab"
+    },
+    {
+      "path": "backend/database/migrations/2026-07-17_corporate_platform.sql",
+      "existed": false,
+      "originalSha256": null
+    },
+    {
+      "path": "backend/database/migrations/2026-07-17_entra_sso.sql",
+      "existed": false,
+      "originalSha256": null
+    },
+    {
+      "path": "backend/middleware/auth.middleware.js",
+      "existed": true,
+      "originalSha256": "83bfe48983b53c46f49192bb2011849a727aa9b1a6240de22d55d79e8be5cf88"
+    },
+    {
+      "path": "backend/middleware/security.middleware.js",
+      "existed": false,
+      "originalSha256": null
+    },
+    {
+      "path": "backend/package-lock.json",
+      "existed": true,
+      "originalSha256": "50730d707f9d0a475a3ca81675a231fdc750849f37ee98ae9d1f99f79a24e002"
+    },
+    {
+      "path": "backend/package.json",
+      "existed": true,
+      "originalSha256": "f666c5feb5a4a6e69dcf7815c429c69df0ad5244af0d942c72952202ec6e8974"
+    },
+    {
+      "path": "backend/routes/archivos.routes.js",
+      "existed": true,
+      "originalSha256": "41bea6a3c02c22ef6cbabb39c7309b95b5ee442cf921c30593ffa642ba723272"
+    },
+    {
+      "path": "backend/routes/auth.routes.js",
+      "existed": true,
+      "originalSha256": "6e0a7ff92af0166aaa8c8107a783944b0e848514f666a3cc224203b19c42d111"
+    },
+    {
+      "path": "backend/routes/corporate.routes.js",
+      "existed": false,
+      "originalSha256": null
+    },
+    {
+      "path": "backend/server.js",
+      "existed": true,
+      "originalSha256": "4960015a5a043893757eb112be2cd3a418021e07b16fed057af233d80c5a1d1c"
+    },
+    {
+      "path": "backend/services/corporatePlatform.service.js",
+      "existed": false,
+      "originalSha256": null
+    },
+    {
+      "path": "backend/services/corporateReport.service.js",
+      "existed": false,
+      "originalSha256": null
+    },
+    {
+      "path": "backend/services/entraOidc.service.js",
+      "existed": false,
+      "originalSha256": null
+    },
+    {
+      "path": "backend/services/intacctClient.service.js",
+      "existed": false,
+      "originalSha256": null
+    },
+    {
+      "path": "backend/tests/corporatePlatform.test.js",
+      "existed": false,
+      "originalSha256": null
+    },
+    {
+      "path": "backend/tests/permissions.test.js",
+      "existed": false,
+      "originalSha256": null
+    },
+    {
+      "path": "backend/tests/prepaidCalculator.test.js",
+      "existed": false,
+      "originalSha256": null
+    },
+    {
+      "path": "backend/workers/runCorporateReports.js",
+      "existed": false,
+      "originalSha256": null
+    },
+    {
+      "path": "docs/API-CORPORATE.md",
+      "existed": false,
+      "originalSha256": null
+    },
+    {
+      "path": "docs/CORPORATE_FEATURES.md",
+      "existed": false,
+      "originalSha256": null
+    },
+    {
+      "path": "docs/DEPLOYMENT.md",
+      "existed": false,
+      "originalSha256": null
+    },
+    {
+      "path": "docs/SECURITY_RUNBOOK.md",
+      "existed": false,
+      "originalSha256": null
+    },
+    {
+      "path": "package-lock.json",
+      "existed": true,
+      "originalSha256": "0e3a984c7e387a729dae44770e035520fbe5fca549eab177562cf59b674dfe90"
+    },
+    {
+      "path": "package.json",
+      "existed": true,
+      "originalSha256": "3994b42f77e092723f8b4d24b756008a2f0003e0bfaf2d3bbc2259a37ffedf62"
+    },
+    {
+      "path": "public/js/corporate-centers.js",
+      "existed": false,
+      "originalSha256": null
+    },
+    {
+      "path": "public/js/corporate-dashboard.js",
+      "existed": false,
+      "originalSha256": null
+    },
+    {
+      "path": "public/js/corporate-ux.js",
+      "existed": false,
+      "originalSha256": null
+    },
+    {
+      "path": "public/js/documentos.js",
+      "existed": true,
+      "originalSha256": "3c71e6d5cf7c43b79e33c929b121a084f5d2acae588c44a9502b67ba20a782de"
+    },
+    {
+      "path": "public/js/login.js",
+      "existed": true,
+      "originalSha256": "6d7fa11d14fff4b558b74f3d915f2e7a6e09ca1ea5f4f8304cf6024c1b3c8532"
+    },
+    {
+      "path": "public/js/permisos.js",
+      "existed": true,
+      "originalSha256": "76fdcaaa1dc2c4d0d46cbdd70788061d1814e07deacce5b6a5422df0f0131d87"
+    },
+    {
+      "path": "public/js/saved-views.js",
+      "existed": false,
+      "originalSha256": null
+    },
+    {
+      "path": "public/js/sidebar-loader.js",
+      "existed": true,
+      "originalSha256": "c731b4e182969d310555cd5c22cbe69ace66e298a4260f89330388beb207ba35"
+    },
+    {
+      "path": "public/styles/app.css",
+      "existed": true,
+      "originalSha256": "126949ab57a82c2a5f676b4ca44def338310c8b5eeb0736f3cf20e16751b6c69"
+    },
+    {
+      "path": "public/styles/corporate/00-tokens.css",
+      "existed": false,
+      "originalSha256": null
+    },
+    {
+      "path": "public/styles/corporate/01-foundation.css",
+      "existed": false,
+      "originalSha256": null
+    },
+    {
+      "path": "public/styles/corporate/02-components.css",
+      "existed": false,
+      "originalSha256": null
+    },
+    {
+      "path": "public/styles/corporate/03-utilities.css",
+      "existed": false,
+      "originalSha256": null
+    },
+    {
+      "path": "public/styles/corporate/index.css",
+      "existed": false,
+      "originalSha256": null
+    },
+    {
+      "path": "public/styles/screens/login-graphite.css",
+      "existed": true,
+      "originalSha256": "7ea8ab48c1b7c6e85d8aff1345495e796c884c2ce5a535846503b6b9a84e7356"
+    },
+    {
+      "path": "scripts/create-release.sh",
+      "existed": false,
+      "originalSha256": null
+    },
+    {
+      "path": "src/components/Sidebar.astro",
+      "existed": true,
+      "originalSha256": "92fe5bbec260d5fabc25d6d2987ca44cbda4e5360eae5102791603c4d7e7631f"
+    },
+    {
+      "path": "src/components/corporate/EmptyState.astro",
+      "existed": false,
+      "originalSha256": null
+    },
+    {
+      "path": "src/components/corporate/MetricCard.astro",
+      "existed": false,
+      "originalSha256": null
+    },
+    {
+      "path": "src/components/corporate/PageHeader.astro",
+      "existed": false,
+      "originalSha256": null
+    },
+    {
+      "path": "src/components/corporate/StatusBadge.astro",
+      "existed": false,
+      "originalSha256": null
+    },
+    {
+      "path": "src/layouts/BaseLayout.astro",
+      "existed": true,
+      "originalSha256": "4632ec61cbf5fab497ee56f733019f82599d767d19cb1818937ee7f75821b7f0"
+    },
+    {
+      "path": "src/pages/index.astro",
+      "existed": true,
+      "originalSha256": "0f18b482c5da365f6b35d8304bef8e09db85f70ea83fb99692a6cf19650661a6"
+    },
+    {
+      "path": "src/pages/views/audit-center.astro",
+      "existed": false,
+      "originalSha256": null
+    },
+    {
+      "path": "src/pages/views/close-center.astro",
+      "existed": false,
+      "originalSha256": null
+    },
+    {
+      "path": "src/pages/views/dashboard-admin.astro",
+      "existed": true,
+      "originalSha256": "192157c9bbfda604b6ae748ba67dad32c8c76fdc09830ec38ac349d57470904e"
+    },
+    {
+      "path": "src/pages/views/documentos.astro",
+      "existed": true,
+      "originalSha256": "0c5f90a2664b24a0aa5c3340a1f07e31aa843bb7612f881d139011eda3f56002"
+    },
+    {
+      "path": "src/pages/views/exception-center.astro",
+      "existed": false,
+      "originalSha256": null
+    },
+    {
+      "path": "src/pages/views/governance-center.astro",
+      "existed": false,
+      "originalSha256": null
+    },
+    {
+      "path": "src/pages/views/integration-center.astro",
+      "existed": false,
+      "originalSha256": null
+    },
+    {
+      "path": "src/pages/views/report-center.astro",
+      "existed": false,
+      "originalSha256": null
+    }
+  ]
+}

@@ -53,7 +53,7 @@ const DEPARTMENT_CATALOG = {
         nombre: 'Information Technology',
         descripcion: 'Base prepared for technical administration and support.',
         paginaInicio: 'dashboardAdmin',
-        modulos: ['dashboardAdmin', 'usuarios', 'permisos']
+        modulos: ['dashboardAdmin', 'systemCenter', 'auditCenter', 'integrationCenter', 'governanceSettings', 'usuarios', 'permisos']
     }
 };
 

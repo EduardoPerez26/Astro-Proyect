@@ -1,0 +1,47 @@
+---
+import DashboardLayout from '../../layouts/DashboardLayout.astro';
+import PageHeader from '../../components/corporate/PageHeader.astro';
+import MetricCard from '../../components/corporate/MetricCard.astro';
+---
+
+<DashboardLayout title="Scheduled reports">
+    <div class="page-container corporate-page" data-corporate-center="reports">
+        <PageHeader eyebrow="Governance & Control" title="Scheduled reports" description="Configure recurring close, exception, security, and integration reports with controlled recipients, formats, and delivery schedules." icon="fa-file-waveform">
+            <button slot="actions" id="reportRunDue" type="button"><i class="fa-solid fa-play"></i> Run due reports</button>
+            <button slot="actions" id="reportRefresh" type="button"><i class="fa-solid fa-rotate"></i> Refresh</button>
+        </PageHeader>
+
+        <section class="xb-metric-grid">
+            <MetricCard label="Configured" value="0" meta="Report schedules" icon="fa-file-lines" valueId="reportTotal" />
+            <MetricCard label="Active" value="0" meta="Enabled schedules" icon="fa-circle-play" valueId="reportActive" />
+            <MetricCard label="Due now" value="0" meta="Ready for generation or delivery" icon="fa-clock" valueId="reportDue" />
+            <MetricCard label="Formats" value="CSV / XLSX / PDF" meta="Controlled export options" icon="fa-file-export" />
+        </section>
+
+        <section class="xb-split-grid">
+            <article class="xb-panel">
+                <header class="xb-panel__header"><div><span class="xb-panel__eyebrow">Delivery schedules</span><h2>Configured reports</h2><p>Enable, pause, and review the next scheduled execution.</p></div></header>
+                <div class="xb-table-wrap"><table class="xb-table"><thead><tr><th>Report</th><th>Type</th><th>Frequency</th><th>Recipients</th><th>Format</th><th>Next run</th><th>Last status</th><th>Active</th><th>Actions</th></tr></thead><tbody id="reportBody"><tr><td colspan="9"><div class="xb-loading-state"><div><i class="fa-solid fa-spinner fa-spin"></i><strong>Loading report schedules</strong></div></div></td></tr></tbody></table></div>
+            </article>
+
+            <aside class="xb-panel">
+                <header class="xb-panel__header"><div><span class="xb-panel__eyebrow">New schedule</span><h2>Schedule report</h2><p>Reports are generated immediately. Email delivery activates when SMTP is configured.</p></div></header>
+                <div class="xb-panel__body">
+                    <form id="reportForm" class="xb-stack" data-track-changes>
+                        <label class="xb-field"><span>Name</span><input name="name" required /></label>
+                        <label class="xb-field"><span>Report type</span><select name="report_type" required><option value="">Select type</option><option value="close_status">Close status</option><option value="exceptions_sla">Exceptions outside SLA</option><option value="permissions_changes">Permission changes</option><option value="integration_health">Integration health</option><option value="administrative_activity">Administrative activity</option></select></label>
+                        <div class="xb-form-grid">
+                            <label class="xb-field"><span>Frequency</span><select name="frequency"><option value="daily">Daily</option><option value="weekly" selected>Weekly</option><option value="monthly">Monthly</option></select></label>
+                            <label class="xb-field"><span>Delivery hour</span><input name="delivery_hour" type="number" min="0" max="23" value="8" /></label>
+                            <label class="xb-field"><span>Format</span><select name="format"><option value="csv">CSV</option><option value="xlsx">Excel</option><option value="pdf">PDF</option></select></label>
+                            <label class="xb-field"><span>Timezone</span><input name="timezone" value="America/Phoenix" /></label>
+                        </div>
+                        <label class="xb-field"><span>Recipients</span><textarea name="recipients" rows="3" placeholder="finance@example.com, manager@example.com" required></textarea></label>
+                        <button class="xb-button xb-button--primary" type="submit"><i class="fa-solid fa-calendar-plus"></i> Create schedule</button>
+                    </form>
+                </div>
+            </aside>
+        </section>
+    </div>
+    <script src="/js/corporate-centers.js?v=20260717-corporate-v1" is:inline></script>
+</DashboardLayout>

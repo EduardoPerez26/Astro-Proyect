@@ -1,0 +1,258 @@
+---
+import DashboardLayout from '../../layouts/DashboardLayout.astro';
+---
+
+<DashboardLayout title="Admin dashboard">
+    <link
+        rel="stylesheet"
+        href="/styles/pages/views/dashboard-admin-premium.css?v=20260716-admin-dashboard-admin-focus-v1"
+    />
+
+    <div class="page-container admin-dashboard-page">
+        <header class="admin-command-hero">
+            <div class="admin-hero-copy">
+                <span class="admin-dashboard-eyebrow">
+                    <i class="fa-solid fa-shield-halved"></i>
+                    ADMIN OPERATIONS
+                </span>
+                <h1>Admin dashboard</h1>
+                <p>
+                    A consolidated view of users, departments, documents,
+                    validations, and administrative activity.
+                </p>
+            </div>
+
+            <div class="admin-hero-actions">
+                <div class="admin-live-status" aria-live="polite">
+                    <span class="admin-live-pill">
+                        <span class="admin-live-dot"></span>
+                        Live data
+                    </span>
+                    <span id="adminDashboardUpdated">Not refreshed</span>
+                </div>
+
+                <div class="admin-hero-buttons">
+                    <button
+                        class="admin-secondary-button"
+                        id="adminAutoRefresh"
+                        type="button"
+                        aria-pressed="false"
+                    >
+                        <i class="fa-solid fa-clock-rotate-left"></i>
+                        Auto refresh
+                    </button>
+                    <button
+                        class="admin-primary-button"
+                        id="refreshAdminDashboard"
+                        type="button"
+                    >
+                        <i class="fa-solid fa-rotate"></i>
+                        Refresh
+                    </button>
+                </div>
+            </div>
+
+            <div class="admin-hero-strip" aria-label="Executive summary">
+                <article>
+                    <span>7-day workload</span>
+                    <strong id="adminHeroWorkload">0 operations</strong>
+                    <small id="adminHeroWorkloadDetail">No recent movement yet</small>
+                </article>
+                <article>
+                    <span>Local time</span>
+                    <strong id="adminDashboardClock">--:--</strong>
+                    <small id="adminDashboardDate">Loading current date</small>
+                </article>
+            </div>
+        </header>
+
+        <nav class="admin-quick-actions" aria-label="Administrative shortcuts">
+            <a href="/views/usuarios">
+                <span class="admin-quick-icon"><i class="fa-solid fa-user-gear"></i></span>
+                <span><strong>Manage users</strong><small>Roles, access and permissions</small></span>
+                <i class="fa-solid fa-arrow-right"></i>
+            </a>
+            <a href="/views/tiendas">
+                <span class="admin-quick-icon"><i class="fa-solid fa-store"></i></span>
+                <span><strong>Manage stores</strong><small>Locations and operational scope</small></span>
+                <i class="fa-solid fa-arrow-right"></i>
+            </a>
+            <a href="/views/system-center">
+                <span class="admin-quick-icon"><i class="fa-solid fa-tower-broadcast"></i></span>
+                <span><strong>System center</strong><small>Health, incidents and integrations</small></span>
+                <i class="fa-solid fa-arrow-right"></i>
+            </a>
+            <a href="/views/documentos">
+                <span class="admin-quick-icon"><i class="fa-solid fa-folder-open"></i></span>
+                <span><strong>Documents</strong><small>Files and processing activity</small></span>
+                <i class="fa-solid fa-arrow-right"></i>
+            </a>
+        </nav>
+
+        <section class="admin-metrics" aria-label="Administrative summary">
+            <article class="admin-metric-card">
+                <span class="admin-metric-icon users"><i class="fa-solid fa-users"></i></span>
+                <div class="admin-metric-copy">
+                    <span>Active users</span>
+                    <strong id="adminUsersTotal">0</strong>
+                    <small id="adminUsersMeta">0 registered</small>
+                </div>
+                <span class="admin-metric-indicator" id="adminUsersRate">0%</span>
+            </article>
+
+            <article class="admin-metric-card">
+                <span class="admin-metric-icon sessions"><i class="fa-solid fa-right-to-bracket"></i></span>
+                <div class="admin-metric-copy">
+                    <span>Active sessions</span>
+                    <strong id="adminActiveSessions">0</strong>
+                    <small id="adminLoginsToday">0 logins today</small>
+                </div>
+                <span class="admin-metric-indicator" id="adminSessionsRate">0%</span>
+            </article>
+
+            <article class="admin-metric-card">
+                <span class="admin-metric-icon files"><i class="fa-solid fa-file-arrow-up"></i></span>
+                <div class="admin-metric-copy">
+                    <span>Files today</span>
+                    <strong id="adminFilesToday">0</strong>
+                    <small id="adminFilesMeta">0 in the last 7 days</small>
+                </div>
+                <span class="admin-metric-indicator" id="adminFilesPace">0/day</span>
+            </article>
+
+            <article class="admin-metric-card">
+                <span class="admin-metric-icon validations"><i class="fa-solid fa-shield-halved"></i></span>
+                <div class="admin-metric-copy">
+                    <span>Validations today</span>
+                    <strong id="adminValidationsToday">0</strong>
+                    <small id="adminValidationMeta">0 with issues</small>
+                </div>
+                <span class="admin-metric-indicator" id="adminValidationRate">100%</span>
+            </article>
+
+            <article class="admin-metric-card">
+                <span class="admin-metric-icon departments"><i class="fa-solid fa-building"></i></span>
+                <div class="admin-metric-copy">
+                    <span>Active departments</span>
+                    <strong id="adminDepartmentsActive">0</strong>
+                    <small id="adminDepartmentsMeta">0 registered</small>
+                </div>
+                <span class="admin-metric-indicator" id="adminDepartmentsRate">0%</span>
+            </article>
+        </section>
+
+        <section class="admin-overview-grid" aria-label="Administrative overview">
+            <article class="admin-dashboard-panel admin-coverage-panel">
+                <header class="admin-panel-header">
+                    <div>
+                        <span>COVERAGE</span>
+                        <h2>Operational coverage</h2>
+                        <p>Key adoption and reliability ratios.</p>
+                    </div>
+                    <span class="admin-panel-icon"><i class="fa-solid fa-chart-simple"></i></span>
+                </header>
+
+                <div class="admin-progress-list">
+                    <div class="admin-progress-item">
+                        <div><span>User availability</span><strong id="adminUsersCoverageValue">0%</strong></div>
+                        <div class="admin-progress-track"><span id="adminUsersCoverageBar"></span></div>
+                        <small id="adminUsersCoverageMeta">0 of 0 users active</small>
+                    </div>
+                    <div class="admin-progress-item">
+                        <div><span>Department coverage</span><strong id="adminDepartmentCoverageValue">0%</strong></div>
+                        <div class="admin-progress-track"><span id="adminDepartmentCoverageBar"></span></div>
+                        <small id="adminDepartmentCoverageMeta">0 of 0 departments active</small>
+                    </div>
+                    <div class="admin-progress-item">
+                        <div><span>Validation reliability</span><strong id="adminValidationReliabilityValue">100%</strong></div>
+                        <div class="admin-progress-track"><span id="adminValidationReliabilityBar"></span></div>
+                        <small id="adminValidationReliabilityMeta">No validation issues detected</small>
+                    </div>
+                </div>
+            </article>
+
+            <article class="admin-dashboard-panel admin-trend-panel">
+                <header class="admin-panel-header">
+                    <div>
+                        <span>LAST 7 DAYS</span>
+                        <h2>Operational activity</h2>
+                        <p id="adminTrendSummary">Waiting for activity data.</p>
+                    </div>
+                    <span class="admin-panel-icon"><i class="fa-solid fa-chart-column"></i></span>
+                </header>
+                <div class="admin-activity-trend" id="adminActivityTrend" aria-label="Activity during the last seven days">
+                    <div class="admin-loading">Loading activity trend...</div>
+                </div>
+                <div class="admin-trend-legend">
+                    <span><i class="files"></i> Files</span>
+                    <span><i class="validations"></i> Validations</span>
+                    <span><i class="sessions"></i> Sessions</span>
+                </div>
+            </article>
+        </section>
+
+        <div class="admin-primary-grid">
+            <section class="admin-dashboard-panel database-tables-panel">
+                <header class="admin-panel-header admin-panel-header-actions">
+                    <div>
+                        <span>TRACEABILITY</span>
+                        <h2>Activity log</h2>
+                        <p>Search and filter administrative and operational events.</p>
+                    </div>
+                    <button class="admin-panel-button" id="adminExportActivityLog" type="button">
+                        <i class="fa-solid fa-file-csv"></i>
+                        Export CSV
+                    </button>
+                </header>
+                <div class="admin-database-tables" id="adminDatabaseTables">
+                    <div class="admin-loading">Loading activity log...</div>
+                </div>
+            </section>
+
+            <section class="admin-dashboard-panel admin-sessions-panel">
+                <header class="admin-panel-header">
+                    <div>
+                        <span>ACCESS CONTROL</span>
+                        <h2>Recent sessions</h2>
+                        <p id="adminSessionsSummary">Loading active sessions.</p>
+                    </div>
+                    <span class="admin-panel-icon"><i class="fa-solid fa-right-from-bracket"></i></span>
+                </header>
+                <div class="admin-session-list" id="adminSessionsList">
+                    <div class="admin-loading">Loading sessions...</div>
+                </div>
+            </section>
+        </div>
+
+        <section class="admin-dashboard-panel user-activity-panel">
+            <header class="admin-panel-header">
+                <div>
+                    <span>SYSTEM USAGE</span>
+                    <h2>User activity</h2>
+                    <p>Recent user contribution and access volume.</p>
+                </div>
+                <span class="admin-panel-icon"><i class="fa-solid fa-ranking-star"></i></span>
+            </header>
+            <div class="admin-table-wrap admin-user-table-wrap">
+                <table class="admin-table admin-user-activity-table">
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>Department</th>
+                            <th>Role</th>
+                            <th>Sessions</th>
+                            <th>Files</th>
+                            <th>Activity</th>
+                            <th>Last access</th>
+                        </tr>
+                    </thead>
+                    <tbody id="adminUserActivityBody">
+                        <tr><td colspan="7" class="admin-loading">Loading activity...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+
+    <script src="/js/dashboard-admin.js?v=20260716-admin-dashboard-movements-v2" is:inline></script>
+</DashboardLayout>

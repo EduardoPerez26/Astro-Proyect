@@ -6,15 +6,157 @@ const path = require('path');
 const fs = require('fs');
 const { pool } = require('../config/database');
 const { verificarToken, checkPermission } = require('../middleware/auth.middleware');
+const {
+    ensureCorporateSchema,
+    createFileHash,
+    recordOperationalAudit
+} = require('../services/corporatePlatform.service');
 
 const storage = multer.memoryStorage();
+const ALLOWED_EXCEL_EXTENSIONS = new Set(['.xlsx', '.xls', '.xlsm', '.csv']);
+const ALLOWED_EXCEL_MIME_TYPES = new Set([
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'application/vnd.ms-excel',
+    'application/vnd.ms-excel.sheet.macroenabled.12',
+    'text/csv',
+    'application/csv',
+    'application/octet-stream'
+]);
+
 const upload = multer({
     storage,
-    limits: { fileSize: Number(process.env.MAX_FILE_SIZE_MB || 50) * 1024 * 1024 }
+    limits: { fileSize: Number(process.env.MAX_FILE_SIZE_MB || 50) * 1024 * 1024 },
+    fileFilter(req, file, callback) {
+        const extension = path.extname(file.originalname || '').toLowerCase();
+        const mimeType = String(file.mimetype || '').toLowerCase();
+
+        if (!ALLOWED_EXCEL_EXTENSIONS.has(extension) || !ALLOWED_EXCEL_MIME_TYPES.has(mimeType)) {
+            const error = new Error('Only XLSX, XLS, XLSM, or CSV files are allowed.');
+            error.code = 'INVALID_EXCEL_FILE';
+            callback(error);
+            return;
+        }
+
+        file.originalname = path.basename(file.originalname)
+            .replace(/[\/\x00-\x1f\x7f]/g, '_')
+            .slice(0, 255);
+        callback(null, true);
+    }
 });
+
+function cargarArchivoExcel(req, res, next) {
+    upload.single('archivo')(req, res, error => {
+        if (!error) return next();
+
+        const isSizeError = error instanceof multer.MulterError && error.code === 'LIMIT_FILE_SIZE';
+        return res.status(isSizeError ? 413 : 400).json({
+            error: true,
+            code: error.code || 'FILE_UPLOAD_REJECTED',
+            message: isSizeError
+                ? `The file exceeds the ${Number(process.env.MAX_FILE_SIZE_MB || 50)} MB limit.`
+                : (error.message || 'The file was rejected.')
+        });
+    });
+}
 
 function debeFiltrarPorDepartment(req) {
     return req.usuario?.rol !== 'superadmin' && Boolean(req.departamento?.id);
+}
+
+async function registrarVersionDocumento({
+    archivoId,
+    req,
+    file,
+    reemplazo = false,
+    metadata = null
+}) {
+    try {
+        await ensureCorporateSchema();
+
+        const [versiones] = await pool.query(
+            `SELECT id, version_number, workflow_status
+             FROM corporate_document_versions
+             WHERE archivo_id = ?
+             ORDER BY version_number DESC
+             LIMIT 1`,
+            [archivoId]
+        );
+
+        const anterior = versiones[0] || null;
+        const versionNumber = anterior
+            ? Number(anterior.version_number || 0) + 1
+            : 1;
+        const fileHash = createFileHash(file?.buffer || '');
+
+        if (anterior && ['approved', 'posted', 'archived'].includes(anterior.workflow_status)) {
+            await pool.query(
+                `UPDATE corporate_document_versions
+                 SET locked_at = COALESCE(locked_at, NOW())
+                 WHERE id = ?`,
+                [anterior.id]
+            );
+        }
+
+        const [resultado] = await pool.query(
+            `INSERT INTO corporate_document_versions
+                (archivo_id, version_number, workflow_status, file_hash,
+                 source_filename, owner_id, departamento_id, metadata_json)
+             VALUES (?, ?, 'uploaded', ?, ?, ?, ?, ?)`,
+            [
+                archivoId,
+                versionNumber,
+                fileHash,
+                file?.originalname || null,
+                req.usuario?.id || null,
+                req.departamento?.id || null,
+                JSON.stringify({
+                    size: Number(file?.size || 0),
+                    mimetype: file?.mimetype || null,
+                    replacement: Boolean(reemplazo),
+                    ...(metadata || {})
+                })
+            ]
+        );
+
+        await pool.query(
+            `INSERT INTO corporate_document_events
+                (archivo_id, version_id, event_type, previous_status,
+                 new_status, actor_id, notes, metadata_json)
+             VALUES (?, ?, ?, ?, 'uploaded', ?, ?, ?)`,
+            [
+                archivoId,
+                resultado.insertId,
+                reemplazo ? 'version_created' : 'uploaded',
+                anterior?.workflow_status || null,
+                req.usuario?.id || null,
+                reemplazo
+                    ? `Version ${versionNumber} uploaded as a replacement.`
+                    : 'Initial document version uploaded.',
+                JSON.stringify({
+                    requestId: req.requestId || null,
+                    fileHash
+                })
+            ]
+        );
+
+        await recordOperationalAudit({
+            req,
+            action: reemplazo ? 'document_version_created' : 'document_uploaded',
+            resourceType: 'archivo_excel',
+            resourceId: archivoId,
+            after: {
+                versionId: resultado.insertId,
+                versionNumber,
+                workflowStatus: 'uploaded',
+                fileHash
+            }
+        });
+    } catch (error) {
+        console.warn(
+            'Document lifecycle registration could not be completed:',
+            error.code || error.message
+        );
+    }
 }
 
 async function obtenerArchivoPorId(req, archivoId) {
@@ -128,16 +270,49 @@ router.get(
                 `);
             }
 
-            const archivos = rows.map(row => ({
-                ...row,
-                archivoExiste: (
-                    Boolean(row.tiene_blob) ||
-                    Boolean(
-                        row.ruta_archivo &&
-                        fs.existsSync(row.ruta_archivo)
+            let workflowByFile = new Map();
+            try {
+                await ensureCorporateSchema();
+                const [workflowRows] = await pool.query(
+                    `SELECT v.archivo_id, v.workflow_status, v.version_number,
+                            v.approved_at, v.locked_at
+                     FROM corporate_document_versions v
+                     INNER JOIN (
+                        SELECT archivo_id, MAX(version_number) AS latest_version
+                        FROM corporate_document_versions
+                        GROUP BY archivo_id
+                     ) latest
+                        ON latest.archivo_id = v.archivo_id
+                       AND latest.latest_version = v.version_number`
+                );
+                workflowByFile = new Map(
+                    workflowRows.map(item => [Number(item.archivo_id), item])
+                );
+            } catch (workflowError) {
+                console.warn(
+                    'Document workflow status could not be joined:',
+                    workflowError.code || workflowError.message
+                );
+            }
+
+            const archivos = rows.map(row => {
+                const workflow = workflowByFile.get(Number(row.id));
+                return {
+                    ...row,
+                    estado_legacy: row.estado,
+                    estado: workflow?.workflow_status || row.estado,
+                    workflow_version: workflow?.version_number || null,
+                    workflow_locked_at: workflow?.locked_at || null,
+                    workflow_approved_at: workflow?.approved_at || null,
+                    archivoExiste: (
+                        Boolean(row.tiene_blob) ||
+                        Boolean(
+                            row.ruta_archivo &&
+                            fs.existsSync(row.ruta_archivo)
+                        )
                     )
-                )
-            }));
+                };
+            });
 
             res.json(archivos);
 
@@ -157,7 +332,7 @@ router.post(
     '/subir',
     verificarToken,
     checkPermission('upload_files'),
-    upload.single('archivo'),
+    cargarArchivoExcel,
     async (req, res) => {
         try {
 
@@ -276,6 +451,17 @@ router.post(
                         ]
                     );
 
+                    await registrarVersionDocumento({
+                        archivoId: referenciaAnterior.id,
+                        req,
+                        file: req.file,
+                        reemplazo: true,
+                        metadata: {
+                            source: 'comparison_reference',
+                            restaurantId: restauranteId
+                        }
+                    });
+
                     return res.json({
                         success: true,
                         reemplazado: true,
@@ -390,6 +576,18 @@ router.post(
                         id
                     ]
                 );
+
+                await registrarVersionDocumento({
+                    archivoId: id,
+                    req,
+                    file: req.file,
+                    reemplazo: true,
+                    metadata: {
+                        documentType: tipoDocumento || null,
+                        periodDate: fechaDocumentoNormalizada || null,
+                        restaurantId: restauranteId
+                    }
+                });
 
                 return res.json({
                     success: true,
@@ -574,6 +772,18 @@ router.post(
                 );
             }
 
+            await registrarVersionDocumento({
+                archivoId: result.insertId,
+                req,
+                file: req.file,
+                reemplazo: false,
+                metadata: {
+                    documentType: tipoDocumento || null,
+                    periodDate: fechaDocumentoNormalizada || null,
+                    restaurantId: restauranteId
+                }
+            });
+
             res.json({
                 success: true,
                 archivo: {
@@ -610,6 +820,17 @@ router.get(
             }
 
             const archivo = archivos[0];
+
+            await recordOperationalAudit({
+                req,
+                action: 'document_downloaded',
+                resourceType: 'archivo_excel',
+                resourceId: archivo.id,
+                metadata: {
+                    filename: archivo.nombre_original,
+                    size: archivo.tamano_bytes || null
+                }
+            });
 
             if (archivo.archivo_blob) {
                 const contenido = Buffer.isBuffer(archivo.archivo_blob)
@@ -672,6 +893,65 @@ router.delete(
             }
 
             const archivo = archivos[0];
+
+            try {
+                await ensureCorporateSchema();
+                const [versions] = await pool.query(
+                    `SELECT id, version_number, workflow_status, locked_at
+                     FROM corporate_document_versions
+                     WHERE archivo_id = ?
+                     ORDER BY version_number DESC
+                     LIMIT 1`,
+                    [archivo.id]
+                );
+                const latestVersion = versions[0];
+
+                if (
+                    latestVersion &&
+                    (
+                        latestVersion.locked_at ||
+                        ['approved', 'posted', 'archived'].includes(latestVersion.workflow_status)
+                    )
+                ) {
+                    return res.status(409).json({
+                        error: true,
+                        code: 'DOCUMENT_VERSION_LOCKED',
+                        message: 'Approved, posted, or archived documents cannot be deleted. Preserve the record and use the archive workflow.'
+                    });
+                }
+
+                await pool.query(
+                    `INSERT INTO corporate_document_events
+                        (archivo_id, version_id, event_type, previous_status,
+                         new_status, actor_id, notes, metadata_json)
+                     VALUES (?, ?, 'deleted', ?, 'deleted', ?, ?, ?)`,
+                    [
+                        archivo.id,
+                        latestVersion?.id || null,
+                        latestVersion?.workflow_status || archivo.estado || null,
+                        req.usuario.id,
+                        'Document deleted before final approval.',
+                        JSON.stringify({ request_id: req.requestId || null })
+                    ]
+                );
+            } catch (workflowError) {
+                console.warn(
+                    'Document deletion governance check could not be completed:',
+                    workflowError.code || workflowError.message
+                );
+            }
+
+            await recordOperationalAudit({
+                req,
+                action: 'document_deleted',
+                resourceType: 'archivo_excel',
+                resourceId: archivo.id,
+                before: {
+                    filename: archivo.nombre_original,
+                    status: archivo.estado,
+                    restaurantId: archivo.restaurante_id
+                }
+            });
 
             if (
                 archivo.ruta_archivo &&

@@ -30,6 +30,13 @@ const {
     generarSecretoAuthenticator,
     verificarCodigoTotp
 } = require('../services/mfa.service');
+const {
+    getEntraConfigStatus,
+    createAuthorizationContext,
+    verifyAuthorizationContext,
+    exchangeAuthorizationCode,
+    verifyIdentityToken
+} = require('../services/entraOidc.service');
 
 const PROFILE_UPLOAD_DIR = process.env.PROFILE_UPLOAD_DIR
     ? path.resolve(process.env.PROFILE_UPLOAD_DIR)
@@ -196,15 +203,26 @@ function esErrorEsquemaSesiones(error) {
     return esErrorEsquema(error) && /sesiones/i.test(detalle);
 }
 
-async function registrarSesion(usuarioId, token, req) {
+function obtenerDuracionSesion(mantenerSesion) {
+    const horas = mantenerSesion
+        ? Number(process.env.JWT_REMEMBER_HOURS || 24 * 30)
+        : Number(process.env.JWT_SESSION_HOURS || 8);
+
+    return Number.isFinite(horas) && horas > 0 ? horas : (mantenerSesion ? 720 : 8);
+}
+
+async function registrarSesion(usuarioId, token, req, mantenerSesion = false) {
     const hash = tokenHash(token);
+    const fechaExpiracion = new Date(
+        Date.now() + obtenerDuracionSesion(mantenerSesion) * 60 * 60 * 1000
+    );
 
     try {
         await pool.query(
             `INSERT INTO sesiones
             (usuario_id, token, token_hash, ip_address, user_agent, fecha_expiracion, ultimo_uso)
-            VALUES (?, ?, ?, ?, ?, DATE_ADD(NOW(), INTERVAL 24 HOUR), NOW())`,
-            [usuarioId, token, hash, req.ip, req.headers['user-agent']]
+            VALUES (?, ?, ?, ?, ?, ?, NOW())`,
+            [usuarioId, token, hash, req.ip, req.headers['user-agent'], fechaExpiracion]
         );
 
         return true;
@@ -214,8 +232,8 @@ async function registrarSesion(usuarioId, token, req) {
                 await pool.query(
                     `INSERT INTO sesiones
                     (usuario_id, token, ip_address, user_agent, fecha_expiracion)
-                    VALUES (?, ?, ?, ?, DATE_ADD(NOW(), INTERVAL 24 HOUR))`,
-                    [usuarioId, token, req.ip, req.headers['user-agent']]
+                    VALUES (?, ?, ?, ?, ?)`,
+                    [usuarioId, token, req.ip, req.headers['user-agent'], fechaExpiracion]
                 );
             } catch (fallbackError) {
                 if (fallbackError.code === 'ER_DATA_TOO_LONG') {
@@ -252,40 +270,53 @@ async function registrarSesion(usuarioId, token, req) {
     }
 }
 
-function opcionesCookieAuth(req) {
+function opcionesCookieAuth(req, mantenerSesion = false) {
     const esProduccion = process.env.NODE_ENV === 'production';
     const origen = String(req.headers.origin || '');
     const esLocal = /^http:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origen);
-
-    return {
+    const options = {
         httpOnly: true,
         secure: esProduccion && !esLocal,
         sameSite: esProduccion && !esLocal ? 'none' : 'lax',
-        maxAge: Number(process.env.JWT_COOKIE_MAX_AGE_MS || 24 * 60 * 60 * 1000),
         path: '/'
     };
+
+    if (mantenerSesion) {
+        options.maxAge = obtenerDuracionSesion(true) * 60 * 60 * 1000;
+    }
+
+    return options;
 }
 
-function crearTokenSesion(usuario, contextoUsuario) {
+function crearTokenSesion(usuario, contextoUsuario, mantenerSesion = false) {
     return jwt.sign(
         {
             id: usuario.id,
             username: usuario.username,
             rol: usuario.rol,
-            departamento: contextoUsuario.departamento.codigo
+            departamento: contextoUsuario.departamento.codigo,
+            session_mode: mantenerSesion ? 'persistent' : 'browser'
         },
         process.env.JWT_SECRET,
         {
-            expiresIn: process.env.JWT_EXPIRES_IN || '24h'
+            expiresIn: mantenerSesion
+                ? (process.env.JWT_REMEMBER_EXPIRES_IN || '30d')
+                : (process.env.JWT_EXPIRES_IN || '8h')
         }
     );
 }
 
-async function finalizarLogin({ req, res, usuario, detalle = 'login_success' }) {
+async function finalizarLogin({
+    req,
+    res,
+    usuario,
+    detalle = 'login_success',
+    mantenerSesion = false
+}) {
     const contextoUsuario = construirContextoUsuario(usuario);
-    const token = crearTokenSesion(usuario, contextoUsuario);
+    const token = crearTokenSesion(usuario, contextoUsuario, mantenerSesion);
 
-    await registrarSesion(usuario.id, token, req);
+    await registrarSesion(usuario.id, token, req, mantenerSesion);
     await registrarIntentoLogin({
         username: usuario.username,
         req,
@@ -297,16 +328,23 @@ async function finalizarLogin({ req, res, usuario, detalle = 'login_success' }) 
         departamentoId: contextoUsuario.departamento.id,
         evento: detalle,
         req,
-        detalle: { departamento: contextoUsuario.departamento.codigo }
+        detalle: {
+            departamento: contextoUsuario.departamento.codigo,
+            sessionMode: mantenerSesion ? 'persistent' : 'browser'
+        }
     });
 
-    res.cookie('auth_token', token, opcionesCookieAuth(req));
+    res.cookie('auth_token', token, opcionesCookieAuth(req, mantenerSesion));
 
     return res.json({
         error: false,
         mensaje: 'Login successful',
         token,
-        usuario: contextoUsuario
+        usuario: contextoUsuario,
+        session: {
+            mode: mantenerSesion ? 'persistent' : 'browser',
+            expiresInHours: obtenerDuracionSesion(mantenerSesion)
+        }
     });
 }
 
@@ -320,9 +358,233 @@ function esErrorColumnasMfa(error) {
     return error.code === 'ER_BAD_FIELD_ERROR' && /mfa_/i.test(detalle);
 }
 
+
+const ENTRA_CONTEXT_COOKIE = 'xbfs_entra_oauth_context';
+
+function leerCookie(req, name) {
+    const prefix = `${name}=`;
+    return String(req.headers.cookie || '')
+        .split(';')
+        .map(item => item.trim())
+        .find(item => item.startsWith(prefix))
+        ?.slice(prefix.length) || '';
+}
+
+function opcionesCookieEntra(req) {
+    const isProduction = process.env.NODE_ENV === 'production';
+    const origin = String(req.headers.origin || '');
+    const isLocal = /^http:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origin);
+
+    return {
+        httpOnly: true,
+        secure: isProduction && !isLocal,
+        sameSite: 'lax',
+        maxAge: 10 * 60 * 1000,
+        path: '/api/auth/entra'
+    };
+}
+
+function limpiarCookieEntra(req, res) {
+    const options = opcionesCookieEntra(req);
+    delete options.maxAge;
+    res.clearCookie(ENTRA_CONTEXT_COOKIE, options);
+}
+
+function obtenerUrlRetornoEntra(req, parameters = {}) {
+    const configured = String(process.env.ENTRA_FRONTEND_RETURN_URL || '').trim();
+    const firstOrigin = String(process.env.FRONTEND_ORIGINS || '')
+        .split(',')
+        .map(item => item.trim())
+        .find(Boolean);
+    const base = configured || firstOrigin || `${req.protocol}://${req.get('host')}`;
+    const url = new URL(base);
+
+    Object.entries(parameters).forEach(([key, value]) => {
+        if (value !== null && value !== undefined && value !== '') {
+            url.searchParams.set(key, String(value));
+        }
+    });
+    return url.toString();
+}
+
+async function asegurarTablaTicketsEntra() {
+    await pool.query(
+        `CREATE TABLE IF NOT EXISTS auth_exchange_tickets (
+            id BIGINT NOT NULL AUTO_INCREMENT,
+            token_hash CHAR(64) NOT NULL,
+            usuario_id INT NOT NULL,
+            remember_session BOOLEAN NOT NULL DEFAULT FALSE,
+            identity_provider VARCHAR(40) NOT NULL DEFAULT 'microsoft-entra',
+            identity_subject VARCHAR(255) NULL,
+            identity_email VARCHAR(255) NULL,
+            ip_address VARCHAR(64) NULL,
+            user_agent VARCHAR(255) NULL,
+            expires_at DATETIME NOT NULL,
+            used_at DATETIME NULL,
+            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (id),
+            UNIQUE KEY uq_auth_exchange_ticket_hash (token_hash),
+            INDEX idx_auth_exchange_ticket_expiry (expires_at, used_at),
+            INDEX idx_auth_exchange_ticket_user (usuario_id, created_at)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`
+    );
+}
+
+router.get('/entra/config', (req, res) => {
+    const status = getEntraConfigStatus();
+    res.json({
+        error: false,
+        enabled: status.enabled,
+        missing: process.env.NODE_ENV === 'development' ? status.missing : [],
+        login_url: `${req.baseUrl}/entra/login`
+    });
+});
+
+router.get('/entra/login', async (req, res) => {
+    try {
+        const status = getEntraConfigStatus();
+        if (!status.enabled) {
+            return res.redirect(obtenerUrlRetornoEntra(req, { entra_error: 'not-configured' }));
+        }
+
+        const context = await createAuthorizationContext({
+            rememberSession: String(req.query.remember || '').toLowerCase() === 'true'
+        });
+
+        res.cookie(ENTRA_CONTEXT_COOKIE, context.contextToken, opcionesCookieEntra(req));
+        return res.redirect(context.authorizationUrl);
+    } catch (error) {
+        console.error('Microsoft Entra authorization start error:', error);
+        return res.redirect(obtenerUrlRetornoEntra(req, { entra_error: 'authorization-start-failed' }));
+    }
+});
+
+router.get('/entra/callback', async (req, res) => {
+    try {
+        if (req.query.error) {
+            return res.redirect(obtenerUrlRetornoEntra(req, { entra_error: 'access-denied' }));
+        }
+
+        const code = String(req.query.code || '').trim();
+        const state = String(req.query.state || '').trim();
+        const contextToken = decodeURIComponent(leerCookie(req, ENTRA_CONTEXT_COOKIE));
+        if (!code || !state || !contextToken) {
+            return res.redirect(obtenerUrlRetornoEntra(req, { entra_error: 'callback-invalid' }));
+        }
+
+        const context = verifyAuthorizationContext(contextToken, state);
+        const tokenResponse = await exchangeAuthorizationCode({ code, context });
+        const identity = await verifyIdentityToken(tokenResponse.id_token, context.nonce);
+        const usuario = await obtenerUsuarioConDepartamento(
+            `(LOWER(u.email) = LOWER(?) OR LOWER(u.username) = LOWER(?))
+             AND u.activo = TRUE`,
+            [identity.email, identity.email]
+        );
+
+        if (!usuario) {
+            await registrarEventoSeguridad({
+                evento: 'entra_account_not_provisioned',
+                req,
+                detalle: { email: identity.email, tenantId: identity.tenantId }
+            });
+            return res.redirect(obtenerUrlRetornoEntra(req, { entra_error: 'account-not-provisioned' }));
+        }
+
+        if (
+            usuario.rol !== 'superadmin' &&
+            usuario.departamento_id &&
+            usuario.departamento_activo === 0
+        ) {
+            return res.redirect(obtenerUrlRetornoEntra(req, { entra_error: 'department-inactive' }));
+        }
+
+        await asegurarTablaTicketsEntra();
+        const rawTicket = require('crypto').randomBytes(32).toString('base64url');
+        await pool.query(
+            `INSERT INTO auth_exchange_tickets
+                (token_hash, usuario_id, remember_session, identity_subject,
+                 identity_email, ip_address, user_agent, expires_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, DATE_ADD(NOW(), INTERVAL 2 MINUTE))`,
+            [
+                tokenHash(rawTicket),
+                usuario.id,
+                Boolean(context.rememberSession),
+                identity.objectId || identity.subject,
+                identity.email,
+                req.ip,
+                String(req.headers['user-agent'] || '').slice(0, 255)
+            ]
+        );
+
+        limpiarCookieEntra(req, res);
+        return res.redirect(obtenerUrlRetornoEntra(req, { entra_ticket: rawTicket }));
+    } catch (error) {
+        console.error('Microsoft Entra callback error:', error);
+        limpiarCookieEntra(req, res);
+        return res.redirect(obtenerUrlRetornoEntra(req, { entra_error: error.code || 'callback-failed' }));
+    }
+});
+
+router.post('/entra/exchange', async (req, res) => {
+    const connection = await pool.getConnection();
+    try {
+        const rawTicket = String(req.body.ticket || '').trim();
+        if (!rawTicket) {
+            return res.status(400).json({ error: true, mensaje: 'Microsoft sign-in ticket is required' });
+        }
+
+        await asegurarTablaTicketsEntra();
+        await connection.beginTransaction();
+        const [rows] = await connection.query(
+            `SELECT *
+             FROM auth_exchange_tickets
+             WHERE token_hash = ?
+               AND used_at IS NULL
+               AND expires_at > NOW()
+             LIMIT 1
+             FOR UPDATE`,
+            [tokenHash(rawTicket)]
+        );
+        const ticket = rows[0];
+
+        if (!ticket) {
+            await connection.rollback();
+            return res.status(401).json({ error: true, mensaje: 'Microsoft sign-in ticket is invalid or expired' });
+        }
+
+        await connection.query(
+            'UPDATE auth_exchange_tickets SET used_at = NOW() WHERE id = ?',
+            [ticket.id]
+        );
+        await connection.commit();
+
+        const usuario = await obtenerUsuarioConDepartamento(
+            'u.id = ? AND u.activo = TRUE',
+            [ticket.usuario_id]
+        );
+        if (!usuario) {
+            return res.status(401).json({ error: true, mensaje: 'The linked user is inactive or no longer exists' });
+        }
+
+        return finalizarLogin({
+            req,
+            res,
+            usuario,
+            detalle: 'login_success_entra',
+            mantenerSesion: Boolean(ticket.remember_session)
+        });
+    } catch (error) {
+        try { await connection.rollback(); } catch {}
+        console.error('Microsoft Entra ticket exchange error:', error);
+        return res.status(500).json({ error: true, mensaje: 'Microsoft sign-in could not be completed' });
+    } finally {
+        connection.release();
+    }
+});
+
 router.post('/login', async (req, res) => {
     try {
-        const { username, password } = req.body;
+        const { username, password, mantenerSesion } = req.body;
         const usernameNormalizado = String(username || '').trim();
 
         // Validate submitted credentials
@@ -415,7 +677,8 @@ router.post('/login', async (req, res) => {
                 {
                     id: usuario.id,
                     username: usuario.username,
-                    purpose: 'mfa-login'
+                    purpose: 'mfa-login',
+                    mantenerSesion: Boolean(mantenerSesion)
                 },
                 process.env.JWT_SECRET,
                 { expiresIn: '5m' }
@@ -446,7 +709,8 @@ router.post('/login', async (req, res) => {
             req,
             res,
             usuario,
-            detalle: 'login_success'
+            detalle: 'login_success',
+            mantenerSesion: Boolean(mantenerSesion)
         });
 
     } catch (error) {
@@ -519,7 +783,8 @@ router.post('/mfa/login', async (req, res) => {
             req,
             res,
             usuario,
-            detalle: 'login_success_mfa'
+            detalle: 'login_success_mfa',
+            mantenerSesion: Boolean(decoded.mantenerSesion)
         });
     } catch (error) {
         console.error('MFA login error:', error);
@@ -1006,6 +1271,63 @@ async function actualizarPerfil(req, res) {
 
 router.put('/profile', verificarToken, cargarFotoPerfil, actualizarPerfil);
 router.patch('/profile', verificarToken, cargarFotoPerfil, actualizarPerfil);
+
+
+router.post('/sessions/revoke-all', verificarToken, async (req, res) => {
+    try {
+        let affectedRows = 0;
+
+        try {
+            const [result] = await pool.query(
+                `UPDATE sesiones
+                 SET activa = FALSE,
+                     fecha_expiracion = NOW(),
+                     fecha_revocacion = NOW(),
+                     revocada_por = ?,
+                     motivo_revocacion = 'user_revoke_all'
+                 WHERE usuario_id = ?
+                   AND activa = TRUE`,
+                [req.usuario.id, req.usuario.id]
+            );
+            affectedRows = result.affectedRows || 0;
+        } catch (error) {
+            if (error.code === 'ER_BAD_FIELD_ERROR') {
+                const [result] = await pool.query(
+                    `UPDATE sesiones
+                     SET activa = FALSE,
+                         fecha_expiracion = NOW()
+                     WHERE usuario_id = ?
+                       AND activa = TRUE`,
+                    [req.usuario.id]
+                );
+                affectedRows = result.affectedRows || 0;
+            } else if (!esErrorEsquemaSesiones(error)) {
+                throw error;
+            }
+        }
+
+        await registrarEventoSeguridad({
+            usuarioId: req.usuario.id,
+            departamentoId: req.departamento?.id || null,
+            evento: 'all_sessions_revoked',
+            req,
+            detalle: { affectedRows }
+        });
+
+        res.clearCookie('auth_token', opcionesCookieAuth(req));
+        res.json({
+            error: false,
+            mensaje: 'All active sessions were revoked',
+            affectedSessions: affectedRows
+        });
+    } catch (error) {
+        console.error('Revoke all sessions error:', error);
+        res.status(500).json({
+            error: true,
+            mensaje: 'Sessions could not be revoked'
+        });
+    }
+});
 
 router.post('/logout', verificarToken, async (req, res) => {
     try {

@@ -1,0 +1,274 @@
+---
+import DashboardLayout from "../../layouts/DashboardLayout.astro";
+---
+
+<DashboardLayout title="Documents" includeSheetJS={true} stylesheets={["/styles/pages/views/documentos.css?v=20260714-style-refactor-v1"]}>
+    <div class="page-container documents-page">
+        <!-- Header -->
+        <div class="documents-system-hero">
+            <div class="page-header-info">
+                <h1>Documents</h1>
+                <p>All Excel files uploaded to the system</p>
+            </div>
+            <div class="documents-system-actions">
+                <button
+                    class="documents-system-action-primary"
+                    type="button"
+                    onclick="exportarCSV()"
+                    data-permission-module="documentos"
+                    data-permission-action="exportar"
+                >
+                    <i class="fa-solid fa-download" aria-hidden="true"></i>
+                    Export
+                </button>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="filters-bar documents-filters">
+            <div class="filter-group search-filter">
+                <label for="searchInput">Search file</label>
+                <div class="search-field">
+                    <i class="fa-solid fa-magnifying-glass" aria-hidden="true"
+                    ></i>
+                    <input
+                        type="search"
+                        id="searchInput"
+                        placeholder="Name or restaurant..."
+                        autocomplete="off"
+                    />
+                </div>
+            </div>
+
+            <div class="filter-group">
+                <label>Restaurant:</label>
+                <select id="filterRestaurant">
+                    <option value="">All</option>
+                    <option value="taco-bell">Taco Bell</option>
+                    <option value="burger-king">Burger King</option>
+                    <option value="popeyes">Popeyes</option>
+                    <option value="kfc">KFC</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label>Status:</label>
+                <select id="filterStatus">
+                    <option value="">All</option>
+                    <option value="pendiente">Pending</option>
+                    <option value="validado">Validated</option>
+                    <option value="con_errores">With errors</option>
+                    <option value="procesado">Processed</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label>From:</label>
+                <input type="date" id="filterFechaDesde" />
+            </div>
+
+            <div class="filter-group">
+                <label>To:</label>
+                <input type="date" id="filterFechaHasta" />
+            </div>
+
+            <button
+                type="button"
+                class="btn btn-secondary btn-sm clear-filters"
+                onclick="limpiarFiltros()"
+            >
+                <i class="fa-solid fa-times"></i>
+                Clear
+            </button>
+        </div>
+
+        <div class="documents-type-tabs" role="tablist" aria-label="Document categories">
+            <button
+                type="button"
+                class="documents-type-tab active"
+                data-document-tab="reconciliations"
+                role="tab"
+                aria-selected="true"
+            >
+                <span class="documents-type-icon">
+                    <i class="fa-solid fa-file-circle-check" aria-hidden="true"></i>
+                </span>
+                <span class="documents-type-copy">
+                    <strong>Reconciliation files</strong>
+                    <small>Generated and uploaded reconciliation documents</small>
+                </span>
+                <span class="documents-type-count" id="reconciliationFilesCount">0</span>
+            </button>
+
+            <button
+                type="button"
+                class="documents-type-tab"
+                data-document-tab="ebt"
+                role="tab"
+                aria-selected="false"
+            >
+                <span class="documents-type-icon">
+                    <i class="fa-solid fa-credit-card" aria-hidden="true"></i>
+                </span>
+                <span class="documents-type-copy">
+                    <strong>EBT files</strong>
+                    <small>EBT documents kept apart for later use</small>
+                </span>
+                <span class="documents-type-count" id="ebtFilesCount">0</span>
+            </button>
+        </div>
+
+        <!-- Documents table -->
+        <div class="table-container">
+            <div class="table-header">
+                <h3 id="documentsTableTitle">Reconciliation files</h3>
+                <div class="table-actions">
+                    <button
+                        class="btn btn-secondary btn-sm"
+                        onclick="exportarCSV()"
+                        data-permission-module="documentos"
+                        data-permission-action="exportar"
+                    >
+                        <i class="fa-solid fa-download"></i>
+                        Export
+                    </button>
+                </div>
+            </div>
+
+            <table class="data-table" id="documentosTable">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>File</th>
+                        <th>Restaurant</th>
+                        <th>Size</th>
+                        <th>Status</th>
+                        <th>Uploaded by</th>
+                        <th>Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="documentosBody">
+                    <!-- Se llena con JavaScript -->
+                </tbody>
+            </table>
+
+            <div id="emptyState" class="empty-state" style="display: none;">
+                <i class="fa-solid fa-folder-open"></i>
+                <h4 id="documentsEmptyTitle">No reconciliation files</h4>
+                <p>
+                    <span id="documentsEmptyText">No reconciliation files match the selected filters</span>
+                </p>
+            </div>
+
+            <div id="loadingState" class="empty-state">
+                <i class="fa-solid fa-spinner fa-spin"></i>
+                <h4>Loading...</h4>
+                <p>Fetching documents from the server</p>
+            </div>
+
+            <!-- Paginacion -->
+            <div class="pagination" id="pagination" style="display: none;">
+                <div class="pagination-info">
+                    Showing <span id="showingFrom">1</span> - <span
+                        id="showingTo">10</span
+                    > of <span id="totalItems">0</span> <span id="paginationItemsLabel">reconciliation files</span>
+                </div>
+                <div class="pagination-buttons">
+                    <button
+                        class="pagination-btn"
+                        id="btnPrev"
+                        onclick="cambiarPagina(-1)"
+                    >
+                        <i class="fa-solid fa-chevron-left"></i>
+                    </button>
+                    <span class="pagination-btn active" id="currentPage">1</span
+                    >
+                    <button
+                        class="pagination-btn"
+                        id="btnNext"
+                        onclick="cambiarPagina(1)"
+                    >
+                        <i class="fa-solid fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="modalDetalles" class="modal-overlay">
+        <div class="modal modal-lg document-detail-modal">
+            <div class="modal-header document-detail-modal-header">
+                <div>
+                    <span>DIGITAL FILE</span>
+                    <h3 id="modalTitulo">Document detail</h3>
+                    <p>Information and traceability for the selected file</p>
+                </div>
+                <button class="modal-close" onclick="cerrarModal()">
+                    <i class="fa-solid fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body" id="modalBody"></div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="cerrarModal()"
+                    >Close</button
+                >
+                <button
+                    class="btn btn-primary"
+                    id="btnDownload"
+                    onclick="downloadSelectedDocument()"
+                    data-permission-module="documentos"
+                    data-permission-action="exportar"
+                >
+                    <i class="fa-solid fa-download"></i>
+                    Download
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Excel preview modal -->
+    <div id="modalPreviewExcel" class="modal-overlay">
+        <div class="modal modal-xl document-preview-modal">
+            <div class="modal-header document-detail-modal-header">
+                <div>
+                    <span>PREVIEW</span>
+                    <h3 id="previewTitulo">Reconciliation view</h3>
+                    <p>Review the file without downloading it</p>
+                </div>
+                <button class="modal-close" onclick="cerrarPreviewExcel()">
+                    <i class="fa-solid fa-times"></i>
+                </button>
+            </div>
+
+            <div class="modal-body preview-excel-body">
+                <div id="previewSheetTabs" class="preview-sheet-tabs"></div>
+
+                <div class="preview-table-wrapper">
+                    <table class="data-table preview-excel-table">
+                        <thead id="previewExcelHead"></thead>
+                        <tbody id="previewExcelBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="cerrarPreviewExcel()"
+                    >Close</button
+                >
+                <button
+                    class="btn btn-primary"
+                    onclick="downloadSelectedDocument()"
+                    data-permission-module="documentos"
+                    data-permission-action="exportar"
+                >
+                    <i class="fa-solid fa-download"></i>
+                    Download
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script is:inline src="/js/documentos.js?v=20260701-compact-document-tables"></script>
+    <link rel="stylesheet" href="/styles/pages/views/conciliation-documents-tabs-graphite.css?v=20260715-conciliation-documents-tabs-graphite-v2" />
+</DashboardLayout>

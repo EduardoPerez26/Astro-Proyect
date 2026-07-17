@@ -1,0 +1,267 @@
+---
+// Sidebar component with permission-aware navigation.
+---
+
+<aside class="sidebar sidebar-permissions-pending" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-logo">
+            <span class="sidebar-logo-text">XBFS</span>
+        </div>
+        <button
+            class="sidebar-toggle"
+            id="sidebarToggle"
+            aria-label="Open or close menu"
+        >
+            <i class="fa-solid fa-bars"></i>
+        </button>
+    </div>
+    <div class="sidebar-search" role="search">
+        <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+        <input
+            id="sidebarSearch"
+            type="search"
+            placeholder="Search or jump..."
+            autocomplete="off"
+            aria-label="Search menu"
+        />
+    </div>
+    <nav class="sidebar-nav">
+        <div class="sidebar-section sidebar-favorites-section" id="sidebarFavoritesSection" hidden>
+            <button
+                class="sidebar-section-title sidebar-section-toggle"
+                type="button"
+                data-sidebar-section-toggle
+                aria-expanded="true"
+            >
+                <span>Favorites</span>
+                <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
+            </button>
+            <ul class="sidebar-menu" id="sidebarFavoritesMenu"></ul>
+        </div>
+
+        <!-- GENERAL -->
+        <div class="sidebar-section">
+            <button
+                class="sidebar-section-title sidebar-section-toggle"
+                type="button"
+                data-sidebar-section-toggle
+                aria-expanded="true"
+            >
+                <span>Accounts Receivable</span>
+                <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
+            </button>
+            <ul class="sidebar-menu" id="menuGeneral">
+                <li class="sidebar-menu-item" data-permission="tiendas">
+                    <a class="sidebar-menu-link" href="/views/tiendas">
+                        <i class="fa-solid fa-shop"></i>
+                        <span>Stores</span>
+                    </a>
+                </li>
+                <li class="sidebar-menu-item" data-permission="documentos">
+                    <a class="sidebar-menu-link" href="/views/documentos">
+                        <i class="fa-solid fa-file-excel"></i>
+                        <span>Documents</span>
+                    </a>
+                </li>
+                <li class="sidebar-menu-item" data-permission="historial">
+                    <a class="sidebar-menu-link" href="/views/historial">
+                        <i class="fa-solid fa-clock-rotate-left"></i>
+                        <span>History</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- DEPARTMENTS -->
+        <div class="sidebar-section">
+            <button
+                class="sidebar-section-title sidebar-section-toggle"
+                type="button"
+                data-sidebar-section-toggle
+                aria-expanded="true"
+            >
+                <span>Property Management</span>
+                <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
+            </button>
+            <ul class="sidebar-menu" id="menuDepartments">
+                <li
+                    class="sidebar-menu-item"
+                    data-permission="propertyManagement"
+                >
+                    <a
+                        class="sidebar-menu-link"
+                        href="/views/departments/dashboard-property"
+                    >
+                        <i class="fa-solid fa-building-user"></i>
+                        <span>Schedules</span>
+                    </a>
+                </li>
+                <li
+                    class="sidebar-menu-item"
+                    data-permission="propertyManagementDocuments"
+                >
+                    <a
+                        class="sidebar-menu-link"
+                        href="/views/departments/property-management-documents"
+                    >
+                        <i class="fa-solid fa-folder-tree"></i>
+                        <span>Documents</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- ADMINISTRACION -->
+        <div class="sidebar-section" id="sectionAdmin">
+            <button
+                class="sidebar-section-title sidebar-section-toggle"
+                type="button"
+                data-sidebar-section-toggle
+                aria-expanded="true"
+            >
+                <span>Information Technology</span>
+                <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
+            </button>
+            <ul class="sidebar-menu">
+                <li
+                    class="sidebar-menu-item"
+                    data-permission="dashboardAdmin"
+                    data-admin-only
+                >
+                    <a class="sidebar-menu-link" href="/views/dashboard-admin">
+                        <i class="fa-solid fa-chart-line"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+                <li
+                    class="sidebar-menu-item"
+                    data-permission="systemCenter"
+                    data-admin-only
+                >
+                    <a class="sidebar-menu-link" href="/views/system-center">
+                        <i class="fa-solid fa-tower-broadcast"></i>
+                        <span>System center</span>
+                    </a>
+                </li>
+                <li
+                    class="sidebar-menu-item"
+                    data-permission="approvalCenter"
+                >
+                    <a class="sidebar-menu-link" href="/views/approval-center">
+                        <i class="fa-solid fa-clipboard-check"></i>
+                        <span>Approval center</span>
+                    </a>
+                </li>
+                <li
+                    class="sidebar-menu-item"
+                    data-permission="usuarios"
+                    data-admin-only
+                >
+                    <a class="sidebar-menu-link" href="/views/usuarios">
+                        <i class="fa-solid fa-users"></i>
+                        <span>Users</span>
+                    </a>
+                </li>
+                <li
+                    class="sidebar-menu-item"
+                    data-permission="controlRestaurants"
+                    data-admin-only
+                >
+                    <a class="sidebar-menu-link" href="/views/restaurantes">
+                        <i class="fa-solid fa-screwdriver-wrench"></i>
+                        <span>Restaurant control</span>
+                    </a>
+                </li>
+                <li
+                    class="sidebar-menu-item"
+                    data-permission="systemErrors"
+                    data-admin-only
+                >
+                    <a class="sidebar-menu-link" href="/views/system-errors">
+                        <i class="fa-solid fa-bug"></i>
+                        <span>System errors</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- ACCOUNT -->
+        <div class="sidebar-section">
+            <button
+                class="sidebar-section-title sidebar-section-toggle"
+                type="button"
+                data-sidebar-section-toggle
+                aria-expanded="true"
+            >
+                <span>Account</span>
+                <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
+            </button>
+            <ul class="sidebar-menu">
+                <li class="sidebar-menu-item" data-permission="perfil">
+                    <a
+                        class="sidebar-menu-link sidebar-profile-link"
+                        href="/views/perfil"
+                        aria-label="Profile and security"
+                    >
+                        <i class="fa-solid fa-user-gear"></i>
+                        <span>Profile and security</span>
+                    </a>
+                </li>
+                <li class="sidebar-menu-item" data-permission="chat">
+                    <a href="/views/chat" class="sidebar-menu-link">
+                        <i class="fa-solid fa-comments"></i>
+                        <span>Chat</span>
+                        <span
+                            class="sidebar-chat-badge"
+                            id="chatUnreadBadge"
+                            hidden>0</span
+                        >
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="sidebar-footer">
+        <div class="sidebar-user-card">
+            <span class="avatar sidebar-user-avatar" id="sidebarUserAvatar"
+                >--</span
+            >
+            <span class="sidebar-user-copy">
+                <strong id="sidebarUserName">User</strong>
+                <small id="sidebarUserRole">Role</small>
+            </span>
+        </div>
+        <button class="sidebar-logout" id="logoutBtn">
+            <i class="fa-solid fa-right-from-bracket"></i>
+            <span>Log out</span>
+        </button>
+    </div>
+</aside>
+<script is:inline>
+    (function () {
+        try {
+            var isDesktop =
+                !window.matchMedia ||
+                !window.matchMedia("(max-width: 1024px)").matches;
+            if (
+                !isDesktop ||
+                localStorage.getItem("sidebarCollapsed") !== "true"
+            )
+                return;
+
+            document.documentElement.classList.add("sidebar-collapsed-preset");
+            document.body.classList.add("sidebar-collapsed");
+
+            var sidebar = document.getElementById("sidebar");
+            if (sidebar) {
+                sidebar.classList.add("collapsed");
+                sidebar.style.transition = "none";
+            }
+        } catch (error) {
+            document.documentElement.classList.remove(
+                "sidebar-collapsed-preset",
+            );
+        }
+    })();
+</script>

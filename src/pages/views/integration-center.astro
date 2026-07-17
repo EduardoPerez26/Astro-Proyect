@@ -1,0 +1,22 @@
+---
+import DashboardLayout from '../../layouts/DashboardLayout.astro';
+import PageHeader from '../../components/corporate/PageHeader.astro';
+---
+
+<DashboardLayout title="Integration center">
+    <div class="page-container corporate-page" data-corporate-center="integrations">
+        <PageHeader eyebrow="Information Technology" title="Integration center" description="Centralize connector readiness, credential checks, synchronization runs, failures, and configuration gaps for corporate systems." icon="fa-plug-circle-check">
+            <button slot="actions" id="integrationRefresh" type="button"><i class="fa-solid fa-rotate"></i> Refresh</button>
+        </PageHeader>
+
+        <section class="xb-metric-grid" id="integrationCards">
+            <div class="xb-loading-state"><div><i class="fa-solid fa-spinner fa-spin"></i><strong>Checking integrations</strong></div></div>
+        </section>
+
+        <article class="xb-panel">
+            <header class="xb-panel__header"><div><span class="xb-panel__eyebrow">Execution history</span><h2>Integration runs</h2><p>Configuration checks and synchronization requests are recorded for auditability.</p></div></header>
+            <div class="xb-table-wrap"><table class="xb-table"><thead><tr><th>Date</th><th>Provider</th><th>Operation</th><th>Requested by</th><th>Records</th><th>Warnings</th><th>Errors</th><th>Status</th><th>Summary</th></tr></thead><tbody id="integrationRunBody"><tr><td colspan="9"><div class="xb-loading-state"><div><i class="fa-solid fa-spinner fa-spin"></i><strong>Loading integration history</strong></div></div></td></tr></tbody></table></div>
+        </article>
+    </div>
+    <script src="/js/corporate-centers.js?v=20260717-corporate-v1" is:inline></script>
+</DashboardLayout>

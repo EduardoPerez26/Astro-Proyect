@@ -1,0 +1,29 @@
+---
+interface Props {
+    eyebrow: string;
+    title: string;
+    description: string;
+    icon?: string;
+}
+
+const {
+    eyebrow,
+    title,
+    description,
+    icon = 'fa-building-shield'
+} = Astro.props;
+---
+
+<header class="corporate-page-header">
+    <div class="corporate-page-header__copy">
+        <span class="corporate-page-header__eyebrow">
+            <i class={`fa-solid ${icon}`} aria-hidden="true"></i>
+            {eyebrow}
+        </span>
+        <h1>{title}</h1>
+        <p>{description}</p>
+    </div>
+    <div class="corporate-page-header__actions">
+        <slot name="actions" />
+    </div>
+</header>
