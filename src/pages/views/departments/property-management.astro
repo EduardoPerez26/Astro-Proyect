@@ -9,12 +9,22 @@ import DashboardLayout from "../../../layouts/DashboardLayout.astro";
     >
         <div class="page-header">
             <div class="page-header-info">
-                <span class="pm-eyebrow"> Department workspace </span>
                 <h1 id="propertyManagementTitle">Property Management</h1>
                 <p>
                     Load source reports, open saved schedules, and review the
                     sales tax payable schedule before exporting.
                 </p>
+            </div>
+
+            <div class="page-header-actions property-window-switcher" aria-label="Property Management windows">
+                <a class="btn btn-secondary" href="/views/departments/prepaid-amortization">
+                    <i class="fa-solid fa-building-columns" aria-hidden="true"></i>
+                    Prepaid Bills
+                </a>
+                <a class="btn btn-secondary" href="/views/departments/property-management-documents">
+                    <i class="fa-solid fa-folder-tree" aria-hidden="true"></i>
+                    Documents
+                </a>
             </div>
         </div>
 

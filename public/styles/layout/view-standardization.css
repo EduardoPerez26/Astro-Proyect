@@ -63,12 +63,16 @@ html body .main > :is(
     .schedule-dashboard,
     .prepaid-page,
     .operations-admin,
+    .access-admin-page,
+    .access-users-page,
     .property-management-page,
     .admin-dashboard-page,
     .admin-users-page,
     .documents-page,
     .comparison-history-page,
     .system-errors-page,
+    .system-center-page,
+    .approval-center-page,
     .profile-page
 ) {
     width: min(100%, var(--xbfs-view-max-width)) !important;
@@ -93,6 +97,8 @@ html body .main > .page-container:is(
     .documents-page,
     .comparison-history-page,
     .system-errors-page,
+    .system-center-page,
+    .approval-center-page,
     .profile-page
 ) {
     padding:
@@ -117,6 +123,8 @@ html body .main :is(
     .page-header,
     .stores-hero,
     .profile-settings-hero,
+    .profile-account-hero,
+    .access-command-hero,
     .documents-system-hero,
     .comparison-history-hero,
     .admin-dashboard-header,
@@ -136,11 +144,20 @@ html body .main :is(
     border-radius: var(--xbfs-view-radius) !important;
 }
 
+html body .main > .access-admin-page {
+    padding:
+        var(--xbfs-view-gutter-y)
+        var(--xbfs-view-gutter-x)
+        var(--xbfs-view-bottom-space) !important;
+}
+
 /* Keep hero content vertically balanced without changing its layout mode. */
 html body .main :is(
     .page-header,
     .stores-hero,
     .profile-settings-hero,
+    .profile-account-hero,
+    .access-command-hero,
     .documents-system-hero,
     .comparison-history-hero,
     .admin-dashboard-header,
@@ -333,6 +350,8 @@ html body .main > .chat-page {
         .page-header,
         .stores-hero,
         .profile-settings-hero,
+        .profile-account-hero,
+        .access-command-hero,
         .documents-system-hero,
         .comparison-history-hero,
         .admin-dashboard-header,
@@ -380,6 +399,8 @@ html body .main > .chat-page {
         .page-header,
         .stores-hero,
         .profile-settings-hero,
+        .profile-account-hero,
+        .access-command-hero,
         .documents-system-hero,
         .comparison-history-hero,
         .admin-dashboard-header,

@@ -6,7 +6,7 @@ import DashboardLayout from "../../../layouts/DashboardLayout.astro";
     <main class="prepaid-page property-management-page">
         <section class="prepaid-hero">
             <div>
-                <span class="prepaid-eyebrow">Property Management</span>
+                <h1 class="prepaid-eyebrow">Property Management</h1>
                 <h1>Prepaid Bills</h1>
                 <p>
                     Import paid PTAX bill rows from the 246000 GL report, generate the monthly amortization schedule,
@@ -15,14 +15,15 @@ import DashboardLayout from "../../../layouts/DashboardLayout.astro";
             </div>
 
             <div class="prepaid-actions">
-                <button type="button" class="btn-secondary" id="refreshSchedulesBtn">
-                    <i class="fa-solid fa-rotate" aria-hidden="true"></i>
-                    Refresh
-                </button>
-                <button type="button" class="btn-primary" id="exportScheduleBtn" disabled>
-                    <i class="fa-solid fa-file-excel" aria-hidden="true"></i>
-                    Download Schedule
-                </button>
+                <a class="btn-secondary property-window-link" href="/views/departments/property-management">
+                    <i class="fa-solid fa-table-list" aria-hidden="true"></i>
+                    Schedule
+                </a>
+                <a class="btn-secondary property-window-link" href="/views/departments/property-management-documents">
+                    <i class="fa-solid fa-folder-tree" aria-hidden="true"></i>
+                    Documents
+                </a>
+                
             </div>
         </section>
 

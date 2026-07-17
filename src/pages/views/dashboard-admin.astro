@@ -101,6 +101,16 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
             </article>
 
             <article class="admin-metric-card">
+                <span class="admin-metric-icon sessions"><i class="fa-solid fa-right-to-bracket"></i></span>
+                <div class="admin-metric-copy">
+                    <span>Active sessions</span>
+                    <strong id="adminActiveSessions">0</strong>
+                    <small id="adminLoginsToday">0 logins today</small>
+                </div>
+                <span class="admin-metric-indicator" id="adminSessionsRate">0%</span>
+            </article>
+
+            <article class="admin-metric-card">
                 <span class="admin-metric-icon files"><i class="fa-solid fa-file-arrow-up"></i></span>
                 <div class="admin-metric-copy">
                     <span>Files today</span>
@@ -196,6 +206,20 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
                 </header>
                 <div class="admin-database-tables" id="adminDatabaseTables">
                     <div class="admin-loading">Loading activity log...</div>
+                </div>
+            </section>
+
+            <section class="admin-dashboard-panel admin-sessions-panel">
+                <header class="admin-panel-header">
+                    <div>
+                        <span>ACCESS CONTROL</span>
+                        <h2>Recent sessions</h2>
+                        <p id="adminSessionsSummary">Loading active sessions.</p>
+                    </div>
+                    <span class="admin-panel-icon"><i class="fa-solid fa-right-from-bracket"></i></span>
+                </header>
+                <div class="admin-session-list" id="adminSessionsList">
+                    <div class="admin-loading">Loading sessions...</div>
                 </div>
             </section>
         </div>

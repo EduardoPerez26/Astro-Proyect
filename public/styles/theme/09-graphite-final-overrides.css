@@ -293,3 +293,36 @@ html body :is(
     color: #f4f4f4 !important;
     border-color: #232323 !important;
 }
+
+/* Keep the new Profile page inside the same standard view window as other tabs. */
+html body .main > .page-container.profile-page.profile-professional-v3 {
+    width: min(100%, var(--xbfs-view-max-width)) !important;
+    max-width: var(--xbfs-view-max-width) !important;
+    margin-inline: auto !important;
+    box-sizing: border-box !important;
+}
+
+html body .main > .page-container.profile-page.profile-professional-v3 > :is(
+    .profile-account-hero,
+    .profile-workspace
+) {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+}
+
+html body .main > .page-container.profile-page.profile-professional-v3 > .profile-account-hero {
+    overflow: hidden !important;
+}
+
+/* Direct navigation between Property Management windows. */
+html body .main :is(.property-window-switcher, .prepaid-actions, .property-documents-actions) a:is(.btn, .btn-secondary, .property-window-link) {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    min-height: 40px !important;
+    text-decoration: none !important;
+    white-space: nowrap !important;
+}
