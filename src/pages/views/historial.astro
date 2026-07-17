@@ -95,12 +95,49 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
                     type="date"
                 />
             </div>
+            <div class="comparison-filter">
+                <label for="filterMontoMinimo">Min. difference</label><input
+                    id="filterMontoMinimo"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    placeholder="$0"
+                />
+            </div>
             <button
                 type="button"
                 class="comparison-clear-button"
                 onclick="limpiarFiltros()"
                 ><i class="fa-solid fa-xmark"></i> Clear</button
             >
+        </section>
+
+        <section
+            id="comparisonBulkBar"
+            class="comparison-bulk-bar"
+            hidden
+        >
+            <label class="comparison-bulk-select-all">
+                <input type="checkbox" id="selectAllComparisons" />
+                <span id="bulkSelectionCount">0 selected</span>
+            </label>
+            <div class="comparison-bulk-actions">
+                <button
+                    type="button"
+                    class="btn btn-secondary"
+                    onclick="exportarSeleccionadas()"
+                    ><i class="fa-solid fa-file-export"></i> Export selected</button
+                >
+                <button
+                    type="button"
+                    id="bulkDeleteButton"
+                    class="btn comparison-bulk-delete-button"
+                    onclick="eliminarSeleccionadas()"
+                    data-permission-module="historial"
+                    data-permission-action="eliminar"
+                    ><i class="fa-solid fa-trash"></i> Delete selected</button
+                >
+            </div>
         </section>
 
         <div id="historyLoading" class="comparison-history-message">

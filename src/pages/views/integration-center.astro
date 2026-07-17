@@ -1,22 +1,46 @@
 ---
 import DashboardLayout from '../../layouts/DashboardLayout.astro';
 import PageHeader from '../../components/corporate/PageHeader.astro';
+import MetricCard from '../../components/corporate/MetricCard.astro';
 ---
 
-<DashboardLayout title="Integration center">
+<DashboardLayout title="Integration Monitor">
     <div class="page-container corporate-page" data-corporate-center="integrations">
-        <PageHeader eyebrow="Information Technology" title="Integration center" description="Centralize connector readiness, credential checks, synchronization runs, failures, and configuration gaps for corporate systems." icon="fa-plug-circle-check">
+        <PageHeader eyebrow="Information Technology" title="Integration Monitor" description="Real-time health of Sage Intacct, the database, SMTP, OpenAI, and the CDTFA tax API — status, latency, last synchronization, and availability." icon="fa-wave-square">
+            <span slot="actions" class="xb-monitor-live" id="integrationLive"><i class="fa-solid fa-circle"></i> Live</span>
             <button slot="actions" id="integrationRefresh" type="button"><i class="fa-solid fa-rotate"></i> Refresh</button>
         </PageHeader>
 
+        <section class="xb-metric-grid">
+            <MetricCard label="Availability" value="—" meta="Providers online" icon="fa-heart-pulse" valueId="integrationAvailability" tone="info" />
+            <MetricCard label="Online" value="0" meta="Healthy connectors" icon="fa-circle-check" valueId="integrationOnline" tone="success" />
+            <MetricCard label="Warning" value="0" meta="Degraded or unconfigured" icon="fa-triangle-exclamation" valueId="integrationWarning" tone="warning" />
+            <MetricCard label="Offline" value="0" meta="Unreachable connectors" icon="fa-circle-xmark" valueId="integrationOffline" tone="danger" />
+        </section>
+
         <section class="xb-metric-grid" id="integrationCards">
-            <div class="xb-loading-state"><div><i class="fa-solid fa-spinner fa-spin"></i><strong>Checking integrations</strong></div></div>
+            {Array.from({ length: 5 }).map(() => (
+                <article class="xb-skeleton-card">
+                    <div class="xb-skeleton"></div>
+                    <div class="xb-skeleton-card-copy">
+                        <div class="xb-skeleton xb-skeleton-line" style="width:55%"></div>
+                        <div class="xb-skeleton xb-skeleton-line" style="width:90%"></div>
+                        <div class="xb-skeleton xb-skeleton-line" style="width:40%"></div>
+                    </div>
+                </article>
+            ))}
         </section>
 
         <article class="xb-panel">
-            <header class="xb-panel__header"><div><span class="xb-panel__eyebrow">Execution history</span><h2>Integration runs</h2><p>Configuration checks and synchronization requests are recorded for auditability.</p></div></header>
-            <div class="xb-table-wrap"><table class="xb-table"><thead><tr><th>Date</th><th>Provider</th><th>Operation</th><th>Requested by</th><th>Records</th><th>Warnings</th><th>Errors</th><th>Status</th><th>Summary</th></tr></thead><tbody id="integrationRunBody"><tr><td colspan="9"><div class="xb-loading-state"><div><i class="fa-solid fa-spinner fa-spin"></i><strong>Loading integration history</strong></div></div></td></tr></tbody></table></div>
+            <header class="xb-panel__header"><div><span class="xb-panel__eyebrow">Event history</span><h2>Integration runs</h2><p>Configuration checks and synchronization requests are recorded for auditability.</p></div></header>
+            <div class="xb-table-wrap"><table class="xb-table"><thead><tr><th>Date</th><th>Provider</th><th>Operation</th><th>Requested by</th><th>Records</th><th>Warnings</th><th>Errors</th><th>Status</th><th>Summary</th></tr></thead><tbody id="integrationRunBody">
+                {Array.from({ length: 4 }).map(() => (
+                    <tr class="xb-skeleton-row">
+                        <td colspan="9"><div class="xb-skeleton xb-skeleton-line" style="width:100%"></div></td>
+                    </tr>
+                ))}
+            </tbody></table></div>
         </article>
     </div>
-    <script src="/js/corporate-centers.js?v=20260717-corporate-v1" is:inline></script>
+    <script src="/js/corporate-centers.js?v=20260717-monitor-v1" is:inline></script>
 </DashboardLayout>

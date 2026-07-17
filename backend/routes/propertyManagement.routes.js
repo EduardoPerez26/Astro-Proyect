@@ -12,11 +12,13 @@ const {
 const {
     verificarToken,
     checkPermission,
-    requireDepartment
+    requireDepartment,
+    esAdmin
 } = require('../middleware/auth.middleware');
 const {
     getIntacctConfigStatus
 } = require('../services/intacctConfig.service');
+const { createNotificationsForUsers } = require('../services/notifications.service');
 
 const router = express.Router();
 const upload = multer({
@@ -91,6 +93,18 @@ function getUserId(req) {
 
 function getDepartmentId(req) {
     return Number(req.departamento?.id || req.usuario?.departamento_id || 0) || null;
+}
+
+async function getAdminUserIds(excludeUserId = null) {
+    const [rows] = await pool.query(`
+        SELECT id
+        FROM usuarios
+        WHERE activo = TRUE
+          AND rol IN ('superadmin', 'admin')
+    `);
+    return rows
+        .map(row => row.id)
+        .filter(id => Number(id) !== Number(excludeUserId));
 }
 
 function tableSetupMessage(error, res) {
@@ -390,11 +404,20 @@ router.get('/schedules', ...access('propertyManagement', 'ver'), async (req, res
                     s.total_filas,
                     s.balance_total,
                     s.estado,
+                    s.submitted_by,
+                    s.submitted_at,
+                    s.reviewed_by,
+                    s.reviewed_at,
+                    s.review_notes,
                     s.fecha_creacion,
                     s.fecha_actualizacion,
-                    u.nombre_completo AS usuario_nombre
+                    u.nombre_completo AS usuario_nombre,
+                    sub.nombre_completo AS submitted_by_nombre,
+                    rev.nombre_completo AS reviewed_by_nombre
              FROM property_management_schedules s
              LEFT JOIN usuarios u ON u.id = s.usuario_id
+             LEFT JOIN usuarios sub ON sub.id = s.submitted_by
+             LEFT JOIN usuarios rev ON rev.id = s.reviewed_by
              ${where}
              ORDER BY s.fecha_actualizacion DESC, s.id DESC`,
             params
@@ -552,6 +575,108 @@ router.put('/schedules/:id', ...access('propertyManagement', 'editar'), async (r
         console.error('Property Management schedule could not be updated:', error);
         if (tableSetupMessage(error, res)) return;
         res.status(500).json({ success: false, message: 'Schedule could not be updated' });
+    }
+});
+
+// Submit a draft (or a schedule sent back with changes requested) for review.
+router.post('/schedules/:id/submit', ...access('propertyManagement', 'editar'), async (req, res) => {
+    try {
+        const [[schedule]] = await pool.query(
+            'SELECT id, nombre, estado FROM property_management_schedules WHERE id = ? LIMIT 1',
+            [req.params.id]
+        );
+        if (!schedule) return res.status(404).json({ success: false, message: 'Schedule not found' });
+        if (!['draft', 'changes_requested'].includes(schedule.estado)) {
+            return res.status(409).json({
+                success: false,
+                message: `Only draft or changes-requested schedules can be submitted for review (current status: ${schedule.estado}).`
+            });
+        }
+
+        await pool.query(
+            `UPDATE property_management_schedules
+             SET estado = 'submitted', submitted_by = ?, submitted_at = NOW(),
+                 reviewed_by = NULL, reviewed_at = NULL, review_notes = NULL
+             WHERE id = ?`,
+            [getUserId(req), req.params.id]
+        );
+
+        const adminIds = await getAdminUserIds(getUserId(req));
+        if (adminIds.length) {
+            await createNotificationsForUsers(adminIds, {
+                tipo: 'property_management_review',
+                titulo: 'Property Management schedule pending review',
+                mensaje: `${req.usuario?.nombre_completo || 'A preparer'} submitted "${schedule.nombre}" for review.`,
+                urlAccion: '/views/departments/property-management-documents',
+                prioridad: 'normal',
+                creadoPor: getUserId(req)
+            }).catch(error => console.error('Property Management submit notification error:', error));
+        }
+
+        res.json({ success: true, estado: 'submitted' });
+    } catch (error) {
+        console.error('Property Management schedule could not be submitted:', error);
+        if (tableSetupMessage(error, res)) return;
+        res.status(500).json({ success: false, message: 'Schedule could not be submitted for review' });
+    }
+});
+
+// Approve or send back a schedule that is pending review. Requires an
+// administrator and enforces separation of duties (preparer != reviewer).
+router.post('/schedules/:id/review', ...access('propertyManagement', 'editar'), esAdmin, async (req, res) => {
+    try {
+        const decision = String(req.body.decision || '').trim();
+        if (!['approved', 'changes_requested'].includes(decision)) {
+            return res.status(400).json({ success: false, message: 'Decision must be "approved" or "changes_requested"' });
+        }
+
+        const [[schedule]] = await pool.query(
+            'SELECT id, nombre, estado, usuario_id FROM property_management_schedules WHERE id = ? LIMIT 1',
+            [req.params.id]
+        );
+        if (!schedule) return res.status(404).json({ success: false, message: 'Schedule not found' });
+        if (schedule.estado !== 'submitted') {
+            return res.status(409).json({
+                success: false,
+                message: `Only schedules pending review can be approved or sent back (current status: ${schedule.estado}).`
+            });
+        }
+        if (Number(schedule.usuario_id) === Number(getUserId(req))) {
+            return res.status(403).json({ success: false, message: 'The preparer of a schedule cannot also review it.' });
+        }
+
+        const notes = String(req.body.notes || '').trim().slice(0, 1000);
+        if (decision === 'changes_requested' && !notes) {
+            return res.status(400).json({ success: false, message: 'Notes are required when requesting changes.' });
+        }
+
+        await pool.query(
+            `UPDATE property_management_schedules
+             SET estado = ?, reviewed_by = ?, reviewed_at = NOW(), review_notes = ?
+             WHERE id = ?`,
+            [decision, getUserId(req), notes || null, req.params.id]
+        );
+
+        if (schedule.usuario_id) {
+            await createNotificationsForUsers([schedule.usuario_id], {
+                tipo: 'property_management_review',
+                titulo: decision === 'approved'
+                    ? 'Property Management schedule approved'
+                    : 'Property Management schedule sent back for changes',
+                mensaje: decision === 'approved'
+                    ? `"${schedule.nombre}" was approved by ${req.usuario?.nombre_completo || 'a reviewer'}.`
+                    : `"${schedule.nombre}" needs changes: ${notes}`,
+                urlAccion: '/views/departments/property-management-documents',
+                prioridad: decision === 'approved' ? 'normal' : 'high',
+                creadoPor: getUserId(req)
+            }).catch(error => console.error('Property Management review notification error:', error));
+        }
+
+        res.json({ success: true, estado: decision });
+    } catch (error) {
+        console.error('Property Management schedule review could not be recorded:', error);
+        if (tableSetupMessage(error, res)) return;
+        res.status(500).json({ success: false, message: 'Review could not be recorded' });
     }
 });
 

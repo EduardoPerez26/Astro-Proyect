@@ -49,8 +49,28 @@
             setText('corporateReportsMeta', `${Number(summary.reports_due || 0)} currently due`);
             setText('corporateDocumentsReview', Number(workflow.under_review || 0).toLocaleString('en-US'));
             setText('corporateDocumentsMeta', `${Number(workflow.changes_requested || 0)} changes requested`);
-            setText('corporateIntegrationHealth', Number(summary.integration_failures_30d || 0) === 0 ? 'Healthy' : 'Attention');
-            setText('corporateIntegrationMeta', `${Number(summary.integration_runs_30d || 0)} runs in 30 days`);
+
+            setText('corporateReconciliations', Number(summary.reconciliations_total || 0).toLocaleString('en-US'));
+            setText('corporateReconciliationsMeta', `${Number(summary.reconciliations_pending || 0)} pending, last 30 days`);
+
+            setText('corporateNotificationsUnread', Number(summary.notifications_unread || 0).toLocaleString('en-US'));
+            setText('corporateNotificationsMeta', Number(summary.notifications_unread || 0) === 1 ? '1 unread for you' : `${Number(summary.notifications_unread || 0)} unread for you`);
+
+            const health = data.integration_health;
+            if (health) {
+                setText('corporateIntegrationHealth', `${health.online}/${health.online + health.warning + health.offline}`);
+                setText(
+                    'corporateIntegrationMeta',
+                    health.offline > 0
+                        ? `${health.offline} offline, ${health.warning} degraded`
+                        : health.warning > 0
+                            ? `${health.warning} degraded`
+                            : 'All connectors healthy'
+                );
+            } else {
+                setText('corporateIntegrationHealth', '—');
+                setText('corporateIntegrationMeta', 'Health check unavailable');
+            }
 
             root.classList.remove('has-error');
         } catch (error) {
@@ -64,5 +84,8 @@
 
     window.addEventListener('xbfs:dashboard-refreshed', loadCorporateOverview);
     document.getElementById('refreshAdminDashboard')?.addEventListener('click', loadCorporateOverview);
+    document.getElementById('corporateNotificationsTile')?.addEventListener('click', () => {
+        document.getElementById('notificationsToggle')?.click();
+    });
     loadCorporateOverview();
 })();

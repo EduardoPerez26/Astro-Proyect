@@ -14,6 +14,24 @@
         governance: []
     };
 
+    // Smooth, unified transition: any table body or metric/panel region in a
+    // corporate center briefly fades in whenever its content is replaced
+    // (skeleton -> data, or refresh -> new data), with no per-view wiring.
+    const fadeObserver = new MutationObserver(mutations => {
+        const seen = new Set();
+        for (const mutation of mutations) {
+            const el = mutation.target;
+            if (seen.has(el)) continue;
+            seen.add(el);
+            el.classList.remove('xb-fade-in');
+            void el.offsetWidth;
+            el.classList.add('xb-fade-in');
+        }
+    });
+    root.querySelectorAll('tbody, .xb-metric-grid, .xb-panel__body').forEach(el => {
+        fadeObserver.observe(el, { childList: true });
+    });
+
     function headers(extra = {}) {
         return {
             'Content-Type': 'application/json',
@@ -518,51 +536,90 @@
     }
 
     // -------------------------------------------------------------------------
-    // INTEGRATION CENTER
+    // INTEGRATION MONITOR (real-time health)
     // -------------------------------------------------------------------------
+    const INTEGRATION_POLL_MS = 15000;
+    let integrationPollTimer = null;
+
+    function healthStatusTone(status) {
+        if (status === 'online') return 'success';
+        if (status === 'offline') return 'danger';
+        return 'warning';
+    }
+
+    function healthStatusLabel(status) {
+        if (status === 'online') return 'Online';
+        if (status === 'offline') return 'Offline';
+        return 'Warning';
+    }
+
+    function formatLatency(ms) {
+        if (ms === null || ms === undefined) return '—';
+        if (ms < 1000) return `${Math.round(ms)} ms`;
+        return `${(ms / 1000).toFixed(2)} s`;
+    }
+
     async function loadIntegrations() {
         try {
-            const data = await request('/integrations');
-            state.integrations = data.integrations || [];
-            renderIntegrations(data.runs || []);
+            const [health, data] = await Promise.all([
+                request('/integrations/health'),
+                request('/integrations')
+            ]);
+            state.integrationHealth = health;
+            renderIntegrationHealth(health);
+            renderIntegrationRuns(data.runs || []);
         } catch (error) {
             showError(error);
         }
     }
 
-    function providerIcon(provider) {
-        if (provider === 'sage-intacct') return 'fa-building-columns';
-        if (provider === 'microsoft-entra') return 'fa-id-card';
-        return 'fa-robot';
-    }
+    function renderIntegrationHealth(health) {
+        const summary = health.summary || {};
+        setText('integrationAvailability', `${Number(summary.availability || 0)}%`);
+        setText('integrationOnline', Number(summary.online || 0));
+        setText('integrationWarning', Number(summary.warning || 0));
+        setText('integrationOffline', Number(summary.offline || 0));
 
-    function renderIntegrations(runs) {
+        const live = document.getElementById('integrationLive');
+        if (live) {
+            live.dataset.tone = summary.offline > 0 ? 'danger' : (summary.warning > 0 ? 'warning' : 'success');
+            live.title = `Last checked ${formatDate(health.generated_at, true)}`;
+        }
+
         const cards = document.getElementById('integrationCards');
-        const body = document.getElementById('integrationRunBody');
         if (cards) {
-            cards.innerHTML = state.integrations.map(integration => `
-                <article class="xb-panel">
+            cards.innerHTML = (health.providers || []).map(provider => `
+                <article class="xb-panel xb-monitor-card" data-tone="${healthStatusTone(provider.status)}">
                     <div class="xb-panel__body xb-stack">
                         <div class="xb-actions" style="justify-content:space-between">
-                            <span class="xb-metric-card__icon"><i class="fa-solid ${providerIcon(integration.provider)}"></i></span>
-                            ${statusBadge(integration.ready ? 'active' : 'failed', integration.ready ? 'Ready' : 'Configuration required')}
+                            <span class="xb-metric-card__icon"><i class="fa-solid ${escapeHtml(provider.icon || 'fa-plug')}"></i></span>
+                            ${statusBadge(healthStatusTone(provider.status), healthStatusLabel(provider.status))}
                         </div>
-                        <div><h2 style="margin:0;font-size:18px">${escapeHtml(integration.name)}</h2><p class="xb-text-muted" style="font-size:12px;line-height:1.5">${integration.ready ? 'Required configuration is present.' : `Missing: ${(integration.missing || []).map(escapeHtml).join(', ')}`}</p></div>
-                        <div class="xb-actions">
-                            <button class="xb-button xb-button--secondary" type="button" data-integration-operation="configuration_check" data-integration-provider="${integration.provider}"><i class="fa-solid fa-list-check"></i> Check configuration</button>
-                            ${integration.provider === 'sage-intacct' && integration.ready ? `
-                                <button class="xb-button xb-button--primary" type="button" data-integration-operation="connection_test" data-integration-provider="${integration.provider}"><i class="fa-solid fa-plug-circle-check"></i> Test connection</button>
-                            ` : ''}
+                        <div>
+                            <h2 style="margin:0;font-size:18px">${escapeHtml(provider.name)}</h2>
+                            <p class="xb-text-muted" style="font-size:12px;line-height:1.5">${escapeHtml(provider.detail || '')}</p>
                         </div>
+                        <dl class="xb-monitor-meta">
+                            <div><dt>Latency</dt><dd>${formatLatency(provider.latency_ms)}</dd></div>
+                            <div><dt>Last sync</dt><dd>${provider.last_sync ? formatDate(provider.last_sync, true) : '—'}</dd></div>
+                        </dl>
+                        ${provider.provider === 'sage-intacct' && provider.configured ? `
+                            <div class="xb-actions">
+                                <button class="xb-button xb-button--primary" type="button" data-integration-operation="connection_test" data-integration-provider="sage-intacct"><i class="fa-solid fa-plug-circle-check"></i> Test connection</button>
+                            </div>
+                        ` : ''}
                     </div>
                 </article>
-            `).join('');
+            `).join('') || '<div class="xb-empty-state"><div><i class="fa-solid fa-plug"></i><strong>No integrations</strong><p>No integration providers are registered.</p></div></div>';
         }
-        if (body) {
-            body.innerHTML = runs.length ? runs.map(run => `
-                <tr><td>${formatDate(run.created_at, true)}</td><td>${escapeHtml(run.provider)}</td><td>${escapeHtml(run.operation)}</td><td>${escapeHtml(run.requested_by_name || 'System')}</td><td>${Number(run.records_processed || 0)}</td><td>${Number(run.warnings_count || 0)}</td><td>${Number(run.errors_count || 0)}</td><td>${statusBadge(run.status)}</td><td>${escapeHtml(run.summary || '-')}</td></tr>
-            `).join('') : '<tr><td colspan="9"><div class="xb-empty-state"><div><i class="fa-solid fa-plug"></i><strong>No integration runs</strong><p>Run a configuration check to create the first auditable integration event.</p></div></div></td></tr>';
-        }
+    }
+
+    function renderIntegrationRuns(runs) {
+        const body = document.getElementById('integrationRunBody');
+        if (!body) return;
+        body.innerHTML = runs.length ? runs.map(run => `
+            <tr><td>${formatDate(run.created_at, true)}</td><td>${escapeHtml(run.provider)}</td><td>${escapeHtml(run.operation)}</td><td>${escapeHtml(run.requested_by_name || 'System')}</td><td>${Number(run.records_processed || 0)}</td><td>${Number(run.warnings_count || 0)}</td><td>${Number(run.errors_count || 0)}</td><td>${statusBadge(run.status)}</td><td>${escapeHtml(run.summary || '-')}</td></tr>
+        `).join('') : '<tr><td colspan="9"><div class="xb-empty-state"><div><i class="fa-solid fa-plug"></i><strong>No integration runs</strong><p>Run a connection test to create the first auditable integration event.</p></div></div></td></tr>';
     }
 
     async function runIntegrationCheck(provider, operation = 'configuration_check') {
@@ -589,7 +646,17 @@
                 );
             }
         });
+
         loadIntegrations();
+
+        // Real-time polling; skip probes while the tab is hidden to save resources.
+        integrationPollTimer = setInterval(() => {
+            if (!document.hidden) loadIntegrations();
+        }, INTEGRATION_POLL_MS);
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) loadIntegrations();
+        });
+        window.addEventListener('beforeunload', () => clearInterval(integrationPollTimer));
     }
 
     // -------------------------------------------------------------------------
@@ -674,8 +741,23 @@
         }
     }
 
+    function applyReportTemplate(button) {
+        const form = document.getElementById('reportForm');
+        if (!form) return;
+        if (button.dataset.reportTemplate) form.elements.report_type.value = button.dataset.reportTemplate;
+        if (button.dataset.name) form.elements.name.value = button.dataset.name;
+        if (button.dataset.frequency) form.elements.frequency.value = button.dataset.frequency;
+        if (button.dataset.format) form.elements.format.value = button.dataset.format;
+        form.elements.name.focus();
+        notify('Template applied. Add recipients and create the schedule.', 'info');
+    }
+
     function initReports() {
         document.getElementById('reportRefresh')?.addEventListener('click', loadReports);
+        document.getElementById('reportTemplates')?.addEventListener('click', event => {
+            const button = event.target.closest('[data-report-template]');
+            if (button) applyReportTemplate(button);
+        });
         document.getElementById('reportBody')?.addEventListener('click', event => {
             const toggleButton = event.target.closest('[data-report-toggle]');
             if (toggleButton) {

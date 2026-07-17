@@ -4,9 +4,9 @@ import PageHeader from '../../components/corporate/PageHeader.astro';
 import MetricCard from '../../components/corporate/MetricCard.astro';
 ---
 
-<DashboardLayout title="Scheduled reports">
+<DashboardLayout title="Reports Center">
     <div class="page-container corporate-page" data-corporate-center="reports">
-        <PageHeader eyebrow="Governance & Control" title="Scheduled reports" description="Configure recurring close, exception, security, and integration reports with controlled recipients, formats, and delivery schedules." icon="fa-file-waveform">
+        <PageHeader eyebrow="Governance & Control" title="Reports Center" description="Generate, schedule, and deliver close, exception, security, and integration reports with controlled recipients, formats, execution status, and history." icon="fa-file-waveform">
             <button slot="actions" id="reportRunDue" type="button"><i class="fa-solid fa-play"></i> Run due reports</button>
             <button slot="actions" id="reportRefresh" type="button"><i class="fa-solid fa-rotate"></i> Refresh</button>
         </PageHeader>
@@ -18,10 +18,29 @@ import MetricCard from '../../components/corporate/MetricCard.astro';
             <MetricCard label="Formats" value="CSV / XLSX / PDF" meta="Controlled export options" icon="fa-file-export" />
         </section>
 
+        <article class="xb-panel">
+            <header class="xb-panel__header"><div><span class="xb-panel__eyebrow">Quick start</span><h2>Templates</h2><p>Prefill the schedule form with a governance-ready report configuration.</p></div></header>
+            <div class="xb-panel__body">
+                <div class="xb-actions xb-actions--wrap" id="reportTemplates">
+                    <button class="xb-button" type="button" data-report-template="close_status" data-name="Monthly close status" data-frequency="monthly" data-format="pdf"><i class="fa-solid fa-calendar-check"></i> Monthly close status</button>
+                    <button class="xb-button" type="button" data-report-template="exceptions_sla" data-name="Exceptions outside SLA" data-frequency="weekly" data-format="xlsx"><i class="fa-solid fa-triangle-exclamation"></i> Exceptions outside SLA</button>
+                    <button class="xb-button" type="button" data-report-template="permissions_changes" data-name="Permission changes" data-frequency="weekly" data-format="csv"><i class="fa-solid fa-user-shield"></i> Permission changes</button>
+                    <button class="xb-button" type="button" data-report-template="integration_health" data-name="Integration health" data-frequency="daily" data-format="pdf"><i class="fa-solid fa-wave-square"></i> Integration health</button>
+                    <button class="xb-button" type="button" data-report-template="administrative_activity" data-name="Administrative activity" data-frequency="weekly" data-format="csv"><i class="fa-solid fa-clipboard-list"></i> Administrative activity</button>
+                </div>
+            </div>
+        </article>
+
         <section class="xb-split-grid">
             <article class="xb-panel">
                 <header class="xb-panel__header"><div><span class="xb-panel__eyebrow">Delivery schedules</span><h2>Configured reports</h2><p>Enable, pause, and review the next scheduled execution.</p></div></header>
-                <div class="xb-table-wrap"><table class="xb-table"><thead><tr><th>Report</th><th>Type</th><th>Frequency</th><th>Recipients</th><th>Format</th><th>Next run</th><th>Last status</th><th>Active</th><th>Actions</th></tr></thead><tbody id="reportBody"><tr><td colspan="9"><div class="xb-loading-state"><div><i class="fa-solid fa-spinner fa-spin"></i><strong>Loading report schedules</strong></div></div></td></tr></tbody></table></div>
+                <div class="xb-table-wrap"><table class="xb-table"><thead><tr><th>Report</th><th>Type</th><th>Frequency</th><th>Recipients</th><th>Format</th><th>Next run</th><th>Last status</th><th>Active</th><th>Actions</th></tr></thead><tbody id="reportBody">
+                    {Array.from({ length: 4 }).map(() => (
+                        <tr class="xb-skeleton-row">
+                            <td colspan="9"><div class="xb-skeleton xb-skeleton-line" style="width:100%"></div></td>
+                        </tr>
+                    ))}
+                </tbody></table></div>
             </article>
 
             <aside class="xb-panel">
@@ -43,5 +62,5 @@ import MetricCard from '../../components/corporate/MetricCard.astro';
             </aside>
         </section>
     </div>
-    <script src="/js/corporate-centers.js?v=20260717-corporate-v1" is:inline></script>
+    <script src="/js/corporate-centers.js?v=20260717-monitor-v1" is:inline></script>
 </DashboardLayout>

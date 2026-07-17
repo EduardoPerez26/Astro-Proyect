@@ -1,8 +1,10 @@
 let comparaciones = [];
-let comparacionesFiltradas = [];
+const seleccionadas = new Set();
+let debounceFiltrosTimer = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
     configurarFiltrosComparaciones();
+    configurarAccionesMasivas();
     await Promise.all([
         cargarRestaurantsHistorial(),
         cargarComparaciones()
@@ -10,12 +12,53 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 function configurarFiltrosComparaciones() {
-    ['searchInput', 'filterRestaurant', 'filterStatus', 'filterDesde', 'filterHasta']
-        .forEach(id => {
-            const element = document.getElementById(id);
-            if (!element) return;
-            element.addEventListener(id === 'searchInput' ? 'input' : 'change', aplicarFiltrosComparaciones);
+    ['filterRestaurant', 'filterStatus', 'filterDesde', 'filterHasta'].forEach(id => {
+        document.getElementById(id)?.addEventListener('change', () => {
+            seleccionadas.clear();
+            cargarComparaciones();
         });
+    });
+
+    ['searchInput', 'filterMontoMinimo'].forEach(id => {
+        document.getElementById(id)?.addEventListener('input', () => {
+            clearTimeout(debounceFiltrosTimer);
+            debounceFiltrosTimer = setTimeout(() => {
+                seleccionadas.clear();
+                cargarComparaciones();
+            }, 350);
+        });
+    });
+}
+
+function configurarAccionesMasivas() {
+    document.getElementById('selectAllComparisons')?.addEventListener('change', event => {
+        if (event.target.checked) {
+            comparaciones.forEach(item => seleccionadas.add(item.id));
+        } else {
+            seleccionadas.clear();
+        }
+        renderGruposComparaciones(comparaciones);
+        actualizarBarraSeleccion();
+    });
+}
+
+function construirQueryFiltros() {
+    const params = new URLSearchParams();
+    const search = document.getElementById('searchInput')?.value.trim() || '';
+    const restaurante = document.getElementById('filterRestaurant')?.value || '';
+    const estado = document.getElementById('filterStatus')?.value || '';
+    const desde = document.getElementById('filterDesde')?.value || '';
+    const hasta = document.getElementById('filterHasta')?.value || '';
+    const montoMinimo = document.getElementById('filterMontoMinimo')?.value || '';
+
+    if (search) params.set('busqueda', search);
+    if (restaurante) params.set('restaurante_id', restaurante);
+    if (estado) params.set('estado', estado);
+    if (desde) params.set('fecha_desde', desde);
+    if (hasta) params.set('fecha_hasta', hasta);
+    if (montoMinimo) params.set('monto_minimo', montoMinimo);
+
+    return params.toString();
 }
 
 async function cargarRestaurantsHistorial() {
@@ -53,7 +96,8 @@ async function cargarComparaciones() {
     if (errorBox) errorBox.hidden = true;
 
     try {
-        const response = await fetch(`${window.API_URL}/comparaciones`, {
+        const query = construirQueryFiltros();
+        const response = await fetch(`${window.API_URL}/comparaciones${query ? `?${query}` : ''}`, {
             headers: { Authorization: `Bearer ${token}` }
         });
         const data = await response.json().catch(() => ({}));
@@ -64,7 +108,8 @@ async function cargarComparaciones() {
 
         comparaciones = data.comparaciones || [];
         renderEstadisticasComparaciones(data.estadisticas || {});
-        aplicarFiltrosComparaciones();
+        renderGruposComparaciones(comparaciones);
+        actualizarBarraSeleccion();
     } catch (error) {
         console.error('Error loading comparisons:', error);
         comparaciones = [];
@@ -78,38 +123,23 @@ async function cargarComparaciones() {
     }
 }
 
-function aplicarFiltrosComparaciones() {
-    const search = document.getElementById('searchInput')?.value.trim().toLowerCase() || '';
-    const restaurante = document.getElementById('filterRestaurant')?.value || '';
-    const estado = document.getElementById('filterStatus')?.value || '';
-    const desde = document.getElementById('filterDesde')?.value || '';
-    const hasta = document.getElementById('filterHasta')?.value || '';
-
-    comparacionesFiltradas = comparaciones.filter(item => {
-        const texto = [
-            item.restaurante_nombre,
-            item.restaurante_codigo,
-            item.usuario_nombre,
-            item.archivo_referencia_nombre,
-            item.fecha_operacion
-        ].join(' ').toLowerCase();
-        const fechaComparacion = normalizarFechaHistorial(item.fecha_comparacion);
-
-        return (!search || texto.includes(search)) &&
-            (!restaurante || String(item.restaurante_id) === restaurante) &&
-            (!estado || item.estado === estado) &&
-            (!desde || fechaComparacion >= desde) &&
-            (!hasta || fechaComparacion <= hasta);
-    });
-
-    renderGruposComparaciones(comparacionesFiltradas);
-}
-
 function renderEstadisticasComparaciones(stats) {
     setHistoryText('statTotal', stats.total || 0);
     setHistoryText('statCambios', stats.con_cambios || 0);
     setHistoryText('statSinCambios', stats.sin_cambios || 0);
     setHistoryText('statStores', stats.tiendas_con_diferencias || 0);
+}
+
+// A comparison is flagged as high impact when its variance is well above the
+// average variance of the comparisons currently on screen (relative, not a
+// fixed dollar amount, so it scales with each restaurant's own history).
+function calcularUmbralImpacto(items) {
+    const montos = items
+        .map(item => Number(item.monto_diferencia_absoluta || 0))
+        .filter(monto => monto > 0);
+    if (!montos.length) return Infinity;
+    const promedio = montos.reduce((sum, value) => sum + value, 0) / montos.length;
+    return promedio * 1.5;
 }
 
 function renderGruposComparaciones(items) {
@@ -122,6 +152,8 @@ function renderGruposComparaciones(items) {
         container.innerHTML = '';
         return;
     }
+
+    const umbralImpacto = calcularUmbralImpacto(items);
 
     const grupos = items.reduce((mapa, item) => {
         const fecha = normalizarFechaHistorial(item.fecha_comparacion);
@@ -141,27 +173,41 @@ function renderGruposComparaciones(items) {
                 <strong>${registros.length} ${registros.length === 1 ? 'comparison' : 'comparisons'}</strong>
             </header>
             <div class="comparison-date-list">
-                ${registros.map(renderComparacionItem).join('')}
+                ${registros.map(item => renderComparacionItem(item, umbralImpacto)).join('')}
             </div>
         </section>
     `).join('');
 }
 
-function renderComparacionItem(item) {
+function renderComparacionItem(item, umbralImpacto) {
     const estado = getStatusComparacion(item.estado);
     const deleteButton = puedeDeleteComparaciones()
         ? `<button class="comparison-delete-button" type="button" onclick="eliminarComparacion(${item.id})" title="Delete comparison">
                 <i class="fa-solid fa-trash"></i>
-                
+
            </button>`
         : '';
+    const esAltoImpacto = Number(item.monto_diferencia_absoluta || 0) >= umbralImpacto;
+    const impactBadge = esAltoImpacto
+        ? '<span class="comparison-impact-badge"><i class="fa-solid fa-arrow-trend-up"></i> High impact</span>'
+        : '';
+
     return `
         <article class="comparison-history-item ${estado.clase}">
+            <label class="comparison-select-checkbox">
+                <input
+                    type="checkbox"
+                    onchange="alternarSeleccion(${item.id}, this.checked)"
+                    ${seleccionadas.has(item.id) ? 'checked' : ''}
+                    aria-label="Select this comparison"
+                />
+            </label>
             <div class="comparison-brand-icon"><i class="fa-solid ${getRestaurantIcon(item.restaurante_codigo)}"></i></div>
             <div class="comparison-main">
                 <div class="comparison-title-line">
                     <h3>${escapeHistoryHtml(item.restaurante_nombre)}</h3>
                     <span class="comparison-status ${estado.clase}">${estado.texto}</span>
+                    ${impactBadge}
                 </div>
                 <p>Operating period: <strong>${formatearFechaCorta(item.fecha_operacion)}</strong></p>
                 <small>${escapeHistoryHtml(item.usuario_nombre || 'Deleted user')} / ${formatearHoraHistorial(item.fecha_comparacion)}</small>
@@ -175,12 +221,39 @@ function renderComparacionItem(item) {
             <div class="comparison-item-actions">
                 <button class="comparison-detail-button" type="button" onclick="verComparacion(${item.id})">
                     <i class="fa-solid fa-eye"></i>
-                    
+
                 </button>
                 ${deleteButton}
             </div>
         </article>
     `;
+}
+
+function alternarSeleccion(id, checked) {
+    if (checked) {
+        seleccionadas.add(id);
+    } else {
+        seleccionadas.delete(id);
+    }
+    actualizarBarraSeleccion();
+}
+
+function actualizarBarraSeleccion() {
+    const bar = document.getElementById('comparisonBulkBar');
+    const count = document.getElementById('bulkSelectionCount');
+    const selectAll = document.getElementById('selectAllComparisons');
+    if (!bar || !count) return;
+
+    bar.hidden = seleccionadas.size === 0;
+    count.textContent = seleccionadas.size === 1 ? '1 selected' : `${seleccionadas.size} selected`;
+
+    if (selectAll) {
+        selectAll.checked = comparaciones.length > 0 && seleccionadas.size === comparaciones.length;
+        selectAll.indeterminate = seleccionadas.size > 0 && seleccionadas.size < comparaciones.length;
+    }
+
+    const deleteButton = document.getElementById('bulkDeleteButton');
+    if (deleteButton) deleteButton.hidden = !puedeDeleteComparaciones();
 }
 
 function puedeDeleteComparaciones() {
@@ -203,15 +276,8 @@ async function eliminarComparacion(id) {
     if (!confirmation.isConfirmed) return;
 
     try {
-        const response = await fetch(`${window.API_URL}/comparaciones/${id}`, {
-            method: 'DELETE',
-            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-        });
-        const data = await response.json().catch(() => ({}));
-        if (!response.ok || !data.success) {
-            throw new Error(data.message || data.mensaje || 'The comparison could not be deleted');
-        }
-
+        await borrarComparacionRemota(id);
+        seleccionadas.delete(id);
         await cargarComparaciones();
         await Swal.fire({
             icon: 'success',
@@ -222,6 +288,63 @@ async function eliminarComparacion(id) {
     } catch (error) {
         await Swal.fire({ icon: 'error', title: 'Could not delete', text: error.message });
     }
+}
+
+async function borrarComparacionRemota(id) {
+    const response = await fetch(`${window.API_URL}/comparaciones/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok || !data.success) {
+        throw new Error(data.message || data.mensaje || 'The comparison could not be deleted');
+    }
+}
+
+async function eliminarSeleccionadas() {
+    if (!puedeDeleteComparaciones() || !seleccionadas.size) return;
+
+    const ids = [...seleccionadas];
+    const confirmation = await Swal.fire({
+        icon: 'warning',
+        title: `Delete ${ids.length} comparison${ids.length === 1 ? '' : 's'}?`,
+        html: 'This action does not delete the underlying files or reconciliations.',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, delete selected',
+        cancelButtonText: 'Cancel',
+        confirmButtonColor: '#b4232f'
+    });
+    if (!confirmation.isConfirmed) return;
+
+    const resultados = await Promise.allSettled(ids.map(borrarComparacionRemota));
+    const fallidos = resultados.filter(result => result.status === 'rejected').length;
+
+    seleccionadas.clear();
+    await cargarComparaciones();
+
+    if (fallidos) {
+        await Swal.fire({
+            icon: 'warning',
+            title: 'Some comparisons could not be deleted',
+            text: `${ids.length - fallidos} of ${ids.length} were deleted successfully.`
+        });
+    } else {
+        await Swal.fire({
+            icon: 'success',
+            title: 'Selected comparisons deleted',
+            timer: 1500,
+            showConfirmButton: false
+        });
+    }
+}
+
+function exportarSeleccionadas() {
+    if (!seleccionadas.size) {
+        Swal.fire({ icon: 'warning', title: 'No selection', text: 'Select at least one comparison to export.' });
+        return;
+    }
+    const filas = comparaciones.filter(item => seleccionadas.has(item.id));
+    descargarComparacionesCsv(filas, `comparison-history-selection-${new Date().toISOString().slice(0, 10)}.csv`);
 }
 
 async function verComparacion(id) {
@@ -272,11 +395,15 @@ function renderDetalleComparacion(comparacion, diferencias) {
         return;
     }
 
+    const diferenciasOrdenadas = [...diferencias].sort(
+        (a, b) => Math.abs(Number(b.diferencia || 0)) - Math.abs(Number(a.diferencia || 0))
+    );
+
     body.innerHTML = `${resumen}
         <div class="comparison-detail-table-wrap">
             <table class="comparison-detail-table">
                 <thead><tr><th>Store</th><th>Concept</th><th>Previous</th><th>New</th><th>Difference</th></tr></thead>
-                <tbody>${diferencias.map(item => `
+                <tbody>${diferenciasOrdenadas.map(item => `
                     <tr>
                         <td>${escapeHistoryHtml(item.tienda)}</td>
                         <td>${escapeHistoryHtml(etiquetaDiferencia(item))}</td>
@@ -294,22 +421,17 @@ function cerrarDetalleComparacion() {
 }
 
 function limpiarFiltros() {
-    ['searchInput', 'filterRestaurant', 'filterStatus', 'filterDesde', 'filterHasta']
+    ['searchInput', 'filterRestaurant', 'filterStatus', 'filterDesde', 'filterHasta', 'filterMontoMinimo']
         .forEach(id => {
             const element = document.getElementById(id);
             if (element) element.value = '';
         });
-    aplicarFiltrosComparaciones();
+    seleccionadas.clear();
+    cargarComparaciones();
 }
 
-function exportarHistorial() {
-    if (!window.AppPermissions?.can('historial', 'exportar')) return;
-    if (!comparacionesFiltradas.length) {
-        Swal.fire({ icon: 'warning', title: 'No comparisons', text: 'There is no data to export.' });
-        return;
-    }
-
-    const rows = comparacionesFiltradas.map(item => [
+function descargarComparacionesCsv(filas, nombreArchivo) {
+    const rows = filas.map(item => [
         item.id,
         item.fecha_comparacion,
         item.restaurante_nombre,
@@ -325,13 +447,22 @@ function exportarHistorial() {
     const csv = [headers, ...rows]
         .map(row => row.map(value => `"${String(value ?? '').replaceAll('"', '""')}"`).join(','))
         .join('\r\n');
-    const blob = new Blob(['\uFEFF', csv], { type: 'text/csv;charset=utf-8' });
+    const blob = new Blob(['﻿', csv], { type: 'text/csv;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement('a');
     anchor.href = url;
-    anchor.download = `comparison-history-${new Date().toISOString().slice(0, 10)}.csv`;
+    anchor.download = nombreArchivo;
     anchor.click();
     URL.revokeObjectURL(url);
+}
+
+function exportarHistorial() {
+    if (!window.AppPermissions?.can('historial', 'exportar')) return;
+    if (!comparaciones.length) {
+        Swal.fire({ icon: 'warning', title: 'No comparisons', text: 'There is no data to export.' });
+        return;
+    }
+    descargarComparacionesCsv(comparaciones, `comparison-history-${new Date().toISOString().slice(0, 10)}.csv`);
 }
 
 function getStatusComparacion(estado) {
@@ -410,6 +541,9 @@ function escapeHistoryHtml(value) {
 
 window.verComparacion = verComparacion;
 window.eliminarComparacion = eliminarComparacion;
+window.eliminarSeleccionadas = eliminarSeleccionadas;
+window.exportarSeleccionadas = exportarSeleccionadas;
+window.alternarSeleccion = alternarSeleccion;
 window.cerrarDetalleComparacion = cerrarDetalleComparacion;
 window.limpiarFiltros = limpiarFiltros;
 window.exportarHistorial = exportarHistorial;

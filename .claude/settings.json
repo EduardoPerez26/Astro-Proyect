@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node --test tests/*.test.js)",
+      "Bash(curl -s \"https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css\" -o /tmp/fa.css --max-time 15)",
+      "Bash(echo \"exit:$?\")",
+      "Read(//tmp/**)",
+      "PowerShell(Get-NetTCPConnection -LocalPort 3001 -State Listen -ErrorAction SilentlyContinue)"
+    ]
+  }
+}

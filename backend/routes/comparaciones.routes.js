@@ -25,7 +25,8 @@ router.get('/', verificarToken, checkPermission('view_validaciones'), async (req
             estado,
             fecha_desde,
             fecha_hasta,
-            busqueda
+            busqueda,
+            monto_minimo
         } = req.query;
         const condiciones = ['1 = 1'];
         const parametros = [];
@@ -55,6 +56,13 @@ router.get('/', verificarToken, checkPermission('view_validaciones'), async (req
             parametros.push(fecha_hasta);
             condicionesEstadisticas.push('DATE(ca.fecha_comparacion) <= ?');
             parametrosEstadisticas.push(fecha_hasta);
+        }
+        const montoMinimoNumero = Number(monto_minimo);
+        if (Number.isFinite(montoMinimoNumero) && montoMinimoNumero > 0) {
+            condiciones.push('ca.monto_diferencia_absoluta >= ?');
+            parametros.push(montoMinimoNumero);
+            condicionesEstadisticas.push('ca.monto_diferencia_absoluta >= ?');
+            parametrosEstadisticas.push(montoMinimoNumero);
         }
         if (busqueda?.trim()) {
             condiciones.push(`(

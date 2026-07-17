@@ -188,6 +188,33 @@
         updatePagination(filtered.length);
     }
 
+    function buildScheduleApprovalActions(item) {
+        const user = window.AppPermissions?.getUser?.() || {};
+        const isAdmin = window.AppPermissions?.isAdmin?.(user) === true;
+        const isPreparer = String(item.preparerId ?? '') === String(user.id ?? '');
+
+        if (['draft', 'changes_requested'].includes(item.estado)) {
+            return `
+            <button class="action-btn edit" type="button" data-schedule-submit="${escapeHtml(item.rawId)}" title="Submit for review">
+                <i class="fa-solid fa-paper-plane" aria-hidden="true"></i>
+            </button>
+        `;
+        }
+
+        if (item.estado === 'submitted' && isAdmin && !isPreparer) {
+            return `
+            <button class="action-btn view" type="button" data-schedule-approve="${escapeHtml(item.rawId)}" title="Approve schedule">
+                <i class="fa-solid fa-circle-check" aria-hidden="true"></i>
+            </button>
+            <button class="action-btn delete" type="button" data-schedule-reject="${escapeHtml(item.rawId)}" title="Request changes">
+                <i class="fa-solid fa-rotate-left" aria-hidden="true"></i>
+            </button>
+        `;
+        }
+
+        return '';
+    }
+
     function renderDocumentRow(item) {
         const isSchedule = ['schedule', 'prepaidSchedule'].includes(item.kind);
         const iconClass = isSchedule
@@ -205,6 +232,7 @@
             <button class="action-btn download" type="button" data-schedule-download="${escapeHtml(item.rawId)}" title="Download schedule">
                 <i class="fa-solid fa-download" aria-hidden="true"></i>
             </button>
+            ${buildScheduleApprovalActions(item)}
             <button class="action-btn delete" type="button" data-schedule-delete="${escapeHtml(item.rawId)}" title="Delete schedule">
                 <i class="fa-solid fa-trash" aria-hidden="true"></i>
             </button>
@@ -258,7 +286,7 @@
                     <span>${escapeHtml(item.detailsSecondary)}</span>
                 </div>
             </td>
-            <td><span class="status-badge ${escapeHtml(item.statusClass)}">${escapeHtml(item.statusLabel)}</span></td>
+            <td><span class="status-badge ${escapeHtml(item.statusClass)}"${item.reviewNotes ? ` title="${escapeHtml(item.reviewNotes)}"` : ''}>${escapeHtml(item.statusLabel)}</span></td>
             <td>${escapeHtml(formatDateTime(item.date))}</td>
             <td>
                 <div class="action-buttons">${actions}</div>
@@ -296,6 +324,13 @@
             const rows = Number(schedule.total_filas || 0);
             const balance = formatCurrency(schedule.balance_total || 0);
 
+            const statusMeta = {
+                draft: { statusClass: 'draft', statusLabel: 'Draft' },
+                submitted: { statusClass: 'pending', statusLabel: 'Pending review' },
+                approved: { statusClass: 'saved', statusLabel: 'Approved' },
+                changes_requested: { statusClass: 'error', statusLabel: 'Changes requested' }
+            }[status] || { statusClass: 'saved', statusLabel: toTitleCase(status) };
+
             return {
                 kind: 'schedule',
                 rawId: schedule.id,
@@ -306,8 +341,13 @@
                 period,
                 detailsPrimary: `${stores} stores`,
                 detailsSecondary: `${rows} rows / ${balance}`,
-                statusClass: status === 'draft' ? 'draft' : 'saved',
-                statusLabel: status === 'draft' ? 'Draft' : toTitleCase(status),
+                estado: status,
+                preparerId: schedule.usuario_id,
+                submittedByName: schedule.submitted_by_nombre || '',
+                reviewedByName: schedule.reviewed_by_nombre || '',
+                reviewNotes: schedule.review_notes || '',
+                statusClass: statusMeta.statusClass,
+                statusLabel: statusMeta.statusLabel,
                 date: updated,
                 searchText: normalize([
                     name,
@@ -504,6 +544,9 @@
         const scheduleButton = event.target.closest('[data-schedule-edit]');
         const scheduleDownloadButton = event.target.closest('[data-schedule-download]');
         const scheduleDeleteButton = event.target.closest('[data-schedule-delete]');
+        const scheduleSubmitButton = event.target.closest('[data-schedule-submit]');
+        const scheduleApproveButton = event.target.closest('[data-schedule-approve]');
+        const scheduleRejectButton = event.target.closest('[data-schedule-reject]');
         const prepaidInfoButton = event.target.closest('[data-prepaid-info]');
         const prepaidOpenButton = event.target.closest('[data-prepaid-open]');
         const prepaidDownloadButton = event.target.closest('[data-prepaid-download]');
@@ -547,6 +590,21 @@
 
         if (scheduleDeleteButton) {
             await deleteSchedule(scheduleDeleteButton.dataset.scheduleDelete, scheduleDeleteButton);
+            return;
+        }
+
+        if (scheduleSubmitButton) {
+            await submitScheduleForReview(scheduleSubmitButton.dataset.scheduleSubmit, scheduleSubmitButton);
+            return;
+        }
+
+        if (scheduleApproveButton) {
+            await reviewSchedule(scheduleApproveButton.dataset.scheduleApprove, 'approved', scheduleApproveButton);
+            return;
+        }
+
+        if (scheduleRejectButton) {
+            await reviewSchedule(scheduleRejectButton.dataset.scheduleReject, 'changes_requested', scheduleRejectButton);
             return;
         }
 
@@ -906,6 +964,67 @@
             showSwal('success', 'Deleted', 'Schedule deleted successfully.');
         } catch (error) {
             showSwal('error', 'Delete failed', error.message || 'Schedule could not be deleted.');
+        } finally {
+            if (button) button.disabled = false;
+        }
+    }
+
+    async function submitScheduleForReview(id, button = null) {
+        if (button) button.disabled = true;
+
+        try {
+            await apiJson(`/schedules/${encodeURIComponent(id)}/submit`, { method: 'POST' });
+            await loadServerDocuments();
+            showSwal('success', 'Submitted', 'The schedule was submitted for review.');
+        } catch (error) {
+            showSwal('error', 'Could not submit', error.message || 'The schedule could not be submitted for review.');
+        } finally {
+            if (button) button.disabled = false;
+        }
+    }
+
+    async function reviewSchedule(id, decision, button = null) {
+        let notes = '';
+
+        if (decision === 'changes_requested') {
+            const { value, isConfirmed } = await Swal.fire({
+                icon: 'question',
+                title: 'Request changes',
+                input: 'textarea',
+                inputLabel: 'Explain what needs to change',
+                inputPlaceholder: 'e.g. Store 042 balance does not match the Dimension Balance report...',
+                showCancelButton: true,
+                confirmButtonText: 'Send back',
+                inputValidator: text => (!text || !text.trim() ? 'Notes are required so the preparer knows what to fix.' : undefined)
+            });
+            if (!isConfirmed) return;
+            notes = value.trim();
+        } else {
+            const confirmation = await Swal.fire({
+                icon: 'question',
+                title: 'Approve this schedule?',
+                text: 'The schedule will be marked as approved and locked from further edits.',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, approve'
+            });
+            if (!confirmation.isConfirmed) return;
+        }
+
+        if (button) button.disabled = true;
+
+        try {
+            await apiJson(`/schedules/${encodeURIComponent(id)}/review`, {
+                method: 'POST',
+                body: { decision, notes }
+            });
+            await loadServerDocuments();
+            showSwal(
+                'success',
+                decision === 'approved' ? 'Approved' : 'Sent back',
+                decision === 'approved' ? 'The schedule was approved.' : 'The schedule was sent back for changes.'
+            );
+        } catch (error) {
+            showSwal('error', 'Review failed', error.message || 'The review could not be recorded.');
         } finally {
             if (button) button.disabled = false;
         }

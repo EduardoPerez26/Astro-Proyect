@@ -173,16 +173,26 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
                     <strong id="corporateDocumentsReview">0</strong>
                     <small id="corporateDocumentsMeta">0 changes requested</small>
                 </a>
+                <a href="/views/conciliacion" class="corporate-command-metric">
+                    <span><i class="fa-solid fa-layer-group"></i> Reconciliations</span>
+                    <strong id="corporateReconciliations">0</strong>
+                    <small id="corporateReconciliationsMeta">0 pending, last 30 days</small>
+                </a>
                 <a href="/views/report-center" class="corporate-command-metric">
                     <span><i class="fa-solid fa-file-waveform"></i> Active reports</span>
                     <strong id="corporateScheduledReports">0</strong>
                     <small id="corporateReportsMeta">0 currently due</small>
                 </a>
                 <a href="/views/integration-center" class="corporate-command-metric">
-                    <span><i class="fa-solid fa-plug-circle-check"></i> Integrations</span>
-                    <strong id="corporateIntegrationHealth">Healthy</strong>
-                    <small id="corporateIntegrationMeta">0 runs in 30 days</small>
+                    <span><i class="fa-solid fa-wave-square"></i> Integrations</span>
+                    <strong id="corporateIntegrationHealth">—</strong>
+                    <small id="corporateIntegrationMeta">Checking connectors</small>
                 </a>
+                <button type="button" class="corporate-command-metric" id="corporateNotificationsTile">
+                    <span><i class="fa-solid fa-bell"></i> Notifications</span>
+                    <strong id="corporateNotificationsUnread">0</strong>
+                    <small id="corporateNotificationsMeta">Unread for you</small>
+                </button>
             </div>
         </section>
 

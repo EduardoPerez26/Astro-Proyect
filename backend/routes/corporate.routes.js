@@ -22,6 +22,7 @@ const {
     runScheduledReport,
     reportPath
 } = require('../services/corporateReport.service');
+const { checkAllIntegrations } = require('../services/integrationHealth.service');
 
 router.use(verificarToken);
 router.use(async (req, res, next) => {
@@ -100,26 +101,14 @@ async function safeScalar(query, params = [], fallback = 0) {
     }
 }
 
-async function refreshClosePeriodTotals(periodId) {
-    const [rows] = await pool.query(
-        `SELECT COUNT(*) AS total,
-                SUM(status IN ('completed', 'verified', 'closed')) AS completed
-         FROM corporate_close_tasks
-         WHERE close_period_id = ?`,
-        [periodId]
-    );
-
-    const total = Number(rows[0]?.total || 0);
-    const completed = Number(rows[0]?.completed || 0);
-
-    await pool.query(
-        `UPDATE corporate_close_periods
-         SET total_tasks = ?, completed_tasks = ?
-         WHERE id = ?`,
-        [total, completed, periodId]
-    );
-
-    return { total, completed };
+async function safeRow(query, params = [], fallback = {}) {
+    try {
+        const [rows] = await pool.query(query, params);
+        return rows[0] || fallback;
+    } catch (error) {
+        if (['ER_NO_SUCH_TABLE', 'ER_BAD_FIELD_ERROR'].includes(error.code)) return fallback;
+        throw error;
+    }
 }
 
 function nextReportRun(frequency, deliveryHour = 8) {
@@ -145,32 +134,9 @@ function nextReportRun(frequency, deliveryHour = 8) {
 // -----------------------------------------------------------------------------
 router.get(
     '/overview',
-    checkPermission('closeCenter', 'ver'),
     async (req, res) => {
         try {
-            const [closeRows, exceptionRows, integrationRows, reportRows, workflowRows] = await Promise.all([
-                pool.query(
-                    `SELECT COUNT(*) AS periods,
-                            SUM(status = 'open') AS open_periods,
-                            COALESCE(SUM(total_tasks), 0) AS total_tasks,
-                            COALESCE(SUM(completed_tasks), 0) AS completed_tasks
-                     FROM corporate_close_periods
-                     WHERE status <> 'archived'`
-                ),
-                pool.query(
-                    `SELECT COUNT(*) AS total,
-                            SUM(status NOT IN ('resolved', 'verified', 'closed')) AS open_total,
-                            SUM(severity = 'critical' AND status NOT IN ('resolved', 'verified', 'closed')) AS critical_total,
-                            COALESCE(SUM(CASE WHEN status NOT IN ('resolved', 'verified', 'closed') THEN ABS(amount) ELSE 0 END), 0) AS open_amount
-                     FROM corporate_exceptions`
-                ),
-                pool.query(
-                    `SELECT COUNT(*) AS runs,
-                            SUM(status = 'failed') AS failures,
-                            MAX(created_at) AS last_run_at
-                     FROM corporate_integration_runs
-                     WHERE created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)`
-                ),
+            const [reportRows, workflowRows] = await Promise.all([
                 pool.query(
                     `SELECT COUNT(*) AS total,
                             SUM(active = TRUE) AS active_total,
@@ -186,469 +152,59 @@ router.get(
 
             const filesTotal = await safeScalar('SELECT COUNT(*) AS total FROM archivos_excel');
             const storesTotal = await safeScalar('SELECT COUNT(*) AS total FROM restaurantes WHERE activo = TRUE');
-            const close = closeRows[0][0] || {};
-            const exceptions = exceptionRows[0][0] || {};
-            const integrations = integrationRows[0][0] || {};
+            const reconciliations = await safeRow(
+                `SELECT COUNT(*) AS total,
+                        SUM(estado = 'borrador') AS pending,
+                        SUM(estado IN ('completada', 'aprobada')) AS completed,
+                        SUM(conceptos_diferencia > 0) AS with_differences,
+                        COALESCE(SUM(monto_total_diferencia), 0) AS difference_amount
+                 FROM conciliaciones
+                 WHERE fecha_conciliacion >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)`
+            );
+            const notificationsUnread = await safeScalar(
+                `SELECT COUNT(*) AS total
+                 FROM notificaciones
+                 WHERE usuario_id = ? AND leida = FALSE AND archivada = FALSE`,
+                [req.usuario.id]
+            );
+            const integrationHealth = await checkAllIntegrations().catch(error => {
+                console.error('Corporate overview integration health error:', error);
+                return null;
+            });
+
             const reports = reportRows[0][0] || {};
-            const totalTasks = Number(close.total_tasks || 0);
-            const completedTasks = Number(close.completed_tasks || 0);
 
             res.json({
                 success: true,
                 generated_at: new Date().toISOString(),
                 summary: {
-                    close_periods: Number(close.periods || 0),
-                    open_close_periods: Number(close.open_periods || 0),
-                    close_completion_rate: totalTasks ? Math.round((completedTasks / totalTasks) * 100) : 0,
-                    close_tasks_total: totalTasks,
-                    close_tasks_completed: completedTasks,
-                    exceptions_open: Number(exceptions.open_total || 0),
-                    exceptions_critical: Number(exceptions.critical_total || 0),
-                    exceptions_open_amount: Number(exceptions.open_amount || 0),
-                    integration_runs_30d: Number(integrations.runs || 0),
-                    integration_failures_30d: Number(integrations.failures || 0),
-                    integration_last_run_at: integrations.last_run_at || null,
                     scheduled_reports: Number(reports.total || 0),
                     active_scheduled_reports: Number(reports.active_total || 0),
                     reports_due: Number(reports.due_total || 0),
                     documents_total: filesTotal,
-                    stores_total: storesTotal
+                    stores_total: storesTotal,
+                    reconciliations_total: Number(reconciliations.total || 0),
+                    reconciliations_pending: Number(reconciliations.pending || 0),
+                    reconciliations_with_differences: Number(reconciliations.with_differences || 0),
+                    reconciliations_difference_amount: Number(reconciliations.difference_amount || 0),
+                    notifications_unread: notificationsUnread
                 },
                 document_workflow: Object.fromEntries(
                     workflowRows[0].map(row => [row.workflow_status, Number(row.total || 0)])
-                )
+                ),
+                integration_health: integrationHealth
+                    ? {
+                        availability: integrationHealth.summary.availability,
+                        online: integrationHealth.summary.online,
+                        warning: integrationHealth.summary.warning,
+                        offline: integrationHealth.summary.offline,
+                        checked_at: integrationHealth.generated_at
+                    }
+                    : null
             });
         } catch (error) {
             console.error('Corporate overview error:', error);
             res.status(500).json({ success: false, message: 'Corporate overview could not be loaded' });
-        }
-    }
-);
-
-// -----------------------------------------------------------------------------
-// Close center
-// -----------------------------------------------------------------------------
-router.get(
-    '/close-center',
-    checkPermission('closeCenter', 'ver'),
-    async (req, res) => {
-        try {
-            const periodId = integer(req.query.period_id);
-            const params = [];
-            let where = '';
-
-            if (periodId) {
-                where = 'WHERE p.id = ?';
-                params.push(periodId);
-            }
-
-            const [periods] = await pool.query(
-                `SELECT p.*,
-                        u.nombre_completo AS owner_name,
-                        d.nombre AS department_name,
-                        CASE WHEN p.total_tasks > 0
-                            THEN ROUND((p.completed_tasks / p.total_tasks) * 100)
-                            ELSE 0 END AS completion_rate,
-                        DATEDIFF(p.due_date, CURDATE()) AS days_remaining
-                 FROM corporate_close_periods p
-                 LEFT JOIN usuarios u ON u.id = p.owner_id
-                 LEFT JOIN departamentos d ON d.id = p.departamento_id
-                 ${where}
-                 ORDER BY p.period_year DESC, p.period_month DESC, p.id DESC`,
-                params
-            );
-
-            let tasks = [];
-            if (periodId) {
-                [tasks] = await pool.query(
-                    `SELECT t.*,
-                            r.nombre AS restaurant_name,
-                            r.codigo AS restaurant_code,
-                            u.nombre_completo AS assignee_name,
-                            rv.nombre_completo AS reviewer_name
-                     FROM corporate_close_tasks t
-                     LEFT JOIN restaurantes r ON r.id = t.restaurante_id
-                     LEFT JOIN usuarios u ON u.id = t.assignee_id
-                     LEFT JOIN usuarios rv ON rv.id = t.reviewer_id
-                     WHERE t.close_period_id = ?
-                     ORDER BY FIELD(t.status, 'blocked', 'pending', 'in_progress', 'completed', 'verified', 'closed'),
-                              FIELD(t.priority, 'critical', 'high', 'normal', 'low'),
-                              t.due_at, t.id`,
-                    [periodId]
-                );
-            }
-
-            res.json({ success: true, periods, tasks });
-        } catch (error) {
-            console.error('Close center error:', error);
-            res.status(500).json({ success: false, message: 'Close center could not be loaded' });
-        }
-    }
-);
-
-router.post(
-    '/close-center/periods',
-    checkPermission('closeCenter', 'crear'),
-    async (req, res) => {
-        const connection = await pool.getConnection();
-        try {
-            const year = integer(req.body.period_year);
-            const month = integer(req.body.period_month);
-            const departmentId = integer(req.body.departamento_id, req.departamento?.id || null);
-            const dueDate = dateOrNull(req.body.due_date);
-            const ownerId = integer(req.body.owner_id, req.usuario.id);
-            const createStoreTasks = boolean(req.body.create_store_tasks, true);
-
-            if (!year || year < 2020 || year > 2100 || !month || month < 1 || month > 12) {
-                return res.status(400).json({ success: false, message: 'A valid close year and month are required' });
-            }
-
-            const periodName = text(req.body.name, 120) || new Intl.DateTimeFormat('en', {
-                month: 'long',
-                year: 'numeric',
-                timeZone: 'UTC'
-            }).format(new Date(Date.UTC(year, month - 1, 1)));
-
-            await connection.beginTransaction();
-            const [result] = await connection.query(
-                `INSERT INTO corporate_close_periods
-                    (period_year, period_month, departamento_id, name, status, due_date, owner_id, created_by)
-                 VALUES (?, ?, ?, ?, 'open', ?, ?, ?)`,
-                [year, month, departmentId, periodName, dueDate, ownerId, req.usuario.id]
-            );
-
-            const periodId = result.insertId;
-            let createdTasks = 0;
-
-            if (createStoreTasks && await tableExists('restaurantes')) {
-                const [stores] = await connection.query(
-                    `SELECT id, codigo, nombre
-                     FROM restaurantes
-                     WHERE activo = TRUE
-                     ORDER BY codigo, nombre`
-                );
-
-                for (const store of stores) {
-                    await connection.query(
-                        `INSERT INTO corporate_close_tasks
-                            (close_period_id, task_type, title, reference_type, reference_id,
-                             restaurante_id, assignee_id, status, priority, due_at)
-                         VALUES (?, 'reconciliation', ?, 'restaurant', ?, ?, ?, 'pending', 'normal', ?)`,
-                        [
-                            periodId,
-                            `Reconcile ${store.codigo || store.nombre}`,
-                            String(store.id),
-                            store.id,
-                            ownerId,
-                            dueDate ? `${dueDate} 17:00:00` : null
-                        ]
-                    );
-                    createdTasks += 1;
-                }
-            }
-
-            await connection.query(
-                `UPDATE corporate_close_periods
-                 SET total_tasks = ?
-                 WHERE id = ?`,
-                [createdTasks, periodId]
-            );
-            await connection.commit();
-
-            await recordOperationalAudit({
-                req,
-                action: 'close_period_created',
-                resourceType: 'close_period',
-                resourceId: periodId,
-                after: { year, month, departmentId, dueDate, createdTasks }
-            });
-
-            res.status(201).json({ success: true, period_id: periodId, tasks_created: createdTasks });
-        } catch (error) {
-            await connection.rollback();
-            if (error.code === 'ER_DUP_ENTRY') {
-                return res.status(409).json({ success: false, message: 'That close period already exists for the department' });
-            }
-            console.error('Create close period error:', error);
-            res.status(500).json({ success: false, message: 'Close period could not be created' });
-        } finally {
-            connection.release();
-        }
-    }
-);
-
-router.patch(
-    '/close-center/tasks/:id',
-    checkPermission('closeCenter', 'editar'),
-    async (req, res) => {
-        try {
-            const id = integer(req.params.id);
-            const [existingRows] = await pool.query('SELECT * FROM corporate_close_tasks WHERE id = ? LIMIT 1', [id]);
-            const existing = existingRows[0];
-            if (!existing) return res.status(404).json({ success: false, message: 'Close task was not found' });
-
-            const allowedStatuses = ['pending', 'in_progress', 'blocked', 'completed', 'verified', 'closed'];
-            const status = text(req.body.status, 40) || existing.status;
-            if (!allowedStatuses.includes(status)) {
-                return res.status(400).json({ success: false, message: 'Invalid close task status' });
-            }
-
-            const priority = ['low', 'normal', 'high', 'critical'].includes(text(req.body.priority, 20))
-                ? text(req.body.priority, 20)
-                : existing.priority;
-            const assigneeId = req.body.assignee_id === undefined ? existing.assignee_id : integer(req.body.assignee_id);
-            const reviewerId = req.body.reviewer_id === undefined ? existing.reviewer_id : integer(req.body.reviewer_id);
-            const notes = req.body.notes === undefined ? existing.notes : text(req.body.notes, 4000);
-            const materialityAmount = req.body.materiality_amount === undefined
-                ? existing.materiality_amount
-                : decimal(req.body.materiality_amount);
-
-            await pool.query(
-                `UPDATE corporate_close_tasks
-                 SET status = ?, priority = ?, assignee_id = ?, reviewer_id = ?, notes = ?,
-                     materiality_amount = ?,
-                     completed_at = CASE WHEN ? IN ('completed', 'verified', 'closed') THEN COALESCE(completed_at, NOW()) ELSE NULL END,
-                     verified_at = CASE WHEN ? IN ('verified', 'closed') THEN COALESCE(verified_at, NOW()) ELSE NULL END
-                 WHERE id = ?`,
-                [status, priority, assigneeId, reviewerId, notes, materialityAmount, status, status, id]
-            );
-
-            const totals = await refreshClosePeriodTotals(existing.close_period_id);
-            await recordOperationalAudit({
-                req,
-                action: 'close_task_updated',
-                resourceType: 'close_task',
-                resourceId: id,
-                before: existing,
-                after: { status, priority, assigneeId, reviewerId, notes, materialityAmount }
-            });
-
-            res.json({ success: true, totals });
-        } catch (error) {
-            console.error('Update close task error:', error);
-            res.status(500).json({ success: false, message: 'Close task could not be updated' });
-        }
-    }
-);
-
-router.patch(
-    '/close-center/periods/:id',
-    checkPermission('closeCenter', 'editar'),
-    async (req, res) => {
-        try {
-            const id = integer(req.params.id);
-            const [rows] = await pool.query('SELECT * FROM corporate_close_periods WHERE id = ? LIMIT 1', [id]);
-            const existing = rows[0];
-            if (!existing) return res.status(404).json({ success: false, message: 'Close period was not found' });
-
-            const allowed = ['open', 'in_progress', 'ready_to_close', 'closed', 'archived'];
-            const status = text(req.body.status, 40) || existing.status;
-            if (!allowed.includes(status)) return res.status(400).json({ success: false, message: 'Invalid close period status' });
-
-            const totals = await refreshClosePeriodTotals(id);
-            if (status === 'closed' && totals.completed < totals.total) {
-                return res.status(409).json({ success: false, message: 'All close tasks must be completed before the period can be closed' });
-            }
-
-            await pool.query(
-                `UPDATE corporate_close_periods
-                 SET status = ?,
-                     locked_at = CASE WHEN ? IN ('closed', 'archived') THEN COALESCE(locked_at, NOW()) ELSE NULL END,
-                     locked_by = CASE WHEN ? IN ('closed', 'archived') THEN ? ELSE NULL END
-                 WHERE id = ?`,
-                [status, status, status, req.usuario.id, id]
-            );
-
-            await recordOperationalAudit({
-                req,
-                action: 'close_period_status_changed',
-                resourceType: 'close_period',
-                resourceId: id,
-                before: { status: existing.status },
-                after: { status }
-            });
-
-            res.json({ success: true, status, totals });
-        } catch (error) {
-            console.error('Update close period error:', error);
-            res.status(500).json({ success: false, message: 'Close period could not be updated' });
-        }
-    }
-);
-
-// -----------------------------------------------------------------------------
-// Exception center
-// -----------------------------------------------------------------------------
-router.get(
-    '/exceptions',
-    checkPermission('exceptionCenter', 'ver'),
-    async (req, res) => {
-        try {
-            const limit = parseLimit(req.query.limit, 100, 250);
-            const offset = parseOffset(req.query.offset);
-            const where = [];
-            const params = [];
-
-            if (req.query.status && req.query.status !== 'all') {
-                where.push('e.status = ?');
-                params.push(text(req.query.status, 40));
-            }
-            if (req.query.severity && req.query.severity !== 'all') {
-                where.push('e.severity = ?');
-                params.push(text(req.query.severity, 20));
-            }
-            if (req.query.search) {
-                const like = `%${text(req.query.search, 120)}%`;
-                where.push('(e.reference_code LIKE ? OR e.title LIKE ? OR e.description LIKE ? OR e.account_code LIKE ?)');
-                params.push(like, like, like, like);
-            }
-
-            const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
-            const [rows] = await pool.query(
-                `SELECT e.*,
-                        u.nombre_completo AS owner_name,
-                        rv.nombre_completo AS reviewer_name,
-                        r.nombre AS restaurant_name,
-                        r.codigo AS restaurant_code,
-                        d.nombre AS department_name,
-                        TIMESTAMPDIFF(HOUR, NOW(), e.due_at) AS hours_remaining
-                 FROM corporate_exceptions e
-                 LEFT JOIN usuarios u ON u.id = e.owner_id
-                 LEFT JOIN usuarios rv ON rv.id = e.reviewer_id
-                 LEFT JOIN restaurantes r ON r.id = e.restaurante_id
-                 LEFT JOIN departamentos d ON d.id = e.departamento_id
-                 ${whereSql}
-                 ORDER BY FIELD(e.status, 'open', 'assigned', 'investigating', 'resolved', 'verified', 'closed'),
-                          FIELD(e.severity, 'critical', 'high', 'medium', 'low'),
-                          e.due_at, e.updated_at DESC
-                 LIMIT ? OFFSET ?`,
-                [...params, limit, offset]
-            );
-
-            const [summaryRows] = await pool.query(
-                `SELECT COUNT(*) AS total,
-                        SUM(status NOT IN ('resolved', 'verified', 'closed')) AS open_total,
-                        SUM(severity = 'critical' AND status NOT IN ('resolved', 'verified', 'closed')) AS critical_total,
-                        SUM(due_at < NOW() AND status NOT IN ('resolved', 'verified', 'closed')) AS overdue_total,
-                        COALESCE(SUM(CASE WHEN status NOT IN ('resolved', 'verified', 'closed') THEN ABS(amount) ELSE 0 END), 0) AS open_amount
-                 FROM corporate_exceptions`
-            );
-
-            res.json({ success: true, exceptions: rows, summary: summaryRows[0] || {} });
-        } catch (error) {
-            console.error('Exception center error:', error);
-            res.status(500).json({ success: false, message: 'Exceptions could not be loaded' });
-        }
-    }
-);
-
-router.post(
-    '/exceptions',
-    checkPermission('exceptionCenter', 'crear'),
-    async (req, res) => {
-        try {
-            const title = text(req.body.title, 180);
-            if (!title) return res.status(400).json({ success: false, message: 'Exception title is required' });
-
-            const amount = decimal(req.body.amount);
-            const severity = calculateSeverity(amount, req.body.severity);
-            const referenceCode = createReference('EXC');
-            const [result] = await pool.query(
-                `INSERT INTO corporate_exceptions
-                    (reference_code, source_type, source_id, departamento_id, restaurante_id,
-                     account_code, title, description, status, severity, amount,
-                     materiality_threshold, owner_id, reviewer_id, due_at, created_by, evidence_json)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'open', ?, ?, ?, ?, ?, ?, ?, ?)`,
-                [
-                    referenceCode,
-                    text(req.body.source_type, 60) || 'manual',
-                    text(req.body.source_id, 80) || null,
-                    integer(req.body.departamento_id, req.departamento?.id || null),
-                    integer(req.body.restaurante_id),
-                    text(req.body.account_code, 80) || null,
-                    title,
-                    text(req.body.description, 5000) || null,
-                    severity,
-                    amount,
-                    decimal(req.body.materiality_threshold),
-                    integer(req.body.owner_id, req.usuario.id),
-                    integer(req.body.reviewer_id),
-                    dateOrNull(req.body.due_at),
-                    req.usuario.id,
-                    req.body.evidence ? JSON.stringify(req.body.evidence) : null
-                ]
-            );
-
-            await recordOperationalAudit({
-                req,
-                action: 'exception_created',
-                resourceType: 'exception',
-                resourceId: result.insertId,
-                after: { referenceCode, title, severity, amount }
-            });
-
-            res.status(201).json({ success: true, id: result.insertId, reference_code: referenceCode });
-        } catch (error) {
-            console.error('Create exception error:', error);
-            res.status(500).json({ success: false, message: 'Exception could not be created' });
-        }
-    }
-);
-
-router.patch(
-    '/exceptions/:id',
-    checkPermission('exceptionCenter', 'editar'),
-    async (req, res) => {
-        try {
-            const id = integer(req.params.id);
-            const [rows] = await pool.query('SELECT * FROM corporate_exceptions WHERE id = ? LIMIT 1', [id]);
-            const existing = rows[0];
-            if (!existing) return res.status(404).json({ success: false, message: 'Exception was not found' });
-
-            const allowedStatuses = ['open', 'assigned', 'investigating', 'resolved', 'verified', 'closed'];
-            const status = text(req.body.status, 40) || existing.status;
-            if (!allowedStatuses.includes(status)) return res.status(400).json({ success: false, message: 'Invalid exception status' });
-
-            const amount = req.body.amount === undefined ? Number(existing.amount || 0) : decimal(req.body.amount);
-            const severity = calculateSeverity(amount, req.body.severity || existing.severity);
-            const resolution = req.body.resolution === undefined ? existing.resolution : text(req.body.resolution, 5000);
-            const rootCause = req.body.root_cause === undefined ? existing.root_cause : text(req.body.root_cause, 5000);
-            const ownerId = req.body.owner_id === undefined ? existing.owner_id : integer(req.body.owner_id);
-            const reviewerId = req.body.reviewer_id === undefined ? existing.reviewer_id : integer(req.body.reviewer_id);
-
-            if (['resolved', 'verified', 'closed'].includes(status) && !resolution) {
-                return res.status(400).json({ success: false, message: 'A resolution is required before resolving an exception' });
-            }
-
-            await pool.query(
-                `UPDATE corporate_exceptions
-                 SET status = ?, severity = ?, amount = ?, owner_id = ?, reviewer_id = ?,
-                     root_cause = ?, resolution = ?, due_at = COALESCE(?, due_at),
-                     resolved_by = CASE WHEN ? IN ('resolved', 'verified', 'closed') THEN COALESCE(resolved_by, ?) ELSE NULL END,
-                     resolved_at = CASE WHEN ? IN ('resolved', 'verified', 'closed') THEN COALESCE(resolved_at, NOW()) ELSE NULL END,
-                     verified_by = CASE WHEN ? IN ('verified', 'closed') THEN COALESCE(verified_by, ?) ELSE NULL END,
-                     verified_at = CASE WHEN ? IN ('verified', 'closed') THEN COALESCE(verified_at, NOW()) ELSE NULL END
-                 WHERE id = ?`,
-                [
-                    status, severity, amount, ownerId, reviewerId, rootCause, resolution,
-                    dateOrNull(req.body.due_at),
-                    status, req.usuario.id, status, status, req.usuario.id, status, id
-                ]
-            );
-
-            await recordOperationalAudit({
-                req,
-                action: 'exception_updated',
-                resourceType: 'exception',
-                resourceId: id,
-                before: existing,
-                after: { status, severity, amount, ownerId, reviewerId, rootCause, resolution }
-            });
-
-            res.json({ success: true });
-        } catch (error) {
-            console.error('Update exception error:', error);
-            res.status(500).json({ success: false, message: 'Exception could not be updated' });
         }
     }
 );
@@ -1071,6 +627,21 @@ router.get(
         } catch (error) {
             console.error('Integration center error:', error);
             res.status(500).json({ success: false, message: 'Integrations could not be loaded' });
+        }
+    }
+);
+
+// Real-time integration monitor: live health probes with latency and availability.
+router.get(
+    '/integrations/health',
+    checkPermission('integrationCenter', 'ver'),
+    async (req, res) => {
+        try {
+            const health = await checkAllIntegrations();
+            res.json({ success: true, ...health });
+        } catch (error) {
+            console.error('Integration monitor error:', error);
+            res.status(500).json({ success: false, message: 'Integration health could not be evaluated' });
         }
     }
 );

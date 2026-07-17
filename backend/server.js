@@ -56,21 +56,6 @@ const uploadRoot = process.env.UPLOAD_FOLDER
 // Corporate request context and baseline HTTP security.
 app.use(requestContext);
 app.use(securityHeaders);
-app.use(createRateLimiter({
-    windowMs: Number(process.env.API_RATE_LIMIT_WINDOW_MS || 15 * 60 * 1000),
-    max: Number(process.env.API_RATE_LIMIT_MAX || 600),
-    keyPrefix: 'api',
-    skip: req => req.path === '/api/health'
-}));
-app.use('/api/auth', createRateLimiter({
-    windowMs: Number(process.env.AUTH_RATE_LIMIT_WINDOW_MS || 15 * 60 * 1000),
-    max: Number(process.env.AUTH_RATE_LIMIT_MAX || 40),
-    keyPrefix: 'auth',
-    message: 'Too many authentication requests. Wait a few minutes and try again.'
-}));
-
-// Captures 5xx / critical backend errors and notifies administrators.
-app.use(attachErrorNotificationCapture());
 
 // ============================================
 // MIDDLEWARES
@@ -85,8 +70,10 @@ const allowedOrigins = [
         .filter(Boolean)
 ];
 
-// CORS
-app.use(cors({
+// CORS must run before rate limiting: a 429 (or any other) response still
+// needs Access-Control-Allow-Origin, or the browser reports it as a CORS
+// failure instead of the real "too many requests" error.
+const corsMiddleware = cors({
     origin(origin, callback) {
         const isLocal = /^http:\/\/(localhost|127\.0\.0\.1):\d+$/.test(
             origin || ''
@@ -102,10 +89,26 @@ app.use(cors({
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-ID']
+});
+
+app.use(corsMiddleware);
+app.options('*', corsMiddleware);
+
+app.use(createRateLimiter({
+    windowMs: Number(process.env.API_RATE_LIMIT_WINDOW_MS || 15 * 60 * 1000),
+    max: Number(process.env.API_RATE_LIMIT_MAX || 600),
+    keyPrefix: 'api',
+    skip: req => req.path === '/api/health'
+}));
+app.use('/api/auth', createRateLimiter({
+    windowMs: Number(process.env.AUTH_RATE_LIMIT_WINDOW_MS || 15 * 60 * 1000),
+    max: Number(process.env.AUTH_RATE_LIMIT_MAX || 40),
+    keyPrefix: 'auth',
+    message: 'Too many authentication requests. Wait a few minutes and try again.'
 }));
 
-// Preflight requests
-app.options('*', cors());
+// Captures 5xx / critical backend errors and notifies administrators.
+app.use(attachErrorNotificationCapture());
 
 // Protect state-changing cookie-authenticated requests from CSRF.
 app.use('/api', csrfOriginGuard);

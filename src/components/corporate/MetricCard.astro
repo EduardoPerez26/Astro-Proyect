@@ -6,6 +6,7 @@ interface Props {
     icon?: string;
     valueId?: string;
     metaId?: string;
+    tone?: 'success' | 'warning' | 'danger' | 'info';
 }
 
 const {
@@ -14,11 +15,12 @@ const {
     meta = '',
     icon = 'fa-chart-simple',
     valueId,
-    metaId
+    metaId,
+    tone
 } = Astro.props;
 ---
 
-<article class="xb-metric-card">
+<article class="xb-metric-card" data-tone={tone}>
     <span class="xb-metric-card__icon">
         <i class={`fa-solid ${icon}`} aria-hidden="true"></i>
     </span>
