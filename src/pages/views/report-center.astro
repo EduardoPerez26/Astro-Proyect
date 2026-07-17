@@ -22,8 +22,6 @@ import MetricCard from '../../components/corporate/MetricCard.astro';
             <header class="xb-panel__header"><div><span class="xb-panel__eyebrow">Quick start</span><h2>Templates</h2><p>Prefill the schedule form with a governance-ready report configuration.</p></div></header>
             <div class="xb-panel__body">
                 <div class="xb-actions xb-actions--wrap" id="reportTemplates">
-                    <button class="xb-button" type="button" data-report-template="close_status" data-name="Monthly close status" data-frequency="monthly" data-format="pdf"><i class="fa-solid fa-calendar-check"></i> Monthly close status</button>
-                    <button class="xb-button" type="button" data-report-template="exceptions_sla" data-name="Exceptions outside SLA" data-frequency="weekly" data-format="xlsx"><i class="fa-solid fa-triangle-exclamation"></i> Exceptions outside SLA</button>
                     <button class="xb-button" type="button" data-report-template="permissions_changes" data-name="Permission changes" data-frequency="weekly" data-format="csv"><i class="fa-solid fa-user-shield"></i> Permission changes</button>
                     <button class="xb-button" type="button" data-report-template="integration_health" data-name="Integration health" data-frequency="daily" data-format="pdf"><i class="fa-solid fa-wave-square"></i> Integration health</button>
                     <button class="xb-button" type="button" data-report-template="administrative_activity" data-name="Administrative activity" data-frequency="weekly" data-format="csv"><i class="fa-solid fa-clipboard-list"></i> Administrative activity</button>
@@ -48,7 +46,7 @@ import MetricCard from '../../components/corporate/MetricCard.astro';
                 <div class="xb-panel__body">
                     <form id="reportForm" class="xb-stack" data-track-changes>
                         <label class="xb-field"><span>Name</span><input name="name" required /></label>
-                        <label class="xb-field"><span>Report type</span><select name="report_type" required><option value="">Select type</option><option value="close_status">Close status</option><option value="exceptions_sla">Exceptions outside SLA</option><option value="permissions_changes">Permission changes</option><option value="integration_health">Integration health</option><option value="administrative_activity">Administrative activity</option></select></label>
+                        <label class="xb-field"><span>Report type</span><select name="report_type" required><option value="">Select type</option><option value="permissions_changes">Permission changes</option><option value="integration_health">Integration health</option><option value="administrative_activity">Administrative activity</option></select></label>
                         <div class="xb-form-grid">
                             <label class="xb-field"><span>Frequency</span><select name="frequency"><option value="daily">Daily</option><option value="weekly" selected>Weekly</option><option value="monthly">Monthly</option></select></label>
                             <label class="xb-field"><span>Delivery hour</span><input name="delivery_hour" type="number" min="0" max="23" value="8" /></label>

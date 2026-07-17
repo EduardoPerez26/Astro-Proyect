@@ -64,83 +64,6 @@ const SCHEMA_STATEMENTS = [
         UNIQUE KEY uq_corporate_approval_scope (workflow_type, departamento_id, entity_code),
         INDEX idx_corporate_approval_active (active, workflow_type)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
-    `CREATE TABLE IF NOT EXISTS corporate_close_periods (
-        id BIGINT NOT NULL AUTO_INCREMENT,
-        period_year SMALLINT NOT NULL,
-        period_month TINYINT NOT NULL,
-        departamento_id INT NULL,
-        name VARCHAR(120) NOT NULL,
-        status VARCHAR(40) NOT NULL DEFAULT 'open',
-        due_date DATE NULL,
-        owner_id INT NULL,
-        total_tasks INT NOT NULL DEFAULT 0,
-        completed_tasks INT NOT NULL DEFAULT 0,
-        locked_at DATETIME NULL,
-        locked_by INT NULL,
-        created_by INT NULL,
-        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        PRIMARY KEY (id),
-        UNIQUE KEY uq_corporate_close_period (period_year, period_month, departamento_id),
-        INDEX idx_corporate_close_status (status, due_date)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
-    `CREATE TABLE IF NOT EXISTS corporate_close_tasks (
-        id BIGINT NOT NULL AUTO_INCREMENT,
-        close_period_id BIGINT NOT NULL,
-        task_type VARCHAR(60) NOT NULL DEFAULT 'reconciliation',
-        title VARCHAR(180) NOT NULL,
-        reference_type VARCHAR(60) NULL,
-        reference_id VARCHAR(80) NULL,
-        restaurante_id INT NULL,
-        assignee_id INT NULL,
-        reviewer_id INT NULL,
-        status VARCHAR(40) NOT NULL DEFAULT 'pending',
-        priority VARCHAR(20) NOT NULL DEFAULT 'normal',
-        materiality_amount DECIMAL(18,2) NOT NULL DEFAULT 0,
-        due_at DATETIME NULL,
-        completed_at DATETIME NULL,
-        verified_at DATETIME NULL,
-        notes TEXT NULL,
-        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        PRIMARY KEY (id),
-        INDEX idx_corporate_close_tasks_period (close_period_id, status),
-        INDEX idx_corporate_close_tasks_assignee (assignee_id, status),
-        INDEX idx_corporate_close_tasks_due (status, due_at)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
-    `CREATE TABLE IF NOT EXISTS corporate_exceptions (
-        id BIGINT NOT NULL AUTO_INCREMENT,
-        reference_code VARCHAR(40) NOT NULL,
-        source_type VARCHAR(60) NOT NULL DEFAULT 'manual',
-        source_id VARCHAR(80) NULL,
-        departamento_id INT NULL,
-        restaurante_id INT NULL,
-        account_code VARCHAR(80) NULL,
-        title VARCHAR(180) NOT NULL,
-        description TEXT NULL,
-        status VARCHAR(40) NOT NULL DEFAULT 'open',
-        severity VARCHAR(20) NOT NULL DEFAULT 'medium',
-        amount DECIMAL(18,2) NOT NULL DEFAULT 0,
-        materiality_threshold DECIMAL(18,2) NOT NULL DEFAULT 0,
-        owner_id INT NULL,
-        reviewer_id INT NULL,
-        due_at DATETIME NULL,
-        root_cause TEXT NULL,
-        resolution TEXT NULL,
-        evidence_json JSON NULL,
-        created_by INT NULL,
-        resolved_by INT NULL,
-        resolved_at DATETIME NULL,
-        verified_by INT NULL,
-        verified_at DATETIME NULL,
-        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        PRIMARY KEY (id),
-        UNIQUE KEY uq_corporate_exception_reference (reference_code),
-        INDEX idx_corporate_exception_status (status, severity, due_at),
-        INDEX idx_corporate_exception_owner (owner_id, status),
-        INDEX idx_corporate_exception_department (departamento_id, status)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
     `CREATE TABLE IF NOT EXISTS corporate_integration_runs (
         id BIGINT NOT NULL AUTO_INCREMENT,
         provider VARCHAR(60) NOT NULL,
@@ -311,22 +234,10 @@ async function recordOperationalAudit({
     }
 }
 
-function calculateSeverity(amount, explicitSeverity = '') {
-    const requested = String(explicitSeverity || '').toLowerCase();
-    if (['low', 'medium', 'high', 'critical'].includes(requested)) return requested;
-
-    const absolute = Math.abs(Number(amount || 0));
-    if (absolute >= 10000) return 'critical';
-    if (absolute >= 1000) return 'high';
-    if (absolute >= 100) return 'medium';
-    return 'low';
-}
-
 module.exports = {
     ensureCorporateSchema,
     parseJson,
     createReference,
     createFileHash,
-    recordOperationalAudit,
-    calculateSeverity
+    recordOperationalAudit
 };

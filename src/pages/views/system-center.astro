@@ -54,11 +54,11 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
             </article>
 
             <article class="system-center-status-card">
-                <span><i class="fa-solid fa-plug-circle-check"></i></span>
+                <span><i class="fa-solid fa-wave-square"></i></span>
                 <div>
                     <small>Integrations</small>
                     <strong id="systemIntegrationCount">--</strong>
-                    <p id="systemIntegrationMeta">Reviewing connectors</p>
+                    <p id="systemIntegrationMeta">Checking connectors</p>
                 </div>
             </article>
 
@@ -116,21 +116,30 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
             </article>
         </section>
 
-        <section class="system-center-grid">
-            <article class="system-center-panel">
-                <header>
-                    <div>
-                        <span>INTEGRATIONS</span>
-                        <h2>Connector posture</h2>
-                        <p>Sage Intacct, AI assistant, and other service readiness.</p>
-                    </div>
-                    <i class="fa-solid fa-diagram-project"></i>
-                </header>
-                <div class="system-center-integration-list" id="systemIntegrationList">
-                    <div class="system-center-loading">Loading integrations...</div>
+        <section class="system-center-panel system-center-integration-monitor">
+            <header>
+                <div>
+                    <span>INTEGRATION MONITOR</span>
+                    <h2>Real-time connector health</h2>
+                    <p>Live status, latency, and last synchronization for every corporate integration.</p>
                 </div>
-            </article>
+                <div class="xb-monitor-live" id="systemIntegrationLive"><i class="fa-solid fa-circle"></i> Live</div>
+            </header>
+            <div class="xb-metric-grid" id="systemIntegrationCards">
+                {Array.from({ length: 5 }).map(() => (
+                    <article class="xb-skeleton-card">
+                        <div class="xb-skeleton"></div>
+                        <div class="xb-skeleton-card-copy">
+                            <div class="xb-skeleton xb-skeleton-line" style="width:55%"></div>
+                            <div class="xb-skeleton xb-skeleton-line" style="width:90%"></div>
+                            <div class="xb-skeleton xb-skeleton-line" style="width:40%"></div>
+                        </div>
+                    </article>
+                ))}
+            </div>
+        </section>
 
+        <section class="system-center-grid">
             <article class="system-center-panel">
                 <header>
                     <div>

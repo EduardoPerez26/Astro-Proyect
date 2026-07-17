@@ -2,22 +2,9 @@
     const root = document.getElementById('corporateExecutiveSummary');
     if (!root || !window.API_URL) return;
 
-    const currency = new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'USD',
-        maximumFractionDigits: 0
-    });
-
     function setText(id, value) {
         const node = document.getElementById(id);
         if (node) node.textContent = value;
-    }
-
-    function setRate(value) {
-        const safeValue = Math.max(0, Math.min(Number(value || 0), 100));
-        setText('corporateCloseRate', `${safeValue}%`);
-        const bar = document.getElementById('corporateCloseBar');
-        if (bar) bar.style.width = `${safeValue}%`;
     }
 
     async function loadCorporateOverview() {
@@ -39,12 +26,6 @@
             const summary = data.summary || {};
             const workflow = data.document_workflow || {};
 
-            setRate(summary.close_completion_rate);
-            setText('corporateCloseMeta', `${Number(summary.close_tasks_completed || 0)} of ${Number(summary.close_tasks_total || 0)} tasks complete`);
-            setText('corporateOpenExceptions', Number(summary.exceptions_open || 0).toLocaleString('en-US'));
-            setText('corporateCriticalExceptions', `${Number(summary.exceptions_critical || 0)} critical`);
-            setText('corporateExposure', currency.format(Number(summary.exceptions_open_amount || 0)));
-            setText('corporateExposureMeta', 'Open exception exposure');
             setText('corporateScheduledReports', Number(summary.active_scheduled_reports || 0).toLocaleString('en-US'));
             setText('corporateReportsMeta', `${Number(summary.reports_due || 0)} currently due`);
             setText('corporateDocumentsReview', Number(workflow.under_review || 0).toLocaleString('en-US'));
@@ -76,7 +57,7 @@
         } catch (error) {
             console.warn('Corporate dashboard overview:', error);
             root.classList.add('has-error');
-            setText('corporateCloseMeta', error.message || 'Corporate metrics could not be loaded.');
+            setText('corporateSummaryStatus', error.message || 'Corporate metrics could not be loaded.');
         } finally {
             root.setAttribute('aria-busy', 'false');
         }

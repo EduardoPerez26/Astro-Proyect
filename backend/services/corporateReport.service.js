@@ -35,58 +35,6 @@ async function buildReportDataset(report) {
     const filters = parseJson(report.filters_json, {});
     const limit = Math.min(Math.max(Number(filters.limit || 1000), 1), 5000);
 
-    if (type === 'close_status') {
-        const [rows] = await pool.query(
-            `SELECT p.name AS close_period,
-                    p.period_year,
-                    p.period_month,
-                    p.status AS period_status,
-                    p.due_date,
-                    p.total_tasks,
-                    p.completed_tasks,
-                    CASE WHEN p.total_tasks > 0
-                        THEN ROUND((p.completed_tasks / p.total_tasks) * 100, 1)
-                        ELSE 0 END AS completion_percent,
-                    d.nombre AS department,
-                    u.nombre_completo AS owner
-             FROM corporate_close_periods p
-             LEFT JOIN departamentos d ON d.id = p.departamento_id
-             LEFT JOIN usuarios u ON u.id = p.owner_id
-             ORDER BY p.period_year DESC, p.period_month DESC
-             LIMIT ?`,
-            [limit]
-        );
-        return { title: 'Close status', rows: normalizeRows(rows) };
-    }
-
-    if (type === 'exceptions_sla') {
-        const [rows] = await pool.query(
-            `SELECT e.reference_code,
-                    e.title,
-                    e.status,
-                    e.severity,
-                    e.amount,
-                    e.account_code,
-                    e.due_at,
-                    TIMESTAMPDIFF(HOUR, e.due_at, NOW()) AS overdue_hours,
-                    r.nombre AS restaurant,
-                    u.nombre_completo AS owner,
-                    rv.nombre_completo AS reviewer,
-                    e.root_cause,
-                    e.resolution
-             FROM corporate_exceptions e
-             LEFT JOIN restaurantes r ON r.id = e.restaurante_id
-             LEFT JOIN usuarios u ON u.id = e.owner_id
-             LEFT JOIN usuarios rv ON rv.id = e.reviewer_id
-             WHERE e.status NOT IN ('resolved', 'verified', 'closed')
-               AND (e.due_at IS NULL OR e.due_at <= NOW())
-             ORDER BY FIELD(e.severity, 'critical', 'high', 'medium', 'low'), e.due_at
-             LIMIT ?`,
-            [limit]
-        );
-        return { title: 'Exceptions outside SLA', rows: normalizeRows(rows) };
-    }
-
     if (type === 'permissions_changes') {
         const [rows] = await pool.query(
             `SELECT a.created_at,

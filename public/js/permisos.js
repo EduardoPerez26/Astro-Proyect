@@ -24,11 +24,8 @@ const MODULE_ACTIONS = {
     dashboardAdmin: ['ver', 'editar', 'exportar'],
     systemCenter: ['ver', 'editar', 'exportar'],
     approvalCenter: ['ver', 'crear', 'editar', 'exportar'],
-    closeCenter: ['ver', 'crear', 'editar', 'exportar'],
-    exceptionCenter: ['ver', 'crear', 'editar', 'exportar'],
     reportCenter: ['ver', 'crear', 'editar', 'exportar'],
     auditCenter: ['ver', 'exportar'],
-    integrationCenter: ['ver', 'editar', 'exportar'],
     governanceSettings: ['ver', 'editar', 'exportar'],
     systemErrors: ['ver', 'crear', 'editar', 'exportar'],
     tiendas: ['ver', 'crear', 'editar', 'eliminar', 'exportar'],
@@ -45,8 +42,6 @@ const MODULE_ACTIONS = {
 
 const MODULE_ROLE_LIMITS = {
     approvalCenter: ['admin', 'supervisor'],
-    closeCenter: ['admin', 'supervisor'],
-    exceptionCenter: ['admin', 'supervisor'],
     reportCenter: ['admin', 'supervisor']
 };
 
@@ -116,30 +111,6 @@ const MENU_SECTIONS = [
         initialOption: true
     },
     {
-        id: 'closeCenter',
-        name: 'Close center',
-        description: 'Period close progress, ownership, deadlines, and completion controls',
-        icon: 'fa-calendar-check',
-        iconClass: 'close-center',
-        department: 'Governance & Control',
-        path: '/views/close-center',
-        required: false,
-        allowedRoles: ['admin', 'supervisor'],
-        initialOption: true
-    },
-    {
-        id: 'exceptionCenter',
-        name: 'Exception center',
-        description: 'Material differences, investigations, evidence, and resolution tracking',
-        icon: 'fa-triangle-exclamation',
-        iconClass: 'exception-center',
-        department: 'Governance & Control',
-        path: '/views/exception-center',
-        required: false,
-        allowedRoles: ['admin', 'supervisor'],
-        initialOption: true
-    },
-    {
         id: 'reportCenter',
         name: 'Scheduled reports',
         description: 'Recurring operational and governance report delivery',
@@ -159,17 +130,6 @@ const MENU_SECTIONS = [
         iconClass: 'audit-center',
         department: 'Information Technology',
         path: '/views/audit-center',
-        required: false,
-        administrative: true
-    },
-    {
-        id: 'integrationCenter',
-        name: 'Integration center',
-        description: 'Sage Intacct, Microsoft Entra ID, and platform connectors',
-        icon: 'fa-plug-circle-check',
-        iconClass: 'integration-center',
-        department: 'Information Technology',
-        path: '/views/integration-center',
         required: false,
         administrative: true
     },
@@ -309,8 +269,6 @@ const PERMISSION_TEMPLATES = {
         startup: 'approvalCenter',
         modules: {
             approvalCenter: ['ver', 'crear', 'editar', 'exportar'],
-            closeCenter: ['ver', 'crear', 'editar', 'exportar'],
-            exceptionCenter: ['ver', 'crear', 'editar', 'exportar'],
             reportCenter: ['ver', 'crear', 'editar', 'exportar'],
             tiendas: ['ver', 'exportar'],
             documentos: ['ver', 'editar', 'exportar'],
@@ -349,11 +307,8 @@ const PERMISSION_TEMPLATES = {
             dashboardAdmin: ['ver', 'editar', 'exportar'],
             systemCenter: ['ver', 'editar', 'exportar'],
             systemErrors: ['ver', 'crear', 'editar', 'exportar'],
-            closeCenter: ['ver', 'crear', 'editar', 'exportar'],
-            exceptionCenter: ['ver', 'crear', 'editar', 'exportar'],
             reportCenter: ['ver', 'crear', 'editar', 'exportar'],
             auditCenter: ['ver', 'exportar'],
-            integrationCenter: ['ver', 'editar', 'exportar'],
             governanceSettings: ['ver', 'editar', 'exportar'],
             usuarios: ['ver', 'crear', 'editar', 'eliminar', 'exportar'],
             controlRestaurants: ['ver', 'crear', 'editar', 'eliminar'],
@@ -460,8 +415,8 @@ async function loadUserData() {
 
         // Sample permissions
         const defaultPermissions = {
-            1: { dashboardAdmin: true, systemCenter: true, approvalCenter: true, closeCenter: true, exceptionCenter: true, reportCenter: true, auditCenter: true, integrationCenter: true, governanceSettings: true, systemErrors: true, tiendas: true, documentos: true, perfil: true, permisos: true, historial: true, usuarios: true, controlRestaurants: true, propertyManagement: true, propertyManagementDocuments: true, chat: true, paginaInicio: 'dashboardAdmin' },
-            2: { approvalCenter: true, closeCenter: true, exceptionCenter: true, reportCenter: true, tiendas: true, documentos: true, perfil: true, permisos: false, historial: true, usuarios: false, controlRestaurants: false, propertyManagement: false, propertyManagementDocuments: false, chat: false, paginaInicio: 'approvalCenter' },
+            1: { dashboardAdmin: true, systemCenter: true, approvalCenter: true, reportCenter: true, auditCenter: true, governanceSettings: true, systemErrors: true, tiendas: true, documentos: true, perfil: true, permisos: true, historial: true, usuarios: true, controlRestaurants: true, propertyManagement: true, propertyManagementDocuments: true, chat: true, paginaInicio: 'dashboardAdmin' },
+            2: { approvalCenter: true, reportCenter: true, tiendas: true, documentos: true, perfil: true, permisos: false, historial: true, usuarios: false, controlRestaurants: false, propertyManagement: false, propertyManagementDocuments: false, chat: false, paginaInicio: 'approvalCenter' },
             3: { tiendas: true, documentos: true, perfil: true, permisos: false, historial: false, usuarios: false, controlRestaurants: false, propertyManagement: false, propertyManagementDocuments: false, chat: false, paginaInicio: 'tiendas' },
             4: { tiendas: true, documentos: false, perfil: true, permisos: false, historial: false, usuarios: false, controlRestaurants: false, propertyManagement: true, propertyManagementDocuments: true, chat: false, paginaInicio: 'propertyManagement' }
         };

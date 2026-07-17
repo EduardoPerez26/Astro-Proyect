@@ -8,8 +8,7 @@ const {
 
 test('admin receives corporate governance modules', () => {
     const permissions = normalizeUserPermissions({}, 'admin', { departmentCode: 'it' });
-    assert.equal(hasPermission(permissions, 'closeCenter', 'ver'), true);
-    assert.equal(hasPermission(permissions, 'exceptionCenter', 'editar'), true);
+    assert.equal(hasPermission(permissions, 'reportCenter', 'ver'), true);
     assert.equal(hasPermission(permissions, 'auditCenter', 'ver'), true);
     assert.equal(hasPermission(permissions, 'governanceSettings', 'editar'), true);
 });

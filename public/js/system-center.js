@@ -1,8 +1,12 @@
 const systemCenterState = {
     health: null,
     admin: null,
-    errors: null
+    errors: null,
+    integrationHealth: null
 };
+
+const INTEGRATION_POLL_MS = 15000;
+let integrationPollTimer = null;
 
 document.addEventListener('DOMContentLoaded', () => {
     document
@@ -11,8 +15,19 @@ document.addEventListener('DOMContentLoaded', () => {
     document
         .getElementById('exportSystemCenter')
         ?.addEventListener('click', exportSystemCenterReport);
+    document
+        .getElementById('systemIntegrationCards')
+        ?.addEventListener('click', handleIntegrationCardClick);
 
     loadSystemCenter();
+
+    integrationPollTimer = setInterval(() => {
+        if (!document.hidden) loadIntegrationHealth();
+    }, INTEGRATION_POLL_MS);
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) loadIntegrationHealth();
+    });
+    window.addEventListener('beforeunload', () => clearInterval(integrationPollTimer));
 });
 
 async function loadSystemCenter() {
@@ -31,15 +46,17 @@ async function loadSystemCenter() {
 
     try {
         const headers = { Authorization: `Bearer ${token}` };
-        const [health, admin, errors] = await Promise.all([
+        const [health, admin, errors, integrationHealth] = await Promise.all([
             fetchJson(`${window.API_URL}/dashboard/system-health`, { headers }),
             fetchJson(`${window.API_URL}/dashboard/admin`, { headers }),
-            fetchJson(`${window.API_URL}/notificaciones/system-errors?status=open&limit=5`, { headers })
+            fetchJson(`${window.API_URL}/notificaciones/system-errors?status=open&limit=5`, { headers }),
+            fetchJson(`${window.API_URL}/corporate/integrations/health`, { headers })
         ]);
 
         systemCenterState.health = health;
         systemCenterState.admin = admin;
         systemCenterState.errors = errors;
+        systemCenterState.integrationHealth = integrationHealth;
 
         renderSystemCenter();
     } catch (error) {
@@ -50,6 +67,21 @@ async function loadSystemCenter() {
             button.disabled = false;
             button.innerHTML = '<i class="fa-solid fa-rotate"></i> Refresh';
         }
+    }
+}
+
+async function loadIntegrationHealth() {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    try {
+        const integrationHealth = await fetchJson(`${window.API_URL}/corporate/integrations/health`, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        systemCenterState.integrationHealth = integrationHealth;
+        renderIntegrationHealth(integrationHealth);
+    } catch (error) {
+        console.warn('Integration health poll failed:', error);
     }
 }
 
@@ -74,12 +106,15 @@ function renderSystemCenter() {
     const config = health.configuration || {};
     const summary = admin.resumen || {};
     const errorSummary = errors.summary || {};
+    const integrationHealth = systemCenterState.integrationHealth || {};
+    const integrationSummary = integrationHealth.summary || {};
 
     const missingRequired = config.missingRequired || [];
     const missingRecommended = config.missingRecommended || [];
-    const integrations = config.integrations || [];
-    const enabledIntegrations = integrations.filter(item => item.enabled);
-    const configuredIntegrations = integrations.filter(item => item.enabled && item.configured);
+    const integrationsOnline = Number(integrationSummary.online || 0);
+    const integrationsWarning = Number(integrationSummary.warning || 0);
+    const integrationsOffline = Number(integrationSummary.offline || 0);
+    const integrationsTotal = Number(integrationSummary.total || (integrationsOnline + integrationsWarning + integrationsOffline));
     const openErrors = Number(errorSummary.abiertos || 0);
     const criticalErrors = Number(errorSummary.criticos_abiertos || 0);
     const activeSessions = Number(summary.sesiones_activas || 0);
@@ -88,8 +123,8 @@ function renderSystemCenter() {
     const score = calculateReadinessScore({
         missingRequired,
         missingRecommended,
-        enabledIntegrations,
-        configuredIntegrations,
+        integrationsWarning,
+        integrationsOffline,
         openErrors,
         criticalErrors,
         activeUsers
@@ -99,9 +134,16 @@ function renderSystemCenter() {
     setText('systemReadinessLabel', score >= 90 ? 'Corporate ready' : score >= 75 ? 'Stable with attention' : 'Action required');
     setText('systemApiStatus', health.success ? 'Online' : 'Needs attention');
     setText('systemApiMeta', health.status || 'Health endpoint checked');
-    setText('systemIntegrationCount', `${configuredIntegrations.length}/${enabledIntegrations.length || integrations.length}`);
-    setText('systemIntegrationMeta', enabledIntegrations.length ? 'Enabled connectors configured' : 'No optional connectors enabled');
-    setText('systemAttentionCount', missingRequired.length + criticalErrors + openErrors);
+    setText('systemIntegrationCount', `${integrationsOnline}/${integrationsTotal}`);
+    setText(
+        'systemIntegrationMeta',
+        integrationsOffline > 0
+            ? `${integrationsOffline} offline, ${integrationsWarning} degraded`
+            : integrationsWarning > 0
+                ? `${integrationsWarning} degraded`
+                : 'All connectors healthy'
+    );
+    setText('systemAttentionCount', missingRequired.length + criticalErrors + openErrors + integrationsOffline);
     setText('systemAttentionMeta', `${openErrors} open errors / ${missingRequired.length} required config gaps`);
     setText('systemCenterRingScore', `${score}%`);
     setText('systemCenterUpdated', `Updated ${formatDate(new Date(), true)}`);
@@ -122,12 +164,12 @@ function renderSystemCenter() {
         buildHealthDescription(score, missingRequired, openErrors, criticalErrors)
     );
 
-    renderChecklist({ missingRequired, missingRecommended, openErrors, criticalErrors, activeSessions, activeUsers });
+    renderChecklist({ missingRequired, missingRecommended, openErrors, criticalErrors, activeSessions, activeUsers, integrationsOffline, integrationsWarning });
     renderConfiguration(config);
-    renderIntegrations(integrations);
+    renderIntegrationHealth(integrationHealth);
     renderIncidents(errors.errores || [], errorSummary);
     renderAccess(summary);
-    renderRecommendations({ missingRequired, missingRecommended, integrations, openErrors, criticalErrors, activeUsers });
+    renderRecommendations({ missingRequired, missingRecommended, integrationsOffline, integrationsWarning, openErrors, criticalErrors, activeUsers });
 }
 
 function calculateReadinessScore(context) {
@@ -137,12 +179,8 @@ function calculateReadinessScore(context) {
     score -= Math.min(context.missingRecommended.length * 6, 18);
     score -= Math.min(context.criticalErrors * 12, 36);
     score -= Math.min(context.openErrors * 2, 20);
-
-    const enabled = context.enabledIntegrations.length;
-    const configured = context.configuredIntegrations.length;
-    if (enabled && configured < enabled) {
-        score -= Math.min((enabled - configured) * 8, 16);
-    }
+    score -= Math.min((context.integrationsOffline || 0) * 10, 30);
+    score -= Math.min((context.integrationsWarning || 0) * 4, 16);
 
     if (context.activeUsers <= 0) score -= 6;
 
@@ -195,6 +233,14 @@ function renderChecklist(context) {
         {
             ok: context.activeUsers > 0,
             text: `${context.activeSessions} active session(s) across ${context.activeUsers} active user(s)`
+        },
+        {
+            ok: (context.integrationsOffline || 0) === 0 && (context.integrationsWarning || 0) === 0,
+            text: context.integrationsOffline
+                ? `${context.integrationsOffline} integration(s) offline`
+                : context.integrationsWarning
+                    ? `${context.integrationsWarning} integration(s) degraded`
+                    : 'All integrations are online'
         }
     ];
 
@@ -238,25 +284,104 @@ function renderConfiguration(config) {
     container.innerHTML = rows.map(row => renderStatusRow(row)).join('');
 }
 
-function renderIntegrations(integrations) {
-    const container = document.getElementById('systemIntegrationList');
+function healthStatusTone(status) {
+    if (status === 'online') return 'success';
+    if (status === 'offline') return 'danger';
+    return 'warning';
+}
+
+function healthStatusLabel(status) {
+    if (status === 'online') return 'Online';
+    if (status === 'offline') return 'Offline';
+    return 'Warning';
+}
+
+function formatLatency(ms) {
+    if (ms === null || ms === undefined) return '—';
+    if (ms < 1000) return `${Math.round(ms)} ms`;
+    return `${(ms / 1000).toFixed(2)} s`;
+}
+
+function renderIntegrationHealth(health) {
+    const container = document.getElementById('systemIntegrationCards');
     if (!container) return;
 
-    if (!integrations.length) {
+    const live = document.getElementById('systemIntegrationLive');
+    const summary = health.summary || {};
+    if (live) {
+        live.dataset.tone = summary.offline > 0 ? 'danger' : (summary.warning > 0 ? 'warning' : 'success');
+        live.title = health.generated_at ? `Last checked ${formatDate(health.generated_at)}` : '';
+    }
+
+    const providers = health.providers || [];
+    if (!providers.length) {
         container.innerHTML = '<div class="system-center-empty">No integration metadata returned.</div>';
         return;
     }
 
-    container.innerHTML = integrations.map(integration => renderStatusRow({
-        label: integration.name,
-        value: integration.enabled
-            ? (integration.configured ? 'Configured' : 'Incomplete')
-            : 'Disabled',
-        detail: integration.enabled
-            ? `${integration.configuredKeys || 0} of ${integration.expectedKeys || 0} credential groups detected.`
-            : 'Optional integration is not enabled.',
-        tone: !integration.enabled ? 'neutral' : integration.configured ? 'success' : 'warning'
-    })).join('');
+    container.innerHTML = providers.map(provider => `
+        <article class="xb-panel xb-monitor-card" data-tone="${healthStatusTone(provider.status)}">
+            <div class="xb-panel__body xb-stack">
+                <div class="xb-actions" style="justify-content:space-between">
+                    <span class="xb-metric-card__icon"><i class="fa-solid ${escapeHtml(provider.icon || 'fa-plug')}"></i></span>
+                    <span class="xb-status xb-status--${healthStatusTone(provider.status)}">${healthStatusLabel(provider.status)}</span>
+                </div>
+                <div>
+                    <h2 style="margin:0;font-size:16px">${escapeHtml(provider.name)}</h2>
+                    <p style="margin:4px 0 0;color:#777;font-size:12px;line-height:1.5">${escapeHtml(provider.detail || '')}</p>
+                </div>
+                <dl class="xb-monitor-meta">
+                    <div><dt>Latency</dt><dd>${formatLatency(provider.latency_ms)}</dd></div>
+                    <div><dt>Last sync</dt><dd>${provider.last_sync ? formatDate(provider.last_sync, true) : '—'}</dd></div>
+                </dl>
+                ${provider.provider === 'sage-intacct' ? `
+                    <div class="xb-actions">
+                        <button class="xb-button xb-button--primary" type="button" data-integration-operation="connection_test" data-integration-provider="sage-intacct"><i class="fa-solid fa-plug-circle-check"></i> Test connection</button>
+                    </div>
+                ` : ''}
+            </div>
+        </article>
+    `).join('');
+}
+
+async function handleIntegrationCardClick(event) {
+    const button = event.target.closest('[data-integration-operation]');
+    if (!button) return;
+
+    const provider = button.dataset.integrationProvider;
+    const operation = button.dataset.integrationOperation;
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    button.disabled = true;
+    try {
+        const response = await fetch(`${window.API_URL}/corporate/integrations/${provider}/runs`, {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ operation })
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok || data.success === false) {
+            throw new Error(data.message || 'Integration request could not be completed.');
+        }
+
+        if (window.Swal) {
+            Swal.fire({
+                icon: data.status === 'failed' ? 'warning' : 'success',
+                title: data.status === 'failed' ? 'Connection test failed' : 'Connection test passed',
+                text: data.summary,
+                timer: data.status === 'failed' ? undefined : 2200,
+                showConfirmButton: data.status === 'failed'
+            });
+        }
+        await loadIntegrationHealth();
+    } catch (error) {
+        if (window.Swal) {
+            Swal.fire({ icon: 'error', title: 'Test failed', text: error.message });
+        }
+    } finally {
+        button.disabled = false;
+    }
 }
 
 function renderIncidents(errors, summary) {
@@ -344,10 +469,16 @@ function renderRecommendations(context) {
         });
     }
 
-    if (context.integrations.some(item => item.enabled && !item.configured)) {
+    if (context.integrationsOffline > 0) {
         actions.push({
-            title: 'Finish integration credentials',
-            detail: 'At least one enabled connector is missing credential configuration.',
+            title: 'Restore offline integrations',
+            detail: `${context.integrationsOffline} connector(s) are unreachable. Check credentials and network access.`,
+            tone: 'danger'
+        });
+    } else if (context.integrationsWarning > 0) {
+        actions.push({
+            title: 'Finish integration configuration',
+            detail: `${context.integrationsWarning} connector(s) are degraded or missing configuration.`,
             tone: 'warning'
         });
     }
@@ -399,7 +530,7 @@ function renderSystemCenterError(error) {
     setText('systemReadinessScore', '--');
     setText('systemReadinessLabel', error.message);
 
-    ['systemConfigList', 'systemIntegrationList', 'systemIncidentList', 'systemAccessList', 'systemActionList'].forEach(id => {
+    ['systemConfigList', 'systemIntegrationCards', 'systemIncidentList', 'systemAccessList', 'systemActionList'].forEach(id => {
         const element = document.getElementById(id);
         if (element) {
             element.innerHTML = `<div class="system-center-empty">${escapeHtml(error.message)}</div>`;
@@ -446,14 +577,13 @@ function buildSystemCenterReport() {
     const config = health.configuration || {};
     const summary = admin.resumen || {};
     const errorSummary = errors.summary || {};
-    const integrations = config.integrations || [];
-    const enabledIntegrations = integrations.filter(item => item.enabled);
-    const configuredIntegrations = integrations.filter(item => item.enabled && item.configured);
+    const integrationHealth = systemCenterState.integrationHealth || {};
+    const integrationSummary = integrationHealth.summary || {};
     const score = calculateReadinessScore({
         missingRequired: config.missingRequired || [],
         missingRecommended: config.missingRecommended || [],
-        enabledIntegrations,
-        configuredIntegrations,
+        integrationsWarning: Number(integrationSummary.warning || 0),
+        integrationsOffline: Number(integrationSummary.offline || 0),
         openErrors: Number(errorSummary.abiertos || 0),
         criticalErrors: Number(errorSummary.criticos_abiertos || 0),
         activeUsers: Number(summary.usuarios_activos || 0)
@@ -466,8 +596,11 @@ function buildSystemCenterReport() {
         http_status: health.httpStatus || null,
         configuration: {
             missing_required: config.missingRequired || [],
-            missing_recommended: config.missingRecommended || [],
-            integrations
+            missing_recommended: config.missingRecommended || []
+        },
+        integrations: {
+            summary: integrationSummary,
+            providers: integrationHealth.providers || []
         },
         incidents: {
             summary: errorSummary,

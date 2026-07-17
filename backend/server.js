@@ -151,9 +151,7 @@ app.get('/api', (req, res) => {
             systemErrors: '/api/notificaciones/system-errors',
             prepaids: '/api/prepaids',
             corporate: '/api/corporate',
-            closeCenter: '/api/corporate/close-center',
-            exceptions: '/api/corporate/exceptions',
-            integrations: '/api/corporate/integrations',
+            integrations: '/api/corporate/integrations/health',
             audit: '/api/corporate/audit'
         }
     });

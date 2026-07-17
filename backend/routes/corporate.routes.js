@@ -14,8 +14,7 @@ const {
     parseJson,
     createReference,
     createFileHash,
-    recordOperationalAudit,
-    calculateSeverity
+    recordOperationalAudit
 } = require('../services/corporatePlatform.service');
 const {
     smtpStatus,
@@ -567,74 +566,11 @@ router.get(
 );
 
 // -----------------------------------------------------------------------------
-// Integration center: Sage Intacct, Microsoft Entra ID, AI provider
+// Integration monitor: Sage Intacct, database, SMTP, OpenAI, CDTFA tax API
 // -----------------------------------------------------------------------------
 router.get(
-    '/integrations',
-    checkPermission('integrationCenter', 'ver'),
-    async (req, res) => {
-        try {
-            const intacct = getIntacctConfigStatus();
-            const entraRequired = ['ENTRA_TENANT_ID', 'ENTRA_CLIENT_ID', 'ENTRA_CLIENT_SECRET', 'ENTRA_REDIRECT_URI'];
-            const entraMissing = entraRequired.filter(key => !String(process.env[key] || '').trim());
-            const aiProvider = text(process.env.AI_PROVIDER, 30) || 'none';
-            const aiReady = Boolean(
-                (aiProvider === 'openai' && process.env.OPENAI_API_KEY) ||
-                (aiProvider === 'gemini' && process.env.GEMINI_API_KEY) ||
-                (aiProvider === 'anthropic' && process.env.ANTHROPIC_API_KEY) ||
-                (aiProvider === 'ollama' && process.env.OLLAMA_URL)
-            );
-            const [runs] = await pool.query(
-                `SELECT r.*, u.nombre_completo AS requested_by_name
-                 FROM corporate_integration_runs r
-                 LEFT JOIN usuarios u ON u.id = r.requested_by
-                 ORDER BY r.created_at DESC
-                 LIMIT 50`
-            );
-
-            res.json({
-                success: true,
-                integrations: [
-                    {
-                        provider: 'sage-intacct',
-                        name: 'Sage Intacct',
-                        ready: intacct.ready,
-                        missing: intacct.missing,
-                        configured: intacct.configured,
-                        endpoint: intacct.optional.INTACCT_ENDPOINT_URL
-                    },
-                    {
-                        provider: 'microsoft-entra',
-                        name: 'Microsoft Entra ID',
-                        ready: entraMissing.length === 0,
-                        missing: entraMissing,
-                        configured: {
-                            tenant: Boolean(process.env.ENTRA_TENANT_ID),
-                            client: Boolean(process.env.ENTRA_CLIENT_ID),
-                            redirect: process.env.ENTRA_REDIRECT_URI || ''
-                        }
-                    },
-                    {
-                        provider: 'ai-assistant',
-                        name: 'AI assistant',
-                        ready: aiReady,
-                        missing: aiReady ? [] : ['provider credentials'],
-                        configured: { provider: aiProvider }
-                    }
-                ],
-                runs
-            });
-        } catch (error) {
-            console.error('Integration center error:', error);
-            res.status(500).json({ success: false, message: 'Integrations could not be loaded' });
-        }
-    }
-);
-
-// Real-time integration monitor: live health probes with latency and availability.
-router.get(
     '/integrations/health',
-    checkPermission('integrationCenter', 'ver'),
+    checkPermission('systemCenter', 'ver'),
     async (req, res) => {
         try {
             const health = await checkAllIntegrations();
@@ -649,7 +585,7 @@ router.get(
 router.post(
     '/integrations/:provider/runs',
     esAdmin,
-    checkPermission('integrationCenter', 'editar'),
+    checkPermission('systemCenter', 'editar'),
     async (req, res) => {
         try {
             const provider = text(req.params.provider, 60);
@@ -734,7 +670,7 @@ router.post(
 router.post(
     '/integrations/sage-intacct/query',
     esAdmin,
-    checkPermission('integrationCenter', 'editar'),
+    checkPermission('systemCenter', 'editar'),
     async (req, res) => {
         try {
             const result = await readByQuery({

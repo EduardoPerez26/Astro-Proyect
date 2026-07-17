@@ -579,13 +579,11 @@
 /* Executive corporate command summary */
 .corporate-command-overview { margin: 22px 0; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); box-shadow: var(--shadow-card); overflow: hidden; }
 .corporate-command-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; padding: 20px 22px; border-bottom: 1px solid var(--color-border); background: linear-gradient(135deg, #15171a, #262a30); color: #fff; }
-.corporate-command-header span { display: block; margin-bottom: 5px; color: rgba(255,255,255,.62); font-size: .7rem; font-weight: 800; letter-spacing: .12em; }
-.corporate-command-header h2 { margin: 0; color: #fff; font-size: 1.25rem; }
-.corporate-command-header p { margin: 5px 0 0; max-width: 760px; color: rgba(255,255,255,.7); font-size: .84rem; }
-.corporate-command-link { display: inline-flex; align-items: center; gap: 8px; min-height: 38px; padding: 0 13px; border: 1px solid rgba(255,255,255,.22); border-radius: var(--radius-md); color: #fff; font-size: .8rem; font-weight: 700; text-decoration: none; white-space: nowrap; }
-.corporate-command-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); }
-.corporate-command-metric:nth-child(4n) { border-right: 0; }
-.corporate-command-metric:nth-child(-n+4) { border-bottom: 1px solid var(--color-border); }
+.corporate-command-header span { display: block; margin-bottom: 5px; color: rgba(255,255,255,.62) !important; font-size: .7rem; font-weight: 800; letter-spacing: .12em; }
+.corporate-command-header h2 { margin: 0; color: #fff !important; font-size: 1.25rem; }
+.corporate-command-header p { margin: 5px 0 0; max-width: 760px; color: rgba(255,255,255,.7) !important; font-size: .84rem; }
+.corporate-command-link { display: inline-flex; align-items: center; gap: 8px; min-height: 38px; padding: 0 13px; border: 1px solid rgba(255,255,255,.22); border-radius: var(--radius-md); color: #fff !important; font-size: .8rem; font-weight: 700; text-decoration: none; white-space: nowrap; }
+.corporate-command-metrics { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); }
 .corporate-command-metric { display: grid; align-content: start; width: 100%; min-height: 132px; padding: 17px; border-right: 1px solid var(--color-border); color: inherit; text-decoration: none; text-align: left; font: inherit; cursor: pointer; transition: background .18s ease; }
 .corporate-command-metric:last-child { border-right: 0; }
 .corporate-command-metric:hover { background: var(--color-surface-subtle); }
@@ -596,8 +594,8 @@
 .corporate-command-progress { height: 5px; margin: 2px 0 8px; overflow: hidden; border-radius: 999px; background: var(--color-surface-strong); }
 .corporate-command-progress i { display: block; width: 0; height: 100%; border-radius: inherit; background: var(--color-success); transition: width .3s ease; }
 .corporate-command-overview.has-error { border-color: color-mix(in srgb, var(--color-warning) 35%, white); }
-@media (max-width: 1200px) { .corporate-command-metrics { grid-template-columns: repeat(2, 1fr); } .corporate-command-metric:nth-child(n) { border-right: 1px solid var(--color-border); border-bottom: 1px solid var(--color-border); } .corporate-command-metric:nth-child(2n) { border-right: 0; } .corporate-command-metric:nth-child(-n+6) { border-bottom: 1px solid var(--color-border); } .corporate-command-metric:nth-child(n+7) { border-bottom: 0; } }
-@media (max-width: 700px) { .corporate-command-header { flex-direction: column; } .corporate-command-metrics { grid-template-columns: 1fr 1fr; } .corporate-command-metric:nth-child(n) { border-right: 1px solid var(--color-border); border-bottom: 1px solid var(--color-border); } .corporate-command-metric:nth-child(2n) { border-right: 0; } .corporate-command-metric:nth-child(n+7) { border-bottom: 0; } }
+@media (max-width: 1200px) { .corporate-command-metrics { grid-template-columns: repeat(3, 1fr); } .corporate-command-metric:nth-child(n) { border-right: 1px solid var(--color-border); border-bottom: 1px solid var(--color-border); } .corporate-command-metric:nth-child(3n) { border-right: 0; } .corporate-command-metric:nth-child(n+4) { border-bottom: 0; } }
+@media (max-width: 700px) { .corporate-command-header { flex-direction: column; } .corporate-command-metrics { grid-template-columns: 1fr 1fr; } .corporate-command-metric:nth-child(n) { border-right: 1px solid var(--color-border); border-bottom: 1px solid var(--color-border); } .corporate-command-metric:nth-child(2n) { border-right: 0; } .corporate-command-metric:nth-child(n+5) { border-bottom: 0; } }
 
 
 /* Saved filters */

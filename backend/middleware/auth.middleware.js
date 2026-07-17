@@ -208,16 +208,10 @@ const PERMISSION_MAPPING = {
     view_approval_center: ['approvalCenter', 'ver'],
     manage_approval_center: ['approvalCenter', 'editar'],
 
-    view_close_center: ['closeCenter', 'ver'],
-    manage_close_center: ['closeCenter', 'editar'],
-    view_exception_center: ['exceptionCenter', 'ver'],
-    manage_exception_center: ['exceptionCenter', 'editar'],
     view_report_center: ['reportCenter', 'ver'],
     manage_report_center: ['reportCenter', 'editar'],
     view_audit_center: ['auditCenter', 'ver'],
     export_audit_center: ['auditCenter', 'exportar'],
-    view_integration_center: ['integrationCenter', 'ver'],
-    manage_integration_center: ['integrationCenter', 'editar'],
     view_governance_settings: ['governanceSettings', 'ver'],
     manage_governance_settings: ['governanceSettings', 'editar'],
 

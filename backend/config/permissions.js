@@ -4,11 +4,8 @@ const MODULE_ACTIONS = {
     dashboardAdmin: ['ver', 'editar', 'exportar'],
     systemCenter: ['ver', 'editar', 'exportar'],
     approvalCenter: ['ver', 'crear', 'editar', 'exportar'],
-    closeCenter: ['ver', 'crear', 'editar', 'exportar'],
-    exceptionCenter: ['ver', 'crear', 'editar', 'exportar'],
     reportCenter: ['ver', 'crear', 'editar', 'exportar'],
     auditCenter: ['ver', 'exportar'],
-    integrationCenter: ['ver', 'editar', 'exportar'],
     governanceSettings: ['ver', 'editar', 'exportar'],
     systemErrors: ['ver', 'crear', 'editar', 'exportar'],
     tiendas: [...PERMISSION_ACTIONS],
@@ -28,7 +25,6 @@ const ADMIN_MODULES = new Set([
     'systemCenter',
     'systemErrors',
     'auditCenter',
-    'integrationCenter',
     'governanceSettings',
     'usuarios',
     'controlRestaurants',
@@ -37,8 +33,6 @@ const ADMIN_MODULES = new Set([
 
 const MODULE_ROLE_LIMITS = {
     approvalCenter: new Set(['admin', 'supervisor']),
-    closeCenter: new Set(['admin', 'supervisor']),
-    exceptionCenter: new Set(['admin', 'supervisor']),
     reportCenter: new Set(['admin', 'supervisor'])
 };
 
@@ -46,11 +40,8 @@ const START_MODULES = [
     'dashboardAdmin',
     'systemCenter',
     'approvalCenter',
-    'closeCenter',
-    'exceptionCenter',
     'reportCenter',
     'auditCenter',
-    'integrationCenter',
     'governanceSettings',
     'systemErrors',
     'tiendas',
@@ -67,11 +58,8 @@ const ROLE_DEFAULT_MODULES = {
         systemCenter: true,
         systemErrors: true,
         approvalCenter: true,
-        closeCenter: true,
-        exceptionCenter: true,
         reportCenter: true,
         auditCenter: true,
-        integrationCenter: true,
         governanceSettings: true,
         usuarios: true,
         controlRestaurants: true,
@@ -80,8 +68,6 @@ const ROLE_DEFAULT_MODULES = {
     },
     supervisor: {
         approvalCenter: true,
-        closeCenter: true,
-        exceptionCenter: true,
         reportCenter: true,
         tiendas: true,
         documentos: true,
