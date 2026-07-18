@@ -41,7 +41,6 @@ function getSystemInstruction() {
         'Information Technology (admin only): Dashboard (/views/dashboard-admin, executive overview of documents, reconciliations, reports, integrations, and notifications), ' +
             'System center (/views/system-center, platform readiness score, configuration checklist, incidents, access load, recommended actions, and the real-time Integration Monitor for the database, Sage Intacct, SMTP, the AI assistant, and the CDTFA tax API), ' +
             'Operational audit (/views/audit-center, immutable log of business and administrative changes), ' +
-            'Governance settings (/views/governance-center, approval matrix: preparer/reviewer/approver roles, SLA, and separation of duties), ' +
             'Users (/views/usuarios, user and department directory), ' +
             'Permissions (/views/permisos, per-user module and action access editor), ' +
             'Restaurant control (/views/restaurantes, restaurant/store master data), ' +

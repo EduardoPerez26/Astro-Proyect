@@ -8,7 +8,6 @@ function obtenerRutaInicial(usuario) {
         approvalCenter: '/views/approval-center',
         reportCenter: '/views/report-center',
         auditCenter: '/views/audit-center',
-        governanceSettings: '/views/governance-center',
         systemErrors: '/views/system-errors',
         tiendas: '/views/tiendas',
         documentos: '/views/documentos',
@@ -103,7 +102,6 @@ function obtenerRutaInicial(usuario) {
         'dashboardAdmin',
         'systemCenter',
         'auditCenter',
-        'governanceSettings',
         'systemErrors'
     ];
 

@@ -35,6 +35,7 @@ const chatbotRoutes = require('./routes/chatbot.routes');
 const notificacionesRoutes = require('./routes/notificaciones.routes');
 const prepaidRoutes = require('./routes/prepaid.routes');
 const corporateRoutes = require('./routes/corporate.routes');
+const { checkAllIntegrations } = require('./services/integrationHealth.service');
 const { attachErrorNotificationCapture } = require('./middleware/error-notification.middleware');
 const {
     requestContext,
@@ -231,6 +232,15 @@ const server = app.listen(PORT, () => {
     console.log(`API available at http://localhost:${PORT}/api`);
     console.log('============================================');
 });
+
+// Keeps integration latency history populated even when nobody has System Center open.
+const INTEGRATION_HEARTBEAT_MS = 5 * 60 * 1000;
+const integrationHeartbeat = setInterval(() => {
+    checkAllIntegrations().catch(error => {
+        console.warn('[heartbeat] Integration health check failed:', error.message);
+    });
+}, INTEGRATION_HEARTBEAT_MS);
+integrationHeartbeat.unref();
 
 
 function shutdown(signal) {

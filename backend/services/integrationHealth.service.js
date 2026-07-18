@@ -11,6 +11,9 @@ const { pool } = require('../config/database');
 const { getIntacctConfigStatus } = require('./intacctConfig.service');
 const { testIntacctConnection } = require('./intacctClient.service');
 const { smtpStatus } = require('./corporateReport.service');
+const { ensureCorporateSchema } = require('./corporatePlatform.service');
+
+const LATENCY_HISTORY_RETENTION_DAYS = 30;
 
 const DEFAULT_TIMEOUT_MS = 6000;
 
@@ -252,6 +255,86 @@ async function lastSyncByProvider() {
     }
 }
 
+// Best-effort snapshot write: a monitoring hiccup should never break the health response.
+async function recordLatencySnapshot(providers) {
+    try {
+        await ensureCorporateSchema();
+        await Promise.all(
+            providers.map(provider => pool.query(
+                `INSERT INTO corporate_integration_latency_history (provider, status, latency_ms)
+                 VALUES (?, ?, ?)`,
+                [provider.provider, provider.status, provider.latency_ms]
+            ))
+        );
+        await pool.query(
+            `DELETE FROM corporate_integration_latency_history
+             WHERE checked_at < DATE_SUB(NOW(), INTERVAL ? DAY)`,
+            [LATENCY_HISTORY_RETENTION_DAYS]
+        );
+    } catch (error) {
+        console.warn('Integration latency snapshot could not be recorded:', error.code || error.message);
+    }
+}
+
+// Recent raw points per provider for sparklines (oldest first).
+async function getLatencySparklines(limit = 24) {
+    try {
+        await ensureCorporateSchema();
+        const [rows] = await pool.query(
+            `SELECT provider, latency_ms, checked_at
+             FROM (
+                 SELECT provider, latency_ms, checked_at,
+                        ROW_NUMBER() OVER (PARTITION BY provider ORDER BY checked_at DESC) AS rn
+                 FROM corporate_integration_latency_history
+             ) ranked
+             WHERE rn <= ?
+             ORDER BY provider, checked_at ASC`,
+            [limit]
+        );
+
+        const byProvider = {};
+        rows.forEach(row => {
+            if (!byProvider[row.provider]) byProvider[row.provider] = [];
+            byProvider[row.provider].push(row.latency_ms === null ? null : Number(row.latency_ms));
+        });
+
+        return byProvider;
+    } catch (error) {
+        console.warn('Latency sparkline history could not be loaded:', error.code || error.message);
+        return {};
+    }
+}
+
+// Daily average latency per provider over the trailing window, for the "last N days" view.
+async function getLatencyDailyAverages(days = 7) {
+    try {
+        await ensureCorporateSchema();
+        const [rows] = await pool.query(
+            `SELECT provider, DATE(checked_at) AS day, AVG(latency_ms) AS avg_latency_ms
+             FROM corporate_integration_latency_history
+             WHERE checked_at >= DATE_SUB(CURDATE(), INTERVAL ? DAY)
+               AND latency_ms IS NOT NULL
+             GROUP BY provider, DATE(checked_at)
+             ORDER BY provider, day ASC`,
+            [days]
+        );
+
+        const byProvider = {};
+        rows.forEach(row => {
+            if (!byProvider[row.provider]) byProvider[row.provider] = [];
+            byProvider[row.provider].push({
+                day: row.day,
+                avg_latency_ms: row.avg_latency_ms === null ? null : Math.round(Number(row.avg_latency_ms))
+            });
+        });
+
+        return byProvider;
+    } catch (error) {
+        console.warn('Latency daily average history could not be loaded:', error.code || error.message);
+        return {};
+    }
+}
+
 async function checkAllIntegrations() {
     const lastSync = await lastSyncByProvider();
     const providers = await Promise.all(
@@ -283,10 +366,14 @@ async function checkAllIntegrations() {
         ? Math.round((summary.online / summary.total) * 100)
         : 0;
 
+    recordLatencySnapshot(providers);
+
     return { generated_at: nowIso(), summary, providers };
 }
 
 module.exports = {
     STATUS,
-    checkAllIntegrations
+    checkAllIntegrations,
+    getLatencySparklines,
+    getLatencyDailyAverages
 };

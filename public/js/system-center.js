@@ -2,7 +2,9 @@ const systemCenterState = {
     health: null,
     admin: null,
     errors: null,
-    integrationHealth: null
+    integrationHealth: null,
+    latencyHistory: null,
+    latencyRange: 'live'
 };
 
 const INTEGRATION_POLL_MS = 15000;
@@ -16,8 +18,8 @@ document.addEventListener('DOMContentLoaded', () => {
         .getElementById('exportSystemCenter')
         ?.addEventListener('click', exportSystemCenterReport);
     document
-        .getElementById('systemIntegrationCards')
-        ?.addEventListener('click', handleIntegrationCardClick);
+        .getElementById('systemLatencyToggle')
+        ?.addEventListener('click', handleLatencyRangeToggle);
 
     loadSystemCenter();
 
@@ -46,17 +48,22 @@ async function loadSystemCenter() {
 
     try {
         const headers = { Authorization: `Bearer ${token}` };
-        const [health, admin, errors, integrationHealth] = await Promise.all([
+        const [health, admin, errors, integrationHealth, latencyHistory] = await Promise.all([
             fetchJson(`${window.API_URL}/dashboard/system-health`, { headers }),
             fetchJson(`${window.API_URL}/dashboard/admin`, { headers }),
             fetchJson(`${window.API_URL}/notificaciones/system-errors?status=open&limit=5`, { headers }),
-            fetchJson(`${window.API_URL}/corporate/integrations/health`, { headers })
+            fetchJson(`${window.API_URL}/corporate/integrations/health`, { headers }),
+            fetchJson(`${window.API_URL}/corporate/integrations/latency-history`, { headers }).catch(error => {
+                console.warn('Latency history unavailable:', error.message);
+                return { success: false, sparklines: {}, daily: {} };
+            })
         ]);
 
         systemCenterState.health = health;
         systemCenterState.admin = admin;
         systemCenterState.errors = errors;
         systemCenterState.integrationHealth = integrationHealth;
+        systemCenterState.latencyHistory = latencyHistory;
 
         renderSystemCenter();
     } catch (error) {
@@ -119,6 +126,13 @@ function renderSystemCenter() {
     const criticalErrors = Number(errorSummary.criticos_abiertos || 0);
     const activeSessions = Number(summary.sesiones_activas || 0);
     const activeUsers = Number(summary.usuarios_activos || 0);
+    const providers = integrationHealth.providers || [];
+    const latencies = providers
+        .map(provider => provider.latency_ms)
+        .filter(value => value !== null && value !== undefined);
+    const avgLatency = latencies.length
+        ? Math.round(latencies.reduce((sum, value) => sum + Number(value), 0) / latencies.length)
+        : null;
 
     const score = calculateReadinessScore({
         missingRequired,
@@ -145,6 +159,10 @@ function renderSystemCenter() {
     );
     setText('systemAttentionCount', missingRequired.length + criticalErrors + openErrors + integrationsOffline);
     setText('systemAttentionMeta', `${openErrors} open errors / ${missingRequired.length} required config gaps`);
+    setText('systemAvgLatency', avgLatency === null ? '—' : formatLatency(avgLatency));
+    setText('systemAvgLatencyMeta', `Across ${latencies.length} live connector(s)`);
+    setText('systemActiveUsers', activeUsers);
+    setText('systemActiveUsersMeta', `${activeSessions} active session(s)`);
     setText('systemCenterRingScore', `${score}%`);
     setText('systemCenterUpdated', `Updated ${formatDate(new Date(), true)}`);
 
@@ -169,6 +187,7 @@ function renderSystemCenter() {
     renderIntegrationHealth(integrationHealth);
     renderIncidents(errors.errores || [], errorSummary);
     renderAccess(summary);
+    renderRecentActivity(admin.movimientos || []);
     renderRecommendations({ missingRequired, missingRecommended, integrationsOffline, integrationsWarning, openErrors, criticalErrors, activeUsers });
 }
 
@@ -303,7 +322,7 @@ function formatLatency(ms) {
 }
 
 function renderIntegrationHealth(health) {
-    const container = document.getElementById('systemIntegrationCards');
+    const container = document.getElementById('systemServiceCards');
     if (!container) return;
 
     const live = document.getElementById('systemIntegrationLive');
@@ -314,74 +333,131 @@ function renderIntegrationHealth(health) {
     }
 
     const providers = health.providers || [];
+    renderStatusLegend(providers);
+    renderLatencyBars(providers, systemCenterState.latencyRange);
+
     if (!providers.length) {
         container.innerHTML = '<div class="system-center-empty">No integration metadata returned.</div>';
         return;
     }
 
+    const sparklines = systemCenterState.latencyHistory?.sparklines || {};
+
     container.innerHTML = providers.map(provider => `
-        <article class="xb-panel xb-monitor-card" data-tone="${healthStatusTone(provider.status)}">
-            <div class="xb-panel__body xb-stack">
-                <div class="xb-actions" style="justify-content:space-between">
-                    <span class="xb-metric-card__icon"><i class="fa-solid ${escapeHtml(provider.icon || 'fa-plug')}"></i></span>
-                    <span class="xb-status xb-status--${healthStatusTone(provider.status)}">${healthStatusLabel(provider.status)}</span>
-                </div>
-                <div>
-                    <h2 style="margin:0;font-size:16px">${escapeHtml(provider.name)}</h2>
-                    <p style="margin:4px 0 0;color:#777;font-size:12px;line-height:1.5">${escapeHtml(provider.detail || '')}</p>
-                </div>
-                <dl class="xb-monitor-meta">
-                    <div><dt>Latency</dt><dd>${formatLatency(provider.latency_ms)}</dd></div>
-                    <div><dt>Last sync</dt><dd>${provider.last_sync ? formatDate(provider.last_sync, true) : '—'}</dd></div>
-                </dl>
-                ${provider.provider === 'sage-intacct' ? `
-                    <div class="xb-actions">
-                        <button class="xb-button xb-button--primary" type="button" data-integration-operation="connection_test" data-integration-provider="sage-intacct"><i class="fa-solid fa-plug-circle-check"></i> Test connection</button>
-                    </div>
-                ` : ''}
-            </div>
+        <article class="system-center-service-card is-${healthStatusTone(provider.status)}">
+            <span class="system-center-service-icon"><i class="fa-solid ${escapeHtml(provider.icon || 'fa-plug')}"></i></span>
+            <strong>${escapeHtml(provider.name)}</strong>
+            <span class="system-center-service-status">
+                <span class="system-center-row-dot"></span> ${healthStatusLabel(provider.status)}
+            </span>
+            <span class="system-center-service-latency">${formatLatency(provider.latency_ms)}</span>
+            ${renderSparkline(sparklines[provider.provider])}
         </article>
     `).join('');
 }
 
-async function handleIntegrationCardClick(event) {
-    const button = event.target.closest('[data-integration-operation]');
+// Tiny inline trend line built from real recent latency snapshots.
+// Renders nothing when there is not yet enough history (no fabricated data).
+function renderSparkline(values) {
+    const points = Array.isArray(values) ? values.filter(v => v !== null && v !== undefined) : [];
+    if (points.length < 2) return '';
+
+    const width = 72;
+    const height = 22;
+    const min = Math.min(...points);
+    const max = Math.max(...points);
+    const range = max - min || 1;
+
+    const coords = points.map((value, index) => {
+        const x = (index / (points.length - 1)) * width;
+        const y = height - ((value - min) / range) * height;
+        return `${x.toFixed(1)},${y.toFixed(1)}`;
+    }).join(' ');
+
+    return `
+        <svg class="system-center-sparkline" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}" aria-hidden="true">
+            <polyline points="${coords}" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+    `;
+}
+
+function renderStatusLegend(providers) {
+    const legend = document.getElementById('systemStatusLegend');
+    if (!legend) return;
+
+    const segments = [
+        { key: 'online', label: 'Online', count: providers.filter(p => p.status === 'online').length },
+        { key: 'warning', label: 'Warning', count: providers.filter(p => p.status !== 'online' && p.status !== 'offline').length },
+        { key: 'offline', label: 'Offline', count: providers.filter(p => p.status === 'offline').length }
+    ];
+
+    legend.innerHTML = segments.map(segment => `
+        <li class="is-${segment.key}">
+            <span class="system-center-row-dot"></span>
+            <span>${escapeHtml(segment.label)}</span>
+            <strong>${segment.count}</strong>
+        </li>
+    `).join('');
+}
+
+function latencyTone(ms) {
+    if (ms === null || ms === undefined) return 'neutral';
+    if (ms < 200) return 'success';
+    if (ms <= 800) return 'warning';
+    return 'danger';
+}
+
+function handleLatencyRangeToggle(event) {
+    const button = event.target.closest('button[data-range]');
     if (!button) return;
 
-    const provider = button.dataset.integrationProvider;
-    const operation = button.dataset.integrationOperation;
-    const token = localStorage.getItem('token');
-    if (!token) return;
+    systemCenterState.latencyRange = button.dataset.range;
 
-    button.disabled = true;
-    try {
-        const response = await fetch(`${window.API_URL}/corporate/integrations/${provider}/runs`, {
-            method: 'POST',
-            headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ operation })
-        });
-        const data = await response.json().catch(() => ({}));
-        if (!response.ok || data.success === false) {
-            throw new Error(data.message || 'Integration request could not be completed.');
-        }
+    document.querySelectorAll('#systemLatencyToggle button').forEach(btn => {
+        btn.classList.toggle('is-active', btn === button);
+    });
 
-        if (window.Swal) {
-            Swal.fire({
-                icon: data.status === 'failed' ? 'warning' : 'success',
-                title: data.status === 'failed' ? 'Connection test failed' : 'Connection test passed',
-                text: data.summary,
-                timer: data.status === 'failed' ? undefined : 2200,
-                showConfirmButton: data.status === 'failed'
-            });
-        }
-        await loadIntegrationHealth();
-    } catch (error) {
-        if (window.Swal) {
-            Swal.fire({ icon: 'error', title: 'Test failed', text: error.message });
-        }
-    } finally {
-        button.disabled = false;
+    const providers = systemCenterState.integrationHealth?.providers || [];
+    renderLatencyBars(providers, systemCenterState.latencyRange);
+}
+
+function averageOf(values) {
+    const usable = (values || []).filter(v => v !== null && v !== undefined);
+    if (!usable.length) return null;
+    return Math.round(usable.reduce((sum, value) => sum + Number(value), 0) / usable.length);
+}
+
+function renderLatencyBars(providers, range = 'live') {
+    const container = document.getElementById('systemLatencyBars');
+    if (!container) return;
+
+    if (!providers.length) {
+        container.innerHTML = '<div class="system-center-empty">No connectors reporting latency.</div>';
+        return;
     }
+
+    const daily = systemCenterState.latencyHistory?.daily || {};
+    const latencyFor = provider => range === '7d'
+        ? averageOf((daily[provider.provider] || []).map(point => point.avg_latency_ms))
+        : (provider.latency_ms === null || provider.latency_ms === undefined ? null : Number(provider.latency_ms));
+
+    const values = providers.map(latencyFor);
+    const maxLatency = Math.max(...values.filter(v => v !== null), 1);
+
+    container.innerHTML = providers.map((provider, index) => {
+        const latency = values[index];
+        const width = latency === null ? 0 : Math.max(4, Math.round((latency / maxLatency) * 100));
+
+        return `
+            <div class="system-center-bar-row">
+                <span class="system-center-bar-label">${escapeHtml(provider.name)}</span>
+                <div class="system-center-bar-track">
+                    <div class="system-center-bar-fill is-${latencyTone(latency)}" style="width:${width}%"></div>
+                </div>
+                <span class="system-center-bar-value">${formatLatency(latency)}</span>
+            </div>
+        `;
+    }).join('');
 }
 
 function renderIncidents(errors, summary) {
@@ -438,6 +514,41 @@ function renderAccess(summary) {
     ].join('');
 }
 
+function renderRecentActivity(movimientos) {
+    const container = document.getElementById('systemActivityList');
+    if (!container) return;
+
+    if (!movimientos.length) {
+        container.innerHTML = '<div class="system-center-empty">No recent activity recorded.</div>';
+        return;
+    }
+
+    container.innerHTML = movimientos.slice(0, 6).map(item => renderStatusRow({
+        label: item.accion || 'Activity',
+        detail: [item.usuario_nombre, item.detalle].filter(Boolean).join(' · '),
+        value: formatActivityTime(item.fecha),
+        tone: activityTone(item.estado)
+    })).join('');
+}
+
+function activityTone(estado) {
+    const value = String(estado || '').toLowerCase();
+    if (value.includes('error') || value.includes('fallid') || value.includes('difference')) return 'danger';
+    if (value.includes('pendient') || value.includes('warning')) return 'warning';
+    return 'success';
+}
+
+function formatActivityTime(value) {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return '-';
+
+    const now = new Date();
+    const isToday = date.toDateString() === now.toDateString();
+    const time = date.toLocaleString('en-US', { hour: '2-digit', minute: '2-digit' });
+
+    return isToday ? `Today ${time}` : date.toLocaleString('en-US', { month: 'short', day: '2-digit' });
+}
+
 function renderRecommendations(context) {
     const container = document.getElementById('systemActionList');
     if (!container) return;
@@ -447,7 +558,8 @@ function renderRecommendations(context) {
     if (context.missingRequired.length) {
         actions.push({
             title: 'Complete required backend configuration',
-            detail: `Set ${context.missingRequired.join(', ')} before production deployment.`,
+            detail: 'The following environment variables are missing:',
+            items: context.missingRequired,
             tone: 'danger'
         });
     }
@@ -464,7 +576,8 @@ function renderRecommendations(context) {
     if (context.missingRecommended.length) {
         actions.push({
             title: 'Harden recommended environment settings',
-            detail: `Review ${context.missingRecommended.join(', ')} for stronger operational readiness.`,
+            detail: 'Review the following for stronger operational readiness:',
+            items: context.missingRecommended,
             tone: 'warning'
         });
     }
@@ -500,13 +613,29 @@ function renderRecommendations(context) {
         });
     }
 
-    container.innerHTML = actions.map(action => renderStatusRow({
-        label: action.title,
-        value: action.tone === 'success' ? 'Ready' : 'Action',
-        detail: action.detail,
-        tone: action.tone,
-        href: action.href
-    })).join('');
+    container.innerHTML = actions.map(renderRecommendationCard).join('');
+}
+
+function renderRecommendationCard(action) {
+    const icon = action.tone === 'success' ? 'fa-circle-check' : 'fa-triangle-exclamation';
+    const items = Array.isArray(action.items) && action.items.length
+        ? `<ul>${action.items.map(item => `<li>${escapeHtml(item)}</li>`).join('')}</ul>`
+        : '';
+    const link = action.href
+        ? `<a class="system-center-recommendation-link" href="${escapeHtml(action.href)}">Open <i class="fa-solid fa-arrow-right"></i></a>`
+        : '';
+
+    return `
+        <div class="system-center-recommendation is-${escapeHtml(action.tone || 'neutral')}">
+            <span class="system-center-recommendation-icon"><i class="fa-solid ${icon}"></i></span>
+            <div class="system-center-recommendation-copy">
+                <strong>${escapeHtml(action.title)}</strong>
+                <p>${escapeHtml(action.detail)}</p>
+                ${items}
+                ${link}
+            </div>
+        </div>
+    `;
 }
 
 function renderStatusRow(row) {
@@ -530,12 +659,22 @@ function renderSystemCenterError(error) {
     setText('systemReadinessScore', '--');
     setText('systemReadinessLabel', error.message);
 
-    ['systemConfigList', 'systemIntegrationCards', 'systemIncidentList', 'systemAccessList', 'systemActionList'].forEach(id => {
+    [
+        'systemConfigList',
+        'systemServiceCards',
+        'systemIncidentList',
+        'systemAccessList',
+        'systemActionList',
+        'systemLatencyBars',
+        'systemActivityList'
+    ].forEach(id => {
         const element = document.getElementById(id);
         if (element) {
             element.innerHTML = `<div class="system-center-empty">${escapeHtml(error.message)}</div>`;
         }
     });
+    const legend = document.getElementById('systemStatusLegend');
+    if (legend) legend.innerHTML = '';
 }
 
 function exportSystemCenterReport() {

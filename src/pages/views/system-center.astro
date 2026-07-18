@@ -2,7 +2,7 @@
 import DashboardLayout from '../../layouts/DashboardLayout.astro';
 ---
 
-<DashboardLayout title="System center" stylesheets={["/styles/pages/views/system-center.css?v=20260716-system-center-v1"]}>
+<DashboardLayout title="System center" stylesheets={["/styles/pages/views/system-center.css?v=20260718-system-center-v6"]}>
     <div class="page-container system-center-page">
         <header class="system-center-hero">
             <div class="system-center-copy">
@@ -18,6 +18,7 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
             </div>
 
             <div class="system-center-actions">
+                <div class="xb-monitor-live" id="systemIntegrationLive"><i class="fa-solid fa-circle"></i> Live</div>
                 <span id="systemCenterUpdated">Not refreshed</span>
                 <a href="/views/dashboard-admin">
                     <i class="fa-solid fa-chart-line"></i>
@@ -54,7 +55,7 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
             </article>
 
             <article class="system-center-status-card">
-                <span><i class="fa-solid fa-wave-square"></i></span>
+                <span><i class="fa-solid fa-plug-circle-check"></i></span>
                 <div>
                     <small>Integrations</small>
                     <strong id="systemIntegrationCount">--</strong>
@@ -70,14 +71,32 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
                     <p id="systemAttentionMeta">Open items across system</p>
                 </div>
             </article>
+
+            <article class="system-center-status-card">
+                <span><i class="fa-solid fa-gauge-high"></i></span>
+                <div>
+                    <small>Avg latency</small>
+                    <strong id="systemAvgLatency">--</strong>
+                    <p id="systemAvgLatencyMeta">Across live connectors</p>
+                </div>
+            </article>
+
+            <article class="system-center-status-card">
+                <span><i class="fa-solid fa-users"></i></span>
+                <div>
+                    <small>Active users</small>
+                    <strong id="systemActiveUsers">--</strong>
+                    <p id="systemActiveUsersMeta">Signed in right now</p>
+                </div>
+            </article>
         </section>
 
-        <section class="system-center-layout">
-            <article class="system-center-panel system-center-health-panel">
+        <section class="system-center-charts-row">
+            <article class="system-center-panel system-center-health-card">
                 <header>
                     <div>
-                        <span>READINESS</span>
-                        <h2>Corporate health posture</h2>
+                        <span>PLATFORM HEALTH</span>
+                        <h2>Overall platform health</h2>
                         <p>Configuration, incidents, sessions, and integration signals in one score.</p>
                     </div>
                     <i class="fa-solid fa-shield-halved"></i>
@@ -88,19 +107,107 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
                         <strong id="systemCenterRingScore">--</strong>
                         <span>ready</span>
                     </div>
+                    <ul id="systemCenterChecklist" class="system-center-checklist">
+                        <li><i class="fa-solid fa-circle-notch fa-spin"></i> Loading readiness checklist</li>
+                    </ul>
+                </div>
 
+                <div class="system-center-health-footer">
                     <div>
                         <strong id="systemCenterHealthTitle">Waiting for data</strong>
                         <p id="systemCenterHealthText">
                             The system center is collecting current platform signals.
                         </p>
-                        <ul id="systemCenterChecklist" class="system-center-checklist">
-                            <li><i class="fa-solid fa-circle-notch fa-spin"></i> Loading readiness checklist</li>
-                        </ul>
                     </div>
+                    <a class="system-center-health-details" href="#systemConfigList">
+                        View health details <i class="fa-solid fa-arrow-right"></i>
+                    </a>
                 </div>
             </article>
 
+            <article class="system-center-panel system-center-services-card">
+                <header>
+                    <div>
+                        <span>CONNECTORS</span>
+                        <h2>Service &amp; connector status</h2>
+                        <p>Live status and latency for every corporate integration.</p>
+                    </div>
+                    <i class="fa-solid fa-satellite-dish"></i>
+                </header>
+
+                <div class="system-center-service-cards" id="systemServiceCards">
+                    {Array.from({ length: 5 }).map(() => (
+                        <article class="xb-skeleton-card">
+                            <div class="xb-skeleton"></div>
+                            <div class="xb-skeleton-card-copy">
+                                <div class="xb-skeleton xb-skeleton-line" style="width:55%"></div>
+                                <div class="xb-skeleton xb-skeleton-line" style="width:90%"></div>
+                            </div>
+                        </article>
+                    ))}
+                </div>
+
+                <ul class="system-center-status-legend" id="systemStatusLegend"></ul>
+            </article>
+        </section>
+
+        <section class="system-center-bottom-row">
+            <article class="system-center-panel">
+                <header>
+                    <div>
+                        <span>LATENCY</span>
+                        <h2>Latency by connector</h2>
+                        <p>Live response time for each corporate integration.</p>
+                        <div class="system-center-latency-toggle" id="systemLatencyToggle">
+                            <button type="button" class="is-active" data-range="live">Live</button>
+                            <button type="button" data-range="7d">Last 7 days</button>
+                        </div>
+                    </div>
+                    <i class="fa-solid fa-wave-square"></i>
+                </header>
+                <div class="system-center-bars" id="systemLatencyBars">
+                    <div class="system-center-loading">Loading latency...</div>
+                </div>
+                <ul class="system-center-latency-legend">
+                    <li class="is-success"><span></span> Excellent (&lt;200ms)</li>
+                    <li class="is-warning"><span></span> Acceptable (200-800ms)</li>
+                    <li class="is-danger"><span></span> Slow (&gt;800ms)</li>
+                </ul>
+            </article>
+
+            <article class="system-center-panel">
+                <header>
+                    <div>
+                        <span>ACTIVITY</span>
+                        <h2>Recent activity</h2>
+                        <p>Latest actions recorded across the platform.</p>
+                    </div>
+                    <i class="fa-solid fa-clock-rotate-left"></i>
+                </header>
+                <div class="system-center-activity-list" id="systemActivityList">
+                    <div class="system-center-loading">Loading recent activity...</div>
+                </div>
+                <a class="system-center-panel-footer-link" href="/views/audit-center">
+                    View full history <i class="fa-solid fa-arrow-right"></i>
+                </a>
+            </article>
+
+            <article class="system-center-panel">
+                <header>
+                    <div>
+                        <span>NEXT ACTIONS</span>
+                        <h2>System recommendations</h2>
+                        <p>Prioritized improvements based on current platform state.</p>
+                    </div>
+                    <i class="fa-solid fa-list-check"></i>
+                </header>
+                <div class="system-center-action-list" id="systemActionList">
+                    <div class="system-center-loading">Preparing recommendations...</div>
+                </div>
+            </article>
+        </section>
+
+        <section class="system-center-grid">
             <article class="system-center-panel">
                 <header>
                     <div>
@@ -114,32 +221,7 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
                     <div class="system-center-loading">Loading configuration status...</div>
                 </div>
             </article>
-        </section>
 
-        <section class="system-center-panel system-center-integration-monitor">
-            <header>
-                <div>
-                    <span>INTEGRATION MONITOR</span>
-                    <h2>Real-time connector health</h2>
-                    <p>Live status, latency, and last synchronization for every corporate integration.</p>
-                </div>
-                <div class="xb-monitor-live" id="systemIntegrationLive"><i class="fa-solid fa-circle"></i> Live</div>
-            </header>
-            <div class="xb-metric-grid" id="systemIntegrationCards">
-                {Array.from({ length: 5 }).map(() => (
-                    <article class="xb-skeleton-card">
-                        <div class="xb-skeleton"></div>
-                        <div class="xb-skeleton-card-copy">
-                            <div class="xb-skeleton xb-skeleton-line" style="width:55%"></div>
-                            <div class="xb-skeleton xb-skeleton-line" style="width:90%"></div>
-                            <div class="xb-skeleton xb-skeleton-line" style="width:40%"></div>
-                        </div>
-                    </article>
-                ))}
-            </div>
-        </section>
-
-        <section class="system-center-grid">
             <article class="system-center-panel">
                 <header>
                     <div>
@@ -168,21 +250,7 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
                 </div>
             </article>
         </section>
-
-        <section class="system-center-panel system-center-actions-panel">
-            <header>
-                <div>
-                    <span>NEXT ACTIONS</span>
-                    <h2>Recommended corporate controls</h2>
-                    <p>Prioritized improvements based on the current state of the platform.</p>
-                </div>
-                <i class="fa-solid fa-list-check"></i>
-            </header>
-            <div class="system-center-action-list" id="systemActionList">
-                <div class="system-center-loading">Preparing recommendations...</div>
-            </div>
-        </section>
     </div>
 
-    <script src="/js/system-center.js?v=20260716-system-center-v3" is:inline></script>
+    <script src="/js/system-center.js?v=20260718-system-center-v7" is:inline></script>
 </DashboardLayout>

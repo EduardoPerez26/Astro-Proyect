@@ -6,9 +6,9 @@ All routes require an authenticated session and role/action permission.
 - `GET /api/corporate/documents/:id/lifecycle`
 - `POST /api/corporate/documents/:id/transition`
 - `POST /api/corporate/documents/:id/versions`
-- `GET|POST /api/corporate/governance/approval-matrix`
 - `GET /api/corporate/audit`
 - `GET /api/corporate/integrations/health`
+- `GET /api/corporate/integrations/latency-history`
 - `POST /api/corporate/integrations/:provider/runs`
 - `GET|POST|PATCH /api/corporate/reports...`
 

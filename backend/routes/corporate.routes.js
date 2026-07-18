@@ -21,7 +21,11 @@ const {
     runScheduledReport,
     reportPath
 } = require('../services/corporateReport.service');
-const { checkAllIntegrations } = require('../services/integrationHealth.service');
+const {
+    checkAllIntegrations,
+    getLatencySparklines,
+    getLatencyDailyAverages
+} = require('../services/integrationHealth.service');
 
 router.use(verificarToken);
 router.use(async (req, res, next) => {
@@ -497,6 +501,23 @@ router.get(
         } catch (error) {
             console.error('Integration monitor error:', error);
             res.status(500).json({ success: false, message: 'Integration health could not be evaluated' });
+        }
+    }
+);
+
+router.get(
+    '/integrations/latency-history',
+    checkPermission('systemCenter', 'ver'),
+    async (req, res) => {
+        try {
+            const [sparklines, daily] = await Promise.all([
+                getLatencySparklines(24),
+                getLatencyDailyAverages(7)
+            ]);
+            res.json({ success: true, sparklines, daily });
+        } catch (error) {
+            console.error('Integration latency history error:', error);
+            res.status(500).json({ success: false, message: 'Latency history could not be loaded' });
         }
     }
 );

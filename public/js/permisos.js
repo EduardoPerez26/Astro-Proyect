@@ -26,7 +26,6 @@ const MODULE_ACTIONS = {
     approvalCenter: ['ver', 'crear', 'editar', 'exportar'],
     reportCenter: ['ver', 'crear', 'editar', 'exportar'],
     auditCenter: ['ver', 'exportar'],
-    governanceSettings: ['ver', 'editar', 'exportar'],
     systemErrors: ['ver', 'crear', 'editar', 'exportar'],
     tiendas: ['ver', 'crear', 'editar', 'eliminar', 'exportar'],
     documentos: ['ver', 'crear', 'editar', 'eliminar', 'exportar'],
@@ -130,17 +129,6 @@ const MENU_SECTIONS = [
         iconClass: 'audit-center',
         department: 'Information Technology',
         path: '/views/audit-center',
-        required: false,
-        administrative: true
-    },
-    {
-        id: 'governanceSettings',
-        name: 'Governance settings',
-        description: 'Approval matrix, separation of duties, and SLA rules',
-        icon: 'fa-scale-balanced',
-        iconClass: 'governance-settings',
-        department: 'Information Technology',
-        path: '/views/governance-center',
         required: false,
         administrative: true
     },
@@ -309,7 +297,6 @@ const PERMISSION_TEMPLATES = {
             systemErrors: ['ver', 'crear', 'editar', 'exportar'],
             reportCenter: ['ver', 'crear', 'editar', 'exportar'],
             auditCenter: ['ver', 'exportar'],
-            governanceSettings: ['ver', 'editar', 'exportar'],
             usuarios: ['ver', 'crear', 'editar', 'eliminar', 'exportar'],
             controlRestaurants: ['ver', 'crear', 'editar', 'eliminar'],
             permisos: ['ver', 'editar'],
@@ -415,7 +402,7 @@ async function loadUserData() {
 
         // Sample permissions
         const defaultPermissions = {
-            1: { dashboardAdmin: true, systemCenter: true, approvalCenter: true, reportCenter: true, auditCenter: true, governanceSettings: true, systemErrors: true, tiendas: true, documentos: true, perfil: true, permisos: true, historial: true, usuarios: true, controlRestaurants: true, propertyManagement: true, propertyManagementDocuments: true, chat: true, paginaInicio: 'dashboardAdmin' },
+            1: { dashboardAdmin: true, systemCenter: true, approvalCenter: true, reportCenter: true, auditCenter: true, systemErrors: true, tiendas: true, documentos: true, perfil: true, permisos: true, historial: true, usuarios: true, controlRestaurants: true, propertyManagement: true, propertyManagementDocuments: true, chat: true, paginaInicio: 'dashboardAdmin' },
             2: { approvalCenter: true, reportCenter: true, tiendas: true, documentos: true, perfil: true, permisos: false, historial: true, usuarios: false, controlRestaurants: false, propertyManagement: false, propertyManagementDocuments: false, chat: false, paginaInicio: 'approvalCenter' },
             3: { tiendas: true, documentos: true, perfil: true, permisos: false, historial: false, usuarios: false, controlRestaurants: false, propertyManagement: false, propertyManagementDocuments: false, chat: false, paginaInicio: 'tiendas' },
             4: { tiendas: true, documentos: false, perfil: true, permisos: false, historial: false, usuarios: false, controlRestaurants: false, propertyManagement: true, propertyManagementDocuments: true, chat: false, paginaInicio: 'propertyManagement' }

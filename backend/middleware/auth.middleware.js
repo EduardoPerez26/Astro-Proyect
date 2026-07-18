@@ -212,8 +212,6 @@ const PERMISSION_MAPPING = {
     manage_report_center: ['reportCenter', 'editar'],
     view_audit_center: ['auditCenter', 'ver'],
     export_audit_center: ['auditCenter', 'exportar'],
-    view_governance_settings: ['governanceSettings', 'ver'],
-    manage_governance_settings: ['governanceSettings', 'editar'],
 
     view_archivos: ['documentos', 'ver'],
     upload_files: ['documentos', 'crear'],
