@@ -7,8 +7,7 @@
     const token = localStorage.getItem('token');
     const state = {
         audit: [],
-        reports: [],
-        governance: []
+        reports: []
     };
 
     // Smooth, unified transition: any table body or metric/panel region in a
@@ -362,59 +361,9 @@
         loadReports();
     }
 
-    // -------------------------------------------------------------------------
-    // GOVERNANCE CENTER
-    // -------------------------------------------------------------------------
-    async function loadGovernance() {
-        try {
-            const data = await request('/governance/approval-matrix');
-            state.governance = data.rules || [];
-            renderGovernance();
-        } catch (error) {
-            showError(error);
-        }
-    }
-
-    function renderGovernance() {
-        const body = document.getElementById('governanceBody');
-        if (!body) return;
-        body.innerHTML = state.governance.length ? state.governance.map(rule => `
-            <tr>
-                <td><strong>${escapeHtml(rule.workflow_type.replace(/_/g, ' '))}</strong></td>
-                <td>${escapeHtml(rule.department_name || rule.entity_code || 'Global')}</td>
-                <td>${escapeHtml(rule.preparer_role)}</td>
-                <td>${escapeHtml(rule.reviewer_role)}</td>
-                <td>${escapeHtml(rule.approver_role)}</td>
-                <td>${Number(rule.approval_levels || 1)}</td>
-                <td>${Number(rule.sla_hours || 0)} hours</td>
-                <td>${rule.separation_of_duties ? 'Separation of duties' : 'Same actor allowed'}<br><small class="xb-text-muted">${rule.require_rejection_comment ? 'Rejection comment required' : 'Comment optional'}</small></td>
-                <td>${statusBadge(rule.active ? 'active' : 'paused', rule.active ? 'Active' : 'Inactive')}</td>
-            </tr>
-        `).join('') : '<tr><td colspan="9"><div class="xb-empty-state"><div><i class="fa-solid fa-scale-balanced"></i><strong>No governance rules</strong><p>Create the first approval matrix rule.</p></div></div></td></tr>';
-    }
-
-    function initGovernance() {
-        document.getElementById('governanceRefresh')?.addEventListener('click', loadGovernance);
-        document.getElementById('governanceForm')?.addEventListener('submit', async event => {
-            event.preventDefault();
-            const form = event.currentTarget;
-            const payload = serializeForm(form);
-            try {
-                await request('/governance/approval-matrix', { method: 'POST', body: JSON.stringify(payload) });
-                window.XBFSCorporateUX?.clearFormDirty(form);
-                notify('Governance rule saved.');
-                await loadGovernance();
-            } catch (error) {
-                showError(error);
-            }
-        });
-        loadGovernance();
-    }
-
     const initializers = {
         audit: initAudit,
-        reports: initReports,
-        governance: initGovernance
+        reports: initReports
     };
 
     initializers[center]?.();

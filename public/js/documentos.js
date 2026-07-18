@@ -780,13 +780,18 @@ async function administrarCicloDocumento(id) {
                     <label for="documentWorkflowNotes">Decision comment</label>
                     <textarea id="documentWorkflowNotes" class="swal2-textarea" maxlength="5000" placeholder="Add review evidence, approval notes, or a rejection reason."></textarea>
                 </div>
-                ${canCreate ? '<button type="button" id="createDocumentVersion" class="corporate-inline-action"><i class="fa-solid fa-plus"></i> Create draft version</button>' : ''}
+                ${canCreate ? '<div class="corporate-lifecycle-secondary-action"><button type="button" id="createDocumentVersion" class="corporate-inline-action"><i class="fa-solid fa-plus"></i> Create draft version</button></div>' : ''}
             </section>
         ` : '';
 
         const result = await Swal.fire({
             title: `Document #${Number(id)} lifecycle`,
             width: 900,
+            customClass: {
+                popup: 'corporate-lifecycle-popup',
+                htmlContainer: 'corporate-lifecycle-html',
+                actions: 'corporate-lifecycle-actions'
+            },
             html: `
                 <div class="corporate-lifecycle-shell">
                     <section>

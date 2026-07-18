@@ -44,26 +44,6 @@ const SCHEMA_STATEMENTS = [
         INDEX idx_corporate_document_events_file (archivo_id, created_at),
         INDEX idx_corporate_document_events_actor (actor_id, created_at)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
-    `CREATE TABLE IF NOT EXISTS corporate_approval_matrix (
-        id BIGINT NOT NULL AUTO_INCREMENT,
-        workflow_type VARCHAR(80) NOT NULL,
-        departamento_id INT NULL,
-        entity_code VARCHAR(80) NULL,
-        preparer_role VARCHAR(50) NOT NULL DEFAULT 'usuario',
-        reviewer_role VARCHAR(50) NOT NULL DEFAULT 'supervisor',
-        approver_role VARCHAR(50) NOT NULL DEFAULT 'admin',
-        approval_levels TINYINT NOT NULL DEFAULT 1,
-        sla_hours INT NOT NULL DEFAULT 48,
-        require_rejection_comment BOOLEAN NOT NULL DEFAULT TRUE,
-        separation_of_duties BOOLEAN NOT NULL DEFAULT TRUE,
-        active BOOLEAN NOT NULL DEFAULT TRUE,
-        created_by INT NULL,
-        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        PRIMARY KEY (id),
-        UNIQUE KEY uq_corporate_approval_scope (workflow_type, departamento_id, entity_code),
-        INDEX idx_corporate_approval_active (active, workflow_type)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
     `CREATE TABLE IF NOT EXISTS corporate_integration_runs (
         id BIGINT NOT NULL AUTO_INCREMENT,
         provider VARCHAR(60) NOT NULL,
@@ -103,19 +83,6 @@ const SCHEMA_STATEMENTS = [
         INDEX idx_corporate_reports_due (active, next_run_at),
         INDEX idx_corporate_reports_type (report_type, active)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
-    `CREATE TABLE IF NOT EXISTS corporate_saved_views (
-        id BIGINT NOT NULL AUTO_INCREMENT,
-        usuario_id INT NOT NULL,
-        module_name VARCHAR(80) NOT NULL,
-        view_name VARCHAR(120) NOT NULL,
-        configuration_json JSON NOT NULL,
-        is_default BOOLEAN NOT NULL DEFAULT FALSE,
-        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        PRIMARY KEY (id),
-        UNIQUE KEY uq_corporate_saved_view (usuario_id, module_name, view_name),
-        INDEX idx_corporate_saved_view_default (usuario_id, module_name, is_default)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
     `CREATE TABLE IF NOT EXISTS auditoria_operativa (
         id BIGINT NOT NULL AUTO_INCREMENT,
         usuario_id INT NULL,
@@ -144,21 +111,6 @@ async function ensureCorporateSchema() {
             for (const statement of SCHEMA_STATEMENTS) {
                 await pool.query(statement);
             }
-
-            await pool.query(
-                `INSERT INTO corporate_approval_matrix
-                    (workflow_type, preparer_role, reviewer_role, approver_role, approval_levels, sla_hours, require_rejection_comment, separation_of_duties, active)
-                 VALUES
-                    ('reconciliation', 'usuario', 'supervisor', 'admin', 2, 24, TRUE, TRUE, TRUE),
-                    ('prepaid_schedule', 'usuario', 'supervisor', 'admin', 2, 48, TRUE, TRUE, TRUE),
-                    ('tax_adjustment', 'usuario', 'supervisor', 'admin', 2, 24, TRUE, TRUE, TRUE),
-                    ('user_permissions', 'admin', 'admin', 'superadmin', 1, 8, TRUE, TRUE, TRUE)
-                 ON DUPLICATE KEY UPDATE
-                    reviewer_role = VALUES(reviewer_role),
-                    approver_role = VALUES(approver_role),
-                    sla_hours = VALUES(sla_hours),
-                    active = VALUES(active)`
-            );
         })().catch(error => {
             schemaPromise = null;
             throw error;

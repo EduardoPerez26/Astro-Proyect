@@ -3,16 +3,120 @@
     const MAX_STORED_MESSAGES = 12;
     const CLEAR_AT_KEY = 'xbfsFloatingChatbotClearAt';
     const CONVERSATION_TTL_MS = 5 * 60 * 1000;
+    const TIP_IDLE_MS = 25000;
+    const TIP_VISIBLE_MS = 12000;
     let autoClearTimer = null;
+    let idleTimer = null;
+    let tipHideTimer = null;
+    let tipPayload = null;
+    let lastErrorMessage = '';
+    let lastErrorShownAt = 0;
+
+    const PAGE_TIPS = {
+        '/views/tiendas': {
+            default: "Tip: use the store filters to jump straight to a pending reconciliation."
+        },
+        '/views/documentos': {
+            default: "Tip: you can drag and drop files here to upload them faster.",
+            ar: "Tip: as AR, this is where every reconciliation source file lives — drag and drop to upload faster."
+        },
+        '/views/historial': {
+            default: "Tip: History keeps a full trail of every reconciliation change."
+        },
+        '/views/departments/dashboard-property': {
+            default: "Tip: Property Management schedules show upcoming and overdue tasks at a glance."
+        },
+        '/views/departments/property-management-documents': {
+            default: "Tip: Property Management keeps its own documents, separate from AR."
+        },
+        '/views/approval-center': {
+            default: "Tip: filter by department here to review only what your team owns.",
+            admin: "Tip: as admin you can filter by department here to focus on one team at a time.",
+            supervisor: "Tip: as supervisor, this list is already scoped to your department — filter further by status or type."
+        },
+        '/views/report-center': {
+            default: "Tip: you can schedule a report to be delivered automatically."
+        },
+        '/views/dashboard-admin': {
+            default: "Tip: the executive dashboard summarizes every department in one view."
+        },
+        '/views/system-center': {
+            default: "Tip: System Center shows live health for the database, Sage Intacct, email, and the AI assistant."
+        },
+        '/views/audit-center': {
+            default: "Tip: Audit Center logs every sensitive action across the platform."
+        },
+        '/views/usuarios': {
+            default: "Tip: you can set a department for each user to control what they see."
+        },
+        '/views/restaurantes': {
+            default: "Tip: keep store data current here so reconciliations map correctly."
+        },
+        '/views/system-errors': {
+            default: "Tip: system errors here are the same ones logged in System Center."
+        },
+        '/views/perfil': {
+            default: "Tip: you can update your password and preferences here anytime."
+        }
+    };
+
+    const MODULE_LINKS = [
+        { label: 'Stores', path: '/views/tiendas', keywords: ['tienda', 'store'] },
+        { label: 'Reconciliation ledger', path: '/views/conciliacion', keywords: ['conciliacion', 'reconciliation', 'ledger'] },
+        { label: 'Documents', path: '/views/documentos', keywords: ['documento', 'document', 'archivo excel', 'uploaded file'] },
+        { label: 'History', path: '/views/historial', keywords: ['historial', 'history'] },
+        { label: 'Property schedules', path: '/views/departments/dashboard-property', keywords: ['property schedule', 'cronograma'] },
+        { label: 'Prepaid amortization', path: '/views/departments/prepaid-amortization', keywords: ['prepaid', 'amortiz'] },
+        { label: 'Property Management documents', path: '/views/departments/property-management-documents', keywords: ['property management document', 'pm document'] },
+        { label: 'Approval Center', path: '/views/approval-center', keywords: ['aprobacion', 'approval'] },
+        { label: 'Reports Center', path: '/views/report-center', keywords: ['reporte', 'report'] },
+        { label: 'Admin dashboard', path: '/views/dashboard-admin', keywords: ['dashboard admin', 'executive dashboard'] },
+        { label: 'System Center', path: '/views/system-center', keywords: ['system center', 'integration monitor', 'integracion'] },
+        { label: 'Audit Center', path: '/views/audit-center', keywords: ['auditoria', 'audit center', 'operational audit'] },
+        { label: 'Users', path: '/views/usuarios', keywords: ['user directory', 'directorio de usuarios'] },
+        { label: 'Permissions', path: '/views/permisos', keywords: ['permiso', 'permission'] },
+        { label: 'Restaurant control', path: '/views/restaurantes', keywords: ['restaurante', 'restaurant'] },
+        { label: 'System errors', path: '/views/system-errors', keywords: ['system error', 'error del sistema'] },
+        { label: 'Profile & security', path: '/views/perfil', keywords: ['perfil', 'profile', 'password', 'contraseña', 'mfa'] },
+        { label: 'Team chat', path: '/views/chat', keywords: ['team chat', 'chat interno', 'internal messaging'] }
+    ];
+
+    const QUICK_COMMANDS = {
+        '/approvals': { path: '/views/approval-center', label: 'Approval Center' },
+        '/documents': { path: '/views/documentos', label: 'Documents' },
+        '/reports': { path: '/views/report-center', label: 'Reports Center' },
+        '/users': { path: '/views/usuarios', label: 'Users' },
+        '/profile': { path: '/views/perfil', label: 'Profile & security' },
+        '/history': { path: '/views/historial', label: 'History' },
+        '/stores': { path: '/views/tiendas', label: 'Stores' },
+        '/system': { path: '/views/system-center', label: 'System Center' },
+        '/audit': { path: '/views/audit-center', label: 'Audit Center' },
+        '/permissions': { path: '/views/permisos', label: 'Permissions' },
+        '/property': { path: '/views/departments/dashboard-property', label: 'Property schedules' }
+    };
+
+    const DEPARTMENT_TOUR = {
+        default: ['Stores', 'Documents', 'History'],
+        ar: ['Stores', 'Documents', 'History'],
+        ap: ['Documents'],
+        operations: ['Stores', 'Documents'],
+        'property-management': ['Property schedules', 'Prepaid amortization', 'Property Management documents'],
+        hr: ['Documents'],
+        it: ['Admin dashboard', 'System Center', 'Users']
+    };
 
     const MASCOT_SVG = `
         <svg class="floating-chatbot-mascot-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-            <line x1="12" y1="2" x2="12" y2="4.2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
-            <circle cx="12" cy="1.6" r="1.1" fill="currentColor"/>
+            <g class="floating-chatbot-mascot-antenna">
+                <line x1="12" y1="2" x2="12" y2="4.2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+                <circle cx="12" cy="1.6" r="1.1" fill="currentColor"/>
+            </g>
             <circle class="floating-chatbot-mascot-face" cx="12" cy="13" r="9.5" fill="currentColor"/>
-            <circle cx="8.6" cy="11.8" r="1.4" fill="var(--franchie-ink, #15191d)"/>
-            <circle cx="15.4" cy="11.8" r="1.4" fill="var(--franchie-ink, #15191d)"/>
-            <path d="M8 15.4c1.2 1.6 2.6 2.4 4 2.4s2.8-.8 4-2.4" stroke="var(--franchie-ink, #15191d)" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+            <g class="floating-chatbot-mascot-eyes">
+                <circle cx="8.6" cy="11.8" r="1.4" fill="var(--franchie-ink, #15191d)"/>
+                <circle cx="15.4" cy="11.8" r="1.4" fill="var(--franchie-ink, #15191d)"/>
+            </g>
+            <path class="floating-chatbot-mascot-mouth" d="M8 15.4c1.2 1.6 2.6 2.4 4 2.4s2.8-.8 4-2.4" stroke="var(--franchie-ink, #15191d)" stroke-width="1.5" stroke-linecap="round" fill="none"/>
         </svg>
     `;
 
@@ -41,6 +145,18 @@
             >
                 <span class="floating-chatbot-mascot">${MASCOT_SVG}</span>
             </button>
+
+            <div class="floating-chatbot-tip" id="floatingChatbotTip" hidden>
+                <button
+                    type="button"
+                    class="floating-chatbot-tip-dismiss"
+                    id="floatingChatbotTipDismiss"
+                    aria-label="Dismiss tip"
+                >
+                    <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                </button>
+                <p id="floatingChatbotTipText"></p>
+            </div>
 
             <section
                 class="floating-chatbot-panel"
@@ -107,12 +223,154 @@
         document
             .getElementById('floatingChatbotInput')
             ?.addEventListener('keydown', handleInputKeydown);
+        document
+            .getElementById('floatingChatbotTip')
+            ?.addEventListener('click', handleTipClick);
+        document
+            .getElementById('floatingChatbotTipDismiss')
+            ?.addEventListener('click', handleTipDismiss);
 
         renderMessages();
         triggerLoginWelcome();
         scheduleAutoClear();
+        setupIdleWatcher();
+        setupErrorWatcher();
         window.addEventListener('beforeunload', () => {
             if (autoClearTimer) window.clearTimeout(autoClearTimer);
+            if (idleTimer) window.clearTimeout(idleTimer);
+            if (tipHideTimer) window.clearTimeout(tipHideTimer);
+        });
+    }
+
+    function setupIdleWatcher() {
+        const activityEvents = ['mousemove', 'keydown', 'scroll', 'click', 'touchstart'];
+        activityEvents.forEach(eventName => {
+            window.addEventListener(eventName, resetIdleTimer, { passive: true });
+        });
+        document.addEventListener('visibilitychange', resetIdleTimer);
+        resetIdleTimer();
+    }
+
+    function resetIdleTimer() {
+        if (idleTimer) window.clearTimeout(idleTimer);
+        idleTimer = window.setTimeout(maybeShowProactiveTip, TIP_IDLE_MS);
+    }
+
+    function maybeShowProactiveTip() {
+        if (state.isOpen) return;
+        if (document.visibilityState !== 'visible') return;
+
+        const pathname = window.location.pathname.replace(/\/+$/, '') || '/';
+        const entry = PAGE_TIPS[pathname];
+        if (!entry) return;
+
+        const tip = resolveTip(entry);
+        if (!tip) return;
+
+        const shownKey = `xbfsFranchieTip:${pathname}`;
+        try {
+            if (sessionStorage.getItem(shownKey)) return;
+            sessionStorage.setItem(shownKey, '1');
+        } catch {
+            // Proceed even if we cannot remember; showing once too often beats never.
+        }
+
+        showProactiveTip(tip);
+    }
+
+    function resolveTip(entry) {
+        if (typeof entry === 'string') return entry;
+        const role = getUserRole();
+        const departmentCode = getDepartmentCode();
+        return entry[role] || entry[departmentCode] || entry.default || '';
+    }
+
+    function showProactiveTip(text, options = {}) {
+        const bubble = document.getElementById('floatingChatbotTip');
+        const textEl = document.getElementById('floatingChatbotTipText');
+        const toggle = document.getElementById('floatingChatbotToggle');
+
+        if (!bubble || !textEl) return;
+
+        tipPayload = {
+            mode: options.mode || 'info',
+            errorText: options.errorText || '',
+            text
+        };
+
+        textEl.textContent = text;
+        bubble.hidden = false;
+        bubble.classList.toggle('is-error', tipPayload.mode === 'error');
+        requestAnimationFrame(() => bubble.classList.add('is-visible'));
+
+        const mascotSvg = toggle?.querySelector('.floating-chatbot-mascot-svg');
+        if (mascotSvg) {
+            mascotSvg.classList.add('is-waving');
+            mascotSvg.addEventListener(
+                'animationend',
+                () => mascotSvg.classList.remove('is-waving'),
+                { once: true }
+            );
+        }
+
+        if (tipHideTimer) window.clearTimeout(tipHideTimer);
+        tipHideTimer = window.setTimeout(hideProactiveTip, TIP_VISIBLE_MS);
+    }
+
+    function hideProactiveTip() {
+        const bubble = document.getElementById('floatingChatbotTip');
+        if (!bubble || bubble.hidden) return;
+
+        bubble.classList.remove('is-visible');
+        window.setTimeout(() => {
+            if (!bubble.classList.contains('is-visible')) bubble.hidden = true;
+        }, 200);
+    }
+
+    function handleTipClick(event) {
+        if (event.target.closest('#floatingChatbotTipDismiss')) return;
+
+        const payload = tipPayload;
+        hideProactiveTip();
+        if (!payload) return;
+
+        openPanel();
+
+        if (payload.mode === 'error') {
+            sendUserMessage(`Explain this error and what I should do about it: ${payload.errorText}`);
+        } else {
+            addMessage('assistant', payload.text);
+        }
+    }
+
+    function handleTipDismiss(event) {
+        event.stopPropagation();
+        hideProactiveTip();
+    }
+
+    function setupErrorWatcher() {
+        window.addEventListener('error', event => {
+            reportRuntimeIssue(event?.error?.message || event?.message);
+        });
+        window.addEventListener('unhandledrejection', event => {
+            const reason = event?.reason;
+            reportRuntimeIssue(reason instanceof Error ? reason.message : String(reason || ''));
+        });
+    }
+
+    function reportRuntimeIssue(rawMessage) {
+        const text = String(rawMessage || '').trim();
+        if (!text || text === 'Script error.' || text.includes('ResizeObserver')) return;
+        if (state.isOpen) return;
+
+        const now = Date.now();
+        if (text === lastErrorMessage && now - lastErrorShownAt < 60000) return;
+        lastErrorMessage = text;
+        lastErrorShownAt = now;
+
+        showProactiveTip('Something just went wrong on this page. Want me to explain what happened?', {
+            mode: 'error',
+            errorText: text
         });
     }
 
@@ -183,19 +441,106 @@
             );
         }
 
-        window.setTimeout(() => {
-            openPanel();
-            addMessage('assistant', buildWelcomeMessage());
+        window.setTimeout(async () => {
+            openPanel({ silent: true });
+            markBriefingShownToday();
+            addMessage('assistant', await buildWelcomeMessage());
+            maybeShowGuidedTour();
         }, 900);
     }
 
-    function buildWelcomeMessage() {
+    async function buildWelcomeMessage() {
         const firstName = getUserFirstName();
         const greeting = firstName ? `Welcome back, ${firstName}!` : 'Welcome back!';
+        const briefing = await fetchBriefingLine();
 
-        return `${greeting} I'm Franchie, your XBFS assistant. I can help you find any screen or answer ` +
+        const base = `${greeting} I'm Franchie, your XBFS assistant. I can help you find any screen or answer ` +
             'questions about reconciliations, documents, permissions, reports, or Property Management. ' +
             'What can I help you with today?';
+
+        return briefing ? `${base}\n\n${briefing}` : base;
+    }
+
+    async function fetchBriefingLine() {
+        try {
+            const apiBase = getApiBase();
+            if (!apiBase) return '';
+
+            const response = await fetch(`${apiBase}/dashboard/approval-center`, {
+                headers: { Authorization: `Bearer ${getToken()}` }
+            });
+            if (!response.ok) return '';
+
+            const data = await response.json().catch(() => ({}));
+            const summary = data?.summary;
+            if (!summary) return '';
+
+            const parts = [];
+            if (summary.total_tasks) parts.push(`${summary.total_tasks} pending approval item(s)`);
+            if (summary.overdue) parts.push(`${summary.overdue} overdue`);
+            if (summary.incidents_open) parts.push(`${summary.incidents_open} open system incident(s)`);
+
+            return parts.length ? `Quick status: ${parts.join(', ')}.` : '';
+        } catch {
+            return '';
+        }
+    }
+
+    function maybeShowDailyBriefing() {
+        if (hasShownBriefingToday()) return;
+        markBriefingShownToday();
+
+        fetchBriefingLine().then(line => {
+            if (line) addMessage('assistant', line);
+        });
+    }
+
+    function hasShownBriefingToday() {
+        try {
+            return localStorage.getItem('franchieBriefingDate') === todayKey();
+        } catch {
+            return true;
+        }
+    }
+
+    function markBriefingShownToday() {
+        try {
+            localStorage.setItem('franchieBriefingDate', todayKey());
+        } catch {
+            // Ignore storage failures; the briefing will simply be offered again next open.
+        }
+    }
+
+    function todayKey() {
+        return new Date().toISOString().slice(0, 10);
+    }
+
+    function maybeShowGuidedTour() {
+        let seen = false;
+        try {
+            seen = localStorage.getItem('franchieTourSeen') === '1';
+        } catch {
+            seen = false;
+        }
+
+        if (seen) return;
+
+        try {
+            localStorage.setItem('franchieTourSeen', '1');
+        } catch {
+            // Ignore storage failures; the tour will simply repeat on later logins.
+        }
+
+        const departmentCode = getDepartmentCode();
+        const tour = DEPARTMENT_TOUR[departmentCode] || DEPARTMENT_TOUR.default;
+
+        window.setTimeout(() => {
+            addMessage(
+                'assistant',
+                `Since this looks like your first time here: you'll mostly use ${tour.join(', ')}. ` +
+                'Ask me anytime if you need help finding something.'
+            );
+        }, 1600);
     }
 
     function getUserFirstName() {
@@ -208,24 +553,57 @@
         }
     }
 
+    function getUserRole() {
+        try {
+            const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
+            return String(usuario?.rol || '').toLowerCase();
+        } catch {
+            return '';
+        }
+    }
+
+    function getDepartmentCode() {
+        try {
+            const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
+            return String(usuario?.departamento?.codigo || '').toLowerCase();
+        } catch {
+            return '';
+        }
+    }
+
     function togglePanel() {
         state.isOpen ? closePanel() : openPanel();
     }
 
-    function openPanel() {
+    function openPanel(options = {}) {
         const panel = document.getElementById('floatingChatbotPanel');
         const toggle = document.getElementById('floatingChatbotToggle');
 
         if (!panel || !toggle) return;
 
+        hideProactiveTip();
         state.isOpen = true;
         panel.hidden = false;
         toggle.setAttribute('aria-label', 'Close AI assistant');
+
+        const headerMascot = panel.querySelector('.floating-chatbot-mascot--header .floating-chatbot-mascot-svg');
+        if (headerMascot) {
+            headerMascot.classList.add('is-waving');
+            headerMascot.addEventListener(
+                'animationend',
+                () => headerMascot.classList.remove('is-waving'),
+                { once: true }
+            );
+        }
 
         window.setTimeout(() => {
             document.getElementById('floatingChatbotInput')?.focus();
             scrollMessagesToBottom();
         }, 0);
+
+        if (!options.silent) {
+            maybeShowDailyBriefing();
+        }
     }
 
     function closePanel() {
@@ -248,12 +626,45 @@
         if (!message || state.isSending) return;
 
         input.value = '';
+
+        if (handleQuickCommand(message)) return;
+
+        await sendUserMessage(message);
+    }
+
+    function handleQuickCommand(message) {
+        const normalized = message.trim().toLowerCase();
+
+        if (normalized === '/help') {
+            addMessage('user', message);
+            const list = Object.entries(QUICK_COMMANDS)
+                .map(([command, target]) => `${command} → ${target.label}`)
+                .join('\n');
+            addMessage('assistant', `Quick commands:\n${list}`);
+            return true;
+        }
+
+        const target = QUICK_COMMANDS[normalized];
+        if (!target) return false;
+
+        addMessage('user', message);
+        addMessage('assistant', `Opening ${target.label}...`, [{ label: target.label, path: target.path }]);
+        window.setTimeout(() => {
+            window.location.href = target.path;
+        }, 500);
+        return true;
+    }
+
+    async function sendUserMessage(message) {
+        if (!message || state.isSending) return;
+
         addMessage('user', message);
         setSending(true);
 
         try {
             const reply = await requestAssistantReply(message);
-            addMessage('assistant', reply || 'I could not generate a reply.');
+            const links = computeMessageLinks(`${message} ${reply || ''}`);
+            addMessage('assistant', reply || 'I could not generate a reply.', links);
         } catch (error) {
             console.error('Floating chatbot error:', error);
             addMessage(
@@ -263,6 +674,20 @@
         } finally {
             setSending(false);
         }
+    }
+
+    function computeMessageLinks(text) {
+        const haystack = String(text || '').toLowerCase();
+        const matches = [];
+
+        for (const entry of MODULE_LINKS) {
+            if (matches.length >= 2) break;
+            if (entry.keywords.some(keyword => haystack.includes(keyword))) {
+                matches.push({ label: entry.label, path: entry.path });
+            }
+        }
+
+        return matches;
     }
 
     function handleInputKeydown(event) {
@@ -300,10 +725,11 @@
         return data.reply;
     }
 
-    function addMessage(role, content) {
+    function addMessage(role, content, links = []) {
         state.messages.push({
             role,
             content,
+            links: Array.isArray(links) ? links : [],
             createdAt: new Date().toISOString()
         });
 
@@ -330,10 +756,25 @@
         container.innerHTML = state.messages.map(message => `
             <div class="floating-chatbot-message is-${message.role}">
                 <p>${escapeHtml(message.content)}</p>
+                ${renderMessageLinks(message.links)}
             </div>
         `).join('');
 
         scrollMessagesToBottom();
+    }
+
+    function renderMessageLinks(links) {
+        if (!Array.isArray(links) || !links.length) return '';
+
+        return `
+            <div class="floating-chatbot-message-links">
+                ${links.map(link => `
+                    <a class="floating-chatbot-message-link" href="${escapeHtml(link.path)}">
+                        <i class="fa-solid fa-arrow-right" aria-hidden="true"></i> ${escapeHtml(link.label)}
+                    </a>
+                `).join('')}
+            </div>
+        `;
     }
 
     function scrollMessagesToBottom() {
@@ -386,8 +827,13 @@
     function normalizeStoredMessage(message) {
         const role = message?.role === 'assistant' ? 'assistant' : 'user';
         const content = String(message?.content || '').trim();
+        const links = Array.isArray(message?.links)
+            ? message.links
+                .filter(link => link && typeof link.path === 'string' && typeof link.label === 'string')
+                .slice(0, 2)
+            : [];
 
-        return content ? { role, content, createdAt: message.createdAt || '' } : null;
+        return content ? { role, content, links, createdAt: message.createdAt || '' } : null;
     }
 
     function getApiBase() {

@@ -1,8 +1,11 @@
 const express = require('express');
 
 const { verificarToken } = require('../middleware/auth.middleware');
+const { pool } = require('../config/database');
 
 const router = express.Router();
+
+const PENDING_DOCS_PATTERN = /(documentos?|files?|archivos?).*(pendient|pending)|(pendient|pending).*(documentos?|files?|archivos?)/i;
 
 const OPENAI_RESPONSES_URL = 'https://api.openai.com/v1/responses';
 const GEMINI_INTERACTIONS_URL = 'https://generativelanguage.googleapis.com/v1beta/interactions';
@@ -252,6 +255,35 @@ async function requestAssistantReply(input) {
     return requestOpenAi(input);
 }
 
+async function tryIntentShortcut(message, req) {
+    const text = String(message || '');
+    if (!PENDING_DOCS_PATTERN.test(text)) return null;
+
+    const filtrarPorDepartment = req.usuario?.rol !== 'superadmin'
+        && req.usuario?.rol !== 'admin'
+        && Boolean(req.departamento?.id);
+    const where = filtrarPorDepartment
+        ? "WHERE estado = 'pendiente' AND (departamento_id = ? OR departamento_id IS NULL)"
+        : "WHERE estado = 'pendiente'";
+    const params = filtrarPorDepartment ? [req.departamento.id] : [];
+
+    const [rows] = await pool.query(
+        `SELECT COUNT(*) AS total FROM archivos_excel ${where}`,
+        params
+    );
+    const total = Number(rows?.[0]?.total || 0);
+
+    if (total === 0) {
+        return "You're all caught up — there are no pending documents right now.";
+    }
+
+    if (total === 1) {
+        return 'There is 1 document pending review. Open Documents to take a look.';
+    }
+
+    return `There are ${total} documents pending review. Open Documents to take a look.`;
+}
+
 router.post('/message', async (req, res) => {
     try {
         const input = buildInput(req.body.messages, req.body.message);
@@ -263,7 +295,12 @@ router.post('/message', async (req, res) => {
             });
         }
 
-        const reply = await requestAssistantReply(input);
+        const shortcutReply = await tryIntentShortcut(req.body.message, req).catch(error => {
+            console.warn('Chatbot intent shortcut failed:', error.message);
+            return null;
+        });
+
+        const reply = shortcutReply || await requestAssistantReply(input);
 
         res.json({
             success: true,

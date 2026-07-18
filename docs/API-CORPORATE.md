@@ -11,7 +11,6 @@ All routes require an authenticated session and role/action permission.
 - `GET /api/corporate/integrations/health`
 - `POST /api/corporate/integrations/:provider/runs`
 - `GET|POST|PATCH /api/corporate/reports...`
-- `GET|POST /api/corporate/saved-views/:module`
 
 Every API response includes an `X-Request-ID` response header. Supply an existing request ID using the same header when tracing a browser operation through server logs.
 

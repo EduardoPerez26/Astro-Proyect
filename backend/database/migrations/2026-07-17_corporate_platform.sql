@@ -1,7 +1,7 @@
 -- ============================================================
 -- XBFS CORPORATE OPERATIONS PLATFORM
 -- Document governance, close management, exceptions, integrations,
--- scheduled reports, saved views, and immutable operational audit.
+-- scheduled reports, and immutable operational audit.
 -- Idempotent migration for MySQL 8 / MariaDB-compatible deployments.
 -- ============================================================
 
@@ -187,20 +187,6 @@ CREATE TABLE IF NOT EXISTS corporate_scheduled_reports (
     PRIMARY KEY (id),
     INDEX idx_corporate_reports_due (active, next_run_at),
     INDEX idx_corporate_reports_type (report_type, active)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS corporate_saved_views (
-    id BIGINT NOT NULL AUTO_INCREMENT,
-    usuario_id INT NOT NULL,
-    module_name VARCHAR(80) NOT NULL,
-    view_name VARCHAR(120) NOT NULL,
-    configuration_json JSON NOT NULL,
-    is_default BOOLEAN NOT NULL DEFAULT FALSE,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    PRIMARY KEY (id),
-    UNIQUE KEY uq_corporate_saved_view (usuario_id, module_name, view_name),
-    INDEX idx_corporate_saved_view_default (usuario_id, module_name, is_default)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS auditoria_operativa (
