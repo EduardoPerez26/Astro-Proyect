@@ -1,0 +1,58 @@
+/* ===== XBFS consolidated stylesheet (dark mode overrides) ===== */
+/* Contains every rule whose selector includes [data-theme="dark"]. */
+
+:root[data-theme="dark"] {
+    --primary: var(--xb-color-brand);
+    --primary-dark: var(--xb-color-brand-active);
+    --primary-light: var(--xb-color-surface-subtle);
+    --success: var(--xb-color-success);
+    --success-light: var(--xb-color-success-soft);
+    --warning: var(--xb-color-warning);
+    --warning-light: var(--xb-color-warning-soft);
+    --danger: var(--xb-color-danger);
+    --danger-light: var(--xb-color-danger-soft);
+    --info: var(--xb-color-text-muted);
+    --info-light: var(--xb-color-surface-subtle);
+    --accent: #e2793d;
+    --accent-light: #3a2410;
+    --gray-50: var(--xb-color-surface-subtle);
+    --gray-100: var(--xb-color-surface-subtle);
+    --gray-200: var(--xb-color-border);
+    --gray-300: var(--xb-color-border-strong);
+    --gray-400: var(--xb-color-text-soft);
+    --gray-500: var(--xb-color-text-muted);
+    --gray-600: var(--xb-color-text-muted);
+    --gray-700: var(--xb-color-text-muted);
+    --gray-800: var(--xb-color-text);
+    --gray-900: var(--xb-color-text);
+    --white: var(--xb-color-surface);
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, .4);
+    --shadow: 0 1px 2px 0 rgba(0, 0, 0, .45), 0 1px 3px 0 rgba(0, 0, 0, .45);
+    --shadow-md: 0 10px 24px -18px rgba(0, 0, 0, .55);
+    --shadow-lg: 0 18px 42px -24px rgba(0, 0, 0, .6)
+;
+    --xb-color-brand: #e7e9ec;
+    --xb-color-brand-hover: #f4f5f7;
+    --xb-color-brand-active: #ffffff;
+    --xb-color-canvas: #14161a;
+    --xb-color-surface: #1c1f24;
+    --xb-color-surface-subtle: #22262c;
+    --xb-color-surface-strong: #2a2f36;
+    --xb-color-border: #363c44;
+    --xb-color-border-strong: #454c55;
+    --xb-color-text: #eef0f2;
+    --xb-color-text-muted: #a7afba;
+    --xb-color-text-soft: #7b8492;
+    --xb-color-success: #3ecf8e;
+    --xb-color-success-soft: #143327;
+    --xb-color-warning: #f2b84b;
+    --xb-color-warning-soft: #3a2c0d;
+    --xb-color-danger: #f26359;
+    --xb-color-danger-soft: #3a1917;
+    --xb-color-info: #5b93ff;
+    --xb-color-info-soft: #14213d;
+    --xb-shadow-xs: 0 1px 2px rgba(0, 0, 0, .35);
+    --xb-shadow-sm: 0 2px 8px rgba(0, 0, 0, .4);
+    --xb-shadow-md: 0 10px 28px rgba(0, 0, 0, .5);
+}
+

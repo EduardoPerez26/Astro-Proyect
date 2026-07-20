@@ -696,3 +696,27 @@
 }
 
 .xb-actions--wrap { flex-wrap: wrap; gap: 8px; }
+
+
+.theme-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: var(--xb-radius-sm);
+    border: 1px solid var(--xb-color-border);
+    background: var(--xb-color-surface);
+    color: var(--xb-color-text-muted);
+    cursor: pointer;
+    transition: var(--xb-transition);
+}
+
+.theme-toggle:hover {
+    background: var(--xb-color-surface-strong);
+    color: var(--xb-color-text);
+}
+
+.theme-toggle[aria-pressed="true"] i {
+    color: var(--xb-color-warning);
+}

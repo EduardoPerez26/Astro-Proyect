@@ -49,6 +49,16 @@ const { title = "Panel", placeholder = "Search..." } = Astro.props;
         </div>
 
         <div class="header-user">
+            <button
+                type="button"
+                class="theme-toggle"
+                id="themeToggle"
+                aria-label="Switch to dark mode"
+                aria-pressed="false"
+                title="Toggle dark mode"
+            >
+                <i class="fa-solid fa-moon" aria-hidden="true"></i>
+            </button>
             <div class="notification-center" id="notificationCenter">
                 <button
                     type="button"

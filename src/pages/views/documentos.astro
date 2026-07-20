@@ -2,7 +2,7 @@
 import DashboardLayout from "../../layouts/DashboardLayout.astro";
 ---
 
-<DashboardLayout title="Documents" includeSheetJS={true} stylesheets={["/styles/pages/views/documentos.css?v=20260714-style-refactor-v1"]}>
+<DashboardLayout title="Documents" includeSheetJS={true}>
     <div class="page-container documents-page">
         <!-- Header -->
         <div class="documents-system-hero">
@@ -282,5 +282,4 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
     </div>
 
     <script is:inline src="/js/documentos.js?v=20260717-corporate-lifecycle-v1"></script>
-    <link rel="stylesheet" href="/styles/pages/views/conciliation-documents-tabs-graphite.css?v=20260715-conciliation-documents-tabs-graphite-v2" />
 </DashboardLayout>
