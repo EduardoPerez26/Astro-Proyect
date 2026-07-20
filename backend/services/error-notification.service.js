@@ -174,6 +174,19 @@ async function getAdminUserIds() {
     return rows.map(row => row.id);
 }
 
+async function getAdminEmails() {
+    const [rows] = await pool.query(`
+        SELECT email
+        FROM usuarios
+        WHERE activo = TRUE
+          AND rol IN ('superadmin', 'admin')
+          AND email IS NOT NULL
+          AND email <> ''
+    `);
+
+    return rows.map(row => row.email);
+}
+
 async function upsertErrorLog(errorData) {
     const [result] = await pool.query(`
         INSERT INTO system_error_logs (
@@ -348,5 +361,7 @@ async function notifyAdminsAboutError({ req, res, err, responseBody, metadata } 
 module.exports = {
     notifyAdminsAboutError,
     extractErrorData,
-    sanitizeObject
+    sanitizeObject,
+    getAdminUserIds,
+    getAdminEmails
 };

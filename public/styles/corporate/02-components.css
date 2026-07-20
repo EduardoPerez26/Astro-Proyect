@@ -612,12 +612,12 @@
     display: inline-flex;
     align-items: center;
     gap: 7px;
-    padding: 4px 11px;
-    border: 1px solid var(--xb-color-border);
+    padding: 4px 20px;
+    border: 1px solid rgba(255, 255, 255, 0.24);
     border-radius: 999px;
-    background: var(--xb-color-surface-subtle);
-    color: var(--xb-color-text-muted);
-    font-size: .74rem;
+    background: rgba(15, 15, 15, 0.40) ;
+     color: #ffffff ;
+    font-size: 1.2rem;
     font-weight: 800;
     text-transform: uppercase;
     letter-spacing: .04em;
@@ -627,7 +627,7 @@
     color: var(--xb-color-success);
     animation: xb-monitor-pulse 1.6s ease-in-out infinite;
 }
-.xb-monitor-live[data-tone="warning"] i { color: var(--xb-color-warning); }
+.xb-monitor-live[data-tone="warning"] i { color: var(--xb-color-danger); }
 .xb-monitor-live[data-tone="danger"] i { color: var(--xb-color-danger); }
 @keyframes xb-monitor-pulse {
     0%, 100% { opacity: 1; transform: scale(1); }

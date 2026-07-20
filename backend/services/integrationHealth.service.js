@@ -12,6 +12,8 @@ const { getIntacctConfigStatus } = require('./intacctConfig.service');
 const { testIntacctConnection } = require('./intacctClient.service');
 const { smtpStatus } = require('./corporateReport.service');
 const { ensureCorporateSchema } = require('./corporatePlatform.service');
+const { getAdminUserIds, getAdminEmails } = require('./error-notification.service');
+const { createNotificationsForUsers } = require('./notifications.service');
 
 const LATENCY_HISTORY_RETENTION_DAYS = 30;
 
@@ -276,6 +278,85 @@ async function recordLatencySnapshot(providers) {
     }
 }
 
+async function sendIntegrationOutageEmail(offlineProviders) {
+    if (!offlineProviders.length) return;
+
+    const smtp = smtpStatus();
+    if (!smtp.ready) return;
+
+    try {
+        const emails = await getAdminEmails();
+        if (!emails.length) return;
+
+        const port = Number(process.env.SMTP_PORT || 587);
+        const transporter = nodemailer.createTransport({
+            host: smtp.host,
+            port,
+            secure: String(process.env.SMTP_SECURE || '').toLowerCase() === 'true' || port === 465,
+            auth: process.env.SMTP_USER
+                ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASSWORD }
+                : undefined
+        });
+
+        const providerList = offlineProviders
+            .map(provider => `- ${provider.name}: ${provider.detail || 'no details available'}`)
+            .join('\n');
+
+        await transporter.sendMail({
+            from: smtp.from,
+            to: emails.join(', '),
+            subject: `[XBFS] Integration outage: ${offlineProviders.map(p => p.name).join(', ')}`,
+            text: `The following integrations failed their health check:\n\n${providerList}\n\nCheck System Center for details.`
+        });
+    } catch (error) {
+        console.warn('Integration outage email could not be sent:', error.code || error.message);
+    }
+}
+
+// Tracks each provider's previous status in memory so alerts fire only on
+// transitions (never spams every 5-minute heartbeat while an outage persists).
+const lastKnownStatus = new Map();
+
+async function notifyAdminsAboutIntegrationIssues(providers) {
+    const transitions = providers.filter(provider => {
+        const previous = lastKnownStatus.get(provider.provider);
+        lastKnownStatus.set(provider.provider, provider.status);
+
+        return Boolean(previous) && previous !== provider.status &&
+            (previous === STATUS.OFFLINE || provider.status === STATUS.OFFLINE);
+    });
+
+    if (!transitions.length) return;
+    try {
+        const adminIds = await getAdminUserIds();
+        if (!adminIds.length) return;
+
+        await Promise.all(transitions.map(provider => {
+            const recovered = provider.status !== STATUS.OFFLINE;
+
+            return createNotificationsForUsers(adminIds, {
+                tipo: 'integracion',
+                prioridad: recovered ? 'normal' : 'high',
+                titulo: recovered
+                    ? `${provider.name} is back online`
+                    : `${provider.name} integration is offline`,
+                mensaje: recovered
+                    ? `${provider.name} recovered. Latency: ${provider.latency_ms ?? 'n/a'}ms.`
+                    : `${provider.name} failed its health check: ${provider.detail || 'no details available'}.`,
+                urlAccion: '/views/system-center',
+                metadata: {
+                    provider: provider.provider,
+                    status: provider.status,
+                    latency_ms: provider.latency_ms,
+                    checked_at: provider.checked_at
+                }
+            });
+        }));
+    } catch (error) {
+        console.warn('Integration status notification could not be sent:', error.code || error.message);
+    }
+}
+
 // Recent raw points per provider for sparklines (oldest first).
 async function getLatencySparklines(limit = 24) {
     try {
@@ -367,6 +448,7 @@ async function checkAllIntegrations() {
         : 0;
 
     recordLatencySnapshot(providers);
+    notifyAdminsAboutIntegrationIssues(providers);
 
     return { generated_at: nowIso(), summary, providers };
 }
