@@ -4,6 +4,8 @@
 
     const FAVORITES_KEY = 'xbfsSidebarFavorites';
     const COLLAPSED_SECTIONS_KEY = 'xbfsSidebarCollapsedSections';
+    const RECENT_PAGES_KEY = 'xbfsRecentPages';
+    const MAX_RECENT_PAGES = 5;
 
     function cleanPath(pathname) {
         return String(pathname || '/').replace(/\/+$/, '') || '/';
@@ -300,10 +302,37 @@
         });
     }
 
+    function readRecentHrefs() {
+        try {
+            const parsed = JSON.parse(localStorage.getItem(RECENT_PAGES_KEY) || '[]');
+            return Array.isArray(parsed) ? parsed.filter(href => typeof href === 'string') : [];
+        } catch {
+            return [];
+        }
+    }
+
+    function trackRecentVisit(items) {
+        const currentPath = cleanPath(window.location.pathname);
+        const current = items.find(item =>
+            cleanPath(new URL(item.href, window.location.origin).pathname) === currentPath
+        );
+        if (!current) return;
+
+        const next = [current.href, ...readRecentHrefs().filter(href => href !== current.href)];
+
+        try {
+            localStorage.setItem(RECENT_PAGES_KEY, JSON.stringify(next.slice(0, MAX_RECENT_PAGES)));
+        } catch {
+            // Ignore storage failures; recents are a convenience, not critical.
+        }
+    }
+
     function initGlobalSearch() {
         const input = document.getElementById('globalNavSearch');
         const results = document.getElementById('globalSearchResults');
         if (!input || !results) return;
+
+        trackRecentVisit(getNavigationItems());
 
         const openResults = () => {
             renderGlobalSearch(input, results);
@@ -363,37 +392,108 @@
     function renderGlobalSearch(input, results) {
         const term = input.value.trim().toLowerCase();
         const favorites = readJsonSet(FAVORITES_KEY);
-        const items = getNavigationItems()
-            .filter(item => !item.hidden)
-            .filter(item => {
-                if (!term) return favorites.has(item.href) || item.link.classList.contains('active');
-                return `${item.label} ${item.section} ${item.href}`.toLowerCase().includes(term);
-            })
+        const allItems = getNavigationItems().filter(item => !item.hidden);
+
+        if (!term) {
+            renderGlobalSearchGroups(results, allItems, favorites);
+            return;
+        }
+
+        const items = allItems
+            .filter(item => `${item.label} ${item.section} ${item.href}`.toLowerCase().includes(term))
             .slice(0, 8);
 
         if (!items.length) {
             results.innerHTML = `
                 <div class="global-search-empty">
                     <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
-                    <span>No matching modules</span>
+                    <span>No matching modules for "${escapeHtml(input.value.trim())}"</span>
                 </div>
             `;
             results.hidden = false;
             return;
         }
 
-        results.innerHTML = items.map(item => `
+        results.innerHTML = items.map(item => renderGlobalSearchLink(item, favorites, term)).join('');
+        results.hidden = false;
+    }
+
+    function renderGlobalSearchGroups(results, allItems, favorites) {
+        const currentPath = cleanPath(window.location.pathname);
+        const byHref = new Map(allItems.map(item => [item.href, item]));
+
+        const recentItems = readRecentHrefs()
+            .map(href => byHref.get(href))
+            .filter(Boolean)
+            .filter(item => cleanPath(new URL(item.href, window.location.origin).pathname) !== currentPath);
+
+        const favoriteItems = allItems.filter(item =>
+            favorites.has(item.href) && !recentItems.includes(item)
+        );
+
+        const usedHrefs = new Set([...recentItems, ...favoriteItems].map(item => item.href));
+        const remainingItems = allItems.filter(item => !usedHrefs.has(item.href));
+
+        const groups = [];
+        if (recentItems.length) groups.push({ label: 'Recent', items: recentItems });
+        if (favoriteItems.length) groups.push({ label: 'Favorites', items: favoriteItems });
+
+        if (!groups.length) {
+            // No recents or favorites yet: browse every module grouped by its sidebar section.
+            const bySection = new Map();
+            remainingItems.forEach(item => {
+                const key = item.section || 'Navigation';
+                if (!bySection.has(key)) bySection.set(key, []);
+                bySection.get(key).push(item);
+            });
+            bySection.forEach((sectionItems, label) => groups.push({ label, items: sectionItems }));
+        } else if (remainingItems.length) {
+            groups.push({ label: 'More', items: remainingItems.slice(0, 6) });
+        }
+
+        if (!groups.length) {
+            results.innerHTML = `
+                <div class="global-search-empty">
+                    <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+                    <span>Start typing to jump to any module</span>
+                </div>
+            `;
+            results.hidden = false;
+            return;
+        }
+
+        results.innerHTML = groups.map(group => `
+            <div class="global-search-section-label">${escapeHtml(group.label)}</div>
+            ${group.items.map(item => renderGlobalSearchLink(item, favorites, '')).join('')}
+        `).join('');
+
+        results.hidden = false;
+    }
+
+    function renderGlobalSearchLink(item, favorites, term) {
+        return `
             <a href="${escapeHtml(item.href)}" role="option">
                 <span class="global-search-icon"><i class="${escapeHtml(item.icon)}"></i></span>
                 <span class="global-search-copy">
-                    <strong>${escapeHtml(item.label)}</strong>
+                    <strong>${highlightMatch(item.label, term)}</strong>
                     <small>${escapeHtml(item.section || 'Navigation')}</small>
                 </span>
                 ${favorites.has(item.href) ? '<i class="fa-solid fa-star global-search-favorite" aria-hidden="true"></i>' : ''}
             </a>
-        `).join('');
+        `;
+    }
 
-        results.hidden = false;
+    function highlightMatch(label, term) {
+        const safeLabel = escapeHtml(label);
+        if (!term) return safeLabel;
+
+        const index = label.toLowerCase().indexOf(term.toLowerCase());
+        if (index === -1) return safeLabel;
+
+        const before = escapeHtml(label.slice(0, index));
+        const match = escapeHtml(label.slice(index, index + term.length));
+        const after = escapeHtml(label.slice(index + term.length));
+        return `${before}<mark class="global-search-highlight">${match}</mark>${after}`;
     }
 
     function closeGlobalSearch(input, results) {

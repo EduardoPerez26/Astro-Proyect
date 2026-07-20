@@ -345,6 +345,7 @@
     }
 
     function startPolling() {
+        console.log("Polling iniciado");
         if (pollInterval) return;
 
         pollInterval = setInterval(() => {

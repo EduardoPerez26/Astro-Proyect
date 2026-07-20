@@ -89,7 +89,8 @@ const corsMiddleware = cors({
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-ID']
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-ID'],
+    maxAge: 600
 });
 
 app.use(corsMiddleware);
@@ -105,6 +106,10 @@ app.use('/api/auth', createRateLimiter({
     windowMs: Number(process.env.AUTH_RATE_LIMIT_WINDOW_MS || 15 * 60 * 1000),
     max: Number(process.env.AUTH_RATE_LIMIT_MAX || 40),
     keyPrefix: 'auth',
+    // /entra/config is a public, read-only "is SSO enabled?" check the login
+    // page calls on every load — it accepts no credentials, so it doesn't
+    // need brute-force protection and shouldn't share the login/MFA bucket.
+    skip: req => req.path === '/entra/config',
     message: 'Too many authentication requests. Wait a few minutes and try again.'
 }));
 

@@ -11,6 +11,10 @@
     let tipPayload = null;
     let lastErrorMessage = '';
     let lastErrorShownAt = 0;
+    let placeholderTimer = null;
+    let placeholderIndex = 0;
+    const CHAR_COUNT_WARN_AT = 2700;
+    const CHAR_COUNT_MAX = 3000;
 
     const PAGE_TIPS = {
         '/views/tiendas': {
@@ -81,6 +85,20 @@
         { label: 'Team chat', path: '/views/chat', keywords: ['team chat', 'chat interno', 'internal messaging'] }
     ];
 
+    const SUGGESTION_CHIPS = [
+        'How do I approve a document?',
+        'Show me pending reconciliations',
+        'Where do I manage users?',
+        'What changed recently?'
+    ];
+
+    const PLACEHOLDER_EXAMPLES = [
+        'Ask something...',
+        'e.g. How do I upload a document?',
+        'e.g. Show pending approvals',
+        'e.g. Where is the audit log?'
+    ];
+
     const QUICK_COMMANDS = {
         '/approvals': { path: '/views/approval-center', label: 'Approval Center' },
         '/documents': { path: '/views/documentos', label: 'Documents' },
@@ -106,17 +124,17 @@
     };
 
     const MASCOT_SVG = `
-        <svg class="floating-chatbot-mascot-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <svg class="floating-chatbot-mascot-svg" viewBox="2 -1.5 26 26" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
             <g class="floating-chatbot-mascot-antenna">
-                <line x1="12" y1="2" x2="12" y2="4.2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
-                <circle cx="12" cy="1.6" r="1.1" fill="currentColor"/>
+                <line x1="14" y1="1.5" x2="14" y2="3.4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+                <circle cx="14" cy="1.1" r="1" fill="currentColor"/>
             </g>
-            <circle class="floating-chatbot-mascot-face" cx="12" cy="13" r="9.5" fill="currentColor"/>
+            <path class="floating-chatbot-mascot-face" d="M8 5 H12 C12.5 3.1 15.5 3.1 16 5 H20 C21.7 5 23 6.3 23 8 V11 C24.9 11.5 24.9 15 23 15.5 V20 C23 21.7 21.7 23 20 23 H8 C6.3 23 5 21.7 5 20 V8 C5 6.3 6.3 5 8 5 Z" fill="currentColor"/>
             <g class="floating-chatbot-mascot-eyes">
-                <circle cx="8.6" cy="11.8" r="1.4" fill="var(--franchie-ink, #15191d)"/>
-                <circle cx="15.4" cy="11.8" r="1.4" fill="var(--franchie-ink, #15191d)"/>
+                <circle cx="11.5" cy="13" r="1.4" fill="var(--franchie-ink, #15191d)"/>
+                <circle cx="17.5" cy="13" r="1.4" fill="var(--franchie-ink, #15191d)"/>
             </g>
-            <path class="floating-chatbot-mascot-mouth" d="M8 15.4c1.2 1.6 2.6 2.4 4 2.4s2.8-.8 4-2.4" stroke="var(--franchie-ink, #15191d)" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+            <path class="floating-chatbot-mascot-mouth" d="M11.3 16.6c.9.9 1.8 1.3 2.7 1.3s1.8-.4 2.7-1.3" stroke="var(--franchie-ink, #15191d)" stroke-width="1.5" stroke-linecap="round" fill="none"/>
         </svg>
     `;
 
@@ -169,7 +187,7 @@
                         <span class="floating-chatbot-mascot floating-chatbot-mascot--header">${MASCOT_SVG}</span>
                         <div>
                             <strong>Franchie</strong>
-                            <span>Your XBFS assistant</span>
+                            <span><span class="floating-chatbot-status-dot" aria-hidden="true"></span>Online</span>
                         </div>
                     </div>
 
@@ -187,24 +205,27 @@
                 <div class="floating-chatbot-messages" id="floatingChatbotMessages"></div>
 
                 <form class="floating-chatbot-form" id="floatingChatbotForm">
-                    <textarea
-                        id="floatingChatbotInput"
-                        class="floating-chatbot-input"
-                        rows="1"
-                        maxlength="3000"
-                        placeholder="Ask something..."
-                        aria-label="Message"
-                    ></textarea>
+                    <div class="floating-chatbot-input-pill">
+                        <textarea
+                            id="floatingChatbotInput"
+                            class="floating-chatbot-input"
+                            rows="1"
+                            maxlength="3000"
+                            placeholder="Ask something..."
+                            aria-label="Message"
+                        ></textarea>
 
-                    <button
-                        type="submit"
-                        class="floating-chatbot-send"
-                        id="floatingChatbotSend"
-                        aria-label="Send message"
-                        title="Send"
-                    >
-                        <i class="fa-solid fa-paper-plane" aria-hidden="true"></i>
-                    </button>
+                        <button
+                            type="submit"
+                            class="floating-chatbot-send"
+                            id="floatingChatbotSend"
+                            aria-label="Send message"
+                            title="Send"
+                        >
+                            <i class="fa-solid fa-paper-plane" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                    <span class="floating-chatbot-char-count" id="floatingChatbotCharCount" hidden></span>
                 </form>
             </section>
         `;
@@ -224,6 +245,18 @@
             .getElementById('floatingChatbotInput')
             ?.addEventListener('keydown', handleInputKeydown);
         document
+            .getElementById('floatingChatbotInput')
+            ?.addEventListener('input', handleInputChange);
+        document
+            .getElementById('floatingChatbotInput')
+            ?.addEventListener('focus', stopPlaceholderRotation);
+        document
+            .getElementById('floatingChatbotInput')
+            ?.addEventListener('blur', startPlaceholderRotation);
+        document
+            .getElementById('floatingChatbotMessages')
+            ?.addEventListener('click', handleSuggestionClick);
+        document
             .getElementById('floatingChatbotTip')
             ?.addEventListener('click', handleTipClick);
         document
@@ -235,11 +268,55 @@
         scheduleAutoClear();
         setupIdleWatcher();
         setupErrorWatcher();
+        startPlaceholderRotation();
         window.addEventListener('beforeunload', () => {
             if (autoClearTimer) window.clearTimeout(autoClearTimer);
             if (idleTimer) window.clearTimeout(idleTimer);
             if (tipHideTimer) window.clearTimeout(tipHideTimer);
+            if (placeholderTimer) window.clearInterval(placeholderTimer);
         });
+    }
+
+    function startPlaceholderRotation() {
+        const input = document.getElementById('floatingChatbotInput');
+        if (!input || placeholderTimer) return;
+
+        placeholderTimer = window.setInterval(() => {
+            if (document.activeElement === input) return;
+            placeholderIndex = (placeholderIndex + 1) % PLACEHOLDER_EXAMPLES.length;
+            input.setAttribute('placeholder', PLACEHOLDER_EXAMPLES[placeholderIndex]);
+        }, 3200);
+    }
+
+    function stopPlaceholderRotation() {
+        const input = document.getElementById('floatingChatbotInput');
+        if (placeholderTimer) {
+            window.clearInterval(placeholderTimer);
+            placeholderTimer = null;
+        }
+        placeholderIndex = 0;
+        input?.setAttribute('placeholder', PLACEHOLDER_EXAMPLES[0]);
+    }
+
+    function handleInputChange(event) {
+        const counter = document.getElementById('floatingChatbotCharCount');
+        if (!counter) return;
+
+        const length = event.target.value.length;
+        if (length >= CHAR_COUNT_WARN_AT) {
+            counter.textContent = `${length}/${CHAR_COUNT_MAX}`;
+            counter.hidden = false;
+        } else {
+            counter.hidden = true;
+        }
+    }
+
+    function handleSuggestionClick(event) {
+        const chip = event.target.closest('.floating-chatbot-suggestion-chip');
+        if (!chip) return;
+
+        const text = chip.dataset.suggestion || chip.textContent.trim();
+        sendUserMessage(text);
     }
 
     function setupIdleWatcher() {
@@ -748,6 +825,11 @@
                     <span class="floating-chatbot-mascot floating-chatbot-mascot--empty">${MASCOT_SVG}</span>
                     <strong>Hi, I'm Franchie!</strong>
                     <span>Ask me about reconciliations, documents, permissions, or any workflow in the app.</span>
+                    <div class="floating-chatbot-suggestions">
+                        ${SUGGESTION_CHIPS.map(text => `
+                            <button type="button" class="floating-chatbot-suggestion-chip" data-suggestion="${escapeHtml(text)}">${escapeHtml(text)}</button>
+                        `).join('')}
+                    </div>
                 </div>
             `;
             return;
@@ -757,10 +839,26 @@
             <div class="floating-chatbot-message is-${message.role}">
                 <p>${escapeHtml(message.content)}</p>
                 ${renderMessageLinks(message.links)}
+                ${renderMessageTime(message.createdAt)}
             </div>
-        `).join('');
+        `).join('') + (state.isSending ? `
+            <div class="floating-chatbot-message is-assistant">
+                <div class="floating-chatbot-typing" aria-label="Franchie is typing">
+                    <span></span><span></span><span></span>
+                </div>
+            </div>
+        ` : '');
 
         scrollMessagesToBottom();
+    }
+
+    function renderMessageTime(createdAt) {
+        if (!createdAt) return '';
+        const date = new Date(createdAt);
+        if (Number.isNaN(date.getTime())) return '';
+
+        const time = date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+        return `<span class="floating-chatbot-message-time">${escapeHtml(time)}</span>`;
     }
 
     function renderMessageLinks(links) {
@@ -800,6 +898,8 @@
         if (input) {
             input.disabled = isSending;
         }
+
+        renderMessages();
     }
 
     function loadMessages() {
