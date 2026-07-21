@@ -4,13 +4,13 @@ const router = express.Router();
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
-const { pool } = require('../config/database');
-const { verificarToken, checkPermission } = require('../middleware/auth.middleware');
+const { pool } = require('../../../config/database');
+const { verificarToken, checkPermission } = require('../../../middleware/auth.middleware');
 const {
     ensureCorporateSchema,
     createFileHash,
     recordOperationalAudit
-} = require('../services/corporatePlatform.service');
+} = require('../../../services/departments/corporate/corporatePlatform.service');
 
 const storage = multer.memoryStorage();
 const ALLOWED_EXCEL_EXTENSIONS = new Set(['.xlsx', '.xls', '.xlsm', '.csv']);

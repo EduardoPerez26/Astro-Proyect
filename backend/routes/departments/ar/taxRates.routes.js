@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const { verificarToken, checkPermission } = require('../middleware/auth.middleware');
+const { verificarToken, checkPermission } = require('../../../middleware/auth.middleware');
 
 const {
     fetchTaxRateByCoordinates,
-} = require('../services/cdtfaTaxrate.service');
+} = require('../../../services/departments/ar/cdtfaTaxrate.service');
 
 
 

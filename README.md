@@ -30,8 +30,6 @@ Backend: `http://localhost:3001/api`
 
 ## Corporate modules
 
-- Close Center
-- Exception Center
 - Document lifecycle and immutable versions
 - Approval matrix
 - Operational audit center

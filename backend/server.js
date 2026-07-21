@@ -20,21 +20,21 @@ validateEnvironment();
 
 // Rutas
 const authRoutes = require('./routes/auth.routes');
-const archivosRoutes = require('./routes/archivos.routes');
-const usuariosRoutes = require('./routes/usuarios.routes');
+const archivosRoutes = require('./routes/departments/ar/archivos.routes');
+const usuariosRoutes = require('./routes/admin/usuarios.routes');
 const restaurantesRoutes = require('./routes/restaurantes.routes');
-const validacionesRoutes = require('./routes/validaciones.routes');
+const validacionesRoutes = require('./routes/departments/ar/validaciones.routes');
 const conciliacionesRoutes = require('./routes/conciliaciones.routes');
 const dashboardRoutes = require('./routes/dashboard.routes');
-const departamentosRoutes = require('./routes/departamentos.routes');
-const comparacionesRoutes = require('./routes/comparaciones.routes');
-const taxRatesRoutes = require('./routes/taxRates.routes');
-const propertyManagementRoutes = require('./routes/propertyManagement.routes');
+const departamentosRoutes = require('./routes/admin/departamentos.routes');
+const comparacionesRoutes = require('./routes/departments/ar/comparaciones.routes');
+const taxRatesRoutes = require('./routes/departments/ar/taxRates.routes');
+const propertyManagementRoutes = require('./routes/departments/property-management/propertyManagement.routes');
 const chatRoutes = require('./routes/chat.routes');
 const chatbotRoutes = require('./routes/chatbot.routes');
 const notificacionesRoutes = require('./routes/notificaciones.routes');
-const prepaidRoutes = require('./routes/prepaid.routes');
-const corporateRoutes = require('./routes/corporate.routes');
+const prepaidRoutes = require('./routes/departments/property-management/prepaid.routes');
+const corporateRoutes = require('./routes/departments/corporate/corporate.routes');
 const { checkAllIntegrations } = require('./services/integrationHealth.service');
 const { attachErrorNotificationCapture } = require('./middleware/error-notification.middleware');
 const {

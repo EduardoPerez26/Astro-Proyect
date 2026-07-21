@@ -5,13 +5,11 @@
 // failing provider never blocks the monitor response.
 // ============================================
 
-const nodemailer = require('nodemailer');
-
 const { pool } = require('../config/database');
-const { getIntacctConfigStatus } = require('./intacctConfig.service');
-const { testIntacctConnection } = require('./intacctClient.service');
-const { smtpStatus } = require('./corporateReport.service');
-const { ensureCorporateSchema } = require('./corporatePlatform.service');
+const { getIntacctConfigStatus } = require('./intacct/intacctConfig.service');
+const { testIntacctConnection } = require('./intacct/intacctClient.service');
+const { emailStatus, sendEmail, verifyEmailConnectivity } = require('./email.service');
+const { ensureCorporateSchema } = require('./departments/corporate/corporatePlatform.service');
 const { getAdminUserIds, getAdminEmails } = require('./error-notification.service');
 const { createNotificationsForUsers } = require('./notifications.service');
 
@@ -92,28 +90,18 @@ function checkSageIntacct() {
 }
 
 function checkSmtp() {
-    const smtp = smtpStatus();
-    if (!smtp.ready) {
+    const email = emailStatus();
+    if (!email.ready) {
         return Promise.resolve({
             status: STATUS.WARNING,
-            detail: 'SMTP host or sender is not configured. Email delivery is disabled.',
+            detail: 'SendGrid API key or sender is not configured. Email delivery is disabled.',
             latency_ms: null,
             configured: false
         });
     }
     return runProbe(async () => {
-        const port = Number(process.env.SMTP_PORT || 587);
-        const transporter = nodemailer.createTransport({
-            host: process.env.SMTP_HOST,
-            port,
-            secure: String(process.env.SMTP_SECURE || '').toLowerCase() === 'true' || port === 465,
-            auth: process.env.SMTP_USER
-                ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASSWORD }
-                : undefined,
-            connectionTimeout: DEFAULT_TIMEOUT_MS
-        });
-        await transporter.verify();
-        return { status: STATUS.ONLINE, detail: `SMTP server ${smtp.host} accepted the connection.`, configured: true };
+        await verifyEmailConnectivity(DEFAULT_TIMEOUT_MS);
+        return { status: STATUS.ONLINE, detail: 'SendGrid API key is valid and the service is reachable.', configured: true };
     });
 }
 
@@ -281,30 +269,19 @@ async function recordLatencySnapshot(providers) {
 async function sendIntegrationOutageEmail(offlineProviders) {
     if (!offlineProviders.length) return;
 
-    const smtp = smtpStatus();
-    if (!smtp.ready) return;
+    const email = emailStatus();
+    if (!email.ready) return;
 
     try {
         const emails = await getAdminEmails();
         if (!emails.length) return;
 
-        const port = Number(process.env.SMTP_PORT || 587);
-        const transporter = nodemailer.createTransport({
-            host: smtp.host,
-            port,
-            secure: String(process.env.SMTP_SECURE || '').toLowerCase() === 'true' || port === 465,
-            auth: process.env.SMTP_USER
-                ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASSWORD }
-                : undefined
-        });
-
         const providerList = offlineProviders
             .map(provider => `- ${provider.name}: ${provider.detail || 'no details available'}`)
             .join('\n');
 
-        await transporter.sendMail({
-            from: smtp.from,
-            to: emails.join(', '),
+        await sendEmail({
+            to: emails,
             subject: `[XBFS] Integration outage: ${offlineProviders.map(p => p.name).join(', ')}`,
             text: `The following integrations failed their health check:\n\n${providerList}\n\nCheck System Center for details.`
         });

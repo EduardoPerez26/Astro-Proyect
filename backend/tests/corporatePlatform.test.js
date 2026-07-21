@@ -5,7 +5,7 @@ const crypto = require('crypto');
 const {
     createFileHash,
     createReference
-} = require('../services/corporatePlatform.service');
+} = require('../services/departments/corporate/corporatePlatform.service');
 
 test('createFileHash hashes buffers without converting their bytes to text', () => {
     const payload = Buffer.from([0, 1, 2, 255]);

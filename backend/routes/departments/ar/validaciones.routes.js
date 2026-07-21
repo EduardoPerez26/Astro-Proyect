@@ -2,8 +2,8 @@
 
 const express = require('express');
 const router = express.Router();
-const { pool } = require('../config/database');
-const { verificarToken, checkPermission } = require('../middleware/auth.middleware');
+const { pool } = require('../../../config/database');
+const { verificarToken, checkPermission } = require('../../../middleware/auth.middleware');
 
 
 router.get('/', verificarToken, checkPermission('view_validaciones'), async (req, res) => {

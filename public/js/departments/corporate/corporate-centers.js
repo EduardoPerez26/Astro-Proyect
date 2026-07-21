@@ -190,7 +190,7 @@
             body.innerHTML = '<tr><td colspan="7"><div class="xb-empty-state"><div><i class="fa-solid fa-magnifying-glass"></i><strong>No audit events found</strong><p>Try another search or perform a controlled workflow action.</p></div></div></td></tr>';
             return;
         }
-        body.innerHTML = state.audit.map(event => `
+        body.innerHTML = state.audit.map((event, index) => `
             <tr>
                 <td class="xb-nowrap">${formatDate(event.created_at, true)}</td>
                 <td><strong>${escapeHtml(event.user_name || event.username || 'System')}</strong><br><small class="xb-text-muted">${escapeHtml(event.ip_address || '')}</small></td>
@@ -198,9 +198,69 @@
                 <td><strong>${escapeHtml(event.resource_type)}</strong><br><small class="xb-mono xb-text-muted">${escapeHtml(event.resource_id || '-')}</small></td>
                 <td>${escapeHtml(event.department_name || '-')}</td>
                 <td class="xb-mono">${escapeHtml(event.request_id || '-')}</td>
-                <td title="${escapeHtml(JSON.stringify(event.after || {}))}">${escapeHtml(summarizeChange(event))}</td>
+                <td>
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <span title="${escapeHtml(JSON.stringify(event.after || {}))}">${escapeHtml(summarizeChange(event))}</span>
+                        <button class="xb-button" type="button" data-audit-diff="${index}" title="View before/after">
+                            <i class="fa-solid fa-code-compare"></i>
+                        </button>
+                    </div>
+                </td>
             </tr>
         `).join('');
+    }
+
+    function buildAuditDiffRows(before = {}, after = {}) {
+        const keys = Array.from(new Set([...Object.keys(before || {}), ...Object.keys(after || {})]));
+        return keys
+            .map(key => ({
+                key,
+                before: before ? before[key] : undefined,
+                after: after ? after[key] : undefined,
+                changed: JSON.stringify(before ? before[key] : undefined) !== JSON.stringify(after ? after[key] : undefined)
+            }))
+            .sort((a, b) => Number(b.changed) - Number(a.changed));
+    }
+
+    function formatAuditDiffValue(value) {
+        if (value === undefined) return '<span class="xb-text-muted">-</span>';
+        if (value === null) return '<span class="xb-text-muted">null</span>';
+        if (typeof value === 'object') return escapeHtml(JSON.stringify(value));
+        return escapeHtml(String(value));
+    }
+
+    function openAuditDiff(index) {
+        const event = state.audit[index];
+        const modal = document.getElementById('auditDiffModal');
+        const title = document.getElementById('auditDiffTitle');
+        const subtitle = document.getElementById('auditDiffSubtitle');
+        const body = document.getElementById('auditDiffBody');
+        if (!event || !modal || !body) return;
+
+        if (title) title.textContent = `${event.action_name || 'Event'} · ${event.resource_type || ''}`;
+        if (subtitle) {
+            subtitle.textContent = `${formatDate(event.created_at, true)} · ${event.user_name || event.username || 'System'}`;
+        }
+
+        const rows = buildAuditDiffRows(event.before, event.after);
+        body.innerHTML = rows.length
+            ? `<div class="xb-table-wrap"><table class="comparison-detail-table">
+                <thead><tr><th>Field</th><th>Previous</th><th>New</th></tr></thead>
+                <tbody>${rows.map(row => `
+                    <tr>
+                        <td>${escapeHtml(row.key)}</td>
+                        <td>${formatAuditDiffValue(row.before)}</td>
+                        <td>${formatAuditDiffValue(row.after)}</td>
+                    </tr>
+                `).join('')}</tbody>
+            </table></div>`
+            : '<div class="xb-empty-state"><div><i class="fa-solid fa-circle-check"></i><strong>No field-level changes recorded for this event</strong></div></div>';
+
+        modal.classList.add('active');
+    }
+
+    function closeAuditDiff() {
+        document.getElementById('auditDiffModal')?.classList.remove('active');
     }
 
     function initAudit() {
@@ -211,6 +271,18 @@
             timer = setTimeout(loadAudit, 300);
         }));
         document.getElementById('auditExport')?.addEventListener('click', () => downloadCsv('operational-audit.csv', state.audit));
+        document.getElementById('auditBody')?.addEventListener('click', event => {
+            const button = event.target.closest('[data-audit-diff]');
+            if (!button) return;
+            openAuditDiff(Number(button.dataset.auditDiff));
+        });
+        document.getElementById('auditDiffClose')?.addEventListener('click', closeAuditDiff);
+        document.getElementById('auditDiffModal')?.addEventListener('click', event => {
+            if (event.target.id === 'auditDiffModal') closeAuditDiff();
+        });
+        document.addEventListener('keydown', event => {
+            if (event.key === 'Escape') closeAuditDiff();
+        });
         loadAudit();
     }
 

@@ -1,0 +1,158 @@
+/* ===== Contextual Help ===== */
+.contextual-help-toggle {
+    position: fixed;
+    left: 22px;
+    bottom: 22px;
+    z-index: 1150;
+    display: grid;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: 1px solid var(--xb-color-border);
+    background: var(--xb-color-surface);
+    color: var(--accent);
+    font-size: 18px;
+    box-shadow: var(--shadow-md);
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.contextual-help-toggle:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+
+.contextual-help-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 1160;
+    background: rgba(15, 15, 15, 0.35);
+    backdrop-filter: blur(2px);
+    opacity: 0;
+    transition: opacity .2s ease;
+}
+
+.contextual-help-backdrop.is-open {
+    opacity: 1;
+}
+
+.contextual-help-panel {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1170;
+    width: min(380px, 100vw);
+    display: flex;
+    flex-direction: column;
+    background: var(--xb-color-surface);
+    border-left: 1px solid var(--xb-color-border);
+    box-shadow: var(--shadow-lg);
+    transform: translateX(100%);
+    transition: transform .25s ease;
+}
+
+.contextual-help-panel.is-open {
+    transform: translateX(0);
+}
+
+.contextual-help-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 20px 20px 16px;
+    border-bottom: 1px solid var(--xb-color-border);
+}
+
+.contextual-help-eyebrow {
+    display: block;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--xb-color-text-muted);
+    margin-bottom: 4px;
+}
+
+.contextual-help-header h3 {
+    margin: 0;
+    font-size: 18px;
+    color: var(--xb-color-text);
+}
+
+.contextual-help-close {
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--xb-color-text-muted);
+    cursor: pointer;
+}
+
+.contextual-help-close:hover {
+    background: var(--xb-color-surface-subtle);
+    color: var(--xb-color-text);
+}
+
+.contextual-help-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px 20px 28px;
+}
+
+.contextual-help-summary {
+    margin: 0 0 18px;
+    color: var(--xb-color-text-muted);
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.contextual-help-section {
+    margin-bottom: 20px;
+}
+
+.contextual-help-section h4 {
+    margin: 0 0 8px;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--xb-color-text);
+}
+
+.contextual-help-section ul {
+    margin: 0;
+    padding-left: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.contextual-help-section li {
+    font-size: 13.5px;
+    line-height: 1.5;
+    color: var(--xb-color-text-muted);
+}
+
+@media (max-width: 640px) {
+    .contextual-help-toggle {
+        left: 14px;
+        bottom: 14px;
+        width: 44px;
+        height: 44px;
+    }
+
+    .contextual-help-panel {
+        width: 100vw;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .contextual-help-panel,
+    .contextual-help-backdrop {
+        transition: none;
+    }
+}

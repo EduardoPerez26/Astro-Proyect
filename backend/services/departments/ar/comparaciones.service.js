@@ -1,5 +1,5 @@
 const crypto = require('crypto');
-const { pool } = require('../config/database');
+const { pool } = require('../../../config/database');
 
 function obtenerHuella(datos) {
     return crypto

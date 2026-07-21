@@ -3,22 +3,22 @@ const multer = require('multer');
 const crypto = require('crypto');
 const fs = require('fs');
 const XLSX = require('xlsx');
-const { pool } = require('../config/database');
+const { pool } = require('../../../config/database');
 const {
     getScheduleExportPath,
     savePropertyManagementScheduleWorkbook,
     deleteSavedPropertyManagementScheduleWorkbook
-} = require('../services/propertyManagementScheduleWorkbook');
+} = require('../../../services/departments/property-management/propertyManagementScheduleWorkbook');
 const {
     verificarToken,
     checkPermission,
     requireDepartment,
     esAdmin
-} = require('../middleware/auth.middleware');
+} = require('../../../middleware/auth.middleware');
 const {
     getIntacctConfigStatus
-} = require('../services/intacctConfig.service');
-const { createNotificationsForUsers } = require('../services/notifications.service');
+} = require('../../../services/intacct/intacctConfig.service');
+const { createNotificationsForUsers } = require('../../../services/notifications.service');
 
 const router = express.Router();
 const upload = multer({

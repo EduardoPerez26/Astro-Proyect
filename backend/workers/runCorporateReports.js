@@ -2,8 +2,8 @@ const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
 
 const { pool } = require('../config/database');
-const { ensureCorporateSchema } = require('../services/corporatePlatform.service');
-const { runScheduledReport } = require('../services/corporateReport.service');
+const { ensureCorporateSchema } = require('../services/departments/corporate/corporatePlatform.service');
+const { runScheduledReport } = require('../services/departments/corporate/corporateReport.service');
 
 function nextRun(frequency, hour) {
     const next = new Date();

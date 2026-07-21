@@ -40,7 +40,7 @@ rsync -a --exclude='node_modules/' --exclude='.env' --exclude='uploads/***' --ex
 mkdir -p "$DEPLOY_STAGE/backend/uploads/perfiles" "$DEPLOY_STAGE/backend/uploads/schedules" "$DEPLOY_STAGE/backend/uploads/prepaid-schedules" "$DEPLOY_STAGE/backend/generated/reports"
 touch "$DEPLOY_STAGE/backend/uploads/.gitkeep" "$DEPLOY_STAGE/backend/uploads/perfiles/.gitkeep" "$DEPLOY_STAGE/backend/uploads/schedules/.gitkeep" "$DEPLOY_STAGE/backend/uploads/prepaid-schedules/.gitkeep" "$DEPLOY_STAGE/backend/generated/reports/.gitkeep"
 cp "$ROOT/docs/DEPLOYMENT.md" "$DEPLOY_STAGE/README-DEPLOY.md"
-cp "$ROOT/CHANGELOG-CORPORATE.md" "$DEPLOY_STAGE/CHANGELOG-CORPORATE.md"
+cp "$ROOT/docs/CHANGELOG-CORPORATE.md" "$DEPLOY_STAGE/CHANGELOG-CORPORATE.md"
 
 rm -f "$SOURCE_ZIP" "$DEPLOY_ZIP"
 (cd "$SOURCE_STAGE" && zip -qr "$SOURCE_ZIP" .)

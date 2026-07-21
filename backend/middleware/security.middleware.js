@@ -1,6 +1,7 @@
 const crypto = require('crypto');
 
 const BLOCKED_KEYS = new Set(['__proto__', 'prototype', 'constructor']);
+const rateLimiterRegistry = [];
 
 function requestContext(req, res, next) {
     const incoming = String(req.headers['x-request-id'] || '').trim();
@@ -89,9 +90,14 @@ function createRateLimiter({
 } = {}) {
     const buckets = new Map();
     let lastCleanup = Date.now();
+    const stats = { totalRequests: 0, totalBlocked: 0 };
+
+    rateLimiterRegistry.push({ keyPrefix, max, windowMs, buckets, stats });
 
     return (req, res, next) => {
         if (skip(req)) return next();
+
+        stats.totalRequests += 1;
 
         const now = Date.now();
         if (now - lastCleanup > windowMs) {
@@ -119,6 +125,7 @@ function createRateLimiter({
         res.setHeader('RateLimit-Reset', String(Math.ceil(bucket.resetAt / 1000)));
 
         if (bucket.count > max) {
+            stats.totalBlocked += 1;
             res.setHeader('Retry-After', String(Math.max(Math.ceil((bucket.resetAt - now) / 1000), 1)));
             return res.status(429).json({
                 error: true,
@@ -130,6 +137,19 @@ function createRateLimiter({
         next();
     };
 }
+
+function getRateLimiterStats() {
+    const now = Date.now();
+    return rateLimiterRegistry.map(entry => ({
+        key: entry.keyPrefix,
+        limit: entry.max,
+        window_ms: entry.windowMs,
+        active_clients: Array.from(entry.buckets.values()).filter(bucket => bucket.resetAt > now).length,
+        total_requests: entry.stats.totalRequests,
+        total_blocked: entry.stats.totalBlocked
+    }));
+}
+
 
 
 function csrfOriginGuard(req, res, next) {
@@ -194,6 +214,8 @@ module.exports = {
     securityHeaders,
     sanitizeRequest,
     createRateLimiter,
+    getRateLimiterStats,
     csrfOriginGuard,
     uploadStaticHeaders
 };
+

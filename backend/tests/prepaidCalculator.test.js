@@ -1,7 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 
-const { calculateBillSchedule, round2 } = require('../services/prepaidCalculator');
+const { calculateBillSchedule, round2 } = require('../services/departments/property-management/prepaid/prepaidCalculator');
 
 test('round2 prevents floating point residue in accounting values', () => {
     assert.equal(round2(10.005), 10.01);

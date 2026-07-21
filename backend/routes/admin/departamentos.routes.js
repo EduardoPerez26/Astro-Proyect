@@ -1,11 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const { pool } = require('../config/database');
+const { pool } = require('../../config/database');
 const {
     verificarToken,
     esAdmin,
     checkPermission
-} = require('../middleware/auth.middleware');
+} = require('../../middleware/auth.middleware');
 
 function normalizarCodigo(valor) {
     return String(valor || '')

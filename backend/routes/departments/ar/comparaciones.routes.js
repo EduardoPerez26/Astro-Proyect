@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const { pool } = require('../config/database');
-const { verificarToken, checkPermission } = require('../middleware/auth.middleware');
+const { pool } = require('../../../config/database');
+const { verificarToken, checkPermission } = require('../../../middleware/auth.middleware');
 
 function errorHistorial(error, res) {
     if (['ER_NO_SUCH_TABLE', 'ER_BAD_FIELD_ERROR'].includes(error.code)) {

@@ -1,23 +1,21 @@
 const express = require('express');
 const multer = require('multer');
 const crypto = require('crypto');
-const fs = require('fs');
-const { pool } = require('../config/database');
+const { pool } = require('../../../config/database');
 const {
     verificarToken,
     checkPermission,
     requireDepartment
-} = require('../middleware/auth.middleware');
+} = require('../../../middleware/auth.middleware');
 const {
     parsePrepaidBillSource,
     parseMonthlyGlActuals,
     normalizeText
-} = require('../services/prepaidBillSourceParser');
+} = require('../../../services/departments/property-management/prepaid/prepaidBillSourceParser');
 const {
     savePrepaidScheduleWorkbook,
-    deleteSavedScheduleWorkbook,
-    getScheduleExportPath
-} = require('../services/prepaidScheduleWorkbook');
+    deleteSavedScheduleWorkbook
+} = require('../../../services/departments/property-management/prepaid/prepaidScheduleWorkbook');
 const {
     calculateBillAmortization,
     defaultAmortizationPeriod,
@@ -26,10 +24,10 @@ const {
     toSqlDate,
     periodCode,
     roundMoney
-} = require('../services/prepaidAmortizationCalculator');
+} = require('../../../services/departments/property-management/prepaid/prepaidAmortizationCalculator');
 const {
     calculateBillAmortizationWithCloseout
-} = require('../services/prepaidCloseoutCalculator');
+} = require('../../../services/departments/property-management/prepaid/prepaidCloseoutCalculator');
 
 const router = express.Router();
 const upload = multer({
@@ -1991,26 +1989,15 @@ router.get('/:scheduleId/export', ...access('exportar'), async (req, res) => {
             });
         }
 
-        const exportPath = getScheduleExportPath(schedule);
-        let generatedWorkbook = null;
-        if (!fs.existsSync(exportPath)) {
-            generatedWorkbook = await saveWorkbookFromPayload(schedule, scheduleDataFromRecord(schedule));
-        }
-
         const downloadName = `${String(schedule.title || 'prepaid-schedule')
             .replace(/[^a-z0-9]+/gi, '-')
             .replace(/^-+|-+$/g, '')
             .slice(0, 90) || 'prepaid-schedule'}.xlsx`;
 
-        if (generatedWorkbook) {
-            return sendWorkbookDownload(res, generatedWorkbook, downloadName);
-        }
-
-        if (fs.existsSync(exportPath)) {
-            return sendWorkbookDownload(res, { path: exportPath, filename: downloadName }, downloadName);
-        }
-
-        generatedWorkbook = await saveWorkbookFromPayload(schedule, scheduleDataFromRecord(schedule));
+        // Always rebuild the workbook from the current schedule data instead of
+        // reusing a previously cached file on disk, which could predate later
+        // changes (e.g. a store closeout applied after the last save).
+        const generatedWorkbook = await saveWorkbookFromPayload(schedule, scheduleDataFromRecord(schedule));
         return sendWorkbookDownload(res, generatedWorkbook, downloadName);
     } catch (error) {
         console.error('Prepaid export could not be created:', error);

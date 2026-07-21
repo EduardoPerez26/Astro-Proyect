@@ -242,8 +242,22 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
                     <div class="system-center-loading">Loading access load...</div>
                 </div>
             </article>
+                        <article class="system-center-panel">
+                <header>
+                    <div>
+                        <span>THROTTLING</span>
+                        <h2>Rate limiting</h2>
+                        <p>Requests and blocks per protected route group since the server started.</p>
+                    </div>
+                    <i class="fa-solid fa-gauge-simple-high"></i>
+                </header>
+                <div class="system-center-access-list" id="systemRateLimitList">
+                    <div class="system-center-loading">Loading rate limit stats...</div>
+                </div>
+            </article>
+
         </section>
     </div>
 
-    <script src="/js/system-center.js?v=20260718-system-center-v7" is:inline></script>
+    <script src="/js/admin/system-center.js?v=20260718-system-center-v7" is:inline></script>
 </DashboardLayout>

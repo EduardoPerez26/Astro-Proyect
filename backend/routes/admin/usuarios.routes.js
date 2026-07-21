@@ -2,15 +2,15 @@
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
-const { pool } = require('../config/database');
+const { pool } = require('../../config/database');
 const {
     verificarToken,
     checkPermission
-} = require('../middleware/auth.middleware');
+} = require('../../middleware/auth.middleware');
 const {
     normalizeUserPermissions,
     isSuperAdmin
-} = require('../config/permissions');
+} = require('../../config/permissions');
 
 const VALID_ROLES = new Set(['superadmin', 'admin', 'supervisor', 'usuario']);
 

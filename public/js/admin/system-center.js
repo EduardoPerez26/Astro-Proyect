@@ -48,7 +48,7 @@ async function loadSystemCenter() {
 
     try {
         const headers = { Authorization: `Bearer ${token}` };
-        const [health, admin, errors, integrationHealth, latencyHistory] = await Promise.all([
+        const [health, admin, errors, integrationHealth, latencyHistory, rateLimits] = await Promise.all([
             fetchJson(`${window.API_URL}/dashboard/system-health`, { headers }),
             fetchJson(`${window.API_URL}/dashboard/admin`, { headers }),
             fetchJson(`${window.API_URL}/notificaciones/system-errors?status=open&limit=5`, { headers }),
@@ -56,6 +56,10 @@ async function loadSystemCenter() {
             fetchJson(`${window.API_URL}/corporate/integrations/latency-history`, { headers }).catch(error => {
                 console.warn('Latency history unavailable:', error.message);
                 return { success: false, sparklines: {}, daily: {} };
+            }),
+            fetchJson(`${window.API_URL}/corporate/integrations/rate-limits`, { headers }).catch(error => {
+                console.warn('Rate limit stats unavailable:', error.message);
+                return { success: false, buckets: [] };
             })
         ]);
 
@@ -64,6 +68,8 @@ async function loadSystemCenter() {
         systemCenterState.errors = errors;
         systemCenterState.integrationHealth = integrationHealth;
         systemCenterState.latencyHistory = latencyHistory;
+        systemCenterState.rateLimits = rateLimits;
+
 
         renderSystemCenter();
     } catch (error) {
@@ -187,6 +193,7 @@ function renderSystemCenter() {
     renderIntegrationHealth(integrationHealth);
     renderIncidents(errors.errores || [], errorSummary);
     renderAccess(summary);
+    renderRateLimits(systemCenterState.rateLimits?.buckets || []);
     renderRecentActivity(admin.movimientos || []);
     renderRecommendations({ missingRequired, missingRecommended, integrationsOffline, integrationsWarning, openErrors, criticalErrors, activeUsers });
 }
@@ -514,6 +521,30 @@ function renderAccess(summary) {
     ].join('');
 }
 
+function rateLimitTone(bucket) {
+    if (!bucket.total_requests) return 'neutral';
+    if (bucket.total_blocked === 0) return 'success';
+    return (bucket.total_blocked / bucket.total_requests) > 0.05 ? 'danger' : 'warning';
+}
+
+function renderRateLimits(buckets) {
+    const container = document.getElementById('systemRateLimitList');
+    if (!container) return;
+
+    if (!buckets.length) {
+        container.innerHTML = '<div class="system-center-empty">No rate limiter data reported.</div>';
+        return;
+    }
+
+    container.innerHTML = buckets.map(bucket => renderStatusRow({
+        label: `${bucket.key} · limit ${bucket.limit}/${Math.round(bucket.window_ms / 60000)}min`,
+        value: `${bucket.total_blocked} blocked`,
+        detail: `${bucket.total_requests} requests seen · ${bucket.active_clients} active client(s) right now.`,
+        tone: rateLimitTone(bucket)
+    })).join('');
+}
+
+
 function renderRecentActivity(movimientos) {
     const container = document.getElementById('systemActivityList');
     if (!container) return;
@@ -664,10 +695,12 @@ function renderSystemCenterError(error) {
         'systemServiceCards',
         'systemIncidentList',
         'systemAccessList',
+        'systemRateLimitList',
         'systemActionList',
         'systemLatencyBars',
         'systemActivityList'
     ].forEach(id => {
+
         const element = document.getElementById(id);
         if (element) {
             element.innerHTML = `<div class="system-center-empty">${escapeHtml(error.message)}</div>`;

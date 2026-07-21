@@ -2,30 +2,32 @@ const express = require('express');
 const fs = require('fs');
 const router = express.Router();
 
-const { pool } = require('../config/database');
-const { verificarToken, checkPermission, esAdmin } = require('../middleware/auth.middleware');
-const { getIntacctConfigStatus } = require('../services/intacctConfig.service');
+const { pool } = require('../../../config/database');
+const { verificarToken, checkPermission, esAdmin } = require('../../../middleware/auth.middleware');
+const { getRateLimiterStats } = require('../../../middleware/security.middleware');
+const { getIntacctConfigStatus } = require('../../../services/intacct/intacctConfig.service');
+
 const {
     testIntacctConnection,
     readByQuery
-} = require('../services/intacctClient.service');
+} = require('../../../services/intacct/intacctClient.service');
 const {
     ensureCorporateSchema,
     parseJson,
     createReference,
     createFileHash,
     recordOperationalAudit
-} = require('../services/corporatePlatform.service');
+} = require('../../../services/departments/corporate/corporatePlatform.service');
 const {
-    smtpStatus,
     runScheduledReport,
     reportPath
-} = require('../services/corporateReport.service');
+} = require('../../../services/departments/corporate/corporateReport.service');
+const { emailStatus } = require('../../../services/email.service');
 const {
     checkAllIntegrations,
     getLatencySparklines,
     getLatencyDailyAverages
-} = require('../services/integrationHealth.service');
+} = require('../../../services/integrationHealth.service');
 
 router.use(verificarToken);
 router.use(async (req, res, next) => {
@@ -522,6 +524,19 @@ router.get(
     }
 );
 
+router.get(
+    '/integrations/rate-limits',
+    checkPermission('systemCenter', 'ver'),
+    (req, res) => {
+        try {
+            res.json({ success: true, buckets: getRateLimiterStats() });
+        } catch (error) {
+            console.error('Rate limiter stats error:', error);
+            res.status(500).json({ success: false, message: 'Rate limiter stats could not be loaded' });
+        }
+    }
+);
+
 router.post(
     '/integrations/:provider/runs',
     esAdmin,
@@ -668,11 +683,11 @@ router.get(
                  LEFT JOIN usuarios u ON u.id = r.created_by
                  ORDER BY r.active DESC, r.next_run_at, r.name`
             );
-            const smtp = smtpStatus();
+            const email = emailStatus();
             res.json({
                 success: true,
                 delivery: {
-                    smtp_ready: smtp.ready
+                    smtp_ready: email.ready
                 },
                 reports: rows.map(row => ({
                     ...row,

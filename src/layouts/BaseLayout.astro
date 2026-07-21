@@ -45,6 +45,10 @@ const { title, includeSheetJS = false } = Astro.props;
             rel="stylesheet"
             href="/styles/consolidated-dark.css?v=20260720-consolidated-v2"
         />
+        <link
+            rel="stylesheet"
+            href="/styles/contextual-help.css?v=20260721-contextual-help-v1"
+        />
         <script is:inline>
             try {
                 if (
@@ -118,6 +122,10 @@ const { title, includeSheetJS = false } = Astro.props;
         <script
             is:inline
             src="/js/floating-chatbot.js?v=20260716-floating-chatbot-v1"
+        ></script>
+        <script
+            is:inline
+            src="/js/contextual-help.js?v=20260721-contextual-help-v1"
         ></script>
     </body>
 </html>

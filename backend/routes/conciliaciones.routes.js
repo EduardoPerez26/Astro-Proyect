@@ -11,7 +11,7 @@ const {
 const {
     registrarComparacion,
     vincularComparacion
-} = require('../services/comparaciones.service');
+} = require('../services/departments/ar/comparaciones.service');
 
 const viewAccess = [
     verificarToken,
