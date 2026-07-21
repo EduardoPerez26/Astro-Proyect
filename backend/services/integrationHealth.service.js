@@ -106,7 +106,7 @@ function checkSmtp() {
 }
 
 function checkAiAssistant() {
-    const provider = String(process.env.AI_PROVIDER || 'openai').trim().toLowerCase();
+    const provider = String(process.env.AI_PROVIDER || 'gemini').trim().toLowerCase();
 
     if (provider === 'ollama') {
         return runProbe(async () => {
@@ -217,7 +217,7 @@ const AI_PROVIDER_LABELS = {
 };
 
 function aiAssistantName() {
-    const provider = String(process.env.AI_PROVIDER || 'openai').trim().toLowerCase();
+    const provider = String(process.env.AI_PROVIDER || 'gemini').trim().toLowerCase();
     return AI_PROVIDER_LABELS[provider] || 'AI assistant';
 }
 

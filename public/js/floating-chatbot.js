@@ -206,6 +206,22 @@
 
                 <form class="floating-chatbot-form" id="floatingChatbotForm">
                     <div class="floating-chatbot-input-pill">
+                        <input
+                            type="file"
+                            id="floatingChatbotFileInput"
+                            accept=".xlsx,.xls,.xlsm,.csv"
+                            hidden
+                        />
+                        <button
+                            type="button"
+                            class="floating-chatbot-attach"
+                            id="floatingChatbotAttach"
+                            aria-label="Attach a reconciliation source file"
+                            title="Attach a file"
+                        >
+                            <i class="fa-solid fa-paperclip" aria-hidden="true"></i>
+                        </button>
+
                         <textarea
                             id="floatingChatbotInput"
                             class="floating-chatbot-input"
@@ -241,6 +257,14 @@
         document
             .getElementById('floatingChatbotForm')
             ?.addEventListener('submit', handleSubmit);
+        document
+            .getElementById('floatingChatbotAttach')
+            ?.addEventListener('click', () => {
+                document.getElementById('floatingChatbotFileInput')?.click();
+            });
+        document
+            .getElementById('floatingChatbotFileInput')
+            ?.addEventListener('change', handleFileSelected);
         document
             .getElementById('floatingChatbotInput')
             ?.addEventListener('keydown', handleInputKeydown);
@@ -748,6 +772,59 @@
                 'assistant',
                 error.message || 'The assistant could not answer right now.'
             );
+        } finally {
+            setSending(false);
+        }
+    }
+
+    async function handleFileSelected(event) {
+        const input = event.target;
+        const file = input.files && input.files[0];
+        input.value = '';
+
+        if (!file || state.isSending) return;
+
+        // The reconciliation math runs client-side on the Reconciliation screen
+        // (per-brand Excel parsing); Franchie can only get the file into Documents.
+        const restauranteCodigo = window.prompt(
+            'Restaurant code for this file (as shown in Stores):'
+        );
+        if (!restauranteCodigo || !restauranteCodigo.trim()) return;
+
+        addMessage('user', `Uploading file: ${file.name}`);
+        setSending(true);
+
+        try {
+            const apiBase = getApiBase();
+            if (!apiBase) throw new Error('API URL is not configured.');
+
+            const formData = new FormData();
+            formData.append('archivo', file);
+            formData.append('restaurante_id', restauranteCodigo.trim());
+
+            const response = await fetch(`${apiBase}/archivos/subir`, {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${getToken()}` },
+                body: formData
+            });
+
+            const data = await response.json().catch(() => ({}));
+
+            if (!response.ok || data.error) {
+                throw new Error(data.message || 'The file could not be uploaded.');
+            }
+
+            addMessage(
+                'assistant',
+                `Got it — "${file.name}" is uploaded to Documents for that restaurant. Open Reconciliation to generate and review the reconciliation from it.`,
+                [
+                    { label: 'Documents', path: '/views/documentos' },
+                    { label: 'Reconciliation', path: '/views/conciliacion' }
+                ]
+            );
+        } catch (error) {
+            console.error('Floating chatbot upload error:', error);
+            addMessage('assistant', error.message || 'The file could not be uploaded.');
         } finally {
             setSending(false);
         }

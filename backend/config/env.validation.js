@@ -35,7 +35,7 @@ const OPTIONAL_INTEGRATIONS = [
     {
         name: 'AI assistant',
         enabledBy: 'AI_PROVIDER',
-        keys: ['OPENAI_API_KEY', 'GEMINI_API_KEY', 'ANTHROPIC_API_KEY']
+        keys: ['GEMINI_API_KEY', 'ANTHROPIC_API_KEY', 'OPENAI_API_KEY']
     }
 ];
 

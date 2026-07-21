@@ -33922,6 +33922,25 @@ html body .swal2-popup.xbfs-toast-popup .swal2-icon.xbfs-swal-icon .swal2-icon-c
     outline: none;
 }
 
+.floating-chatbot-attach {
+    flex: 0 0 auto;
+    display: grid;
+    width: 34px;
+    height: 34px;
+    place-items: center;
+    border: 1px solid var(--xb-color-border);
+    border-radius: 50%;
+    background: transparent;
+    color: var(--xb-color-text-soft);
+    cursor: pointer;
+    transition: transform .15s ease, color .15s ease;
+}
+
+.floating-chatbot-attach:hover {
+    color: var(--xb-color-text);
+    transform: scale(1.06);
+}
+
 .floating-chatbot-send {
     flex: 0 0 auto;
     display: grid;
