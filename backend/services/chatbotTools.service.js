@@ -73,6 +73,53 @@ const TOOL_DEFINITIONS = [
             },
             required: ['nombre', 'email', 'username', 'password']
         }
+    },
+    {
+        type: 'function',
+        name: 'find_user',
+        description: 'Search the user directory by name, email, or username to resolve a user_id before calling revoke_user_sessions or update_user_permissions.',
+        parameters: {
+            type: 'object',
+            properties: {
+                query: { type: 'string', description: 'Partial name, email, or username to search for.' }
+            },
+            required: ['query']
+        }
+    },
+    {
+        type: 'function',
+        name: 'revoke_user_sessions',
+        description: 'Force-log-out a user everywhere by revoking every one of their active sessions. Use this when an account is suspected to be compromised. Requires the edit_users permission.',
+        parameters: {
+            type: 'object',
+            properties: {
+                user_id: { type: 'integer', description: 'ID of the user, from find_user.' }
+            },
+            required: ['user_id']
+        }
+    },
+    {
+        type: 'function',
+        name: 'update_user_permissions',
+        description: 'Grant or revoke ONE specific module/action permission for an existing user, without touching their other permissions. Requires the manage_permissions permission.',
+        parameters: {
+            type: 'object',
+            properties: {
+                user_id: { type: 'integer', description: 'ID of the user, from find_user.' },
+                module: {
+                    type: 'string',
+                    enum: ['dashboardAdmin', 'systemCenter', 'approvalCenter', 'reportCenter', 'auditCenter', 'systemErrors', 'tiendas', 'documentos', 'historial', 'propertyManagement', 'propertyManagementDocuments', 'usuarios', 'controlRestaurants', 'permisos', 'perfil', 'chat'],
+                    description: 'Screen/module name as used in the sidebar.'
+                },
+                action: {
+                    type: 'string',
+                    enum: ['ver', 'crear', 'editar', 'eliminar', 'exportar'],
+                    description: 'Action to grant or revoke. Not every module supports every action.'
+                },
+                enabled: { type: 'boolean', description: 'true to grant, false to revoke.' }
+            },
+            required: ['user_id', 'module', 'action', 'enabled']
+        }
     }
 ];
 
@@ -174,6 +221,58 @@ async function executeTool(name, args, req) {
             });
             if (!ok) return { error: data.message || `Request failed with status ${status}` };
             return { success: true, usuario: data.usuario };
+        }
+
+        case 'find_user': {
+            const { ok, status, data } = await callInternalApi(req, 'GET', '/usuarios');
+            if (!ok) return { error: data.message || `Request failed with status ${status}` };
+
+            const query = String(args?.query || '').trim().toLowerCase();
+            const matches = (data.usuarios || [])
+                .filter(user => [user.nombre, user.email, user.username]
+                    .some(field => String(field || '').toLowerCase().includes(query)))
+                .slice(0, 10)
+                .map(user => ({
+                    id: user.id,
+                    nombre: user.nombre,
+                    email: user.email,
+                    username: user.username,
+                    rol: user.rol,
+                    departamento: user.departamento_nombre
+                }));
+
+            return { matches };
+        }
+
+        case 'revoke_user_sessions': {
+            const userId = Number(args?.user_id);
+            if (!Number.isInteger(userId)) return { error: 'user_id must be an integer' };
+
+            const { ok, status, data } = await callInternalApi(req, 'POST', `/usuarios/${userId}/revocar-sesiones`);
+            if (!ok) return { error: data.message || `Request failed with status ${status}` };
+            return data;
+        }
+
+        case 'update_user_permissions': {
+            const userId = Number(args?.user_id);
+            if (!Number.isInteger(userId)) return { error: 'user_id must be an integer' };
+
+            const current = await callInternalApi(req, 'GET', `/usuarios/${userId}/permisos`);
+            if (!current.ok) return { error: current.data.message || `Request failed with status ${current.status}` };
+
+            const permisos = current.data.permisos || {};
+            const module = args?.module;
+            const action = args?.action;
+            const enabled = Boolean(args?.enabled);
+
+            if (!permisos.acciones) permisos.acciones = {};
+            if (!permisos.acciones[module]) permisos.acciones[module] = {};
+            permisos.acciones[module][action] = enabled;
+            if (enabled) permisos[module] = true;
+
+            const updated = await callInternalApi(req, 'PUT', `/usuarios/${userId}/permisos`, { permisos });
+            if (!updated.ok) return { error: updated.data.message || `Request failed with status ${updated.status}` };
+            return { success: true, permisos: updated.data.permisos };
         }
 
         default:

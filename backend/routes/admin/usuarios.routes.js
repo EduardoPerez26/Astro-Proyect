@@ -11,6 +11,7 @@ const {
     normalizeUserPermissions,
     isSuperAdmin
 } = require('../../config/permissions');
+const { registrarEventoSeguridad } = require('../../services/securityAudit.service');
 
 const VALID_ROLES = new Set(['superadmin', 'admin', 'supervisor', 'usuario']);
 
@@ -430,6 +431,87 @@ router.delete(
     }
 });
 
+router.post(
+    '/:id/revocar-sesiones',
+    verificarToken,
+    checkPermission('edit_users'),
+    async (req, res) => {
+    try {
+        const usuarioId = parseInt(req.params.id);
+
+        const [usuarios] = await pool.query(
+            'SELECT id, rol FROM usuarios WHERE id = ? LIMIT 1',
+            [usuarioId]
+        );
+
+        if (!usuarios.length) {
+            return res.status(404).json({
+                success: false,
+                message: 'User not found'
+            });
+        }
+
+        if (!canManageRole(req.usuario, usuarios[0].rol)) {
+            return res.status(403).json({
+                success: false,
+                message: 'You cannot revoke sessions for a user with this role'
+            });
+        }
+
+        let affectedRows = 0;
+
+        try {
+            const [result] = await pool.query(
+                `UPDATE sesiones
+                 SET activa = FALSE,
+                     fecha_expiracion = NOW(),
+                     fecha_revocacion = NOW(),
+                     revocada_por = ?,
+                     motivo_revocacion = 'admin_revoke'
+                 WHERE usuario_id = ?
+                   AND activa = TRUE`,
+                [req.usuario.id, usuarioId]
+            );
+            affectedRows = result.affectedRows || 0;
+        } catch (error) {
+            if (error.code === 'ER_BAD_FIELD_ERROR') {
+                const [result] = await pool.query(
+                    `UPDATE sesiones
+                     SET activa = FALSE,
+                         fecha_expiracion = NOW()
+                     WHERE usuario_id = ?
+                       AND activa = TRUE`,
+                    [usuarioId]
+                );
+                affectedRows = result.affectedRows || 0;
+            } else {
+                throw error;
+            }
+        }
+
+        await registrarEventoSeguridad({
+            usuarioId,
+            departamentoId: null,
+            evento: 'admin_sessions_revoked',
+            req,
+            detalle: { affectedRows, actorId: req.usuario.id }
+        });
+
+        res.json({
+            success: true,
+            message: 'Sessions revoked',
+            affectedSessions: affectedRows
+        });
+    } catch (error) {
+        console.error('Admin revoke sessions error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Sessions could not be revoked'
+        });
+    }
+});
+
+
 router.get(
     '/:id/permisos',
     verificarToken,
@@ -649,3 +731,4 @@ router.post(
 });
 
 module.exports = router;
+

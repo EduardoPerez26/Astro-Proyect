@@ -15,6 +15,7 @@ const state = {
     removedStoreNumbers: new Set(),
     bills: [],
     months: [],
+    comparisonRows: [],
     summary: {}
 };
 
@@ -259,11 +260,16 @@ function showDifferenceModal(data) {
         return;
     }
 
+    // When multiple monthly GL files are uploaded at once, rows are tagged with
+    // their own period_code so this one combined table can still tell them apart.
+    const showPeriodColumn = rows.some(row => row.period_code);
+
     const table = `
         <div class="prepaid-difference-modal-table">
             <table>
                 <thead>
                     <tr>
+                        ${showPeriodColumn ? '<th>Period</th>' : ''}
                         <th>Store</th>
                         <th>Payee</th>
                         <th>Doc</th>
@@ -276,6 +282,7 @@ function showDifferenceModal(data) {
                 <tbody>
                     ${rows.slice(0, 80).map(row => `
                         <tr>
+                            ${showPeriodColumn ? `<td>${escapeHtml(row.period_code || '')}</td>` : ''}
                             <td>${escapeHtml(row.store_number)}</td>
                             <td>${escapeHtml(row.payee || '')}</td>
                             <td>${escapeHtml(row.doc_number || '')}</td>
@@ -297,7 +304,8 @@ function showDifferenceModal(data) {
             title: `Differences found in ${data.period_code}`,
             html: table,
             width: 'min(1040px, 94vw)',
-            confirmButtonText: 'Review table'
+            confirmButtonText: 'Review table',
+            customClass: { popup: 'prepaid-difference-swal' }
         });
         return;
     }
@@ -1685,7 +1693,11 @@ async function loadScheduleDetail(scheduleId) {
     state.sourceDirty = false;
     state.removedStoreNumbers.clear();
     state.bills = detail.bills || detail.rows || [];
-    state.months = detail.months || detail.comparison_rows || [];
+    state.months = detail.months || [];
+    // comparisonRows is the store/period (or synthetic prior-year) validation
+    // view used by the Comparison and Differences tabs — months stays the raw
+    // per-bill-per-month array renderBillRows groups by bill_id.
+    state.comparisonRows = detail.comparison_rows || detail.months || [];
     state.summary = detail.summary || {};
 
     els.selectedScheduleTitle.textContent = detail.schedule?.title || 'Schedule Detail';
@@ -1693,10 +1705,10 @@ async function loadScheduleDetail(scheduleId) {
     if (els.exportScheduleBtn) els.exportScheduleBtn.disabled = !state.bills.length;
     if (els.glScheduleSelect) els.glScheduleSelect.value = String(scheduleId);
 
-    renderKpis(detail.summary || {});
+    renderKpis(state.summary);
     renderSourceRows(state.sourceRows);
     renderBillRows(state.bills);
-    renderMonthRows(state.months);
+    renderMonthRows(state.comparisonRows);
     renderScheduleList();
     updateSourceEditorState();
 }
@@ -1780,7 +1792,8 @@ async function handleGlUpload(event) {
     event?.preventDefault();
     if (isUploadingGl) return;
     const fileInput = els.glUploadForm?.querySelector('input[type="file"]');
-    if (!fileInput?.files?.length) return;
+    const files = Array.from(fileInput?.files || []);
+    if (!files.length) return;
     if (!state.selectedScheduleId) {
         showToast('Select a schedule before uploading the monthly GL.', 'error');
         fileInput.value = '';
@@ -1794,23 +1807,55 @@ async function handleGlUpload(event) {
     }
 
     isUploadingGl = true;
-    const formData = new FormData(els.glUploadForm);
+
+    // The backend only accepts one GL file per request (upload.single('glFile')),
+    // so multiple selected files are sent as separate sequential requests instead
+    // of one multi-file request.
+    const results = [];
+    const failedFiles = [];
 
     try {
-        const data = await apiFetch('/prepaids/upload-gl', {
-            method: 'POST',
-            body: formData,
-            headers: authHeaders(false)
-        });
-        if (Number(data.differences || 0) > 0 || Number(data.missing_gl || 0) > 0) {
-            showDifferenceModal(data);
-        } else {
-            showToast(`GL ${data.period_code}: all expected amounts matched.`, 'success');
+        for (const file of files) {
+            const formData = new FormData();
+            formData.append('schedule_id', String(state.selectedScheduleId));
+            formData.append('glFile', file);
+
+            try {
+                const data = await apiFetch('/prepaids/upload-gl', {
+                    method: 'POST',
+                    body: formData,
+                    headers: authHeaders(false)
+                });
+                results.push(data);
+            } catch (error) {
+                failedFiles.push(`${file.name}: ${error.message || 'could not be processed'}`);
+            }
         }
+
+        const combinedRows = results.flatMap(data =>
+            (data.difference_rows || []).map(row => ({ ...row, period_code: data.period_code }))
+        );
+        const totalDifferences = results.reduce((sum, data) => sum + Number(data.differences || 0), 0);
+        const totalMissingGl = results.reduce((sum, data) => sum + Number(data.missing_gl || 0), 0);
+
+        if (combinedRows.length && (totalDifferences > 0 || totalMissingGl > 0)) {
+            showDifferenceModal({
+                period_code: results.map(data => data.period_code).filter(Boolean).join(', '),
+                difference_rows: combinedRows
+            });
+        } else if (results.length) {
+            showToast(
+                `${results.length} file${results.length === 1 ? '' : 's'} processed: all expected amounts matched.`,
+                'success'
+            );
+        }
+
+        if (failedFiles.length) {
+            showToast(`Some files could not be processed: ${failedFiles.join(' ')}`, 'error');
+        }
+
         if (state.selectedScheduleId) await loadScheduleDetail(state.selectedScheduleId);
         await loadSchedules();
-    } catch (error) {
-        showToast(error.message, 'error');
     } finally {
         isUploadingGl = false;
     }
@@ -1820,9 +1865,15 @@ function updateDropName(input) {
     const drop = input.closest('[data-file-drop]');
     const name = drop?.querySelector('.file-drop-name');
     const removeButton = drop?.querySelector('[data-remove-file]');
-    const hasFile = Boolean(input.files?.length);
-    if (name) name.textContent = hasFile ? input.files[0].name : 'No file selected';
-    if (removeButton) removeButton.disabled = !hasFile;
+    const fileCount = input.files?.length || 0;
+    if (name) {
+        name.textContent = !fileCount
+            ? 'No file selected'
+            : fileCount === 1
+                ? input.files[0].name
+                : `${fileCount} files selected`;
+    }
+    if (removeButton) removeButton.disabled = !fileCount;
 }
 
 function resetBillSourceView() {
@@ -1834,6 +1885,7 @@ function resetBillSourceView() {
     state.removedStoreNumbers.clear();
     state.bills = [];
     state.months = [];
+    state.comparisonRows = [];
     state.summary = {};
 
     if (els.selectedScheduleTitle) els.selectedScheduleTitle.textContent = 'Schedule Detail';
@@ -1861,6 +1913,7 @@ function resetBillSourceView() {
 
 function resetGlView() {
     state.months = [];
+    state.comparisonRows = [];
     renderMonthRows([]);
     if (els.kpiDifference) els.kpiDifference.textContent = money(0);
 }

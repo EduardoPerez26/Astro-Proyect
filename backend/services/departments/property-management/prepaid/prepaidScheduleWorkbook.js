@@ -498,7 +498,7 @@ function displayNegativeAmount(value) {
 
 function buildScheduleSheet(workbook, schedule, bills, months) {
     const sheet = workbook.addWorksheet('Prepaid Schedule', {
-        views: [{ state: 'frozen', xSplit: 3, ySplit: 8, showGridLines: true }],
+        views: [{ state: 'frozen', xSplit: 3, ySplit: 9, showGridLines: true }],
         pageSetup: { orientation: 'landscape', fitToPage: true, fitToWidth: 1, fitToHeight: 0, paperSize: 9 }
     });
 
@@ -513,17 +513,43 @@ function buildScheduleSheet(workbook, schedule, bills, months) {
         'Ending Prepaid Balance', 'Ending Balance per Store'
     ];
     setTitle(sheet, schedule.title || 'Prepaid Amortization Schedule', headers.length);
+    const selectedMonth = getSelectedMonth(schedule);
     const headerRowNumber = addMetadata(sheet, [
         ['Company name:', schedule.brand || ''],
         ['Report name:', 'Prepaid Amortization Schedule'],
         ['Tax year:', schedule.tax_year || ''],
-        ['Schedule period:', `${String(schedule.amortization_start).slice(0, 10)} to ${String(schedule.amortization_end).slice(0, 10)}`]
+        ['Schedule period:', `${String(schedule.amortization_start).slice(0, 10)} to ${String(schedule.amortization_end).slice(0, 10)}`],
+        ['Balance as of month:', monthNames[selectedMonth - 1]]
     ]);
+
+    // The last metadata pair added above is the interactive month selector
+    // (a dropdown). Its value cell is two rows above the header row.
+    const monthSelectorRow = headerRowNumber - 2;
+    const monthSelectorAddress = `B${monthSelectorRow}`;
+    const monthSelectorCell = sheet.getCell(monthSelectorRow, 2);
+    monthSelectorCell.dataValidation = {
+        type: 'list',
+        allowBlank: false,
+        formulae: [`"${monthNames.join(',')}"`],
+        showErrorMessage: true,
+        errorTitle: 'Invalid month',
+        error: 'Pick a month from the list.'
+    };
+    monthSelectorCell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: COLORS.selectedMonth }
+    };
+    monthSelectorCell.font = {
+        name: 'Arial',
+        size: 10,
+        bold: true,
+        color: { argb: COLORS.selectedMonthText }
+    };
 
     const headerRow = sheet.getRow(headerRowNumber);
     headerRow.values = headers;
 
-    const selectedMonth = getSelectedMonth(schedule);
     const selectedMonthColumn = 10 + selectedMonth;
 
     styleScheduleHeader(
@@ -588,7 +614,6 @@ function buildScheduleSheet(workbook, schedule, bills, months) {
             const match = billMonths.find(month => Number(month.period_year) === scheduleYear && Number(month.period_month) === index + 1);
             return match ? money(match.expected_amount) : 0;
         });
-        const ytd = monthValues.reduce((sum, value) => sum + value, 0);
         const amountPaid = money(bill.amount_paid);
         const priorBalance = billMonths
             .filter(month => Number(month.period_year) < scheduleYear)
@@ -598,6 +623,11 @@ function buildScheduleSheet(workbook, schedule, bills, months) {
             .reduce((sum, month) => sum + money(month.expected_amount), 0);
         const storeEnding = storeTotals.get(String(bill.store_number || '')) || 0;
         const isCloseout = String(bill.amortization_mode || '').toUpperCase() === 'CLOSEOUT';
+
+        // YTD Amortization sums only the month columns up to whichever month is
+        // picked in the "Balance as of month:" dropdown, instead of always the
+        // full year — MATCH() turns the picked month name into a column count.
+        const ytdFormula = `SUMPRODUCT((COLUMN(K${currentRow}:V${currentRow})-COLUMN($K$${currentRow})+1<=MATCH($B$${monthSelectorRow},{"January","February","March","April","May","June","July","August","September","October","November","December"},0))*K${currentRow}:V${currentRow})`;
 
         const row = sheet.getRow(currentRow);
         row.values = [
@@ -612,7 +642,7 @@ function buildScheduleSheet(workbook, schedule, bills, months) {
             Math.max(priorBalance, 0),
             isCloseout ? null : money(bill.monthly_amount),
             ...monthValues.map(displayNegativeAmount),
-            displayNegativeAmount(ytd),
+            { formula: ytdFormula },
             Math.max(endingBalance, 0),
             Math.max(storeEnding, 0)
         ];

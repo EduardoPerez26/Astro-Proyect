@@ -12561,6 +12561,90 @@ body .main .prepaid-page .prepaid-difference-modal-table {
     text-align: left;
 }
 
+/* This table is injected into a SweetAlert popup (property-management-prepaid.js
+   showDifferenceModal), which Swal appends outside .main — none of the
+   .prepaid-page-scoped rules above reach it, so it needs its own copy. */
+.swal2-popup .prepaid-difference-modal-table {
+    max-height: min(520px, 62vh);
+    overflow: auto;
+    text-align: left;
+    border: 1px solid var(--xb-color-border);
+    border-radius: 10px;
+}
+
+.swal2-popup .prepaid-difference-modal-table table {
+    width: 100%;
+    min-width: 720px;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 13px;
+}
+
+.swal2-popup .prepaid-difference-modal-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    padding: 10px 9px;
+    border: 1px solid var(--xb-color-text);
+    background: #0F0F0F;
+    color: #ffffff;
+    font-size: 10px;
+    font-weight: 950;
+    text-transform: uppercase;
+    white-space: nowrap;
+    text-align: left;
+}
+
+.swal2-popup .prepaid-difference-modal-table td {
+    padding: 8px 9px;
+    border-right: 1px solid var(--xb-color-border);
+    border-bottom: 1px solid var(--xb-color-border);
+    color: var(--xb-color-text);
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+    background: var(--xb-color-surface);
+}
+
+.swal2-popup .prepaid-difference-modal-table tbody tr:nth-child(even) td {
+    background: var(--xb-color-surface-subtle);
+}
+
+.swal2-popup .prepaid-difference-modal-table .danger-text {
+    color: var(--xb-color-danger);
+    font-weight: 950;
+}
+
+.swal2-popup .prepaid-difference-modal-table p {
+    margin: 10px 2px 0;
+    font-size: 12px;
+    color: var(--xb-color-text-soft);
+}
+
+/* Opts out of the shared "complex" alert layout in swal-guard.js (see
+   hasSpecialLayout), whose grid/flex rules let the confirm button overlap
+   this table instead of stacking below it. Same pattern as mfa-swal,
+   tax-swal-popup, etc. — fall back to SweetAlert2's own default stacking. */
+.prepaid-difference-swal {
+    border-color: var(--xb-color-border);
+    border-top-color: #1F1F1F;
+    border-radius: 12px;
+    box-shadow: 0 30px 84px -38px rgba(15, 15, 15, 0.76);
+    text-align: left;
+}
+
+.prepaid-difference-swal .swal2-title {
+    text-align: left;
+}
+
+.prepaid-difference-swal .swal2-actions {
+    margin-top: 18px;
+    padding-top: 16px;
+    border-top: 1px solid var(--xb-color-border);
+    width: 100%;
+    justify-content: flex-end;
+}
+
 .prepaid-table-footer {
     display: flex;
     justify-content: flex-end;
@@ -26525,6 +26609,11 @@ body.swal2-shown .prepaid-page .prepaid-table th {
 }
 
 .source-store-status.closeout {
+    width: auto;
+    max-width: 98px;
+    white-space: normal;
+    overflow-wrap: break-word;
+    text-align: center;
     border: 1px solid var(--xb-color-warning);
     background: var(--xb-color-warning-soft);
     color: var(--xb-color-danger);
@@ -26584,15 +26673,15 @@ body.swal2-shown .prepaid-page .prepaid-table th {
 }
 
 .prepaid-source-table .source-sticky-store {
-    width: 92px;
-    min-width: 92px;
-    max-width: 92px;
+    width: 120px;
+    min-width: 120px;
+    max-width: 120px;
     padding: 8px 10px;
     text-align: left;
 }
 
 .prepaid-source-table .source-sticky-actions {
-    left: 92px;
+    left: 120px;
 }
 
 .property-documents-page {

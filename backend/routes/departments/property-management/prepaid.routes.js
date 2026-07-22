@@ -360,8 +360,26 @@ function applyMonthlyGlByStore(
     };
 }
 
-function summarizeMonths(months = []) {
-    return buildMonthlyValidationRows(months)
+// Months before the schedule's own year (e.g. 2025 months on a 2026 schedule)
+// came from a restructuring where no reliable monthly GL breakdown exists — only
+// an annual reconciled balance. Those prior-year months are excluded from GL
+// Difference ONLY while no monthly GL has ever been uploaded for them (still
+// PENDING_GL). If a prior-year monthly GL is later uploaded for a specific
+// period, its status flips (MATCHED/DIFFERENCE/MISSING_GL) and it's counted
+// like any current-year month — this isn't a hard year cutoff.
+function buildComparisonRows(months = [], scheduleYear = null) {
+    const year = Number(scheduleYear) || null;
+    const relevantMonths = year
+        ? months.filter(month =>
+            Number(month.period_year) >= year
+            || String(month.status || '').toUpperCase() !== 'PENDING_GL'
+        )
+        : months;
+    return buildMonthlyValidationRows(relevantMonths);
+}
+
+function summarizeMonths(months = [], scheduleYear = null) {
+    return buildComparisonRows(months, scheduleYear)
         .reduce((summary, row) => {
             const expected =
                 Number(row.expected_amount || 0);
@@ -411,7 +429,7 @@ function refreshDraftCounts(draft) {
     schedule.excluded_row_count = draft.sourceRows.length - schedule.included_row_count;
     schedule.generated_month_count = draft.months.length;
     if (draft.months.length) {
-        const summary = summarizeMonths(draft.months);
+        const summary = summarizeMonths(draft.months, schedule.schedule_year);
         schedule.status = summary.difference_count || summary.missing_gl_count
             ? 'DIFFERENCE'
             : summary.pending_count
@@ -433,7 +451,7 @@ function buildScheduleDataPayload(draft) {
     refreshDraftCounts(draft);
 
     const comparisonRows =
-        buildMonthlyValidationRows(draft.months);
+        buildComparisonRows(draft.months, draft.schedule.schedule_year);
 
     return {
         schedule: draft.schedule,
@@ -441,7 +459,7 @@ function buildScheduleDataPayload(draft) {
         bills: draft.bills,
         months: draft.months,
         comparisonRows,
-        summary: summarizeMonths(draft.months)
+        summary: summarizeMonths(draft.months, draft.schedule.schedule_year)
     };
 }
 
@@ -473,7 +491,7 @@ function scheduleDataFromRecord(schedule) {
         sourceRows,
         bills,
         months,
-        summary: summarizeMonths(months)
+        summary: summarizeMonths(months, schedule.schedule_year)
     };
 }
 
@@ -535,7 +553,7 @@ function buildPersistentScheduleData(schedule, overrides = {}) {
         sourceRows,
         bills,
         months,
-        summary: summarizeMonths(months)
+        summary: summarizeMonths(months, schedule.schedule_year)
     };
 }
 
@@ -751,7 +769,7 @@ router.get('/schedules', ...access('ver'), async (req, res) => {
                 schedules.unshift({
                     ...draft.schedule,
                     metadata_json: parseJson(draft.schedule.metadata_json, {}),
-                    ...summarizeMonths(draft.months),
+                    ...summarizeMonths(draft.months, draft.schedule.schedule_year),
                     is_draft: true
                 });
             }
@@ -878,7 +896,7 @@ router.get('/:scheduleId', ...access('ver'), async (req, res) => {
         const sourceRows = data.sourceRows.map(row => sourceRowForClient(row, schedule));
         const bills = data.bills;
         const months = data.months;
-        const summary = data.summary || summarizeMonths(months);
+        const summary = data.summary || summarizeMonths(months, schedule.schedule_year);
 
         res.json({
             success: true,
@@ -890,7 +908,7 @@ router.get('/:scheduleId', ...access('ver'), async (req, res) => {
             bills,
             rows: bills,
             months,
-            comparison_rows: buildMonthlyValidationRows(months),
+            comparison_rows: buildComparisonRows(months, schedule.schedule_year),
             summary
         });
     } catch (error) {
@@ -899,7 +917,6 @@ router.get('/:scheduleId', ...access('ver'), async (req, res) => {
         res.status(500).json({ success: false, message: 'Schedule detail could not be loaded' });
     }
 });
-
 
 router.put('/:scheduleId/source-rows', ...access('editar'), async (req, res) => {
     const connection = await pool.getConnection();
@@ -1640,7 +1657,7 @@ router.post('/upload-gl', ...access('crear'), upload.single('glFile'), async (re
             glUpload
         );
 
-        const summary = summarizeMonths(payload.months);
+        const summary = summarizeMonths(payload.months, schedule.schedule_year);
 
         const status =
             summary.difference_count

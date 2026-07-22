@@ -145,7 +145,7 @@
     }
 
     function hasSpecialLayout(options) {
-        return /(?:mfa-swal|replacement-file-dialog|tax-swal-popup|pm-reclass-popup|source-amortization-swal|source-concept-swal|new-chat-swal)/.test(
+        return /(?:mfa-swal|replacement-file-dialog|tax-swal-popup|pm-reclass-popup|source-amortization-swal|source-concept-swal|new-chat-swal|prepaid-difference-swal)/.test(
             getPopupClass(options)
         );
     }

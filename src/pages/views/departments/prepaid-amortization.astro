@@ -94,10 +94,10 @@ import DashboardLayout from "../../../layouts/DashboardLayout.astro";
                 <label class="wide-field file-drop" data-file-drop>
                     <span class="file-drop-heading">
                         <i class="fa-solid fa-file-arrow-up" aria-hidden="true"></i>
-                        Monthly GL file
+                        Monthly GL files
                     </span>
-                    
-                    <input type="file" name="glFile" accept=".xlsx,.xls,.csv" required />
+
+                    <input type="file" name="glFile" accept=".xlsx,.xls,.csv" multiple required />
                     <span class="file-drop-selection">
                         <span class="file-drop-name">No file selected</span>
                         <button type="button" class="file-remove-btn" data-remove-file aria-label="Remove selected file" title="Remove selected file">
