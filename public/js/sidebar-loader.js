@@ -460,10 +460,10 @@ function aplicarPermissions(opciones = {}) {
 
     window.applySidebarSearch?.();
     window.XBFSNavigation?.refreshFavorites?.();
-    window.XBFSNavigation?.refreshBadges?.();
 
     // Check access to the current page.
     if (opciones.verificarPagina !== false) {
+        window.XBFSNavigation?.refreshBadges?.();
         verificarAccesoPagina(permisos);
     }
 }

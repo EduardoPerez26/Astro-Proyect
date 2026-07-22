@@ -527,19 +527,30 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
                 <div class="bk-tax-store-panel-copy">
                     <span>POPEYES</span>
                     <strong>Tax Rate by store</strong>
-                    <small
+                    <small id="pyTaxPanelStatus" data-type="info"
                         >Tax Review uses local rates. CDTFA updates only when
                         refreshed manually.</small
                     >
+                    <small id="pyTaxPanelCount"></small>
                 </div>
-                <button
-                    class="btn btn-secondary"
-                    type="button"
-                    id="pyTaxOpenModal"
-                >
-                    <i class="fa-solid fa-store"></i>
-                    Manage stores
-                </button>
+                <div class="bk-tax-store-panel-actions">
+                    <button
+                        class="btn btn-secondary"
+                        type="button"
+                        id="pyTaxPanelRefreshRates"
+                    >
+                        <i class="fa-solid fa-arrows-rotate"></i>
+                        Refresh rates
+                    </button>
+                    <button
+                        class="btn btn-secondary"
+                        type="button"
+                        id="pyTaxOpenModal"
+                    >
+                        <i class="fa-solid fa-store"></i>
+                        Manage stores
+                    </button>
+                </div>
             </section>
 
             <dialog
@@ -725,8 +736,7 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
 
                     <footer class="bk-tax-store-footer">
                         <small
-                            >Changes are saved in this browser with
-                            localStorage.</small
+                            >Changes are saved to the shared database.</small
                         >
                         <button
                             class="btn btn-primary"
@@ -747,19 +757,30 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
                 <div class="bk-tax-store-panel-copy">
                     <span>TACO BELL</span>
                     <strong>Tax Rate by store</strong>
-                    <small
+                    <small id="tbTaxPanelStatus" data-type="info"
                         >CDTFA updates CA stores; other stores use manual/local
                         rates.</small
                     >
+                    <small id="tbTaxPanelCount"></small>
                 </div>
-                <button
-                    class="btn btn-secondary"
-                    type="button"
-                    id="tbTaxOpenModal"
-                >
-                    <i class="fa-solid fa-store"></i>
-                    Manage stores
-                </button>
+                <div class="bk-tax-store-panel-actions">
+                    <button
+                        class="btn btn-secondary"
+                        type="button"
+                        id="tbTaxPanelRefreshRates"
+                    >
+                        <i class="fa-solid fa-arrows-rotate"></i>
+                        Refresh rates
+                    </button>
+                    <button
+                        class="btn btn-secondary"
+                        type="button"
+                        id="tbTaxOpenModal"
+                    >
+                        <i class="fa-solid fa-store"></i>
+                        Manage stores
+                    </button>
+                </div>
             </section>
 
             <dialog
@@ -956,8 +977,7 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
 
                     <footer class="bk-tax-store-footer">
                         <small
-                            >Changes are saved in this browser with
-                            localStorage.</small
+                            >Changes are saved to the shared database.</small
                         >
                         <button
                             class="btn btn-primary"
@@ -978,19 +998,30 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
                 <div class="bk-tax-store-panel-copy">
                     <span>BURGER KING</span>
                     <strong>Tax Rate by store</strong>
-                    <small
+                    <small id="bkTaxPanelStatus" data-type="info"
                         >Reconciliation uses local rates. CDTFA updates only
                         when refreshed manually.</small
                     >
+                    <small id="bkTaxPanelCount"></small>
                 </div>
-                <button
-                    class="btn btn-secondary"
-                    type="button"
-                    id="bkTaxOpenModal"
-                >
-                    <i class="fa-solid fa-store"></i>
-                    Manage stores
-                </button>
+                <div class="bk-tax-store-panel-actions">
+                    <button
+                        class="btn btn-secondary"
+                        type="button"
+                        id="bkTaxPanelRefreshRates"
+                    >
+                        <i class="fa-solid fa-arrows-rotate"></i>
+                        Refresh rates
+                    </button>
+                    <button
+                        class="btn btn-secondary"
+                        type="button"
+                        id="bkTaxOpenModal"
+                    >
+                        <i class="fa-solid fa-store"></i>
+                        Manage stores
+                    </button>
+                </div>
             </section>
 
             <dialog
@@ -1176,8 +1207,7 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
 
                     <footer class="bk-tax-store-footer">
                         <small
-                            >Changes are saved in this browser with
-                            localStorage.</small
+                            >Changes are saved to the shared database.</small
                         >
                         <button
                             class="btn btn-primary"
@@ -1277,6 +1307,7 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
         <!-- Scripts -->
         <script is:inline src="/js/departments/ar/restaurant-configs.js"></script>
 
+        <script is:inline src="/js/departments/ar/store-tax-catalog-api.js"></script>
         <script is:inline src="/js/departments/ar/taco-bell-tax-stores.js"></script>
         <script is:inline src="/js/departments/ar/conciliacion-tacobell.js"></script>
         <script is:inline src="/js/departments/ar/popeyes-tax-stores.js"></script>
@@ -1379,7 +1410,7 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
 
                 document.addEventListener(
                     "click",
-                    (event) => {
+                    async (event) => {
                         const target =
                             event.target instanceof Element
                                 ? event.target
@@ -1452,7 +1483,7 @@ import DashboardLayout from "../../layouts/DashboardLayout.astro";
                             if (saveButton) {
                                 try {
                                     const storeData = callTaxFn(config.readFn);
-                                    callTaxFn(config.upsertFn, storeData);
+                                    await callTaxFn(config.upsertFn, storeData);
                                     callTaxFn(config.renderFn);
                                     callTaxFn(config.recalcFn);
                                     callTaxFn(

@@ -690,6 +690,10 @@ const BK_TAX_STORE_STORAGE_KEY = 'burgerKingTaxStores.v1';
 const BK_TAX_RATE_CACHE_STORAGE_KEY = 'burgerKingTaxRateCache.v1';
 const BK_TAX_RATE_CACHE_DAYS = 30;
 const BK_TAX_RATE_TIMEOUT_MS = 8000;
+const BK_RESTAURANT_CODE = 'burger-king';
+
+let BK_TAX_STORE_CACHE = null;
+let BK_TAX_STORE_INIT_DONE = false;
 
 // Fallback local: se usa en la conciliación para no depender de CDTFA en tiempo real.
 const BK_TAX_RATE_FALLBACK = {
@@ -1986,6 +1990,10 @@ function normalizarStoreTaxBurgerKing(tienda) {
 }
 
 function cargarStoresTaxBurgerKing() {
+    if (Array.isArray(BK_TAX_STORE_CACHE)) {
+        return BK_TAX_STORE_CACHE;
+    }
+
     try {
         const guardadas = JSON.parse(
             localStorage.getItem(BK_TAX_STORE_STORAGE_KEY) || 'null'
@@ -2011,12 +2019,55 @@ function guardarStoresTaxBurgerKing(tiendas) {
         .filter(tienda => tienda.store)
         .sort((a, b) => a.store - b.store);
 
+    BK_TAX_STORE_CACHE = limpias;
+
     localStorage.setItem(
         BK_TAX_STORE_STORAGE_KEY,
         JSON.stringify(limpias)
     );
 
     return limpias;
+}
+
+async function inicializarCatalogoTaxBurgerKing() {
+    if (BK_TAX_STORE_INIT_DONE) return;
+    BK_TAX_STORE_INIT_DONE = true;
+
+    try {
+        let stores = await window.StoreTaxCatalogApi.list(BK_RESTAURANT_CODE);
+
+        if (!stores.length) {
+            let localStores = null;
+
+            try {
+                const raw = JSON.parse(
+                    localStorage.getItem(BK_TAX_STORE_STORAGE_KEY) || 'null'
+                );
+                if (Array.isArray(raw) && raw.length) {
+                    localStores = raw;
+                }
+            } catch (error) {
+                console.warn('The local Burger King store catalog could not be read:', error);
+            }
+
+            if (localStores) {
+                stores = await window.StoreTaxCatalogApi.replaceAll(
+                    BK_RESTAURANT_CODE,
+                    localStores.map(normalizarStoreTaxBurgerKing)
+                );
+            }
+        }
+
+        BK_TAX_STORE_CACHE = stores.length
+            ? stores.map(normalizarStoreTaxBurgerKing).sort((a, b) => a.store - b.store)
+            : BK_DEFAULT_TAX_STORES.map(normalizarStoreTaxBurgerKing).sort((a, b) => a.store - b.store);
+    } catch (error) {
+        console.warn('Store tax catalog could not be loaded from the server; using local cache.', error);
+        BK_TAX_STORE_CACHE = null;
+        BK_TAX_STORE_INIT_DONE = false;
+    }
+
+    renderStoresTaxBurgerKing();
 }
 
 function buscarStoreTaxBurgerKing(store) {
@@ -2026,7 +2077,7 @@ function buscarStoreTaxBurgerKing(store) {
         .find(tienda => tienda.store === numeroStore) || null;
 }
 
-function upsertStoreTaxBurgerKing(tienda) {
+async function upsertStoreTaxBurgerKing(tienda) {
     const normalizada = normalizarStoreTaxBurgerKing(tienda);
 
     if (!normalizada.store) {
@@ -2040,6 +2091,8 @@ function upsertStoreTaxBurgerKing(tienda) {
     if (!tieneCoordenadas && !normalizada.taxRate) {
         throw new Error('Add valid coordinates or enter a manual tax rate.');
     }
+
+    await window.StoreTaxCatalogApi.upsert(BK_RESTAURANT_CODE, normalizada);
 
     const tiendas = cargarStoresTaxBurgerKing()
         .filter(item => item.store !== normalizada.store);
@@ -2108,6 +2161,14 @@ async function eliminarStoreTaxBurgerKing(store) {
 
     if (!confirmado) {
         mostrarStatusTaxBurgerKing('Deletion canceled.');
+        return false;
+    }
+
+    try {
+        await window.StoreTaxCatalogApi.remove(BK_RESTAURANT_CODE, storeNumber);
+    } catch (error) {
+        console.warn('Store could not be deleted from the server:', error);
+        mostrarStatusTaxBurgerKing('The store could not be deleted. Try again.', 'warning');
         return false;
     }
 
@@ -2480,6 +2541,7 @@ function actualizarPanelTaxBurgerKing(codigo = '') {
 
     if (codigoActual === 'burger-king') {
         renderStoresTaxBurgerKing();
+        inicializarCatalogoTaxBurgerKing();
     }
 }
 
@@ -2549,15 +2611,22 @@ function leerFormularioStoreTaxBurgerKing() {
 
 function mostrarStatusTaxBurgerKing(texto, tipo = 'info') {
     const status = document.getElementById('bkTaxStoreStatus');
-    if (!status) return;
+    if (status) {
+        status.textContent = texto;
+        status.dataset.type = tipo;
+    }
 
-    status.textContent = texto;
-    status.dataset.type = tipo;
+    const panelStatus = document.getElementById('bkTaxPanelStatus');
+    if (panelStatus) {
+        panelStatus.textContent = texto;
+        panelStatus.dataset.type = tipo;
+    }
 }
 
 function renderStoresTaxBurgerKing() {
     const tbody = document.getElementById('bkTaxStoreBody');
     const count = document.getElementById('bkTaxStoreCount');
+    const panelCount = document.getElementById('bkTaxPanelCount');
 
     if (!tbody) return;
 
@@ -2565,6 +2634,10 @@ function renderStoresTaxBurgerKing() {
 
     if (count) {
         count.textContent = `${tiendas.length} configured stores`;
+    }
+
+    if (panelCount) {
+        panelCount.textContent = `${tiendas.length} configured stores`;
     }
 
     tbody.innerHTML = tiendas.map(tienda => `
@@ -2641,11 +2714,18 @@ async function refrescarTaxRatesBurgerKing() {
         return;
     }
     const botonRefresh = document.getElementById('bkTaxRefreshRates');
+    const botonPanelRefresh = document.getElementById('bkTaxPanelRefreshRates');
 
     if (botonRefresh) {
         botonRefresh.disabled = true;
         botonRefresh.dataset.originalText = botonRefresh.textContent;
         botonRefresh.textContent = 'Refreshing...';
+    }
+
+    if (botonPanelRefresh) {
+        botonPanelRefresh.disabled = true;
+        botonPanelRefresh.dataset.originalText = botonPanelRefresh.textContent;
+        botonPanelRefresh.textContent = 'Refreshing...';
     }
 
     mostrarStatusTaxBurgerKing(
@@ -2689,7 +2769,7 @@ async function refrescarTaxRatesBurgerKing() {
                 result
             );
 
-            upsertStoreTaxBurgerKing({
+            await upsertStoreTaxBurgerKing({
                 ...tienda,
                 taxRate: result.rate
             });
@@ -2721,6 +2801,12 @@ async function refrescarTaxRatesBurgerKing() {
         botonRefresh.disabled = false;
         botonRefresh.textContent =
             botonRefresh.dataset.originalText || 'Refresh CDTFA rates';
+    }
+
+    if (botonPanelRefresh) {
+        botonPanelRefresh.disabled = false;
+        botonPanelRefresh.textContent =
+            botonPanelRefresh.dataset.originalText || 'Refresh rates';
     }
 
     if (Array.isArray(datosExtraidos) && datosExtraidos.length) {
@@ -2788,9 +2874,9 @@ function inicializarPanelTaxRatesBurgerKing() {
 
     document
         .getElementById('bkTaxSaveStore')
-        ?.addEventListener('click', () => {
+        ?.addEventListener('click', async () => {
             try {
-                upsertStoreTaxBurgerKing(
+                await upsertStoreTaxBurgerKing(
                     leerFormularioStoreTaxBurgerKing()
                 );
 
@@ -2826,12 +2912,18 @@ function inicializarPanelTaxRatesBurgerKing() {
         });
 
     document
+        .getElementById('bkTaxPanelRefreshRates')
+        ?.addEventListener('click', () => {
+            refrescarTaxRatesBurgerKing();
+        });
+
+    document
         .getElementById('bkTaxResetStores')
         ?.addEventListener('click', async () => {
             const confirmar = !window.Swal || (await swalBurgerKingModal({
                 icon: 'warning',
                 title: 'Restore Burger King stores',
-                text: 'Locally saved changes will be cleared and the initial catalog will be restored.',
+                text: 'This restores the initial catalog in the shared database, for every user. Manually added stores that are not part of the original list will be lost.',
                 showCancelButton: true,
                 confirmButtonText: 'Restore',
                 cancelButtonText: 'Cancel',
@@ -2843,13 +2935,25 @@ function inicializarPanelTaxRatesBurgerKing() {
 
             if (!confirmar) return;
 
-            localStorage.removeItem(BK_TAX_STORE_STORAGE_KEY);
-            renderStoresTaxBurgerKing();
-            limpiarFormularioStoreTaxBurgerKing();
-            document
-                .getElementById('burgerKingTaxStoreDialog')
-                ?.classList.remove('is-form-open');
-            mostrarStatusTaxBurgerKing('Initial catalog restored.', 'success');
+            try {
+                const defaults = BK_DEFAULT_TAX_STORES.map(normalizarStoreTaxBurgerKing);
+                const stores = await window.StoreTaxCatalogApi.replaceAll(BK_RESTAURANT_CODE, defaults);
+
+                BK_TAX_STORE_CACHE = (stores.length ? stores : defaults)
+                    .map(normalizarStoreTaxBurgerKing)
+                    .sort((a, b) => a.store - b.store);
+                localStorage.removeItem(BK_TAX_STORE_STORAGE_KEY);
+
+                renderStoresTaxBurgerKing();
+                limpiarFormularioStoreTaxBurgerKing();
+                document
+                    .getElementById('burgerKingTaxStoreDialog')
+                    ?.classList.remove('is-form-open');
+                mostrarStatusTaxBurgerKing('Initial catalog restored for all users.', 'success');
+            } catch (error) {
+                console.warn('Catalog could not be restored:', error);
+                mostrarStatusTaxBurgerKing('The catalog could not be restored. Try again.', 'error');
+            }
         });
 
     document

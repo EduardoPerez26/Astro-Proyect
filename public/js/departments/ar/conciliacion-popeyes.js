@@ -229,6 +229,10 @@ const POPEYES_TAX_STORE_STORAGE_KEY = 'popeyesTaxStores.v1';
 const POPEYES_TAX_RATE_CACHE_STORAGE_KEY = 'popeyesTaxRateCache.v1';
 const POPEYES_TAX_RATE_CACHE_DAYS = 30;
 const POPEYES_TAX_RATE_TIMEOUT_MS = 8000;
+const POPEYES_RESTAURANT_CODE = 'popeyes';
+
+let POPEYES_TAX_STORE_CACHE = null;
+let POPEYES_TAX_STORE_INIT_DONE = false;
 
 const POPEYES_STORE_JURISDICTION_OVERRIDES = {
     13538: 'HERCULES',
@@ -295,6 +299,10 @@ function normalizarStoreTaxPopeyes(tienda) {
 }
 
 function cargarStoresTaxPopeyes() {
+    if (Array.isArray(POPEYES_TAX_STORE_CACHE)) {
+        return POPEYES_TAX_STORE_CACHE;
+    }
+
     try {
         const guardadas = JSON.parse(
             localStorage.getItem(POPEYES_TAX_STORE_STORAGE_KEY) || 'null'
@@ -320,12 +328,57 @@ function guardarStoresTaxPopeyes(tiendas) {
         .filter(tienda => tienda.store)
         .sort((a, b) => a.store - b.store);
 
+    POPEYES_TAX_STORE_CACHE = limpias;
+
     localStorage.setItem(
         POPEYES_TAX_STORE_STORAGE_KEY,
         JSON.stringify(limpias)
     );
 
     return limpias;
+}
+
+async function inicializarCatalogoTaxPopeyes() {
+    if (POPEYES_TAX_STORE_INIT_DONE) return;
+    POPEYES_TAX_STORE_INIT_DONE = true;
+
+    try {
+        let stores = await window.StoreTaxCatalogApi.list(POPEYES_RESTAURANT_CODE);
+
+        if (!stores.length) {
+            let localStores = null;
+
+            try {
+                const raw = JSON.parse(
+                    localStorage.getItem(POPEYES_TAX_STORE_STORAGE_KEY) || 'null'
+                );
+                if (Array.isArray(raw) && raw.length) {
+                    localStores = raw;
+                }
+            } catch (error) {
+                console.warn('The local Popeyes store catalog could not be read:', error);
+            }
+
+            if (localStores) {
+                stores = await window.StoreTaxCatalogApi.replaceAll(
+                    POPEYES_RESTAURANT_CODE,
+                    localStores.map(normalizarStoreTaxPopeyes)
+                );
+            }
+        }
+
+        POPEYES_TAX_STORE_CACHE = stores.length
+            ? stores.map(normalizarStoreTaxPopeyes).sort((a, b) => a.store - b.store)
+            : (window.POPEYES_DEFAULT_TAX_STORES || [])
+                .map(normalizarStoreTaxPopeyes)
+                .sort((a, b) => a.store - b.store);
+    } catch (error) {
+        console.warn('Store tax catalog could not be loaded from the server; using local cache.', error);
+        POPEYES_TAX_STORE_CACHE = null;
+        POPEYES_TAX_STORE_INIT_DONE = false;
+    }
+
+    renderStoresTaxPopeyes();
 }
 
 function buscarStoreTaxPopeyes(store) {
@@ -335,7 +388,7 @@ function buscarStoreTaxPopeyes(store) {
         .find(tienda => tienda.store === numeroStore) || null;
 }
 
-function upsertStoreTaxPopeyes(tienda) {
+async function upsertStoreTaxPopeyes(tienda) {
     const normalizada = normalizarStoreTaxPopeyes(tienda);
 
     if (!normalizada.store) {
@@ -349,6 +402,8 @@ function upsertStoreTaxPopeyes(tienda) {
     if (!tieneCoordenadas && !normalizada.taxRate) {
         throw new Error('Add valid coordinates or enter a manual tax rate.');
     }
+
+    await window.StoreTaxCatalogApi.upsert(POPEYES_RESTAURANT_CODE, normalizada);
 
     const tiendas = cargarStoresTaxPopeyes()
         .filter(item => item.store !== normalizada.store);
@@ -449,6 +504,14 @@ async function eliminarStoreTaxPopeyes(store) {
 
     if (!confirmado) {
         mostrarStatusTaxPopeyes('Deletion canceled.');
+        return false;
+    }
+
+    try {
+        await window.StoreTaxCatalogApi.remove(POPEYES_RESTAURANT_CODE, numeroStore);
+    } catch (error) {
+        console.warn('Store could not be deleted from the server:', error);
+        mostrarStatusTaxPopeyes('The store could not be deleted. Try again.', 'warning');
         return false;
     }
 
@@ -755,6 +818,7 @@ function actualizarPanelTaxPopeyes(codigo = '') {
 
     if (codigoActual === 'popeyes') {
         renderStoresTaxPopeyes();
+        inicializarCatalogoTaxPopeyes();
     }
 }
 
@@ -825,15 +889,22 @@ function leerFormularioStoreTaxPopeyes() {
 
 function mostrarStatusTaxPopeyes(texto, tipo = 'info') {
     const status = document.getElementById('pyTaxStoreStatus');
-    if (!status) return;
+    if (status) {
+        status.textContent = texto;
+        status.dataset.type = tipo;
+    }
 
-    status.textContent = texto;
-    status.dataset.type = tipo;
+    const panelStatus = document.getElementById('pyTaxPanelStatus');
+    if (panelStatus) {
+        panelStatus.textContent = texto;
+        panelStatus.dataset.type = tipo;
+    }
 }
 
 function renderStoresTaxPopeyes() {
     const tbody = document.getElementById('pyTaxStoreBody');
     const count = document.getElementById('pyTaxStoreCount');
+    const panelCount = document.getElementById('pyTaxPanelCount');
 
     if (!tbody) return;
 
@@ -841,6 +912,10 @@ function renderStoresTaxPopeyes() {
 
     if (count) {
         count.textContent = `${tiendas.length} configured stores`;
+    }
+
+    if (panelCount) {
+        panelCount.textContent = `${tiendas.length} configured stores`;
     }
 
     tbody.innerHTML = tiendas.map(tienda => `
@@ -930,11 +1005,18 @@ Do you want to continue?`
     }
 
     const botonRefresh = document.getElementById('pyTaxRefreshRates');
+    const botonPanelRefresh = document.getElementById('pyTaxPanelRefreshRates');
 
     if (botonRefresh) {
         botonRefresh.disabled = true;
         botonRefresh.dataset.originalText = botonRefresh.textContent;
         botonRefresh.textContent = 'Refreshing...';
+    }
+
+    if (botonPanelRefresh) {
+        botonPanelRefresh.disabled = true;
+        botonPanelRefresh.dataset.originalText = botonPanelRefresh.textContent;
+        botonPanelRefresh.textContent = 'Refreshing...';
     }
 
     mostrarStatusTaxPopeyes(
@@ -978,7 +1060,7 @@ Do you want to continue?`
                     result
                 );
 
-                upsertStoreTaxPopeyes({
+                await upsertStoreTaxPopeyes({
                     ...tienda,
                     taxRate: result.rate
                 });
@@ -1010,6 +1092,12 @@ Do you want to continue?`
             botonRefresh.disabled = false;
             botonRefresh.textContent =
                 botonRefresh.dataset.originalText || 'Refresh CDTFA rates';
+        }
+
+        if (botonPanelRefresh) {
+            botonPanelRefresh.disabled = false;
+            botonPanelRefresh.textContent =
+                botonPanelRefresh.dataset.originalText || 'Refresh rates';
         }
     }
 }
@@ -1070,9 +1158,9 @@ function inicializarPanelTaxRatesPopeyes() {
 
     document
         .getElementById('pyTaxSaveStore')
-        ?.addEventListener('click', () => {
+        ?.addEventListener('click', async () => {
             try {
-                upsertStoreTaxPopeyes(
+                await upsertStoreTaxPopeyes(
                     leerFormularioStoreTaxPopeyes()
                 );
 
@@ -1114,12 +1202,18 @@ function inicializarPanelTaxRatesPopeyes() {
         });
 
     document
+        .getElementById('pyTaxPanelRefreshRates')
+        ?.addEventListener('click', () => {
+            refrescarTaxRatesPopeyes();
+        });
+
+    document
         .getElementById('pyTaxResetStores')
         ?.addEventListener('click', async () => {
             const confirmar = !window.Swal || (await swalPopeyesModal({
                 icon: 'warning',
                 title: 'Restore Popeyes stores',
-                text: 'Locally saved changes will be cleared and the initial catalog will be restored.',
+                text: 'This restores the initial catalog in the shared database, for every user. Manually added stores that are not part of the original list will be lost.',
                 showCancelButton: true,
                 confirmButtonText: 'Restore',
                 cancelButtonText: 'Cancel',
@@ -1131,14 +1225,27 @@ function inicializarPanelTaxRatesPopeyes() {
 
             if (!confirmar) return;
 
-            localStorage.removeItem(POPEYES_TAX_STORE_STORAGE_KEY);
-            renderStoresTaxPopeyes();
-            recalcularTaxReviewPopeyesSiAplica();
-            limpiarFormularioStoreTaxPopeyes();
-            document
-                .getElementById('popeyesTaxStoreDialog')
-                ?.classList.remove('is-form-open');
-            mostrarStatusTaxPopeyes('Catalogo inicial restaurado.', 'success');
+            try {
+                const defaults = (window.POPEYES_DEFAULT_TAX_STORES || [])
+                    .map(normalizarStoreTaxPopeyes);
+                const stores = await window.StoreTaxCatalogApi.replaceAll(POPEYES_RESTAURANT_CODE, defaults);
+
+                POPEYES_TAX_STORE_CACHE = (stores.length ? stores : defaults)
+                    .map(normalizarStoreTaxPopeyes)
+                    .sort((a, b) => a.store - b.store);
+                localStorage.removeItem(POPEYES_TAX_STORE_STORAGE_KEY);
+
+                renderStoresTaxPopeyes();
+                recalcularTaxReviewPopeyesSiAplica();
+                limpiarFormularioStoreTaxPopeyes();
+                document
+                    .getElementById('popeyesTaxStoreDialog')
+                    ?.classList.remove('is-form-open');
+                mostrarStatusTaxPopeyes('Initial catalog restored for all users.', 'success');
+            } catch (error) {
+                console.warn('Catalog could not be restored:', error);
+                mostrarStatusTaxPopeyes('The catalog could not be restored. Try again.', 'error');
+            }
         });
 
     document

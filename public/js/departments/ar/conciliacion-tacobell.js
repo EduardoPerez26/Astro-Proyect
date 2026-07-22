@@ -1112,6 +1112,10 @@ const TB_TAX_STORE_STORAGE_KEY = 'tacoBellTaxStores.v1';
 const TB_TAX_RATE_CACHE_STORAGE_KEY = 'tacoBellTaxRateCache.v1';
 const TB_TAX_RATE_CACHE_DAYS = 30;
 const TB_TAX_RATE_TIMEOUT_MS = 8000;
+const TB_RESTAURANT_CODE = 'taco-bell';
+
+let TB_TAX_STORE_CACHE = null;
+let TB_TAX_STORE_INIT_DONE = false;
 
 const TB_STORE_JURISDICTION_OVERRIDES = {
     13538: 'HERCULES',
@@ -1203,6 +1207,10 @@ function normalizarStoreTaxTacoBell(tienda) {
 }
 
 function cargarStoresTaxTacoBell() {
+    if (Array.isArray(TB_TAX_STORE_CACHE)) {
+        return TB_TAX_STORE_CACHE;
+    }
+
     try {
         const guardadas = JSON.parse(
             localStorage.getItem(TB_TAX_STORE_STORAGE_KEY) || 'null'
@@ -1228,12 +1236,57 @@ function guardarStoresTaxTacoBell(tiendas) {
         .filter(tienda => tienda.store)
         .sort((a, b) => a.store - b.store);
 
+    TB_TAX_STORE_CACHE = limpias;
+
     localStorage.setItem(
         TB_TAX_STORE_STORAGE_KEY,
         JSON.stringify(limpias)
     );
 
     return limpias;
+}
+
+async function inicializarCatalogoTaxTacoBell() {
+    if (TB_TAX_STORE_INIT_DONE) return;
+    TB_TAX_STORE_INIT_DONE = true;
+
+    try {
+        let stores = await window.StoreTaxCatalogApi.list(TB_RESTAURANT_CODE);
+
+        if (!stores.length) {
+            let localStores = null;
+
+            try {
+                const raw = JSON.parse(
+                    localStorage.getItem(TB_TAX_STORE_STORAGE_KEY) || 'null'
+                );
+                if (Array.isArray(raw) && raw.length) {
+                    localStores = raw;
+                }
+            } catch (error) {
+                console.warn('The local Taco Bell store catalog could not be read:', error);
+            }
+
+            if (localStores) {
+                stores = await window.StoreTaxCatalogApi.replaceAll(
+                    TB_RESTAURANT_CODE,
+                    localStores.map(normalizarStoreTaxTacoBell)
+                );
+            }
+        }
+
+        TB_TAX_STORE_CACHE = stores.length
+            ? stores.map(normalizarStoreTaxTacoBell).sort((a, b) => a.store - b.store)
+            : (window.TACO_BELL_DEFAULT_TAX_STORES || [])
+                .map(normalizarStoreTaxTacoBell)
+                .sort((a, b) => a.store - b.store);
+    } catch (error) {
+        console.warn('Store tax catalog could not be loaded from the server; using local cache.', error);
+        TB_TAX_STORE_CACHE = null;
+        TB_TAX_STORE_INIT_DONE = false;
+    }
+
+    renderStoresTaxTacoBell();
 }
 
 function buscarStoreTaxTacoBell(store) {
@@ -1243,7 +1296,7 @@ function buscarStoreTaxTacoBell(store) {
         .find(tienda => tienda.store === numeroStore) || null;
 }
 
-function upsertStoreTaxTacoBell(tienda) {
+async function upsertStoreTaxTacoBell(tienda) {
     const normalizada = normalizarStoreTaxTacoBell(tienda);
 
     if (!normalizada.store) {
@@ -1257,6 +1310,8 @@ function upsertStoreTaxTacoBell(tienda) {
     if (!tieneCoordenadas && !normalizada.taxRate) {
         throw new Error('Add valid coordinates or enter a manual tax rate.');
     }
+
+    await window.StoreTaxCatalogApi.upsert(TB_RESTAURANT_CODE, normalizada);
 
     const tiendas = cargarStoresTaxTacoBell()
         .filter(item => item.store !== normalizada.store);
@@ -1357,6 +1412,14 @@ async function eliminarStoreTaxTacoBell(store) {
 
     if (!confirmado) {
         mostrarStatusTaxTacoBell('Deletion canceled.');
+        return false;
+    }
+
+    try {
+        await window.StoreTaxCatalogApi.remove(TB_RESTAURANT_CODE, numeroStore);
+    } catch (error) {
+        console.warn('Store could not be deleted from the server:', error);
+        mostrarStatusTaxTacoBell('The store could not be deleted. Try again.', 'warning');
         return false;
     }
 
@@ -1676,6 +1739,7 @@ function actualizarPanelTaxTacoBell(codigo = '') {
 
     if (codigoActual === 'taco-bell') {
         renderStoresTaxTacoBell();
+        inicializarCatalogoTaxTacoBell();
     }
 }
 
@@ -1748,15 +1812,22 @@ function leerFormularioStoreTaxTacoBell() {
 
 function mostrarStatusTaxTacoBell(texto, tipo = 'info') {
     const status = document.getElementById('tbTaxStoreStatus');
-    if (!status) return;
+    if (status) {
+        status.textContent = texto;
+        status.dataset.type = tipo;
+    }
 
-    status.textContent = texto;
-    status.dataset.type = tipo;
+    const panelStatus = document.getElementById('tbTaxPanelStatus');
+    if (panelStatus) {
+        panelStatus.textContent = texto;
+        panelStatus.dataset.type = tipo;
+    }
 }
 
 function renderStoresTaxTacoBell() {
     const tbody = document.getElementById('tbTaxStoreBody');
     const count = document.getElementById('tbTaxStoreCount');
+    const panelCount = document.getElementById('tbTaxPanelCount');
 
     if (!tbody) return;
 
@@ -1764,6 +1835,10 @@ function renderStoresTaxTacoBell() {
 
     if (count) {
         count.textContent = `${tiendas.length} configured stores`;
+    }
+
+    if (panelCount) {
+        panelCount.textContent = `${tiendas.length} configured stores`;
     }
 
     tbody.innerHTML = tiendas.map(tienda => `
@@ -1857,11 +1932,18 @@ Do you want to continue?`
     }
 
     const botonRefresh = document.getElementById('tbTaxRefreshRates');
+    const botonPanelRefresh = document.getElementById('tbTaxPanelRefreshRates');
 
     if (botonRefresh) {
         botonRefresh.disabled = true;
         botonRefresh.dataset.originalText = botonRefresh.textContent;
         botonRefresh.textContent = 'Refreshing...';
+    }
+
+    if (botonPanelRefresh) {
+        botonPanelRefresh.disabled = true;
+        botonPanelRefresh.dataset.originalText = botonPanelRefresh.textContent;
+        botonPanelRefresh.textContent = 'Refreshing...';
     }
 
     mostrarStatusTaxTacoBell(
@@ -1905,7 +1987,7 @@ Do you want to continue?`
                     result
                 );
 
-                upsertStoreTaxTacoBell({
+                await upsertStoreTaxTacoBell({
                     ...tienda,
                     taxRate: result.rate
                 });
@@ -1937,6 +2019,12 @@ Do you want to continue?`
             botonRefresh.disabled = false;
             botonRefresh.textContent =
                 botonRefresh.dataset.originalText || 'Refresh CDTFA rates';
+        }
+
+        if (botonPanelRefresh) {
+            botonPanelRefresh.disabled = false;
+            botonPanelRefresh.textContent =
+                botonPanelRefresh.dataset.originalText || 'Refresh rates';
         }
     }
 }
@@ -1997,9 +2085,9 @@ function inicializarPanelTaxRatesTacoBell() {
 
     document
         .getElementById('tbTaxSaveStore')
-        ?.addEventListener('click', () => {
+        ?.addEventListener('click', async () => {
             try {
-                upsertStoreTaxTacoBell(
+                await upsertStoreTaxTacoBell(
                     leerFormularioStoreTaxTacoBell()
                 );
 
@@ -2041,12 +2129,18 @@ function inicializarPanelTaxRatesTacoBell() {
         });
 
     document
+        .getElementById('tbTaxPanelRefreshRates')
+        ?.addEventListener('click', () => {
+            refrescarTaxRatesTacoBell();
+        });
+
+    document
         .getElementById('tbTaxResetStores')
         ?.addEventListener('click', async () => {
             const confirmar = !window.Swal || (await swalTacoBellModal({
                 icon: 'warning',
                 title: 'Restore Taco Bell stores',
-                text: 'Locally saved changes will be cleared and the initial catalog will be restored.',
+                text: 'This restores the initial catalog in the shared database, for every user. Manually added stores that are not part of the original list will be lost.',
                 showCancelButton: true,
                 confirmButtonText: 'Restore',
                 cancelButtonText: 'Cancel',
@@ -2058,14 +2152,27 @@ function inicializarPanelTaxRatesTacoBell() {
 
             if (!confirmar) return;
 
-            localStorage.removeItem(TB_TAX_STORE_STORAGE_KEY);
-            renderStoresTaxTacoBell();
-            recalcularTaxReviewTacoBellSiAplica();
-            limpiarFormularioStoreTaxTacoBell();
-            document
-                .getElementById('tacoBellTaxStoreDialog')
-                ?.classList.remove('is-form-open');
-            mostrarStatusTaxTacoBell('Catalogo inicial restaurado.', 'success');
+            try {
+                const defaults = (window.TACO_BELL_DEFAULT_TAX_STORES || [])
+                    .map(normalizarStoreTaxTacoBell);
+                const stores = await window.StoreTaxCatalogApi.replaceAll(TB_RESTAURANT_CODE, defaults);
+
+                TB_TAX_STORE_CACHE = (stores.length ? stores : defaults)
+                    .map(normalizarStoreTaxTacoBell)
+                    .sort((a, b) => a.store - b.store);
+                localStorage.removeItem(TB_TAX_STORE_STORAGE_KEY);
+
+                renderStoresTaxTacoBell();
+                recalcularTaxReviewTacoBellSiAplica();
+                limpiarFormularioStoreTaxTacoBell();
+                document
+                    .getElementById('tacoBellTaxStoreDialog')
+                    ?.classList.remove('is-form-open');
+                mostrarStatusTaxTacoBell('Initial catalog restored for all users.', 'success');
+            } catch (error) {
+                console.warn('Catalog could not be restored:', error);
+                mostrarStatusTaxTacoBell('The catalog could not be restored. Try again.', 'error');
+            }
         });
 
     document

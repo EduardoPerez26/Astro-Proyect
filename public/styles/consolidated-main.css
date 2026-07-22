@@ -19816,6 +19816,13 @@ html body :is(.store-card-disabled,
     font-size: 12px;
 }
 
+.bk-tax-store-panel-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
 .bk-tax-store-dialog::backdrop {
     background: rgba(15, 15, 15, 0.58);
     backdrop-filter: blur(7px);
@@ -35335,7 +35342,7 @@ html body :is(.metric-card,
     .access-metric-card,
     .permission-summary-grid article) :is([class*="label"],
     span:first-child) {
-    color: #fff;
+    color: var(--corp2-muted);
     font-size: 8px;
     font-weight: 850;
     letter-spacing: .07em;

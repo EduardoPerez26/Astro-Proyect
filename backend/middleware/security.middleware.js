@@ -1,4 +1,5 @@
 const crypto = require('crypto');
+const jwt = require('jsonwebtoken');
 
 const BLOCKED_KEYS = new Set(['__proto__', 'prototype', 'constructor']);
 const rateLimiterRegistry = [];
@@ -81,6 +82,18 @@ function sanitizeRequest(req, res, next) {
     next();
 }
 
+function resolveRateLimitIdentity(req) {
+    const authHeader = req.headers.authorization || '';
+    if (!authHeader.startsWith('Bearer ')) return null;
+
+    try {
+        const decoded = jwt.decode(authHeader.slice(7).trim());
+        return decoded?.id ? `user:${decoded.id}` : null;
+    } catch {
+        return null;
+    }
+}
+
 function createRateLimiter({
     windowMs = 15 * 60 * 1000,
     max = 300,
@@ -110,7 +123,8 @@ function createRateLimiter({
         const ip = String(req.headers['x-forwarded-for'] || '')
             .split(',')[0]
             .trim() || req.ip || req.socket?.remoteAddress || 'unknown';
-        const key = `${keyPrefix}:${ip}`;
+        const identity = resolveRateLimitIdentity(req) || `ip:${ip}`;
+        const key = `${keyPrefix}:${identity}`;
         const current = buckets.get(key);
         const bucket = !current || current.resetAt <= now
             ? { count: 0, resetAt: now + windowMs }
