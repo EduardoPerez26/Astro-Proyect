@@ -1029,4 +1029,137 @@ router.delete('/entities/:id', ...access('propertyManagement', 'eliminar'), asyn
     }
 });
 
+
+function normalizeRequestRow(row) {
+    return {
+        id: String(row.id),
+        title: row.title,
+        property: row.property,
+        category: row.category,
+        priority: row.priority,
+        dueDate: row.due_date
+            ? new Date(row.due_date).toISOString().slice(0, 10)
+            : '',
+        notes: row.notes || '',
+        stage: row.stage,
+        createdAt: row.fecha_creacion
+    };
+}
+
+router.get('/requests', ...access('propertyManagement', 'ver'), async (req, res) => {
+    try {
+        const [rows] = await pool.query(
+            `SELECT * FROM property_management_requests ORDER BY fecha_creacion DESC`
+        );
+
+        res.json({
+            success: true,
+            requests: rows.map(normalizeRequestRow)
+        });
+    } catch (error) {
+        console.error('Property Management requests could not be loaded:', error);
+        if (tableSetupMessage(error, res)) return;
+        res.status(500).json({ success: false, message: 'Requests could not be loaded' });
+    }
+});
+
+router.post('/requests', ...access('propertyManagement', 'crear'), async (req, res) => {
+    try {
+        const title = String(req.body.title || '').trim();
+        const property = String(req.body.property || '').trim();
+
+        if (!title || !property) {
+            return res.status(400).json({
+                success: false,
+                message: 'Title and property are required'
+            });
+        }
+
+        const [result] = await pool.query(
+            `INSERT INTO property_management_requests
+             (usuario_id, departamento_id, title, property, category, priority, due_date, notes, stage)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'intake')`,
+            [
+                getUserId(req),
+                getDepartmentId(req),
+                title,
+                property,
+                String(req.body.category || 'Other').trim(),
+                String(req.body.priority || 'Normal').trim(),
+                req.body.dueDate || null,
+                String(req.body.notes || '').trim() || null
+            ]
+        );
+
+        const [rows] = await pool.query(
+            `SELECT * FROM property_management_requests WHERE id = ?`,
+            [result.insertId]
+        );
+
+        res.status(201).json({
+            success: true,
+            request: normalizeRequestRow(rows[0])
+        });
+    } catch (error) {
+        console.error('Property Management request could not be created:', error);
+        if (tableSetupMessage(error, res)) return;
+        res.status(500).json({ success: false, message: 'Request could not be created' });
+    }
+});
+
+router.put('/requests/:id', ...access('propertyManagement', 'editar'), async (req, res) => {
+    try {
+        const [result] = await pool.query(
+            `UPDATE property_management_requests SET
+                title = COALESCE(?, title),
+                property = COALESCE(?, property),
+                category = COALESCE(?, category),
+                priority = COALESCE(?, priority),
+                due_date = ?,
+                notes = ?,
+                stage = COALESCE(?, stage)
+             WHERE id = ?`,
+            [
+                req.body.title ?? null,
+                req.body.property ?? null,
+                req.body.category ?? null,
+                req.body.priority ?? null,
+                req.body.dueDate || null,
+                req.body.notes ?? null,
+                req.body.stage ?? null,
+                req.params.id
+            ]
+        );
+
+        if (!result.affectedRows) {
+            return res.status(404).json({ success: false, message: 'Request not found' });
+        }
+
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Property Management request could not be updated:', error);
+        if (tableSetupMessage(error, res)) return;
+        res.status(500).json({ success: false, message: 'Request could not be updated' });
+    }
+});
+
+router.delete('/requests/:id', ...access('propertyManagement', 'eliminar'), async (req, res) => {
+    try {
+        const [result] = await pool.query(
+            `DELETE FROM property_management_requests WHERE id = ?`,
+            [req.params.id]
+        );
+
+        if (!result.affectedRows) {
+            return res.status(404).json({ success: false, message: 'Request not found' });
+        }
+
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Property Management request could not be deleted:', error);
+        if (tableSetupMessage(error, res)) return;
+        res.status(500).json({ success: false, message: 'Request could not be deleted' });
+    }
+});
+
 module.exports = router;

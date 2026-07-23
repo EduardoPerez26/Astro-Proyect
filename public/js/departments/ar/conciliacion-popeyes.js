@@ -225,14 +225,10 @@ function formatoPorcentajePopeyes(valor) {
 }
 
 const POPEYES_TAX_RATE_DIRECT_API_BASE_URL = 'https://services.maps.cdtfa.ca.gov/api/taxrate';
-const POPEYES_TAX_STORE_STORAGE_KEY = 'popeyesTaxStores.v1';
 const POPEYES_TAX_RATE_CACHE_STORAGE_KEY = 'popeyesTaxRateCache.v1';
 const POPEYES_TAX_RATE_CACHE_DAYS = 30;
 const POPEYES_TAX_RATE_TIMEOUT_MS = 8000;
 const POPEYES_RESTAURANT_CODE = 'popeyes';
-
-let POPEYES_TAX_STORE_CACHE = null;
-let POPEYES_TAX_STORE_INIT_DONE = false;
 
 const POPEYES_STORE_JURISDICTION_OVERRIDES = {
     13538: 'HERCULES',
@@ -240,145 +236,43 @@ const POPEYES_STORE_JURISDICTION_OVERRIDES = {
     2152: 'UNINCORPORATED AREA-ALAMEDA'
 };
 
+const popeyesTaxCatalog = window.createTaxStoreCatalog({
+    restaurantCode: POPEYES_RESTAURANT_CODE,
+    rateCacheStorageKey: POPEYES_TAX_RATE_CACHE_STORAGE_KEY,
+    rateCacheDays: POPEYES_TAX_RATE_CACHE_DAYS,
+    jurisdictionOverrides: POPEYES_STORE_JURISDICTION_OVERRIDES,
+    rateFallback: POPEYES_TAX_RATES,
+    includeState: true,
+    defaultState: 'CA',
+    getDefaults: () => window.POPEYES_DEFAULT_TAX_STORES || []
+});
+
 function normalizarStoreNumberPopeyes(store) {
-    const numero = Number(String(store ?? '').replace(/\D/g, ''));
-    return Number.isFinite(numero) ? numero : 0;
+    return popeyesTaxCatalog.normalizeStoreNumber(store);
 }
 
 function normalizarTaxRateDecimalPopeyes(valor) {
-    if (valor === null || valor === undefined || valor === '') return 0;
-
-    const numero = Number(
-        String(valor).replace('%', '').replace(',', '.').trim()
-    );
-
-    if (!Number.isFinite(numero)) return 0;
-
-    return numero > 1 ? numero / 100 : numero;
+    return popeyesTaxCatalog.normalizeTaxRateDecimal(valor);
 }
 
 function parsearCoordenadasPopeyes(valor) {
-    if (!valor) return { latitude: null, longitude: null };
-
-    const partes = String(valor).split(',').map(parte => parte.trim());
-    if (partes.length !== 2) return { latitude: null, longitude: null };
-
-    const latitude = Number(partes[0]);
-    const longitude = Number(partes[1]);
-
-    return {
-        latitude: Number.isFinite(latitude) ? latitude : null,
-        longitude: Number.isFinite(longitude) ? longitude : null
-    };
+    return popeyesTaxCatalog.parseCoordinates(valor);
 }
 
 function normalizarStoreTaxPopeyes(tienda) {
-    const store = normalizarStoreNumberPopeyes(tienda.store);
-
-    return {
-        store,
-        address: String(tienda.address || '').trim(),
-        city: String(tienda.city || '').trim(),
-        state: String(tienda.state || 'CA').trim().toUpperCase(),
-        zip: String(tienda.zip || '').trim(),
-        latitude: Number.isFinite(Number(tienda.latitude))
-            ? Number(tienda.latitude)
-            : null,
-        longitude: Number.isFinite(Number(tienda.longitude))
-            ? Number(tienda.longitude)
-            : null,
-        preferredJurisdiction: String(
-            tienda.preferredJurisdiction ||
-            POPEYES_STORE_JURISDICTION_OVERRIDES[store] ||
-            ''
-        ).trim(),
-        taxRate: normalizarTaxRateDecimalPopeyes(
-            tienda.taxRate ?? POPEYES_TAX_RATES[store] ?? 0
-        )
-    };
+    return popeyesTaxCatalog.normalizeStoreRecord(tienda);
 }
 
 function cargarStoresTaxPopeyes() {
-    if (Array.isArray(POPEYES_TAX_STORE_CACHE)) {
-        return POPEYES_TAX_STORE_CACHE;
-    }
-
-    try {
-        const guardadas = JSON.parse(
-            localStorage.getItem(POPEYES_TAX_STORE_STORAGE_KEY) || 'null'
-        );
-
-        if (Array.isArray(guardadas)) {
-            return guardadas
-                .map(normalizarStoreTaxPopeyes)
-                .filter(tienda => tienda.store);
-        }
-    } catch (error) {
-        console.warn('The local Popeyes store catalog could not be read:', error);
-    }
-
-    return (window.POPEYES_DEFAULT_TAX_STORES || [])
-        .map(normalizarStoreTaxPopeyes)
-        .filter(tienda => tienda.store);
+    return popeyesTaxCatalog.cargar();
 }
 
 function guardarStoresTaxPopeyes(tiendas) {
-    const limpias = tiendas
-        .map(normalizarStoreTaxPopeyes)
-        .filter(tienda => tienda.store)
-        .sort((a, b) => a.store - b.store);
-
-    POPEYES_TAX_STORE_CACHE = limpias;
-
-    localStorage.setItem(
-        POPEYES_TAX_STORE_STORAGE_KEY,
-        JSON.stringify(limpias)
-    );
-
-    return limpias;
+    return popeyesTaxCatalog.guardar(tiendas);
 }
 
-async function inicializarCatalogoTaxPopeyes() {
-    if (POPEYES_TAX_STORE_INIT_DONE) return;
-    POPEYES_TAX_STORE_INIT_DONE = true;
-
-    try {
-        let stores = await window.StoreTaxCatalogApi.list(POPEYES_RESTAURANT_CODE);
-
-        if (!stores.length) {
-            let localStores = null;
-
-            try {
-                const raw = JSON.parse(
-                    localStorage.getItem(POPEYES_TAX_STORE_STORAGE_KEY) || 'null'
-                );
-                if (Array.isArray(raw) && raw.length) {
-                    localStores = raw;
-                }
-            } catch (error) {
-                console.warn('The local Popeyes store catalog could not be read:', error);
-            }
-
-            if (localStores) {
-                stores = await window.StoreTaxCatalogApi.replaceAll(
-                    POPEYES_RESTAURANT_CODE,
-                    localStores.map(normalizarStoreTaxPopeyes)
-                );
-            }
-        }
-
-        POPEYES_TAX_STORE_CACHE = stores.length
-            ? stores.map(normalizarStoreTaxPopeyes).sort((a, b) => a.store - b.store)
-            : (window.POPEYES_DEFAULT_TAX_STORES || [])
-                .map(normalizarStoreTaxPopeyes)
-                .sort((a, b) => a.store - b.store);
-    } catch (error) {
-        console.warn('Store tax catalog could not be loaded from the server; using local cache.', error);
-        POPEYES_TAX_STORE_CACHE = null;
-        POPEYES_TAX_STORE_INIT_DONE = false;
-    }
-
-    renderStoresTaxPopeyes();
+function inicializarCatalogoTaxPopeyes() {
+    return popeyesTaxCatalog.inicializarCatalogo(renderStoresTaxPopeyes);
 }
 
 function buscarStoreTaxPopeyes(store) {
@@ -388,28 +282,8 @@ function buscarStoreTaxPopeyes(store) {
         .find(tienda => tienda.store === numeroStore) || null;
 }
 
-async function upsertStoreTaxPopeyes(tienda) {
-    const normalizada = normalizarStoreTaxPopeyes(tienda);
-
-    if (!normalizada.store) {
-        throw new Error('The store must have a valid number');
-    }
-
-    const tieneCoordenadas =
-        Number.isFinite(normalizada.latitude) &&
-        Number.isFinite(normalizada.longitude);
-
-    if (!tieneCoordenadas && !normalizada.taxRate) {
-        throw new Error('Add valid coordinates or enter a manual tax rate.');
-    }
-
-    await window.StoreTaxCatalogApi.upsert(POPEYES_RESTAURANT_CODE, normalizada);
-
-    const tiendas = cargarStoresTaxPopeyes()
-        .filter(item => item.store !== normalizada.store);
-
-    tiendas.push(normalizada);
-    return guardarStoresTaxPopeyes(tiendas);
+function upsertStoreTaxPopeyes(tienda) {
+    return popeyesTaxCatalog.upsert(tienda);
 }
 
 function asegurarSweetAlertSobreModalPopeyes() {
@@ -508,7 +382,7 @@ async function eliminarStoreTaxPopeyes(store) {
     }
 
     try {
-        await window.StoreTaxCatalogApi.remove(POPEYES_RESTAURANT_CODE, numeroStore);
+        await popeyesTaxCatalog.eliminarRemoto(numeroStore);
     } catch (error) {
         console.warn('Store could not be deleted from the server:', error);
         mostrarStatusTaxPopeyes('The store could not be deleted. Try again.', 'warning');
@@ -518,16 +392,7 @@ async function eliminarStoreTaxPopeyes(store) {
     guardarStoresTaxPopeyes(
         tiendas.filter(item => item.store !== numeroStore)
     );
-
-    const cache = cargarCacheTaxRatePopeyes();
-
-    Object.keys(cache).forEach(clave => {
-        if (clave.startsWith(`${numeroStore}|`)) {
-            delete cache[clave];
-        }
-    });
-
-    guardarCacheTaxRatePopeyes(cache);
+    popeyesTaxCatalog.limpiarCacheRateParaStore(numeroStore);
 
     renderStoresTaxPopeyes();
     recalcularTaxReviewPopeyesSiAplica();
@@ -537,20 +402,11 @@ async function eliminarStoreTaxPopeyes(store) {
 }
 
 function cargarCacheTaxRatePopeyes() {
-    try {
-        return JSON.parse(
-            localStorage.getItem(POPEYES_TAX_RATE_CACHE_STORAGE_KEY) || '{}'
-        );
-    } catch {
-        return {};
-    }
+    return popeyesTaxCatalog.cargarCacheRate();
 }
 
 function guardarCacheTaxRatePopeyes(cache) {
-    localStorage.setItem(
-        POPEYES_TAX_RATE_CACHE_STORAGE_KEY,
-        JSON.stringify(cache)
-    );
+    return popeyesTaxCatalog.guardarCacheRate(cache);
 }
 
 function crearClaveCacheTaxRatePopeyes(store, latitude, longitude) {
@@ -562,29 +418,11 @@ function crearClaveCacheTaxRatePopeyes(store, latitude, longitude) {
 }
 
 function obtenerCacheTaxRatePopeyes(store, latitude, longitude) {
-    const cache = cargarCacheTaxRatePopeyes();
-    const item = cache[crearClaveCacheTaxRatePopeyes(store, latitude, longitude)];
-
-    if (!item?.rate || !item?.timestamp) return null;
-
-    const edadDias =
-        (Date.now() - new Date(item.timestamp).getTime()) / 86400000;
-
-    if (edadDias > POPEYES_TAX_RATE_CACHE_DAYS) return null;
-
-    return item;
+    return popeyesTaxCatalog.obtenerCacheRate(store, latitude, longitude);
 }
 
 function guardarCacheStoreTaxRatePopeyes(store, latitude, longitude, data) {
-    const cache = cargarCacheTaxRatePopeyes();
-
-    cache[crearClaveCacheTaxRatePopeyes(store, latitude, longitude)] = {
-        ...data,
-        rate: normalizarTaxRateDecimalPopeyes(data.rate),
-        timestamp: new Date().toISOString()
-    };
-
-    guardarCacheTaxRatePopeyes(cache);
+    return popeyesTaxCatalog.guardarCacheStoreRate(store, latitude, longitude, data);
 }
 
 function elegirResultadoCDTFAPopeyes(apiData, store, preferredJurisdiction = '') {
@@ -1226,14 +1064,7 @@ function inicializarPanelTaxRatesPopeyes() {
             if (!confirmar) return;
 
             try {
-                const defaults = (window.POPEYES_DEFAULT_TAX_STORES || [])
-                    .map(normalizarStoreTaxPopeyes);
-                const stores = await window.StoreTaxCatalogApi.replaceAll(POPEYES_RESTAURANT_CODE, defaults);
-
-                POPEYES_TAX_STORE_CACHE = (stores.length ? stores : defaults)
-                    .map(normalizarStoreTaxPopeyes)
-                    .sort((a, b) => a.store - b.store);
-                localStorage.removeItem(POPEYES_TAX_STORE_STORAGE_KEY);
+                await popeyesTaxCatalog.restoreDefaults();
 
                 renderStoresTaxPopeyes();
                 recalcularTaxReviewPopeyesSiAplica();

@@ -39,6 +39,39 @@ const DEFAULT_OLLAMA_MODEL = 'llama3.2';
 const MAX_HISTORY_MESSAGES = 12;
 const MAX_MESSAGE_LENGTH = 3000;
 
+// AI providers occasionally return transient capacity errors (model overloaded,
+// rate limited). These are worth a couple of short retries before giving up,
+// since the provider itself is telling us the spike is usually temporary.
+const RETRYABLE_STATUS = new Set([408, 425, 429, 500, 502, 503, 504]);
+const RETRY_ATTEMPTS = 2;
+const RETRY_BASE_DELAY_MS = 700;
+
+function delay(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function fetchJsonWithRetry(url, options) {
+    let response;
+    let data;
+
+    for (let attempt = 0; attempt <= RETRY_ATTEMPTS; attempt++) {
+        response = await fetch(url, options);
+        data = await response.json().catch(() => ({}));
+
+        if (response.ok) return { response, data };
+        if (!RETRYABLE_STATUS.has(response.status) || attempt === RETRY_ATTEMPTS) break;
+
+        await delay(RETRY_BASE_DELAY_MS * (attempt + 1));
+    }
+
+    return { response, data };
+}
+
+// Provider error bodies (rate limits, model overloaded, invalid API key, etc.)
+// are useful for our logs but should never be echoed verbatim to the chat
+// widget — they can leak the provider/model name and internal error codes.
+const GENERIC_PROVIDER_ERROR_MESSAGE = 'Franchie is a bit overloaded right now. Please try again in a moment.';
+
 router.use(verificarToken);
 
 function getSystemInstruction() {
@@ -119,7 +152,7 @@ async function requestOpenAi(input, req) {
     let conversation = input.slice();
 
     for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
-        const response = await fetch(OPENAI_RESPONSES_URL, {
+        const { response, data } = await fetchJsonWithRetry(OPENAI_RESPONSES_URL, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -134,12 +167,10 @@ async function requestOpenAi(input, req) {
             })
         });
 
-        const data = await response.json().catch(() => ({}));
-
         if (!response.ok) {
             console.error('OpenAI chatbot error:', data);
 
-            const error = new Error(data.error?.message || 'The assistant could not answer right now');
+            const error = new Error(GENERIC_PROVIDER_ERROR_MESSAGE);
             error.status = response.status;
             throw error;
         }
@@ -202,7 +233,7 @@ async function requestGemini(input, req) {
         };
         if (previousInteractionId) body.previous_interaction_id = previousInteractionId;
 
-        const response = await fetch(GEMINI_INTERACTIONS_URL, {
+        const { response, data } = await fetchJsonWithRetry(GEMINI_INTERACTIONS_URL, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -211,12 +242,10 @@ async function requestGemini(input, req) {
             body: JSON.stringify(body)
         });
 
-        const data = await response.json().catch(() => ({}));
-
         if (!response.ok) {
             console.error('Gemini chatbot error:', data);
 
-            const error = new Error(data.error?.message || 'The assistant could not answer right now');
+            const error = new Error(GENERIC_PROVIDER_ERROR_MESSAGE);
             error.status = response.status;
             throw error;
         }
@@ -273,7 +302,7 @@ async function requestClaude(input, req) {
     let conversation = input.slice();
 
     for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
-        const response = await fetch(ANTHROPIC_MESSAGES_URL, {
+        const { response, data } = await fetchJsonWithRetry(ANTHROPIC_MESSAGES_URL, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -289,12 +318,10 @@ async function requestClaude(input, req) {
             })
         });
 
-        const data = await response.json().catch(() => ({}));
-
         if (!response.ok) {
             console.error('Claude chatbot error:', data);
 
-            const error = new Error(data.error?.message || 'Claude could not answer right now');
+            const error = new Error(GENERIC_PROVIDER_ERROR_MESSAGE);
             error.status = response.status;
             throw error;
         }
@@ -338,7 +365,7 @@ async function requestClaude(input, req) {
 async function requestOllama(input) {
     const ollamaUrl = process.env.OLLAMA_URL || OLLAMA_CHAT_URL;
 
-    const response = await fetch(ollamaUrl, {
+    const { response, data } = await fetchJsonWithRetry(ollamaUrl, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -356,12 +383,10 @@ async function requestOllama(input) {
         })
     });
 
-    const data = await response.json().catch(() => ({}));
-
     if (!response.ok) {
         console.error('Ollama chatbot error:', data);
 
-        const error = new Error(data.error || 'Ollama could not answer right now');
+        const error = new Error(GENERIC_PROVIDER_ERROR_MESSAGE);
         error.status = response.status;
         throw error;
     }

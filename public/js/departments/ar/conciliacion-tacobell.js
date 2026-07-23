@@ -1108,14 +1108,10 @@ function asegurarPestanaExpectedDepositsTacoBell() {
 }
 
 const TB_TAX_RATE_DIRECT_API_BASE_URL = 'https://services.maps.cdtfa.ca.gov/api/taxrate';
-const TB_TAX_STORE_STORAGE_KEY = 'tacoBellTaxStores.v1';
 const TB_TAX_RATE_CACHE_STORAGE_KEY = 'tacoBellTaxRateCache.v1';
 const TB_TAX_RATE_CACHE_DAYS = 30;
 const TB_TAX_RATE_TIMEOUT_MS = 8000;
 const TB_RESTAURANT_CODE = 'taco-bell';
-
-let TB_TAX_STORE_CACHE = null;
-let TB_TAX_STORE_INIT_DONE = false;
 
 const TB_STORE_JURISDICTION_OVERRIDES = {
     13538: 'HERCULES',
@@ -1144,36 +1140,27 @@ const TB_TAX_RATE_FALLBACK = {
     32952: 0.079
 };
 
+const tbTaxCatalog = window.createTaxStoreCatalog({
+    restaurantCode: TB_RESTAURANT_CODE,
+    rateCacheStorageKey: TB_TAX_RATE_CACHE_STORAGE_KEY,
+    rateCacheDays: TB_TAX_RATE_CACHE_DAYS,
+    jurisdictionOverrides: TB_STORE_JURISDICTION_OVERRIDES,
+    rateFallback: TB_TAX_RATE_FALLBACK,
+    includeState: true,
+    defaultState: '',
+    getDefaults: () => window.TACO_BELL_DEFAULT_TAX_STORES || []
+});
+
 function normalizarStoreNumberTacoBell(store) {
-    const numero = Number(String(store ?? '').replace(/\D/g, ''));
-    return Number.isFinite(numero) ? numero : 0;
+    return tbTaxCatalog.normalizeStoreNumber(store);
 }
 
 function normalizarTaxRateDecimalTacoBell(valor) {
-    if (valor === null || valor === undefined || valor === '') return 0;
-
-    const numero = Number(
-        String(valor).replace('%', '').replace(',', '.').trim()
-    );
-
-    if (!Number.isFinite(numero)) return 0;
-
-    return numero > 1 ? numero / 100 : numero;
+    return tbTaxCatalog.normalizeTaxRateDecimal(valor);
 }
 
 function parsearCoordenadasTacoBell(valor) {
-    if (!valor) return { latitude: null, longitude: null };
-
-    const partes = String(valor).split(',').map(parte => parte.trim());
-    if (partes.length !== 2) return { latitude: null, longitude: null };
-
-    const latitude = Number(partes[0]);
-    const longitude = Number(partes[1]);
-
-    return {
-        latitude: Number.isFinite(latitude) ? latitude : null,
-        longitude: Number.isFinite(longitude) ? longitude : null
-    };
+    return tbTaxCatalog.parseCoordinates(valor);
 }
 
 function formatearPorcentajeTacoBell(valor) {
@@ -1181,112 +1168,19 @@ function formatearPorcentajeTacoBell(valor) {
 }
 
 function normalizarStoreTaxTacoBell(tienda) {
-    const store = normalizarStoreNumberTacoBell(tienda.store);
-
-    return {
-        store,
-        address: String(tienda.address || '').trim(),
-        city: String(tienda.city || '').trim(),
-        state: String(tienda.state || '').trim().toUpperCase(),
-        zip: String(tienda.zip || '').trim(),
-        latitude: Number.isFinite(Number(tienda.latitude))
-            ? Number(tienda.latitude)
-            : null,
-        longitude: Number.isFinite(Number(tienda.longitude))
-            ? Number(tienda.longitude)
-            : null,
-        preferredJurisdiction: String(
-            tienda.preferredJurisdiction ||
-            TB_STORE_JURISDICTION_OVERRIDES[store] ||
-            ''
-        ).trim(),
-        taxRate: normalizarTaxRateDecimalTacoBell(
-            tienda.taxRate ?? TB_TAX_RATE_FALLBACK[store] ?? 0
-        )
-    };
+    return tbTaxCatalog.normalizeStoreRecord(tienda);
 }
 
 function cargarStoresTaxTacoBell() {
-    if (Array.isArray(TB_TAX_STORE_CACHE)) {
-        return TB_TAX_STORE_CACHE;
-    }
-
-    try {
-        const guardadas = JSON.parse(
-            localStorage.getItem(TB_TAX_STORE_STORAGE_KEY) || 'null'
-        );
-
-        if (Array.isArray(guardadas)) {
-            return guardadas
-                .map(normalizarStoreTaxTacoBell)
-                .filter(tienda => tienda.store);
-        }
-    } catch (error) {
-        console.warn('The local Taco Bell store catalog could not be read:', error);
-    }
-
-    return (window.TACO_BELL_DEFAULT_TAX_STORES || [])
-        .map(normalizarStoreTaxTacoBell)
-        .filter(tienda => tienda.store);
+    return tbTaxCatalog.cargar();
 }
 
 function guardarStoresTaxTacoBell(tiendas) {
-    const limpias = tiendas
-        .map(normalizarStoreTaxTacoBell)
-        .filter(tienda => tienda.store)
-        .sort((a, b) => a.store - b.store);
-
-    TB_TAX_STORE_CACHE = limpias;
-
-    localStorage.setItem(
-        TB_TAX_STORE_STORAGE_KEY,
-        JSON.stringify(limpias)
-    );
-
-    return limpias;
+    return tbTaxCatalog.guardar(tiendas);
 }
 
-async function inicializarCatalogoTaxTacoBell() {
-    if (TB_TAX_STORE_INIT_DONE) return;
-    TB_TAX_STORE_INIT_DONE = true;
-
-    try {
-        let stores = await window.StoreTaxCatalogApi.list(TB_RESTAURANT_CODE);
-
-        if (!stores.length) {
-            let localStores = null;
-
-            try {
-                const raw = JSON.parse(
-                    localStorage.getItem(TB_TAX_STORE_STORAGE_KEY) || 'null'
-                );
-                if (Array.isArray(raw) && raw.length) {
-                    localStores = raw;
-                }
-            } catch (error) {
-                console.warn('The local Taco Bell store catalog could not be read:', error);
-            }
-
-            if (localStores) {
-                stores = await window.StoreTaxCatalogApi.replaceAll(
-                    TB_RESTAURANT_CODE,
-                    localStores.map(normalizarStoreTaxTacoBell)
-                );
-            }
-        }
-
-        TB_TAX_STORE_CACHE = stores.length
-            ? stores.map(normalizarStoreTaxTacoBell).sort((a, b) => a.store - b.store)
-            : (window.TACO_BELL_DEFAULT_TAX_STORES || [])
-                .map(normalizarStoreTaxTacoBell)
-                .sort((a, b) => a.store - b.store);
-    } catch (error) {
-        console.warn('Store tax catalog could not be loaded from the server; using local cache.', error);
-        TB_TAX_STORE_CACHE = null;
-        TB_TAX_STORE_INIT_DONE = false;
-    }
-
-    renderStoresTaxTacoBell();
+function inicializarCatalogoTaxTacoBell() {
+    return tbTaxCatalog.inicializarCatalogo(renderStoresTaxTacoBell);
 }
 
 function buscarStoreTaxTacoBell(store) {
@@ -1296,28 +1190,8 @@ function buscarStoreTaxTacoBell(store) {
         .find(tienda => tienda.store === numeroStore) || null;
 }
 
-async function upsertStoreTaxTacoBell(tienda) {
-    const normalizada = normalizarStoreTaxTacoBell(tienda);
-
-    if (!normalizada.store) {
-        throw new Error('The store must have a valid number');
-    }
-
-    const tieneCoordenadas =
-        Number.isFinite(normalizada.latitude) &&
-        Number.isFinite(normalizada.longitude);
-
-    if (!tieneCoordenadas && !normalizada.taxRate) {
-        throw new Error('Add valid coordinates or enter a manual tax rate.');
-    }
-
-    await window.StoreTaxCatalogApi.upsert(TB_RESTAURANT_CODE, normalizada);
-
-    const tiendas = cargarStoresTaxTacoBell()
-        .filter(item => item.store !== normalizada.store);
-
-    tiendas.push(normalizada);
-    return guardarStoresTaxTacoBell(tiendas);
+function upsertStoreTaxTacoBell(tienda) {
+    return tbTaxCatalog.upsert(tienda);
 }
 
 function asegurarSweetAlertSobreModalTacoBell() {
@@ -1416,7 +1290,7 @@ async function eliminarStoreTaxTacoBell(store) {
     }
 
     try {
-        await window.StoreTaxCatalogApi.remove(TB_RESTAURANT_CODE, numeroStore);
+        await tbTaxCatalog.eliminarRemoto(numeroStore);
     } catch (error) {
         console.warn('Store could not be deleted from the server:', error);
         mostrarStatusTaxTacoBell('The store could not be deleted. Try again.', 'warning');
@@ -1426,16 +1300,7 @@ async function eliminarStoreTaxTacoBell(store) {
     guardarStoresTaxTacoBell(
         tiendas.filter(item => item.store !== numeroStore)
     );
-
-    const cache = cargarCacheTaxRateTacoBell();
-
-    Object.keys(cache).forEach(clave => {
-        if (clave.startsWith(`${numeroStore}|`)) {
-            delete cache[clave];
-        }
-    });
-
-    guardarCacheTaxRateTacoBell(cache);
+    tbTaxCatalog.limpiarCacheRateParaStore(numeroStore);
 
     renderStoresTaxTacoBell();
     recalcularTaxReviewTacoBellSiAplica();
@@ -1445,20 +1310,11 @@ async function eliminarStoreTaxTacoBell(store) {
 }
 
 function cargarCacheTaxRateTacoBell() {
-    try {
-        return JSON.parse(
-            localStorage.getItem(TB_TAX_RATE_CACHE_STORAGE_KEY) || '{}'
-        );
-    } catch {
-        return {};
-    }
+    return tbTaxCatalog.cargarCacheRate();
 }
 
 function guardarCacheTaxRateTacoBell(cache) {
-    localStorage.setItem(
-        TB_TAX_RATE_CACHE_STORAGE_KEY,
-        JSON.stringify(cache)
-    );
+    return tbTaxCatalog.guardarCacheRate(cache);
 }
 
 function crearClaveCacheTaxRateTacoBell(store, latitude, longitude) {
@@ -1470,29 +1326,11 @@ function crearClaveCacheTaxRateTacoBell(store, latitude, longitude) {
 }
 
 function obtenerCacheTaxRateTacoBell(store, latitude, longitude) {
-    const cache = cargarCacheTaxRateTacoBell();
-    const item = cache[crearClaveCacheTaxRateTacoBell(store, latitude, longitude)];
-
-    if (!item?.rate || !item?.timestamp) return null;
-
-    const edadDias =
-        (Date.now() - new Date(item.timestamp).getTime()) / 86400000;
-
-    if (edadDias > TB_TAX_RATE_CACHE_DAYS) return null;
-
-    return item;
+    return tbTaxCatalog.obtenerCacheRate(store, latitude, longitude);
 }
 
 function guardarCacheStoreTaxRateTacoBell(store, latitude, longitude, data) {
-    const cache = cargarCacheTaxRateTacoBell();
-
-    cache[crearClaveCacheTaxRateTacoBell(store, latitude, longitude)] = {
-        ...data,
-        rate: normalizarTaxRateDecimalTacoBell(data.rate),
-        timestamp: new Date().toISOString()
-    };
-
-    guardarCacheTaxRateTacoBell(cache);
+    return tbTaxCatalog.guardarCacheStoreRate(store, latitude, longitude, data);
 }
 
 function elegirResultadoCDTFATacoBell(apiData, store, preferredJurisdiction = '') {
@@ -2153,14 +1991,7 @@ function inicializarPanelTaxRatesTacoBell() {
             if (!confirmar) return;
 
             try {
-                const defaults = (window.TACO_BELL_DEFAULT_TAX_STORES || [])
-                    .map(normalizarStoreTaxTacoBell);
-                const stores = await window.StoreTaxCatalogApi.replaceAll(TB_RESTAURANT_CODE, defaults);
-
-                TB_TAX_STORE_CACHE = (stores.length ? stores : defaults)
-                    .map(normalizarStoreTaxTacoBell)
-                    .sort((a, b) => a.store - b.store);
-                localStorage.removeItem(TB_TAX_STORE_STORAGE_KEY);
+                await tbTaxCatalog.restoreDefaults();
 
                 renderStoresTaxTacoBell();
                 recalcularTaxReviewTacoBellSiAplica();

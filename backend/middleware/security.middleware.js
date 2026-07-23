@@ -230,6 +230,7 @@ module.exports = {
     createRateLimiter,
     getRateLimiterStats,
     csrfOriginGuard,
-    uploadStaticHeaders
+    uploadStaticHeaders,
+    resolveRateLimitIdentity
 };
 

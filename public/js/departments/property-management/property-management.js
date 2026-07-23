@@ -3,7 +3,6 @@
 
     console.info('[XBFS PM] property-management.js loaded: 2026-07-09-prior-year-forward-quarter-review-v13');
 
-    const STORAGE_KEY = 'xbfs.propertyManagement.requests.v1';
     const SCHEDULE_HEADERS = [
         'Entry / Payee',
         'Location',
@@ -296,7 +295,7 @@
     }
 
     document.addEventListener('DOMContentLoaded', function () {
-        requests = loadRequests();
+        initRequests();
 
         document
             .getElementById('propertyRequestForm')
@@ -7178,24 +7177,20 @@
         return 2000 + Number(match[1]);
     }
 
-    function loadRequests() {
+    async function initRequests() {
         try {
-            const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-            return Array.isArray(parsed) ? parsed : [];
-        } catch {
-            return [];
-        }
-    }
-
-    function saveRequests() {
-        try {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(requests));
+            const payload = await apiJson('/requests');
+            requests = payload.requests || [];
         } catch (error) {
-            console.warn('Property Management requests could not be saved:', error);
+            console.warn('Property Management requests could not be loaded from the server.', error);
+            requests = [];
         }
+
+        render();
     }
 
-    function handleSubmit(event) {
+
+    async function handleSubmit(event) {
         event.preventDefault();
 
         const form = event.currentTarget;
@@ -7204,24 +7199,26 @@
 
         if (!title || !property) return;
 
-        requests.unshift({
-            id: `pm-${Date.now()}`,
+        const payload = {
             title,
             property,
             category: document.getElementById('pmCategory')?.value || 'Other',
             priority: document.getElementById('pmPriority')?.value || 'Normal',
             dueDate: document.getElementById('pmDueDate')?.value || '',
-            notes: document.getElementById('pmNotes')?.value.trim() || '',
-            stage: 'intake',
-            createdAt: new Date().toISOString()
-        });
+            notes: document.getElementById('pmNotes')?.value.trim() || ''
+        };
 
-        saveRequests();
-        form.reset();
-        render();
+        try {
+            const result = await apiJson('/requests', { method: 'POST', body: payload });
+            requests.unshift(result.request);
+            form.reset();
+            render();
+        } catch (error) {
+            showPmAlert({ type: 'error', title: 'Could not save', message: error.message });
+        }
     }
 
-    function handleBoardClick(event) {
+    async function handleBoardClick(event) {
         const button = event.target.closest('[data-pm-action]');
         if (!button) return;
 
@@ -7230,18 +7227,48 @@
         const request = requests.find(item => item.id === id);
         if (!request) return;
 
+        if (action === 'delete') {
+            try {
+                await apiJson(`/requests/${id}`, { method: 'DELETE' });
+                requests = requests.filter(item => item.id !== id);
+                render();
+            } catch (error) {
+                showPmAlert({ type: 'error', title: 'Could not delete', message: error.message });
+            }
+            return;
+        }
+
+        const previousStage = request.stage;
+
         if (action === 'next') {
             moveRequest(request, 1);
         } else if (action === 'previous') {
             moveRequest(request, -1);
         } else if (action === 'complete') {
             request.stage = 'completed';
-        } else if (action === 'delete') {
-            requests = requests.filter(item => item.id !== id);
+        } else {
+            return;
         }
 
-        saveRequests();
-        render();
+        try {
+            await apiJson(`/requests/${id}`, {
+                method: 'PUT',
+                body: {
+                    title: request.title,
+                    property: request.property,
+                    category: request.category,
+                    priority: request.priority,
+                    dueDate: request.dueDate,
+                    notes: request.notes,
+                    stage: request.stage
+                }
+            });
+            render();
+        } catch (error) {
+            request.stage = previousStage;
+            showPmAlert({ type: 'error', title: 'Could not update', message: error.message });
+            render();
+        }
     }
 
     function moveRequest(request, direction) {

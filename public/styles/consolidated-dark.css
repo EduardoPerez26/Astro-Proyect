@@ -56,4 +56,12 @@
     --xb-shadow-md: 0 10px 28px rgba(0, 0, 0, .5);
 }
 
+/* The sidebar keeps its own dark charcoal background regardless of theme —
+   consolidated-main.css sets it to a literal white for light mode, so dark
+   mode needs its own literal override here instead of a variable. */
+[data-theme="dark"] .sidebar,
+html[data-theme="dark"] body .sidebar {
+    background: #22262c;
+}
+
 

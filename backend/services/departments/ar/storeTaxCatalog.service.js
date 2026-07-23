@@ -145,5 +145,7 @@ module.exports = {
     listStores,
     upsertStore,
     deleteStore,
-    replaceAll
+    replaceAll,
+    toRow,
+    fromRow
 };

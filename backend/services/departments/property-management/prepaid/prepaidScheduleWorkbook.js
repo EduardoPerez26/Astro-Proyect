@@ -510,7 +510,7 @@ function buildScheduleSheet(workbook, schedule, bills, months) {
         'Payee', 'Location', 'Entity', 'GL Acct', 'Exp. To GL Acct', 'Date',
         'Amortization Period', 'Amount Paid', 'Prior Yr End Balance Forward',
         'MO AMORT AMT', ...monthNames, 'YTD Amortization',
-        'Ending Prepaid Balance', 'Ending Balance per Store'
+        'Ending Prepaid Balance', 'Ending Balance To Date'
     ];
     setTitle(sheet, schedule.title || 'Prepaid Amortization Schedule', headers.length);
     const selectedMonth = getSelectedMonth(schedule);
@@ -565,18 +565,7 @@ function buildScheduleSheet(workbook, schedule, bills, months) {
         monthsByBill.get(id).push(row);
     }
 
-    const storeTotals = new Map();
     const sortedBills = [...bills].sort(compareBillsForSchedule(schedule));
-
-    for (const bill of sortedBills) {
-        const billMonths = monthsByBill.get(Number(bill.id)) || [];
-        const yearAmortization = billMonths
-            .filter(month => Number(month.period_year) === scheduleYear)
-            .reduce((total, month) => total + money(month.expected_amount), 0);
-        const endingBalance = money(bill.amount_paid) - yearAmortization;
-        const store = String(bill.store_number || '');
-        storeTotals.set(store, (storeTotals.get(store) || 0) + endingBalance);
-    }
 
     let currentRow = headerRowNumber + 1;
     let previousEntity = null;
@@ -621,7 +610,6 @@ function buildScheduleSheet(workbook, schedule, bills, months) {
         const endingBalance = amountPaid - billMonths
             .filter(month => Number(month.period_year) <= scheduleYear)
             .reduce((sum, month) => sum + money(month.expected_amount), 0);
-        const storeEnding = storeTotals.get(String(bill.store_number || '')) || 0;
         const isCloseout = String(bill.amortization_mode || '').toUpperCase() === 'CLOSEOUT';
 
         // YTD Amortization sums only the month columns up to whichever month is
@@ -644,8 +632,9 @@ function buildScheduleSheet(workbook, schedule, bills, months) {
             ...monthValues.map(displayNegativeAmount),
             { formula: ytdFormula },
             Math.max(endingBalance, 0),
-            Math.max(storeEnding, 0)
+            { formula: `MAX(I${currentRow}+W${currentRow},0)` }
         ];
+
         styleScheduleDataRow(
             row,
             selectedMonthColumn,
@@ -670,12 +659,7 @@ function buildScheduleSheet(workbook, schedule, bills, months) {
     for (let col = 1; col <= headers.length; col += 1) {
         const cell = totalRow.getCell(col);
 
-        if (col === 25) {
-            cell.value = {
-                formula: totalRow.getCell(24).address
-            };
-            setReferenceMoneyFormat(cell);
-        } else if (
+        if (
             col >= 8
             && col <= headers.length
             && lastDataRow >= firstDataRow
@@ -790,7 +774,7 @@ function buildValidationSheet(workbook, schedule, months) {
     for (const month of validationRows) {
         const row = sheet.getRow(rowNumber);
         row.values = [month.period_code || '', String(month.store_number || ''), month.payee || '', month.doc_number || '',
-            money(month.expected_amount), money(month.gl_actual_amount), money(month.difference), month.status || 'PENDING_GL'];
+        money(month.expected_amount), money(month.gl_actual_amount), money(month.difference), month.status || 'PENDING_GL'];
         styleBodyRow(row);
         [5, 6, 7].forEach(index => {
             setReferenceMoneyFormat(
