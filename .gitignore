@@ -25,3 +25,8 @@ backend/uploads/**
 
 backend/generated/reports/
 !backend/generated/reports/.gitkeep
+
+# Excel de negocio - no versionar datos reales
+*.xlsx
+*.xls
+backend/services/**/uploads/
