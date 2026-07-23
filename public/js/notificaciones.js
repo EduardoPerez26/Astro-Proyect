@@ -1,5 +1,5 @@
 (() => {
-    const POLL_INTERVAL_MS = 15000;
+    const POLL_INTERVAL_MS = 90000;
     let pollInterval = null;
     let previousUnreadTotal = null;
     let isLoading = false;
@@ -57,6 +57,7 @@
         });
 
         loadNotifications({ silent: true });
+        connectNotificationStream();
         startPolling();
     });
 
@@ -342,6 +343,26 @@
             timer: 2600,
             timerProgressBar: true
         });
+    }
+
+    let notificationStream = null;
+
+    function connectNotificationStream(){
+        if(notificationStream || typeof  EventSource === 'undefined') return;
+
+        const token = localStorage.getItem('token');
+        if (!token || !window.API_URL) return;
+
+        const url = `${window.API_URL}/notifications-stream?token=${encodeURIComponent(token)}`;
+        notificationStream = new EventSource(url);
+
+        notificationStream.addEventListener('notification',()=> {
+            loadNotifications({silent: false});
+        });
+
+        notificationStream.onerror = () => {
+            console.warn('Notification stream disconnected, retry automatically.');
+        }
     }
 
     function startPolling() {

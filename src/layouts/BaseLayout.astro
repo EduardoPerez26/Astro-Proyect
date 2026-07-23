@@ -37,10 +37,26 @@ const { title, includeSheetJS = false } = Astro.props;
         </script>
         <title>{title}</title>
         <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-        <link
-            rel="stylesheet"
-            href="/styles/consolidated-main.css?v=20260720-consolidated-v2"
-        />
+        <!--
+            consolidated-main.css was split into ordered parts for maintainability
+            (2026-07-23). Each part is a contiguous slice of the original file in its
+            original cascade order — this order must be preserved exactly, since some
+            equal-specificity rules across parts depend on it. Do not reorder these
+            links, and do not add new rules between parts; append to the most relevant
+            part instead. See public/styles/main/ for the source split.
+        -->
+        <link rel="stylesheet" href="/styles/main/01-foundation-shell.css?v=20260723-css-split-v1" />
+        <link rel="stylesheet" href="/styles/main/02-profile-documents-pm.css?v=20260723-css-split-v1" />
+        <link rel="stylesheet" href="/styles/main/03-property-management-stores.css?v=20260723-css-split-v1" />
+        <link rel="stylesheet" href="/styles/main/04-prepaid-corporate-metrics.css?v=20260723-css-split-v1" />
+        <link rel="stylesheet" href="/styles/main/05-approval-center-chat.css?v=20260723-css-split-v1" />
+        <link rel="stylesheet" href="/styles/main/06-reconciliation-documents.css?v=20260723-css-split-v1" />
+        <link rel="stylesheet" href="/styles/main/07-system-center-errors.css?v=20260723-css-split-v1" />
+        <link rel="stylesheet" href="/styles/main/08-property-management-documents.css?v=20260723-css-split-v1" />
+        <link rel="stylesheet" href="/styles/main/09-layout-system-chatbot-login.css?v=20260723-css-split-v1" />
+        <link rel="stylesheet" href="/styles/main/10-admin-dashboard-access.css?v=20260723-css-split-v1" />
+        <link rel="stylesheet" href="/styles/main/11-sidebar-login-dialogs.css?v=20260723-css-split-v1" />
+        <link rel="stylesheet" href="/styles/main/12-corporate-headers-tokens.css?v=20260723-css-split-v1" />
         <link
             rel="stylesheet"
             href="/styles/consolidated-dark.css?v=20260720-consolidated-v2"

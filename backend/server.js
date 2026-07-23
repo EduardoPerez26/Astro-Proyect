@@ -34,6 +34,7 @@ const propertyManagementRoutes = require('./routes/departments/property-manageme
 const chatRoutes = require('./routes/chat.routes');
 const chatbotRoutes = require('./routes/chatbot.routes');
 const notificacionesRoutes = require('./routes/notificaciones.routes');
+const notificationsStreamRotes = require ('./routes/notificationsStream.routes');
 const prepaidRoutes = require('./routes/departments/property-management/prepaid.routes');
 const corporateRoutes = require('./routes/departments/corporate/corporate.routes');
 const { checkAllIntegrations } = require('./services/integrationHealth.service');
@@ -191,6 +192,7 @@ app.use('/api/property-management', propertyManagementRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/chatbot', chatbotRoutes);
 app.use('/api/notificaciones', notificacionesRoutes);
+app.use('/api/notifications-stream',notificationsStreamRotes);
 app.use('/api/prepaids', prepaidRoutes);
 app.use('/api/corporate', corporateRoutes);
 

@@ -1,5 +1,5 @@
 const { pool } = require('../config/database');
-
+const { sendToUser , sendToUsers} = require('./sse.service');
 const VALID_PRIORITIES = new Set(['low', 'normal', 'high']);
 
 function normalizePriority(priority) {
@@ -57,6 +57,17 @@ async function createNotification(options = {}) {
         metadata
     ]);
 
+    sendToUser(usuarioId, 'notification',{
+        id: result.insertId,
+        tipo: normalizeText(options.tipo || options.type, 'system').slice(0, 40),
+        titulo:titulo.slice(0, 160),
+        mensaje,
+        url_accion: normalizeUrl(options.urlAccion || options.url_accion || options.actionUrl),
+        prioridad: normalizePriority(options.prioridad || options.priority),
+        leida: false,
+        fecha_creacion: new Date().toISOString()
+    });
+
     return result.insertId;
 }
 
@@ -107,6 +118,19 @@ async function createNotificationsForUsers(usuarioIds = [], options = {}) {
         VALUES ?
     `, [values]);
 
+    uniqueIds.forEach((usuarioId,index) => {
+        sendToUser(usuarioId, 'notification',{
+            id: result.insertId ? result.insertId + index : null,
+            tipo:normalizeText(options.tipo || options.type, 'system').slice(0, 40),
+            titulo,
+            mensaje,
+            url_accion: normalizeUrl(options.urlAccion || options.url_accion || options.actionUrl),
+            prioridad: normalizePriority(options.prioridad || options.priority), 
+            leida: false,
+            fecha_creacion: new Date().toISOString()
+        });
+    });
+
     return {
         inserted: result.affectedRows || 0,
         userIds: uniqueIds
@@ -138,7 +162,7 @@ async function createChatMessageNotifications({
         ? `${cleanMessage.slice(0, 117)}...`
         : cleanMessage;
 
-    return createNotificationsForUsers(recipientIds, {
+    const result = await createNotificationsForUsers(recipientIds, {
         creadoPor: senderId,
         tipo: 'chat',
         prioridad: 'normal',
@@ -151,6 +175,16 @@ async function createChatMessageNotifications({
             sender_id: senderId
         }
     });
+
+    sendToUsers(recipientIds,'chat-message',{
+        conversacion_id: conversacionId,
+        mensaje_id:messageId,
+        sender_id:senderId,
+        sender_name: senderName,
+        mensaje:cleanMessage
+    });
+
+    return result;
 }
 
 module.exports = {

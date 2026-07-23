@@ -174,6 +174,16 @@ const verificarToken = async (req, res, next) => {
     }
 };
 
+const verificarTokenStream = async (req, res, next) => {
+    if(!obtenerTokenAutenticacion(req)){
+        const queryToken = String(req.query.token || '').trim();
+        if(queryToken){
+            req.headers.authorization = `Bearer ${queryToken}`;
+        }
+    }
+    return verificarToken(req,res, next);
+};
+
 const esAdmin = (req, res, next) => {
     if (!req.usuario || !isAdminRole(req.usuario)) {
         return res.status(403).json({ error: true, message: 'Access denied: administrators only' });
@@ -413,6 +423,7 @@ const requireDepartment = (allowedDepartments = []) => {
 
 module.exports = {
     verificarToken,
+    verificarTokenStream,
     esAdmin,
     esSuperAdmin,
     esSupervisorOAdmin,

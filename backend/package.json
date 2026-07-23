@@ -8,7 +8,8 @@
     "dev": "nodemon server.js",
     "test": "node --test tests/*.test.js",
     "check": "node --check server.js && node --check routes/departments/corporate/corporate.routes.js && node --check routes/auth.routes.js && node --check routes/departments/ar/archivos.routes.js && node --check middleware/security.middleware.js && node --check services/intacct/intacctClient.service.js && node --check services/departments/corporate/corporateReport.service.js && node --check services/entraOidc.service.js && node --check routes/departments/ar/storeTaxCatalog.routes.js && node --check services/departments/ar/storeTaxCatalog.service.js && node --check ../public/js/departments/ar/tax-store-catalog.js",
-    "reports:run": "node workers/runCorporateReports.js"
+    "reports:run": "node workers/runCorporateReports.js",
+    "diagnose:cdtfa": "node scripts/diagnose-cdtfa.js"
   },
   "dependencies": {
     "@sendgrid/mail": "^8.1.6",

@@ -1,3 +1,4 @@
+
 let chatState = {
     usuario: null,
     conversacionActual: null,
@@ -41,16 +42,33 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         cargarConversaciones(false);
-    }, 2000);
+    }, 20000);
 
     chatState.typingPolling = setInterval(function () {
         if (chatState.conversacionActual) {
             consultarTyping();
         }
-    }, 1500);
+    }, 4000);
 
     window.addEventListener('beforeunload', limpiarEstadoChat);
 });
+
+function connectChatStream() {
+    const token = getToken();
+    if (!token || typeof EventSource === 'undefined') return;
+
+    const stream = new EventSource(`${getApiBase()}/notifications-stream?token=${encodeURIComponent(token)}`);
+
+    stream.addEventListener('chat-message', function (event) {
+        const data = JSON.parse(event.data);
+
+        if (chatState.conversacionActual && Number(data.conversacion_id) === Number(chatState.conversacionActual)) {
+            cargarMensajes(true);
+        }
+
+        cargarConversaciones(false);
+    });
+}
 
 function getToken() {
     return localStorage.getItem('token') || '';
@@ -201,8 +219,8 @@ function renderConversaciones(conversaciones) {
                     <span class="chat-conversation-meta">
                         <small class="chat-conversation-time">${escapeHtml(time)}</small>
                         ${unreadCount > 0
-                            ? `<span class="chat-conversation-unread">${escapeHtml(unreadCount > 99 ? '99+' : unreadCount)}</span>`
-                            : ''}
+                ? `<span class="chat-conversation-unread">${escapeHtml(unreadCount > 99 ? '99+' : unreadCount)}</span>`
+                : ''}
                     </span>
                 </div>
 
