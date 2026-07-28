@@ -125,6 +125,11 @@ import DashboardLayout from "../../../layouts/DashboardLayout.astro";
                         <i class="fa-solid fa-plus" aria-hidden="true"></i>
                         Add Concept
                     </button>
+                    <button type="button" class="btn-secondary hidden" id="appendBillSourceBtn" disabled title="Upload a new payment file and add it to this schedule (e.g. September-December)">
+                        <i class="fa-solid fa-file-circle-plus" aria-hidden="true"></i>
+                        Add Payments
+                    </button>
+                    <input type="file" id="appendBillSourceInput" class="hidden" accept=".xlsx,.xls,.csv" />
                     <button type="button" class="btn-primary hidden" id="generateScheduleBtn" disabled>
                         <i class="fa-solid fa-calculator" aria-hidden="true"></i>
                         Generate Schedule

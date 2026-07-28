@@ -27,6 +27,8 @@ const els = {
     refreshSchedulesBtn: document.getElementById('refreshSchedulesBtn'),
     exportScheduleBtn: document.getElementById('exportScheduleBtn'),
     addSourceRowBtn: document.getElementById('addSourceRowBtn'),
+    appendBillSourceBtn: document.getElementById('appendBillSourceBtn'),
+    appendBillSourceInput: document.getElementById('appendBillSourceInput'),
     generateScheduleBtn: document.getElementById('generateScheduleBtn'),
     sourceReviewStatus: document.getElementById('sourceReviewStatus'),
     saveScheduleBtn: document.getElementById('saveScheduleBtn'),
@@ -369,6 +371,11 @@ function updateSourceEditorState() {
     if (els.addSourceRowBtn) {
         els.addSourceRowBtn.classList.toggle('hidden', !hasSchedule);
         els.addSourceRowBtn.disabled = !hasSchedule;
+    }
+
+    if (els.appendBillSourceBtn) {
+        els.appendBillSourceBtn.classList.toggle('hidden', !hasSchedule);
+        els.appendBillSourceBtn.disabled = !hasSchedule || isUploadingBillSource;
     }
 
     if (els.generateScheduleBtn) {
@@ -1745,6 +1752,45 @@ async function handleBillSourceUpload(event) {
     }
 }
 
+async function handleAppendBillSource(event) {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file || !state.selectedScheduleId || isUploadingBillSource) return;
+
+    isUploadingBillSource = true;
+    const originalHtml = els.appendBillSourceBtn?.innerHTML;
+    if (els.appendBillSourceBtn) {
+        els.appendBillSourceBtn.disabled = true;
+        els.appendBillSourceBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i> Adding payments';
+    }
+
+    const formData = new FormData();
+    formData.append('billSourceFile', file);
+
+    try {
+        const data = await apiFetch(`/prepaids/${state.selectedScheduleId}/append-bill-source`, {
+            method: 'POST',
+            body: formData,
+            headers: authHeaders(false)
+        });
+        showToast(
+            `Added ${data.appended_rows} new bill row${data.appended_rows === 1 ? '' : 's'} for ${shortDate(data.amortization_start)} to ${shortDate(data.amortization_end)}. Regenerate the schedule to include them.`,
+            'success'
+        );
+        await loadScheduleDetail(state.selectedScheduleId);
+        await loadSchedules();
+        activateTab('source');
+    } catch (error) {
+        showToast(error.message, 'error');
+    } finally {
+        isUploadingBillSource = false;
+        if (els.appendBillSourceBtn) {
+            els.appendBillSourceBtn.innerHTML = originalHtml || '<i class="fa-solid fa-file-circle-plus" aria-hidden="true"></i> Add Payments';
+        }
+        updateSourceEditorState();
+    }
+}
+
 async function generateSchedule() {
     if (!state.selectedScheduleId) return;
 
@@ -1898,6 +1944,10 @@ function resetBillSourceView() {
     if (els.addSourceRowBtn) {
         els.addSourceRowBtn.disabled = true;
         els.addSourceRowBtn.classList.add('hidden');
+    }
+    if (els.appendBillSourceBtn) {
+        els.appendBillSourceBtn.disabled = true;
+        els.appendBillSourceBtn.classList.add('hidden');
     }
     if (els.saveScheduleBtn) els.saveScheduleBtn.disabled = true;
     els.saveScheduleFooter?.classList.add('hidden');
@@ -2099,6 +2149,8 @@ function init() {
     els.scheduleList?.addEventListener('click', handleScheduleClick);
     els.sourceRows?.addEventListener('click', handleSourceRowsClick);
     els.addSourceRowBtn?.addEventListener('click', addManualSourceRow);
+    els.appendBillSourceBtn?.addEventListener('click', () => els.appendBillSourceInput?.click());
+    els.appendBillSourceInput?.addEventListener('change', handleAppendBillSource);
     els.generateScheduleBtn?.addEventListener('click', generateSchedule);
     els.saveScheduleBtn?.addEventListener('click', saveCurrentSchedule);
     els.refreshSchedulesBtn?.addEventListener('click', () => loadSchedules().catch(error => showToast(error.message, 'error')));

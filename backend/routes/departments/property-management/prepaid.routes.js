@@ -1,6 +1,7 @@
 const express = require('express');
 const multer = require('multer');
 const crypto = require('crypto');
+const fs = require('fs');
 const { pool } = require('../../../config/database');
 const {
     verificarToken,
@@ -14,7 +15,8 @@ const {
 } = require('../../../services/departments/property-management/prepaid/prepaidBillSourceParser');
 const {
     savePrepaidScheduleWorkbook,
-    deleteSavedScheduleWorkbook
+    deleteSavedScheduleWorkbook,
+    getScheduleExportPath
 } = require('../../../services/departments/property-management/prepaid/prepaidScheduleWorkbook');
 const {
     calculateBillAmortization,
@@ -915,6 +917,188 @@ router.get('/:scheduleId', ...access('ver'), async (req, res) => {
         console.error('Prepaid schedule detail could not be loaded:', error);
         if (tableSetupMessage(error, res)) return;
         res.status(500).json({ success: false, message: 'Schedule detail could not be loaded' });
+    }
+});
+
+// Appends the bills from a newly uploaded file to an ALREADY loaded/saved
+// schedule (draft or persisted), instead of starting a brand-new schedule
+// like /upload-bill-source does. Existing rows keep whatever amortization
+// period they already resolve to (their own explicit dates, or the
+// schedule's own amortization_start/end) - only the newly appended rows get
+// the period computed here, baked in explicitly, so they don't inherit or
+// disturb the schedule-level fallback used by the older rows.
+//
+// Default period: unless amortization_start/end are given explicitly, new
+// rows are amortized only across the months of the schedule's own
+// schedule_year that come after September - i.e. Sep-Dec of that year, not
+// the full Sep-Aug PTAX cycle that would spill 8 months into next year.
+router.post('/:scheduleId/append-bill-source', ...access('editar'), upload.single('billSourceFile'), async (req, res) => {
+    const connection = await pool.getConnection();
+
+    try {
+        if (!req.file) {
+            return res.status(400).json({ success: false, message: 'No bill source file was received' });
+        }
+
+        const scheduleId = Number(req.params.scheduleId);
+        const entityMap = await loadPropertyManagementEntityMap();
+        const draft = getDraftSchedule(scheduleId);
+
+        if (draft) {
+            const parsed = parsePrepaidBillSource(req.file.buffer, {
+                sourceAccount: draft.schedule.source_account,
+                prepaidAccount: draft.schedule.prepaid_account,
+                expenseAccount: draft.schedule.expense_account,
+                taxYear: draft.schedule.tax_year
+            });
+
+            if (!parsed.rows.length) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'No paid PTAX bill rows were found in the uploaded file.'
+                });
+            }
+
+            const scheduleYear = parseYear(draft.schedule.schedule_year);
+            const amortizationStart = toSqlDate(req.body.amortization_start) || `${scheduleYear}-09-01`;
+            const amortizationEnd = toSqlDate(req.body.amortization_end) || `${scheduleYear}-12-31`;
+
+            let nextSourceRowNumber = draft.sourceRows.reduce(
+                (max, row) => Math.max(max, Number(row.source_row_number) || 0),
+                0
+            ) + 1;
+
+            const appendedRows = parsed.rows.map(row => {
+                const normalized = {
+                    ...row,
+                    id: nextDraftRowId--,
+                    schedule_id: scheduleId,
+                    source_row_number: nextSourceRowNumber,
+                    entity_code: resolveEntityForStore(entityMap, row.store_number, draft.schedule.brand),
+                    tax_year: row.tax_year || draft.schedule.tax_year,
+                    raw_json: JSON.stringify({
+                        ...(row.raw_json || {}),
+                        source_review: {
+                            is_manual: 0,
+                            amortization_start: amortizationStart,
+                            amortization_end: amortizationEnd,
+                            amortization_mode: 'NORMAL',
+                            closeout_date: null
+                        }
+                    })
+                };
+                nextSourceRowNumber += 1;
+                return normalized;
+            });
+
+            draft.sourceRows = [...draft.sourceRows, ...appendedRows];
+            draft.bills = [];
+            draft.months = [];
+            refreshDraftCounts(draft);
+
+            return res.json({
+                success: true,
+                schedule_id: scheduleId,
+                appended_rows: appendedRows.length,
+                skipped_rows: parsed.skippedRows.length,
+                needs_regenerate: true,
+                amortization_start: amortizationStart,
+                amortization_end: amortizationEnd
+            });
+        }
+
+        const [[schedule]] = await connection.query(
+            'SELECT * FROM prepaid_schedules WHERE id = ? LIMIT 1',
+            [scheduleId]
+        );
+        if (!schedule) {
+            return res.status(404).json({ success: false, message: 'Schedule was not found' });
+        }
+
+        const parsed = parsePrepaidBillSource(req.file.buffer, {
+            sourceAccount: schedule.source_account,
+            prepaidAccount: schedule.prepaid_account,
+            expenseAccount: schedule.expense_account,
+            taxYear: schedule.tax_year
+        });
+
+        if (!parsed.rows.length) {
+            return res.status(400).json({
+                success: false,
+                message: 'No paid PTAX bill rows were found in the uploaded file.'
+            });
+        }
+
+        const scheduleYear = parseYear(schedule.schedule_year);
+        const amortizationStart = toSqlDate(req.body.amortization_start) || `${scheduleYear}-09-01`;
+        const amortizationEnd = toSqlDate(req.body.amortization_end) || `${scheduleYear}-12-31`;
+
+        const existingRows = scheduleDataFromRecord(schedule).sourceRows.map(row =>
+            normalizeSourceRowRecord(row, schedule)
+        );
+
+        let nextSourceRowNumber = existingRows.reduce(
+            (max, row) => Math.max(max, Number(row.source_row_number) || 0),
+            0
+        ) + 1;
+
+        const appendedRows = parsed.rows.map(row => {
+            const normalized = normalizeSourceRowRecord({
+                ...row,
+                id: nextDraftRowId--,
+                schedule_id: scheduleId,
+                source_row_number: nextSourceRowNumber,
+                entity_code: resolveEntityForStore(entityMap, row.store_number, schedule.brand),
+                tax_year: row.tax_year || schedule.tax_year,
+                raw_json: JSON.stringify({
+                    ...(row.raw_json || {}),
+                    source_review: {
+                        is_manual: 0,
+                        amortization_start: amortizationStart,
+                        amortization_end: amortizationEnd,
+                        amortization_mode: 'NORMAL',
+                        closeout_date: null
+                    }
+                })
+            }, schedule);
+            nextSourceRowNumber += 1;
+            return normalized;
+        });
+
+        const combinedRows = [...existingRows, ...appendedRows];
+        const metadata = parseJson(schedule.metadata_json, {}) || {};
+        const payload = buildPersistentScheduleData(schedule, {
+            sourceRows: combinedRows,
+            bills: [],
+            months: [],
+            status: 'SOURCE_LOADED',
+            generated_at: null
+        });
+
+        await connection.beginTransaction();
+        await updatePrepaidScheduleJson(connection, scheduleId, payload, {
+            status: 'SOURCE_LOADED',
+            generated_at: null,
+            metadata
+        });
+        await connection.commit();
+
+        res.json({
+            success: true,
+            schedule_id: scheduleId,
+            appended_rows: appendedRows.length,
+            skipped_rows: parsed.skippedRows.length,
+            needs_regenerate: true,
+            amortization_start: amortizationStart,
+            amortization_end: amortizationEnd
+        });
+    } catch (error) {
+        await connection.rollback();
+        console.error('Prepaid bill source could not be appended:', error);
+        if (tableSetupMessage(error, res)) return;
+        res.status(Number(error.statusCode) || 500).json({ success: false, message: error.message || 'Bill source could not be appended' });
+    } finally {
+        connection.release();
     }
 });
 
@@ -1930,6 +2114,136 @@ router.post('/:scheduleId/save', ...access('crear'), async (req, res) => {
         console.error('Prepaid schedule could not be saved:', error);
         if (tableSetupMessage(error, res)) return;
         res.status(500).json({ success: false, message: error.message || 'Schedule could not be saved' });
+    }
+});
+
+router.put('/:scheduleId/rename', ...access('editar'), async (req, res) => {
+    try {
+        const scheduleId = Number(req.params.scheduleId);
+        if (isDraftScheduleId(scheduleId)) {
+            return res.status(409).json({ success: false, message: 'Save the schedule before renaming it.' });
+        }
+
+        const title = String(req.body.title || '').trim().slice(0, 255);
+        if (!title) {
+            return res.status(400).json({ success: false, message: 'A schedule title is required.' });
+        }
+
+        const schedule = await loadScheduleOr404(scheduleId, res);
+        if (!schedule) return;
+
+        if (title === schedule.title) {
+            return res.json({ success: true, schedule_id: scheduleId, title: schedule.title });
+        }
+
+        const oldExportPath = getScheduleExportPath(schedule);
+
+        await pool.query('UPDATE prepaid_schedules SET title = ? WHERE id = ?', [title, scheduleId]);
+
+        const payload = scheduleDataFromRecord(schedule);
+        const savedWorkbook = await saveWorkbookFromPayload({ ...schedule, title }, payload);
+
+        const metadata = parseJson(schedule.metadata_json, {}) || {};
+        if (metadata.saved_workbook) {
+            metadata.saved_workbook.filename = savedWorkbook.filename;
+            await pool.query('UPDATE prepaid_schedules SET metadata_json = ? WHERE id = ?', [JSON.stringify(metadata), scheduleId]);
+        }
+
+        const newExportPath = getScheduleExportPath({ ...schedule, title });
+        if (oldExportPath !== newExportPath && fs.existsSync(oldExportPath)) {
+            fs.unlinkSync(oldExportPath);
+        }
+
+        res.json({
+            success: true,
+            message: 'Prepaid schedule renamed successfully.',
+            schedule_id: scheduleId,
+            title,
+            file_name: savedWorkbook.filename
+        });
+    } catch (error) {
+        console.error('Prepaid schedule could not be renamed:', error);
+        if (tableSetupMessage(error, res)) return;
+        res.status(500).json({ success: false, message: error.message || 'Prepaid schedule could not be renamed' });
+    }
+});
+
+router.post('/:scheduleId/duplicate', ...access('crear'), async (req, res) => {
+    try {
+        const scheduleId = Number(req.params.scheduleId);
+        if (isDraftScheduleId(scheduleId)) {
+            return res.status(409).json({ success: false, message: 'Save the schedule before duplicating it.' });
+        }
+
+        const schedule = await loadScheduleOr404(scheduleId, res);
+        if (!schedule) return;
+
+        const title = `${schedule.title || 'Prepaid amortization schedule'} (Copy)`.slice(0, 255);
+        const metadata = parseJson(schedule.metadata_json, {}) || {};
+        metadata.saved_workbook = {
+            ...(metadata.saved_workbook || {}),
+            saved_at: new Date().toISOString(),
+            saved_by: getUserId(req)
+        };
+        const datosJson = typeof schedule.datos_json === 'object'
+            ? JSON.stringify(schedule.datos_json)
+            : schedule.datos_json;
+
+        const [result] = await pool.query(
+            `INSERT INTO prepaid_schedules
+             (brand, schedule_year, tax_year, title, source_account, prepaid_account, expense_account,
+              amortization_start, amortization_end, status, source_file_name, source_file_hash,
+              source_sheet_name, source_row_count, included_row_count, excluded_row_count,
+              generated_month_count, metadata_json, datos_json, created_by, departamento_id, generated_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+                schedule.brand,
+                schedule.schedule_year,
+                schedule.tax_year,
+                title,
+                schedule.source_account,
+                schedule.prepaid_account,
+                schedule.expense_account,
+                schedule.amortization_start,
+                schedule.amortization_end,
+                schedule.status,
+                schedule.source_file_name,
+                schedule.source_file_hash,
+                schedule.source_sheet_name,
+                schedule.source_row_count,
+                schedule.included_row_count,
+                schedule.excluded_row_count,
+                schedule.generated_month_count,
+                JSON.stringify(metadata),
+                datosJson,
+                getUserId(req),
+                getDepartmentId(req),
+                schedule.generated_at
+            ]
+        );
+
+        const newId = result.insertId;
+        const payload = scheduleDataFromRecord(schedule);
+        const savedWorkbook = await saveWorkbookFromPayload({ ...schedule, id: newId, title }, payload);
+        metadata.saved_workbook.filename = savedWorkbook.filename;
+        metadata.saved_workbook.persisted = savedWorkbook.persisted !== false;
+        if (savedWorkbook.write_error) metadata.saved_workbook.write_error = savedWorkbook.write_error;
+
+        await pool.query(
+            'UPDATE prepaid_schedules SET metadata_json = ? WHERE id = ?',
+            [JSON.stringify(metadata), newId]
+        );
+
+        res.status(201).json({
+            success: true,
+            message: 'Prepaid schedule duplicated successfully.',
+            schedule_id: newId,
+            file_name: savedWorkbook.filename
+        });
+    } catch (error) {
+        console.error('Prepaid schedule could not be duplicated:', error);
+        if (tableSetupMessage(error, res)) return;
+        res.status(500).json({ success: false, message: error.message || 'Prepaid schedule could not be duplicated' });
     }
 });
 

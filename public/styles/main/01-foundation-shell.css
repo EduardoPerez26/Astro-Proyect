@@ -3274,6 +3274,18 @@ input[type=file] {
     color: #ffffff;
 }
 
+.action-btn.duplicate:hover {
+    border-color: var(--xb-color-success);
+    color: var(--xb-color-success);
+    background: rgba(16, 185, 129, 0.1);
+}
+
+.action-btn.rename:hover {
+    border-color: var(--xb-color-text);
+    background: var(--xb-color-surface-subtle);
+    color: var(--xb-color-text);
+}
+
 .pagination {
     display: flex;
     justify-content: space-between;

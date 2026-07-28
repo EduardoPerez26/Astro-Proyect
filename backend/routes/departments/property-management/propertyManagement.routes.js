@@ -467,6 +467,109 @@ router.get('/schedules/:id', ...access('propertyManagement', 'ver'), async (req,
     }
 });
 
+router.put('/schedules/:id/rename', ...access('propertyManagement', 'editar'), async (req, res) => {
+    try {
+        const name = String(req.body.nombre || '').trim().slice(0, 180);
+        if (!name) {
+            return res.status(400).json({ success: false, message: 'A schedule name is required.' });
+        }
+
+        const [[schedule]] = await pool.query(
+            `SELECT * FROM property_management_schedules WHERE id = ? LIMIT 1`,
+            [req.params.id]
+        );
+
+        if (!schedule) {
+            return res.status(404).json({ success: false, message: 'Schedule not found' });
+        }
+
+        if (name === schedule.nombre) {
+            return res.json({ success: true, schedule: { id: schedule.id, nombre: schedule.nombre } });
+        }
+
+        const oldExportPath = getScheduleExportPath(schedule);
+
+        await pool.query(
+            `UPDATE property_management_schedules SET nombre = ? WHERE id = ?`,
+            [name, req.params.id]
+        );
+
+        const savedWorkbook = await persistPropertyManagementScheduleWorkbook(req.params.id);
+
+        const newExportPath = getScheduleExportPath({ ...schedule, nombre: name });
+        if (oldExportPath !== newExportPath && fs.existsSync(oldExportPath)) {
+            fs.unlinkSync(oldExportPath);
+        }
+
+        res.json({
+            success: true,
+            message: 'Schedule renamed successfully.',
+            schedule: { id: Number(req.params.id), nombre: name, export_file: savedWorkbook.filename }
+        });
+    } catch (error) {
+        console.error('Property Management schedule could not be renamed:', error);
+        if (tableSetupMessage(error, res)) return;
+        res.status(500).json({ success: false, message: 'Schedule could not be renamed' });
+    }
+});
+
+router.post('/schedules/:id/duplicate', ...access('propertyManagement', 'crear'), async (req, res) => {
+    try {
+        const [[schedule]] = await pool.query(
+            `SELECT * FROM property_management_schedules WHERE id = ? LIMIT 1`,
+            [req.params.id]
+        );
+
+        if (!schedule) {
+            return res.status(404).json({ success: false, message: 'Schedule not found' });
+        }
+
+        const name = `${schedule.nombre || 'Schedule 2026'} (Copy)`.slice(0, 180);
+        const datosJson = typeof schedule.datos_json === 'object'
+            ? JSON.stringify(schedule.datos_json)
+            : schedule.datos_json;
+
+        const [result] = await pool.query(
+            `INSERT INTO property_management_schedules
+             (usuario_id, departamento_id, nombre, periodo_anio, periodo_mes,
+              datos_json, total_tiendas, total_filas, balance_total, estado)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'draft')`,
+            [
+                getUserId(req),
+                getDepartmentId(req),
+                name,
+                schedule.periodo_anio,
+                schedule.periodo_mes,
+                datosJson,
+                schedule.total_tiendas,
+                schedule.total_filas,
+                schedule.balance_total
+            ]
+        );
+
+        const [documentLinks] = await pool.query(
+            `SELECT documento_id FROM property_management_schedule_documentos WHERE schedule_id = ?`,
+            [req.params.id]
+        );
+        await syncScheduleDocuments(result.insertId, documentLinks.map(row => row.documento_id));
+
+        const savedWorkbook = await persistPropertyManagementScheduleWorkbook(result.insertId);
+
+        res.status(201).json({
+            success: true,
+            message: 'Schedule duplicated successfully.',
+            schedule: {
+                id: result.insertId,
+                export_file: savedWorkbook.filename
+            }
+        });
+    } catch (error) {
+        console.error('Property Management schedule could not be duplicated:', error);
+        if (tableSetupMessage(error, res)) return;
+        res.status(500).json({ success: false, message: 'Schedule could not be duplicated' });
+    }
+});
+
 router.post('/schedules', ...access('propertyManagement', 'crear'), async (req, res) => {
     try {
         const scheduleData = parseSchedulePayload(req.body);

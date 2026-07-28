@@ -193,14 +193,6 @@
         const isAdmin = window.AppPermissions?.isAdmin?.(user) === true;
         const isPreparer = String(item.preparerId ?? '') === String(user.id ?? '');
 
-        if (['draft', 'changes_requested'].includes(item.estado)) {
-            return `
-            <button class="action-btn edit" type="button" data-schedule-submit="${escapeHtml(item.rawId)}" title="Submit for review">
-                <i class="fa-solid fa-paper-plane" aria-hidden="true"></i>
-            </button>
-        `;
-        }
-
         if (item.estado === 'submitted' && isAdmin && !isPreparer) {
             return `
             <button class="action-btn view" type="button" data-schedule-approve="${escapeHtml(item.rawId)}" title="Approve schedule">
@@ -232,6 +224,12 @@
             <button class="action-btn download" type="button" data-schedule-download="${escapeHtml(item.rawId)}" title="Download schedule">
                 <i class="fa-solid fa-download" aria-hidden="true"></i>
             </button>
+            <button class="action-btn duplicate" type="button" data-schedule-duplicate="${escapeHtml(item.rawId)}" title="Duplicate schedule">
+                <i class="fa-solid fa-copy" aria-hidden="true"></i>
+            </button>
+            <button class="action-btn rename" type="button" data-schedule-rename="${escapeHtml(item.rawId)}" title="Rename schedule">
+                <i class="fa-solid fa-i-cursor" aria-hidden="true"></i>
+            </button>
             ${buildScheduleApprovalActions(item)}
             <button class="action-btn delete" type="button" data-schedule-delete="${escapeHtml(item.rawId)}" title="Delete schedule">
                 <i class="fa-solid fa-trash" aria-hidden="true"></i>
@@ -247,6 +245,12 @@
             </button>
             <button class="action-btn download" type="button" data-prepaid-download="${escapeHtml(item.rawId)}" title="Download prepaid schedule">
                 <i class="fa-solid fa-download" aria-hidden="true"></i>
+            </button>
+            <button class="action-btn duplicate" type="button" data-prepaid-duplicate="${escapeHtml(item.rawId)}" title="Duplicate prepaid schedule">
+                <i class="fa-solid fa-copy" aria-hidden="true"></i>
+            </button>
+            <button class="action-btn rename" type="button" data-prepaid-rename="${escapeHtml(item.rawId)}" title="Rename prepaid schedule">
+                <i class="fa-solid fa-i-cursor" aria-hidden="true"></i>
             </button>
             <button class="action-btn delete" type="button" data-prepaid-delete="${escapeHtml(item.rawId)}" title="Delete prepaid schedule">
                 <i class="fa-solid fa-trash" aria-hidden="true"></i>
@@ -543,13 +547,16 @@
         const scheduleInfoButton = event.target.closest('[data-schedule-info]');
         const scheduleButton = event.target.closest('[data-schedule-edit]');
         const scheduleDownloadButton = event.target.closest('[data-schedule-download]');
+        const scheduleDuplicateButton = event.target.closest('[data-schedule-duplicate]');
+        const scheduleRenameButton = event.target.closest('[data-schedule-rename]');
         const scheduleDeleteButton = event.target.closest('[data-schedule-delete]');
-        const scheduleSubmitButton = event.target.closest('[data-schedule-submit]');
         const scheduleApproveButton = event.target.closest('[data-schedule-approve]');
         const scheduleRejectButton = event.target.closest('[data-schedule-reject]');
         const prepaidInfoButton = event.target.closest('[data-prepaid-info]');
         const prepaidOpenButton = event.target.closest('[data-prepaid-open]');
         const prepaidDownloadButton = event.target.closest('[data-prepaid-download]');
+        const prepaidDuplicateButton = event.target.closest('[data-prepaid-duplicate]');
+        const prepaidRenameButton = event.target.closest('[data-prepaid-rename]');
         const prepaidDeleteButton = event.target.closest('[data-prepaid-delete]');
         const viewButton = event.target.closest('[data-document-view]');
         const downloadButton = event.target.closest('[data-document-download]');
@@ -588,13 +595,18 @@
             return;
         }
 
-        if (scheduleDeleteButton) {
-            await deleteSchedule(scheduleDeleteButton.dataset.scheduleDelete, scheduleDeleteButton);
+        if (scheduleDuplicateButton) {
+            await duplicateSchedule(scheduleDuplicateButton.dataset.scheduleDuplicate, scheduleDuplicateButton);
             return;
         }
 
-        if (scheduleSubmitButton) {
-            await submitScheduleForReview(scheduleSubmitButton.dataset.scheduleSubmit, scheduleSubmitButton);
+        if (scheduleRenameButton) {
+            await renameSchedule(scheduleRenameButton.dataset.scheduleRename, scheduleRenameButton);
+            return;
+        }
+
+        if (scheduleDeleteButton) {
+            await deleteSchedule(scheduleDeleteButton.dataset.scheduleDelete, scheduleDeleteButton);
             return;
         }
 
@@ -638,6 +650,16 @@
 
         if (prepaidDownloadButton) {
             await downloadPrepaidSchedule(prepaidDownloadButton.dataset.prepaidDownload, prepaidDownloadButton);
+            return;
+        }
+
+        if (prepaidDuplicateButton) {
+            await duplicatePrepaidSchedule(prepaidDuplicateButton.dataset.prepaidDuplicate, prepaidDuplicateButton);
+            return;
+        }
+
+        if (prepaidRenameButton) {
+            await renamePrepaidSchedule(prepaidRenameButton.dataset.prepaidRename, prepaidRenameButton);
             return;
         }
 
@@ -927,6 +949,57 @@
         }
     }
 
+    async function duplicatePrepaidSchedule(id, button = null) {
+        if (button) button.disabled = true;
+
+        try {
+            await prepaidApiJson(`/${encodeURIComponent(id)}/duplicate`, { method: 'POST' });
+            await loadServerDocuments();
+            showSwal('success', 'Duplicated', 'Prepaid schedule duplicated successfully.');
+        } catch (error) {
+            showSwal('error', 'Duplicate failed', error.message || 'Prepaid schedule could not be duplicated.');
+        } finally {
+            if (button) button.disabled = false;
+        }
+    }
+
+    async function renamePrepaidSchedule(id, button = null) {
+        const item = getAllItems().find(candidate =>
+            candidate.kind === 'prepaidSchedule' && String(candidate.rawId) === String(id)
+        );
+        const currentName = item?.name || '';
+
+        const { value: title, isConfirmed } = await Swal.fire({
+            icon: 'question',
+            title: 'Rename prepaid schedule',
+            input: 'text',
+            inputLabel: 'New name',
+            inputValue: currentName,
+            showCancelButton: true,
+            confirmButtonText: 'Rename',
+            inputValidator: text => (!text || !text.trim() ? 'A schedule name is required.' : undefined)
+        });
+
+        if (!isConfirmed) return;
+        const trimmedTitle = title.trim();
+        if (trimmedTitle === currentName) return;
+
+        if (button) button.disabled = true;
+
+        try {
+            await prepaidApiJson(`/${encodeURIComponent(id)}/rename`, {
+                method: 'PUT',
+                body: { title: trimmedTitle }
+            });
+            await loadServerDocuments();
+            showSwal('success', 'Renamed', 'Prepaid schedule renamed successfully.');
+        } catch (error) {
+            showSwal('error', 'Rename failed', error.message || 'Prepaid schedule could not be renamed.');
+        } finally {
+            if (button) button.disabled = false;
+        }
+    }
+
     async function deletePrepaidSchedule(id, button = null) {
         const confirmed = await confirmDelete(
             'Delete prepaid schedule?',
@@ -948,6 +1021,57 @@
         }
     }
 
+    async function duplicateSchedule(id, button = null) {
+        if (button) button.disabled = true;
+
+        try {
+            await apiJson(`/schedules/${encodeURIComponent(id)}/duplicate`, { method: 'POST' });
+            await loadServerDocuments();
+            showSwal('success', 'Duplicated', 'Schedule duplicated successfully.');
+        } catch (error) {
+            showSwal('error', 'Duplicate failed', error.message || 'Schedule could not be duplicated.');
+        } finally {
+            if (button) button.disabled = false;
+        }
+    }
+
+    async function renameSchedule(id, button = null) {
+        const item = getAllItems().find(candidate =>
+            candidate.kind === 'schedule' && String(candidate.rawId) === String(id)
+        );
+        const currentName = item?.name || '';
+
+        const { value: name, isConfirmed } = await Swal.fire({
+            icon: 'question',
+            title: 'Rename schedule',
+            input: 'text',
+            inputLabel: 'New name',
+            inputValue: currentName,
+            showCancelButton: true,
+            confirmButtonText: 'Rename',
+            inputValidator: text => (!text || !text.trim() ? 'A schedule name is required.' : undefined)
+        });
+
+        if (!isConfirmed) return;
+        const trimmedName = name.trim();
+        if (trimmedName === currentName) return;
+
+        if (button) button.disabled = true;
+
+        try {
+            await apiJson(`/schedules/${encodeURIComponent(id)}/rename`, {
+                method: 'PUT',
+                body: { nombre: trimmedName }
+            });
+            await loadServerDocuments();
+            showSwal('success', 'Renamed', 'Schedule renamed successfully.');
+        } catch (error) {
+            showSwal('error', 'Rename failed', error.message || 'Schedule could not be renamed.');
+        } finally {
+            if (button) button.disabled = false;
+        }
+    }
+
     async function deleteSchedule(id, button = null) {
         const confirmed = await confirmDelete(
             'Delete schedule?',
@@ -964,20 +1088,6 @@
             showSwal('success', 'Deleted', 'Schedule deleted successfully.');
         } catch (error) {
             showSwal('error', 'Delete failed', error.message || 'Schedule could not be deleted.');
-        } finally {
-            if (button) button.disabled = false;
-        }
-    }
-
-    async function submitScheduleForReview(id, button = null) {
-        if (button) button.disabled = true;
-
-        try {
-            await apiJson(`/schedules/${encodeURIComponent(id)}/submit`, { method: 'POST' });
-            await loadServerDocuments();
-            showSwal('success', 'Submitted', 'The schedule was submitted for review.');
-        } catch (error) {
-            showSwal('error', 'Could not submit', error.message || 'The schedule could not be submitted for review.');
         } finally {
             if (button) button.disabled = false;
         }
