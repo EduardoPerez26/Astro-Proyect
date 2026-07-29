@@ -13,6 +13,7 @@ const state = {
     importedSourceRowCount: 0,
     sourceDirty: false,
     removedStoreNumbers: new Set(),
+    selectedSourceRowKeys: new Set(),
     bills: [],
     months: [],
     comparisonRows: [],
@@ -29,6 +30,10 @@ const els = {
     addSourceRowBtn: document.getElementById('addSourceRowBtn'),
     appendBillSourceBtn: document.getElementById('appendBillSourceBtn'),
     appendBillSourceInput: document.getElementById('appendBillSourceInput'),
+    bulkAccountsBtn: document.getElementById('bulkAccountsBtn'),
+    bulkAmortizationBtn: document.getElementById('bulkAmortizationBtn'),
+    bulkAmortizationBtnLabel: document.getElementById('bulkAmortizationBtnLabel'),
+    selectAllSourceRows: document.getElementById('selectAllSourceRows'),
     generateScheduleBtn: document.getElementById('generateScheduleBtn'),
     sourceReviewStatus: document.getElementById('sourceReviewStatus'),
     saveScheduleBtn: document.getElementById('saveScheduleBtn'),
@@ -378,6 +383,13 @@ function updateSourceEditorState() {
         els.appendBillSourceBtn.disabled = !hasSchedule || isUploadingBillSource;
     }
 
+    if (els.bulkAccountsBtn) {
+        els.bulkAccountsBtn.classList.toggle('hidden', !hasSchedule);
+        els.bulkAccountsBtn.disabled = !hasSchedule || !hasRows;
+    }
+
+    updateSourceSelectionState();
+
     if (els.generateScheduleBtn) {
         els.generateScheduleBtn.classList.toggle('hidden', !hasSchedule);
         els.generateScheduleBtn.disabled = !hasSchedule || !hasRows;
@@ -403,6 +415,31 @@ function updateSourceEditorState() {
             els.sourceReviewStatus.textContent = `${state.sourceRows.length} rows ready${changeSummary} to generate.`;
             els.sourceReviewStatus.classList.remove('pending');
         }
+    }
+}
+
+function updateSourceSelectionState() {
+    const validKeys = new Set(state.sourceRows.map((row, index) => createDraftRowId(row, index)));
+    for (const key of Array.from(state.selectedSourceRowKeys)) {
+        if (!validKeys.has(key)) state.selectedSourceRowKeys.delete(key);
+    }
+
+    const selectedCount = state.selectedSourceRowKeys.size;
+
+    if (els.bulkAmortizationBtn) {
+        els.bulkAmortizationBtn.classList.toggle('hidden', !state.selectedScheduleId);
+        els.bulkAmortizationBtn.disabled = selectedCount === 0;
+    }
+    if (els.bulkAmortizationBtnLabel) {
+        els.bulkAmortizationBtnLabel.textContent = selectedCount
+            ? `Edit amortization (${selectedCount} selected)`
+            : 'Edit amortization';
+    }
+
+    if (els.selectAllSourceRows) {
+        els.selectAllSourceRows.disabled = !state.sourceRows.length;
+        els.selectAllSourceRows.checked = state.sourceRows.length > 0 && selectedCount === state.sourceRows.length;
+        els.selectAllSourceRows.indeterminate = selectedCount > 0 && selectedCount < state.sourceRows.length;
     }
 }
 
@@ -468,7 +505,7 @@ function renderScheduleList() {
 
 function renderSourceRows(rows) {
     if (!rows.length) {
-        els.sourceRows.innerHTML = '<tr><td colspan="9" class="empty-cell">No source bills loaded.</td></tr>';
+        els.sourceRows.innerHTML = '<tr><td colspan="10" class="empty-cell">No source bills loaded.</td></tr>';
         updateSourceEditorState();
         return;
     }
@@ -508,6 +545,15 @@ function renderSourceRows(rows) {
 
         return `
             <tr class="${rowClass}" data-source-row-key="${escapeHtml(rowKey)}" title="Double-click to edit amortization">
+                <td class="source-sticky-select">
+                    <input
+                        type="checkbox"
+                        class="source-row-checkbox"
+                        data-source-row-select="${escapeHtml(rowKey)}"
+                        aria-label="Select row for store ${escapeHtml(row.store_number || '')}"
+                        ${state.selectedSourceRowKeys.has(rowKey) ? 'checked' : ''}
+                    />
+                </td>
                 <td class="source-sticky-store strong">
                     <div class="source-store-stack">
                         <strong>${escapeHtml(row.store_number || '-')}</strong>
@@ -525,6 +571,15 @@ function renderSourceRows(rows) {
                             aria-label="Edit amortization for store ${escapeHtml(row.store_number || '')}"
                         >
                             <i class="fa-solid fa-calendar-days" aria-hidden="true"></i>
+                        </button>
+                        <button
+                            type="button"
+                            class="source-action-btn source-action-accounts"
+                            data-edit-source-accounts="${escapeHtml(rowKey)}"
+                            title="Edit GL accounts for this row"
+                            aria-label="Edit GL accounts for store ${escapeHtml(row.store_number || '')}"
+                        >
+                            <i class="fa-solid fa-building-columns" aria-hidden="true"></i>
                         </button>
                         <button
                             type="button"
@@ -1360,6 +1415,302 @@ async function editSourceAmortization(rowKey) {
     }
 }
 
+function bulkAmortizationModalHtml(selectedRows, defaults) {
+    const closeoutEnabled = defaults.isCloseout;
+    const closeoutMonth = sqlMonth(defaults.closeoutDate);
+    const totalAmount = selectedRows.reduce((sum, row) => sum + Number(row.amount_paid || 0), 0);
+
+    return `
+        <div class="source-amortization-modal-body">
+            <div class="source-amortization-summary">
+                <div class="source-amortization-summary-icon">
+                    <i class="fa-solid fa-layer-group" aria-hidden="true"></i>
+                </div>
+                <div>
+                    <strong>${selectedRows.length} row${selectedRows.length === 1 ? '' : 's'} selected</strong>
+                    <span>${money(totalAmount)} total amount paid</span>
+                </div>
+            </div>
+
+            <div class="source-amortization-presets" aria-label="Quick original amortization periods">
+                <span>Original amortization term</span>
+                <div>
+                    ${[3, 6, 12, 18, 24].map(value => `
+                        <button type="button" data-amortization-months="${value}">${value} months</button>
+                    `).join('')}
+                </div>
+            </div>
+
+            <div class="source-amortization-date-grid">
+                <label>
+                    <span>Original start date</span>
+                    <input id="bulkAmortizationStart" class="swal2-input" type="date" value="${escapeHtml(defaults.start)}">
+                </label>
+                <label>
+                    <span>Original end date</span>
+                    <input id="bulkAmortizationEnd" class="swal2-input" type="date" value="${escapeHtml(defaults.end)}">
+                </label>
+            </div>
+
+            <div class="source-closeout-panel">
+                <label class="source-closeout-toggle">
+                    <input id="bulkCloseoutEnabled" type="checkbox" ${closeoutEnabled ? 'checked' : ''}>
+                    <span class="source-closeout-toggle-copy">
+                        <strong>Stores closed — amortize remaining balance</strong>
+                        <small>Keep the original term for every selected row. Each row's own unamortized balance posts in the closure month.</small>
+                    </span>
+                </label>
+
+                <label class="source-closeout-month ${closeoutEnabled ? '' : 'is-disabled'}" id="bulkCloseoutMonthField">
+                    <span>Closure month</span>
+                    <input id="bulkCloseoutMonth" class="swal2-input" type="month" value="${escapeHtml(closeoutMonth)}" ${closeoutEnabled ? '' : 'disabled'}>
+                </label>
+            </div>
+
+            <div class="source-amortization-preview" id="bulkAmortizationPreview">
+                <i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i>
+                <span>This period will be applied to all ${selectedRows.length} selected rows.</span>
+            </div>
+        </div>
+    `;
+}
+
+async function bulkEditAmortization() {
+    const selectedRows = state.sourceRows.filter((row, index) =>
+        state.selectedSourceRowKeys.has(createDraftRowId(row, index))
+    );
+    if (!selectedRows.length) return;
+
+    const current = getRowAmortization(selectedRows[0]);
+    let values;
+
+    if (!window.Swal) {
+        const start = window.prompt('Original amortization start (YYYY-MM-DD):', current.start)?.trim();
+        if (!start) return;
+        const end = window.prompt('Original amortization end (YYYY-MM-DD):', current.end)?.trim();
+        if (!end) return;
+        if (!parseSqlDateParts(start) || !parseSqlDateParts(end) || end < start) {
+            showToast('Enter a valid original amortization period.', 'error');
+            return;
+        }
+        values = { start, end, amortizationMode: 'NORMAL', closeoutDate: null };
+    } else {
+        ensureAmortizationModalStyles();
+        ensureCloseoutModalStyles();
+
+        const result = await window.Swal.fire({
+            title: `Edit amortization for ${selectedRows.length} rows`,
+            html: bulkAmortizationModalHtml(selectedRows, current),
+            width: 'min(720px, calc(100vw - 32px))',
+            customClass: {
+                popup: 'source-amortization-swal',
+                htmlContainer: 'source-amortization-swal-html',
+                actions: 'source-amortization-swal-actions',
+                confirmButton: 'source-amortization-confirm-btn',
+                cancelButton: 'source-amortization-cancel-btn'
+            },
+            buttonsStyling: false,
+            showCancelButton: true,
+            confirmButtonText: `<i class="fa-solid fa-check" aria-hidden="true"></i><span>Apply to ${selectedRows.length} rows</span>`,
+            cancelButtonText: '<i class="fa-solid fa-xmark" aria-hidden="true"></i><span>Cancel</span>',
+            focusConfirm: false,
+            didOpen: popup => {
+                const swalContainer = popup.closest('.swal2-container');
+                swalContainer?.style.setProperty('position', 'fixed', 'important');
+                swalContainer?.style.setProperty('inset', '0', 'important');
+                swalContainer?.style.setProperty('z-index', '2147483647', 'important');
+                swalContainer?.style.setProperty('isolation', 'isolate', 'important');
+
+                popup.classList.add('source-amortization-swal');
+                popup.style.setProperty('width', 'min(720px, calc(100vw - 32px))', 'important');
+                popup.style.setProperty('max-width', 'none', 'important');
+
+                const htmlContainer = popup.querySelector('.swal2-html-container');
+                const actions = popup.querySelector('.swal2-actions');
+                const confirmButton = window.Swal.getConfirmButton?.();
+                const cancelButton = window.Swal.getCancelButton?.();
+                htmlContainer?.classList.add('source-amortization-swal-html');
+                actions?.classList.add('source-amortization-swal-actions');
+                confirmButton?.classList.add('source-amortization-confirm-btn');
+                cancelButton?.classList.add('source-amortization-cancel-btn');
+
+                const startInput = popup.querySelector('#bulkAmortizationStart');
+                const endInput = popup.querySelector('#bulkAmortizationEnd');
+                const closeoutToggle = popup.querySelector('#bulkCloseoutEnabled');
+                const closeoutMonthInput = popup.querySelector('#bulkCloseoutMonth');
+                const closeoutMonthField = popup.querySelector('#bulkCloseoutMonthField');
+
+                const updateToggleState = () => {
+                    const closeoutEnabled = Boolean(closeoutToggle?.checked);
+                    if (closeoutMonthInput) closeoutMonthInput.disabled = !closeoutEnabled;
+                    closeoutMonthField?.classList.toggle('is-disabled', !closeoutEnabled);
+                };
+
+                popup.querySelectorAll('[data-amortization-months]').forEach(button => {
+                    button.addEventListener('click', () => {
+                        const months = Number(button.dataset.amortizationMonths);
+                        const start = startInput?.value || current.start;
+                        if (!start || !startInput || !endInput) return;
+                        startInput.value = start;
+                        endInput.value = addMonthsMinusOneDay(start, months);
+                        popup.querySelectorAll('[data-amortization-months]').forEach(item => item.classList.remove('active'));
+                        button.classList.add('active');
+                    });
+                });
+
+                closeoutToggle?.addEventListener('change', () => {
+                    if (closeoutToggle.checked && closeoutMonthInput && !closeoutMonthInput.value) {
+                        closeoutMonthInput.value = sqlMonth(startInput?.value);
+                    }
+                    updateToggleState();
+                });
+                updateToggleState();
+            },
+            preConfirm: () => {
+                const start = document.getElementById('bulkAmortizationStart')?.value || '';
+                const end = document.getElementById('bulkAmortizationEnd')?.value || '';
+                const closeoutEnabled = Boolean(document.getElementById('bulkCloseoutEnabled')?.checked);
+                const closeoutDate = monthInputToSqlDate(
+                    document.getElementById('bulkCloseoutMonth')?.value || ''
+                );
+
+                if (!parseSqlDateParts(start) || !parseSqlDateParts(end)) {
+                    window.Swal.showValidationMessage('Original start date and end date are required.');
+                    return false;
+                }
+                if (end < start) {
+                    window.Swal.showValidationMessage('Original amortization end must be after the start date.');
+                    return false;
+                }
+                if (closeoutEnabled) {
+                    if (!closeoutDate) {
+                        window.Swal.showValidationMessage('Select the month in which the stores closed.');
+                        return false;
+                    }
+                    if (closeoutDate.slice(0, 7) < start.slice(0, 7) || closeoutDate.slice(0, 7) > end.slice(0, 7)) {
+                        window.Swal.showValidationMessage('The closure month must be inside the original amortization period.');
+                        return false;
+                    }
+                }
+
+                return {
+                    start,
+                    end,
+                    amortizationMode: closeoutEnabled ? 'CLOSEOUT' : 'NORMAL',
+                    closeoutDate: closeoutEnabled ? closeoutDate : null
+                };
+            }
+        });
+
+        if (!result.isConfirmed) return;
+        values = result.value;
+    }
+
+    selectedRows.forEach(row => {
+        row.amortization_start = values.start;
+        row.amortization_end = values.end;
+        row.amortization_mode = values.amortizationMode;
+        row.closeout_date = values.closeoutDate || '';
+    });
+
+    markSourceDirty();
+    renderSourceRows(state.sourceRows);
+    showToast(`Amortization updated for ${selectedRows.length} row${selectedRows.length === 1 ? '' : 's'}.`, 'success');
+}
+
+function accountsModalHtml(defaultPrepaid, defaultExpense, description) {
+    return `
+        <div style="display:grid; gap:14px; text-align:left;">
+            <p style="margin:0; font-size:13px; color:#6b6b6b;">${description}</p>
+            <label style="display:grid; gap:6px; font-size:12px; font-weight:700;">
+                Prepaid GL
+                <input type="text" id="accountsPrepaidInput" value="${escapeHtml(defaultPrepaid)}" placeholder="e.g. 138500" style="padding:9px 10px; border:1px solid #ddd; border-radius:8px; font:inherit;" />
+            </label>
+            <label style="display:grid; gap:6px; font-size:12px; font-weight:700;">
+                Expense GL
+                <input type="text" id="accountsExpenseInput" value="${escapeHtml(defaultExpense)}" placeholder="e.g. 708500" style="padding:9px 10px; border:1px solid #ddd; border-radius:8px; font:inherit;" />
+            </label>
+        </div>
+    `;
+}
+
+async function promptAccounts(defaults, title, confirmText) {
+    if (!window.Swal) {
+        const prepaid = window.prompt('Prepaid GL account:', defaults.prepaid_account)?.trim();
+        if (!prepaid) return null;
+        const expense = window.prompt('Expense GL account:', defaults.expense_account)?.trim();
+        if (!expense) return null;
+        return { prepaid_account: prepaid, expense_account: expense };
+    }
+
+    const result = await window.Swal.fire({
+        title,
+        html: accountsModalHtml(defaults.prepaid_account, defaults.expense_account, defaults.description || ''),
+        showCancelButton: true,
+        confirmButtonText: confirmText,
+        cancelButtonText: 'Cancel',
+        focusConfirm: false,
+        preConfirm: () => {
+            const prepaid = document.getElementById('accountsPrepaidInput')?.value?.trim() || '';
+            const expense = document.getElementById('accountsExpenseInput')?.value?.trim() || '';
+            if (!prepaid || !expense) {
+                window.Swal.showValidationMessage('Both GL accounts are required.');
+                return false;
+            }
+            return { prepaid_account: prepaid, expense_account: expense };
+        }
+    });
+
+    if (!result.isConfirmed) return null;
+    return result.value;
+}
+
+async function editSourceAccounts(rowKey) {
+    const row = state.sourceRows.find(item => String(item._draft_id) === String(rowKey));
+    if (!row) return;
+
+    const values = await promptAccounts(
+        {
+            prepaid_account: row.prepaid_account || state.selectedSchedule?.prepaid_account || '138500',
+            expense_account: row.expense_account || state.selectedSchedule?.expense_account || '708500',
+            description: `GL accounts for ${row.store_number || 'this row'} · ${row.payee || row.doc_number || 'source row'}.`
+        },
+        'Edit GL accounts',
+        'Apply'
+    );
+    if (!values) return;
+
+    row.prepaid_account = values.prepaid_account;
+    row.expense_account = values.expense_account;
+    markSourceDirty();
+    renderSourceRows(state.sourceRows);
+    showToast(`GL accounts updated for ${row.store_number || 'this row'}.`, 'success');
+}
+
+async function bulkEditAccounts() {
+    if (!state.sourceRows.length) return;
+
+    const values = await promptAccounts(
+        {
+            prepaid_account: state.selectedSchedule?.prepaid_account || '138500',
+            expense_account: state.selectedSchedule?.expense_account || '708500',
+            description: `This will overwrite the Prepaid GL and Expense GL on all ${state.sourceRows.length} rows currently loaded.`
+        },
+        `Edit GL accounts for all ${state.sourceRows.length} rows`,
+        'Apply to all rows'
+    );
+    if (!values) return;
+
+    state.sourceRows.forEach(row => {
+        row.prepaid_account = values.prepaid_account;
+        row.expense_account = values.expense_account;
+    });
+
+    markSourceDirty();
+    renderSourceRows(state.sourceRows);
+    showToast(`GL accounts updated for all ${state.sourceRows.length} rows.`, 'success');
+}
+
 function sourceModalHtml(defaults) {
     return `
         <div class="source-concept-modal-body">
@@ -1521,9 +1872,27 @@ async function addManualSourceRow() {
 }
 
 function handleSourceRowsClick(event) {
+    const selectCheckbox = event.target.closest('[data-source-row-select]');
+    if (selectCheckbox) {
+        const key = selectCheckbox.dataset.sourceRowSelect;
+        if (selectCheckbox.checked) {
+            state.selectedSourceRowKeys.add(key);
+        } else {
+            state.selectedSourceRowKeys.delete(key);
+        }
+        updateSourceSelectionState();
+        return;
+    }
+
     const editButton = event.target.closest('[data-edit-source-amortization]');
     if (editButton) {
         editSourceAmortization(editButton.dataset.editSourceAmortization).catch(error => showToast(error.message, 'error'));
+        return;
+    }
+
+    const accountsButton = event.target.closest('[data-edit-source-accounts]');
+    if (accountsButton) {
+        editSourceAccounts(accountsButton.dataset.editSourceAccounts).catch(error => showToast(error.message, 'error'));
         return;
     }
 
@@ -1730,8 +2099,20 @@ async function handleBillSourceUpload(event) {
         return;
     }
 
+    const currentYear = new Date().getFullYear();
+    const range = await promptAmortizationRange(
+        { start: `${currentYear}-09-01`, end: `${currentYear + 1}-08-31` },
+        {
+            title: 'Amortization period for this schedule',
+            description: 'PTAX bills are typically amortized from September through August of the following year. Adjust these dates if this bill covers a different period.'
+        }
+    );
+    if (!range) return;
+
     isUploadingBillSource = true;
     const formData = new FormData(els.billSourceUploadForm);
+    formData.set('amortization_start', range.start);
+    formData.set('amortization_end', range.end);
 
     try {
         const data = await apiFetch('/prepaids/upload-bill-source', {
@@ -1752,10 +2133,79 @@ async function handleBillSourceUpload(event) {
     }
 }
 
+function amortizationRangeModalHtml(defaultStart, defaultEnd, description) {
+    return `
+        <div style="display:grid; gap:14px; text-align:left;">
+            <p style="margin:0; font-size:13px; color:#6b6b6b;">${description}</p>
+            <label style="display:grid; gap:6px; font-size:12px; font-weight:700;">
+                Amortization start
+                <input type="date" id="amortRangeStart" value="${defaultStart}" style="padding:9px 10px; border:1px solid #ddd; border-radius:8px; font:inherit;" />
+            </label>
+            <label style="display:grid; gap:6px; font-size:12px; font-weight:700;">
+                Amortization end
+                <input type="date" id="amortRangeEnd" value="${defaultEnd}" style="padding:9px 10px; border:1px solid #ddd; border-radius:8px; font:inherit;" />
+            </label>
+        </div>
+    `;
+}
+
+async function promptAmortizationRange(defaults, options = {}) {
+    const title = options.title || 'Amortization period';
+    const description = options.description
+        || 'This period will be used to calculate the monthly amortization schedule.';
+
+    if (!window.Swal) {
+        const start = window.prompt('Amortization start (YYYY-MM-DD):', defaults.start)?.trim();
+        if (!start) return null;
+        const end = window.prompt('Amortization end (YYYY-MM-DD):', defaults.end)?.trim();
+        if (!end) return null;
+        if (!parseSqlDateParts(start) || !parseSqlDateParts(end) || end < start) {
+            showToast('Enter a valid amortization period.', 'error');
+            return null;
+        }
+        return { start, end };
+    }
+
+    const result = await window.Swal.fire({
+        title,
+        html: amortizationRangeModalHtml(defaults.start, defaults.end, description),
+        showCancelButton: true,
+        confirmButtonText: 'Continue',
+        cancelButtonText: 'Cancel',
+        focusConfirm: false,
+        preConfirm: () => {
+            const start = document.getElementById('amortRangeStart')?.value || '';
+            const end = document.getElementById('amortRangeEnd')?.value || '';
+            if (!start || !end) {
+                window.Swal.showValidationMessage('Both dates are required.');
+                return false;
+            }
+            if (end < start) {
+                window.Swal.showValidationMessage('Amortization end must be after its start date.');
+                return false;
+            }
+            return { start, end };
+        }
+    });
+
+    if (!result.isConfirmed) return null;
+    return result.value;
+}
+
 async function handleAppendBillSource(event) {
     const file = event.target.files?.[0];
     event.target.value = '';
     if (!file || !state.selectedScheduleId || isUploadingBillSource) return;
+
+    const scheduleYear = Number(state.selectedSchedule?.schedule_year || new Date().getFullYear());
+    const range = await promptAmortizationRange(
+        { start: `${scheduleYear}-09-01`, end: `${scheduleYear}-12-31` },
+        {
+            title: 'Amortization period for this payment',
+            description: "This period will apply to every row in the uploaded file. It does not have to match the original schedule's period - use the range that covers this new payment."
+        }
+    );
+    if (!range) return;
 
     isUploadingBillSource = true;
     const originalHtml = els.appendBillSourceBtn?.innerHTML;
@@ -1766,6 +2216,8 @@ async function handleAppendBillSource(event) {
 
     const formData = new FormData();
     formData.append('billSourceFile', file);
+    formData.append('amortization_start', range.start);
+    formData.append('amortization_end', range.end);
 
     try {
         const data = await apiFetch(`/prepaids/${state.selectedScheduleId}/append-bill-source`, {
@@ -1929,6 +2381,7 @@ function resetBillSourceView() {
     state.importedSourceRowCount = 0;
     state.sourceDirty = false;
     state.removedStoreNumbers.clear();
+    state.selectedSourceRowKeys.clear();
     state.bills = [];
     state.months = [];
     state.comparisonRows = [];
@@ -1948,6 +2401,14 @@ function resetBillSourceView() {
     if (els.appendBillSourceBtn) {
         els.appendBillSourceBtn.disabled = true;
         els.appendBillSourceBtn.classList.add('hidden');
+    }
+    if (els.bulkAccountsBtn) {
+        els.bulkAccountsBtn.disabled = true;
+        els.bulkAccountsBtn.classList.add('hidden');
+    }
+    if (els.bulkAmortizationBtn) {
+        els.bulkAmortizationBtn.disabled = true;
+        els.bulkAmortizationBtn.classList.add('hidden');
     }
     if (els.saveScheduleBtn) els.saveScheduleBtn.disabled = true;
     els.saveScheduleFooter?.classList.add('hidden');
@@ -2151,6 +2612,16 @@ function init() {
     els.addSourceRowBtn?.addEventListener('click', addManualSourceRow);
     els.appendBillSourceBtn?.addEventListener('click', () => els.appendBillSourceInput?.click());
     els.appendBillSourceInput?.addEventListener('change', handleAppendBillSource);
+    els.bulkAccountsBtn?.addEventListener('click', () => bulkEditAccounts().catch(error => showToast(error.message, 'error')));
+    els.bulkAmortizationBtn?.addEventListener('click', () => bulkEditAmortization().catch(error => showToast(error.message, 'error')));
+    els.selectAllSourceRows?.addEventListener('change', () => {
+        if (els.selectAllSourceRows.checked) {
+            state.sourceRows.forEach((row, index) => state.selectedSourceRowKeys.add(createDraftRowId(row, index)));
+        } else {
+            state.selectedSourceRowKeys.clear();
+        }
+        renderSourceRows(state.sourceRows);
+    });
     els.generateScheduleBtn?.addEventListener('click', generateSchedule);
     els.saveScheduleBtn?.addEventListener('click', saveCurrentSchedule);
     els.refreshSchedulesBtn?.addEventListener('click', () => loadSchedules().catch(error => showToast(error.message, 'error')));

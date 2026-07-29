@@ -130,6 +130,10 @@ import DashboardLayout from "../../../layouts/DashboardLayout.astro";
                         Add Payments
                     </button>
                     <input type="file" id="appendBillSourceInput" class="hidden" accept=".xlsx,.xls,.csv" />
+                    <button type="button" class="btn-secondary hidden" id="bulkAccountsBtn" disabled title="Set the Prepaid GL and Expense GL accounts for every row in this schedule">
+                        <i class="fa-solid fa-building-columns" aria-hidden="true"></i>
+                        Edit GL Accounts
+                    </button>
                     <button type="button" class="btn-primary hidden" id="generateScheduleBtn" disabled>
                         <i class="fa-solid fa-calculator" aria-hidden="true"></i>
                         Generate Schedule
@@ -153,12 +157,19 @@ import DashboardLayout from "../../../layouts/DashboardLayout.astro";
                     <small>
                         Edit the original amortization period, apply a store closeout to accelerate the remaining balance, remove exceptions, or add manual concepts before generating.
                     </small>
+                    <button type="button" class="btn-secondary hidden" id="bulkAmortizationBtn" disabled>
+                        <i class="fa-solid fa-calendar-days" aria-hidden="true"></i>
+                        <span id="bulkAmortizationBtnLabel">Edit amortization</span>
+                    </button>
                 </div>
 
                 <div class="prepaid-table-wrap">
                     <table class="prepaid-table prepaid-source-table">
                         <thead>
                             <tr>
+                                <th class="source-sticky-select">
+                                    <input type="checkbox" id="selectAllSourceRows" title="Select all rows" />
+                                </th>
                                 <th class="source-sticky-store">Store</th>
                                 <th class="source-sticky-actions">Actions</th>
                                 <th>Concept / Payee</th>
@@ -171,7 +182,7 @@ import DashboardLayout from "../../../layouts/DashboardLayout.astro";
                             </tr>
                         </thead>
                         <tbody id="sourceRows">
-                            <tr><td colspan="9" class="empty-cell">No source bills loaded.</td></tr>
+                            <tr><td colspan="10" class="empty-cell">No source bills loaded.</td></tr>
                         </tbody>
                     </table>
                 </div>

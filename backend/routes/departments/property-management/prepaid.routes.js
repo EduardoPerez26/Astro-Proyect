@@ -482,10 +482,32 @@ function draftForClient(draft) {
     };
 }
 
+// Self-heals schedules that already have two source rows sharing the same
+// (negative) id - a side effect of ids previously being handed out from the
+// shared, restart-unstable nextDraftRowId counter (see nextStableSourceRowId).
+// Re-keys every collision to a fresh, schedule-scoped id so callers (GET
+// /:scheduleId, PUT /source-rows, /append-bill-source) never see or persist
+// duplicates again once this runs.
+function dedupeSourceRowIds(rows) {
+    const seen = new Set();
+    let nextId = rows.reduce((min, row) => Math.min(min, Number(row.id) || 0), 0) - 1;
+
+    return rows.map(row => {
+        const id = Number(row.id) || 0;
+        if (id && !seen.has(id)) {
+            seen.add(id);
+            return row;
+        }
+        const freshId = nextId--;
+        seen.add(freshId);
+        return { ...row, id: freshId };
+    });
+}
+
 function scheduleDataFromRecord(schedule) {
     const metadata = parseJson(schedule.metadata_json, {}) || {};
     const data = parseJson(schedule.datos_json, {}) || metadata.schedule_data || {};
-    const sourceRows = Array.isArray(data.sourceRows) ? data.sourceRows : [];
+    const sourceRows = dedupeSourceRowIds(Array.isArray(data.sourceRows) ? data.sourceRows : []);
     const bills = Array.isArray(data.bills) ? data.bills : [];
     const months = Array.isArray(data.months) ? data.months : [];
     return {
@@ -527,6 +549,18 @@ function normalizeSourceRowRecord(row = {}, schedule = {}) {
             ? row.raw_json
             : JSON.stringify(row.raw_json || row.rawJson || {})
     };
+}
+
+// New source rows on an ALREADY SAVED schedule must get an id that stays
+// unique forever once written into datos_json - nextDraftRowId is a shared,
+// in-memory counter that resets to -1 on every server restart, so using it
+// here would let two separate append/edit operations (with a restart in
+// between) both hand out id -1 for the same schedule, corrupting the JSON
+// with duplicate ids ("Source row -1 was submitted more than once"). Basing
+// the next id on the schedule's own already-persisted rows keeps it stable
+// and collision-free regardless of process restarts.
+function nextStableSourceRowId(existingRows = []) {
+    return existingRows.reduce((min, row) => Math.min(min, Number(row.id) || 0), 0) - 1;
 }
 
 function buildPersistentScheduleData(schedule, overrides = {}) {
@@ -817,6 +851,9 @@ router.post('/upload-bill-source', ...access('crear'), upload.single('billSource
         const defaultPeriod = defaultAmortizationPeriod(inferredTaxYear);
         const amortizationStart = toSqlDate(req.body.amortization_start || defaultPeriod.start);
         const amortizationEnd = toSqlDate(req.body.amortization_end || defaultPeriod.end);
+        if (!amortizationStart || !amortizationEnd || amortizationStart > amortizationEnd) {
+            return res.status(400).json({ success: false, message: 'A valid amortization period (start on or before end) is required.' });
+        }
         const scheduleYear = parseYear(req.body.schedule_year, new Date(amortizationEnd).getUTCFullYear());
         const title = cleanText(
             req.body.title,
@@ -962,6 +999,9 @@ router.post('/:scheduleId/append-bill-source', ...access('editar'), upload.singl
             const scheduleYear = parseYear(draft.schedule.schedule_year);
             const amortizationStart = toSqlDate(req.body.amortization_start) || `${scheduleYear}-09-01`;
             const amortizationEnd = toSqlDate(req.body.amortization_end) || `${scheduleYear}-12-31`;
+            if (amortizationStart > amortizationEnd) {
+                return res.status(400).json({ success: false, message: 'Amortization end must be on or after the start date.' });
+            }
 
             let nextSourceRowNumber = draft.sourceRows.reduce(
                 (max, row) => Math.max(max, Number(row.source_row_number) || 0),
@@ -1032,6 +1072,9 @@ router.post('/:scheduleId/append-bill-source', ...access('editar'), upload.singl
         const scheduleYear = parseYear(schedule.schedule_year);
         const amortizationStart = toSqlDate(req.body.amortization_start) || `${scheduleYear}-09-01`;
         const amortizationEnd = toSqlDate(req.body.amortization_end) || `${scheduleYear}-12-31`;
+        if (amortizationStart > amortizationEnd) {
+            return res.status(400).json({ success: false, message: 'Amortization end must be on or after the start date.' });
+        }
 
         const existingRows = scheduleDataFromRecord(schedule).sourceRows.map(row =>
             normalizeSourceRowRecord(row, schedule)
@@ -1041,11 +1084,12 @@ router.post('/:scheduleId/append-bill-source', ...access('editar'), upload.singl
             (max, row) => Math.max(max, Number(row.source_row_number) || 0),
             0
         ) + 1;
+        let nextRowId = nextStableSourceRowId(existingRows);
 
         const appendedRows = parsed.rows.map(row => {
             const normalized = normalizeSourceRowRecord({
                 ...row,
-                id: nextDraftRowId--,
+                id: nextRowId--,
                 schedule_id: scheduleId,
                 source_row_number: nextSourceRowNumber,
                 entity_code: resolveEntityForStore(entityMap, row.store_number, schedule.brand),
@@ -1390,8 +1434,10 @@ router.put('/:scheduleId/source-rows', ...access('editar'), async (req, res) => 
             nextSourceRowNumber += 1;
         }
 
+        let nextRowId = nextStableSourceRowId(existingRows);
+
         const savedRows = reviewedRows.map(row => normalizeSourceRowRecord({
-            id: row.id || nextDraftRowId--,
+            id: row.id || nextRowId--,
             schedule_id: scheduleId,
             source_row_number: row.sourceRowNumber,
             posted_date: row.postedDate,

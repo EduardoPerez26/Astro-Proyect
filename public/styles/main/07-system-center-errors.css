@@ -2957,9 +2957,26 @@ html body .stores-page.stores-page .status-pulse {
     font-weight: 700;
 }
 
+.source-sticky-select {
+    width: 36px;
+    min-width: 36px;
+    max-width: 36px;
+    padding: 8px 6px;
+    text-align: center;
+    vertical-align: middle;
+}
+
+.source-row-checkbox,
+#selectAllSourceRows {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    accent-color: var(--xb-color-text);
+}
+
 .source-row-actions {
-    width: 220px;
-    min-width: 220px;
+    width: 280px;
+    min-width: 280px;
     padding-left: 10px;
     padding-right: 10px;
     text-align: center;
@@ -3021,6 +3038,18 @@ html body .stores-page.stores-page .status-pulse {
     border-color: var(--xb-color-border-strong);
     background: var(--xb-color-surface-subtle);
     color: var(--xb-color-text);
+}
+
+.source-action-accounts {
+    border-color: var(--xb-color-border);
+    background: var(--xb-color-surface-subtle);
+    color: var(--xb-color-text);
+}
+
+.source-action-accounts:hover {
+    border-color: var(--xb-color-success);
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--xb-color-success);
 }
 
 .source-action-row:hover {
