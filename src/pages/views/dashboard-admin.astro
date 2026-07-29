@@ -4,12 +4,8 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
 
 <DashboardLayout title="Admin dashboard">
     <div class="page-container admin-dashboard-page">
-        <header class="admin-command-hero">
+        <header class="admin-command-panel">
             <div class="admin-hero-copy">
-                <span class="admin-dashboard-eyebrow">
-                    <i class="fa-solid fa-shield-halved"></i>
-                    ADMIN OPERATIONS
-                </span>
                 <h1>Admin dashboard</h1>
                 <p>
                     A consolidated view of users, departments, documents,
@@ -18,13 +14,7 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
             </div>
 
             <div class="admin-hero-actions">
-                <div class="admin-live-status" aria-live="polite">
-                    <span class="admin-live-pill">
-                        <span class="admin-live-dot"></span>
-                        Live data
-                    </span>
-                    <span id="adminDashboardUpdated">Not refreshed</span>
-                </div>
+                <span id="adminDashboardUpdated" class="admin-hero-updated">Not refreshed</span>
 
                 <div class="admin-hero-buttons">
                     <button
@@ -45,19 +35,6 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
                         Refresh
                     </button>
                 </div>
-            </div>
-
-            <div class="admin-hero-strip" aria-label="Executive summary">
-                <article>
-                    <span>7-day workload</span>
-                    <strong id="adminHeroWorkload">0 operations</strong>
-                    <small id="adminHeroWorkloadDetail">No recent movement yet</small>
-                </article>
-                <article>
-                    <span>Local time</span>
-                    <strong id="adminDashboardClock">--:--</strong>
-                    <small id="adminDashboardDate">Loading current date</small>
-                </article>
             </div>
         </header>
 
@@ -92,7 +69,6 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
                     <strong id="adminUsersTotal">0</strong>
                     <small id="adminUsersMeta">0 registered</small>
                 </div>
-                <span class="admin-metric-indicator" id="adminUsersRate">0%</span>
             </article>
 
             <article class="admin-metric-card">
@@ -102,7 +78,6 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
                     <strong id="adminActiveSessions">0</strong>
                     <small id="adminLoginsToday">0 logins today</small>
                 </div>
-                <span class="admin-metric-indicator" id="adminSessionsRate">0%</span>
             </article>
 
             <article class="admin-metric-card">
@@ -112,7 +87,6 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
                     <strong id="adminFilesToday">0</strong>
                     <small id="adminFilesMeta">0 in the last 7 days</small>
                 </div>
-                <span class="admin-metric-indicator" id="adminFilesPace">0/day</span>
             </article>
 
             <article class="admin-metric-card">
@@ -122,47 +96,7 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
                     <strong id="adminDepartmentsActive">0</strong>
                     <small id="adminDepartmentsMeta">0 registered</small>
                 </div>
-                <span class="admin-metric-indicator" id="adminDepartmentsRate">0%</span>
             </article>
-        </section>
-
-        <section class="corporate-command-overview" id="corporateExecutiveSummary" aria-label="Corporate control summary">
-            <header class="corporate-command-header">
-                <div>
-                    <span>GOVERNANCE &amp; CONTROL</span>
-                    <h2>Corporate operating status</h2>
-                    <p id="corporateSummaryStatus">Document workflow, reconciliations, scheduled reporting, and integration reliability.</p>
-                </div>
-                <a href="/views/report-center" class="corporate-command-link">Open reports center <i class="fa-solid fa-arrow-right"></i></a>
-            </header>
-
-            <div class="corporate-command-metrics">
-                <a href="/views/documentos" class="corporate-command-metric">
-                    <span><i class="fa-solid fa-code-branch"></i> Under review</span>
-                    <strong id="corporateDocumentsReview">0</strong>
-                    <small id="corporateDocumentsMeta">0 changes requested</small>
-                </a>
-                <a href="/views/conciliacion" class="corporate-command-metric">
-                    <span><i class="fa-solid fa-layer-group"></i> Reconciliations</span>
-                    <strong id="corporateReconciliations">0</strong>
-                    <small id="corporateReconciliationsMeta">0 pending, last 30 days</small>
-                </a>
-                <a href="/views/report-center" class="corporate-command-metric">
-                    <span><i class="fa-solid fa-file-waveform"></i> Active reports</span>
-                    <strong id="corporateScheduledReports">0</strong>
-                    <small id="corporateReportsMeta">0 currently due</small>
-                </a>
-                <a href="/views/system-center" class="corporate-command-metric">
-                    <span><i class="fa-solid fa-wave-square"></i> Integrations</span>
-                    <strong id="corporateIntegrationHealth">—</strong>
-                    <small id="corporateIntegrationMeta">Checking connectors</small>
-                </a>
-                <button type="button" class="corporate-command-metric" id="corporateNotificationsTile">
-                    <span><i class="fa-solid fa-bell"></i> Notifications</span>
-                    <strong id="corporateNotificationsUnread">0</strong>
-                    <small id="corporateNotificationsMeta">Unread for you</small>
-                </button>
-            </div>
         </section>
 
         <section class="admin-overview-grid" aria-label="Administrative overview">

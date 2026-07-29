@@ -3337,17 +3337,16 @@
 
 @media (hover: hover) {
     html body .stores-page .stores-hero-overview article:hover {
-        transform: translateY(-2px);
+        transform: none;
         border-color: rgba(255, 255, 255, 0.27);
         background: rgba(255, 255, 255, 0.15);
     }
 
     html body .stores-page.stores-page .stores-hero-overview article:hover {
-        transform: translateY(-2px);
+        transform: none;
         border-color: rgba(255, 255, 255, 0.36);
         background: rgba(15, 15, 15, 0.50);
-        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12),
-            0 20px 34px -26px rgba(15, 15, 15, 0.9);
+        box-shadow: none;
     }
 
     html body .main :is(.stores-hero-overview,
@@ -3361,11 +3360,10 @@
         .prepaid-hero-overview,
         .system-errors-hero-overview,
         .xbfs-page-hero__metrics)> :is(article, div, li):hover {
-        transform: translateY(-2px);
+        transform: none;
         border-color: var(--xbfs-hero-surface-border-hover);
         background: var(--xbfs-hero-surface-hover);
-        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.11),
-            0 22px 36px -28px rgba(15, 15, 15, 0.95);
+        box-shadow: none;
     }
 
     html body .main :is(.xbfs-page-hero,
@@ -3384,7 +3382,7 @@
         .system-errors-page > .system-errors-hero,
         .schedule-dashboard > .schedule-header,
         .prepaid-page > .prepaid-hero) :is(button, .btn, a.btn):hover {
-        transform: translateY(-1px);
+        transform: none;
         border-color: rgba(255, 255, 255, 0.48);
         background: rgba(15, 15, 15, 0.48);
     }
@@ -3996,9 +3994,7 @@ html body .swal2-popup.xbfs-toast-popup.xbfs-toast-final {
     border-radius: 20px;
     background: var(--xb-color-surface);
     background-image: none;
-    box-shadow:
-        0 28px 56px -24px rgba(15, 15, 20, .30),
-        0 8px 20px -10px rgba(15, 15, 20, .14);
+    box-shadow: none;
 }
 
 html body .swal2-popup.xbfs-toast-popup.xbfs-toast-final .swal2-icon {

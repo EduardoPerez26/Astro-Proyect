@@ -8,30 +8,9 @@ const currentYear = new Date().getFullYear();
     <main class="login-screen">
         <div class="login-shell">
             <section class="login-brand-panel" aria-label="System overview">
-                <div class="login-brand">
-                    <span
-                        class="login-brand-icon login-brand-monogram"
-                        aria-hidden="true"
-                    >
-                        <span class="login-brand-monogram-text">XB</span>
-                    </span>
-                    <span class="login-brand-copy">
-                        <strong>XBFS</strong>
-                        <small>Operations Hub</small>
-                    </span>
-                </div>
-
-                <div class="login-brand-message">
-                    <span class="login-eyebrow">XB Franchise Solutions</span>
-                    <h1>XB Operations Hub</h1>
-                    <p>
-                        Centralized access for reconciliations, documents, and
-                        internal controls across XBFS-operated brands.
-                    </p>
-                </div>
-                <div class="login-brand-footnote">
-                    <i class="fa-solid fa-lock" aria-hidden="true"></i>
-                    <span>Restricted access for authorized personnel.</span>
+                <div class="login-brand-center">
+                    <img src="/img/logo.png" alt="XB" class="login-logo" />
+                    <span class="login-brand-caption">XB Franchise Solutions</span>
                 </div>
             </section>
 
@@ -50,55 +29,42 @@ const currentYear = new Date().getFullYear();
 
                 <div class="login-form-wrap">
                     <div class="login-mobile-brand" aria-hidden="true">
-                        <span class="login-brand-icon login-brand-monogram">
-                            <span class="login-brand-monogram-text">XB</span>
-                        </span>
-                        <span class="login-mobile-brand-copy">
-                            <strong>XBFS</strong>
-                            <small>Operations Hub</small>
-                        </span>
+                        <img src="/img/logo.png" alt="XB" class="login-logo login-logo--sm" />
                     </div>
 
                     <div class="login-access-card">
                         <div class="login-header">
-                            <span class="login-status">
-                                <span class="login-status-dot"></span>
-                                Secure access
-                            </span>
-                            <h2>Sign in</h2>
-                            <p>Enter your credentials to continue.</p>
+                            <h2>Bienvenido de vuelta</h2>
+                            <p>Ingresa tus datos para continuar.</p>
                         </div>
 
                         <form class="login-form" id="loginForm">
                             <div class="login-field">
-                                <label for="username">Username</label>
+                                <label for="username">Correo</label>
                                 <div class="login-input-wrap">
-                                    <i
-                                        class="fa-regular fa-user"
-                                        aria-hidden="true"></i>
                                     <input
                                         type="text"
                                         id="username"
                                         name="username"
-                                        placeholder="username"
+                                        placeholder="correo o usuario"
                                         autocomplete="username"
                                         required
                                         autofocus
                                     />
+                                    <i
+                                        class="fa-regular fa-envelope"
+                                        aria-hidden="true"></i>
                                 </div>
                             </div>
 
                             <div class="login-field">
-                                <label for="password">Password</label>
+                                <label for="password">Contraseña</label>
                                 <div class="login-input-wrap">
-                                    <i
-                                        class="fa-solid fa-lock"
-                                        aria-hidden="true"></i>
                                     <input
                                         type="password"
                                         id="password"
                                         name="password"
-                                        placeholder="password"
+                                        placeholder="contraseña"
                                         autocomplete="current-password"
                                         required
                                     />
@@ -106,7 +72,7 @@ const currentYear = new Date().getFullYear();
                                         class="login-password-toggle"
                                         id="passwordToggle"
                                         type="button"
-                                        aria-label="Show password"
+                                        aria-label="Mostrar contraseña"
                                         aria-pressed="false"
                                     >
                                         <i
@@ -116,8 +82,8 @@ const currentYear = new Date().getFullYear();
                                 </div>
                             </div>
 
-                            <div class="login-session-options">
-                                <label class="login-remember-control">
+                            <div class="login-row-between">
+                                <label class="login-check-inline">
                                     <input
                                         type="checkbox"
                                         id="rememberSession"
@@ -125,19 +91,21 @@ const currentYear = new Date().getFullYear();
                                         value="true"
                                     />
                                     <span
-                                        class="login-remember-check"
+                                        class="login-check-box"
                                         aria-hidden="true"
                                     >
                                         <i class="fa-solid fa-check"></i>
                                     </span>
-                                    <span class="login-remember-copy">
-                                        <strong>Mantener sesión abierta</strong>
-                                        <small>
-                                            Conserva el acceso en este
-                                            dispositivo.
-                                        </small>
-                                    </span>
+                                    <span>Recordarme 30 días</span>
                                 </label>
+
+                                <button
+                                    type="button"
+                                    class="login-forgot-link"
+                                    id="forgotPasswordBtn"
+                                >
+                                    ¿Olvidaste tu contraseña?
+                                </button>
                             </div>
 
                             <button
@@ -145,87 +113,25 @@ const currentYear = new Date().getFullYear();
                                 id="loginBtn"
                                 class="login-submit"
                             >
-                                <span>Enter the hub</span>
-                                <i
-                                    class="fa-solid fa-arrow-right"
-                                    aria-hidden="true"></i>
+                                <span>Iniciar sesión</span>
                             </button>
                         </form>
 
                         <div class="login-enterprise-access" id="entraLoginBlock" hidden>
-                            <div class="login-enterprise-divider"><span>or use corporate access</span></div>
+                            <div class="login-enterprise-divider"><span>o</span></div>
                             <button type="button" class="login-enterprise-button" id="entraLoginBtn">
                                 <i class="fa-brands fa-microsoft" aria-hidden="true"></i>
-                                <span>Continue with Microsoft</span>
+                                <span>Continuar con Microsoft</span>
                             </button>
-                            <small>Uses your organization account and Microsoft Entra ID policies.</small>
+                            <small>Usa tu cuenta corporativa y las políticas de Microsoft Entra ID.</small>
                         </div>
-
-                        <form
-                            class="login-form login-mfa-form"
-                            id="mfaForm"
-                            hidden
-                        >
-                            <div class="login-mfa-summary">
-                                <span class="login-mfa-icon">
-                                    <i
-                                        class="fa-solid fa-mobile-screen-button"
-                                        aria-hidden="true"></i>
-                                </span>
-                                <div>
-                                    <strong>Authenticator required</strong>
-                                    <p>
-                                        Enter the 6-digit code from Microsoft
-                                        Authenticator.
-                                    </p>
-                                </div>
-                            </div>
-
-                            <div class="login-field">
-                                <label for="mfaCode">Authentication code</label>
-                                <div class="login-input-wrap">
-                                    <i
-                                        class="fa-solid fa-key"
-                                        aria-hidden="true"></i>
-                                    <input
-                                        type="text"
-                                        id="mfaCode"
-                                        name="mfaCode"
-                                        placeholder="000000"
-                                        autocomplete="one-time-code"
-                                        inputmode="numeric"
-                                        maxlength="6"
-                                        pattern="[0-9]{6}"
-                                    />
-                                </div>
-                            </div>
-
-                            <button
-                                type="submit"
-                                id="mfaBtn"
-                                class="login-submit"
-                            >
-                                <span>Verify code</span>
-                                <i
-                                    class="fa-solid fa-shield-halved"
-                                    aria-hidden="true"></i>
-                            </button>
-
-                            <button
-                                type="button"
-                                id="mfaBackBtn"
-                                class="login-secondary-action"
-                            >
-                                Use another account
-                            </button>
-                        </form>
 
                         <div class="login-security-note">
                             <i
                                 class="fa-solid fa-shield-halved"
                                 aria-hidden="true"></i>
                             <span
-                                >Your access is logged for internal audit.</span
+                                >Tu acceso queda registrado para auditoría interna.</span
                             >
                         </div>
                     </div>
@@ -239,5 +145,5 @@ const currentYear = new Date().getFullYear();
     </main>
 
     <script src="/js/config.js" is:inline></script>
-    <script src="/js/login.js?v=20260717-entra-sso-v1" is:inline></script>
+    <script src="/js/login.js?v=20260729-flat-redesign-v1" is:inline></script>
     </BaseLayout>

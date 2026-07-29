@@ -86,9 +86,9 @@
 }
 
 .summary-card:hover {
-    transform: translateY(-2px);
+    transform: none;
     border-color: var(--xb-color-border-strong);
-    box-shadow: var(--shadow);
+    box-shadow: none;
 }
 
 #burgerKingTaxStoreDialog .bk-tax-swal-container {
@@ -493,7 +493,7 @@
     justify-content: center;
     padding: 24px;
     background: #0F0F0FA8;
-    backdrop-filter: blur(3px);
+    backdrop-filter: none;
 }
 
 .comparison-detail-overlay.active {
@@ -519,7 +519,7 @@
 .document-detail-modal {
     border: 1px solid var(--xb-color-border);
     border-top: 5px solid var(--xb-color-text);
-    box-shadow: 0 30px 80px -36px rgba(15, 15, 15, .72);
+    box-shadow: none;
     max-width: 780px;
     border-radius: 10px;
 }
@@ -528,7 +528,7 @@
     border: 1px solid var(--xb-color-border);
     border-top: 5px solid var(--xb-color-text);
     border-radius: 12px;
-    box-shadow: 0 30px 80px -36px rgba(15, 15, 15, .72);
+    box-shadow: none;
     width: min(1180px, 96vw);
     max-width: 96vw;
     height: 88vh;
@@ -621,7 +621,7 @@ dialog.file-comparison-dialog {
     border-top: 5px solid var(--xb-color-text);
     border-radius: 12px;
     background: var(--xb-color-surface);
-    box-shadow: 0 32px 86px -38px rgba(15, 15, 15, .78);
+    box-shadow: none;
 }
 
 dialog.bk-tax-store-dialog {
@@ -629,18 +629,18 @@ dialog.bk-tax-store-dialog {
     border-top: 5px solid var(--xb-color-text);
     border-radius: 12px;
     background: var(--xb-color-surface);
-    box-shadow: 0 32px 86px -38px rgba(15, 15, 15, .78);
+    box-shadow: none;
 }
 
 dialog.file-comparison-dialog::backdrop {
     background: rgba(15, 15, 15, .56);
-    backdrop-filter: blur(5px);
+    backdrop-filter: none;
     animation: appBackdropIn .18s ease-out both;
 }
 
 dialog.bk-tax-store-dialog::backdrop {
     background: rgba(15, 15, 15, .56);
-    backdrop-filter: blur(5px);
+    backdrop-filter: none;
     animation: appBackdropIn .18s ease-out both;
 }
 
@@ -806,7 +806,7 @@ dialog.bk-tax-store-dialog[open] {
     border: 0;
     border-bottom: 1px solid var(--xb-color-border);
     background: var(--xb-color-surface);
-    box-shadow: 0 14px 32px -34px rgba(15, 15, 15, 0.75);
+    box-shadow: none;
 }
 
 .bk-tax-store-form {
@@ -827,7 +827,7 @@ dialog.bk-tax-store-dialog[open] {
     border: 1px solid var(--xb-color-border);
     border-top: 4px solid var(--xb-color-text);
     border-radius: 14px;
-    box-shadow: 0 18px 44px -42px rgba(15, 15, 15, 0.84);
+    box-shadow: none;
 }
 
 .file-comparison-window-content {
@@ -876,21 +876,21 @@ dialog.bk-tax-store-dialog[open] {
     border-color: var(--xb-color-border);
     border-top-color: #1F1F1F;
     border-radius: 10px;
-    box-shadow: 0 30px 84px -38px rgba(15, 15, 15, 0.76);
+    box-shadow: none;
 }
 
 .py-tax-swal-popup {
     border-color: var(--xb-color-border);
     border-top-color: #1F1F1F;
     border-radius: 10px;
-    box-shadow: 0 30px 84px -38px rgba(15, 15, 15, 0.76);
+    box-shadow: none;
 }
 
 .bk-tax-swal-popup {
     border-color: var(--xb-color-border);
     border-top-color: #1F1F1F;
     border-radius: 10px;
-    box-shadow: 0 30px 84px -38px rgba(15, 15, 15, 0.76);
+    box-shadow: none;
 }
 
 h1 {
@@ -919,13 +919,13 @@ h3 {
 .admin-dashboard-header {
     border-radius: 8px;
     background: linear-gradient(120deg, rgba(184, 184, 184, 0.15), transparent 48%), #1F1F1F;
-    box-shadow: 0 20px 46px -38px rgba(15, 15, 15, 0.78);
+    box-shadow: none;
 }
 
 .comparison-history-hero {
     border-radius: 8px;
     background: linear-gradient(120deg, rgba(184, 184, 184, 0.15), transparent 48%), #1F1F1F;
-    box-shadow: 0 20px 46px -38px rgba(15, 15, 15, 0.78);
+    box-shadow: none;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -1110,7 +1110,7 @@ h3 {
     font-weight: 800;
     min-height: 42px;
     border-radius: 8px;
-    box-shadow: 0 10px 26px -24px rgba(15, 15, 15, .65);
+    box-shadow: none;
     border-color: var(--xb-color-border-strong);
     background: var(--xb-color-surface);
     color: var(--xb-color-text);
@@ -1128,7 +1128,7 @@ h3 {
     top: 82px;
     border-color: var(--xb-color-border);
     border: 1px solid var(--modern-border);
-    box-shadow: 0 18px 46px -42px rgba(15, 15, 15, 0.72);
+    box-shadow: none;
     border-radius: 22px;
     background: var(--xb-color-surface);
     overflow: hidden;
@@ -1138,7 +1138,7 @@ h3 {
 .profile-panel {
     border-color: var(--xb-color-border);
     border-top: 4px solid var(--xb-color-text);
-    box-shadow: 0 18px 46px -42px rgba(15, 15, 15, 0.72);
+    box-shadow: none;
     overflow: visible;
     padding: 20px;
     border: 0;
@@ -1158,7 +1158,7 @@ h3 {
     border-left: 0;
     border: 1px solid var(--modern-border);
     border-radius: 8px;
-    box-shadow: 0 18px 46px -42px rgba(15, 15, 15, 0.72);
+    box-shadow: none;
     border-bottom: 0;
     align-items: center;
     padding: 22px 24px 12px;
@@ -1191,7 +1191,7 @@ h3 {
     height: 112px;
     border: 4px solid var(--xb-color-border);
     border-radius: 999px;
-    box-shadow: 0 12px 34px -24px rgba(15, 15, 15, .65);
+    box-shadow: none;
     display: grid;
     place-items: center;
     overflow: hidden;
@@ -1221,7 +1221,7 @@ h3 {
     border-radius: 999px;
     background: var(--xb-color-surface);
     color: var(--clean-primary);
-    box-shadow: 0 12px 28px -24px rgba(15, 15, 15, .65);
+    box-shadow: none;
 }
 
 .profile-photo-action:hover {
@@ -1291,7 +1291,7 @@ h3 {
     display: grid;
     gap: 0;
     border: 1px solid var(--xb-color-border);
-    box-shadow: 0 18px 44px -40px rgba(15, 15, 15, .65);
+    box-shadow: none;
     border-radius: 22px;
     background: var(--xb-color-surface);
     overflow: hidden;
@@ -1400,7 +1400,7 @@ body.profile-crop-open {
     height: 100%;
     border: none;
     background: rgba(15, 15, 15, 0.72);
-    backdrop-filter: blur(7px);
+    backdrop-filter: none;
 }
 
 .profile-crop-dialog {
@@ -1691,9 +1691,9 @@ body.profile-crop-open {
     color: var(--xb-color-text);
     background: var(--xb-color-surface-subtle);
     outline: none;
-    transform: translateY(-1px);
+    transform: none;
     border-color: var(--xb-color-border-strong);
-    box-shadow: 0 14px 26px -24px rgba(31, 31, 31, 0.65);
+    box-shadow: none;
 }
 
 .profile-settings-tab:focus-visible {
@@ -1707,7 +1707,7 @@ body.profile-crop-open {
     border-color: var(--xb-color-text);
     background: #1F1F1F;
     color: #ffffff;
-    box-shadow: 0 18px 34px -25px rgba(15, 15, 15, 0.80);
+    box-shadow: none;
 }
 
 .profile-settings-tab i {
@@ -1753,7 +1753,7 @@ body.profile-crop-open {
 .profile-mfa-card {
     grid-template-columns: minmax(0, 1fr) auto;
     margin-top: 4px;
-    box-shadow: 0 18px 46px -42px rgba(15, 15, 15, 0.72);
+    box-shadow: none;
     border: 0;
     border-radius: 16px;
     background: var(--xb-color-surface);
@@ -1842,7 +1842,7 @@ body.profile-crop-open {
     border-top: 4px solid var(--xb-color-text);
     border-radius: 8px;
     background: var(--xb-color-surface);
-    box-shadow: 0 28px 70px -32px rgba(15, 15, 15, 0.8);
+    box-shadow: none;
 }
 
 .mfa-swal-danger {
@@ -2188,7 +2188,7 @@ body.profile-crop-open {
     place-items: center;
     padding: 24px;
     background: rgba(15, 15, 15, .48);
-    backdrop-filter: blur(8px);
+    backdrop-filter: none;
 }
 
 .system-error-detail-dialog {
@@ -2200,7 +2200,7 @@ body.profile-crop-open {
     overflow: hidden;
     border-radius: 24px;
     background: var(--xb-color-surface);
-    box-shadow: 0 34px 96px -46px rgba(15, 15, 15, .9);
+    box-shadow: none;
     animation: systemErrorModalIn .18s ease-out both;
 }
 
@@ -2297,7 +2297,7 @@ body.profile-crop-open {
     border-left: 5px solid var(--xb-color-danger);
     border-radius: 16px;
     background: var(--xb-color-surface);
-    box-shadow: 0 14px 32px -30px rgba(15, 15, 15, .55);
+    box-shadow: none;
 }
 
 .system-error-detail-alert.is-resolved {
@@ -2393,7 +2393,7 @@ body.profile-crop-open {
     border: 1px solid var(--xb-color-border);
     border-radius: 16px;
     background: var(--xb-color-surface);
-    box-shadow: 0 14px 32px -32px rgba(15, 15, 15, .5);
+    box-shadow: none;
 }
 
 .system-error-detail-section-header {
@@ -2615,7 +2615,7 @@ html {
     border: 1px solid var(--modern-border);
     border-radius: 8px;
     background: rgba(255, 255, 255, 0.94);
-    box-shadow: 0 18px 46px -42px rgba(15, 15, 15, 0.72);
+    box-shadow: none;
     display: grid;
     gap: 16px;
     padding: 20px;
@@ -2625,7 +2625,7 @@ html {
     border: 1px solid var(--modern-border);
     border-radius: 8px;
     background: rgba(255, 255, 255, 0.94);
-    box-shadow: 0 18px 46px -42px rgba(15, 15, 15, 0.72);
+    box-shadow: none;
     min-height: 286px;
     padding: 20px;
     display: grid;
@@ -2639,7 +2639,7 @@ html {
     border: 1px solid var(--modern-border);
     border-radius: 8px;
     background: rgba(255, 255, 255, 0.94);
-    box-shadow: 0 18px 46px -42px rgba(15, 15, 15, 0.72);
+    box-shadow: none;
     flex-wrap: wrap;
     justify-content: flex-end;
     min-height: 286px;
@@ -2654,7 +2654,7 @@ html {
     border: 1px solid var(--modern-border);
     border-radius: 8px;
     background: rgba(255, 255, 255, 0.94);
-    box-shadow: 0 18px 46px -42px rgba(15, 15, 15, 0.72);
+    box-shadow: none;
     display: grid;
     align-content: start;
     gap: 14px;
@@ -2666,7 +2666,7 @@ html {
     border: 1px solid var(--modern-border);
     border-radius: 8px;
     background: rgba(255, 255, 255, 0.94);
-    box-shadow: 0 18px 46px -42px rgba(15, 15, 15, 0.72);
+    box-shadow: none;
     display: grid;
     gap: 13px;
     padding: 14px;
@@ -2676,14 +2676,14 @@ html {
     border: 1px solid var(--modern-border);
     border-radius: 8px;
     background: rgba(255, 255, 255, 0.94);
-    box-shadow: 0 18px 46px -42px rgba(15, 15, 15, 0.72);
+    box-shadow: none;
     overflow: hidden;
 }
 
 .documents-type-tab {
     border: 1px solid var(--modern-border);
     background: rgba(255, 255, 255, 0.94);
-    box-shadow: 0 18px 46px -42px rgba(15, 15, 15, 0.72);
+    box-shadow: none;
     border-radius: 8px;
     color: var(--xb-color-text);
     font-weight: 800;
@@ -2702,7 +2702,7 @@ html {
 
 .property-documents-status {
     border: 1px solid var(--modern-border);
-    box-shadow: 0 18px 46px -42px rgba(15, 15, 15, 0.72);
+    box-shadow: none;
     border-color: var(--xb-color-border);
     border-radius: 8px;
     background: var(--xb-color-surface-subtle);
@@ -2748,14 +2748,14 @@ html {
 .documents-type-tab:hover {
     transform: none;
     border-color: var(--xb-color-border-strong);
-    box-shadow: 0 22px 54px -42px rgba(15, 15, 15, 0.85);
+    box-shadow: none;
     outline: 0;
 }
 
 .pm-upload-card:hover {
     transform: none;
     border-color: var(--xb-color-border-strong);
-    box-shadow: 0 22px 54px -42px rgba(15, 15, 15, 0.85);
+    box-shadow: none;
 }
 
 .pm-table-action {
@@ -2796,20 +2796,20 @@ html {
     border-color: var(--xb-color-text);
     background: #1F1F1F;
     color: #ffffff;
-    box-shadow: 0 14px 28px -22px rgba(15, 15, 15, 0.8);
+    box-shadow: none;
 }
 
 .documents-type-tab.active .documents-type-icon {
     border-color: var(--xb-color-text);
     background: #1F1F1F;
     color: #ffffff;
-    box-shadow: 0 14px 28px -22px rgba(15, 15, 15, 0.8);
+    box-shadow: none;
 }
 
 .pm-table-action.is-primary:hover {
     border-color: var(--xb-color-text);
     background: #0F0F0F;
-    transform: translateY(-1px);
+    transform: none;
 }
 
 .pm-table-action:hover {
@@ -3036,7 +3036,7 @@ label {
     margin: 18px;
     border: 1px solid var(--xb-color-border);
     border-radius: 14px;
-    box-shadow: 0 18px 46px -42px rgba(15, 15, 15, 0.9);
+    box-shadow: none;
     scrollbar-width: thin;
     scrollbar-color: var(--xb-color-text-soft) var(--xb-color-surface-subtle);
 }
@@ -3298,7 +3298,7 @@ label {
     padding: 12px 13px;
     border: 1px solid var(--xb-color-border);
     border-left-width: 4px;
-    box-shadow: 0 14px 32px -30px rgba(15, 15, 15, 0.55);
+    box-shadow: none;
 }
 
 .pm-schedule-status.is-success {
@@ -3413,7 +3413,7 @@ label {
     border-color: var(--xb-color-border);
     border-radius: 8px;
     background: var(--xb-color-surface);
-    box-shadow: 0 18px 46px -42px rgba(15, 15, 15, 0.72);
+    box-shadow: none;
     border: 1px solid var(--gray-200);
     margin-bottom: 18px;
     padding: 14px 16px;
@@ -3423,21 +3423,21 @@ label {
     border-color: var(--xb-color-border);
     border-radius: 8px;
     background: var(--xb-color-surface);
-    box-shadow: 0 18px 46px -42px rgba(15, 15, 15, 0.72);
+    box-shadow: none;
 }
 
 .tax-store-dialog {
     border-color: var(--xb-color-border);
     border-radius: 8px;
     background: var(--xb-color-surface);
-    box-shadow: 0 18px 46px -42px rgba(15, 15, 15, 0.72);
+    box-shadow: none;
 }
 
 .bk-tax-store-dialog {
     border-color: var(--xb-color-border);
     border-radius: 8px;
     background: var(--xb-color-surface);
-    box-shadow: 0 18px 46px -42px rgba(15, 15, 15, 0.72);
+    box-shadow: none;
     position: fixed;
     inset: 0;
     margin: auto;
@@ -3454,14 +3454,14 @@ label {
     border-color: var(--xb-color-border);
     border-radius: 8px;
     background: var(--xb-color-surface);
-    box-shadow: 0 18px 46px -42px rgba(15, 15, 15, 0.72);
+    box-shadow: none;
 }
 
 .py-tax-store-dialog {
     border-color: var(--xb-color-border);
     border-radius: 8px;
     background: var(--xb-color-surface);
-    box-shadow: 0 18px 46px -42px rgba(15, 15, 15, 0.72);
+    box-shadow: none;
 }
 
 .step.active .step-number {
@@ -3756,12 +3756,12 @@ label {
 
 .panel:hover {
     border-color: var(--xb-color-border-strong);
-    box-shadow: var(--shadow);
+    box-shadow: none;
 }
 
 .metric-card:hover {
     border-color: var(--xb-color-border-strong);
-    box-shadow: var(--shadow);
+    box-shadow: none;
 }
 
 .panel-header {

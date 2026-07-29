@@ -183,21 +183,11 @@ html body .access-department-hero {
     border: 1px solid var(--xb-color-text);
     border-radius: 18px;
     color: #ffffff;
-    box-shadow: 0 24px 52px -42px rgba(0, 0, 0, .78);
+    box-shadow: none;
 }
 
 html body .access-department-hero::after {
-    content: "";
-    position: absolute;
-    right: -86px;
-    bottom: -172px;
-    display: block;
-    width: 330px;
-    height: 330px;
-    border: 42px solid rgba(255, 255, 255, .035);
-    border-radius: 50%;
-    background: transparent;
-    pointer-events: none;
+    display: none;
 }
 
 html body .access-department-icon {
@@ -278,7 +268,7 @@ html body #userModal .access-user-modal {
     border-top: 4px solid var(--xb-color-text);
     border-radius: 17px;
     background: var(--xb-color-surface);
-    box-shadow: 0 34px 78px -42px rgba(0, 0, 0, .72);
+    box-shadow: none;
 }
 
 html body #departmentModal .access-department-modal {
@@ -289,7 +279,7 @@ html body #departmentModal .access-department-modal {
     border-top: 4px solid var(--xb-color-text);
     border-radius: 17px;
     background: var(--xb-color-surface);
-    box-shadow: 0 34px 78px -42px rgba(0, 0, 0, .72);
+    box-shadow: none;
 }
 
 html body :is(#userModal, #departmentModal) .access-modal-header {
@@ -414,7 +404,7 @@ html body .system-error-detail-dialog {
     border: 1px solid var(--xb-color-border);
     border-radius: 18px;
     background: var(--xb-color-surface);
-    box-shadow: 0 36px 88px -44px rgba(0, 0, 0, .78);
+    box-shadow: none;
 }
 
 html body .system-error-detail-header {
@@ -578,21 +568,11 @@ html body .schedule-header {
     border: 1px solid var(--xb-color-text);
     border-radius: 20px;
     color: #ffffff;
-    box-shadow: 0 26px 58px -45px rgba(0, 0, 0, .78);
+    box-shadow: none;
 }
 
 html body .schedule-header::after {
-    content: "";
-    position: absolute;
-    right: -65px;
-    bottom: -165px;
-    display: block;
-    width: 330px;
-    height: 330px;
-    border: 42px solid rgba(255, 255, 255, .04);
-    border-radius: 50%;
-    background: transparent;
-    pointer-events: none;
+    display: none;
 }
 
 html body .schedule-header-copy {
@@ -756,8 +736,7 @@ html body .swal2-popup:is(.swal2-toast,
     background-color: var(--xb-color-surface);
     background-image: none;
     color: var(--toast-title);
-    box-shadow: 0 22px 44px -32px rgba(0, 0, 0, .52),
-        0 8px 18px -17px rgba(0, 0, 0, .25);
+    box-shadow: none;
     pointer-events: auto;
 }
 
@@ -1070,7 +1049,7 @@ html body :is(.access-command-hero,
             #0e1012 66%,
             #24282c 100%);
     color: #ffffff;
-    box-shadow: 0 16px 32px -28px rgba(0, 0, 0, .72);
+    box-shadow: none;
 }
 
 html body :is(.access-command-hero,
@@ -1235,7 +1214,7 @@ html body :is(.card,
     border-radius: 10px;
     background: var(--xb-color-surface);
     background-image: none;
-    box-shadow: 0 12px 24px -24px rgba(0, 0, 0, .34);
+    box-shadow: none;
 }
 
 html body :is(.card,
@@ -1254,7 +1233,7 @@ html body :is(.card,
     .schedule-option-card,
     .pm-card):hover {
     transform: none;
-    box-shadow: 0 12px 24px -24px rgba(0, 0, 0, .34);
+    box-shadow: none;
 }
 
 html body :is(.metric-card,
@@ -1588,8 +1567,8 @@ html body :is(.status-warning,
 html body :is(.modal-overlay,
     .system-error-detail-overlay) {
     background: rgba(8, 10, 12, .56);
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
 }
 
 html body :is(.modal,
@@ -1603,7 +1582,7 @@ html body :is(.modal,
     border-top: 3px solid var(--xb-color-text);
     border-radius: 10px;
     background: var(--xb-color-surface);
-    box-shadow: 0 30px 68px -40px rgba(0, 0, 0, .68);
+    box-shadow: none;
 }
 
 html body :is(.modal-header,
@@ -1640,7 +1619,7 @@ html body .login-shell {
     border: 1px solid var(--xb-color-border);
     border-radius: 12px;
     background: var(--xb-color-surface);
-    box-shadow: 0 28px 58px -42px rgba(0, 0, 0, .64);
+    box-shadow: none;
 }
 
 html body .login-form-panel {
@@ -1662,14 +1641,14 @@ html body .swal2-popup.swal2-toast {
     border-radius: 8px;
     background: var(--xb-color-surface);
     background-image: none;
-    box-shadow: 0 16px 34px -23px rgba(0, 0, 0, .42);
+    box-shadow: none;
 }
 
 html body .swal2-popup.xbfs-toast-final {
     border-radius: 8px;
     background: var(--xb-color-surface);
     background-image: none;
-    box-shadow: 0 16px 34px -23px rgba(0, 0, 0, .42);
+    box-shadow: none;
 }
 
 html body .swal2-popup.swal2-toast .swal2-title {
@@ -1729,11 +1708,10 @@ html body .main :is(.page-header,
     overflow: hidden;
     border: 1px solid rgba(255, 255, 255, .10);
     border-radius: var(--xbfs-header-radius);
-    background-color: #050607;
-    background-image: radial-gradient(circle at 88% 12%, rgba(255, 255, 255, .10), transparent 26%),
-        linear-gradient(135deg, #050607 0%, #0d0f11 58%, #24282c 100%);
+    background-color: #0F0F0F;
+    background-image: none;
     color: #ffffff;
-    box-shadow: 0 18px 40px -32px rgba(0, 0, 0, .78);
+    box-shadow: none;
     box-sizing: border-box;
 }
 
@@ -1758,17 +1736,7 @@ html body .main :is(.page-header,
     .pm-hero,
     [class$="-hero"],
     [class*="-hero "])::after {
-    content: "";
-    position: absolute;
-    right: -94px;
-    bottom: -172px;
-    z-index: 0;
-    width: 360px;
-    height: 360px;
-    border: 48px solid rgba(255, 255, 255, .045);
-    border-radius: 50%;
-    background: transparent;
-    pointer-events: none;
+    display: none;
 }
 
 html body .main :is(.page-header,
@@ -2016,7 +1984,7 @@ html body .main :is(.page-header,
     opacity: 1;
     box-shadow: none;
     transform: none;
-    backdrop-filter: blur(8px);
+    backdrop-filter: none;
 }
 
 html body .main :is(.page-header,
@@ -2126,7 +2094,7 @@ html body .main :is(.page-header,
     box-sizing: border-box;
 }
 
-.admin-command-hero {
+.admin-command-panel {
     position: relative;
     isolation: isolate;
     display: grid;
@@ -2134,30 +2102,33 @@ html body .main :is(.page-header,
     gap: 28px;
     overflow: hidden;
     padding: 32px;
-    border: 1px solid rgba(255, 255, 255, .10);
-    border-radius: 22px;
-    background: radial-gradient(circle at 88% 8%, rgba(255, 255, 255, .11), transparent 29%),
-        radial-gradient(circle at 8% 118%, rgba(255, 255, 255, .05), transparent 34%),
-        linear-gradient(135deg, #030303 0%, #0d0d0d 55%, #252525 100%);
-    color: #ffffff;
-    box-shadow: 0 34px 72px -52px rgba(0, 0, 0, .96),
-        inset 0 1px 0 rgba(255, 255, 255, .04);
-}
-
-.admin-command-hero::before {
-    content: "";
-    position: absolute;
-    right: -100px;
-    bottom: -180px;
-    z-index: -1;
-    width: 390px;
-    height: 390px;
-    border: 52px solid rgba(255, 255, 255, .025);
-    border-radius: 50%;
+    border: 1px solid var(--xb-color-border);
+    border-radius: 14px;
+    background: var(--xb-color-surface);
+    color: var(--xb-color-text);
+    box-shadow: none;
 }
 
 .admin-hero-copy {
     max-width: 720px;
+}
+
+.admin-hero-copy h1 {
+    margin: 0 0 10px;
+    color: var(--xb-color-text);
+    font-size: clamp(28px, 3vw, 38px);
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: -.03em;
+}
+
+.admin-hero-copy p {
+    max-width: 620px;
+    margin: 0;
+    color: var(--xb-color-text-muted);
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.55;
 }
 
 .admin-dashboard-eyebrow {
@@ -2189,6 +2160,12 @@ html body .main :is(.page-header,
     gap: 7px;
     color: var(--xb-color-text-soft);
     font-size: 11px;
+}
+
+.admin-hero-updated {
+    color: var(--xb-color-text-soft);
+    font-size: 11px;
+    font-weight: 700;
 }
 
 .admin-live-pill {
@@ -2232,11 +2209,11 @@ html body .main :is(.page-header,
     font-size: 12px;
     font-weight: 850;
     cursor: pointer;
-    transition: transform .16s ease, border-color .16s ease, background .16s ease;
-    border: 1px solid rgba(255, 255, 255, .23);
-    background: linear-gradient(180deg, #363636 0%, #090909 100%);
+    transition: border-color .16s ease, background .16s ease;
+    border: 1px solid #0F0F0F;
+    background: #0F0F0F;
     color: #ffffff;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .10);
+    box-shadow: none;
 }
 
 .admin-secondary-button {
@@ -2251,10 +2228,10 @@ html body .main :is(.page-header,
     font-size: 12px;
     font-weight: 850;
     cursor: pointer;
-    transition: transform .16s ease, border-color .16s ease, background .16s ease;
-    border: 1px solid rgba(255, 255, 255, .15);
-    background: rgba(255, 255, 255, .065);
-    color: #eeeeee;
+    transition: border-color .16s ease, background .16s ease;
+    border: 1px solid var(--xb-color-border-strong);
+    background: var(--xb-color-surface);
+    color: var(--xb-color-text);
 }
 
 .admin-panel-button {
@@ -2269,28 +2246,28 @@ html body .main :is(.page-header,
     font-size: 12px;
     font-weight: 850;
     cursor: pointer;
-    transition: transform .16s ease, border-color .16s ease, background .16s ease;
+    transition: border-color .16s ease, background .16s ease;
     flex: 0 0 auto;
     border: 1px solid var(--xb-color-border);
-    background: linear-gradient(180deg, var(--xb-color-surface), var(--xb-color-surface-subtle));
+    background: var(--xb-color-surface);
     color: var(--xb-color-text);
 }
 
 .admin-primary-button:hover:not(:disabled) {
-    border-color: rgba(255, 255, 255, .40);
-    background: linear-gradient(180deg, #4a4a4a 0%, #141414 100%);
-    transform: translateY(-1px);
+    border-color: #1F1F1F;
+    background: #1F1F1F;
+    transform: none;
 }
 
 .admin-secondary-button:hover:not(:disabled) {
-    border-color: rgba(255, 255, 255, .30);
-    background: rgba(255, 255, 255, .13);
-    color: #ffffff;
+    border-color: var(--xb-color-border-strong);
+    background: var(--xb-color-surface-subtle);
+    color: var(--xb-color-text);
 }
 
 .admin-secondary-button[aria-pressed="true"] {
-    border-color: rgba(255, 255, 255, .30);
-    background: rgba(255, 255, 255, .13);
+    border-color: #0F0F0F;
+    background: #0F0F0F;
     color: #ffffff;
 }
 
@@ -2362,14 +2339,14 @@ html body .main :is(.page-header,
     background: var(--admin-surface);
     color: inherit;
     text-decoration: none;
-    box-shadow: 0 15px 34px -34px rgba(0, 0, 0, .60);
+    box-shadow: none;
     transition: transform .16s ease, border-color .16s ease, box-shadow .16s ease;
 }
 
 .admin-quick-actions>a:hover {
     border-color: var(--xb-color-border-strong);
-    box-shadow: 0 22px 44px -34px rgba(0, 0, 0, .52);
-    transform: translateY(-2px);
+    box-shadow: none;
+    transform: none;
 }
 
 .admin-quick-icon {
@@ -2379,7 +2356,7 @@ html body .main :is(.page-header,
     place-items: center;
     border: 1px solid var(--xb-color-border);
     border-radius: 11px;
-    background: linear-gradient(145deg, var(--xb-color-surface-subtle), var(--xb-color-surface-strong));
+    background: var(--xb-color-surface-subtle);
     color: var(--xb-color-text);
 }
 
@@ -2405,14 +2382,7 @@ html body .main :is(.page-header,
 }
 
 .admin-metric-card::after {
-    content: "";
-    position: absolute;
-    right: -28px;
-    bottom: -34px;
-    width: 82px;
-    height: 82px;
-    border-radius: 50%;
-    background: rgba(0, 0, 0, .025);
+    display: none;
 }
 
 .admin-metric-icon {
@@ -2505,8 +2475,8 @@ html body .main :is(.page-header,
 
 .admin-metric-link:hover {
     border-color: var(--admin-danger);
-    box-shadow: 0 22px 44px -34px rgba(145, 47, 41, .42);
-    transform: translateY(-2px);
+    box-shadow: none;
+    transform: none;
 }
 
 .admin-panel-header>div {
@@ -2543,7 +2513,7 @@ html body .main :is(.page-header,
 .admin-panel-button:hover:not(:disabled) {
     border-color: var(--xb-color-border-strong);
     background: linear-gradient(180deg, var(--xb-color-surface-subtle), var(--xb-color-surface-strong));
-    transform: translateY(-1px);
+    transform: none;
 }
 
 .admin-overview-grid {
@@ -2855,7 +2825,7 @@ html body .main :is(.page-header,
     border: 1px solid var(--xb-color-border);
     border-radius: 8px;
     background: var(--xb-color-surface);
-    box-shadow: 0 10px 18px -18px rgba(0, 0, 0, .34);
+    box-shadow: none;
 }
 
 .admin-dashboard-page .corporate-command-metric>span {
@@ -3335,24 +3305,13 @@ html body .main :is(.page-header,
     padding: 31px 32px;
     border: 1px solid rgba(255, 255, 255, .09);
     border-radius: 22px;
-    background: radial-gradient(circle at 90% 3%, rgba(255, 255, 255, .11), transparent 27%),
-        radial-gradient(circle at 8% 125%, rgba(255, 255, 255, .05), transparent 34%),
-        linear-gradient(135deg, #050505 0%, #0f0f0f 56%, #292929 100%);
+    background: #0F0F0F;
     color: #ffffff;
-    box-shadow: 0 34px 72px -52px rgba(0, 0, 0, .96),
-        inset 0 1px 0 rgba(255, 255, 255, .04);
+    box-shadow: none;
 }
 
 .access-command-hero::after {
-    content: "";
-    position: absolute;
-    right: -92px;
-    bottom: -182px;
-    z-index: -1;
-    width: 380px;
-    height: 380px;
-    border: 48px solid rgba(255, 255, 255, .025);
-    border-radius: 50%;
+    display: none;
 }
 
 .access-hero-copy {
@@ -3488,8 +3447,7 @@ html body .main :is(.page-header,
     border: 1px solid var(--xb-color-text);
     background: linear-gradient(180deg, #353535 0%, #090909 100%);
     color: #ffffff;
-    box-shadow: 0 14px 24px -20px rgba(0, 0, 0, .82),
-        inset 0 1px 0 rgba(255, 255, 255, .10);
+    box-shadow: none;
 }
 
 .access-command-hero .access-button-primary {
@@ -3499,7 +3457,7 @@ html body .main :is(.page-header,
 .access-button-primary:hover:not(:disabled) {
     border-color: var(--xb-color-border-strong);
     background: linear-gradient(180deg, #4a4a4a 0%, #141414 100%);
-    transform: translateY(-1px);
+    transform: none;
 }
 
 .access-button-secondary {
@@ -3534,7 +3492,7 @@ html body .main :is(.page-header,
     border: 1px solid var(--access-border);
     border-radius: 15px;
     background: var(--xb-color-surface);
-    box-shadow: 0 18px 42px -38px rgba(0, 0, 0, .56);
+    box-shadow: none;
 }
 
 .access-view-switcher>div:first-child {
@@ -3582,8 +3540,7 @@ html body .main :is(.page-header,
     border-color: var(--xb-color-text);
     background: linear-gradient(180deg, #343434 0%, #111111 100%);
     color: #ffffff;
-    box-shadow: 0 10px 18px -15px rgba(0, 0, 0, .80),
-        inset 0 1px 0 rgba(255, 255, 255, .10);
+    box-shadow: none;
 }
 
 .access-view-panel {
@@ -3610,7 +3567,7 @@ html body .main :is(.page-header,
     border: 1px solid var(--access-border);
     border-radius: 15px;
     background: var(--xb-color-surface);
-    box-shadow: 0 20px 44px -40px rgba(0, 0, 0, .58);
+    box-shadow: none;
 }
 
 .access-metric-icon {
@@ -3691,7 +3648,7 @@ html body .main :is(.page-header,
     border: 1px solid var(--access-border);
     border-radius: 17px;
     background: var(--xb-color-surface);
-    box-shadow: 0 22px 52px -44px rgba(0, 0, 0, .58);
+    box-shadow: none;
     min-width: 0;
     overflow: hidden;
 }
@@ -3700,7 +3657,7 @@ html body .main :is(.page-header,
     border: 1px solid var(--access-border);
     border-radius: 17px;
     background: var(--xb-color-surface);
-    box-shadow: 0 22px 52px -44px rgba(0, 0, 0, .58);
+    box-shadow: none;
     overflow: hidden;
 }
 
@@ -3708,7 +3665,7 @@ html body .main :is(.page-header,
     border: 1px solid var(--access-border);
     border-radius: 17px;
     background: var(--xb-color-surface);
-    box-shadow: 0 22px 52px -44px rgba(0, 0, 0, .58);
+    box-shadow: none;
     overflow: hidden;
 }
 
@@ -3716,7 +3673,7 @@ html body .main :is(.page-header,
     border: 1px solid var(--access-border);
     border-radius: 17px;
     background: var(--xb-color-surface);
-    box-shadow: 0 22px 52px -44px rgba(0, 0, 0, .58);
+    box-shadow: none;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -3728,7 +3685,7 @@ html body .main :is(.page-header,
     border: 1px solid var(--access-border);
     border-radius: 17px;
     background: var(--xb-color-surface);
-    box-shadow: 0 22px 52px -44px rgba(0, 0, 0, .58);
+    box-shadow: none;
     display: grid;
     grid-template-columns: 50px minmax(0, 1fr) minmax(260px, 360px);
     align-items: center;
@@ -3739,7 +3696,7 @@ html body .main :is(.page-header,
 .permission-sticky-actions {
     border: 1px solid var(--access-border);
     border-radius: 17px;
-    box-shadow: 0 22px 52px -44px rgba(0, 0, 0, .58);
+    box-shadow: none;
     position: sticky;
     bottom: 14px;
     z-index: 18;
@@ -3749,15 +3706,15 @@ html body .main :is(.page-header,
     gap: 18px;
     padding: 13px 15px;
     background: rgba(255, 255, 255, .94);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
 }
 
 .access-department-hero {
     border: 1px solid var(--access-border);
     border-radius: 17px;
     background: var(--xb-color-surface);
-    box-shadow: 0 22px 52px -44px rgba(0, 0, 0, .58);
+    box-shadow: none;
     display: grid;
     grid-template-columns: 52px minmax(0, 1fr) auto;
     align-items: center;

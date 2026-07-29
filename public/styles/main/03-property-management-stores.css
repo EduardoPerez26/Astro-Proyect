@@ -252,12 +252,12 @@ body .main :is(.admin-metric-card, .admin-dashboard-panel, .admin-db-card, .comp
     border-radius: 8px;
     background: var(--xb-color-surface);
     color: var(--xb-color-text);
-    box-shadow: 0 12px 32px -30px rgba(15, 15, 15, 0.78);
+    box-shadow: none;
 }
 
 body .main :is(.admin-metric-card, .admin-dashboard-panel, .admin-db-card, .comparison-date-group, .documents-type-tab, .table-container, .profile-summary-card, .profile-panel, .pm-manager-card, .pm-documents-panel, .store-card, .restaurant-card, .document-card, .card, .panel):hover {
     border-color: var(--xb-color-border-strong);
-    box-shadow: 0 20px 42px -34px rgba(15, 15, 15, 0.86);
+    box-shadow: none;
 }
 
 body .main :is(.admin-panel-header, .table-header, .comparison-date-header, .profile-panel-header, .pm-schedule-header, .pm-manager-card-header, .pm-documents-panel-header, .pm-panel-header, .card-header, .panel-header) {
@@ -457,7 +457,7 @@ body .main :is(.modal, .comparison-detail-modal, .document-detail-modal, .profil
     background: var(--xb-color-surface);
     border-radius: 12px;
     border-color: var(--minimal-border);
-    box-shadow: 0 20px 54px -44px rgba(15, 15, 15, 0.9);
+    box-shadow: none;
 }
 
 body .main :is(.modal-header, .comparison-detail-modal>header, .document-detail-modal-header, .profile-crop-header) {
@@ -1664,7 +1664,7 @@ html body .main>.topbar {
     border: 0;
     border-radius: 0 0 20px 20px;
     background: var(--xb-color-surface-subtle);
-    box-shadow: 0 18px 42px -36px rgba(15, 15, 15, .78);
+    box-shadow: none;
     backdrop-filter: none;
     isolation: isolate;
     z-index: 8000;
@@ -1681,7 +1681,7 @@ html body .main>.header {
     border: 0;
     border-radius: 0 0 20px 20px;
     background: var(--xb-color-surface-subtle);
-    box-shadow: 0 18px 42px -36px rgba(15, 15, 15, .78);
+    box-shadow: none;
     backdrop-filter: none;
     isolation: isolate;
     z-index: 8000;
@@ -2073,7 +2073,7 @@ html body .sidebar {
 
 html body dialog::backdrop {
     background: rgba(15, 15, 15, .48);
-    backdrop-filter: blur(8px);
+    backdrop-filter: none;
 }
 
 html body .comparison-detail-modal {
@@ -2083,7 +2083,7 @@ html body .comparison-detail-modal {
     border: 0;
     border-radius: 24px;
     background: var(--xb-color-surface);
-    box-shadow: 0 34px 90px -50px rgba(15, 15, 15, .88);
+    box-shadow: none;
 }
 
 html body .comparison-detail-modal>header {
@@ -2151,7 +2151,7 @@ html body .sidebar-profile-link {
 html body .sidebar-profile-link:hover {
     background: var(--xb-color-surface);
     color: var(--xb-color-text);
-    transform: translate3d(2px, 0, 0);
+    transform: none;
 }
 
 html body .sidebar-profile-link.active {
@@ -2161,7 +2161,7 @@ html body .sidebar-profile-link.active {
 
 html body .sidebar-profile-link:hover i {
     color: var(--xb-color-text);
-    transform: scale(1.08);
+    transform: none;
 }
 
 html body .sidebar-profile-link.active i {
@@ -2205,7 +2205,7 @@ body :is(.card, .stat-card, .store-card, .restaurant-card, .module-card, .admin-
 }
 
 body :is(.store-card, .restaurant-card, .module-card, .pm-manager-card, .document-card, .restaurant-control-row, .comparison-date-group):hover {
-    transform: translate3d(0, -2px, 0);
+    transform: none;
 }
 
 body :is(button, .btn, .action-btn, .sidebar-menu-link, .sidebar-logout, .header-user-profile, .department-pill, .profile-settings-tab, .store-action, .toggle-restaurant-state) {
@@ -2213,7 +2213,7 @@ body :is(button, .btn, .action-btn, .sidebar-menu-link, .sidebar-logout, .header
 }
 
 body :is(button, .btn, .action-btn, .store-action, .toggle-restaurant-state):hover {
-    transform: translate3d(0, -1px, 0);
+    transform: none;
 }
 
 body :is(button, .btn, .action-btn, .store-action, .toggle-restaurant-state):active {
@@ -2668,43 +2668,43 @@ html body .sidebar-search i {
 }
 
 html body .sidebar-menu-link:hover {
-    transform: translate3d(2px, 0, 0);
+    transform: none;
 }
 
 html body .sidebar-logout:hover {
-    transform: translate3d(2px, 0, 0);
+    transform: none;
 }
 
 html body .sidebar.collapsed .sidebar-menu-link:hover {
-    transform: translate3d(0, -1px, 0);
+    transform: none;
 }
 
 html body .sidebar.collapsed .sidebar-profile-link:hover {
-    transform: translate3d(0, -1px, 0);
+    transform: none;
 }
 
 html body .sidebar.collapsed .sidebar-logout:hover {
-    transform: translate3d(0, -1px, 0);
+    transform: none;
 }
 
 html.sidebar-collapsed-preset body .sidebar .sidebar-menu-link:hover {
-    transform: translate3d(0, -1px, 0);
+    transform: none;
 }
 
 html.sidebar-collapsed-preset body .sidebar .sidebar-profile-link:hover {
-    transform: translate3d(0, -1px, 0);
+    transform: none;
 }
 
 html.sidebar-collapsed-preset body .sidebar .sidebar-logout:hover {
-    transform: translate3d(0, -1px, 0);
+    transform: none;
 }
 
 html body .sidebar-menu-link:hover i {
-    transform: scale(1.08);
+    transform: none;
 }
 
 html body .sidebar-logout:hover i {
-    transform: scale(1.08);
+    transform: none;
 }
 
 html body .sidebar-menu-link.active::before {
@@ -2814,7 +2814,7 @@ html body .main :is(.page-container, .property-management-page)>.page-header {
     border: 1px solid var(--xb-color-border);
     border-radius: var(--xb-panel-radius);
     background: var(--xb-color-surface);
-    box-shadow: 0 18px 46px -42px rgba(15, 15, 15, .72);
+    box-shadow: none;
     color: var(--xb-color-text);
 }
 
@@ -2892,7 +2892,7 @@ html body .main .property-management-page #pmUploadSection.upload-section {
     border: 1px solid var(--xb-color-border);
     border-radius: var(--xb-panel-radius);
     background: var(--xb-color-surface);
-    box-shadow: 0 18px 46px -42px rgba(15, 15, 15, .72);
+    box-shadow: none;
     box-sizing: border-box;
 }
 
@@ -3135,7 +3135,7 @@ html body .main .reconciliation-page .conciliacion-config {
     border: 1px solid var(--xb-color-border);
     border-radius: var(--xb-panel-radius);
     background: var(--xb-color-surface);
-    box-shadow: 0 18px 46px -42px rgba(15, 15, 15, .72);
+    box-shadow: none;
     box-sizing: border-box;
     max-width: 100%;
     min-width: 0;
@@ -3164,7 +3164,7 @@ html body .main .reconciliation-page #uploadSection.upload-section {
     border: 1px solid var(--xb-color-border);
     border-radius: var(--xb-panel-radius);
     background: var(--xb-color-surface);
-    box-shadow: 0 18px 46px -42px rgba(15, 15, 15, .72);
+    box-shadow: none;
 }
 
 html body .main .reconciliation-page #uploadSection>.section-heading {
@@ -3603,7 +3603,7 @@ html body .sidebar.collapsed .sidebar-menu-link .sidebar-chat-badge:not([hidden]
     padding: 0 5px;
     border: 2px solid var(--xb-color-text);
     font-size: 10px;
-    box-shadow: 0 8px 16px -10px rgba(0, 0, 0, .75);
+    box-shadow: none;
     z-index: 4;
 }
 
@@ -3617,7 +3617,7 @@ html.sidebar-collapsed-preset body .sidebar .sidebar-menu-link .sidebar-chat-bad
     padding: 0 5px;
     border: 2px solid var(--xb-color-text);
     font-size: 10px;
-    box-shadow: 0 8px 16px -10px rgba(0, 0, 0, .75);
+    box-shadow: none;
     z-index: 4;
 }
 
@@ -3645,15 +3645,15 @@ html.sidebar-collapsed-preset body .sidebar .sidebar-menu-link .sidebar-chat-bad
 .notification-toggle:hover {
     border-color: rgba(58, 58, 58, 0.38);
     background: var(--xb-color-surface);
-    box-shadow: 0 16px 34px -24px rgba(15, 15, 15, 0.65);
-    transform: translateY(-1px);
+    box-shadow: none;
+    transform: none;
     outline: none;
 }
 
 .notification-toggle:focus-visible {
     border-color: rgba(58, 58, 58, 0.38);
     background: var(--xb-color-surface);
-    box-shadow: 0 16px 34px -24px rgba(15, 15, 15, 0.65);
+    box-shadow: none;
     transform: translateY(-1px);
     outline: none;
 }
@@ -3661,7 +3661,7 @@ html.sidebar-collapsed-preset body .sidebar .sidebar-menu-link .sidebar-chat-bad
 .notification-center.is-open .notification-toggle {
     border-color: rgba(58, 58, 58, 0.38);
     background: var(--xb-color-surface);
-    box-shadow: 0 16px 34px -24px rgba(15, 15, 15, 0.65);
+    box-shadow: none;
     transform: translateY(-1px);
     outline: none;
 }
@@ -3683,7 +3683,7 @@ html.sidebar-collapsed-preset body .sidebar .sidebar-menu-link .sidebar-chat-bad
     font-size: 10px;
     font-weight: 900;
     line-height: 1;
-    box-shadow: 0 12px 20px -12px rgba(239, 68, 68, 0.9);
+    box-shadow: none;
 }
 
 .notification-badge[hidden] {
@@ -3700,8 +3700,8 @@ html.sidebar-collapsed-preset body .sidebar .sidebar-menu-link .sidebar-chat-bad
     border: 1px solid rgba(184, 184, 184, 0.28);
     border-radius: 22px;
     background: color-mix(in srgb, var(--xb-color-surface) 98%, transparent);
-    box-shadow: 0 28px 72px -34px rgba(15, 15, 15, 0.82);
-    backdrop-filter: blur(18px);
+    box-shadow: none;
+    backdrop-filter: none;
 }
 
 .notifications-panel[hidden] {

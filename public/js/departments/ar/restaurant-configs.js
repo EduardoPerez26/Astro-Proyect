@@ -143,6 +143,7 @@ window.RestaurantConfigs = {
             { key: 'discPolice', label: 'Discount - Police' },
             { key: 'discSenior', label: 'Discount - Senior' },
             { key: 'discVendor', label: 'Discount - Vendor' },
+            { key: 'discWhopperGuarantee', label: 'Discount - Whopper Guarantee' },
 
             { key: 'netSales', label: 'Net Sales' },
 
@@ -237,6 +238,7 @@ window.RestaurantConfigs = {
             discPolice: 'Discount - Police',
             discSenior: 'Discount - Senior',
             discVendor: 'Discount - Vendor',
+            discWhopperGuarantee: 'Discount - Whopper Guarantee',
 
             amex: 'AMEX',
             visa: 'Visa',

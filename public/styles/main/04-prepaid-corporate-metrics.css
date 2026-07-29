@@ -1114,7 +1114,7 @@ body .main .prepaid-page .prepaid-difference-modal-table {
     border-color: var(--xb-color-border);
     border-top-color: #1F1F1F;
     border-radius: 12px;
-    box-shadow: 0 30px 84px -38px rgba(15, 15, 15, 0.76);
+    box-shadow: none;
     text-align: left;
 }
 
@@ -1545,21 +1545,14 @@ html body .main>.page-container.documents-page>.documents-system-hero {
     margin: 0 0 18px;
     padding: 28px;
     border: 1px solid rgba(255, 255, 255, 0.16);
-    border-radius: 22px;
+    border-radius: 14px;
     color: #ffffff;
-    background: radial-gradient(circle at 88% 10%, rgba(255, 255, 255, 0.16), transparent 28%), linear-gradient(135deg, var(--dept-start, #0F0F0F) 0%, var(--dept-mid, #1F1F1F) 54%, var(--dept-end, #8f1d1d) 100%);
-    box-shadow: var(--se-shadow);
+    background: var(--dept-mid, #1F1F1F);
+    box-shadow: none;
 }
 
 html body .main>.page-container.documents-page>.documents-system-hero::after {
-    content: "";
-    position: absolute;
-    inset: auto -80px -110px auto;
-    width: 280px;
-    height: 280px;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.11);
-    pointer-events: none;
+    display: none;
 }
 
 html body .main>.page-container.documents-page>.documents-system-hero .page-header-info {
@@ -1629,7 +1622,7 @@ html body .main>.page-container.documents-page>.documents-system-hero .documents
 }
 
 html body .main>.page-container.documents-page>.documents-system-hero .documents-system-action-primary:hover {
-    transform: translateY(-1px);
+    transform: none;
     background: var(--xb-color-surface-subtle);
 }
 
@@ -1747,21 +1740,14 @@ html body .main :is(.admin-dashboard-header, .admin-users-page>.page-header, .op
     margin: 0 0 18px;
     padding: 28px;
     border: 1px solid rgba(255, 255, 255, 0.16);
-    border-radius: 22px;
+    border-radius: 14px;
     color: #ffffff;
-    background: radial-gradient(circle at 88% 10%, rgba(255, 255, 255, 0.16), transparent 28%), linear-gradient(135deg, var(--dept-start, #0F0F0F) 0%, var(--dept-mid, #1F1F1F) 54%, var(--dept-end, #8f1d1d) 100%);
-    box-shadow: var(--se-shadow);
+    background: var(--dept-mid, #1F1F1F);
+    box-shadow: none;
 }
 
 html body .main :is(.admin-dashboard-header, .admin-users-page>.page-header, .operations-header, .schedule-header, .reconciliation-page>.page-header, .property-documents-page .page-header, .property-management-page>.page-header, .comparison-history-hero, .stores-hero)::after {
-    content: "";
-    position: absolute;
-    inset: auto -80px -110px auto;
-    width: 280px;
-    height: 280px;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.11);
-    pointer-events: none;
+    display: none;
 }
 
 html body .main :is(.admin-dashboard-header>div, .admin-users-page>.page-header>*, .operations-header>*, .schedule-header>*, .reconciliation-page>.page-header>*, .property-documents-page .page-header>*, .property-management-page>.page-header>*, .comparison-history-hero>*, .stores-hero>*) {
@@ -2109,12 +2095,9 @@ html body .main :is(.prepaid-table, .prepaid-source-table, .prepaid-schedule-mat
 
 html body .main>.page-container.documents-page.documents-page>.documents-system-hero.documents-system-hero {
     border-color: rgba(255, 255, 255, .10);
-    background: radial-gradient(circle at 88% 12%, rgba(255, 255, 255, .10), transparent 28%),
-        radial-gradient(circle at 6% 120%, rgba(255, 255, 255, .05), transparent 39%),
-        linear-gradient(132deg, #020202 0%, #0a0a0a 54%, #1b1b1b 100%);
+    background: #0F0F0F;
     color: #fff;
-    box-shadow: 0 30px 66px -48px rgba(0, 0, 0, .98),
-        inset 0 1px 0 rgba(255, 255, 255, .045);
+    box-shadow: none;
 }
 
 html body .main>.page-container.documents-page.documents-page>.documents-system-hero.documents-system-hero:is(h1, h2, .page-title) {
@@ -2138,12 +2121,9 @@ html body .main>.page-container.documents-page.documents-page>.documents-system-
 
 html body .main>.page-container.profile-page.profile-professional-v3.profile-professional-v3>.profile-account-hero.profile-account-hero {
     border-color: rgba(255, 255, 255, .10);
-    background: radial-gradient(circle at 88% 12%, rgba(255, 255, 255, .10), transparent 28%),
-        radial-gradient(circle at 6% 120%, rgba(255, 255, 255, .05), transparent 39%),
-        linear-gradient(132deg, #020202 0%, #0a0a0a 54%, #1b1b1b 100%);
+    background: #0F0F0F;
     color: #fff;
-    box-shadow: 0 30px 66px -48px rgba(0, 0, 0, .98),
-        inset 0 1px 0 rgba(255, 255, 255, .045);
+    box-shadow: none;
 }
 
 html body .main>.page-container.profile-page.profile-professional-v3.profile-professional-v3>.profile-account-hero.profile-account-hero:is(h1, h2) {
@@ -2179,12 +2159,9 @@ html body .main>.page-container.profile-page.profile-professional-v3.profile-pro
 
 html body .main>.page-container.profile-page.profile-security-v2.profile-security-v2>.profile-settings-hero.profile-settings-hero {
     border-color: rgba(255, 255, 255, .10);
-    background: radial-gradient(circle at 88% 12%, rgba(255, 255, 255, .10), transparent 28%),
-        radial-gradient(circle at 6% 120%, rgba(255, 255, 255, .05), transparent 39%),
-        linear-gradient(132deg, #020202 0%, #0a0a0a 54%, #1b1b1b 100%);
+    background: #0F0F0F;
     color: #fff;
-    box-shadow: 0 30px 66px -48px rgba(0, 0, 0, .98),
-        inset 0 1px 0 rgba(255, 255, 255, .045);
+    box-shadow: none;
 }
 
 .sidebar-chat-badge {
@@ -2375,33 +2352,33 @@ html body .main>.page-container.profile-page.profile-security-v2.profile-securit
 }
 
 :is(html body .sidebar-menu-link:hover) {
-    transform: translate3d(4px, 0, 0);
-    box-shadow: 0 12px 28px -22px rgba(15, 15, 15, 0.85);
+    transform: none;
+    box-shadow: none;
 }
 
 :is(html body .sidebar-profile-link:hover) {
-    transform: translate3d(4px, 0, 0);
-    box-shadow: 0 12px 28px -22px rgba(15, 15, 15, 0.85);
+    transform: none;
+    box-shadow: none;
 }
 
 :is(html body .sidebar-logout:hover) {
-    transform: translate3d(4px, 0, 0);
-    box-shadow: 0 12px 28px -22px rgba(15, 15, 15, 0.85);
+    transform: none;
+    box-shadow: none;
 }
 
 :is(html body .sidebar-menu-link:hover::before) {
     opacity: 1;
-    transform: scaleY(1);
+    transform: none;
 }
 
 :is(html body .sidebar-profile-link:hover::before) {
     opacity: 1;
-    transform: scaleY(1);
+    transform: none;
 }
 
 :is(html body .sidebar-logout:hover::before) {
     opacity: 1;
-    transform: scaleY(1);
+    transform: none;
 }
 
 :is(html body .sidebar-menu-link.active::before) {
@@ -2440,15 +2417,15 @@ html body .main>.page-container.profile-page.profile-security-v2.profile-securit
 }
 
 :is(html body .sidebar-menu-link:hover i) {
-    transform: translateX(1px) scale(1.1);
+    transform: none;
 }
 
 :is(html body .sidebar-profile-link:hover i) {
-    transform: translateX(1px) scale(1.1);
+    transform: none;
 }
 
 :is(html body .sidebar-logout:hover i) {
-    transform: translateX(1px) scale(1.1);
+    transform: none;
 }
 
 :is(html body .sidebar-toggle) {
@@ -2458,39 +2435,39 @@ html body .main>.page-container.profile-page.profile-security-v2.profile-securit
 }
 
 :is(html body .sidebar-toggle:hover) {
-    transform: rotate(-6deg) scale(1.04);
+    transform: none;
 }
 
 :is(html body .sidebar.collapsed .sidebar-toggle:hover) {
-    transform: rotate(174deg) scale(1.04);
+    transform: none;
 }
 
 :is(html.sidebar-collapsed-preset body .sidebar .sidebar-toggle:hover) {
-    transform: rotate(174deg) scale(1.04);
+    transform: none;
 }
 
 :is(html body .sidebar.collapsed .sidebar-menu-link:hover) {
-    transform: translate3d(0, -2px, 0);
+    transform: none;
 }
 
 :is(html body .sidebar.collapsed .sidebar-profile-link:hover) {
-    transform: translate3d(0, -2px, 0);
+    transform: none;
 }
 
 :is(html body .sidebar.collapsed .sidebar-logout:hover) {
-    transform: translate3d(0, -2px, 0);
+    transform: none;
 }
 
 :is(html.sidebar-collapsed-preset body .sidebar .sidebar-menu-link:hover) {
-    transform: translate3d(0, -2px, 0);
+    transform: none;
 }
 
 :is(html.sidebar-collapsed-preset body .sidebar .sidebar-profile-link:hover) {
-    transform: translate3d(0, -2px, 0);
+    transform: none;
 }
 
 :is(html.sidebar-collapsed-preset body .sidebar .sidebar-logout:hover) {
-    transform: translate3d(0, -2px, 0);
+    transform: none;
 }
 
 :is(html body .sidebar.open) {
@@ -2519,7 +2496,7 @@ html body .main>.page-container.profile-page.profile-security-v2.profile-securit
     padding: 0 5px;
     border: 2px solid var(--xb-color-text);
     font-size: 10px;
-    box-shadow: 0 8px 16px -10px rgba(0, 0, 0, 0.75);
+    box-shadow: none;
     z-index: 4;
 }
 
@@ -2533,7 +2510,7 @@ html body .main>.page-container.profile-page.profile-security-v2.profile-securit
     padding: 0 5px;
     border: 2px solid var(--xb-color-text);
     font-size: 10px;
-    box-shadow: 0 8px 16px -10px rgba(0, 0, 0, 0.75);
+    box-shadow: none;
     z-index: 4;
 }
 
@@ -2588,7 +2565,7 @@ html body .main>.page-container.profile-page.profile-security-v2.profile-securit
 }
 
 .store-action:hover i {
-    transform: translateX(3px);
+    transform: none;
 }
 
 .store-card-disabled:hover {
@@ -3064,19 +3041,13 @@ tbody tr:hover {
     padding: 30px;
 
     border-radius: var(--xb-radius-xl);
-    background: linear-gradient(135deg, #090a0c 0%, #181a1f 56%, #292d34 100%);
+    background: #0F0F0F;
     color: #fff;
-    box-shadow: var(--xb-shadow-md);
+    box-shadow: none;
 }
 
 .corporate-page-header::after {
-    content: "";
-    position: absolute;
-    inset: auto -70px -100px auto;
-    width: 260px;
-    height: 260px;
-    border: 1px solid rgba(255, 255, 255, .08);
-    border-radius: 50%;
+    display: none;
 }
 
 .corporate-page-header__copy {
@@ -3167,11 +3138,11 @@ tbody tr:hover {
 .xb-button:hover {
     border-color: var(--xb-color-border-strong);
     background: var(--xb-color-surface-subtle);
-    transform: translateY(-1px);
+    transform: none;
 }
 
 .corporate-page-header__actions :is(button, a):hover {
-    transform: translateY(-1px);
+    transform: none;
     border-color: rgba(255, 255, 255, .35);
     background: rgba(255, 255, 255, .14);
 }

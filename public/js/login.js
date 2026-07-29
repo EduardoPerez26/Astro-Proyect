@@ -477,6 +477,19 @@ document.addEventListener(
         const rememberSessionInput =
             document.getElementById('rememberSession');
 
+        const forgotPasswordBtn =
+            document.getElementById('forgotPasswordBtn');
+
+        if (forgotPasswordBtn) {
+            forgotPasswordBtn.addEventListener('click', function () {
+                Swal.fire({
+                    icon: 'info',
+                    title: 'Recuperar acceso',
+                    text: 'Contacta a un administrador del sistema para restablecer tu contraseña.'
+                });
+            });
+        }
+
         await configurarInicioEntra(rememberSessionInput);
         const entraHandled = await procesarRetornoEntra();
         if (entraHandled) return;

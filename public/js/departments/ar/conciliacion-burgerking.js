@@ -70,6 +70,7 @@ const BK_ACCOUNT_MAP = {
     'Discount - Police': ['discPolice', 'credit'],
     'Discount - Senior': ['discSenior', 'credit'],
     'Discount - Vendor': ['discVendor', 'credit'],
+    'Discount - Whopper Guarantee': ['discWhopperGuarantee', 'credit'],
 
     'AMEX': ['amex', 'credit'],
     'Visa': ['visa', 'credit'],
@@ -106,7 +107,8 @@ const BK_DISCOUNT_KEYS = [
     'discOther',
     'discPolice',
     'discSenior',
-    'discVendor'
+    'discVendor',
+    'discWhopperGuarantee'
 ];
 
 const BK_DAILY_SALES_LINES = [
@@ -136,6 +138,7 @@ const BK_DAILY_SALES_LINES = [
     { memo: 'Discounts & Promotions - Police', acctNo: 442000, field: 'discPolice', type: 'debit' },
     { memo: 'Discounts & Promotions - Senior', acctNo: 421000, field: 'discSenior', type: 'debit' },
     { memo: 'Discounts & Promotions - Vendor', acctNo: 442000, field: 'discVendor', type: 'debit' },
+    { memo: 'Discounts & Promotions - Whopper Guarantee', acctNo: 444000, field: 'discWhopperGuarantee', type: 'debit' },
 
     { memo: 'Credit Card Expected', acctNo: 111500, field: 'ccTotals', type: 'debit' },
     { memo: 'Amex Expected Deposit', acctNo: 111500, field: 'amex', type: 'debit' },
@@ -379,6 +382,7 @@ function crearRegistroBurgerKing(store, unitName, date) {
         discPolice: 0,
         discSenior: 0,
         discVendor: 0,
+        discWhopperGuarantee: 0,
 
         amex: 0,
         visa: 0,
