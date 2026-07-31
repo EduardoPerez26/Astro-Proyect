@@ -129,10 +129,6 @@ import DashboardLayout from "../../../layouts/DashboardLayout.astro";
                         Add Payments
                     </button>
                     <input type="file" id="appendBillSourceInput" class="hidden" accept=".xlsx,.xls,.csv" />
-                    <button type="button" class="btn-secondary hidden" id="bulkAccountsBtn" disabled title="Set the Prepaid GL and Expense GL accounts for every row in this schedule">
-                        <i class="fa-solid fa-building-columns" aria-hidden="true"></i>
-                        Edit GL Accounts
-                    </button>
                     <button type="button" class="btn-primary hidden" id="generateScheduleBtn" disabled>
                         <i class="fa-solid fa-calculator" aria-hidden="true"></i>
                         Generate Schedule
@@ -153,13 +149,24 @@ import DashboardLayout from "../../../layouts/DashboardLayout.astro";
                         <strong>Review before generating</strong>
                         <span id="sourceReviewStatus">Upload a file to review its records before generating.</span>
                     </div>
-                    <small>
-                        Edit the original amortization period, apply a store closeout to accelerate the remaining balance, remove exceptions, or add manual concepts before generating.
-                    </small>
-                    <button type="button" class="btn-secondary hidden" id="bulkAmortizationBtn" disabled>
-                        <i class="fa-solid fa-calendar-days" aria-hidden="true"></i>
-                        <span id="bulkAmortizationBtnLabel">Edit amortization</span>
-                    </button>
+                    <div class="source-review-bulk-actions">
+                        <button type="button" class="btn-secondary hidden" id="bulkAmortizationBtn" disabled>
+                            <i class="fa-solid fa-calendar-days" aria-hidden="true"></i>
+                            <span id="bulkAmortizationBtnLabel">Edit amortization</span>
+                        </button>
+                        <button type="button" class="btn-secondary hidden" id="bulkAccountsBtn" disabled title="Set the Prepaid GL and Expense GL accounts for the selected rows">
+                            <i class="fa-solid fa-building-columns" aria-hidden="true"></i>
+                            <span id="bulkAccountsBtnLabel">Edit GL Accounts</span>
+                        </button>
+                        <button type="button" class="btn-secondary hidden" id="bulkRemoveRowsBtn" disabled title="Remove the selected rows from the schedule">
+                            <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                            <span id="bulkRemoveRowsBtnLabel">Remove rows</span>
+                        </button>
+                        <button type="button" class="btn-secondary hidden" id="bulkRemoveStoresBtn" disabled title="Remove every row for the selected stores">
+                            <i class="fa-solid fa-store-slash" aria-hidden="true"></i>
+                            <span id="bulkRemoveStoresBtnLabel">Remove stores</span>
+                        </button>
+                    </div>
                 </div>
 
                 <div class="prepaid-table-wrap">

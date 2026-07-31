@@ -640,12 +640,12 @@
     --xbfs-alert-muted: var(--xb-color-text-muted);
     --xbfs-alert-graphite: var(--xb-color-text);
     --xbfs-alert-graphite-hover: var(--xb-color-text);
-    --xbfs-alert-success: var(--xb-color-success);
-    --xbfs-alert-success-soft: var(--xb-color-success-soft);
-    --xbfs-alert-error: var(--xb-color-danger);
-    --xbfs-alert-error-soft: var(--xb-color-danger-soft);
-    --xbfs-alert-warning: var(--xb-color-warning);
-    --xbfs-alert-warning-soft: var(--xb-color-warning-soft);
+    --xbfs-alert-success: var(--xb-color-text);
+    --xbfs-alert-success-soft: var(--xb-color-surface-subtle);
+    --xbfs-alert-error: var(--xb-color-text);
+    --xbfs-alert-error-soft: var(--xb-color-surface-subtle);
+    --xbfs-alert-warning: var(--xb-color-text);
+    --xbfs-alert-warning-soft: var(--xb-color-surface-subtle);
     --xbfs-alert-info: var(--xb-color-text);
     --xbfs-alert-info-soft: var(--xb-color-surface-subtle);
     --xbfs-alert-shadow: 0 4px 12px rgba(0, 0, 0, 0.14);
@@ -1355,31 +1355,31 @@ body.sidebar-collapsed .main {
 
 .btn-primary {
     padding: 12px 24px;
-    border-radius: var(--radius);
-    font-weight: 600;
+    border-radius: 999px;
+    font-weight: 700;
     cursor: pointer;
     display: inline-flex;
     align-items: center;
     gap: 8px;
     transition: var(--transition);
-    border-color: var(--xb-color-text);
-    border: 1px solid var(--xb-color-text);
-    background: #1F1F1F;
+    border-color: #0F0F0F;
+    border: 1px solid #0F0F0F;
+    background: #0F0F0F;
     color: #ffffff;
     box-shadow: none;
 }
 
 .btn-primary:hover {
-    border-color: var(--xb-color-text);
+    border-color: #1F1F1F;
     transform: none;
-    background: #0F0F0F;
+    background: #1F1F1F;
     color: #ffffff;
 }
 
 .btn-secondary {
     padding: 12px 24px;
-    border-radius: var(--radius);
-    font-weight: 500;
+    border-radius: 11px;
+    font-weight: 800;
     cursor: pointer;
     border: 1px solid var(--modern-border);
     background: var(--xb-color-surface);

@@ -14,6 +14,7 @@ const state = {
     sourceDirty: false,
     removedStoreNumbers: new Set(),
     selectedSourceRowKeys: new Set(),
+    lastSourceRowCheckboxKey: null,
     bills: [],
     months: [],
     comparisonRows: [],
@@ -31,8 +32,13 @@ const els = {
     appendBillSourceBtn: document.getElementById('appendBillSourceBtn'),
     appendBillSourceInput: document.getElementById('appendBillSourceInput'),
     bulkAccountsBtn: document.getElementById('bulkAccountsBtn'),
+    bulkAccountsBtnLabel: document.getElementById('bulkAccountsBtnLabel'),
     bulkAmortizationBtn: document.getElementById('bulkAmortizationBtn'),
     bulkAmortizationBtnLabel: document.getElementById('bulkAmortizationBtnLabel'),
+    bulkRemoveRowsBtn: document.getElementById('bulkRemoveRowsBtn'),
+    bulkRemoveRowsBtnLabel: document.getElementById('bulkRemoveRowsBtnLabel'),
+    bulkRemoveStoresBtn: document.getElementById('bulkRemoveStoresBtn'),
+    bulkRemoveStoresBtnLabel: document.getElementById('bulkRemoveStoresBtnLabel'),
     selectAllSourceRows: document.getElementById('selectAllSourceRows'),
     generateScheduleBtn: document.getElementById('generateScheduleBtn'),
     sourceReviewStatus: document.getElementById('sourceReviewStatus'),
@@ -383,11 +389,6 @@ function updateSourceEditorState() {
         els.appendBillSourceBtn.disabled = !hasSchedule || isUploadingBillSource;
     }
 
-    if (els.bulkAccountsBtn) {
-        els.bulkAccountsBtn.classList.toggle('hidden', !hasSchedule);
-        els.bulkAccountsBtn.disabled = !hasSchedule || !hasRows;
-    }
-
     updateSourceSelectionState();
 
     if (els.generateScheduleBtn) {
@@ -434,6 +435,36 @@ function updateSourceSelectionState() {
         els.bulkAmortizationBtnLabel.textContent = selectedCount
             ? `Edit amortization (${selectedCount} selected)`
             : 'Edit amortization';
+    }
+
+    if (els.bulkAccountsBtn) {
+        els.bulkAccountsBtn.classList.toggle('hidden', !state.selectedScheduleId);
+        els.bulkAccountsBtn.disabled = selectedCount === 0;
+    }
+    if (els.bulkAccountsBtnLabel) {
+        els.bulkAccountsBtnLabel.textContent = selectedCount
+            ? `Edit GL Accounts (${selectedCount} selected)`
+            : 'Edit GL Accounts';
+    }
+
+    if (els.bulkRemoveRowsBtn) {
+        els.bulkRemoveRowsBtn.classList.toggle('hidden', !state.selectedScheduleId);
+        els.bulkRemoveRowsBtn.disabled = selectedCount === 0;
+    }
+    if (els.bulkRemoveRowsBtnLabel) {
+        els.bulkRemoveRowsBtnLabel.textContent = selectedCount
+            ? `Remove rows (${selectedCount} selected)`
+            : 'Remove rows';
+    }
+
+    if (els.bulkRemoveStoresBtn) {
+        els.bulkRemoveStoresBtn.classList.toggle('hidden', !state.selectedScheduleId);
+        els.bulkRemoveStoresBtn.disabled = selectedCount === 0;
+    }
+    if (els.bulkRemoveStoresBtnLabel) {
+        els.bulkRemoveStoresBtnLabel.textContent = selectedCount
+            ? `Remove stores (${selectedCount} selected)`
+            : 'Remove stores';
     }
 
     if (els.selectAllSourceRows) {
@@ -1687,28 +1718,76 @@ async function editSourceAccounts(rowKey) {
     showToast(`GL accounts updated for ${row.store_number || 'this row'}.`, 'success');
 }
 
+function getSelectedSourceRows() {
+    return state.sourceRows.filter((row, index) =>
+        state.selectedSourceRowKeys.has(createDraftRowId(row, index))
+    );
+}
+
 async function bulkEditAccounts() {
-    if (!state.sourceRows.length) return;
+    const selectedRows = getSelectedSourceRows();
+    if (!selectedRows.length) return;
 
     const values = await promptAccounts(
         {
             prepaid_account: state.selectedSchedule?.prepaid_account || '138500',
             expense_account: state.selectedSchedule?.expense_account || '708500',
-            description: `This will overwrite the Prepaid GL and Expense GL on all ${state.sourceRows.length} rows currently loaded.`
+            description: `This will overwrite the Prepaid GL and Expense GL on the ${selectedRows.length} selected row${selectedRows.length === 1 ? '' : 's'}.`
         },
-        `Edit GL accounts for all ${state.sourceRows.length} rows`,
-        'Apply to all rows'
+        `Edit GL accounts for ${selectedRows.length} row${selectedRows.length === 1 ? '' : 's'}`,
+        'Apply to selected rows'
     );
     if (!values) return;
 
-    state.sourceRows.forEach(row => {
+    selectedRows.forEach(row => {
         row.prepaid_account = values.prepaid_account;
         row.expense_account = values.expense_account;
     });
 
     markSourceDirty();
     renderSourceRows(state.sourceRows);
-    showToast(`GL accounts updated for all ${state.sourceRows.length} rows.`, 'success');
+    showToast(`GL accounts updated for ${selectedRows.length} row${selectedRows.length === 1 ? '' : 's'}.`, 'success');
+}
+
+async function bulkRemoveSourceRows() {
+    const selectedRows = getSelectedSourceRows();
+    if (!selectedRows.length) return;
+
+    const confirmed = await confirmAction(
+        `Remove ${selectedRows.length} selected row${selectedRows.length === 1 ? '' : 's'}?`,
+        'They will be excluded from the schedule that is generated.'
+    );
+    if (!confirmed) return;
+
+    const removedKeys = new Set(selectedRows.map(row => String(row._draft_id)));
+    state.sourceRows = state.sourceRows.filter(row => !removedKeys.has(String(row._draft_id)));
+    state.selectedSourceRowKeys.clear();
+    markSourceDirty();
+    renderSourceRows(state.sourceRows);
+    showToast(`${selectedRows.length} row${selectedRows.length === 1 ? '' : 's'} removed from the source review.`, 'success');
+}
+
+async function bulkRemoveSourceStores() {
+    const selectedRows = getSelectedSourceRows();
+    if (!selectedRows.length) return;
+
+    const storeNumbers = Array.from(new Set(selectedRows.map(row => String(row.store_number || '').trim()).filter(Boolean)));
+    if (!storeNumbers.length) return;
+
+    const affected = state.sourceRows.filter(row => storeNumbers.includes(String(row.store_number || '').trim())).length;
+
+    const confirmed = await confirmAction(
+        `Remove ${storeNumbers.length} selected store${storeNumbers.length === 1 ? '' : 's'}?`,
+        `${affected} row${affected === 1 ? '' : 's'} across ${storeNumbers.length} store${storeNumbers.length === 1 ? '' : 's'} will be excluded from the schedule that is generated.`
+    );
+    if (!confirmed) return;
+
+    state.sourceRows = state.sourceRows.filter(row => !storeNumbers.includes(String(row.store_number || '').trim()));
+    storeNumbers.forEach(store => state.removedStoreNumbers.add(store));
+    state.selectedSourceRowKeys.clear();
+    markSourceDirty();
+    renderSourceRows(state.sourceRows);
+    showToast(`${storeNumbers.length} store${storeNumbers.length === 1 ? '' : 's'} removed from the source review.`, 'success');
 }
 
 function sourceModalHtml(defaults) {
@@ -1875,11 +1954,38 @@ function handleSourceRowsClick(event) {
     const selectCheckbox = event.target.closest('[data-source-row-select]');
     if (selectCheckbox) {
         const key = selectCheckbox.dataset.sourceRowSelect;
+        const checkboxes = Array.from(els.sourceRows.querySelectorAll('[data-source-row-select]'));
+
+        if (event.shiftKey && state.lastSourceRowCheckboxKey) {
+            const lastIndex = checkboxes.findIndex(box => box.dataset.sourceRowSelect === state.lastSourceRowCheckboxKey);
+            const currentIndex = checkboxes.findIndex(box => box.dataset.sourceRowSelect === key);
+
+            if (lastIndex !== -1 && currentIndex !== -1) {
+                const [start, end] = lastIndex < currentIndex ? [lastIndex, currentIndex] : [currentIndex, lastIndex];
+                const checked = selectCheckbox.checked;
+
+                for (let i = start; i <= end; i += 1) {
+                    const box = checkboxes[i];
+                    box.checked = checked;
+                    if (checked) {
+                        state.selectedSourceRowKeys.add(box.dataset.sourceRowSelect);
+                    } else {
+                        state.selectedSourceRowKeys.delete(box.dataset.sourceRowSelect);
+                    }
+                }
+
+                state.lastSourceRowCheckboxKey = key;
+                updateSourceSelectionState();
+                return;
+            }
+        }
+
         if (selectCheckbox.checked) {
             state.selectedSourceRowKeys.add(key);
         } else {
             state.selectedSourceRowKeys.delete(key);
         }
+        state.lastSourceRowCheckboxKey = key;
         updateSourceSelectionState();
         return;
     }
@@ -2410,6 +2516,14 @@ function resetBillSourceView() {
         els.bulkAmortizationBtn.disabled = true;
         els.bulkAmortizationBtn.classList.add('hidden');
     }
+    if (els.bulkRemoveRowsBtn) {
+        els.bulkRemoveRowsBtn.disabled = true;
+        els.bulkRemoveRowsBtn.classList.add('hidden');
+    }
+    if (els.bulkRemoveStoresBtn) {
+        els.bulkRemoveStoresBtn.disabled = true;
+        els.bulkRemoveStoresBtn.classList.add('hidden');
+    }
     if (els.saveScheduleBtn) els.saveScheduleBtn.disabled = true;
     els.saveScheduleFooter?.classList.add('hidden');
     if (els.glScheduleSelect) els.glScheduleSelect.value = '';
@@ -2614,6 +2728,8 @@ function init() {
     els.appendBillSourceInput?.addEventListener('change', handleAppendBillSource);
     els.bulkAccountsBtn?.addEventListener('click', () => bulkEditAccounts().catch(error => showToast(error.message, 'error')));
     els.bulkAmortizationBtn?.addEventListener('click', () => bulkEditAmortization().catch(error => showToast(error.message, 'error')));
+    els.bulkRemoveRowsBtn?.addEventListener('click', () => bulkRemoveSourceRows().catch(error => showToast(error.message, 'error')));
+    els.bulkRemoveStoresBtn?.addEventListener('click', () => bulkRemoveSourceStores().catch(error => showToast(error.message, 'error')));
     els.selectAllSourceRows?.addEventListener('change', () => {
         if (els.selectAllSourceRows.checked) {
             state.sourceRows.forEach((row, index) => state.selectedSourceRowKeys.add(createDraftRowId(row, index)));

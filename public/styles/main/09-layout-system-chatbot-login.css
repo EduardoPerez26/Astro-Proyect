@@ -2417,10 +2417,10 @@ html body .swal2-popup:not(.xbfs-alert-preserve-layout) .swal2-validation-messag
     grid-area: validation;
     margin: 9px 0 0;
     padding: 9px 11px;
-    border: 1px solid var(--xb-color-danger);
+    border: 1px solid var(--xb-color-border-strong);
     border-radius: 9px;
-    background: var(--xb-color-danger-soft);
-    color: var(--xb-color-danger);
+    background: var(--xb-color-surface-subtle);
+    color: var(--xb-color-text);
     font-size: 12px;
     text-align: left;
 }
@@ -2443,7 +2443,7 @@ html body .swal2-popup:not(.xbfs-alert-preserve-layout) .swal2-actions.xbfs-swal
     min-height: 42px;
     margin: 0;
     padding: 0 17px;
-    border-radius: 10px;
+    border-radius: 11px;
     font-family: inherit;
     font-size: 12px;
     font-weight: 800;
@@ -2455,51 +2455,41 @@ html body .swal2-popup:not(.xbfs-alert-preserve-layout) .swal2-actions.xbfs-swal
 }
 
 html body .swal2-popup:not(.xbfs-alert-preserve-layout) .swal2-confirm.xbfs-swal-confirm {
-    border: 1px solid var(--xb-color-text);
-    background: linear-gradient(180deg,
-            #303030 0%,
-            #090909 100%);
+    border-radius: 999px;
+    border: 1px solid #0F0F0F;
+    background: #0F0F0F;
     color: #ffffff;
     box-shadow: none;
 }
 
 html body .swal2-popup:not(.xbfs-alert-preserve-layout) .swal2-confirm.xbfs-swal-confirm:hover:not(:disabled) {
-    border-color: var(--xb-color-border-strong);
-    background: linear-gradient(180deg,
-            #444444 0%,
-            #121212 100%);
+    border-color: #1F1F1F;
+    background: #1F1F1F;
     transform: none;
 }
 
 html body .swal2-popup.xbfs-alert-danger-action:not(.xbfs-alert-preserve-layout) .swal2-confirm.xbfs-swal-confirm {
-    border-color: var(--xb-color-danger);
-    background: linear-gradient(180deg,
-            var(--xb-color-danger-soft) 0%,
-            #a92c27 100%);
+    border-radius: 999px;
+    border-color: #0F0F0F;
+    background: #0F0F0F;
     color: #ffffff;
 }
 
 html body .swal2-popup.xbfs-alert-danger-action:not(.xbfs-alert-preserve-layout) .swal2-confirm.xbfs-swal-confirm:hover:not(:disabled) {
-    border-color: var(--xb-color-danger);
-    background: linear-gradient(180deg,
-            var(--xb-color-danger-soft) 0%,
-            #922520 100%);
+    border-color: #1F1F1F;
+    background: #1F1F1F;
 }
 
 html body .swal2-popup:not(.xbfs-alert-preserve-layout) .swal2-cancel.xbfs-swal-cancel {
     border: 1px solid var(--xb-color-border-strong);
-    background: linear-gradient(180deg,
-            var(--xb-color-surface) 0%,
-            var(--xb-color-surface-subtle) 100%);
+    background: var(--xb-color-surface);
     color: var(--xb-color-text);
     box-shadow: none;
 }
 
 html body .swal2-popup:not(.xbfs-alert-preserve-layout) .swal2-deny.xbfs-swal-deny {
     border: 1px solid var(--xb-color-border-strong);
-    background: linear-gradient(180deg,
-            var(--xb-color-surface) 0%,
-            var(--xb-color-surface-subtle) 100%);
+    background: var(--xb-color-surface);
     color: var(--xb-color-text);
     box-shadow: none;
 }
@@ -2507,9 +2497,7 @@ html body .swal2-popup:not(.xbfs-alert-preserve-layout) .swal2-deny.xbfs-swal-de
 html body .swal2-popup:not(.xbfs-alert-preserve-layout):is(.swal2-cancel.xbfs-swal-cancel,
     .swal2-deny.xbfs-swal-deny):hover:not(:disabled) {
     border-color: var(--xb-color-border-strong);
-    background: linear-gradient(180deg,
-            var(--xb-color-surface-subtle) 0%,
-            var(--xb-color-border) 100%);
+    background: var(--xb-color-surface-subtle);
     color: var(--xb-color-text);
     transform: none;
 }
@@ -2970,7 +2958,7 @@ html body .swal2-popup .swal2-icon.xbfs-swal-icon *::after {
     animation: none;
 }
 
-html body .swal2-popup .swal2-icon.swal2-success.xbfs-swal-icon:is(.swal2-success-ring,
+html body .swal2-popup .swal2-icon.swal2-success.xbfs-swal-icon :is(.swal2-success-ring,
     .swal2-success-fix,
     .swal2-success-circular-line-left,
     .swal2-success-circular-line-right,
@@ -2999,7 +2987,7 @@ html body .swal2-popup .swal2-icon.swal2-success.xbfs-swal-icon::after {
     display: none;
 }
 
-html body .swal2-popup .swal2-icon.swal2-error.xbfs-swal-icon:is(.swal2-x-mark,
+html body .swal2-popup .swal2-icon.swal2-error.xbfs-swal-icon :is(.swal2-x-mark,
     .swal2-x-mark-line-left,
     .swal2-x-mark-line-right) {
     display: none;

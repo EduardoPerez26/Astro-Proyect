@@ -758,27 +758,27 @@ html body .swal2-popup:is(.swal2-toast,
     .xbfs-toast-popup,
     .xbfs-toast-final):is(.swal2-icon-success,
     .xbfs-alert-success) {
-    --toast-accent: #16835f;
-    --toast-soft: #ecf8f3;
-    --toast-border: #a9dccb;
+    --toast-accent: var(--xb-color-text);
+    --toast-soft: var(--xb-color-surface-strong);
+    --toast-border: var(--xb-color-border);
 }
 
 html body .swal2-popup:is(.swal2-toast,
     .xbfs-toast-popup,
     .xbfs-toast-final):is(.swal2-icon-error,
     .xbfs-alert-error) {
-    --toast-accent: #b3261e;
-    --toast-soft: #fff0ef;
-    --toast-border: #edc0bd;
+    --toast-accent: var(--xb-color-text);
+    --toast-soft: var(--xb-color-surface-strong);
+    --toast-border: var(--xb-color-border);
 }
 
 html body .swal2-popup:is(.swal2-toast,
     .xbfs-toast-popup,
     .xbfs-toast-final):is(.swal2-icon-warning,
     .xbfs-alert-warning) {
-    --toast-accent: #b87412;
-    --toast-soft: #fff5e4;
-    --toast-border: #ead0a5;
+    --toast-accent: var(--xb-color-text);
+    --toast-soft: var(--xb-color-surface-strong);
+    --toast-border: var(--xb-color-border);
 }
 
 html body .swal2-popup:is(.swal2-toast,
@@ -1301,7 +1301,7 @@ html body :is(.btn,
     min-height: 36px;
     padding-left: 13px;
     padding-right: 13px;
-    border-radius: 6px;
+    border-radius: 11px;
     font-size: 10px;
     font-weight: 750;
     letter-spacing: 0;
@@ -1317,6 +1317,7 @@ html body :is(.btn-primary,
     .submit-button,
     .swal2-confirm) {
     border: 1px solid var(--xb-color-text);
+    border-radius: 999px;
     background: #000000;
     background-color: #000000;
     color: #ffffff;

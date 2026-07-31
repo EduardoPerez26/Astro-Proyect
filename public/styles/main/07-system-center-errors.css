@@ -2897,6 +2897,13 @@ html body .stores-page.stores-page .status-pulse {
     gap: 4px;
 }
 
+.source-review-bar .source-review-bulk-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
 .source-review-bar strong {
     color: var(--xb-color-text);
     font-size: 13px;
