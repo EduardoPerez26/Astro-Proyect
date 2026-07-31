@@ -247,7 +247,7 @@ html body .main :is(.xbfs-page-hero,
     padding: var(--xbfs-hero-padding-y) var(--xbfs-hero-padding-x);
     box-sizing: border-box;
     overflow: hidden;
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--xb-color-border);
     border-radius: var(--xbfs-hero-radius);
     background: var(--xbfs-hero-bg-middle);
     box-shadow: none;
@@ -336,8 +336,9 @@ html body .main :is(.topbar-eyebrow,
     gap: 7px;
     min-height: 28px;
     width: fit-content;
+    border: 1px solid var(--xb-color-border);
     border-radius: 999px;
-    background: rgba(255, 255, 255, 0.11);
+    background: var(--xb-color-surface-subtle);
     opacity: 1;
     font-size: var(--xbfs-hero-eyebrow-size);
     font-weight: 900;
@@ -360,7 +361,7 @@ html body .main :is(.topbar-eyebrow,
     .system-errors-eyebrow,
     .schedule-eyebrow,
     .xbfs-page-hero__eyebrow) i {
-    color: #ffffff;
+    color: var(--xb-color-text-muted);
     opacity: 1;
     font-size: 10px;
 }
@@ -391,7 +392,7 @@ html body .main :is(.xbfs-page-hero,
     letter-spacing: -0.045em;
     line-height: 1.02;
     text-wrap: balance;
-    text-shadow: 0 2px 12px rgba(15, 15, 15, 0.20);
+    text-shadow: none;
 }
 
 html body .main :is(.xbfs-page-hero,
@@ -432,7 +433,7 @@ html body .main :is(.xbfs-page-hero,
     font-weight: 600;
     letter-spacing: 0;
     line-height: 1.58;
-    text-shadow: 0 1px 1px rgba(15, 15, 15, 0.16);
+    text-shadow: none;
 }
 
 html body .main :is(.stores-hero-overview,
@@ -481,7 +482,7 @@ html body .main :is(.stores-hero-overview,
     box-shadow: none;
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
-    color: #ffffff;
+    color: var(--xb-color-text);
     opacity: 1;
     transition: transform 170ms ease,
         border-color 170ms ease,
@@ -500,10 +501,10 @@ html body .main :is(.stores-hero-icon,
     height: 44px;
     place-items: center;
     flex: 0 0 44px;
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    border: 1px solid var(--xb-color-border);
     border-radius: 13px;
-    background: rgba(255, 255, 255, 0.15);
-    color: #ffffff;
+    background: var(--xb-color-surface-subtle);
+    color: var(--xb-color-text);
     opacity: 1;
     font-size: 16px;
 }
@@ -514,7 +515,7 @@ html body .main :is(.stores-hero-icon,
     .schedule-hero-icon,
     .prepaid-hero-icon,
     .xbfs-page-hero__metric-icon) i {
-    color: #ffffff;
+    color: var(--xb-color-text);
     opacity: 1;
 }
 
@@ -554,7 +555,7 @@ html body .main :is(.stores-hero-overview,
     display: block;
     margin: 0;
     overflow: hidden;
-    color: #ffffff;
+    color: var(--xb-color-text);
     opacity: 1;
     font-size: 20px;
     font-weight: 900;
@@ -602,11 +603,11 @@ html body .main :is(.xbfs-page-hero,
     .prepaid-page > .prepaid-hero) :is(button, .btn, a.btn) {
     min-height: 42px;
     padding: 0 15px;
-    border: 1px solid rgba(255, 255, 255, 0.28);
+    border: 1px solid var(--xb-color-border);
     border-radius: 12px;
-    background: rgba(15, 15, 15, 0.32);
+    background: var(--xb-color-surface-subtle);
     box-shadow: none;
-    color: #ffffff;
+    color: var(--xb-color-text);
     opacity: 1;
     font-size: 12px;
     font-weight: 850;
@@ -1812,23 +1813,23 @@ html body .main :is(.xbfs-page-hero,
     .profile-settings-hero,
     .profile-account-hero,
     .reconciliation-hero) {
-    border-color: rgba(255, 255, 255, .10);
-    background: #0F0F0F;
-    color: #fff;
+    border-color: var(--xb-color-border);
+    background: var(--xb-color-surface);
+    color: var(--xb-color-text);
     box-shadow: none;
 }
 
 html body .main>.page-container.property-documents-page.property-documents-page>.page-header {
-    border-color: rgba(255, 255, 255, .10);
-    background: #0F0F0F;
-    color: #fff;
+    border-color: var(--xb-color-border);
+    background: var(--xb-color-surface);
+    color: var(--xb-color-text);
     box-shadow: none;
 }
 
 html body .main>.page-container.admin-users-page.admin-users-page>.page-header {
-    border-color: rgba(255, 255, 255, .10);
-    background: #0F0F0F;
-    color: #fff;
+    border-color: var(--xb-color-border);
+    background: var(--xb-color-surface);
+    color: var(--xb-color-text);
     box-shadow: none;
 }
 
@@ -1849,8 +1850,8 @@ html body .main :is(.xbfs-page-hero,
     .profile-settings-hero,
     .profile-account-hero,
     .reconciliation-hero) :is(h1, h2, h3, .page-title) {
-    color: #fff;
-    text-shadow: 0 2px 15px rgba(0, 0, 0, .42);
+    color: var(--xb-color-text);
+    text-shadow: none;
 }
 
 html body .main :is(.xbfs-page-hero,
@@ -1870,7 +1871,7 @@ html body .main :is(.xbfs-page-hero,
     .profile-settings-hero,
     .profile-account-hero,
     .reconciliation-hero) :is(p, .page-subtitle, .hero-subtitle, #adminDashboardUpdated, #systemErrorsUpdated) {
-    color: #c9c9c9;
+    color: var(--xb-color-text-muted);
 }
 
 html body :is(.btn-primary,
@@ -2728,10 +2729,8 @@ html body .main :is(.xbfs-page-hero,
     .property-management-hero,
     .property-documents-hero,
     .reconciliation-hero) {
-    border-color: rgba(255, 255, 255, 0.10);
-    background: radial-gradient(circle at 86% 16%, rgba(255, 255, 255, 0.13), transparent 25%),
-        radial-gradient(circle at 8% 118%, rgba(255, 255, 255, 0.055), transparent 36%),
-        linear-gradient(128deg, #020202 0%, #0a0a0a 56%, #1b1b1b 100%);
+    border-color: var(--xb-color-border);
+    background: var(--xb-color-surface);
     box-shadow: none;
 }
 
@@ -2752,7 +2751,7 @@ html body .main :is(.xbfs-page-hero,
     .property-management-hero,
     .property-documents-hero,
     .reconciliation-hero) :is(h1, h2, h3, .page-title, strong) {
-    color: #ffffff;
+    color: var(--xb-color-text);
 }
 
 html body .main :is(.xbfs-page-hero,
@@ -2772,7 +2771,7 @@ html body .main :is(.xbfs-page-hero,
     .property-management-hero,
     .property-documents-hero,
     .reconciliation-hero) :is(p, small, span, .page-subtitle, .hero-subtitle) {
-    color: #cfcfcf;
+    color: var(--xb-color-text-muted);
 }
 
 html body .main :is(.topbar-eyebrow,

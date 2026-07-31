@@ -1,0 +1,285 @@
+---
+import DashboardLayout from "../../../layouts/DashboardLayout.astro";
+---
+
+<DashboardLayout title="Prepaid Bills | XBFS Operations Hub">
+    <main class="prepaid-page property-management-page">
+        <section class="prepaid-hero">
+            <div>
+                <h1>Prepaid Bills</h1>
+                <p>
+                    Import paid PTAX bill rows from the 246000 GL report, generate the monthly amortization schedule,
+                    then upload each monthly GL to validate expected amounts against actual postings.
+                </p>
+            </div>
+
+            <div class="prepaid-actions">
+                <a class="btn-secondary property-window-link" href="/views/departments/ap">
+                    <i class="fa-solid fa-table-list" aria-hidden="true"></i>
+                    Schedule
+                </a>
+                <a class="btn-secondary property-window-link" href="/views/departments/ap-documents">
+                    <i class="fa-solid fa-folder-tree" aria-hidden="true"></i>
+                    Documents
+                </a>
+                
+            </div>
+        </section>
+
+        <section class="prepaid-kpis" aria-label="Prepaid schedule summary">
+            <article class="prepaid-kpi-card">
+                <span>Source rows</span>
+                <strong id="kpiSourceRows">0</strong>
+                <small>Rows extracted from the bill GL source</small>
+            </article>
+            <article class="prepaid-kpi-card">
+                <span>Included bills</span>
+                <strong id="kpiIncludedRows">0</strong>
+                <small>Rows used to build the schedule</small>
+            </article>
+            <article class="prepaid-kpi-card">
+                <span>Expected amortization</span>
+                <strong id="kpiExpected">$0.00</strong>
+                <small>Generated from the included bill rows</small>
+            </article>
+            <article class="prepaid-kpi-card warning">
+                <span>GL difference</span>
+                <strong id="kpiDifference">$0.00</strong>
+                <small>Actual GL minus expected amortization</small>
+            </article>
+        </section>
+
+        <div class="prepaid-upload-grid">
+            <section class="prepaid-panel prepaid-upload-panel">
+            <div class="panel-header stackable">
+                <div>
+                    <h2>Upload paid bill source</h2>
+                    <p>
+                        The system reads the paid bill rows and uses the
+                        amortization period to calculate the monthly adjustment schedule.
+                    </p>
+                </div>
+            </div>
+
+            <form id="billSourceUploadForm" class="prepaid-form prepaid-source-form" enctype="multipart/form-data">
+                <label class="wide-field file-drop" data-file-drop>
+                    <span class="file-drop-heading">
+                        <i class="fa-solid fa-cloud-arrow-up" aria-hidden="true"></i>
+                        Paid bill GL source
+                    </span>
+                    
+                    <input type="file" name="billSourceFile" accept=".xlsx,.xls,.csv" required />
+                    <span class="file-drop-selection">
+                        <span class="file-drop-name">No file selected</span>
+                        <button type="button" class="file-remove-btn" data-remove-file aria-label="Remove selected file" title="Remove selected file">
+                            <i class="fa-solid fa-trash" aria-hidden="true"></i>
+                        </button>
+                    </span>
+                </label>
+            </form>
+        </section>
+
+            <section class="prepaid-panel prepaid-gl-panel">
+            <div class="panel-header stackable">
+                <div>
+                    <h2>Upload monthly GL</h2>
+                    <p>After generating the schedule, upload the monthly GL to validate expected vs actual amounts by store.</p>
+                </div>
+            </div>
+
+            <form id="glUploadForm" class="prepaid-form prepaid-gl-form" enctype="multipart/form-data">
+                <input type="hidden" id="glScheduleSelect" name="schedule_id" required />
+
+                <label class="wide-field file-drop" data-file-drop>
+                    <span class="file-drop-heading">
+                        <i class="fa-solid fa-file-arrow-up" aria-hidden="true"></i>
+                        Monthly GL files
+                    </span>
+
+                    <input type="file" name="glFile" accept=".xlsx,.xls,.csv" multiple required />
+                    <span class="file-drop-selection">
+                        <span class="file-drop-name">No file selected</span>
+                        <button type="button" class="file-remove-btn" data-remove-file aria-label="Remove selected file" title="Remove selected file">
+                            <i class="fa-solid fa-trash" aria-hidden="true"></i>
+                        </button>
+                    </span>
+                </label>
+            </form>
+            </section>
+        </div>
+
+        <section class="prepaid-panel">
+            <div class="panel-header stackable">
+                <div>
+                    <h2 id="selectedScheduleTitle">Schedule Detail</h2>
+                    <p id="selectedScheduleSubtitle">Select a schedule to load source rows.</p>
+                </div>
+
+                <div class="prepaid-detail-actions source-review-actions">
+                    <button type="button" class="btn-secondary" id="exportScheduleBtn" disabled>
+                        <i class="fa-solid fa-file-excel" aria-hidden="true"></i>
+                        Export Schedule
+                    </button>
+                    <button type="button" class="btn-secondary hidden" id="addSourceRowBtn" disabled>
+                        <i class="fa-solid fa-plus" aria-hidden="true"></i>
+                        Add Concept
+                    </button>
+                    <button type="button" class="btn-secondary hidden" id="appendBillSourceBtn" disabled title="Upload a new payment file and add it to this schedule (e.g. September-December)">
+                        <i class="fa-solid fa-file-circle-plus" aria-hidden="true"></i>
+                        Add Payments
+                    </button>
+                    <input type="file" id="appendBillSourceInput" class="hidden" accept=".xlsx,.xls,.csv" />
+                    <button type="button" class="btn-primary hidden" id="generateScheduleBtn" disabled>
+                        <i class="fa-solid fa-calculator" aria-hidden="true"></i>
+                        Generate Schedule
+                    </button>
+                </div>
+            </div>
+
+            <div class="prepaid-tabs" role="tablist">
+                <button type="button" class="tab-button active" data-tab="source">Source Rows</button>
+                <button type="button" class="tab-button" data-tab="schedule">Generated Schedule</button>
+                <button type="button" class="tab-button" data-tab="comparison">GL Validation</button>
+                <button type="button" class="tab-button" data-tab="differences">Differences</button>
+            </div>
+
+            <div id="sourceTab">
+                <div class="source-review-bar">
+                    <div>
+                        <strong>Review before generating</strong>
+                        <span id="sourceReviewStatus">Upload a file to review its records before generating.</span>
+                    </div>
+                    <div class="source-review-bulk-actions">
+                        <button type="button" class="btn-secondary hidden" id="bulkAmortizationBtn" disabled>
+                            <i class="fa-solid fa-calendar-days" aria-hidden="true"></i>
+                            <span id="bulkAmortizationBtnLabel">Edit amortization</span>
+                        </button>
+                        <button type="button" class="btn-secondary hidden" id="bulkAccountsBtn" disabled title="Set the Prepaid GL and Expense GL accounts for the selected rows">
+                            <i class="fa-solid fa-building-columns" aria-hidden="true"></i>
+                            <span id="bulkAccountsBtnLabel">Edit GL Accounts</span>
+                        </button>
+                        <button type="button" class="btn-secondary hidden" id="bulkRemoveRowsBtn" disabled title="Remove the selected rows from the schedule">
+                            <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                            <span id="bulkRemoveRowsBtnLabel">Remove rows</span>
+                        </button>
+                        <button type="button" class="btn-secondary hidden" id="bulkRemoveStoresBtn" disabled title="Remove every row for the selected stores">
+                            <i class="fa-solid fa-store-slash" aria-hidden="true"></i>
+                            <span id="bulkRemoveStoresBtnLabel">Remove stores</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="prepaid-table-wrap">
+                    <table class="prepaid-table prepaid-source-table">
+                        <thead>
+                            <tr>
+                                <th class="source-sticky-select">
+                                    <input type="checkbox" id="selectAllSourceRows" title="Select all rows" />
+                                </th>
+                                <th class="source-sticky-store">Store</th>
+                                <th class="source-sticky-actions">Actions</th>
+                                <th>Concept / Payee</th>
+                                <th>Doc</th>
+                                <th>Date</th>
+                                <th>Tax Year</th>
+                                <th>Amount Paid</th>
+                                <th>Amortization</th>
+                                <th>Memo</th>
+                            </tr>
+                        </thead>
+                        <tbody id="sourceRows">
+                            <tr><td colspan="10" class="empty-cell">No source bills loaded.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="hidden" id="scheduleTab">
+                <div class="prepaid-table-wrap">
+                    <table class="prepaid-table prepaid-schedule-matrix">
+                        <thead id="scheduleTableHead">
+                            <tr>
+                                <th>Payee</th>
+                                <th>Location</th>
+                                <th>Entity</th>
+                                <th>GL Acct</th>
+                                <th>Exp. To GL Acct</th>
+                                <th>Date</th>
+                                <th>Amortization Period</th>
+                                <th>Amount Paid</th>
+                                <th>Prior Yr End Balance Forward</th>
+                                <th>MO AMORT AMT</th>
+                                <th>January</th>
+                                <th>February</th>
+                                <th>March</th>
+                                <th>April</th>
+                                <th>May</th>
+                                <th>June</th>
+                                <th>July</th>
+                                <th>August</th>
+                                <th>September</th>
+                                <th>October</th>
+                                <th>November</th>
+                                <th>December</th>
+                                <th>YTD Amortization</th>
+                                <th>Ending Prepaid Balance</th>
+                                <th>Ending Balance per Store</th>
+                            </tr>
+                        </thead>
+                        <tbody id="scheduleRows">
+                            <tr><td colspan="25" class="empty-cell">No generated amortization yet.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="prepaid-table-footer hidden" id="saveScheduleFooter">
+                    <button type="button" class="btn-primary" id="saveScheduleBtn" disabled>
+                        <i class="fa-solid fa-floppy-disk" aria-hidden="true"></i>
+                        Save Schedule
+                    </button>
+                </div>
+            </div>
+
+            <div class="prepaid-table-wrap hidden" id="comparisonTab">
+                <table class="prepaid-table">
+                    <thead>
+                        <tr>
+                            <th>Period</th>
+                            <th>Store</th>
+                            <th>Payee</th>
+                            <th>Doc</th>
+                            <th>Expected</th>
+                            <th>GL Actual</th>
+                            <th>Difference</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="comparisonRows">
+                        <tr><td colspan="8" class="empty-cell">No validation loaded.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="prepaid-table-wrap hidden" id="differencesTab">
+                <table class="prepaid-table">
+                    <thead>
+                        <tr>
+                            <th>Period</th>
+                            <th>Store</th>
+                            <th>Payee</th>
+                            <th>Doc</th>
+                            <th>Expected</th>
+                            <th>GL Actual</th>
+                            <th>Difference</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="differenceRows">
+                        <tr><td colspan="8" class="empty-cell">No differences loaded.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+    <script type="module" src="/js/departments/ap/ap-prepaid.js?v=20260731-ap-department-v1"></script>
+</DashboardLayout>

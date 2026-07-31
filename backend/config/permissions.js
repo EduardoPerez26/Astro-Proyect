@@ -12,6 +12,8 @@ const MODULE_ACTIONS = {
     historial: ['ver', 'eliminar', 'exportar'],
     propertyManagement: [...PERMISSION_ACTIONS],
     propertyManagementDocuments: [...PERMISSION_ACTIONS],
+    accountsPayable: [...PERMISSION_ACTIONS],
+    accountsPayableDocuments: [...PERMISSION_ACTIONS],
     usuarios: [...PERMISSION_ACTIONS],
     controlRestaurants: ['ver', 'crear', 'editar', 'eliminar'],
     permisos: ['ver', 'editar'],
@@ -46,6 +48,8 @@ const START_MODULES = [
     'historial',
     'propertyManagement',
     'propertyManagementDocuments',
+    'accountsPayable',
+    'accountsPayableDocuments',
     'chat'
 ];
 
@@ -120,6 +124,13 @@ function defaultModuleEnabled(role, module, departmentCode) {
     if (
         ['property-management', 'pm'].includes(String(departmentCode || '').toLowerCase()) &&
         ['propertyManagement', 'propertyManagementDocuments'].includes(module)
+    ) {
+        return true;
+    }
+
+    if (
+        String(departmentCode || '').toLowerCase() === 'ap' &&
+        ['accountsPayable', 'accountsPayableDocuments'].includes(module)
     ) {
         return true;
     }

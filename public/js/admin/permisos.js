@@ -32,6 +32,8 @@ const MODULE_ACTIONS = {
     historial: ['ver', 'eliminar', 'exportar'],
     propertyManagement: ['ver', 'crear', 'editar', 'eliminar', 'exportar'],
     propertyManagementDocuments: ['ver', 'crear', 'editar', 'eliminar', 'exportar'],
+    accountsPayable: ['ver', 'crear', 'editar', 'eliminar', 'exportar'],
+    accountsPayableDocuments: ['ver', 'crear', 'editar', 'eliminar', 'exportar'],
     usuarios: ['ver', 'crear', 'editar', 'eliminar', 'exportar'],
     controlRestaurants: ['ver', 'crear', 'editar', 'eliminar'],
     permisos: ['ver', 'editar'],
@@ -209,6 +211,28 @@ const MENU_SECTIONS = [
         initialOption: true
     },
     {
+        id: 'accountsPayable',
+        name: 'AP schedules',
+        description: 'Accounts Payable schedule builder and saved schedules',
+        icon: 'fa-file-invoice-dollar',
+        iconClass: 'accounts-payable',
+        department: 'Accounts Payable',
+        path: '/views/departments/dashboard-ap',
+        required: false,
+        initialOption: true
+    },
+    {
+        id: 'accountsPayableDocuments',
+        name: 'AP documents',
+        description: 'Saved Accounts Payable schedules and source files',
+        icon: 'fa-folder-tree',
+        iconClass: 'accounts-payable-documents',
+        department: 'Accounts Payable',
+        path: '/views/departments/ap-documents',
+        required: false,
+        initialOption: true
+    },
+    {
         id: 'usuarios',
         name: 'Users',
         description: 'User administration',
@@ -246,6 +270,7 @@ const MENU_SECTIONS = [
 const MENU_GROUP_ORDER = [
     'Accounts Receivable',
     'Property Management',
+    'Accounts Payable',
     'Governance & Control',
     'Information Technology',
     'Account'
@@ -262,6 +287,7 @@ const PERMISSION_TEMPLATES = {
             documentos: ['ver', 'editar', 'exportar'],
             historial: ['ver', 'exportar'],
             propertyManagementDocuments: ['ver', 'exportar'],
+            accountsPayableDocuments: ['ver', 'exportar'],
             perfil: ['ver', 'editar'],
             chat: ['ver', 'crear']
         }
@@ -283,6 +309,17 @@ const PERMISSION_TEMPLATES = {
         modules: {
             propertyManagement: ['ver', 'crear', 'editar', 'exportar'],
             propertyManagementDocuments: ['ver', 'crear', 'editar', 'exportar'],
+            historial: ['ver', 'exportar'],
+            perfil: ['ver', 'editar'],
+            chat: ['ver', 'crear']
+        }
+    },
+    accountsPayable: {
+        label: 'Accounts payable',
+        startup: 'accountsPayable',
+        modules: {
+            accountsPayable: ['ver', 'crear', 'editar', 'exportar'],
+            accountsPayableDocuments: ['ver', 'crear', 'editar', 'exportar'],
             historial: ['ver', 'exportar'],
             perfil: ['ver', 'editar'],
             chat: ['ver', 'crear']
@@ -312,6 +349,7 @@ const PERMISSION_TEMPLATES = {
             documentos: ['ver'],
             historial: ['ver'],
             propertyManagementDocuments: ['ver'],
+            accountsPayableDocuments: ['ver'],
             perfil: ['ver']
         }
     }
@@ -328,6 +366,13 @@ function normalizeLegacyPermissions(permisos = {}) {
         normalized.propertyManagementDocuments === undefined
     ) {
         normalized.propertyManagementDocuments = true;
+    }
+
+    if (
+        normalized.accountsPayable === true &&
+        normalized.accountsPayableDocuments === undefined
+    ) {
+        normalized.accountsPayableDocuments = true;
     }
 
     MENU_SECTIONS.forEach(section => {
@@ -402,10 +447,10 @@ async function loadUserData() {
 
         // Sample permissions
         const defaultPermissions = {
-            1: { dashboardAdmin: true, systemCenter: true, approvalCenter: true, reportCenter: true, auditCenter: true, systemErrors: true, tiendas: true, documentos: true, perfil: true, permisos: true, historial: true, usuarios: true, controlRestaurants: true, propertyManagement: true, propertyManagementDocuments: true, chat: true, paginaInicio: 'dashboardAdmin' },
-            2: { approvalCenter: true, reportCenter: true, tiendas: true, documentos: true, perfil: true, permisos: false, historial: true, usuarios: false, controlRestaurants: false, propertyManagement: false, propertyManagementDocuments: false, chat: false, paginaInicio: 'approvalCenter' },
-            3: { tiendas: true, documentos: true, perfil: true, permisos: false, historial: false, usuarios: false, controlRestaurants: false, propertyManagement: false, propertyManagementDocuments: false, chat: false, paginaInicio: 'tiendas' },
-            4: { tiendas: true, documentos: false, perfil: true, permisos: false, historial: false, usuarios: false, controlRestaurants: false, propertyManagement: true, propertyManagementDocuments: true, chat: false, paginaInicio: 'propertyManagement' }
+            1: { dashboardAdmin: true, systemCenter: true, approvalCenter: true, reportCenter: true, auditCenter: true, systemErrors: true, tiendas: true, documentos: true, perfil: true, permisos: true, historial: true, usuarios: true, controlRestaurants: true, propertyManagement: true, propertyManagementDocuments: true, accountsPayable: true, accountsPayableDocuments: true, chat: true, paginaInicio: 'dashboardAdmin' },
+            2: { approvalCenter: true, reportCenter: true, tiendas: true, documentos: true, perfil: true, permisos: false, historial: true, usuarios: false, controlRestaurants: false, propertyManagement: false, propertyManagementDocuments: false, accountsPayable: false, accountsPayableDocuments: false, chat: false, paginaInicio: 'approvalCenter' },
+            3: { tiendas: true, documentos: true, perfil: true, permisos: false, historial: false, usuarios: false, controlRestaurants: false, propertyManagement: false, propertyManagementDocuments: false, accountsPayable: false, accountsPayableDocuments: false, chat: false, paginaInicio: 'tiendas' },
+            4: { tiendas: true, documentos: false, perfil: true, permisos: false, historial: false, usuarios: false, controlRestaurants: false, propertyManagement: true, propertyManagementDocuments: true, accountsPayable: false, accountsPayableDocuments: false, chat: false, paginaInicio: 'propertyManagement' }
         };
 
         currentUser.permisos = normalizeLegacyPermissions(defaultPermissions[currentUser.id] || {});

@@ -16,6 +16,10 @@ function obtenerRutaInicial(usuario) {
             '/views/departments/dashboard-property',
         propertyManagementDocuments:
             '/views/departments/property-management-documents',
+        accountsPayable:
+            '/views/departments/dashboard-ap',
+        accountsPayableDocuments:
+            '/views/departments/ap-documents',
         chat: '/views/chat'
     };
 
@@ -27,7 +31,11 @@ function obtenerRutaInicial(usuario) {
         propertyManagementSchedule:
             'propertyManagement',
         propertyManagementDocument:
-            'propertyManagementDocuments'
+            'propertyManagementDocuments',
+        apSchedules: 'accountsPayable',
+        apSchedule: 'accountsPayable',
+        apDocuments: 'accountsPayableDocuments',
+        apDocument: 'accountsPayableDocuments'
     };
 
     let permisos = usuario?.permisos || {};
@@ -97,6 +105,8 @@ function obtenerRutaInicial(usuario) {
         'historial',
         'propertyManagement',
         'propertyManagementDocuments',
+        'accountsPayable',
+        'accountsPayableDocuments',
         'chat',
         'reportCenter',
         'dashboardAdmin',
@@ -121,6 +131,19 @@ function obtenerRutaInicial(usuario) {
         );
     }
 
+    if (departmentCode === 'ap') {
+        preferredOrder.splice(
+            preferredOrder.indexOf(
+                'accountsPayable'
+            ),
+            1
+        );
+
+        preferredOrder.unshift(
+            'accountsPayable'
+        );
+    }
+
     for (const moduleName of preferredOrder) {
         if (
             rutas[moduleName]
@@ -139,6 +162,10 @@ function obtenerRutaInicial(usuario) {
             .includes(departmentCode)
     ) {
         return rutas.propertyManagement;
+    }
+
+    if (departmentCode === 'ap') {
+        return rutas.accountsPayable;
     }
 
     return null;

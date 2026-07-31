@@ -392,7 +392,7 @@
     display: grid;
     margin: 0;
     border-bottom: 1px solid var(--se-line);
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 12px;
     padding: 14px 16px;
     border-right: 1px solid var(--se-line);
@@ -404,12 +404,23 @@
     display: grid;
     margin: 0;
     border-bottom: 1px solid var(--se-line);
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 12px;
     padding: 14px 16px;
     border-right: 1px solid var(--se-line);
     border-left: 1px solid var(--se-line);
     background: var(--xb-color-surface);
+}
+
+.property-documents-page .documents-type-tab {
+    border: 0;
+    border-radius: 10px;
+    background: transparent;
+    box-shadow: none;
+}
+
+.property-documents-page .documents-type-tab:hover:not(.active) {
+    background: var(--xb-color-surface-subtle);
 }
 
 .property-documents-page .documents-type-tab.active {

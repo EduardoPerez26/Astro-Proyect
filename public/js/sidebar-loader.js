@@ -409,6 +409,8 @@ const START_PERMISSION_ORDER = [
     'historial',
     'propertyManagement',
     'propertyManagementDocuments',
+    'accountsPayable',
+    'accountsPayableDocuments',
     'chat'
 ];
 
@@ -472,6 +474,7 @@ function aplicarPermissions(opciones = {}) {
 function obtenerPermissions(usuario) {
     const departmentCode = String(usuario.departamento?.codigo || '').toLowerCase();
     const esPropertyManagement = departmentCode === 'property-management' || departmentCode === 'pm';
+    const esAccountsPayable = departmentCode === 'ap';
     const modules = [
         'dashboardAdmin',
         'systemCenter',
@@ -488,6 +491,8 @@ function obtenerPermissions(usuario) {
         'controlRestaurants',
         'propertyManagement',
         'propertyManagementDocuments',
+        'accountsPayable',
+        'accountsPayableDocuments',
         'chat'
     ];
     const defaultPermissions = {
@@ -507,6 +512,8 @@ function obtenerPermissions(usuario) {
             controlRestaurants: true,
             propertyManagement: true,
             propertyManagementDocuments: true,
+            accountsPayable: true,
+            accountsPayableDocuments: true,
             chat: true
         },
         'admin': {
@@ -525,6 +532,8 @@ function obtenerPermissions(usuario) {
             controlRestaurants: true,
             propertyManagement: false,
             propertyManagementDocuments: false,
+            accountsPayable: false,
+            accountsPayableDocuments: false,
             chat: false
         },
         'supervisor': {
@@ -542,6 +551,8 @@ function obtenerPermissions(usuario) {
             controlRestaurants: false,
             propertyManagement: false,
             propertyManagementDocuments: false,
+            accountsPayable: false,
+            accountsPayableDocuments: false,
             chat: false
 
         },
@@ -560,6 +571,8 @@ function obtenerPermissions(usuario) {
             controlRestaurants: false,
             propertyManagement: false,
             propertyManagementDocuments: false,
+            accountsPayable: false,
+            accountsPayableDocuments: false,
             chat: false
         }
     };
@@ -610,9 +623,20 @@ function obtenerPermissions(usuario) {
         permisos.propertyManagementDocuments = true;
     }
 
+    if (
+        esAccountsPayable &&
+        source.accountsPayable === undefined &&
+        !source.acciones?.accountsPayable
+    ) {
+        permisos.accountsPayable = true;
+        permisos.accountsPayableDocuments = true;
+    }
+
     permisos.paginaInicio = resolverPaginaInicioPermitida(
         permisos,
-        esPropertyManagement ? 'propertyManagement' : null
+        esPropertyManagement
+            ? 'propertyManagement'
+            : (esAccountsPayable ? 'accountsPayable' : null)
     );
     return permisos;
 }
@@ -641,6 +665,10 @@ function verificarAccesoPagina(permisos) {
         '/views/departments/property-management': 'propertyManagement',
         '/views/departments/prepaid-amortization': 'propertyManagement',
         '/views/departments/property-management-documents': 'propertyManagementDocuments',
+        '/views/departments/dashboard-ap': 'accountsPayable',
+        '/views/departments/ap': 'accountsPayable',
+        '/views/departments/ap-prepaid': 'accountsPayable',
+        '/views/departments/ap-documents': 'accountsPayableDocuments',
         '/views/chat': 'chat'
     };
 
@@ -680,6 +708,8 @@ function verificarAccesoPagina(permisos) {
                 historial: '/views/historial',
                 propertyManagement: '/views/departments/dashboard-property',
                 propertyManagementDocuments: '/views/departments/property-management-documents',
+                accountsPayable: '/views/departments/dashboard-ap',
+                accountsPayableDocuments: '/views/departments/ap-documents',
                 chat: '/views/chat'
             };
             const paginaConfigurada = permisos.paginaInicio;
@@ -696,11 +726,15 @@ function verificarAccesoPagina(permisos) {
                             ? '/views/departments/dashboard-property'
                             : permisos.propertyManagementDocuments
                                 ? '/views/departments/property-management-documents'
-                                : permisos.chat
-                                    ? '/views/chat'
-                                    : window.AppPermissions?.isAdmin(usuario) && permisos.dashboardAdmin
-                                        ? '/views/dashboard-admin'
-                                        : '/');
+                                : permisos.accountsPayable
+                                    ? '/views/departments/dashboard-ap'
+                                    : permisos.accountsPayableDocuments
+                                        ? '/views/departments/ap-documents'
+                                        : permisos.chat
+                                            ? '/views/chat'
+                                            : window.AppPermissions?.isAdmin(usuario) && permisos.dashboardAdmin
+                                                ? '/views/dashboard-admin'
+                                                : '/');
             window.location.href = destino;
         });
     }

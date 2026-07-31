@@ -136,9 +136,13 @@ html body :is(.access-command-hero,
     .property-documents-hero,
     .profile-account-hero,
     .profile-settings-hero,
-    .login-brand-panel,
     .access-department-hero,
     .system-error-detail-header) {
+    background-color: var(--xb-color-surface);
+    background-image: none;
+}
+
+html body .login-brand-panel {
     background-color: #000000;
     background-image: linear-gradient(135deg,
             #000000 0%,
@@ -563,11 +567,11 @@ html body .schedule-header {
     overflow: hidden;
     grid-template-columns: minmax(0, 1fr) auto;
     gap: 28px;
-    min-height: 196px;
+    min-height: 0;
     padding: 28px 30px;
-    border: 1px solid var(--xb-color-text);
+    border: 1px solid var(--xb-color-border);
     border-radius: 20px;
-    color: #ffffff;
+    color: var(--xb-color-text);
     box-shadow: none;
 }
 
@@ -580,18 +584,21 @@ html body .schedule-header-copy {
 }
 
 html body .schedule-eyebrow {
-    color: #d2d5d8;
+    color: var(--xb-color-text-muted);
 }
 
 html body .schedule-header h1 {
     margin-top: 12px;
-    color: #ffffff;
-    font-size: clamp(38px, 4.5vw, 54px);
-    letter-spacing: -.05em;
+    color: var(--xb-color-text);
+    font-size: clamp(30px, 3.4vw, 40px);
+    font-weight: 800;
+    letter-spacing: -.04em;
+    text-shadow: none;
 }
 
 html body .schedule-header p {
-    color: #c9ced2;
+    color: var(--xb-color-text-muted);
+    text-shadow: none;
 }
 
 html body .schedule-header-summary {
@@ -1034,21 +1041,16 @@ html body :is(.access-command-hero,
     .property-documents-hero,
     .profile-account-hero,
     .profile-settings-hero,
-    .login-brand-panel,
     .access-department-hero,
-    .system-error-detail-header,
-    [class$="-hero"],
-    [class*="-hero "]) {
+    .system-error-detail-header) {
     min-height: 132px;
     padding: 24px 26px;
 
     border-radius: 12px;
-    background-color: #050607;
-    background-image: linear-gradient(135deg,
-            #050607 0%,
-            #0e1012 66%,
-            #24282c 100%);
-    color: #ffffff;
+    border: 1px solid var(--xb-color-border);
+    background-color: var(--xb-color-surface);
+    background-image: none;
+    color: var(--xb-color-text);
     box-shadow: none;
 }
 
@@ -1068,14 +1070,13 @@ html body :is(.access-command-hero,
     .property-documents-hero,
     .profile-account-hero,
     .profile-settings-hero,
-    .login-brand-panel,
     .access-department-hero,
     .system-error-detail-header) :is(h1,
     h2,
     h3,
     strong,
     .title) {
-    color: #ffffff;
+    color: var(--xb-color-text);
 }
 
 html body :is(.access-command-hero,
@@ -1094,7 +1095,6 @@ html body :is(.access-command-hero,
     .property-documents-hero,
     .profile-account-hero,
     .profile-settings-hero,
-    .login-brand-panel,
     .access-department-hero,
     .system-error-detail-header) :is(p,
     small,
@@ -1103,7 +1103,7 @@ html body :is(.access-command-hero,
     [class*="description"],
     [class*="eyebrow"],
     [class*="kicker"]) {
-    color: #c5cbd0;
+    color: var(--xb-color-text-muted);
 }
 
 html body :is(.access-command-hero,
@@ -1707,11 +1707,11 @@ html body .main :is(.page-header,
     margin: 0 0 14px;
     padding: var(--xbfs-header-pad-y) var(--xbfs-header-pad-x);
     overflow: hidden;
-    border: 1px solid rgba(255, 255, 255, .10);
+    border: 1px solid var(--xb-color-border);
     border-radius: var(--xbfs-header-radius);
-    background-color: #0F0F0F;
+    background-color: var(--xb-color-surface);
     background-image: none;
-    color: #ffffff;
+    color: var(--xb-color-text);
     box-shadow: none;
     box-sizing: border-box;
 }
@@ -1787,12 +1787,13 @@ html body .main :is(.page-header,
     [class$="-hero"],
     [class*="-hero "]) :is(h1, .page-title, .hero-title, [class*="title"]) {
     margin: 8px 0 10px;
-    color: #ffffff;
-    font-size: clamp(36px, 4vw, 52px);
-    font-weight: 950;
-    line-height: .98;
-    letter-spacing: -.045em;
+    color: var(--xb-color-text);
+    font-size: clamp(30px, 3.4vw, 40px);
+    font-weight: 800;
+    line-height: 1.05;
+    letter-spacing: -.04em;
     text-wrap: balance;
+    text-shadow: none;
 }
 
 html body .main :is(.page-header,
@@ -1817,11 +1818,12 @@ html body .main :is(.page-header,
     [class$="-hero"],
     [class*="-hero "]) :is(h2, h3, .section-title, .hero-heading) {
     margin: 0 0 8px;
-    color: #ffffff;
+    color: var(--xb-color-text);
     font-size: clamp(22px, 2vw, 30px);
     font-weight: 900;
     line-height: 1.05;
     letter-spacing: -.035em;
+    text-shadow: none;
 }
 
 html body .main :is(.page-header,
@@ -1852,11 +1854,12 @@ html body .main :is(.page-header,
     [class*="description"]) {
     max-width: 780px;
     margin: 0;
-    color: #e6eaf0;
+    color: var(--xb-color-text-muted);
     font-size: 14px;
     font-weight: 650;
     line-height: 1.55;
     letter-spacing: 0;
+    text-shadow: none;
 }
 
 html body .main :is(.page-header,
@@ -1886,10 +1889,10 @@ html body .main :is(.page-header,
     min-height: 30px;
     margin: 0 0 8px;
     padding: 0 11px;
-    border: 1px solid rgba(255, 255, 255, .22);
+    border: 1px solid var(--xb-color-border);
     border-radius: 999px;
-    background: rgba(255, 255, 255, .075);
-    color: #ffffff;
+    background: var(--xb-color-surface-subtle);
+    color: var(--xb-color-text-muted);
     font-size: 11px;
     font-weight: 900;
     line-height: 1;
@@ -1972,10 +1975,10 @@ html body .main :is(.page-header,
     gap: 8px;
     min-height: 38px;
     padding: 0 14px;
-    border: 1px solid rgba(255, 255, 255, .28);
+    border: 1px solid var(--xb-color-border);
     border-radius: 8px;
-    background: rgba(255, 255, 255, .06);
-    color: #ffffff;
+    background: var(--xb-color-surface-subtle);
+    color: var(--xb-color-text);
     font-size: 13px;
     font-weight: 850;
     line-height: 1;
@@ -2021,9 +2024,9 @@ html body .main :is(.page-header,
     .documents-system-action,
     .documents-system-action-primary,
     .property-window-link):hover:not(:disabled) {
-    border-color: rgba(255, 255, 255, .44);
-    background: rgba(255, 255, 255, .12);
-    color: #ffffff;
+    border-color: var(--xb-color-text-muted);
+    background: var(--xb-color-surface);
+    color: var(--xb-color-text);
     box-shadow: none;
     transform: none;
 }
@@ -2061,7 +2064,7 @@ html body .main :is(.page-header,
     .documents-system-action,
     .documents-system-action-primary,
     .property-window-link) :is(i, svg, span) {
-    color: #ffffff;
+    color: var(--xb-color-text);
     stroke: currentColor;
 }
 
@@ -3304,10 +3307,10 @@ html body .main :is(.page-header,
     gap: 30px;
     overflow: hidden;
     padding: 31px 32px;
-    border: 1px solid rgba(255, 255, 255, .09);
+    border: 1px solid var(--xb-color-border);
     border-radius: 22px;
-    background: #0F0F0F;
-    color: #ffffff;
+    background: var(--xb-color-surface);
+    color: var(--xb-color-text);
     box-shadow: none;
 }
 
@@ -3329,10 +3332,10 @@ html body .main :is(.page-header,
     gap: 8px;
     min-height: 29px;
     padding: 0 11px;
-    border: 1px solid rgba(255, 255, 255, .15);
+    border: 1px solid var(--xb-color-border);
     border-radius: 999px;
-    background: rgba(255, 255, 255, .065);
-    color: #e3e3e3;
+    background: var(--xb-color-surface-subtle);
+    color: var(--xb-color-text-muted);
 }
 
 .access-section-kicker {
@@ -3345,19 +3348,21 @@ html body .main :is(.page-header,
 
 .access-command-hero h1 {
     margin: 17px 0 9px;
-    color: #ffffff;
-    font-size: clamp(34px, 4vw, 52px);
-    font-weight: 950;
-    letter-spacing: -.055em;
-    line-height: .99;
+    color: var(--xb-color-text);
+    font-size: clamp(30px, 3.4vw, 40px);
+    font-weight: 800;
+    letter-spacing: -.045em;
+    line-height: 1.02;
+    text-shadow: none;
 }
 
 .access-command-hero p {
     max-width: 720px;
     margin: 0;
-    color: var(--xb-color-text-soft);
+    color: var(--xb-color-text-muted);
     font-size: 14px;
     line-height: 1.65;
+    text-shadow: none;
 }
 
 .access-hero-tags {
@@ -3373,10 +3378,10 @@ html body .main :is(.page-header,
     gap: 7px;
     min-height: 30px;
     padding: 0 10px;
-    border: 1px solid rgba(255, 255, 255, .11);
+    border: 1px solid var(--xb-color-border);
     border-radius: 9px;
-    background: rgba(255, 255, 255, .045);
-    color: #c8c8c8;
+    background: var(--xb-color-surface-subtle);
+    color: var(--xb-color-text-muted);
     font-size: 10px;
     font-weight: 750;
 }
@@ -3408,7 +3413,7 @@ html body .main :is(.page-header,
 
 .access-governance-status strong {
     display: block;
-    color: #f5f5f5;
+    color: var(--xb-color-text);
     font-size: 11px;
     font-weight: 850;
 }
@@ -3416,7 +3421,7 @@ html body .main :is(.page-header,
 .access-governance-status small {
     display: block;
     margin-top: 3px;
-    color: var(--xb-color-text-soft);
+    color: var(--xb-color-text-muted);
     font-size: 10px;
 }
 
@@ -3451,10 +3456,6 @@ html body .main :is(.page-header,
     box-shadow: none;
 }
 
-.access-command-hero .access-button-primary {
-    border-color: rgba(255, 255, 255, .24);
-}
-
 .access-button-primary:hover:not(:disabled) {
     border-color: var(--xb-color-border-strong);
     background: linear-gradient(180deg, #4a4a4a 0%, #141414 100%);
@@ -3462,15 +3463,15 @@ html body .main :is(.page-header,
 }
 
 .access-button-secondary {
-    border: 1px solid rgba(255, 255, 255, .15);
-    background: rgba(255, 255, 255, .065);
-    color: #eeeeee;
+    border: 1px solid var(--xb-color-border);
+    background: var(--xb-color-surface-subtle);
+    color: var(--xb-color-text);
 }
 
 .access-button-secondary:hover {
-    border-color: rgba(255, 255, 255, .31);
-    background: rgba(255, 255, 255, .13);
-    color: #ffffff;
+    border-color: var(--xb-color-text-muted);
+    background: var(--xb-color-surface);
+    color: var(--xb-color-text);
 }
 
 .access-button-light {

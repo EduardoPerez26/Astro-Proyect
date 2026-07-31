@@ -2,11 +2,11 @@
 import DashboardLayout from "../../../layouts/DashboardLayout.astro";
 ---
 
-<DashboardLayout title="Property Schedules">
+<DashboardLayout title="AP Schedules">
     <section class="schedule-dashboard schedule-dashboard-cards" aria-labelledby="scheduleDashboardTitle">
         <header class="schedule-header">
             <div class="schedule-header-copy">
-                <h1 id="scheduleDashboardTitle">Property schedules</h1>
+                <h1 id="scheduleDashboardTitle">Accounts Payable schedules</h1>
 
                 <p>
                     Select a workspace to manage standard schedules or prepaid amortization.
@@ -14,8 +14,8 @@ import DashboardLayout from "../../../layouts/DashboardLayout.astro";
             </div>
         </header>
 
-        <section class="schedule-options" aria-label="Available property schedule modules">
-            <a class="schedule-option" href="/views/departments/property-management">
+        <section class="schedule-options" aria-label="Available AP schedule modules">
+            <a class="schedule-option" href="/views/departments/ap">
                 <div class="schedule-option-top">
                     <span class="schedule-option-icon">
                         <i class="fa-solid fa-file-excel" aria-hidden="true"></i>
@@ -24,9 +24,9 @@ import DashboardLayout from "../../../layouts/DashboardLayout.astro";
 
                 <div class="schedule-option-copy">
                     <span>Schedule module</span>
-                    <h2>Property schedule</h2>
+                    <h2>Accounts Payable schedule</h2>
                     <p>
-                        Create and maintain the standard monthly property schedule.
+                        Create and maintain the standard monthly Accounts Payable schedule.
                     </p>
                 </div>
 
@@ -39,7 +39,7 @@ import DashboardLayout from "../../../layouts/DashboardLayout.astro";
                 </div>
             </a>
 
-            <a class="schedule-option" href="/views/departments/prepaid-amortization">
+            <a class="schedule-option" href="/views/departments/ap-prepaid">
                 <div class="schedule-option-top">
                     <span class="schedule-option-icon is-green">
                         <i class="fa-solid fa-file-invoice-dollar" aria-hidden="true"></i>

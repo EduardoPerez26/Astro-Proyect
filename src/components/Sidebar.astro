@@ -111,6 +111,45 @@
             </ul>
         </div>
 
+        <!-- DEPARTMENTS: AP -->
+        <div class="sidebar-section">
+            <button
+                class="sidebar-section-title sidebar-section-toggle"
+                type="button"
+                data-sidebar-section-toggle
+                aria-expanded="true"
+            >
+                <span>Accounts Payable</span>
+                <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
+            </button>
+            <ul class="sidebar-menu" id="menuAccountsPayable">
+                <li
+                    class="sidebar-menu-item"
+                    data-permission="accountsPayable"
+                >
+                    <a
+                        class="sidebar-menu-link"
+                        href="/views/departments/dashboard-ap"
+                    >
+                        <i class="fa-solid fa-file-invoice-dollar"></i>
+                        <span>Schedules</span>
+                    </a>
+                </li>
+                <li
+                    class="sidebar-menu-item"
+                    data-permission="accountsPayableDocuments"
+                >
+                    <a
+                        class="sidebar-menu-link"
+                        href="/views/departments/ap-documents"
+                    >
+                        <i class="fa-solid fa-folder"></i>
+                        <span>Documents</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
         <!-- GOVERNANCE & CONTROL -->
         <div class="sidebar-section" id="sectionGovernance">
             <button
@@ -251,6 +290,29 @@
     </nav>
 
     <div class="sidebar-footer">
+        <div class="sidebar-utility-row">
+            <button
+                type="button"
+                class="theme-toggle"
+                id="themeToggle"
+                aria-label="Switch to dark mode"
+                aria-pressed="false"
+                title="Toggle dark mode"
+            >
+                <i class="fa-solid fa-moon" aria-hidden="true"></i>
+            </button>
+            <button
+                type="button"
+                class="lang-toggle"
+                data-lang-toggle
+                aria-label="Switch to English"
+                title="Switch to English"
+                hidden
+            >
+                <i class="fa-solid fa-language" aria-hidden="true"></i>
+                <span data-lang-label>EN</span>
+            </button>
+        </div>
         <div class="sidebar-user-card">
             <span class="avatar sidebar-user-avatar" id="sidebarUserAvatar"
                 >--</span

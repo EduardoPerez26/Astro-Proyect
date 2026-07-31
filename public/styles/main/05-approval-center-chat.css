@@ -1614,10 +1614,10 @@ html body :is(.store-card-disabled,
     grid-template-columns: minmax(0, 1fr) auto;
     gap: 24px;
     padding: 30px;
+    border: 1px solid var(--xb-color-border);
     border-radius: 18px;
-    background: radial-gradient(circle at 90% 9%, rgba(255, 255, 255, .10), transparent 29%),
-        linear-gradient(135deg, #030303 0%, #111111 56%, #292929 100%);
-    color: #ffffff;
+    background: var(--xb-color-surface);
+    color: var(--xb-color-text);
     box-shadow: none;
 }
 
@@ -1627,10 +1627,10 @@ html body :is(.store-card-disabled,
     gap: 8px;
     min-height: 30px;
     padding: 0 12px;
-    border: 1px solid rgba(255, 255, 255, .16);
+    border: 1px solid var(--xb-color-border);
     border-radius: 999px;
-    background: rgba(255, 255, 255, .07);
-    color: #eeeeee;
+    background: var(--xb-color-surface-subtle);
+    color: var(--xb-color-text-muted);
     font-size: 10px;
     font-weight: 900;
     letter-spacing: .10em;
@@ -1651,10 +1651,10 @@ html body :is(.store-card-disabled,
     gap: 8px;
     min-height: 40px;
     padding: 0 14px;
-    border: 1px solid rgba(255, 255, 255, .17);
+    border: 1px solid var(--xb-color-border);
     border-radius: 10px;
-    background: rgba(255, 255, 255, .075);
-    color: #ffffff;
+    background: var(--xb-color-surface-subtle);
+    color: var(--xb-color-text);
     font-family: inherit;
     font-size: 12px;
     font-weight: 850;
@@ -1669,15 +1669,15 @@ html body :is(.store-card-disabled,
     gap: 8px;
     min-height: 40px;
     padding: 0 14px;
-    border: 1px solid rgba(255, 255, 255, .17);
+    border: 1px solid var(--xb-color-border);
     border-radius: 10px;
-    color: #ffffff;
+    color: var(--xb-color-text);
     font-family: inherit;
     font-size: 12px;
     font-weight: 850;
     text-decoration: none;
     cursor: pointer;
-    background: linear-gradient(180deg, #393939, #101010);
+    background: var(--xb-color-surface-subtle);
 }
 
 .approval-hero-actions button:disabled {

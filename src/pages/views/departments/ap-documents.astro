@@ -2,12 +2,12 @@
 import DashboardLayout from "../../../layouts/DashboardLayout.astro";
 ---
 
-<DashboardLayout title="Property Documents" includeSheetJS={true}>
+<DashboardLayout title="AP Documents" includeSheetJS={true}>
     <div class="page-container property-documents-page">
         <div class="page-header">
             <div class="page-header-info">
-                <h1>Property Documents</h1>
-                <p>Schedules and source files saved for Property Management.</p>
+                <h1>AP Documents</h1>
+                <p>Schedules and source files saved for Accounts Payable.</p>
             </div>
 
             <div class="page-header-actions property-documents-actions">
@@ -149,14 +149,14 @@ import DashboardLayout from "../../../layouts/DashboardLayout.astro";
                 style="display: none;"
             >
                 <i class="fa-solid fa-folder-open" aria-hidden="true"></i>
-                <h4>No Property Management documents</h4>
+                <h4>No Accounts Payable documents</h4>
                 <p>No schedules or source files match the selected filters.</p>
             </div>
 
             <div id="pmDocsLoadingState" class="empty-state">
                 <i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i>
                 <h4>Loading...</h4>
-                <p>Fetching Property Management documents from the server.</p>
+                <p>Fetching Accounts Payable documents from the server.</p>
             </div>
 
             <div
@@ -197,6 +197,6 @@ import DashboardLayout from "../../../layouts/DashboardLayout.astro";
 
     <script
         is:inline
-        src="/js/departments/property-management/property-management-documents.js?v=20260714-property-documents-modal-v2"
+        src="/js/departments/ap/ap-documents.js?v=20260731-ap-department-v1"
     ></script>
 </DashboardLayout>

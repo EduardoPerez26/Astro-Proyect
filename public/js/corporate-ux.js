@@ -157,7 +157,7 @@
 
             if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
                 event.preventDefault();
-                document.getElementById('globalNavSearch')?.focus();
+                document.getElementById('sidebarSearch')?.focus();
                 return;
             }
 

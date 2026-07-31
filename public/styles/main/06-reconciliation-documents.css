@@ -2032,11 +2032,10 @@ html body main.main {
     overflow: hidden;
     margin: 0 0 18px;
     padding: 28px;
-    border: 1px solid rgba(255, 255, 255, 0.16);
+    border: 1px solid var(--xb-color-border);
     border-radius: 22px;
-    color: #ffffff;
-    background: radial-gradient(circle at 88% 10%, rgba(255, 255, 255, 0.16), transparent 28%),
-        linear-gradient(135deg, #0F0F0F 0%, #1F1F1F 54%, #8f1d1d 100%);
+    color: var(--xb-color-text);
+    background: var(--xb-color-surface);
     box-shadow: var(--se-shadow);
 }
 
@@ -2055,10 +2054,10 @@ html body main.main {
     align-items: center;
     margin: 0 0 12px;
     padding: 7px 10px;
-    border: 1px solid rgba(255, 255, 255, 0.22);
+    border: 1px solid var(--xb-color-border);
     border-radius: 999px;
-    color: #ffe3e3;
-    background: rgba(255, 255, 255, 0.11);
+    color: var(--xb-color-text-muted);
+    background: var(--xb-color-surface-subtle);
     font-size: 11px;
     font-weight: 900;
     letter-spacing: 0.09em;
@@ -2067,18 +2066,20 @@ html body main.main {
 
 .documents-page .page-header h1 {
     margin: 0;
-    color: #ffffff;
+    color: var(--xb-color-text);
     font-size: clamp(28px, 3vw, 44px);
     line-height: 1;
     letter-spacing: -0.04em;
+    text-shadow: none;
 }
 
 .documents-page .page-header p {
     max-width: 680px;
     margin: 12px 0 0;
-    color: rgba(255, 255, 255, 0.78);
+    color: var(--xb-color-text-muted);
     font-size: 14px;
     line-height: 1.55;
+    text-shadow: none;
 }
 
 .documents-page .documents-type-tab {
@@ -2819,12 +2820,10 @@ html body .main .profile-page.profile-professional-v3>.profile-account-hero {
     position: relative;
     isolation: isolate;
     display: grid;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    background: radial-gradient(circle at 86% 22%, rgba(255, 255, 255, 0.16), transparent 22%),
-        radial-gradient(circle at 4% 120%, rgba(45, 212, 191, 0.18), transparent 36%),
-        linear-gradient(124deg, #0F0F0F 0%, #1F1F1F 58%, #2E2E2E 100%);
+    border: 1px solid var(--xb-color-border);
+    background: var(--xb-color-surface);
     box-shadow: none;
-    color: #ffffff;
+    color: var(--xb-color-text);
     grid-template-areas: "avatar identity summary";
     grid-template-columns: 150px minmax(0, 1fr) 360px;
     align-items: center;

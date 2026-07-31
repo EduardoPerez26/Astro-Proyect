@@ -1,0 +1,953 @@
+---
+import DashboardLayout from "../../../layouts/DashboardLayout.astro";
+---
+
+<DashboardLayout title="Accounts Payable" includeSheetJS={true}>
+    <section
+        class="property-management-page page-container"
+        aria-labelledby="propertyManagementTitle"
+    >
+        <div class="page-header">
+            <div class="page-header-info">
+                <h1 id="propertyManagementTitle">Accounts Payable</h1>
+                <p>
+                    Load source reports, open saved schedules, and review the
+                    sales tax payable schedule before exporting.
+                </p>
+            </div>
+
+            <div class="page-header-actions property-window-switcher" aria-label="Accounts Payable windows">
+                <a class="btn btn-secondary" href="/views/departments/ap-prepaid">
+                    <i class="fa-solid fa-building-columns" aria-hidden="true"></i>
+                    Prepaid Bills
+                </a>
+                <a class="btn btn-secondary" href="/views/departments/ap-documents">
+                    <i class="fa-solid fa-folder" aria-hidden="true"></i>
+                    Documents
+                </a>
+            </div>
+        </div>
+
+        <section
+            id="pmUploadSection"
+            class="upload-section pm-upload-section"
+            aria-labelledby="pmScheduleTitle"
+        >
+            <div class="section-heading">
+                <span class="step-badge">1</span>
+                <div>
+                    <h2 id="pmScheduleTitle">Files and schedule</h2>
+                    <p>
+                        Import the Dimension Balance report, add monthly files,
+                        or open a saved Accounts Payable schedule.
+                    </p>
+                </div>
+            </div>
+
+            <div class="multi-upload-container pm-intake-grid">
+                <div class="upload-card pm-upload-panel" id="salesUploadCard">
+                    <div class="pm-upload-panel-header">
+                        <div>
+                            <h3>Upload Dimension Balance report</h3>
+                            <p>
+                                The system reads the report and prepares the
+                                Accounts Payable schedule by store.
+                            </p>
+                        </div>
+
+                        <span class="upload-pill required">Required</span>
+                    </div>
+
+                    <div class="pm-upload-panel-body">
+                        <label
+                            class="pm-upload-drop-area"
+                            for="pmDimensionBalanceFile"
+                        >
+                            <span class="pm-upload-drop-icon">
+                                <i class="fa-solid fa-cloud-arrow-up" aria-hidden="true"></i>
+                            </span>
+
+                            <strong>Dimension Balance report</strong>
+                            <span>Drag and drop the file here or click to browse</span>
+                        </label>
+
+                        <input
+                            id="pmDimensionBalanceFile"
+                            type="file"
+                            accept=".xlsx,.xls"
+                            class="reconciliation-file-input"
+                        />
+
+                        <div class="pm-upload-selected-row">
+                            <div
+                                class="pm-upload-selected-name"
+                                id="pmDimensionBalanceFileName"
+                            >
+                                <span class="pm-upload-file-empty">No file selected</span>
+                            </div>
+
+                            <button
+                                type="button"
+                                class="btn btn-secondary pm-remove-file-btn"
+                                id="pmClearDimensionBalanceFileBtn"
+                                disabled
+                                aria-label="Remove Dimension Balance report"
+                            >
+                                <i class="fa-solid fa-trash" aria-hidden="true"></i>
+                            </button>
+                        </div>
+
+                        <small class="pm-upload-format">
+                            Accepted formats: .xlsx, .xls
+                        </small>
+                    </div>
+                </div>
+
+                <div class="upload-card pm-upload-panel" id="salesDetailUploadCard">
+                    <div class="pm-upload-panel-header">
+                        <div>
+                            <h3>Upload monthly files</h3>
+                            <p>
+                                Add one or more monthly GL exports after loading
+                                the Dimension Balance report.
+                            </p>
+                        </div>
+
+                        <span class="upload-pill">Optional</span>
+                    </div>
+
+                    <div class="pm-upload-panel-body">
+                        <label
+                            class="pm-upload-drop-area"
+                            for="pmMonthlyLedgerFile"
+                        >
+                            <span class="pm-upload-drop-icon">
+                                <i class="fa-solid fa-file-arrow-up" aria-hidden="true"></i>
+                            </span>
+
+                            <strong>Monthly GL files</strong>
+                            <span>Drag and drop files here or click to browse</span>
+                        </label>
+
+                        <input
+                            id="pmMonthlyLedgerFile"
+                            type="file"
+                            accept=".xls,.xlsx,.html,.htm"
+                            multiple
+                            class="reconciliation-file-input"
+                        />
+
+                        <div class="pm-upload-selected-row">
+                            <div
+                                class="pm-upload-selected-name"
+                                id="pmMonthlyLedgerFileName"
+                            >
+                                <span class="pm-upload-file-empty">No files selected</span>
+                            </div>
+
+                            <button
+                                type="button"
+                                class="btn btn-secondary pm-remove-file-btn"
+                                id="pmClearMonthlyLedgerFileBtn"
+                                disabled
+                                aria-label="Remove monthly files"
+                            >
+                                <i class="fa-solid fa-trash" aria-hidden="true"></i>
+                            </button>
+                        </div>
+
+                        <small class="pm-upload-format">
+                            Accepted formats: .xlsx, .xls, .html, .htm
+                        </small>
+                    </div>
+                </div>
+
+                <section
+                    class="pm-manager-card summary-card pm-saved-work-card"
+                    aria-labelledby="pmSavedScheduleTitle"
+                >
+                    <div class="pm-manager-card-header">
+                        <span class="pm-manager-icon">
+                            <i class="fa-solid fa-database" aria-hidden="true"
+                            ></i>
+                        </span>
+
+                        <div>
+                            <span>Saved work</span>
+                            <h3 id="pmSavedScheduleTitle">
+                                Accounts Payable schedules
+                            </h3>
+                        </div>
+                    </div>
+
+                    <label class="pm-field">
+                        <span>Schedule name</span>
+                        <input
+                            id="pmScheduleName"
+                            type="text"
+                            value="Schedule 2026"
+                        />
+                    </label>
+
+                    <div class="pm-inline-controls">
+                        <select
+                            id="pmSavedScheduleSelect"
+                            aria-label="Saved Accounts Payable schedules"
+                        >
+                            <option value="">No saved schedules loaded</option>
+                        </select>
+
+                        <button
+                            type="button"
+                            class="btn btn-secondary"
+                            id="pmLoadScheduleBtn"
+                        >
+                            <i
+                                class="fa-solid fa-folder-open"
+                                aria-hidden="true"></i>
+                            Open
+                        </button>
+                    </div>
+                </section>
+            </div>
+
+            <div
+                class="pm-alert-stack"
+                id="pmAlertStack"
+                aria-live="polite"
+                aria-atomic="false"
+            >
+            </div>
+
+            <div
+                class="pm-tab-panel is-active"
+                id="pmEditorTab"
+                role="tabpanel"
+                aria-labelledby="pmEditorTabButton"
+            >
+                <div class="pm-schedule-preview" id="pmSchedulePreview" hidden>
+                    <div class="section-heading pm-review-heading">
+                        <span class="step-badge">2</span>
+                        <div>
+                            <h2>Review</h2>
+                            <p>
+                                Review totals, filter rows, validate quarters,
+                                and export the schedule.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="pm-preview-summary pm-simple-stats-grid">
+                        <article class="pm-simple-stat-card">
+                            <span
+                                class="pm-simple-stat-icon"
+                                aria-hidden="true"
+                            >
+                                <i class="fa-solid fa-store"></i>
+                            </span>
+
+                            <div class="pm-simple-stat-copy">
+                                <strong id="pmScheduleStores">0</strong>
+                                <span>Stores</span>
+                            </div>
+                        </article>
+
+                        <article class="pm-simple-stat-card">
+                            <span
+                                class="pm-simple-stat-icon"
+                                aria-hidden="true"
+                            >
+                                <i class="fa-solid fa-table-list"></i>
+                            </span>
+
+                            <div class="pm-simple-stat-copy">
+                                <strong id="pmScheduleRows">0</strong>
+                                <span>Rows</span>
+                            </div>
+                        </article>
+
+                        <article class="pm-simple-stat-card">
+                            <span
+                                class="pm-simple-stat-icon"
+                                aria-hidden="true"
+                            >
+                                <i class="fa-solid fa-scale-balanced"></i>
+                            </span>
+
+                            <div class="pm-simple-stat-copy">
+                                <strong id="pmScheduleBalance">$0.00</strong>
+                                <span>YTD balance</span>
+                            </div>
+                        </article>
+                    </div>
+
+                    <section
+                        class="pm-quarter-workspace"
+                        id="pmQuarterWorkspace"
+                    >
+                        <div class="pm-quarter-section-head">
+                            <div>
+                                <span class="pm-eyebrow">
+                                    <i
+                                        class="fa-solid fa-chart-pie"
+                                        aria-hidden="true"></i>
+                                    Quarter overview
+                                </span>
+                                <h3>General quarter review</h3>
+                                <p>
+                                    Review collected, paid next month, and open
+                                    differences by quarter.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div
+                            class="pm-quarter-grid"
+                            id="pmQuarterReviewCards"
+                            aria-label="Quarterly tax payment differences"
+                        >
+                        </div>
+                    </section>
+
+                    <div class="pm-table-toolbar" aria-label="Schedule filters">
+                        <div class="pm-table-toolbar-head">
+                            <div>
+                                <span class="pm-eyebrow">
+                                    <i
+                                        class="fa-solid fa-filter"
+                                        aria-hidden="true"></i>
+                                    Working view
+                                </span>
+                                <h3>Schedule filters</h3>
+                            </div>
+                            <strong id="pmScheduleFilterCount"
+                                >Showing all rows</strong
+                            >
+                        </div>
+
+                        <div class="pm-filter-grid">
+                            <label class="pm-field">
+                                <span>Search</span>
+                                <input
+                                    id="pmScheduleSearch"
+                                    type="search"
+                                    placeholder="Store, entry, entity, reference"
+                                    data-pm-filter="search"
+                                />
+                            </label>
+
+                            <label class="pm-field">
+                                <span>Store</span>
+                                <select
+                                    id="pmScheduleStoreFilter"
+                                    data-pm-filter="store"
+                                >
+                                    <option value="">All stores</option>
+                                </select>
+                            </label>
+
+                            <label class="pm-field">
+                                <span>Entity</span>
+                                <select
+                                    id="pmScheduleEntityFilter"
+                                    data-pm-filter="entity"
+                                >
+                                    <option value="">All entities</option>
+                                </select>
+                            </label>
+
+                            <label class="pm-field">
+                                <span>Month</span>
+                                <select
+                                    id="pmScheduleMonthFilter"
+                                    data-pm-filter="month"
+                                >
+                                    <option value="">All months</option>
+                                    <option value="1">January</option>
+                                    <option value="2">February</option>
+                                    <option value="3">March</option>
+                                    <option value="4">April</option>
+                                    <option value="5">May</option>
+                                    <option value="6">June</option>
+                                    <option value="7">July</option>
+                                    <option value="8">August</option>
+                                    <option value="9">September</option>
+                                    <option value="10">October</option>
+                                    <option value="11">November</option>
+                                    <option value="12">December</option>
+                                </select>
+                            </label>
+
+                            <label class="pm-field">
+                                <span>Rows</span>
+                                <select
+                                    id="pmScheduleRowTypeFilter"
+                                    data-pm-filter="rowType"
+                                >
+                                    <option value="">All rows</option>
+                                    <option value="summary"
+                                        >Store summaries</option
+                                    >
+                                    <option value="detail">Detail rows</option>
+                                    <option value="manual">Manual rows</option>
+                                    <option value="activity"
+                                        >Rows with activity</option
+                                    >
+                                </select>
+                            </label>
+
+                            <button
+                                type="button"
+                                class="btn btn-secondary pm-filter-reset"
+                                id="pmClearScheduleFiltersBtn"
+                            >
+                                <i class="fa-solid fa-xmark" aria-hidden="true"
+                                ></i>
+                                Clear filters
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="pm-schedule-table-wrap">
+                        <table class="pm-schedule-table" id="pmScheduleTable">
+                        </table>
+                    </div>
+
+                    <section
+                        class="pm-monthly-totals-panel"
+                        aria-labelledby="pmMonthlyTotalsTitle"
+                    >
+                        <div class="pm-monthly-totals-header">
+                            <div>
+                                <span class="pm-eyebrow">
+                                    <i
+                                        class="fa-solid fa-calendar-check"
+                                        aria-hidden="true"></i>
+                                    Monthly totals
+                                </span>
+                                <h3 id="pmMonthlyTotalsTitle">
+                                    Paid and collected by month
+                                </h3>
+                                <p>
+                                    Review the total paid and collected amounts
+                                    for each month separately.
+                                </p>
+                            </div>
+
+                            <div class="pm-monthly-totals-grand">
+                                <div>
+                                    <span>Total collected</span>
+                                    <strong id="pmMonthlyCollectedTotal"
+                                        >$0.00</strong
+                                    >
+                                </div>
+
+                                <div>
+                                    <span>Total paid</span>
+                                    <strong id="pmMonthlyPaidTotal"
+                                        >$0.00</strong
+                                    >
+                                </div>
+                            </div>
+                        </div>
+
+                        <div
+                            class="pm-monthly-totals-strip"
+                            id="pmMonthlyTotalsCards"
+                        >
+                            <article class="pm-month-total-card is-empty">
+                                <span>No monthly totals loaded.</span>
+                            </article>
+                        </div>
+                    </section>
+
+                    <div
+                        class="pm-schedule-actions pm-schedule-actions-bottom"
+                        aria-label="Schedule actions"
+                    >
+                        <button
+                            type="button"
+                            class="btn btn-secondary"
+                            id="pmSaveScheduleBtn"
+                            disabled
+                        >
+                            <i
+                                class="fa-solid fa-floppy-disk"
+                                aria-hidden="true"></i>
+                            Save
+                        </button>
+
+                        <button
+                            type="button"
+                            class="btn btn-secondary"
+                            id="pmOpenMonthReclassBtn"
+                            disabled
+                        >
+                            <i class="fa-solid fa-right-left" aria-hidden="true"
+                            ></i>
+                            Month reclass
+                        </button>
+
+                        <button
+                            type="button"
+                            class="btn btn-secondary"
+                            id="pmManageEntitiesBtn"
+                        >
+                            <i class="fa-solid fa-sitemap" aria-hidden="true"
+                            ></i>
+                            Entities
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div
+                class="pm-tab-panel"
+                id="pmDepartmentDocumentsTab"
+                role="tabpanel"
+                aria-labelledby="pmDocumentsTabButton"
+                hidden
+            >
+                <div class="pm-documents-workspace">
+                    <section
+                        class="pm-documents-panel"
+                        aria-labelledby="pmSavedDocsTitle"
+                    >
+                        <div class="pm-documents-panel-header">
+                            <div>
+                                <span class="pm-eyebrow">
+                                    <i
+                                        class="fa-solid fa-file-pen"
+                                        aria-hidden="true"></i>
+                                    Editable schedules
+                                </span>
+                                <h3 id="pmSavedDocsTitle">
+                                    Department schedules
+                                </h3>
+                            </div>
+                            <button
+                                type="button"
+                                class="btn btn-secondary"
+                                id="pmDocsRefreshBtn"
+                            >
+                                <i
+                                    class="fa-solid fa-arrows-rotate"
+                                    aria-hidden="true"></i>
+                                Refresh
+                            </button>
+                        </div>
+
+                        <div class="pm-documents-table-wrap">
+                            <table class="pm-documents-table">
+                                <thead>
+                                    <tr>
+                                        <th>Schedule</th>
+                                        <th>Period</th>
+                                        <th>Stores</th>
+                                        <th>Rows</th>
+                                        <th>Balance</th>
+                                        <th>Updated</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="pmDepartmentSchedulesTable">
+                                    <tr
+                                        ><td colspan="7"
+                                            >Loading schedules...</td
+                                        ></tr
+                                    >
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+
+                    <section
+                        class="pm-documents-panel"
+                        aria-labelledby="pmSourceDocsTitle"
+                    >
+                        <div class="pm-documents-panel-header">
+                            <div>
+                                <span class="pm-eyebrow">
+                                    <i
+                                        class="fa-solid fa-file-shield"
+                                        aria-hidden="true"></i>
+                                    Source files
+                                </span>
+                                <h3 id="pmSourceDocsTitle">
+                                    Uploaded department documents
+                                </h3>
+                            </div>
+                        </div>
+
+                        <div class="pm-documents-table-wrap">
+                            <table class="pm-documents-table">
+                                <thead>
+                                    <tr>
+                                        <th>File</th>
+                                        <th>Type</th>
+                                        <th>Size</th>
+                                        <th>Uploaded</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="pmDepartmentFilesTable">
+                                    <tr
+                                        ><td colspan="5"
+                                            >Loading documents...</td
+                                        ></tr
+                                    >
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </section>
+    </section>
+    <div class="pm-modal pm-entities-modal" id="pmEntitiesModal" hidden>
+        <div class="pm-modal-backdrop" data-pm-close-entities></div>
+
+        <section
+            class="pm-modal-card pm-entities-modal-card"
+            aria-labelledby="pmEntitiesTitle"
+        >
+            <header class="pm-modal-header pm-entities-header">
+                <div>
+                    <span class="pm-eyebrow">Accounts Payable</span>
+                    <h3 id="pmEntitiesTitle">Entities / ORG Chart</h3>
+                    <p>
+                        Manage the store-to-entity mapping used by the Sales Tax
+                        Payable Schedule.
+                    </p>
+                </div>
+
+                <button
+                    type="button"
+                    class="pm-modal-close"
+                    data-pm-close-entities
+                    aria-label="Close entities modal"
+                >
+                    <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                </button>
+            </header>
+
+            <div class="pm-modal-body pm-entities-body">
+                <section class="pm-entity-card" id="pmEntitiesImportCard">
+                    <div class="pm-entity-card-header">
+                        <div>
+                            <span class="pm-eyebrow">
+                                <i
+                                    class="fa-solid fa-file-excel"
+                                    aria-hidden="true"></i>
+                                Import
+                            </span>
+                            <h4>ORG Chart source</h4>
+                            <p>Import the entity mapping file only once.</p>
+                        </div>
+                    </div>
+
+                    <div class="pm-entity-import-row">
+                        <input
+                            id="pmEntitiesImportFile"
+                            type="file"
+                            accept=".xlsx,.xls"
+                            hidden
+                        />
+
+                        <button
+                            type="button"
+                            class="btn btn-secondary"
+                            id="pmChooseEntitiesFileBtn"
+                        >
+                            <i class="fa-solid fa-file-excel" aria-hidden="true"
+                            ></i>
+                            Choose ORG CHART file
+                        </button>
+
+                        <span
+                            class="pm-selected-file"
+                            id="pmEntitiesImportFileName"
+                        >
+                            No file selected
+                        </span>
+
+                        <button
+                            type="button"
+                            class="btn btn-primary"
+                            id="pmImportEntitiesBtn"
+                        >
+                            <i class="fa-solid fa-upload" aria-hidden="true"
+                            ></i>
+                            Import file
+                        </button>
+                    </div>
+                </section>
+
+                <section class="pm-entity-card pm-entity-toolbar-card">
+                    <div class="pm-entities-toolbar">
+                        <div>
+                            <span class="pm-eyebrow">
+                                <i class="fa-solid fa-table" aria-hidden="true"
+                                ></i>
+                                Entity mappings
+                            </span>
+                            <h4>Loaded entities</h4>
+                            <p id="pmEntitiesCountLabel">No entities loaded.</p>
+                        </div>
+
+                        <button
+                            type="button"
+                            class="btn btn-primary"
+                            id="pmToggleEntityFormBtn"
+                        >
+                            <i class="fa-solid fa-plus" aria-hidden="true"></i>
+                            Add entity
+                        </button>
+                    </div>
+                </section>
+
+                <section
+                    class="pm-entity-card pm-entity-form-card"
+                    id="pmEntityFormCard"
+                    hidden
+                >
+                    <div class="pm-entity-card-header">
+                        <div>
+                            <span class="pm-eyebrow">
+                                <i
+                                    class="fa-solid fa-pen-to-square"
+                                    aria-hidden="true"></i>
+                                Manual edit
+                            </span>
+                            <h4 id="pmEntityFormTitle">Add entity</h4>
+                        </div>
+
+                        <button
+                            type="button"
+                            class="btn btn-secondary"
+                            id="pmCancelEntityFormBtn"
+                        >
+                            Cancel
+                        </button>
+                    </div>
+
+                    <form id="pmEntityForm" class="pm-entity-form">
+                        <input type="hidden" id="pmEntityId" />
+
+                        <label class="pm-field">
+                            <span>Location</span>
+                            <input id="pmEntityLocation" type="text" required />
+                        </label>
+
+                        <label class="pm-field">
+                            <span>Entity</span>
+                            <input id="pmEntityCode" type="text" required />
+                        </label>
+
+                        <label class="pm-field">
+                            <span>Brand</span>
+                            <input id="pmEntityBrand" type="text" />
+                        </label>
+
+                        <label class="pm-field">
+                            <span>Legal Name</span>
+                            <input id="pmEntityLegalName" type="text" />
+                        </label>
+
+                        <label class="pm-field">
+                            <span>Short Name</span>
+                            <input id="pmEntityShortName" type="text" />
+                        </label>
+
+                        <label class="pm-field">
+                            <span>Other ID</span>
+                            <input id="pmEntityOtherId" type="text" />
+                        </label>
+
+                        <div class="pm-entity-form-actions">
+                            <button type="submit" class="btn btn-primary">
+                                <i
+                                    class="fa-solid fa-floppy-disk"
+                                    aria-hidden="true"></i>
+                                Save entity
+                            </button>
+
+                            <button
+                                type="button"
+                                class="btn btn-secondary"
+                                id="pmClearEntityFormBtn"
+                            >
+                                Clear
+                            </button>
+                        </div>
+                    </form>
+                </section>
+
+                <section class="pm-entity-card pm-entity-table-card">
+                    <div class="pm-entities-table-wrap">
+                        <table class="pm-entities-table">
+                            <thead>
+                                <tr>
+                                    <th>Location</th>
+                                    <th>Entity</th>
+                                    <th>Brand</th>
+                                    <th>Legal Name</th>
+                                    <th>Other ID</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+
+                            <tbody id="pmEntitiesTableBody">
+                                <tr>
+                                    <td colspan="6">No entities loaded.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+
+            <footer class="pm-modal-footer">
+                <button
+                    type="button"
+                    class="btn btn-secondary"
+                    data-pm-close-entities
+                >
+                    Close
+                </button>
+            </footer>
+        </section>
+    </div>
+
+    <div
+        class="pm-modal pm-quarter-store-modal"
+        id="pmQuarterStoreModal"
+        hidden
+    >
+        <div class="pm-modal-backdrop" data-pm-close-quarter-store></div>
+
+        <section
+            class="pm-modal-card pm-quarter-store-modal-card"
+            aria-labelledby="pmQuarterStoreTitle"
+        >
+            <header class="pm-modal-header pm-quarter-store-header">
+                <div>
+                    <span class="pm-eyebrow">
+                        <i class="fa-solid fa-calculator" aria-hidden="true"
+                        ></i>
+                        Quarter detail
+                    </span>
+                    <h3 id="pmQuarterStoreTitle">Quarter review</h3>
+                    <p id="pmQuarterStoreSubtitle">
+                        Review quarter differences by store.
+                    </p>
+                </div>
+
+                <button
+                    type="button"
+                    class="pm-modal-close"
+                    data-pm-close-quarter-store
+                    aria-label="Close quarter detail modal"
+                >
+                    <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                </button>
+            </header>
+
+            <div class="pm-modal-body pm-quarter-store-body">
+                <section class="pm-quarter-modal-filters">
+                    <label class="pm-field">
+                        <span>Search</span>
+                        <input
+                            id="pmQuarterModalSearch"
+                            type="search"
+                            placeholder="Store or entity"
+                        />
+                    </label>
+
+                    <label class="pm-field">
+                        <span>Quarter</span>
+                        <select id="pmQuarterModalQuarter">
+                            <option value="">All quarters</option>
+                            <option value="1">Q1 Jan-Mar</option>
+                            <option value="2">Q2 Apr-Jun</option>
+                            <option value="3">Q3 Jul-Sep</option>
+                            <option value="4">Q4 Oct-Dec</option>
+                        </select>
+                    </label>
+
+                    <label class="pm-field">
+                        <span>Entity</span>
+                        <select id="pmQuarterModalEntity">
+                            <option value="">All entities</option>
+                        </select>
+                    </label>
+
+                    <label class="pm-field">
+                        <span>Status</span>
+                        <select id="pmQuarterModalStatus">
+                            <option value="">All</option>
+                            <option value="open">Needs Review</option>
+                            <option value="balanced">Balanced</option>
+                        </select>
+                    </label>
+
+                    <button
+                        type="button"
+                        class="btn btn-secondary"
+                        id="pmQuarterModalClearFiltersBtn"
+                    >
+                        Clear filters
+                    </button>
+                </section>
+
+                <section
+                    class="pm-quarter-modal-summary"
+                    id="pmQuarterModalSummary"
+                >
+                </section>
+
+                <div class="pm-quarter-modal-table-wrap">
+                    <table class="pm-quarter-modal-table">
+                        <thead>
+                            <tr>
+                                <th>Store</th>
+                                <th>Entity</th>
+                                <th>Quarter</th>
+                                <th>Collected</th>
+                                <th>Paid next month</th>
+                                <th>Difference</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+
+                        <tbody id="pmQuarterModalTableBody">
+                            <tr>
+                                <td colspan="7">No data found.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <footer class="pm-modal-footer">
+                <button
+                    type="button"
+                    class="btn btn-secondary"
+                    data-pm-close-quarter-store
+                >
+                    Close
+                </button>
+            </footer>
+        </section>
+    </div>
+
+<script
+    is:inline
+    src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"
+></script>
+
+<script
+    is:inline
+    src="/js/departments/ap/ap.js?v=20260731-ap-department-v1"
+></script>
+</DashboardLayout>

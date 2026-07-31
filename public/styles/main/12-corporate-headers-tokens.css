@@ -4101,3 +4101,84 @@ html body .swal2-popup.xbfs-toast-popup.xbfs-toast-final .swal2-timer-progress-b
             var(--toast-accent, var(--xb-color-text)),
             color-mix(in srgb, var(--toast-accent, var(--xb-color-text)) 55%, transparent));
 }
+
+/* Schedule hub dashboards (AP, Property) — customizations beyond the flat baseline
+   (which now lives at the source in 04/07/09/10). Scoped to .schedule-dashboard-cards. */
+
+html body .main .schedule-dashboard.schedule-dashboard-cards {
+    gap: 26px;
+}
+
+html body .main .schedule-dashboard.schedule-dashboard-cards .schedule-header {
+    padding: 24px 26px;
+    box-shadow: 0 1px 2px rgba(15, 15, 15, 0.04);
+}
+
+html body .main .schedule-dashboard.schedule-dashboard-cards .schedule-header h1 {
+    font-size: clamp(26px, 3vw, 34px);
+}
+
+html body .main .schedule-dashboard.schedule-dashboard-cards :is(h1, h2, h3, p, span, strong, small, a) {
+    text-shadow: none;
+}
+
+html body .main .schedule-dashboard.schedule-dashboard-cards .schedule-metrics article {
+    box-shadow: 0 1px 2px rgba(15, 15, 15, 0.04);
+    padding: 18px 20px;
+}
+
+html body .main .schedule-dashboard.schedule-dashboard-cards .schedule-option {
+    min-height: 0;
+    padding: 22px;
+    box-shadow: 0 1px 3px rgba(15, 15, 15, 0.05);
+    transition: border-color 0.16s ease, box-shadow 0.16s ease;
+}
+
+html body .main .schedule-dashboard.schedule-dashboard-cards .schedule-option:hover {
+    border-color: var(--xb-color-text-muted);
+    box-shadow: 0 6px 16px rgba(15, 15, 15, 0.08);
+    transform: none;
+}
+
+html body .main .schedule-dashboard.schedule-dashboard-cards .schedule-option-copy {
+    margin-top: 20px;
+}
+
+html body .main .schedule-dashboard.schedule-dashboard-cards .schedule-option-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    font-size: 16px;
+}
+
+html body .main .schedule-dashboard.schedule-dashboard-cards .schedule-option-footer>span {
+    min-height: 36px;
+    padding: 0 14px;
+    border: 1px solid var(--xb-color-border);
+    border-radius: 999px;
+    background: var(--xb-color-surface-subtle);
+    color: var(--xb-color-text);
+    font-weight: 800;
+}
+
+/* Minimal topbar — pin the notification bell to the right edge unambiguously */
+
+html body .topbar.topbar-minimal {
+    position: sticky;
+    display: block;
+    min-height: 58px;
+}
+
+html body .topbar.topbar-minimal .topbar-menu-toggle {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+html body .topbar.topbar-minimal .notification-center {
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+}

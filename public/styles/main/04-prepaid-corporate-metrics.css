@@ -168,8 +168,8 @@ body .main .prepaid-page .prepaid-hero {
     align-items: flex-start;
     gap: 18px;
     padding: 22px 24px;
-    background: linear-gradient(135deg, #0F0F0F 0%, #0F0F0F 54%, #1F1F1F 100%);
-    color: #ffffff;
+    background: var(--xb-color-surface);
+    color: var(--xb-color-text);
 }
 
 body .main .prepaid-page .prepaid-panel {
@@ -240,7 +240,7 @@ body .main .prepaid-page .empty-card {
 body .main .prepaid-page .prepaid-eyebrow {
     margin-bottom: 7px;
     display: block;
-    color: #EBEBEB;
+    color: var(--xb-color-text-muted);
     font-size: 11px;
     font-weight: 900;
     letter-spacing: .04em;
@@ -249,19 +249,21 @@ body .main .prepaid-page .prepaid-eyebrow {
 
 body .main .prepaid-page .prepaid-hero h1 {
     margin: 7px 0 6px;
-    color: #ffffff;
+    color: var(--xb-color-text);
     font-size: 30px;
     font-weight: 950;
     line-height: 1.05;
+    text-shadow: none;
 }
 
 body .main .prepaid-page .prepaid-hero p {
     max-width: 780px;
     margin: 0;
-    color: #EBEBEB;
+    color: var(--xb-color-text-muted);
     font-size: 14px;
     line-height: 1.55;
     font-weight: 700;
+    text-shadow: none;
 }
 
 body .main .prepaid-page .panel-header p {
@@ -1544,10 +1546,10 @@ html body .main>.page-container.documents-page>.documents-system-hero {
     min-height: 0;
     margin: 0 0 18px;
     padding: 28px;
-    border: 1px solid rgba(255, 255, 255, 0.16);
+    border: 1px solid var(--xb-color-border);
     border-radius: 14px;
-    color: #ffffff;
-    background: var(--dept-mid, #1F1F1F);
+    color: var(--xb-color-text);
+    background: var(--dept-mid, var(--xb-color-surface));
     box-shadow: none;
 }
 
@@ -1575,10 +1577,10 @@ html body .main>.page-container.documents-page>.documents-system-hero .page-head
     align-items: center;
     margin: 0 0 12px;
     padding: 7px 10px;
-    border: 1px solid rgba(255, 255, 255, 0.22);
+    border: 1px solid var(--xb-color-border);
     border-radius: 999px;
-    color: #ffe3e3;
-    background: rgba(255, 255, 255, 0.11);
+    color: var(--xb-color-text-muted);
+    background: var(--xb-color-surface-subtle);
     font-size: 11px;
     font-weight: 900;
     letter-spacing: 0.09em;
@@ -1587,20 +1589,22 @@ html body .main>.page-container.documents-page>.documents-system-hero .page-head
 
 html body .main>.page-container.documents-page>.documents-system-hero h1 {
     margin: 0;
-    color: #ffffff;
+    color: var(--xb-color-text);
     font-size: clamp(28px, 3vw, 44px);
     font-weight: 900;
     line-height: 1;
     letter-spacing: -0.04em;
+    text-shadow: none;
 }
 
 html body .main>.page-container.documents-page>.documents-system-hero p {
     max-width: 680px;
     margin: 12px 0 0;
-    color: rgba(255, 255, 255, 0.78);
+    color: var(--xb-color-text-muted);
     font-size: 14px;
     font-weight: 650;
     line-height: 1.55;
+    text-shadow: none;
 }
 
 html body .main>.page-container.documents-page>.documents-system-hero .documents-system-action-primary {
@@ -1705,29 +1709,29 @@ html body .main :is(.admin-dashboard-page, .admin-users-page, .operations-admin,
     --se-panel: #ffffff;
     --se-soft: #F7F7F7;
     --se-red: #8f1d1d;
-    --se-shadow: 0 20px 50px -42px rgba(15, 15, 15, 0.7);
-    --dept-start: #0F0F0F;
-    --dept-mid: #1F1F1F;
-    --dept-end: #8f1d1d;
+    --se-shadow: 0 1px 2px rgba(15, 15, 15, 0.05);
+    --dept-start: var(--xb-color-surface);
+    --dept-mid: var(--xb-color-surface);
+    --dept-end: var(--xb-color-surface);
     color: var(--xb-color-text);
 }
 
 html body .main :is(.stores-page, .documents-page, .reconciliation-page, .comparison-history-page) {
-    --dept-start: #0F0F0F;
-    --dept-mid: #2E2E2E;
-    --dept-end: #3A3A3A;
+    --dept-start: var(--xb-color-surface);
+    --dept-mid: var(--xb-color-surface);
+    --dept-end: var(--xb-color-surface);
 }
 
 html body .main :is(.schedule-dashboard, .property-documents-page, .property-management-page) {
-    --dept-start: #1F1F1F;
-    --dept-mid: #365314;
-    --dept-end: #2E2E2E;
+    --dept-start: var(--xb-color-surface);
+    --dept-mid: var(--xb-color-surface);
+    --dept-end: var(--xb-color-surface);
 }
 
 html body .main :is(.admin-dashboard-page, .admin-users-page, .operations-admin) {
-    --dept-start: #0F0F0F;
-    --dept-mid: #2E2E2E;
-    --dept-end: #b42318;
+    --dept-start: var(--xb-color-surface);
+    --dept-mid: var(--xb-color-surface);
+    --dept-end: var(--xb-color-surface);
 }
 
 html body .main :is(.admin-dashboard-header, .admin-users-page>.page-header, .operations-header, .schedule-header, .reconciliation-page>.page-header, .property-documents-page .page-header, .property-management-page>.page-header, .comparison-history-hero, .stores-hero) {
@@ -1739,10 +1743,10 @@ html body .main :is(.admin-dashboard-header, .admin-users-page>.page-header, .op
     min-height: 0;
     margin: 0 0 18px;
     padding: 28px;
-    border: 1px solid rgba(255, 255, 255, 0.16);
+    border: 1px solid var(--xb-color-border);
     border-radius: 14px;
-    color: #ffffff;
-    background: var(--dept-mid, #1F1F1F);
+    color: var(--xb-color-text);
+    background: var(--dept-mid, var(--xb-color-surface));
     box-shadow: none;
 }
 
@@ -1761,10 +1765,10 @@ html body .main :is(.admin-dashboard-eyebrow, .operations-eyebrow, .schedule-eye
     gap: 8px;
     margin: 0 0 12px;
     padding: 7px 10px;
-    border: 1px solid rgba(255, 255, 255, 0.22);
+    border: 1px solid var(--xb-color-border);
     border-radius: 999px;
-    color: #ffe3e3;
-    background: rgba(255, 255, 255, 0.11);
+    color: var(--xb-color-text-muted);
+    background: var(--xb-color-surface-subtle);
     font-size: 11px;
     font-weight: 900;
     letter-spacing: 0.09em;
@@ -1777,10 +1781,10 @@ html body .main .admin-users-page>.page-header .page-header-info::before {
     align-items: center;
     margin: 0 0 12px;
     padding: 7px 10px;
-    border: 1px solid rgba(255, 255, 255, 0.22);
+    border: 1px solid var(--xb-color-border);
     border-radius: 999px;
-    color: #ffe3e3;
-    background: rgba(255, 255, 255, 0.11);
+    color: var(--xb-color-text-muted);
+    background: var(--xb-color-surface-subtle);
     font-size: 11px;
     font-weight: 900;
     letter-spacing: 0.09em;
@@ -1793,10 +1797,10 @@ html body .main .reconciliation-page>.page-header .page-header-info::before {
     align-items: center;
     margin: 0 0 12px;
     padding: 7px 10px;
-    border: 1px solid rgba(255, 255, 255, 0.22);
+    border: 1px solid var(--xb-color-border);
     border-radius: 999px;
-    color: #d1fae5;
-    background: rgba(255, 255, 255, 0.11);
+    color: var(--xb-color-text-muted);
+    background: var(--xb-color-surface-subtle);
     font-size: 11px;
     font-weight: 900;
     letter-spacing: 0.09em;
@@ -1809,10 +1813,10 @@ html body .main .property-management-page>.page-header .page-header-info::before
     align-items: center;
     margin: 0 0 12px;
     padding: 7px 10px;
-    border: 1px solid rgba(255, 255, 255, 0.22);
+    border: 1px solid var(--xb-color-border);
     border-radius: 999px;
-    color: #dcfce7;
-    background: rgba(255, 255, 255, 0.11);
+    color: var(--xb-color-text-muted);
+    background: var(--xb-color-surface-subtle);
     font-size: 11px;
     font-weight: 900;
     letter-spacing: 0.09em;
@@ -1821,20 +1825,22 @@ html body .main .property-management-page>.page-header .page-header-info::before
 
 html body .main :is(.admin-dashboard-header h1, .admin-users-page>.page-header h1, .operations-header h1, .schedule-header h1, .reconciliation-page>.page-header h1, .property-documents-page .page-header h1, .property-management-page>.page-header h1, .comparison-history-hero h1, .stores-hero h1) {
     margin: 0;
-    color: #ffffff;
+    color: var(--xb-color-text);
     font-size: clamp(28px, 3vw, 44px);
     font-weight: 900;
     line-height: 1;
     letter-spacing: -0.04em;
+    text-shadow: none;
 }
 
 html body .main :is(.admin-dashboard-header p, .admin-users-page>.page-header p, .operations-header p, .schedule-header p, .reconciliation-page>.page-header p, .property-documents-page .page-header p, .property-management-page>.page-header p, .comparison-history-hero p, .stores-hero p) {
     max-width: 680px;
     margin: 12px 0 0;
-    color: rgba(255, 255, 255, 0.78);
+    color: var(--xb-color-text-muted);
     font-size: 14px;
     font-weight: 650;
     line-height: 1.55;
+    text-shadow: none;
 }
 
 html body .main :is(.admin-dashboard-header-actions, .admin-users-page>.page-header>.btn, .operations-refresh, .comparison-export-button) {
@@ -2094,9 +2100,9 @@ html body .main :is(.prepaid-table, .prepaid-source-table, .prepaid-schedule-mat
 }
 
 html body .main>.page-container.documents-page.documents-page>.documents-system-hero.documents-system-hero {
-    border-color: rgba(255, 255, 255, .10);
-    background: #0F0F0F;
-    color: #fff;
+    border-color: var(--xb-color-border);
+    background: var(--xb-color-surface);
+    color: var(--xb-color-text);
     box-shadow: none;
 }
 
@@ -2109,8 +2115,8 @@ html body .main>.page-container.documents-page.documents-page>.documents-system-
 }
 
 html body .main>.page-container.documents-page.documents-page>.documents-system-hero.documents-system-hero .documents-system-action-primary {
-    border-color: rgba(255, 255, 255, 0.25);
-    background: rgba(255, 255, 255, 0.96);
+    border-color: var(--xb-color-border);
+    background: var(--xb-color-surface-subtle);
     color: var(--xb-color-text);
 }
 
@@ -2120,9 +2126,9 @@ html body .main>.page-container.documents-page.documents-page>.documents-system-
 }
 
 html body .main>.page-container.profile-page.profile-professional-v3.profile-professional-v3>.profile-account-hero.profile-account-hero {
-    border-color: rgba(255, 255, 255, .10);
-    background: #0F0F0F;
-    color: #fff;
+    border-color: var(--xb-color-border);
+    background: var(--xb-color-surface);
+    color: var(--xb-color-text);
     box-shadow: none;
 }
 
@@ -2158,9 +2164,9 @@ html body .main>.page-container.profile-page.profile-professional-v3.profile-pro
 }
 
 html body .main>.page-container.profile-page.profile-security-v2.profile-security-v2>.profile-settings-hero.profile-settings-hero {
-    border-color: rgba(255, 255, 255, .10);
-    background: #0F0F0F;
-    color: #fff;
+    border-color: var(--xb-color-border);
+    background: var(--xb-color-surface);
+    color: var(--xb-color-text);
     box-shadow: none;
 }
 
@@ -3040,9 +3046,10 @@ tbody tr:hover {
     min-height: 178px;
     padding: 30px;
 
+    border: 1px solid var(--xb-color-border);
     border-radius: var(--xb-radius-xl);
-    background: #0F0F0F;
-    color: #fff;
+    background: var(--xb-color-surface);
+    color: var(--xb-color-text);
     box-shadow: none;
 }
 
@@ -3070,10 +3077,10 @@ tbody tr:hover {
     gap: 8px;
     min-height: 28px;
     padding: 0 10px;
-    border: 1px solid rgba(255, 255, 255, .16);
+    border: 1px solid var(--xb-color-border);
     border-radius: 999px;
-    background: rgba(255, 255, 255, .06);
-    color: #e6e8eb;
+    background: var(--xb-color-surface-subtle);
+    color: var(--xb-color-text-muted);
     font-size: 10px;
     font-weight: 800;
     letter-spacing: .09em;
@@ -3082,18 +3089,20 @@ tbody tr:hover {
 
 .corporate-page-header h1 {
     margin: 14px 0 8px;
-    color: #fff;
+    color: var(--xb-color-text);
     font-size: clamp(32px, 4vw, 48px);
     line-height: 1;
     letter-spacing: -.04em;
+    text-shadow: none;
 }
 
 .corporate-page-header p {
     max-width: 760px;
     margin: 0;
-    color: #c9cdd3;
+    color: var(--xb-color-text-muted);
     font-size: 14px;
     line-height: 1.65;
+    text-shadow: none;
 }
 
 .xb-button {

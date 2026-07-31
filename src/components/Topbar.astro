@@ -1,133 +1,69 @@
-﻿---
-// Componente Topbar - Barra superior con busqueda y perfil
-interface Props {
-  placeholder?: string;
-  title?: string;
-}
-
-const { title = "Panel", placeholder = "Search..." } = Astro.props;
+---
+// Componente Topbar - Barra superior minimal (solo notificaciones)
 ---
 
-<header class="topbar">
-    <div class="topbar-left">
+<header class="topbar topbar-minimal">
+    <button
+        class="menu-toggle topbar-menu-toggle"
+        id="topbarSidebarToggle"
+        aria-label="Open menu"
+    >
+        <i class="fa-solid fa-bars"></i>
+    </button>
+
+    <div class="notification-center" id="notificationCenter">
         <button
-            class="menu-toggle topbar-menu-toggle"
-            id="topbarSidebarToggle"
-            aria-label="Open menu"
+            type="button"
+            class="notification-toggle"
+            id="notificationsToggle"
+            aria-label="Open notifications"
+            aria-haspopup="true"
+            aria-expanded="false"
         >
-            <i class="fa-solid fa-bars"></i>
+            <i class="fa-regular fa-bell" aria-hidden="true"></i>
+            <span
+                class="notification-badge"
+                id="notificationsBadge"
+                hidden
+            >0</span>
         </button>
 
-        <div class="topbar-page">
-            <span class="topbar-eyebrow">XB Franchise Solutions</span>
-            <nav class="topbar-breadcrumbs" id="topbarBreadcrumbs" aria-label="Breadcrumb">
-                <span>Operations</span>
-            </nav>
-            <h2 class="topbar-title">{title.replace(" - XBFS Hub", "")}</h2>
-        </div>
-    </div>
-
-        <div class="topbar-global-search" role="search">
-            <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
-            <input
-                id="globalNavSearch"
-                type="search"
-                placeholder={placeholder}
-                autocomplete="off"
-                aria-label="Global search"
-                aria-controls="globalSearchResults"
-                aria-expanded="false"
-            />
-            <span class="topbar-search-shortcut">Ctrl K</span>
-            <div
-                class="global-search-results"
-                id="globalSearchResults"
-                role="listbox"
-                aria-label="Search results"
-                hidden
-            ></div>
-        </div>
-
-        <div class="header-user">
-            <button
-                type="button"
-                class="theme-toggle"
-                id="themeToggle"
-                aria-label="Switch to dark mode"
-                aria-pressed="false"
-                title="Toggle dark mode"
-            >
-                <i class="fa-solid fa-moon" aria-hidden="true"></i>
-            </button>
-            <div class="notification-center" id="notificationCenter">
+        <div
+            class="notifications-panel"
+            id="notificationsPanel"
+            role="dialog"
+            aria-label="Notifications"
+            hidden
+        >
+            <div class="notifications-panel-header">
+                <div>
+                    <strong>Notifications</strong>
+                    <span>Recent system activity</span>
+                </div>
                 <button
                     type="button"
-                    class="notification-toggle"
-                    id="notificationsToggle"
-                    aria-label="Open notifications"
-                    aria-haspopup="true"
-                    aria-expanded="false"
+                    class="notifications-mark-all"
+                    id="notificationsMarkAll"
                 >
-                    <i class="fa-regular fa-bell" aria-hidden="true"></i>
-                    <span
-                        class="notification-badge"
-                        id="notificationsBadge"
-                        hidden
-                    >0</span>
+                    Mark all read
                 </button>
-
-                <div
-                    class="notifications-panel"
-                    id="notificationsPanel"
-                    role="dialog"
-                    aria-label="Notifications"
-                    hidden
-                >
-                    <div class="notifications-panel-header">
-                        <div>
-                            <strong>Notifications</strong>
-                            <span>Recent system activity</span>
-                        </div>
-                        <button
-                            type="button"
-                            class="notifications-mark-all"
-                            id="notificationsMarkAll"
-                        >
-                            Mark all read
-                        </button>
-                    </div>
-                    <div class="notifications-filter" id="notificationsFilter" aria-label="Notification filters">
-                        <button type="button" class="is-active" data-notification-filter="all">All</button>
-                        <button type="button" data-notification-filter="unread">Unread</button>
-                        <button type="button" data-notification-filter="approval">Approvals</button>
-                        <button type="button" data-notification-filter="system">System</button>
-                    </div>
-                    <div
-                        class="notifications-list"
-                        id="notificationsList"
-                        aria-live="polite"
-                    >
-                        <div class="notifications-empty">
-                            <i class="fa-regular fa-bell" aria-hidden="true"></i>
-                            <strong>Loading notifications...</strong>
-                        </div>
-                    </div>
+            </div>
+            <div class="notifications-filter" id="notificationsFilter" aria-label="Notification filters">
+                <button type="button" class="is-active" data-notification-filter="all">All</button>
+                <button type="button" data-notification-filter="unread">Unread</button>
+                <button type="button" data-notification-filter="approval">Approvals</button>
+                <button type="button" data-notification-filter="system">System</button>
+            </div>
+            <div
+                class="notifications-list"
+                id="notificationsList"
+                aria-live="polite"
+            >
+                <div class="notifications-empty">
+                    <i class="fa-regular fa-bell" aria-hidden="true"></i>
+                    <strong>Loading notifications...</strong>
                 </div>
             </div>
-            <div class="department-pill" title="Active department">
-                <span>Department</span>
-                <strong data-department-label>AR</strong>
-            </div>
-            <button
-                type="button"
-                class="lang-toggle"
-                data-lang-toggle
-                aria-label="Switch to English"
-                title="Switch to English"
-                hidden
-            >
-                <i class="fa-solid fa-language" aria-hidden="true"></i>
-                <span data-lang-label>EN</span>
-            </button>
         </div>
+    </div>
 </header>

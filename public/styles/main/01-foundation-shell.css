@@ -604,13 +604,13 @@
     --xbfs-hero-title-weight: 950;
     --xbfs-hero-subtitle-size: 14px;
     --xbfs-hero-eyebrow-size: 10px;
-    --xbfs-hero-title-color: #ffffff;
-    --xbfs-hero-subtitle-color: #EBEBEB;
-    --xbfs-hero-label-color: #EBEBEB;
-    --xbfs-hero-surface: rgba(255, 255, 255, 0.07);
-    --xbfs-hero-surface-hover: rgba(255, 255, 255, 0.11);
-    --xbfs-hero-surface-border: rgba(255, 255, 255, 0.16);
-    --xbfs-hero-surface-border-hover: rgba(255, 255, 255, 0.24);
+    --xbfs-hero-title-color: var(--xb-color-text);
+    --xbfs-hero-subtitle-color: var(--xb-color-text-muted);
+    --xbfs-hero-label-color: var(--xb-color-text-muted);
+    --xbfs-hero-surface: var(--xb-color-surface-subtle);
+    --xbfs-hero-surface-hover: var(--xb-color-surface);
+    --xbfs-hero-surface-border: var(--xb-color-border);
+    --xbfs-hero-surface-border-hover: var(--xb-color-text-muted);
     --xbfs-sidebar-hero-copy: rgba(247, 247, 247, 0.84);
     --xbfs-modal-fix-bg: var(--xb-color-surface);
     --xbfs-modal-fix-surface: var(--xb-color-surface-subtle);
@@ -669,9 +669,9 @@
     --xbfs-modal-text: var(--xb-color-text);
     --xbfs-modal-text-strong: var(--xb-color-text);
     --xbfs-modal-border: var(--xb-color-border);
-    --xbfs-hero-bg-start: #0F0F0F;
-    --xbfs-hero-bg-middle: #0F0F0F;
-    --xbfs-hero-bg-end: #0F0F0F;
+    --xbfs-hero-bg-start: var(--xb-color-surface);
+    --xbfs-hero-bg-middle: var(--xb-color-surface);
+    --xbfs-hero-bg-end: var(--xb-color-surface);
     --xbfs-sidebar-hero-start: #0F0F0F;
     --xbfs-sidebar-hero-middle: #0F0F0F;
     --xbfs-sidebar-hero-end: #0F0F0F;
@@ -1263,6 +1263,23 @@ body.sidebar-collapsed .main {
     border-top: 0;
     background: transparent;
     padding: 10px;
+}
+
+.sidebar-utility-row {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
+    padding-bottom: 9px;
+    border-bottom: 1px solid var(--xb-color-border);
+}
+
+.sidebar.collapsed .sidebar-utility-row {
+    display: none;
+}
+
+html.sidebar-collapsed-preset body .sidebar .sidebar-utility-row {
+    display: none;
 }
 
 .sidebar-logout {

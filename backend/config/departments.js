@@ -19,9 +19,9 @@ const DEPARTMENT_CATALOG = {
         codigo: 'ap',
         label: 'AP',
         nombre: 'Accounts Payable',
-        descripcion: 'Base prepared for future AP workflows.',
-        paginaInicio: 'documentos',
-        modulos: ['documentos']
+        descripcion: 'AP schedules, prepaid amortization, entities, requests, and documents.',
+        paginaInicio: 'accountsPayable',
+        modulos: ['accountsPayable', 'accountsPayableDocuments', 'historial']
     },
     operations: {
         codigo: 'operations',
