@@ -2928,12 +2928,16 @@ html body .stores-page.stores-page .status-pulse {
 }
 
 .source-sticky-select {
+    position: sticky;
+    left: 0;
+    z-index: 2;
     width: 36px;
     min-width: 36px;
     max-width: 36px;
     padding: 8px 6px;
     text-align: center;
     vertical-align: middle;
+    background: var(--xb-color-surface);
 }
 
 .source-row-checkbox,
@@ -3641,6 +3645,7 @@ body.swal2-shown .prepaid-page .prepaid-table th {
     border-bottom-color: #fed7aa;
 }
 
+.prepaid-source-table tbody tr.source-row-closeout .source-sticky-select,
 .prepaid-source-table tbody tr.source-row-closeout .source-sticky-store {
     background: var(--xb-color-surface);
 }
@@ -3649,6 +3654,7 @@ body.swal2-shown .prepaid-page .prepaid-table th {
     background: var(--xb-color-surface);
 }
 
+.prepaid-source-table tbody tr.source-row-custom .source-sticky-select,
 .prepaid-source-table tbody tr.source-row-custom .source-sticky-store {
     background: var(--xb-color-surface-subtle);
 }
@@ -3657,16 +3663,33 @@ body.swal2-shown .prepaid-page .prepaid-table th {
     background: var(--xb-color-surface-subtle);
 }
 
+/* Freeze select/store/actions so they stay visible while reviewing wide
+   source rows before generating the schedule. Left offsets stack the
+   preceding frozen columns' widths (36px select + 120px store). */
 .prepaid-source-table .source-sticky-store {
+    position: sticky;
+    left: 36px;
+    z-index: 2;
     width: 120px;
     min-width: 120px;
     max-width: 120px;
     padding: 8px 10px;
     text-align: left;
+    background: var(--xb-color-surface);
 }
 
 .prepaid-source-table .source-sticky-actions {
-    left: 120px;
+    position: sticky;
+    left: 156px;
+    z-index: 2;
+    background: var(--xb-color-surface);
+    box-shadow: 2px 0 4px rgba(0, 0, 0, .12);
+}
+
+body .main .prepaid-page .prepaid-source-table thead th.source-sticky-select,
+body .main .prepaid-page .prepaid-source-table thead th.source-sticky-store,
+body .main .prepaid-page .prepaid-source-table thead th.source-sticky-actions {
+    z-index: 4;
 }
 
 .property-documents-page {

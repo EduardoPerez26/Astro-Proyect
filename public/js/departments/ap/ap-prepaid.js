@@ -18,7 +18,19 @@ const state = {
     bills: [],
     months: [],
     comparisonRows: [],
-    summary: {}
+    summary: {},
+    sort: {
+        source: { key: null, dir: 'asc' },
+        schedule: { key: null, dir: 'asc' },
+        comparison: { key: null, dir: 'asc' },
+        differences: { key: null, dir: 'asc' }
+    },
+    filter: {
+        source: '',
+        schedule: { text: '', entity: '' },
+        comparison: { text: '', status: '' },
+        differences: ''
+    }
 };
 
 const els = {
@@ -50,6 +62,20 @@ const els = {
     scheduleRows: document.getElementById('scheduleRows'),
     comparisonRows: document.getElementById('comparisonRows'),
     differenceRows: document.getElementById('differenceRows'),
+    sourceTableHead: document.getElementById('sourceTableHead'),
+    scheduleTableHead: document.getElementById('scheduleTableHead'),
+    comparisonTableHead: document.getElementById('comparisonTableHead'),
+    differencesTableHead: document.getElementById('differencesTableHead'),
+    sourceFilterInput: document.getElementById('sourceFilterInput'),
+    sourceFilterCount: document.getElementById('sourceFilterCount'),
+    scheduleFilterInput: document.getElementById('scheduleFilterInput'),
+    scheduleEntityFilter: document.getElementById('scheduleEntityFilter'),
+    scheduleFilterCount: document.getElementById('scheduleFilterCount'),
+    comparisonFilterInput: document.getElementById('comparisonFilterInput'),
+    comparisonStatusFilter: document.getElementById('comparisonStatusFilter'),
+    comparisonFilterCount: document.getElementById('comparisonFilterCount'),
+    differencesFilterInput: document.getElementById('differencesFilterInput'),
+    differencesFilterCount: document.getElementById('differencesFilterCount'),
     kpiSourceRows: document.getElementById('kpiSourceRows'),
     kpiIncludedRows: document.getElementById('kpiIncludedRows'),
     kpiExpected: document.getElementById('kpiExpected'),
@@ -82,7 +108,7 @@ async function apiFetch(path, options = {}) {
         try {
             const data = await response.json();
             message = data.message || data.mensaje || message;
-        } catch (_) {}
+        } catch (_) { }
         throw new Error(message);
     }
 
@@ -500,6 +526,147 @@ function compareScheduleBills(a, b) {
         || String(a.doc_number || '').localeCompare(String(b.doc_number || ''), undefined, { numeric: true, sensitivity: 'base' });
 }
 
+function compareSortValues(a, b) {
+    if (typeof a === 'number' && typeof b === 'number') return a - b;
+    return String(a ?? '').localeCompare(String(b ?? ''), undefined, { numeric: true, sensitivity: 'base' });
+}
+
+function applySort(rows, sortState, valueGetters) {
+    const getter = sortState?.key && valueGetters[sortState.key];
+    if (!getter) return rows;
+    const sorted = [...rows].sort((a, b) => compareSortValues(getter(a), getter(b)));
+    return sortState.dir === 'desc' ? sorted.reverse() : sorted;
+}
+
+function initSortableTable(theadEl, sortState, onChange) {
+    if (!theadEl) return;
+    theadEl.querySelectorAll('th[data-sort]').forEach(th => {
+        th.addEventListener('click', () => {
+            const key = th.dataset.sort;
+            if (sortState.key === key) {
+                sortState.dir = sortState.dir === 'asc' ? 'desc' : 'asc';
+            } else {
+                sortState.key = key;
+                sortState.dir = 'asc';
+            }
+            theadEl.querySelectorAll('th[data-sort]').forEach(other => other.classList.remove('sort-asc', 'sort-desc'));
+            th.classList.add(sortState.dir === 'asc' ? 'sort-asc' : 'sort-desc');
+            onChange();
+        });
+    });
+}
+
+const SOURCE_SORT_GETTERS = {
+    store: row => String(row.store_number || ''),
+    payee: row => String(row.payee || ''),
+    doc: row => String(row.doc_number || ''),
+    date: row => String(shortDate(row.doc_date || row.posted_date)),
+    taxYear: row => Number(row.tax_year || 0),
+    amount: row => Number(row.amount_paid || 0),
+    amortStart: row => String(getRowAmortization(row).start || ''),
+    memo: row => String(row.memo_description || '')
+};
+
+const SCHEDULE_SORT_GETTERS = {
+    payee: vm => String(vm.row.payee || ''),
+    location: vm => String(vm.row.store_number || ''),
+    entity: vm => vm.entity,
+    glAcct: vm => String(vm.row.prepaid_account || ''),
+    expAcct: vm => String(vm.row.expense_account || ''),
+    date: vm => String(shortDate(vm.row.bill_date)),
+    amortStart: vm => String(shortDate(vm.row.amortization_start)),
+    amount: vm => vm.amountPaid,
+    priorBalance: vm => vm.priorBalance,
+    monthlyAmount: vm => Number(vm.row.monthly_amount || 0),
+    ytd: vm => vm.ytd,
+    endingBalance: vm => vm.endingBalance,
+    storeBalance: vm => vm.storeEnding
+};
+for (let i = 0; i < 12; i += 1) {
+    SCHEDULE_SORT_GETTERS[`month${i}`] = vm => vm.monthValues[i];
+}
+
+const COMPARISON_SORT_GETTERS = {
+    period: row => String(row.period_code || ''),
+    store: row => String(row.store_number || ''),
+    payee: row => String(row.payee || ''),
+    doc: row => String(row.doc_number || ''),
+    expected: row => Number(row.expected_amount || 0),
+    glActual: row => Number(row.gl_actual_amount || 0),
+    difference: row => Number(row.difference || 0),
+    status: row => String(row.status || '')
+};
+
+function matchesSearchText(haystackValues, query) {
+    const needle = String(query || '').trim().toLowerCase();
+    if (!needle) return true;
+    return haystackValues.some(value => String(value ?? '').toLowerCase().includes(needle));
+}
+
+function filterSourceRows(rows) {
+    return rows.filter(row => matchesSearchText(
+        [row.store_number, row.payee, row.doc_number, row.memo_description],
+        state.filter.source
+    ));
+}
+
+function filterScheduleRows(rows) {
+    const { text, entity } = state.filter.schedule;
+    return rows.filter(row => {
+        if (entity && getBillEntity(row) !== entity) return false;
+        return matchesSearchText([row.payee, row.store_number, row.prepaid_account, row.expense_account], text);
+    });
+}
+
+function filterComparisonRows(rows) {
+    const { text, status } = state.filter.comparison;
+    return rows.filter(row => {
+        if (status && String(row.status || '').toUpperCase() !== status) return false;
+        return matchesSearchText([row.store_number, row.payee, row.doc_number], text);
+    });
+}
+
+function filterDifferenceRows(rows) {
+    return rows.filter(row => matchesSearchText([row.store_number, row.payee, row.doc_number], state.filter.differences));
+}
+
+function populateScheduleEntityFilter(rows) {
+    if (!els.scheduleEntityFilter) return;
+    const entities = Array.from(new Set(rows.map(row => getBillEntity(row))))
+        .sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
+    const current = state.filter.schedule.entity;
+    els.scheduleEntityFilter.innerHTML = ['<option value="">All entities</option>']
+        .concat(entities.map(entity => `<option value="${escapeHtml(entity)}" ${entity === current ? 'selected' : ''}>${escapeHtml(entity)}</option>`))
+        .join('');
+}
+
+function computeScheduleTotals(viewModels) {
+    return viewModels.reduce((acc, vm) => {
+        acc.amountPaid += vm.amountPaid;
+        acc.prior += vm.priorBalance;
+        acc.monthly += Number(vm.row.monthly_amount || 0);
+        vm.monthValues.forEach((value, index) => { acc.months[index] += value; });
+        return acc;
+    }, { amountPaid: 0, prior: 0, monthly: 0, months: Array(12).fill(0) });
+}
+
+function renderScheduleTotalsRow(totals, label, rowClass) {
+    const totalYtd = totals.months.reduce((sum, value) => sum + value, 0);
+    const totalEnding = Math.max(totals.amountPaid - totalYtd - Math.max(totals.amountPaid - totals.prior, 0), 0);
+    return `
+        <tr class="${rowClass}">
+            <td colspan="7"><span class="schedule-sticky-label">${escapeHtml(label)}</span></td>
+            <td class="number">${money(totals.amountPaid)}</td>
+            <td class="number">${money(Math.max(totals.prior, 0))}</td>
+            <td class="number">${money(totals.monthly)}</td>
+            ${totals.months.map(value => `<td class="number">${value ? `(${money(value).replace('$', '')})` : '-'}</td>`).join('')}
+            <td class="number">${totalYtd ? `(${money(totalYtd).replace('$', '')})` : '-'}</td>
+            <td class="number">${money(totalEnding)}</td>
+            <td class="number">${money(totalEnding)}</td>
+        </tr>
+    `;
+}
+
 function renderScheduleList() {
     if (!els.scheduleList) return;
 
@@ -537,11 +704,26 @@ function renderScheduleList() {
 function renderSourceRows(rows) {
     if (!rows.length) {
         els.sourceRows.innerHTML = '<tr><td colspan="10" class="empty-cell">No source bills loaded.</td></tr>';
+        if (els.sourceFilterCount) els.sourceFilterCount.textContent = '';
         updateSourceEditorState();
         return;
     }
 
-    els.sourceRows.innerHTML = rows.map((row, index) => {
+    const filteredRows = filterSourceRows(rows);
+    if (els.sourceFilterCount) {
+        els.sourceFilterCount.textContent = state.filter.source
+            ? `Showing ${filteredRows.length} of ${rows.length} rows`
+            : '';
+    }
+    if (!filteredRows.length) {
+        els.sourceRows.innerHTML = '<tr><td colspan="10" class="empty-cell">No rows match the filter.</td></tr>';
+        updateSourceEditorState();
+        return;
+    }
+
+    const sortedRows = applySort(filteredRows, state.sort.source, SOURCE_SORT_GETTERS);
+
+    els.sourceRows.innerHTML = sortedRows.map((row, index) => {
         const rowKey = createDraftRowId(row, index);
         const period = getRowAmortization(row);
         const closeoutPreview = period.isCloseout
@@ -2014,17 +2196,7 @@ function handleSourceRowsClick(event) {
     }
 }
 
-function renderBillRows(rows) {
-    if (!rows.length) {
-        els.scheduleRows.innerHTML = '<tr><td colspan="25" class="empty-cell">No generated amortization yet.</td></tr>';
-        els.saveScheduleFooter?.classList.add('hidden');
-        if (els.saveScheduleBtn) els.saveScheduleBtn.disabled = true;
-        return;
-    }
-
-    els.saveScheduleFooter?.classList.remove('hidden');
-    if (els.saveScheduleBtn) els.saveScheduleBtn.disabled = !state.selectedScheduleId;
-
+function buildScheduleViewModels(rows) {
     const scheduleYear = Number(state.selectedSchedule?.schedule_year || new Date().getFullYear());
     const monthsByBill = new Map();
     state.months.forEach(month => {
@@ -2033,9 +2205,10 @@ function renderBillRows(rows) {
         monthsByBill.get(billId).push(month);
     });
 
-    const sortedRows = [...rows].sort(compareScheduleBills);
+    const baseSorted = [...rows].sort(compareScheduleBills);
+
     const storeTotals = new Map();
-    sortedRows.forEach(row => {
+    baseSorted.forEach(row => {
         const billMonths = monthsByBill.get(Number(row.id)) || [];
         const yearAmortization = billMonths
             .filter(month => Number(month.period_year) === scheduleYear)
@@ -2044,16 +2217,7 @@ function renderBillRows(rows) {
         storeTotals.set(String(row.store_number || ''), (storeTotals.get(String(row.store_number || '')) || 0) + endingBalance);
     });
 
-    let previousEntity = null;
-    const html = [];
-
-    sortedRows.forEach(row => {
-        const entity = getBillEntity(row);
-        if (entity !== previousEntity) {
-            html.push(`<tr class="schedule-entity-row"><td colspan="25">Entity: ${escapeHtml(entity)}</td></tr>`);
-            previousEntity = entity;
-        }
-
+    return baseSorted.map(row => {
         const billMonths = monthsByBill.get(Number(row.id)) || [];
         const monthValues = Array.from({ length: 12 }, (_, index) => {
             const match = billMonths.find(month => Number(month.period_year) === scheduleYear && Number(month.period_month) === index + 1);
@@ -2061,61 +2225,95 @@ function renderBillRows(rows) {
         });
         const ytd = monthValues.reduce((sum, value) => sum + value, 0);
         const amountPaid = Number(row.amount_paid || 0);
-        const priorBalance = billMonths
-            .filter(month => Number(month.period_year) < scheduleYear)
-            .reduce((sum, month) => sum - Number(month.expected_amount || 0), amountPaid);
+        const priorMonths = billMonths.filter(month => Number(month.period_year) < scheduleYear);
+        const priorBalance = priorMonths.length
+            ? priorMonths.reduce((sum, month) => sum - Number(month.expected_amount || 0), amountPaid)
+            : 0;
         const endingBalance = amountPaid - billMonths
             .filter(month => Number(month.period_year) <= scheduleYear)
             .reduce((sum, month) => sum + Number(month.expected_amount || 0), 0);
         const storeEnding = storeTotals.get(String(row.store_number || '')) || 0;
 
-        html.push(`
-            <tr>
-                <td>${escapeHtml(row.payee || '')}</td>
-                <td class="number strong">${escapeHtml(row.store_number || '')}</td>
-                <td class="entity-cell">${escapeHtml(entity)}</td>
-                <td>${escapeHtml(row.prepaid_account || '')}</td>
-                <td>${escapeHtml(row.expense_account || '')}</td>
-                <td>${escapeHtml(shortDate(row.bill_date))}</td>
-                <td>${escapeHtml(shortDate(row.amortization_start))} - ${escapeHtml(shortDate(row.amortization_end))}</td>
-                <td class="number amount-paid">${money(amountPaid)}</td>
-                <td class="number prior-balance">${money(Math.max(priorBalance, 0))}</td>
-                <td class="number monthly-amount">${money(row.monthly_amount)}</td>
-                ${monthValues.map(value => `<td class="number month-amount">${value ? `(${money(value).replace('$', '')})` : '-'}</td>`).join('')}
-                <td class="number ytd-amount">${ytd ? `(${money(ytd).replace('$', '')})` : '-'}</td>
-                <td class="number ending-balance">${money(Math.max(endingBalance, 0))}</td>
-                <td class="number store-balance">${money(Math.max(storeEnding, 0))}</td>
-            </tr>
-        `);
+        return { row, entity: getBillEntity(row), monthValues, ytd, amountPaid, priorBalance, endingBalance, storeEnding };
+    });
+}
+
+function renderBillRows(rows) {
+    els.saveScheduleFooter?.classList.toggle('hidden', !rows.length);
+    if (els.saveScheduleBtn) els.saveScheduleBtn.disabled = !state.selectedScheduleId;
+    populateScheduleEntityFilter(rows);
+
+    if (!rows.length) {
+        els.scheduleRows.innerHTML = '<tr><td colspan="25" class="empty-cell">No generated amortization yet.</td></tr>';
+        if (els.scheduleFilterCount) els.scheduleFilterCount.textContent = '';
+        return;
+    }
+
+    const filteredRows = filterScheduleRows(rows);
+    if (els.scheduleFilterCount) {
+        const hasFilter = Boolean(state.filter.schedule.text || state.filter.schedule.entity);
+        els.scheduleFilterCount.textContent = hasFilter
+            ? `Showing ${filteredRows.length} of ${rows.length} bills`
+            : '';
+    }
+    if (!filteredRows.length) {
+        els.scheduleRows.innerHTML = '<tr><td colspan="25" class="empty-cell">No rows match the filter.</td></tr>';
+        return;
+    }
+
+    const viewModels = buildScheduleViewModels(filteredRows);
+
+    const groupOrder = [];
+    const groups = new Map();
+    viewModels.forEach(vm => {
+        if (!groups.has(vm.entity)) {
+            groups.set(vm.entity, []);
+            groupOrder.push(vm.entity);
+        }
+        groups.get(vm.entity).push(vm);
     });
 
-    const totals = sortedRows.reduce((acc, row) => {
-        const billMonths = monthsByBill.get(Number(row.id)) || [];
-        acc.amountPaid += Number(row.amount_paid || 0);
-        acc.prior += billMonths.filter(month => Number(month.period_year) < scheduleYear)
-            .reduce((sum, month) => sum - Number(month.expected_amount || 0), Number(row.amount_paid || 0));
-        acc.monthly += Number(row.monthly_amount || 0);
-        for (let index = 0; index < 12; index += 1) {
-            const month = billMonths.find(item => Number(item.period_year) === scheduleYear && Number(item.period_month) === index + 1);
-            acc.months[index] += Number(month?.expected_amount || 0);
-        }
-        return acc;
-    }, { amountPaid: 0, prior: 0, monthly: 0, months: Array(12).fill(0) });
-    const totalYtd = totals.months.reduce((sum, value) => sum + value, 0);
-    const totalEnding = Math.max(totals.amountPaid - totalYtd - Math.max(totals.amountPaid - totals.prior, 0), 0);
+    const html = [];
+    const grandTotals = { amountPaid: 0, prior: 0, monthly: 0, months: Array(12).fill(0) };
 
-    html.push(`
-        <tr class="schedule-total-row">
-            <td colspan="7">Total</td>
-            <td class="number">${money(totals.amountPaid)}</td>
-            <td class="number">${money(Math.max(totals.prior, 0))}</td>
-            <td class="number">${money(totals.monthly)}</td>
-            ${totals.months.map(value => `<td class="number">${value ? `(${money(value).replace('$', '')})` : '-'}</td>`).join('')}
-            <td class="number">${totalYtd ? `(${money(totalYtd).replace('$', '')})` : '-'}</td>
-            <td class="number">${money(totalEnding)}</td>
-            <td class="number">${money(totalEnding)}</td>
-        </tr>
-    `);
+    groupOrder.forEach(entity => {
+        const groupViewModels = groups.get(entity);
+        const sortedGroup = applySort(groupViewModels, state.sort.schedule, SCHEDULE_SORT_GETTERS);
+
+        html.push(`<tr class="schedule-entity-row"><td colspan="25"><span class="schedule-sticky-label">Entity: ${escapeHtml(entity)}</span></td></tr>`);
+
+
+        sortedGroup.forEach(vm => {
+            const { row, monthValues, ytd, amountPaid, priorBalance, endingBalance, storeEnding } = vm;
+            html.push(`
+                <tr>
+                    <td title="${escapeHtml(row.payee || '')}">${escapeHtml(row.payee || '')}</td>
+                    <td class="number strong">${escapeHtml(row.store_number || '')}</td>
+                    <td class="entity-cell" title="${escapeHtml(entity)}">${escapeHtml(entity)}</td>
+                    <td>${escapeHtml(row.prepaid_account || '')}</td>
+                    <td>${escapeHtml(row.expense_account || '')}</td>
+                    <td>${escapeHtml(shortDate(row.bill_date))}</td>
+                    <td>${escapeHtml(shortDate(row.amortization_start))} - ${escapeHtml(shortDate(row.amortization_end))}</td>
+                    <td class="number amount-paid">${money(amountPaid)}</td>
+                    <td class="number prior-balance">${money(Math.max(priorBalance, 0))}</td>
+                    <td class="number monthly-amount">${money(row.monthly_amount)}</td>
+                    ${monthValues.map(value => `<td class="number month-amount">${value ? `(${money(value).replace('$', '')})` : '-'}</td>`).join('')}
+                    <td class="number ytd-amount">${ytd ? `(${money(ytd).replace('$', '')})` : '-'}</td>
+                    <td class="number ending-balance">${money(Math.max(endingBalance, 0))}</td>
+                    <td class="number store-balance">${money(Math.max(storeEnding, 0))}</td>
+                </tr>
+            `);
+        });
+
+        const subtotal = computeScheduleTotals(groupViewModels);
+
+        grandTotals.amountPaid += subtotal.amountPaid;
+        grandTotals.prior += subtotal.prior;
+        grandTotals.monthly += subtotal.monthly;
+        subtotal.months.forEach((value, index) => { grandTotals.months[index] += value; });
+    });
+
+    html.push(renderScheduleTotalsRow(grandTotals, 'Total', 'schedule-total-row'));
 
     els.scheduleRows.innerHTML = html.join('');
 }
@@ -2124,6 +2322,8 @@ function renderMonthRows(rows) {
     if (!rows.length) {
         els.comparisonRows.innerHTML = empty;
         els.differenceRows.innerHTML = empty;
+        if (els.comparisonFilterCount) els.comparisonFilterCount.textContent = '';
+        if (els.differencesFilterCount) els.differencesFilterCount.textContent = '';
         return;
     }
 
@@ -2140,12 +2340,29 @@ function renderMonthRows(rows) {
         </tr>
     `;
 
-    els.comparisonRows.innerHTML = rows.map(template).join('');
+    const filteredComparison = filterComparisonRows(rows);
+    if (els.comparisonFilterCount) {
+        const hasFilter = Boolean(state.filter.comparison.text || state.filter.comparison.status);
+        els.comparisonFilterCount.textContent = hasFilter
+            ? `Showing ${filteredComparison.length} of ${rows.length} rows`
+            : '';
+    }
+    const comparisonSorted = applySort(filteredComparison, state.sort.comparison, COMPARISON_SORT_GETTERS);
+    els.comparisonRows.innerHTML = comparisonSorted.length
+        ? comparisonSorted.map(template).join('')
+        : '<tr><td colspan="8" class="empty-cell">No rows match the filter.</td></tr>';
 
     const differences = rows.filter(row => ['DIFFERENCE', 'MISSING_GL'].includes(String(row.status).toUpperCase()));
-    els.differenceRows.innerHTML = differences.length
-        ? differences.map(template).join('')
-        : '<tr><td colspan="8" class="empty-cell">No differences found.</td></tr>';
+    const filteredDifferences = filterDifferenceRows(differences);
+    if (els.differencesFilterCount) {
+        els.differencesFilterCount.textContent = state.filter.differences
+            ? `Showing ${filteredDifferences.length} of ${differences.length} rows`
+            : '';
+    }
+    const differencesSorted = applySort(filteredDifferences, state.sort.differences, COMPARISON_SORT_GETTERS);
+    els.differenceRows.innerHTML = differencesSorted.length
+        ? differencesSorted.map(template).join('')
+        : `<tr><td colspan="8" class="empty-cell">${differences.length ? 'No rows match the filter.' : 'No differences found.'}</td></tr>`;
 }
 
 async function loadSchedules() {
@@ -2743,6 +2960,34 @@ function init() {
     els.refreshSchedulesBtn?.addEventListener('click', () => loadSchedules().catch(error => showToast(error.message, 'error')));
     els.exportScheduleBtn?.addEventListener('click', exportCurrentSchedule);
     document.querySelector('.prepaid-tabs')?.addEventListener('click', handleTabs);
+    initSortableTable(els.sourceTableHead, state.sort.source, () => renderSourceRows(state.sourceRows));
+    initSortableTable(els.scheduleTableHead, state.sort.schedule, () => renderBillRows(state.bills));
+    initSortableTable(els.comparisonTableHead, state.sort.comparison, () => renderMonthRows(state.comparisonRows));
+    initSortableTable(els.differencesTableHead, state.sort.differences, () => renderMonthRows(state.comparisonRows));
+    els.sourceFilterInput?.addEventListener('input', () => {
+        state.filter.source = els.sourceFilterInput.value;
+        renderSourceRows(state.sourceRows);
+    });
+    els.scheduleFilterInput?.addEventListener('input', () => {
+        state.filter.schedule.text = els.scheduleFilterInput.value;
+        renderBillRows(state.bills);
+    });
+    els.scheduleEntityFilter?.addEventListener('change', () => {
+        state.filter.schedule.entity = els.scheduleEntityFilter.value;
+        renderBillRows(state.bills);
+    });
+    els.comparisonFilterInput?.addEventListener('input', () => {
+        state.filter.comparison.text = els.comparisonFilterInput.value;
+        renderMonthRows(state.comparisonRows);
+    });
+    els.comparisonStatusFilter?.addEventListener('change', () => {
+        state.filter.comparison.status = els.comparisonStatusFilter.value;
+        renderMonthRows(state.comparisonRows);
+    });
+    els.differencesFilterInput?.addEventListener('input', () => {
+        state.filter.differences = els.differencesFilterInput.value;
+        renderMonthRows(state.comparisonRows);
+    });
     bindAutoDrop(els.billSourceUploadForm, handleBillSourceUpload, resetBillSourceView);
     bindAutoDrop(els.glUploadForm, handleGlUpload, resetGlView);
     loadSchedules()

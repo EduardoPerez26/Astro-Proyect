@@ -119,8 +119,21 @@
         const headerHeight = table.tHead.getBoundingClientRect().height || 38;
         const viewportTop = 0;
         const hasInternalVerticalScroll = wrap.scrollHeight > wrap.clientHeight + 2;
-        const scrolledInsideWrap = hasInternalVerticalScroll && wrap.scrollTop > 0;
-        const pageHasPassedHeader = tableRect.top < viewportTop && tableRect.bottom > viewportTop + headerHeight;
+        // .prepaid-page tables have working native `position: sticky` headers (their
+        // <table> no longer clips overflow, see 04-prepaid-corporate-metrics.css), so
+        // this clone is only needed there for the page-scrolled-past-the-wrap case
+        // below, not for scrolling within the wrap itself -- otherwise the native
+        // sticky header and this clone render on top of each other.
+        const nativeStickyHandlesInternalScroll = !!table.closest('.prepaid-page');
+        const scrolledInsideWrap = !nativeStickyHandlesInternalScroll
+            && hasInternalVerticalScroll
+            && wrap.scrollTop > 0;
+        // Uses wrapRect (the visible, clipped container), not tableRect (the full
+        // <table> box, which is taller than the wrap and always extends above/below
+        // it once scrolled) -- otherwise scrolling *inside* the wrap alone made this
+        // true too, since the tall table's own top edge goes negative regardless of
+        // whether the page itself ever scrolled past the wrap.
+        const pageHasPassedHeader = wrapRect.top < viewportTop && wrapRect.bottom > viewportTop + headerHeight;
         const wrapVisible = wrapRect.bottom > viewportTop + headerHeight && wrapRect.top < window.innerHeight - headerHeight;
 
         if ((!pageHasPassedHeader && !scrolledInsideWrap) || !wrapVisible) {

@@ -604,9 +604,10 @@ function buildScheduleSheet(workbook, schedule, bills, months) {
             return match ? money(match.expected_amount) : 0;
         });
         const amountPaid = money(bill.amount_paid);
-        const priorBalance = billMonths
-            .filter(month => Number(month.period_year) < scheduleYear)
-            .reduce((sum, month) => sum - money(month.expected_amount), amountPaid);
+        const priorMonths = billMonths.filter(month => Number(month.period_year) < scheduleYear);
+        const priorBalance = priorMonths.length
+            ? priorMonths.reduce((sum, month) => sum - money(month.expected_amount), amountPaid)
+            : 0;
         const endingBalance = amountPaid - billMonths
             .filter(month => Number(month.period_year) <= scheduleYear)
             .reduce((sum, month) => sum + money(month.expected_amount), 0);

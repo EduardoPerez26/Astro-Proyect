@@ -615,6 +615,12 @@ body .main .prepaid-page .prepaid-table {
     min-width: 1100px;
     border-collapse: separate;
     border-spacing: 0;
+    /* A broader rule (body .main :is(table, ...)) sets overflow:hidden on every
+       <table> in the app. On this table that makes the <table> element itself
+       the nearest scroll container, so position:sticky on th/td resolves against
+       it instead of the real scrolling ancestor (.prepaid-table-wrap) and never
+       visibly sticks. */
+    overflow: visible;
 }
 
 body .main .prepaid-page .prepaid-table th {
@@ -633,6 +639,71 @@ body .main .prepaid-page .prepaid-table th {
     font-size: 10px;
     font-weight: 950;
     text-transform: uppercase;
+    white-space: nowrap;
+}
+
+body .main .prepaid-page .prepaid-table th[data-sort] {
+    cursor: pointer;
+    user-select: none;
+    position: sticky;
+    padding-right: 20px;
+}
+
+body .main .prepaid-page .prepaid-table th[data-sort]:hover {
+    background: #1c1c1c;
+}
+
+body .main .prepaid-page .prepaid-table th[data-sort]::after {
+    content: '\2195';
+    position: absolute;
+    right: 6px;
+    opacity: .45;
+    font-size: 10px;
+}
+
+body .main .prepaid-page .prepaid-table th[data-sort].sort-asc::after {
+    content: '\25B2';
+    opacity: 1;
+}
+
+body .main .prepaid-page .prepaid-table th[data-sort].sort-desc::after {
+    content: '\25BC';
+    opacity: 1;
+}
+
+body .main .prepaid-page .prepaid-filter-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+}
+
+body .main .prepaid-page .prepaid-filter-input {
+    flex: 1 1 260px;
+    min-width: 200px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--xb-color-border);
+    background: var(--xb-color-surface);
+    color: var(--xb-color-text);
+    font-size: 13px;
+}
+
+body .main .prepaid-page .prepaid-filter-select {
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--xb-color-border);
+    background: var(--xb-color-surface);
+    color: var(--xb-color-text);
+    font-size: 13px;
+}
+
+body .main .prepaid-page .prepaid-filter-count {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--xb-color-text);
+    opacity: .75;
     white-space: nowrap;
 }
 
@@ -1209,6 +1280,74 @@ body .main .prepaid-page .prepaid-upload-grid .file-drop {
     min-width: 150px;
 }
 
+body .main .prepaid-page .prepaid-schedule-matrix thead th:nth-child(1),
+body .main .prepaid-page .prepaid-schedule-matrix tbody tr:not(.schedule-entity-row):not(.schedule-subtotal-row):not(.schedule-total-row) td:nth-child(1) {
+    position: sticky;
+    left: 0;
+    width: 200px;
+    min-width: 200px;
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+body .main .prepaid-page .prepaid-schedule-matrix thead th:nth-child(2),
+body .main .prepaid-page .prepaid-schedule-matrix tbody tr:not(.schedule-entity-row):not(.schedule-subtotal-row):not(.schedule-total-row) td:nth-child(2) {
+    position: sticky;
+    left: 200px;
+    width: 80px;
+    min-width: 80px;
+    max-width: 80px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+body .main .prepaid-page .prepaid-schedule-matrix thead th:nth-child(3),
+body .main .prepaid-page .prepaid-schedule-matrix tbody tr:not(.schedule-entity-row):not(.schedule-subtotal-row):not(.schedule-total-row) td:nth-child(3) {
+    position: sticky;
+    left: 280px;
+    width: 90px;
+    min-width: 90px;
+    max-width: 90px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+body .main .prepaid-page .prepaid-schedule-matrix thead th:nth-child(1),
+body .main .prepaid-page .prepaid-schedule-matrix thead th:nth-child(2),
+body .main .prepaid-page .prepaid-schedule-matrix thead th:nth-child(3) {
+    z-index: 95;
+}
+
+body .main .prepaid-page .prepaid-schedule-matrix tbody tr:not(.schedule-entity-row):not(.schedule-subtotal-row):not(.schedule-total-row) td:nth-child(1),
+body .main .prepaid-page .prepaid-schedule-matrix tbody tr:not(.schedule-entity-row):not(.schedule-subtotal-row):not(.schedule-total-row) td:nth-child(2),
+body .main .prepaid-page .prepaid-schedule-matrix tbody tr:not(.schedule-entity-row):not(.schedule-subtotal-row):not(.schedule-total-row) td:nth-child(3) {
+    z-index: 5;
+    background: var(--xb-color-surface);
+    box-shadow: 2px 0 4px rgba(0, 0, 0, .12);
+}
+
+body .main .prepaid-page .prepaid-schedule-matrix tbody tr:not(.schedule-entity-row):not(.schedule-subtotal-row):not(.schedule-total-row):nth-child(even) td:nth-child(1),
+body .main .prepaid-page .prepaid-schedule-matrix tbody tr:not(.schedule-entity-row):not(.schedule-subtotal-row):not(.schedule-total-row):nth-child(even) td:nth-child(2),
+body .main .prepaid-page .prepaid-schedule-matrix tbody tr:not(.schedule-entity-row):not(.schedule-subtotal-row):not(.schedule-total-row):nth-child(even) td:nth-child(3) {
+    background: var(--xb-color-surface-subtle);
+}
+
+body .main .prepaid-page .prepaid-schedule-matrix tbody tr:not(.schedule-entity-row):not(.schedule-subtotal-row):not(.schedule-total-row):hover td:nth-child(1),
+body .main .prepaid-page .prepaid-schedule-matrix tbody tr:not(.schedule-entity-row):not(.schedule-subtotal-row):not(.schedule-total-row):hover td:nth-child(2),
+body .main .prepaid-page .prepaid-schedule-matrix tbody tr:not(.schedule-entity-row):not(.schedule-subtotal-row):not(.schedule-total-row):hover td:nth-child(3) {
+    background: var(--xb-color-surface-subtle);
+}
+
+body .main .prepaid-page .prepaid-schedule-matrix .schedule-sticky-label {
+    position: sticky;
+    left: 8px;
+    z-index: 6;
+    display: inline-block;
+}
+
+
+
 .prepaid-schedule-matrix tbody td {
     white-space: nowrap;
     padding: 5px 7px;
@@ -1270,6 +1409,14 @@ body .main .prepaid-page .prepaid-upload-grid .file-drop {
     color: #fff;
     font-weight: 800;
     border-color: var(--xb-color-text);
+}
+
+.prepaid-schedule-matrix .schedule-subtotal-row td {
+    background: var(--xb-color-surface-subtle);
+    color: var(--xb-color-text);
+    font-weight: 800;
+    font-style: italic;
+    border-top: 1px solid var(--xb-color-border-strong);
 }
 
 .prepaid-schedule-matrix .strong {

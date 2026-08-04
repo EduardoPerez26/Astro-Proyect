@@ -169,22 +169,27 @@ import DashboardLayout from "../../../layouts/DashboardLayout.astro";
                     </div>
                 </div>
 
+                <div class="prepaid-filter-bar">
+                    <input type="search" id="sourceFilterInput" class="prepaid-filter-input" placeholder="Search store, payee, doc, memo..."/>
+                    <span class="prepaid-filter-count" id="sourceFilterCount"></span>
+                </div>
+
                 <div class="prepaid-table-wrap">
                     <table class="prepaid-table prepaid-source-table">
-                        <thead>
+                        <thead id="sourceTableHead">
                             <tr>
                                 <th class="source-sticky-select">
                                     <input type="checkbox" id="selectAllSourceRows" title="Select all rows" />
                                 </th>
-                                <th class="source-sticky-store">Store</th>
+                                <th class="source-sticky-store" data-sort="store">Store</th>
                                 <th class="source-sticky-actions">Actions</th>
-                                <th>Concept / Payee</th>
-                                <th>Doc</th>
-                                <th>Date</th>
-                                <th>Tax Year</th>
-                                <th>Amount Paid</th>
-                                <th>Amortization</th>
-                                <th>Memo</th>
+                                <th data-sort="payee">Concept / Payee</th>
+                                <th data-sort="doc">Doc</th>
+                                <th data-sort="date">Date</th>
+                                <th data-sort="taxYear">Tax Year</th>
+                                <th data-sort="amount">Amount Paid</th>
+                                <th data-sort="amortStart">Amortization</th>
+                                <th data-sort="memo">Memo</th>
                             </tr>
                         </thead>
                         <tbody id="sourceRows">
@@ -194,36 +199,44 @@ import DashboardLayout from "../../../layouts/DashboardLayout.astro";
                 </div>
             </div>
 
-            <div class="hidden" id="scheduleTab">
+                <div class="hidden" id="scheduleTab">
+                 <div class="prepaid-filter-bar">
+                    <input type="search" id="scheduleFilterInput" class="prepaid-filter-input" placeholder="Search payee, store, GL account..." />
+                    <select id="scheduleEntityFilter" class="prepaid-filter-select">
+                        <option value="">All entities</option>
+                    </select>
+                    <span class="prepaid-filter-count" id="scheduleFilterCount"></span>
+                </div>
+
                 <div class="prepaid-table-wrap">
                     <table class="prepaid-table prepaid-schedule-matrix">
                         <thead id="scheduleTableHead">
                             <tr>
-                                <th>Payee</th>
-                                <th>Location</th>
-                                <th>Entity</th>
-                                <th>GL Acct</th>
-                                <th>Exp. To GL Acct</th>
-                                <th>Date</th>
-                                <th>Amortization Period</th>
-                                <th>Amount Paid</th>
-                                <th>Prior Yr End Balance Forward</th>
-                                <th>MO AMORT AMT</th>
-                                <th>January</th>
-                                <th>February</th>
-                                <th>March</th>
-                                <th>April</th>
-                                <th>May</th>
-                                <th>June</th>
-                                <th>July</th>
-                                <th>August</th>
-                                <th>September</th>
-                                <th>October</th>
-                                <th>November</th>
-                                <th>December</th>
-                                <th>YTD Amortization</th>
-                                <th>Ending Prepaid Balance</th>
-                                <th>Ending Balance per Store</th>
+                                <th data-sort="payee">Payee</th>
+                                <th data-sort="location">Location</th>
+                                <th data-sort="entity">Entity</th>
+                                <th data-sort="glAcct">GL Acct</th>
+                                <th data-sort="expAcct">Exp. To GL Acct</th>
+                                <th data-sort="date">Date</th>
+                                <th data-sort="amortStart">Amortization Period</th>
+                                <th data-sort="amount">Amount Paid</th>
+                                <th data-sort="priorBalance">Prior Yr End Balance Forward</th>
+                                <th data-sort="monthlyAmount">MO AMORT AMT</th>
+                                <th data-sort="month0">January</th>
+                                <th data-sort="month1">February</th>
+                                <th data-sort="month2">March</th>
+                                <th data-sort="month3">April</th>
+                                <th data-sort="month4">May</th>
+                                <th data-sort="month5">June</th>
+                                <th data-sort="month6">July</th>
+                                <th data-sort="month7">August</th>
+                                <th data-sort="month8">September</th>
+                                <th data-sort="month9">October</th>
+                                <th data-sort="month10">November</th>
+                                <th data-sort="month11">December</th>
+                                <th data-sort="ytd">YTD Amortization</th>
+                                <th data-sort="endingBalance">Ending Prepaid Balance</th>
+                                <th data-sort="storeBalance">Ending Balance per Store</th>
                             </tr>
                         </thead>
                         <tbody id="scheduleRows">
@@ -241,17 +254,28 @@ import DashboardLayout from "../../../layouts/DashboardLayout.astro";
             </div>
 
             <div class="prepaid-table-wrap hidden" id="comparisonTab">
+                <div class="prepaid-filter-bar">
+                    <input type="search" id="comparisonFilterInput" class="prepaid-filter-input" placeholder="Search store, payee, doc..." />
+                    <select id="comparisonStatusFilter" class="prepaid-filter-select">
+                        <option value="">All statuses</option>
+                        <option value="MATCHED">Matched</option>
+                        <option value="DIFFERENCE">Difference</option>
+                        <option value="PENDING_GL">Pending GL</option>
+                        <option value="MISSING_GL">Missing GL</option>
+                    </select>
+                    <span class="prepaid-filter-count" id="comparisonFilterCount"></span>
+                </div>
                 <table class="prepaid-table">
-                    <thead>
+                    <thead id="comparisonTableHead">
                         <tr>
-                            <th>Period</th>
-                            <th>Store</th>
-                            <th>Payee</th>
-                            <th>Doc</th>
-                            <th>Expected</th>
-                            <th>GL Actual</th>
-                            <th>Difference</th>
-                            <th>Status</th>
+                            <th data-sort="period">Period</th>
+                            <th data-sort="store">Store</th>
+                            <th data-sort="payee">Payee</th>
+                            <th data-sort="doc">Doc</th>
+                            <th data-sort="expected">Expected</th>
+                            <th data-sort="glActual">GL Actual</th>
+                            <th data-sort="difference">Difference</th>
+                            <th data-sort="status">Status</th>
                         </tr>
                     </thead>
                     <tbody id="comparisonRows">
@@ -261,17 +285,21 @@ import DashboardLayout from "../../../layouts/DashboardLayout.astro";
             </div>
 
             <div class="prepaid-table-wrap hidden" id="differencesTab">
+                <div class="prepaid-filter-bar">
+                    <input type="search" id="differencesFilterInput" class="prepaid-filter-input" placeholder="Search store, payee, doc..." />
+                    <span class="prepaid-filter-count" id="differencesFilterCount"></span>
+                </div>
                 <table class="prepaid-table">
-                    <thead>
+                    <thead id="differencesTableHead">
                         <tr>
-                            <th>Period</th>
-                            <th>Store</th>
-                            <th>Payee</th>
-                            <th>Doc</th>
-                            <th>Expected</th>
-                            <th>GL Actual</th>
-                            <th>Difference</th>
-                            <th>Status</th>
+                            <th data-sort="period">Period</th>
+                            <th data-sort="store">Store</th>
+                            <th data-sort="payee">Payee</th>
+                            <th data-sort="doc">Doc</th>
+                            <th data-sort="expected">Expected</th>
+                            <th data-sort="glActual">GL Actual</th>
+                            <th data-sort="difference">Difference</th>
+                            <th data-sort="status">Status</th>
                         </tr>
                     </thead>
                     <tbody id="differenceRows">
@@ -281,5 +309,5 @@ import DashboardLayout from "../../../layouts/DashboardLayout.astro";
             </div>
         </section>
     </main>
-    <script type="module" src="/js/departments/ap/ap-prepaid.js?v=20260731-ap-department-v1"></script>
+    <script type="module" src="/js/departments/ap/ap-prepaid.js?v=20260803-freeze-columns-v1"></script>
 </DashboardLayout>
