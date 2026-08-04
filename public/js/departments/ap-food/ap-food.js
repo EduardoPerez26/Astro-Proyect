@@ -138,7 +138,7 @@
         'November',
         'December'
     ];
-    const AP_API = '/ap';
+    const AP_API = '/ap-food';
     const STAGES = ['intake', 'review', 'approval', 'completed'];
     const STAGE_LABELS = {
         intake: 'Intake',
@@ -1299,7 +1299,7 @@
                 documentResult.warning ? 'warning' : 'success'
             );
         } catch (error) {
-            console.error('Accounts Payable schedule error:', error);
+            console.error('AP Food schedule error:', error);
             scheduleRows = [];
             scheduleStoreCount = 0;
             currentScheduleId = null;
@@ -4412,9 +4412,9 @@
                 'COMPANY NAME: Quikserve Burger King',
                 '',
                 'Prepared by:',
-                'Properties Dpmt / Accounts Payable'
+                'Properties Dpmt / AP Food'
             ],
-            [`COMPANY: ${entities.join(', ') || 'Accounts Payable'}`],
+            [`COMPANY: ${entities.join(', ') || 'AP Food'}`],
             ['GL ACCOUNT NAME: SALES TAX PAYABLE'],
             ['GL ACCOUNT #: 241000'],
             [`YEAR: ${year}`],
@@ -4483,7 +4483,7 @@
 
         window.XLSX.writeFile(
             workbook,
-            `Accounts Payable - Schedule 2026 ${timestampForFile()}.xlsx`,
+            `AP Food - Schedule 2026 ${timestampForFile()}.xlsx`,
             {
                 cellStyles: true,
                 bookType: 'xlsx'
@@ -5270,7 +5270,7 @@
     }
 
     async function uploadPropertyDocument() {
-        throw new Error('Source file uploads are disabled for Accounts Payable. Only schedules are saved.');
+        throw new Error('Source file uploads are disabled for AP Food. Only schedules are saved.');
     }
 
     async function loadPropertyDocuments() {
@@ -5294,7 +5294,7 @@
         if (!list) return;
 
         if (!documents.length) {
-            list.innerHTML = '<div class="pm-empty-state">No Accounts Payable documents saved yet.</div>';
+            list.innerHTML = '<div class="pm-empty-state">No AP Food documents saved yet.</div>';
             return;
         }
 
@@ -5425,7 +5425,7 @@
     }
 
     async function renderDocumentInWindow(viewer, file) {
-        const filename = file.filename || 'Accounts Payable document';
+        const filename = file.filename || 'AP Food document';
         const lowerName = filename.toLowerCase();
         const isSpreadsheet = /\.(xlsx|xls|csv)$/i.test(lowerName) ||
             /spreadsheet|excel|csv/i.test(file.mimeType || '');
@@ -5612,7 +5612,7 @@
         if (!tbody) return;
 
         if (!savedSchedules.length) {
-            tbody.innerHTML = '<tr><td class="pm-doc-empty" colspan="7">No saved Accounts Payable schedules yet.</td></tr>';
+            tbody.innerHTML = '<tr><td class="pm-doc-empty" colspan="7">No saved AP Food schedules yet.</td></tr>';
             return;
         }
 
@@ -5626,7 +5626,7 @@
                     <td>
                         <div class="pm-document-name">
                             <strong>${escapeHtml(schedule.nombre || 'Schedule 2026')}</strong>
-                            <span>${escapeHtml(schedule.usuario_nombre || 'Accounts Payable')}</span>
+                            <span>${escapeHtml(schedule.usuario_nombre || 'AP Food')}</span>
                         </div>
                     </td>
                     <td>${escapeHtml(period)}</td>
@@ -5664,7 +5664,7 @@
         if (!tbody) return;
 
         if (!propertyDocuments.length) {
-            tbody.innerHTML = '<tr><td class="pm-doc-empty" colspan="5">No uploaded Accounts Payable documents yet.</td></tr>';
+            tbody.innerHTML = '<tr><td class="pm-doc-empty" colspan="5">No uploaded AP Food documents yet.</td></tr>';
             return;
         }
 
@@ -5909,7 +5909,7 @@
         const id = select?.value;
 
         if (!id) {
-            setScheduleStatus('Select a saved Accounts Payable schedule to open.', 'error');
+            setScheduleStatus('Select a saved AP Food schedule to open.', 'error');
             return;
         }
 
@@ -6745,7 +6745,7 @@
         const payload = await readJsonResponse(response);
 
         if (!response.ok || payload.success === false) {
-            throw new Error(payload.message || 'The Accounts Payable server request failed');
+            throw new Error(payload.message || 'The AP Food server request failed');
         }
 
         return payload;
@@ -7182,7 +7182,7 @@
             const payload = await apiJson('/requests');
             requests = payload.requests || [];
         } catch (error) {
-            console.warn('Accounts Payable requests could not be loaded from the server.', error);
+            console.warn('AP Food requests could not be loaded from the server.', error);
             requests = [];
         }
 

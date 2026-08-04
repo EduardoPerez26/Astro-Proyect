@@ -409,8 +409,8 @@ const START_PERMISSION_ORDER = [
     'historial',
     'propertyManagement',
     'propertyManagementDocuments',
-    'accountsPayable',
-    'accountsPayableDocuments',
+    'apFood',
+    'apFoodDocuments',
     'chat'
 ];
 
@@ -474,7 +474,7 @@ function aplicarPermissions(opciones = {}) {
 function obtenerPermissions(usuario) {
     const departmentCode = String(usuario.departamento?.codigo || '').toLowerCase();
     const esPropertyManagement = departmentCode === 'property-management' || departmentCode === 'pm';
-    const esAccountsPayable = departmentCode === 'ap';
+    const esApFood = departmentCode === 'ap-food';
     const modules = [
         'dashboardAdmin',
         'systemCenter',
@@ -491,8 +491,8 @@ function obtenerPermissions(usuario) {
         'controlRestaurants',
         'propertyManagement',
         'propertyManagementDocuments',
-        'accountsPayable',
-        'accountsPayableDocuments',
+        'apFood',
+        'apFoodDocuments',
         'chat'
     ];
     const defaultPermissions = {
@@ -512,8 +512,8 @@ function obtenerPermissions(usuario) {
             controlRestaurants: true,
             propertyManagement: true,
             propertyManagementDocuments: true,
-            accountsPayable: true,
-            accountsPayableDocuments: true,
+            apFood: true,
+            apFoodDocuments: true,
             chat: true
         },
         'admin': {
@@ -532,8 +532,8 @@ function obtenerPermissions(usuario) {
             controlRestaurants: true,
             propertyManagement: false,
             propertyManagementDocuments: false,
-            accountsPayable: false,
-            accountsPayableDocuments: false,
+            apFood: false,
+            apFoodDocuments: false,
             chat: false
         },
         'supervisor': {
@@ -551,8 +551,8 @@ function obtenerPermissions(usuario) {
             controlRestaurants: false,
             propertyManagement: false,
             propertyManagementDocuments: false,
-            accountsPayable: false,
-            accountsPayableDocuments: false,
+            apFood: false,
+            apFoodDocuments: false,
             chat: false
 
         },
@@ -571,8 +571,8 @@ function obtenerPermissions(usuario) {
             controlRestaurants: false,
             propertyManagement: false,
             propertyManagementDocuments: false,
-            accountsPayable: false,
-            accountsPayableDocuments: false,
+            apFood: false,
+            apFoodDocuments: false,
             chat: false
         }
     };
@@ -624,19 +624,19 @@ function obtenerPermissions(usuario) {
     }
 
     if (
-        esAccountsPayable &&
-        source.accountsPayable === undefined &&
-        !source.acciones?.accountsPayable
+        esApFood &&
+        source.apFood === undefined &&
+        !source.acciones?.apFood
     ) {
-        permisos.accountsPayable = true;
-        permisos.accountsPayableDocuments = true;
+        permisos.apFood = true;
+        permisos.apFoodDocuments = true;
     }
 
     permisos.paginaInicio = resolverPaginaInicioPermitida(
         permisos,
         esPropertyManagement
             ? 'propertyManagement'
-            : (esAccountsPayable ? 'accountsPayable' : null)
+            : (esApFood ? 'apFood' : null)
     );
     return permisos;
 }
@@ -665,10 +665,10 @@ function verificarAccesoPagina(permisos) {
         '/views/departments/property-management': 'propertyManagement',
         '/views/departments/prepaid-amortization': 'propertyManagement',
         '/views/departments/property-management-documents': 'propertyManagementDocuments',
-        '/views/departments/dashboard-ap': 'accountsPayable',
-        '/views/departments/ap': 'accountsPayable',
-        '/views/departments/ap-prepaid': 'accountsPayable',
-        '/views/departments/ap-documents': 'accountsPayableDocuments',
+        '/views/departments/dashboard-ap-food': 'apFood',
+        '/views/departments/ap-food': 'apFood',
+        '/views/departments/ap-food-prepaid': 'apFood',
+        '/views/departments/ap-food-documents': 'apFoodDocuments',
         '/views/chat': 'chat'
     };
 
@@ -708,8 +708,8 @@ function verificarAccesoPagina(permisos) {
                 historial: '/views/historial',
                 propertyManagement: '/views/departments/dashboard-property',
                 propertyManagementDocuments: '/views/departments/property-management-documents',
-                accountsPayable: '/views/departments/dashboard-ap',
-                accountsPayableDocuments: '/views/departments/ap-documents',
+                apFood: '/views/departments/dashboard-ap-food',
+                apFoodDocuments: '/views/departments/ap-food-documents',
                 chat: '/views/chat'
             };
             const paginaConfigurada = permisos.paginaInicio;
@@ -726,10 +726,10 @@ function verificarAccesoPagina(permisos) {
                             ? '/views/departments/dashboard-property'
                             : permisos.propertyManagementDocuments
                                 ? '/views/departments/property-management-documents'
-                                : permisos.accountsPayable
-                                    ? '/views/departments/dashboard-ap'
-                                    : permisos.accountsPayableDocuments
-                                        ? '/views/departments/ap-documents'
+                                : permisos.apFood
+                                    ? '/views/departments/dashboard-ap-food'
+                                    : permisos.apFoodDocuments
+                                        ? '/views/departments/ap-food-documents'
                                         : permisos.chat
                                             ? '/views/chat'
                                             : window.AppPermissions?.isAdmin(usuario) && permisos.dashboardAdmin

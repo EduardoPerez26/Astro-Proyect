@@ -2,26 +2,26 @@
 import DashboardLayout from "../../../layouts/DashboardLayout.astro";
 ---
 
-<DashboardLayout title="Accounts Payable" includeSheetJS={true}>
+<DashboardLayout title="AP Food" includeSheetJS={true}>
     <section
         class="property-management-page page-container"
         aria-labelledby="propertyManagementTitle"
     >
         <div class="page-header">
             <div class="page-header-info">
-                <h1 id="propertyManagementTitle">Accounts Payable</h1>
+                <h1 id="propertyManagementTitle">AP Food</h1>
                 <p>
                     Load source reports, open saved schedules, and review the
                     sales tax payable schedule before exporting.
                 </p>
             </div>
 
-            <div class="page-header-actions property-window-switcher" aria-label="Accounts Payable windows">
-                <a class="btn btn-secondary" href="/views/departments/ap-prepaid">
+            <div class="page-header-actions property-window-switcher" aria-label="AP Food windows">
+                <a class="btn btn-secondary" href="/views/departments/ap-food-prepaid">
                     <i class="fa-solid fa-building-columns" aria-hidden="true"></i>
                     Prepaid Bills
                 </a>
-                <a class="btn btn-secondary" href="/views/departments/ap-documents">
+                <a class="btn btn-secondary" href="/views/departments/ap-food-documents">
                     <i class="fa-solid fa-folder" aria-hidden="true"></i>
                     Documents
                 </a>
@@ -39,7 +39,7 @@ import DashboardLayout from "../../../layouts/DashboardLayout.astro";
                     <h2 id="pmScheduleTitle">Files and schedule</h2>
                     <p>
                         Import the Dimension Balance report, add monthly files,
-                        or open a saved Accounts Payable schedule.
+                        or open a saved AP Food schedule.
                     </p>
                 </div>
             </div>
@@ -51,7 +51,7 @@ import DashboardLayout from "../../../layouts/DashboardLayout.astro";
                             <h3>Upload Dimension Balance report</h3>
                             <p>
                                 The system reads the report and prepares the
-                                Accounts Payable schedule by store.
+                                AP Food schedule by store.
                             </p>
                         </div>
 
@@ -175,7 +175,7 @@ import DashboardLayout from "../../../layouts/DashboardLayout.astro";
                         <div>
                             <span>Saved work</span>
                             <h3 id="pmSavedScheduleTitle">
-                                Accounts Payable schedules
+                                AP Food schedules
                             </h3>
                         </div>
                     </div>
@@ -192,7 +192,7 @@ import DashboardLayout from "../../../layouts/DashboardLayout.astro";
                     <div class="pm-inline-controls">
                         <select
                             id="pmSavedScheduleSelect"
-                            aria-label="Saved Accounts Payable schedules"
+                            aria-label="Saved AP Food schedules"
                         >
                             <option value="">No saved schedules loaded</option>
                         </select>
@@ -613,7 +613,7 @@ import DashboardLayout from "../../../layouts/DashboardLayout.astro";
         >
             <header class="pm-modal-header pm-entities-header">
                 <div>
-                    <span class="pm-eyebrow">Accounts Payable</span>
+                    <span class="pm-eyebrow">AP Food</span>
                     <h3 id="pmEntitiesTitle">Entities / ORG Chart</h3>
                     <p>
                         Manage the store-to-entity mapping used by the Sales Tax
@@ -948,6 +948,6 @@ import DashboardLayout from "../../../layouts/DashboardLayout.astro";
 
 <script
     is:inline
-    src="/js/departments/ap/ap.js?v=20260731-ap-department-v1"
+    src="/js/departments/ap-food/ap-food.js?v=20260731-ap-department-v1"
 ></script>
 </DashboardLayout>

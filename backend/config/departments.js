@@ -15,13 +15,13 @@ const DEPARTMENT_CATALOG = {
         paginaInicio: 'tiendas',
         modulos: ['tiendas', 'documentos', 'historial']
     },
-    ap: {
-        codigo: 'ap',
-        label: 'AP',
-        nombre: 'Accounts Payable',
-        descripcion: 'AP schedules, prepaid amortization, entities, requests, and documents.',
-        paginaInicio: 'accountsPayable',
-        modulos: ['accountsPayable', 'accountsPayableDocuments', 'historial']
+    'ap-food': {
+        codigo: 'ap-food',
+        label: 'AP Food',
+        nombre: 'AP Food',
+        descripcion: 'AP Food schedules, prepaid amortization, entities, requests, and documents.',
+        paginaInicio: 'apFood',
+        modulos: ['apFood', 'apFoodDocuments', 'historial']
     },
     operations: {
         codigo: 'operations',

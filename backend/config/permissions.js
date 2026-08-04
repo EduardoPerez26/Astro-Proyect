@@ -12,8 +12,8 @@ const MODULE_ACTIONS = {
     historial: ['ver', 'eliminar', 'exportar'],
     propertyManagement: [...PERMISSION_ACTIONS],
     propertyManagementDocuments: [...PERMISSION_ACTIONS],
-    accountsPayable: [...PERMISSION_ACTIONS],
-    accountsPayableDocuments: [...PERMISSION_ACTIONS],
+    apFood: [...PERMISSION_ACTIONS],
+    apFoodDocuments: [...PERMISSION_ACTIONS],
     usuarios: [...PERMISSION_ACTIONS],
     controlRestaurants: ['ver', 'crear', 'editar', 'eliminar'],
     permisos: ['ver', 'editar'],
@@ -48,8 +48,8 @@ const START_MODULES = [
     'historial',
     'propertyManagement',
     'propertyManagementDocuments',
-    'accountsPayable',
-    'accountsPayableDocuments',
+    'apFood',
+    'apFoodDocuments',
     'chat'
 ];
 
@@ -129,8 +129,8 @@ function defaultModuleEnabled(role, module, departmentCode) {
     }
 
     if (
-        String(departmentCode || '').toLowerCase() === 'ap' &&
-        ['accountsPayable', 'accountsPayableDocuments'].includes(module)
+        String(departmentCode || '').toLowerCase() === 'ap-food' &&
+        ['apFood', 'apFoodDocuments'].includes(module)
     ) {
         return true;
     }

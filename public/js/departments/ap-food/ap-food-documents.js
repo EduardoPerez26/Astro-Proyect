@@ -1,8 +1,8 @@
 (function () {
     'use strict';
 
-    const AP_API = '/ap';
-    const AP_PREPAID_API = '/ap-prepaids';
+    const AP_API = '/ap-food';
+    const AP_PREPAID_API = '/ap-food-prepaids';
     const ITEMS_PER_PAGE = 10;
     const MONTH_NAMES = [
         '',
@@ -323,7 +323,7 @@
             const updated = schedule.fecha_actualizacion || schedule.fecha_creacion;
             const status = String(schedule.estado || 'draft').toLowerCase();
             const name = schedule.nombre || 'Schedule 2026';
-            const user = schedule.usuario_nombre || 'Accounts Payable';
+            const user = schedule.usuario_nombre || 'AP Food';
             const stores = Number(schedule.total_tiendas || 0);
             const rows = Number(schedule.total_filas || 0);
             const balance = formatCurrency(schedule.balance_total || 0);
@@ -371,7 +371,7 @@
             const updated = schedule.updated_at || schedule.generated_at || schedule.created_at;
             const status = String(schedule.status || 'SOURCE_LOADED').toLowerCase();
             const name = schedule.title || 'Prepaid amortization schedule';
-            const brand = schedule.brand || 'Accounts Payable';
+            const brand = schedule.brand || 'AP Food';
             const expected = formatCurrency(schedule.expected_total || 0);
             const difference = formatCurrency(schedule.difference_total || 0);
 
@@ -403,7 +403,7 @@
         const sourceItems = documents.map(document => {
             const period = formatPeriod(document.periodo_mes, document.periodo_anio);
             const label = document.tipo_label || document.tipo_documento || 'Source file';
-            const name = document.nombre_original || 'Accounts Payable document';
+            const name = document.nombre_original || 'AP Food document';
             const size = formatFileSize(document.tamano_bytes);
             const state = document.tiene_archivo ? 'Server file' : 'Metadata only';
 
@@ -585,7 +585,7 @@
         if (scheduleButton) {
             const id = scheduleButton.dataset.scheduleEdit;
             if (id) {
-                window.location.href = `/views/departments/ap?schedule=${encodeURIComponent(id)}`;
+                window.location.href = `/views/departments/ap-food?schedule=${encodeURIComponent(id)}`;
             }
             return;
         }
@@ -643,8 +643,8 @@
         if (prepaidOpenButton) {
             const id = prepaidOpenButton.dataset.prepaidOpen;
             window.location.href = id
-                ? `/views/departments/ap-prepaid?schedule=${encodeURIComponent(id)}`
-                : '/views/departments/ap-prepaid';
+                ? `/views/departments/ap-food-prepaid?schedule=${encodeURIComponent(id)}`
+                : '/views/departments/ap-food-prepaid';
             return;
         }
 
@@ -758,8 +758,8 @@
             item,
             confirmText: kind === 'prepaidSchedule' ? 'Open prepaid' : 'Edit schedule',
             href: kind === 'prepaidSchedule'
-                ? `/views/departments/ap-prepaid?schedule=${encodeURIComponent(item.rawId)}`
-                : `/views/departments/ap?schedule=${encodeURIComponent(item.rawId)}`
+                ? `/views/departments/ap-food-prepaid?schedule=${encodeURIComponent(item.rawId)}`
+                : `/views/departments/ap-food?schedule=${encodeURIComponent(item.rawId)}`
         });
     }
 
@@ -1264,7 +1264,7 @@
     }
 
     async function renderDocument(viewer, file) {
-        const filename = file.filename || 'Accounts Payable document';
+        const filename = file.filename || 'AP Food document';
         const lowerName = filename.toLowerCase();
         const isSpreadsheet = /\.(xlsx|xls|csv)$/i.test(lowerName) ||
             /spreadsheet|excel|csv/i.test(file.mimeType || '');
@@ -1389,7 +1389,7 @@
         const payload = await readJsonResponse(response);
 
         if (!response.ok || payload.success === false) {
-            throw new Error(payload.message || 'The Accounts Payable server request failed');
+            throw new Error(payload.message || 'The AP Food server request failed');
         }
 
         return payload;

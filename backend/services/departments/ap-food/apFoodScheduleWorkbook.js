@@ -111,7 +111,7 @@ async function saveApScheduleWorkbook({ schedule, data }) {
     const workbook = new ExcelJS.Workbook();
     workbook.creator = 'XBFS Operations Hub';
     workbook.company = 'XB Franchise Solutions';
-    workbook.subject = 'Accounts Payable schedule';
+    workbook.subject = 'AP Food schedule';
     workbook.created = new Date();
     workbook.modified = new Date();
 

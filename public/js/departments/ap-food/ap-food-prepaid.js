@@ -868,7 +868,7 @@ async function persistSourceRows() {
     if (!state.selectedScheduleId) throw new Error('No schedule is selected.');
 
     const rows = state.sourceRows.map(serializeSourceRow);
-    const data = await apiFetch(`/ap-prepaids/${state.selectedScheduleId}/source-rows`, {
+    const data = await apiFetch(`/ap-food-prepaids/${state.selectedScheduleId}/source-rows`, {
         method: 'PUT',
         body: JSON.stringify({
             rows,
@@ -2366,7 +2366,7 @@ function renderMonthRows(rows) {
 }
 
 async function loadSchedules() {
-    const data = await apiFetch('/ap-prepaids/schedules');
+    const data = await apiFetch('/ap-food-prepaids/schedules');
     state.schedules = data.schedules || [];
     renderScheduleList();
 
@@ -2384,7 +2384,7 @@ function getRequestedScheduleId() {
 }
 
 async function loadScheduleDetail(scheduleId) {
-    const detail = await apiFetch(`/ap-prepaids/${scheduleId}`);
+    const detail = await apiFetch(`/ap-food-prepaids/${scheduleId}`);
     state.selectedScheduleId = Number(scheduleId);
     state.selectedSchedule = detail.schedule;
     state.sourceRows = normalizeSourceRows(detail.source_rows || []);
@@ -2438,7 +2438,7 @@ async function handleBillSourceUpload(event) {
     formData.set('amortization_end', range.end);
 
     try {
-        const data = await apiFetch('/ap-prepaids/upload-bill-source', {
+        const data = await apiFetch('/ap-food-prepaids/upload-bill-source', {
             method: 'POST',
             body: formData,
             headers: authHeaders(false)
@@ -2543,7 +2543,7 @@ async function handleAppendBillSource(event) {
     formData.append('amortization_end', range.end);
 
     try {
-        const data = await apiFetch(`/ap-prepaids/${state.selectedScheduleId}/append-bill-source`, {
+        const data = await apiFetch(`/ap-food-prepaids/${state.selectedScheduleId}/append-bill-source`, {
             method: 'POST',
             body: formData,
             headers: authHeaders(false)
@@ -2591,7 +2591,7 @@ async function generateSchedule() {
         if (els.generateScheduleBtn) {
             els.generateScheduleBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i> Generating';
         }
-        const data = await apiFetch(`/ap-prepaids/${state.selectedScheduleId}/generate`, {
+        const data = await apiFetch(`/ap-food-prepaids/${state.selectedScheduleId}/generate`, {
             method: 'POST',
             headers: authHeaders(true)
         });
@@ -2642,7 +2642,7 @@ async function handleGlUpload(event) {
             formData.append('glFile', file);
 
             try {
-                const data = await apiFetch('/ap-prepaids/upload-gl', {
+                const data = await apiFetch('/ap-food-prepaids/upload-gl', {
                     method: 'POST',
                     body: formData,
                     headers: authHeaders(false)
@@ -2839,7 +2839,7 @@ async function saveScheduleOnServer() {
         button.innerHTML = '<i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i> Saving';
     }
     try {
-        const data = await apiFetch(`/ap-prepaids/${state.selectedScheduleId}/save`, {
+        const data = await apiFetch(`/ap-food-prepaids/${state.selectedScheduleId}/save`, {
             method: 'POST',
             headers: authHeaders(true)
         });
@@ -2866,7 +2866,7 @@ async function downloadScheduleFile(button = els.exportScheduleBtn) {
     }
 
     try {
-        const response = await apiFetch(`/ap-prepaids/${state.selectedScheduleId}/export`, {
+        const response = await apiFetch(`/ap-food-prepaids/${state.selectedScheduleId}/export`, {
             method: 'GET',
             headers: authHeaders(false)
         });

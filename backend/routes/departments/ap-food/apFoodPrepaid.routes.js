@@ -12,12 +12,12 @@ const {
     parsePrepaidBillSource,
     parseMonthlyGlActuals,
     normalizeText
-} = require('../../../services/departments/ap/prepaid/prepaidBillSourceParser');
+} = require('../../../services/departments/ap-food/prepaid/prepaidBillSourceParser');
 const {
     savePrepaidScheduleWorkbook,
     deleteSavedScheduleWorkbook,
     getScheduleExportPath
-} = require('../../../services/departments/ap/prepaid/prepaidScheduleWorkbook');
+} = require('../../../services/departments/ap-food/prepaid/prepaidScheduleWorkbook');
 const {
     calculateBillAmortization,
     defaultAmortizationPeriod,
@@ -26,10 +26,10 @@ const {
     toSqlDate,
     periodCode,
     roundMoney
-} = require('../../../services/departments/ap/prepaid/prepaidAmortizationCalculator');
+} = require('../../../services/departments/ap-food/prepaid/prepaidAmortizationCalculator');
 const {
     calculateBillAmortizationWithCloseout
-} = require('../../../services/departments/ap/prepaid/prepaidCloseoutCalculator');
+} = require('../../../services/departments/ap-food/prepaid/prepaidCloseoutCalculator');
 
 const router = express.Router();
 const upload = multer({
@@ -45,8 +45,8 @@ let nextDraftMonthId = -1;
 
 const access = (action = 'ver') => [
     verificarToken,
-    checkPermission('accountsPayable', action),
-    requireDepartment('ap')
+    checkPermission('apFood', action),
+    requireDepartment('ap-food')
 ];
 
 function getUserId(req) {
@@ -90,7 +90,7 @@ async function loadApEntityMap() {
     try {
         const [rows] = await pool.query(
             `SELECT location, entity_code
-             FROM ap_entities
+             FROM ap_food_entities
              WHERE is_active = 1`
         );
 
@@ -597,7 +597,7 @@ async function updatePrepaidScheduleJson(connection, scheduleId, payload, extra 
     const schedule = payload.schedule || {};
 
     await connection.query(
-        `UPDATE ap_prepaid_schedules
+        `UPDATE ap_food_prepaid_schedules
          SET status = ?,
              source_row_count = ?,
              included_row_count = ?,
@@ -744,7 +744,7 @@ function tableSetupMessage(error, res) {
 }
 
 async function loadScheduleOr404(scheduleId, res) {
-    const [rows] = await pool.query('SELECT * FROM ap_prepaid_schedules WHERE id = ? LIMIT 1', [scheduleId]);
+    const [rows] = await pool.query('SELECT * FROM ap_food_prepaid_schedules WHERE id = ? LIMIT 1', [scheduleId]);
     if (!rows.length) {
         res.status(404).json({ success: false, message: 'Schedule was not found' });
         return null;
@@ -777,7 +777,7 @@ router.get('/schedules', ...access('ver'), async (req, res) => {
 
         const [records] = await pool.query(
             `SELECT ps.*
-             FROM ap_prepaid_schedules ps
+             FROM ap_food_prepaid_schedules ps
              ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
              ORDER BY ps.id DESC
              LIMIT ?`,
@@ -1048,7 +1048,7 @@ router.post('/:scheduleId/append-bill-source', ...access('editar'), upload.singl
         }
 
         const [[schedule]] = await connection.query(
-            'SELECT * FROM ap_prepaid_schedules WHERE id = ? LIMIT 1',
+            'SELECT * FROM ap_food_prepaid_schedules WHERE id = ? LIMIT 1',
             [scheduleId]
         );
         if (!schedule) {
@@ -1271,7 +1271,7 @@ router.put('/:scheduleId/source-rows', ...access('editar'), async (req, res) => 
         }
 
         const [[schedule]] = await connection.query(
-            'SELECT * FROM ap_prepaid_schedules WHERE id = ? LIMIT 1',
+            'SELECT * FROM ap_food_prepaid_schedules WHERE id = ? LIMIT 1',
             [scheduleId]
         );
         if (!schedule) {
@@ -1501,7 +1501,7 @@ router.patch('/source-rows/:rowId', ...access('editar'), async (req, res) => {
 
     try {
         const rowId = Number(req.params.rowId);
-        const [schedules] = await connection.query('SELECT * FROM ap_prepaid_schedules ORDER BY id DESC');
+        const [schedules] = await connection.query('SELECT * FROM ap_food_prepaid_schedules ORDER BY id DESC');
         let schedule = null;
         let payload = null;
         let rowIndex = -1;
@@ -1663,7 +1663,7 @@ router.post('/:scheduleId/generate', ...access('crear'), async (req, res) => {
             });
         }
 
-        const [[schedule]] = await connection.query('SELECT * FROM ap_prepaid_schedules WHERE id = ? LIMIT 1', [scheduleId]);
+        const [[schedule]] = await connection.query('SELECT * FROM ap_food_prepaid_schedules WHERE id = ? LIMIT 1', [scheduleId]);
 
         if (!schedule) {
             return res.status(404).json({ success: false, message: 'Schedule was not found' });
@@ -2017,7 +2017,7 @@ router.post('/:scheduleId/save', ...access('crear'), async (req, res) => {
             let documentId = Number(draft.savedDocumentId || 0) || null;
             if (documentId) {
                 await pool.query(
-                    `UPDATE ap_prepaid_schedules
+                    `UPDATE ap_food_prepaid_schedules
                      SET brand = ?,
                          schedule_year = ?,
                          tax_year = ?,
@@ -2065,7 +2065,7 @@ router.post('/:scheduleId/save', ...access('crear'), async (req, res) => {
                 );
             } else {
                 const [result] = await pool.query(
-                    `INSERT INTO ap_prepaid_schedules
+                    `INSERT INTO ap_food_prepaid_schedules
                      (brand, schedule_year, tax_year, title, source_account, prepaid_account, expense_account,
                       amortization_start, amortization_end, status, source_file_name, source_file_hash,
                       source_sheet_name, source_row_count, included_row_count, excluded_row_count,
@@ -2105,7 +2105,7 @@ router.post('/:scheduleId/save', ...access('crear'), async (req, res) => {
             metadata.saved_workbook.persisted = savedWorkbook.persisted !== false;
             if (savedWorkbook.write_error) metadata.saved_workbook.write_error = savedWorkbook.write_error;
             await pool.query(
-                'UPDATE ap_prepaid_schedules SET metadata_json = ? WHERE id = ?',
+                'UPDATE ap_food_prepaid_schedules SET metadata_json = ? WHERE id = ?',
                 [JSON.stringify(metadata), documentId]
             );
 
@@ -2146,7 +2146,7 @@ router.post('/:scheduleId/save', ...access('crear'), async (req, res) => {
         };
         if (savedWorkbook.write_error) metadata.saved_workbook.write_error = savedWorkbook.write_error;
         await pool.query(
-            'UPDATE ap_prepaid_schedules SET metadata_json = ? WHERE id = ?',
+            'UPDATE ap_food_prepaid_schedules SET metadata_json = ? WHERE id = ?',
             [JSON.stringify(metadata), scheduleId]
         );
 
@@ -2184,7 +2184,7 @@ router.put('/:scheduleId/rename', ...access('editar'), async (req, res) => {
 
         const oldExportPath = getScheduleExportPath(schedule);
 
-        await pool.query('UPDATE ap_prepaid_schedules SET title = ? WHERE id = ?', [title, scheduleId]);
+        await pool.query('UPDATE ap_food_prepaid_schedules SET title = ? WHERE id = ?', [title, scheduleId]);
 
         const payload = scheduleDataFromRecord(schedule);
         const savedWorkbook = await saveWorkbookFromPayload({ ...schedule, title }, payload);
@@ -2192,7 +2192,7 @@ router.put('/:scheduleId/rename', ...access('editar'), async (req, res) => {
         const metadata = parseJson(schedule.metadata_json, {}) || {};
         if (metadata.saved_workbook) {
             metadata.saved_workbook.filename = savedWorkbook.filename;
-            await pool.query('UPDATE ap_prepaid_schedules SET metadata_json = ? WHERE id = ?', [JSON.stringify(metadata), scheduleId]);
+            await pool.query('UPDATE ap_food_prepaid_schedules SET metadata_json = ? WHERE id = ?', [JSON.stringify(metadata), scheduleId]);
         }
 
         const newExportPath = getScheduleExportPath({ ...schedule, title });
@@ -2236,7 +2236,7 @@ router.post('/:scheduleId/duplicate', ...access('crear'), async (req, res) => {
             : schedule.datos_json;
 
         const [result] = await pool.query(
-            `INSERT INTO ap_prepaid_schedules
+            `INSERT INTO ap_food_prepaid_schedules
              (brand, schedule_year, tax_year, title, source_account, prepaid_account, expense_account,
               amortization_start, amortization_end, status, source_file_name, source_file_hash,
               source_sheet_name, source_row_count, included_row_count, excluded_row_count,
@@ -2276,7 +2276,7 @@ router.post('/:scheduleId/duplicate', ...access('crear'), async (req, res) => {
         if (savedWorkbook.write_error) metadata.saved_workbook.write_error = savedWorkbook.write_error;
 
         await pool.query(
-            'UPDATE ap_prepaid_schedules SET metadata_json = ? WHERE id = ?',
+            'UPDATE ap_food_prepaid_schedules SET metadata_json = ? WHERE id = ?',
             [JSON.stringify(metadata), newId]
         );
 
@@ -2312,7 +2312,7 @@ router.delete('/:scheduleId', ...access('eliminar'), async (req, res) => {
         if (!schedule) return;
 
         await connection.beginTransaction();
-        await connection.query('DELETE FROM ap_prepaid_schedules WHERE id = ?', [scheduleId]);
+        await connection.query('DELETE FROM ap_food_prepaid_schedules WHERE id = ?', [scheduleId]);
         await connection.commit();
 
         try {

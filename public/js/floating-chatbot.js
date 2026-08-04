@@ -33,11 +33,11 @@
         '/views/departments/property-management-documents': {
             default: "Tip: Property Management keeps its own documents, separate from AR."
         },
-        '/views/departments/dashboard-ap': {
-            default: "Tip: Accounts Payable schedules show upcoming and overdue tasks at a glance."
+        '/views/departments/dashboard-ap-food': {
+            default: "Tip: AP Food schedules show upcoming and overdue tasks at a glance."
         },
-        '/views/departments/ap-documents': {
-            default: "Tip: Accounts Payable keeps its own documents, separate from AR and Property Management."
+        '/views/departments/ap-food-documents': {
+            default: "Tip: AP Food keeps its own documents, separate from AR and Property Management."
         },
         '/views/approval-center': {
             default: "Tip: filter by department here to review only what your team owns.",
@@ -78,9 +78,9 @@
         { label: 'Property schedules', path: '/views/departments/dashboard-property', keywords: ['property schedule', 'cronograma'] },
         { label: 'Prepaid amortization', path: '/views/departments/prepaid-amortization', keywords: ['prepaid', 'amortiz'] },
         { label: 'Property Management documents', path: '/views/departments/property-management-documents', keywords: ['property management document', 'pm document'] },
-        { label: 'AP schedules', path: '/views/departments/dashboard-ap', keywords: ['ap schedule', 'accounts payable schedule'] },
-        { label: 'AP prepaid amortization', path: '/views/departments/ap-prepaid', keywords: ['ap prepaid', 'accounts payable prepaid'] },
-        { label: 'AP documents', path: '/views/departments/ap-documents', keywords: ['ap document', 'accounts payable document'] },
+        { label: 'AP Food schedules', path: '/views/departments/dashboard-ap-food', keywords: ['ap food schedule', 'ap schedule', 'accounts payable schedule'] },
+        { label: 'AP Food prepaid amortization', path: '/views/departments/ap-food-prepaid', keywords: ['ap food prepaid', 'ap prepaid', 'accounts payable prepaid'] },
+        { label: 'AP Food documents', path: '/views/departments/ap-food-documents', keywords: ['ap food document', 'ap document', 'accounts payable document'] },
         { label: 'Approval Center', path: '/views/approval-center', keywords: ['aprobacion', 'approval'] },
         { label: 'Reports Center', path: '/views/report-center', keywords: ['reporte', 'report'] },
         { label: 'Admin dashboard', path: '/views/dashboard-admin', keywords: ['dashboard admin', 'executive dashboard'] },
@@ -120,13 +120,13 @@
         '/audit': { path: '/views/audit-center', label: 'Audit Center' },
         '/permissions': { path: '/views/permisos', label: 'Permissions' },
         '/property': { path: '/views/departments/dashboard-property', label: 'Property schedules' },
-        '/ap': { path: '/views/departments/dashboard-ap', label: 'AP schedules' }
+        '/ap-food': { path: '/views/departments/dashboard-ap-food', label: 'AP Food schedules' }
     };
 
     const DEPARTMENT_TOUR = {
         default: ['Stores', 'Documents', 'History'],
         ar: ['Stores', 'Documents', 'History'],
-        ap: ['AP schedules', 'AP prepaid amortization', 'AP documents'],
+        'ap-food': ['AP Food schedules', 'AP Food prepaid amortization', 'AP Food documents'],
         operations: ['Stores', 'Documents'],
         'property-management': ['Property schedules', 'Prepaid amortization', 'Property Management documents'],
         hr: ['Documents'],

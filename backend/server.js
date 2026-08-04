@@ -36,8 +36,8 @@ const chatbotRoutes = require('./routes/chatbot.routes');
 const notificacionesRoutes = require('./routes/notificaciones.routes');
 const notificationsStreamRotes = require ('./routes/notificationsStream.routes');
 const prepaidRoutes = require('./routes/departments/property-management/prepaid.routes');
-const apRoutes = require('./routes/departments/ap/ap.routes');
-const apPrepaidRoutes = require('./routes/departments/ap/apPrepaid.routes');
+const apFoodRoutes = require('./routes/departments/ap-food/apFood.routes');
+const apFoodPrepaidRoutes = require('./routes/departments/ap-food/apFoodPrepaid.routes');
 const corporateRoutes = require('./routes/departments/corporate/corporate.routes');
 const { checkAllIntegrations } = require('./services/integrationHealth.service');
 const { attachErrorNotificationCapture } = require('./middleware/error-notification.middleware');
@@ -160,8 +160,8 @@ app.get('/api', (req, res) => {
             notificaciones: '/api/notificaciones',
             systemErrors: '/api/notificaciones/system-errors',
             prepaids: '/api/prepaids',
-            accountsPayable: '/api/ap',
-            apPrepaids: '/api/ap-prepaids',
+            apFood: '/api/ap-food',
+            apFoodPrepaids: '/api/ap-food-prepaids',
             corporate: '/api/corporate',
             integrations: '/api/corporate/integrations/health',
             audit: '/api/corporate/audit'
@@ -198,8 +198,8 @@ app.use('/api/chatbot', chatbotRoutes);
 app.use('/api/notificaciones', notificacionesRoutes);
 app.use('/api/notifications-stream',notificationsStreamRotes);
 app.use('/api/prepaids', prepaidRoutes);
-app.use('/api/ap', apRoutes);
-app.use('/api/ap-prepaids', apPrepaidRoutes);
+app.use('/api/ap-food', apFoodRoutes);
+app.use('/api/ap-food-prepaids', apFoodPrepaidRoutes);
 app.use('/api/corporate', corporateRoutes);
 
 

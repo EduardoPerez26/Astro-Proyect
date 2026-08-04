@@ -16,10 +16,10 @@ function obtenerRutaInicial(usuario) {
             '/views/departments/dashboard-property',
         propertyManagementDocuments:
             '/views/departments/property-management-documents',
-        accountsPayable:
-            '/views/departments/dashboard-ap',
-        accountsPayableDocuments:
-            '/views/departments/ap-documents',
+        apFood:
+            '/views/departments/dashboard-ap-food',
+        apFoodDocuments:
+            '/views/departments/ap-food-documents',
         chat: '/views/chat'
     };
 
@@ -32,10 +32,10 @@ function obtenerRutaInicial(usuario) {
             'propertyManagement',
         propertyManagementDocument:
             'propertyManagementDocuments',
-        apSchedules: 'accountsPayable',
-        apSchedule: 'accountsPayable',
-        apDocuments: 'accountsPayableDocuments',
-        apDocument: 'accountsPayableDocuments'
+        apSchedules: 'apFood',
+        apSchedule: 'apFood',
+        apDocuments: 'apFoodDocuments',
+        apDocument: 'apFoodDocuments'
     };
 
     let permisos = usuario?.permisos || {};
@@ -105,8 +105,8 @@ function obtenerRutaInicial(usuario) {
         'historial',
         'propertyManagement',
         'propertyManagementDocuments',
-        'accountsPayable',
-        'accountsPayableDocuments',
+        'apFood',
+        'apFoodDocuments',
         'chat',
         'reportCenter',
         'dashboardAdmin',
@@ -131,16 +131,16 @@ function obtenerRutaInicial(usuario) {
         );
     }
 
-    if (departmentCode === 'ap') {
+    if (departmentCode === 'ap-food') {
         preferredOrder.splice(
             preferredOrder.indexOf(
-                'accountsPayable'
+                'apFood'
             ),
             1
         );
 
         preferredOrder.unshift(
-            'accountsPayable'
+            'apFood'
         );
     }
 
@@ -164,8 +164,8 @@ function obtenerRutaInicial(usuario) {
         return rutas.propertyManagement;
     }
 
-    if (departmentCode === 'ap') {
-        return rutas.accountsPayable;
+    if (departmentCode === 'ap-food') {
+        return rutas.apFood;
     }
 
     return null;

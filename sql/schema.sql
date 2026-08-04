@@ -413,7 +413,7 @@ SET FOREIGN_KEY_CHECKS = 1;
 INSERT INTO departamentos (codigo, nombre, descripcion, modulos, pagina_inicio, activo)
 VALUES
     ('ar', 'Accounts Receivable', 'AR reconciliations, documents, stores, and history.', JSON_OBJECT(), 'tiendas', TRUE),
-    ('ap', 'Accounts Payable', 'Base prepared for future AP workflows.', JSON_OBJECT(), 'documentos', TRUE),
+    ('ap-food', 'AP Food', 'AP Food schedules, prepaid amortization, entities, requests, and documents.', JSON_OBJECT('apFood', true, 'apFoodDocuments', true, 'historial', true), 'apFood', TRUE),
     ('operations', 'Operations', 'Base prepared for future operations workflows.', JSON_OBJECT(), 'tiendas', TRUE),
     ('hr', 'Human Resources', 'Base prepared for future human resources workflows.', JSON_OBJECT(), 'documentos', TRUE),
     ('it', 'Information Technology', 'Technical administration, security, and support.', JSON_OBJECT(), 'dashboardAdmin', TRUE)

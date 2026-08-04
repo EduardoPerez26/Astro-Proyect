@@ -8,7 +8,7 @@ const {
     getScheduleExportPath,
     saveApScheduleWorkbook,
     deleteSavedApScheduleWorkbook
-} = require('../../../services/departments/ap/apScheduleWorkbook');
+} = require('../../../services/departments/ap-food/apFoodScheduleWorkbook');
 const {
     verificarToken,
     checkPermission,
@@ -28,7 +28,7 @@ const upload = multer({
 const access = (module, action) => [
     verificarToken,
     checkPermission(module, action),
-    requireDepartment('ap')
+    requireDepartment('ap-food')
 ];
 const VALID_DOCUMENT_TYPES = new Set([
     'general_ledger',
@@ -37,7 +37,7 @@ const VALID_DOCUMENT_TYPES = new Set([
     'supporting_file'
 ]);
 
-router.get('/intacct/status', ...access('accountsPayable', 'ver'), (req, res) => {
+router.get('/intacct/status', ...access('apFood', 'ver'), (req, res) => {
     const status = getIntacctConfigStatus();
 
     res.json({
@@ -71,7 +71,7 @@ function sendWorkbookDownload(res, workbook, downloadName) {
 
     res.download(workbook.path, downloadName || workbook.filename, error => {
         if (!error || res.headersSent) return;
-        console.error('Accounts Payable schedule could not be downloaded:', error);
+        console.error('AP Food schedule could not be downloaded:', error);
         res.status(500).json({ success: false, message: 'Schedule could not be downloaded' });
     });
 }
@@ -112,7 +112,7 @@ function tableSetupMessage(error, res) {
         res.status(503).json({
             success: false,
             code: 'AP_TABLES_MISSING',
-            message: 'Run the Accounts Payable schedule SQL migration first.'
+            message: 'Run the AP Food schedule SQL migration first.'
         });
         return true;
     }
@@ -151,7 +151,7 @@ function parseSchedulePayload(body = {}) {
     return {
         headers,
         rows,
-        source: data?.source || 'ap',
+        source: data?.source || 'ap-food',
         savedAt: new Date().toISOString()
     };
 }
@@ -162,21 +162,21 @@ async function syncScheduleDocuments(scheduleId, documentIds) {
         : [];
 
     await pool.query(
-        'DELETE FROM ap_schedule_documentos WHERE schedule_id = ?',
+        'DELETE FROM ap_food_schedule_documentos WHERE schedule_id = ?',
         [scheduleId]
     );
 
     if (!ids.length) return;
 
     await pool.query(
-        `INSERT IGNORE INTO ap_schedule_documentos
+        `INSERT IGNORE INTO ap_food_schedule_documentos
          (schedule_id, documento_id)
          VALUES ?`,
         [ids.map(id => [scheduleId, id])]
     );
 }
 
-router.get('/documents', ...access('accountsPayableDocuments', 'ver'), async (req, res) => {
+router.get('/documents', ...access('apFoodDocuments', 'ver'), async (req, res) => {
     try {
         const params = [];
         let where = '';
@@ -202,7 +202,7 @@ router.get('/documents', ...access('accountsPayableDocuments', 'ver'), async (re
                     fecha_carga,
                     fecha_actualizacion,
                     archivo_blob IS NOT NULL AS tiene_archivo
-             FROM ap_documentos
+             FROM ap_food_documentos
              ${where}
              ORDER BY fecha_carga DESC, id DESC`,
             params
@@ -217,13 +217,13 @@ router.get('/documents', ...access('accountsPayableDocuments', 'ver'), async (re
             }))
         });
     } catch (error) {
-        console.error('Accounts Payable documents could not be loaded:', error);
+        console.error('AP Food documents could not be loaded:', error);
         if (tableSetupMessage(error, res)) return;
         res.status(500).json({ success: false, message: 'Documents could not be loaded' });
     }
 });
 
-router.post('/documents', ...access('accountsPayableDocuments', 'crear'), upload.single('document'), async (req, res) => {
+router.post('/documents', ...access('apFoodDocuments', 'crear'), upload.single('document'), async (req, res) => {
     try {
         if (!req.file) {
             return res.status(400).json({ success: false, message: 'No document was received' });
@@ -237,7 +237,7 @@ router.post('/documents', ...access('accountsPayableDocuments', 'crear'), upload
 
         const [existing] = await pool.query(
             `SELECT id
-             FROM ap_documentos
+             FROM ap_food_documentos
              WHERE tipo_documento = ?
                AND hash_archivo = ?
                AND periodo_anio = ?
@@ -248,7 +248,7 @@ router.post('/documents', ...access('accountsPayableDocuments', 'crear'), upload
 
         if (existing.length) {
             await pool.query(
-                `UPDATE ap_documentos
+                `UPDATE ap_food_documentos
                  SET usuario_id = ?,
                      departamento_id = ?,
                      metadata_json = ?,
@@ -270,7 +270,7 @@ router.post('/documents', ...access('accountsPayableDocuments', 'crear'), upload
         }
 
         const [result] = await pool.query(
-            `INSERT INTO ap_documentos
+            `INSERT INTO ap_food_documentos
              (usuario_id, departamento_id, tipo_documento, nombre_original,
               nombre_servidor, tamano_bytes, tipo_mime, archivo_blob, hash_archivo,
               periodo_anio, periodo_mes, estado, metadata_json)
@@ -296,19 +296,19 @@ router.post('/documents', ...access('accountsPayableDocuments', 'crear'), upload
             document: { id: result.insertId }
         });
     } catch (error) {
-        console.error('Accounts Payable document could not be saved:', error);
+        console.error('AP Food document could not be saved:', error);
         if (tableSetupMessage(error, res)) return;
         res.status(500).json({ success: false, message: 'Document could not be saved' });
     }
 });
 
-router.get('/documents/:id/download', ...access('accountsPayableDocuments', 'exportar'), async (req, res) => {
+router.get('/documents/:id/download', ...access('apFoodDocuments', 'exportar'), async (req, res) => {
     try {
         const [rows] = await pool.query(
             `SELECT nombre_original,
                     tipo_mime,
                     archivo_blob
-             FROM ap_documentos
+             FROM ap_food_documentos
              WHERE id = ?
              LIMIT 1`,
             [req.params.id]
@@ -331,26 +331,26 @@ router.get('/documents/:id/download', ...access('accountsPayableDocuments', 'exp
         );
         res.send(content);
     } catch (error) {
-        console.error('Accounts Payable document could not be downloaded:', error);
+        console.error('AP Food document could not be downloaded:', error);
         if (tableSetupMessage(error, res)) return;
         res.status(500).json({ success: false, message: 'Document could not be downloaded' });
     }
 });
 
-router.delete('/documents/:id', ...access('accountsPayableDocuments', 'eliminar'), async (req, res) => {
+router.delete('/documents/:id', ...access('apFoodDocuments', 'eliminar'), async (req, res) => {
     const connection = await pool.getConnection();
 
     try {
         await connection.beginTransaction();
 
         await connection.query(
-            `DELETE FROM ap_schedule_documentos
+            `DELETE FROM ap_food_schedule_documentos
              WHERE documento_id = ?`,
             [req.params.id]
         );
 
         const [result] = await connection.query(
-            `DELETE FROM ap_documentos
+            `DELETE FROM ap_food_documentos
              WHERE id = ?`,
             [req.params.id]
         );
@@ -364,7 +364,7 @@ router.delete('/documents/:id', ...access('accountsPayableDocuments', 'eliminar'
         res.json({ success: true, message: 'Document deleted successfully' });
     } catch (error) {
         await connection.rollback();
-        console.error('Accounts Payable document could not be deleted:', error);
+        console.error('AP Food document could not be deleted:', error);
         if (tableSetupMessage(error, res)) return;
         res.status(500).json({ success: false, message: 'Document could not be deleted' });
     } finally {
@@ -374,7 +374,7 @@ router.delete('/documents/:id', ...access('accountsPayableDocuments', 'eliminar'
 
 async function persistApScheduleWorkbook(scheduleId) {
     const [[schedule]] = await pool.query(
-        `SELECT * FROM ap_schedules WHERE id = ? LIMIT 1`,
+        `SELECT * FROM ap_food_schedules WHERE id = ? LIMIT 1`,
         [scheduleId]
     );
     if (!schedule) throw new Error('Schedule not found');
@@ -383,7 +383,7 @@ async function persistApScheduleWorkbook(scheduleId) {
     return saveApScheduleWorkbook({ schedule, data });
 }
 
-router.get('/schedules', ...access('accountsPayable', 'ver'), async (req, res) => {
+router.get('/schedules', ...access('apFood', 'ver'), async (req, res) => {
     try {
         const params = [];
         let where = '';
@@ -414,7 +414,7 @@ router.get('/schedules', ...access('accountsPayable', 'ver'), async (req, res) =
                     u.nombre_completo AS usuario_nombre,
                     sub.nombre_completo AS submitted_by_nombre,
                     rev.nombre_completo AS reviewed_by_nombre
-             FROM ap_schedules s
+             FROM ap_food_schedules s
              LEFT JOIN usuarios u ON u.id = s.usuario_id
              LEFT JOIN usuarios sub ON sub.id = s.submitted_by
              LEFT JOIN usuarios rev ON rev.id = s.reviewed_by
@@ -425,17 +425,17 @@ router.get('/schedules', ...access('accountsPayable', 'ver'), async (req, res) =
 
         res.json({ success: true, schedules: rows });
     } catch (error) {
-        console.error('Accounts Payable schedules could not be loaded:', error);
+        console.error('AP Food schedules could not be loaded:', error);
         if (tableSetupMessage(error, res)) return;
         res.status(500).json({ success: false, message: 'Schedules could not be loaded' });
     }
 });
 
-router.get('/schedules/:id', ...access('accountsPayable', 'ver'), async (req, res) => {
+router.get('/schedules/:id', ...access('apFood', 'ver'), async (req, res) => {
     try {
         const [rows] = await pool.query(
             `SELECT *
-             FROM ap_schedules
+             FROM ap_food_schedules
              WHERE id = ?
              LIMIT 1`,
             [req.params.id]
@@ -447,7 +447,7 @@ router.get('/schedules/:id', ...access('accountsPayable', 'ver'), async (req, re
 
         const [documents] = await pool.query(
             `SELECT documento_id
-             FROM ap_schedule_documentos
+             FROM ap_food_schedule_documentos
              WHERE schedule_id = ?`,
             [req.params.id]
         );
@@ -461,13 +461,13 @@ router.get('/schedules/:id', ...access('accountsPayable', 'ver'), async (req, re
             documentIds: documents.map(row => row.documento_id)
         });
     } catch (error) {
-        console.error('Accounts Payable schedule could not be loaded:', error);
+        console.error('AP Food schedule could not be loaded:', error);
         if (tableSetupMessage(error, res)) return;
         res.status(500).json({ success: false, message: 'Schedule could not be loaded' });
     }
 });
 
-router.put('/schedules/:id/rename', ...access('accountsPayable', 'editar'), async (req, res) => {
+router.put('/schedules/:id/rename', ...access('apFood', 'editar'), async (req, res) => {
     try {
         const name = String(req.body.nombre || '').trim().slice(0, 180);
         if (!name) {
@@ -475,7 +475,7 @@ router.put('/schedules/:id/rename', ...access('accountsPayable', 'editar'), asyn
         }
 
         const [[schedule]] = await pool.query(
-            `SELECT * FROM ap_schedules WHERE id = ? LIMIT 1`,
+            `SELECT * FROM ap_food_schedules WHERE id = ? LIMIT 1`,
             [req.params.id]
         );
 
@@ -490,7 +490,7 @@ router.put('/schedules/:id/rename', ...access('accountsPayable', 'editar'), asyn
         const oldExportPath = getScheduleExportPath(schedule);
 
         await pool.query(
-            `UPDATE ap_schedules SET nombre = ? WHERE id = ?`,
+            `UPDATE ap_food_schedules SET nombre = ? WHERE id = ?`,
             [name, req.params.id]
         );
 
@@ -507,16 +507,16 @@ router.put('/schedules/:id/rename', ...access('accountsPayable', 'editar'), asyn
             schedule: { id: Number(req.params.id), nombre: name, export_file: savedWorkbook.filename }
         });
     } catch (error) {
-        console.error('Accounts Payable schedule could not be renamed:', error);
+        console.error('AP Food schedule could not be renamed:', error);
         if (tableSetupMessage(error, res)) return;
         res.status(500).json({ success: false, message: 'Schedule could not be renamed' });
     }
 });
 
-router.post('/schedules/:id/duplicate', ...access('accountsPayable', 'crear'), async (req, res) => {
+router.post('/schedules/:id/duplicate', ...access('apFood', 'crear'), async (req, res) => {
     try {
         const [[schedule]] = await pool.query(
-            `SELECT * FROM ap_schedules WHERE id = ? LIMIT 1`,
+            `SELECT * FROM ap_food_schedules WHERE id = ? LIMIT 1`,
             [req.params.id]
         );
 
@@ -530,7 +530,7 @@ router.post('/schedules/:id/duplicate', ...access('accountsPayable', 'crear'), a
             : schedule.datos_json;
 
         const [result] = await pool.query(
-            `INSERT INTO ap_schedules
+            `INSERT INTO ap_food_schedules
              (usuario_id, departamento_id, nombre, periodo_anio, periodo_mes,
               datos_json, total_tiendas, total_filas, balance_total, estado)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'draft')`,
@@ -548,7 +548,7 @@ router.post('/schedules/:id/duplicate', ...access('accountsPayable', 'crear'), a
         );
 
         const [documentLinks] = await pool.query(
-            `SELECT documento_id FROM ap_schedule_documentos WHERE schedule_id = ?`,
+            `SELECT documento_id FROM ap_food_schedule_documentos WHERE schedule_id = ?`,
             [req.params.id]
         );
         await syncScheduleDocuments(result.insertId, documentLinks.map(row => row.documento_id));
@@ -564,13 +564,13 @@ router.post('/schedules/:id/duplicate', ...access('accountsPayable', 'crear'), a
             }
         });
     } catch (error) {
-        console.error('Accounts Payable schedule could not be duplicated:', error);
+        console.error('AP Food schedule could not be duplicated:', error);
         if (tableSetupMessage(error, res)) return;
         res.status(500).json({ success: false, message: 'Schedule could not be duplicated' });
     }
 });
 
-router.post('/schedules', ...access('accountsPayable', 'crear'), async (req, res) => {
+router.post('/schedules', ...access('apFood', 'crear'), async (req, res) => {
     try {
         const scheduleData = parseSchedulePayload(req.body);
         const rows = scheduleData.rows;
@@ -586,7 +586,7 @@ router.post('/schedules', ...access('accountsPayable', 'crear'), async (req, res
         }
 
         const [result] = await pool.query(
-            `INSERT INTO ap_schedules
+            `INSERT INTO ap_food_schedules
              (usuario_id, departamento_id, nombre, periodo_anio, periodo_mes,
               datos_json, total_tiendas, total_filas, balance_total, estado)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -615,13 +615,13 @@ router.post('/schedules', ...access('accountsPayable', 'crear'), async (req, res
             }
         });
     } catch (error) {
-        console.error('Accounts Payable schedule could not be saved:', error);
+        console.error('AP Food schedule could not be saved:', error);
         if (tableSetupMessage(error, res)) return;
         res.status(500).json({ success: false, message: 'Schedule could not be saved' });
     }
 });
 
-router.put('/schedules/:id', ...access('accountsPayable', 'editar'), async (req, res) => {
+router.put('/schedules/:id', ...access('apFood', 'editar'), async (req, res) => {
     try {
         const scheduleData = parseSchedulePayload(req.body);
         const rows = scheduleData.rows;
@@ -637,7 +637,7 @@ router.put('/schedules/:id', ...access('accountsPayable', 'editar'), async (req,
         }
 
         const [result] = await pool.query(
-            `UPDATE ap_schedules
+            `UPDATE ap_food_schedules
              SET nombre = ?,
                  periodo_anio = ?,
                  periodo_mes = ?,
@@ -675,17 +675,17 @@ router.put('/schedules/:id', ...access('accountsPayable', 'editar'), async (req,
             }
         });
     } catch (error) {
-        console.error('Accounts Payable schedule could not be updated:', error);
+        console.error('AP Food schedule could not be updated:', error);
         if (tableSetupMessage(error, res)) return;
         res.status(500).json({ success: false, message: 'Schedule could not be updated' });
     }
 });
 
 // Submit a draft (or a schedule sent back with changes requested) for review.
-router.post('/schedules/:id/submit', ...access('accountsPayable', 'editar'), async (req, res) => {
+router.post('/schedules/:id/submit', ...access('apFood', 'editar'), async (req, res) => {
     try {
         const [[schedule]] = await pool.query(
-            'SELECT id, nombre, estado FROM ap_schedules WHERE id = ? LIMIT 1',
+            'SELECT id, nombre, estado FROM ap_food_schedules WHERE id = ? LIMIT 1',
             [req.params.id]
         );
         if (!schedule) return res.status(404).json({ success: false, message: 'Schedule not found' });
@@ -697,7 +697,7 @@ router.post('/schedules/:id/submit', ...access('accountsPayable', 'editar'), asy
         }
 
         await pool.query(
-            `UPDATE ap_schedules
+            `UPDATE ap_food_schedules
              SET estado = 'submitted', submitted_by = ?, submitted_at = NOW(),
                  reviewed_by = NULL, reviewed_at = NULL, review_notes = NULL
              WHERE id = ?`,
@@ -707,18 +707,18 @@ router.post('/schedules/:id/submit', ...access('accountsPayable', 'editar'), asy
         const adminIds = await getAdminUserIds(getUserId(req));
         if (adminIds.length) {
             await createNotificationsForUsers(adminIds, {
-                tipo: 'ap_review',
-                titulo: 'Accounts Payable schedule pending review',
+                tipo: 'ap_food_review',
+                titulo: 'AP Food schedule pending review',
                 mensaje: `${req.usuario?.nombre_completo || 'A preparer'} submitted "${schedule.nombre}" for review.`,
-                urlAccion: '/views/departments/ap-documents',
+                urlAccion: '/views/departments/ap-food-documents',
                 prioridad: 'normal',
                 creadoPor: getUserId(req)
-            }).catch(error => console.error('Accounts Payable submit notification error:', error));
+            }).catch(error => console.error('AP Food submit notification error:', error));
         }
 
         res.json({ success: true, estado: 'submitted' });
     } catch (error) {
-        console.error('Accounts Payable schedule could not be submitted:', error);
+        console.error('AP Food schedule could not be submitted:', error);
         if (tableSetupMessage(error, res)) return;
         res.status(500).json({ success: false, message: 'Schedule could not be submitted for review' });
     }
@@ -726,7 +726,7 @@ router.post('/schedules/:id/submit', ...access('accountsPayable', 'editar'), asy
 
 // Approve or send back a schedule that is pending review. Requires an
 // administrator and enforces separation of duties (preparer != reviewer).
-router.post('/schedules/:id/review', ...access('accountsPayable', 'editar'), esAdmin, async (req, res) => {
+router.post('/schedules/:id/review', ...access('apFood', 'editar'), esAdmin, async (req, res) => {
     try {
         const decision = String(req.body.decision || '').trim();
         if (!['approved', 'changes_requested'].includes(decision)) {
@@ -734,7 +734,7 @@ router.post('/schedules/:id/review', ...access('accountsPayable', 'editar'), esA
         }
 
         const [[schedule]] = await pool.query(
-            'SELECT id, nombre, estado, usuario_id FROM ap_schedules WHERE id = ? LIMIT 1',
+            'SELECT id, nombre, estado, usuario_id FROM ap_food_schedules WHERE id = ? LIMIT 1',
             [req.params.id]
         );
         if (!schedule) return res.status(404).json({ success: false, message: 'Schedule not found' });
@@ -754,7 +754,7 @@ router.post('/schedules/:id/review', ...access('accountsPayable', 'editar'), esA
         }
 
         await pool.query(
-            `UPDATE ap_schedules
+            `UPDATE ap_food_schedules
              SET estado = ?, reviewed_by = ?, reviewed_at = NOW(), review_notes = ?
              WHERE id = ?`,
             [decision, getUserId(req), notes || null, req.params.id]
@@ -762,31 +762,31 @@ router.post('/schedules/:id/review', ...access('accountsPayable', 'editar'), esA
 
         if (schedule.usuario_id) {
             await createNotificationsForUsers([schedule.usuario_id], {
-                tipo: 'ap_review',
+                tipo: 'ap_food_review',
                 titulo: decision === 'approved'
-                    ? 'Accounts Payable schedule approved'
-                    : 'Accounts Payable schedule sent back for changes',
+                    ? 'AP Food schedule approved'
+                    : 'AP Food schedule sent back for changes',
                 mensaje: decision === 'approved'
                     ? `"${schedule.nombre}" was approved by ${req.usuario?.nombre_completo || 'a reviewer'}.`
                     : `"${schedule.nombre}" needs changes: ${notes}`,
-                urlAccion: '/views/departments/ap-documents',
+                urlAccion: '/views/departments/ap-food-documents',
                 prioridad: decision === 'approved' ? 'normal' : 'high',
                 creadoPor: getUserId(req)
-            }).catch(error => console.error('Accounts Payable review notification error:', error));
+            }).catch(error => console.error('AP Food review notification error:', error));
         }
 
         res.json({ success: true, estado: decision });
     } catch (error) {
-        console.error('Accounts Payable schedule review could not be recorded:', error);
+        console.error('AP Food schedule review could not be recorded:', error);
         if (tableSetupMessage(error, res)) return;
         res.status(500).json({ success: false, message: 'Review could not be recorded' });
     }
 });
 
-router.get('/schedules/:id/export', ...access('accountsPayable', 'exportar'), async (req, res) => {
+router.get('/schedules/:id/export', ...access('apFood', 'exportar'), async (req, res) => {
     try {
         const [[schedule]] = await pool.query(
-            `SELECT * FROM ap_schedules WHERE id = ? LIMIT 1`,
+            `SELECT * FROM ap_food_schedules WHERE id = ? LIMIT 1`,
             [req.params.id]
         );
 
@@ -807,31 +807,31 @@ router.get('/schedules/:id/export', ...access('accountsPayable', 'exportar'), as
         const savedWorkbook = await persistApScheduleWorkbook(schedule.id);
         return sendWorkbookDownload(res, savedWorkbook, downloadName);
     } catch (error) {
-        console.error('Accounts Payable schedule export could not be created:', error);
+        console.error('AP Food schedule export could not be created:', error);
         if (tableSetupMessage(error, res)) return;
         res.status(500).json({ success: false, message: error.message || 'Schedule export could not be created' });
     }
 });
 
-router.delete('/schedules/:id', ...access('accountsPayable', 'eliminar'), async (req, res) => {
+router.delete('/schedules/:id', ...access('apFood', 'eliminar'), async (req, res) => {
     const connection = await pool.getConnection();
 
     try {
         const [[schedule]] = await connection.query(
-            `SELECT id, nombre FROM ap_schedules WHERE id = ? LIMIT 1`,
+            `SELECT id, nombre FROM ap_food_schedules WHERE id = ? LIMIT 1`,
             [req.params.id]
         );
 
         await connection.beginTransaction();
 
         await connection.query(
-            `DELETE FROM ap_schedule_documentos
+            `DELETE FROM ap_food_schedule_documentos
              WHERE schedule_id = ?`,
             [req.params.id]
         );
 
         const [result] = await connection.query(
-            `DELETE FROM ap_schedules
+            `DELETE FROM ap_food_schedules
              WHERE id = ?`,
             [req.params.id]
         );
@@ -847,14 +847,14 @@ router.delete('/schedules/:id', ...access('accountsPayable', 'eliminar'), async 
             try {
                 deleteSavedApScheduleWorkbook(schedule);
             } catch (fileError) {
-                console.warn('Saved Accounts Payable workbook could not be removed:', fileError.message);
+                console.warn('Saved AP Food workbook could not be removed:', fileError.message);
             }
         }
 
         res.json({ success: true, message: 'Schedule deleted successfully' });
     } catch (error) {
         await connection.rollback();
-        console.error('Accounts Payable schedule could not be deleted:', error);
+        console.error('AP Food schedule could not be deleted:', error);
         if (tableSetupMessage(error, res)) return;
         res.status(500).json({ success: false, message: 'Schedule could not be deleted' });
     } finally {
@@ -926,7 +926,7 @@ function parseOrgChartWorkbook(buffer) {
     return entities;
 }
 
-router.get('/entities', ...access('accountsPayable', 'ver'), async (req, res) => {
+router.get('/entities', ...access('apFood', 'ver'), async (req, res) => {
     try {
         const [rows] = await pool.query(
             `SELECT id,
@@ -939,7 +939,7 @@ router.get('/entities', ...access('accountsPayable', 'ver'), async (req, res) =>
                     is_active,
                     created_at,
                     updated_at
-             FROM ap_entities
+             FROM ap_food_entities
              WHERE is_active = 1
              ORDER BY location + 0, location`
         );
@@ -949,13 +949,13 @@ router.get('/entities', ...access('accountsPayable', 'ver'), async (req, res) =>
             entities: rows
         });
     } catch (error) {
-        console.error('Accounts Payable entities could not be loaded:', error);
+        console.error('AP Food entities could not be loaded:', error);
         if (tableSetupMessage(error, res)) return;
         res.status(500).json({ success: false, message: 'Entities could not be loaded' });
     }
 });
 
-router.post('/entities/import', ...access('accountsPayable', 'crear'), upload.single('orgChart'), async (req, res) => {
+router.post('/entities/import', ...access('apFood', 'crear'), upload.single('orgChart'), async (req, res) => {
     const connection = await pool.getConnection();
 
     try {
@@ -976,7 +976,7 @@ router.post('/entities/import', ...access('accountsPayable', 'crear'), upload.si
 
         for (const item of entities) {
             await connection.query(
-                `INSERT INTO ap_entities
+                `INSERT INTO ap_food_entities
                  (brand, entity_legal_name, entity_short_name, entity_code, other_id, location, is_active)
                  VALUES (?, ?, ?, ?, ?, ?, 1)
                  ON DUPLICATE KEY UPDATE
@@ -1006,7 +1006,7 @@ router.post('/entities/import', ...access('accountsPayable', 'crear'), upload.si
         });
     } catch (error) {
         await connection.rollback();
-        console.error('Accounts Payable entities import failed:', error);
+        console.error('AP Food entities import failed:', error);
         if (tableSetupMessage(error, res)) return;
         res.status(500).json({ success: false, message: error.message || 'Entities could not be imported' });
     } finally {
@@ -1014,7 +1014,7 @@ router.post('/entities/import', ...access('accountsPayable', 'crear'), upload.si
     }
 });
 
-router.post('/entities', ...access('accountsPayable', 'crear'), async (req, res) => {
+router.post('/entities', ...access('apFood', 'crear'), async (req, res) => {
     try {
         const location = normalizeLocationValue(req.body.location);
         const entityCode = normalizeEntityCodeValue(req.body.entity_code);
@@ -1027,7 +1027,7 @@ router.post('/entities', ...access('accountsPayable', 'crear'), async (req, res)
         }
 
         const [result] = await pool.query(
-            `INSERT INTO ap_entities
+            `INSERT INTO ap_food_entities
              (brand, entity_legal_name, entity_short_name, entity_code, other_id, location, is_active)
              VALUES (?, ?, ?, ?, ?, ?, 1)`,
             [
@@ -1045,7 +1045,7 @@ router.post('/entities', ...access('accountsPayable', 'crear'), async (req, res)
             entity: { id: result.insertId }
         });
     } catch (error) {
-        console.error('Accounts Payable entity could not be created:', error);
+        console.error('AP Food entity could not be created:', error);
 
         if (error.code === 'ER_DUP_ENTRY') {
             return res.status(409).json({
@@ -1059,7 +1059,7 @@ router.post('/entities', ...access('accountsPayable', 'crear'), async (req, res)
     }
 });
 
-router.put('/entities/:id', ...access('accountsPayable', 'editar'), async (req, res) => {
+router.put('/entities/:id', ...access('apFood', 'editar'), async (req, res) => {
     try {
         const location = normalizeLocationValue(req.body.location);
         const entityCode = normalizeEntityCodeValue(req.body.entity_code);
@@ -1072,7 +1072,7 @@ router.put('/entities/:id', ...access('accountsPayable', 'editar'), async (req, 
         }
 
         const [result] = await pool.query(
-            `UPDATE ap_entities
+            `UPDATE ap_food_entities
              SET brand = ?,
                  entity_legal_name = ?,
                  entity_short_name = ?,
@@ -1097,7 +1097,7 @@ router.put('/entities/:id', ...access('accountsPayable', 'editar'), async (req, 
 
         res.json({ success: true });
     } catch (error) {
-        console.error('Accounts Payable entity could not be updated:', error);
+        console.error('AP Food entity could not be updated:', error);
 
         if (error.code === 'ER_DUP_ENTRY') {
             return res.status(409).json({
@@ -1111,10 +1111,10 @@ router.put('/entities/:id', ...access('accountsPayable', 'editar'), async (req, 
     }
 });
 
-router.delete('/entities/:id', ...access('accountsPayable', 'eliminar'), async (req, res) => {
+router.delete('/entities/:id', ...access('apFood', 'eliminar'), async (req, res) => {
     try {
         const [result] = await pool.query(
-            `UPDATE ap_entities
+            `UPDATE ap_food_entities
              SET is_active = 0
              WHERE id = ?`,
             [req.params.id]
@@ -1126,7 +1126,7 @@ router.delete('/entities/:id', ...access('accountsPayable', 'eliminar'), async (
 
         res.json({ success: true });
     } catch (error) {
-        console.error('Accounts Payable entity could not be deleted:', error);
+        console.error('AP Food entity could not be deleted:', error);
         if (tableSetupMessage(error, res)) return;
         res.status(500).json({ success: false, message: 'Entity could not be deleted' });
     }
@@ -1149,10 +1149,10 @@ function normalizeRequestRow(row) {
     };
 }
 
-router.get('/requests', ...access('accountsPayable', 'ver'), async (req, res) => {
+router.get('/requests', ...access('apFood', 'ver'), async (req, res) => {
     try {
         const [rows] = await pool.query(
-            `SELECT * FROM ap_requests ORDER BY fecha_creacion DESC`
+            `SELECT * FROM ap_food_requests ORDER BY fecha_creacion DESC`
         );
 
         res.json({
@@ -1160,13 +1160,13 @@ router.get('/requests', ...access('accountsPayable', 'ver'), async (req, res) =>
             requests: rows.map(normalizeRequestRow)
         });
     } catch (error) {
-        console.error('Accounts Payable requests could not be loaded:', error);
+        console.error('AP Food requests could not be loaded:', error);
         if (tableSetupMessage(error, res)) return;
         res.status(500).json({ success: false, message: 'Requests could not be loaded' });
     }
 });
 
-router.post('/requests', ...access('accountsPayable', 'crear'), async (req, res) => {
+router.post('/requests', ...access('apFood', 'crear'), async (req, res) => {
     try {
         const title = String(req.body.title || '').trim();
         const property = String(req.body.property || '').trim();
@@ -1179,7 +1179,7 @@ router.post('/requests', ...access('accountsPayable', 'crear'), async (req, res)
         }
 
         const [result] = await pool.query(
-            `INSERT INTO ap_requests
+            `INSERT INTO ap_food_requests
              (usuario_id, departamento_id, title, property, category, priority, due_date, notes, stage)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'intake')`,
             [
@@ -1195,7 +1195,7 @@ router.post('/requests', ...access('accountsPayable', 'crear'), async (req, res)
         );
 
         const [rows] = await pool.query(
-            `SELECT * FROM ap_requests WHERE id = ?`,
+            `SELECT * FROM ap_food_requests WHERE id = ?`,
             [result.insertId]
         );
 
@@ -1204,16 +1204,16 @@ router.post('/requests', ...access('accountsPayable', 'crear'), async (req, res)
             request: normalizeRequestRow(rows[0])
         });
     } catch (error) {
-        console.error('Accounts Payable request could not be created:', error);
+        console.error('AP Food request could not be created:', error);
         if (tableSetupMessage(error, res)) return;
         res.status(500).json({ success: false, message: 'Request could not be created' });
     }
 });
 
-router.put('/requests/:id', ...access('accountsPayable', 'editar'), async (req, res) => {
+router.put('/requests/:id', ...access('apFood', 'editar'), async (req, res) => {
     try {
         const [result] = await pool.query(
-            `UPDATE ap_requests SET
+            `UPDATE ap_food_requests SET
                 title = COALESCE(?, title),
                 property = COALESCE(?, property),
                 category = COALESCE(?, category),
@@ -1240,16 +1240,16 @@ router.put('/requests/:id', ...access('accountsPayable', 'editar'), async (req, 
 
         res.json({ success: true });
     } catch (error) {
-        console.error('Accounts Payable request could not be updated:', error);
+        console.error('AP Food request could not be updated:', error);
         if (tableSetupMessage(error, res)) return;
         res.status(500).json({ success: false, message: 'Request could not be updated' });
     }
 });
 
-router.delete('/requests/:id', ...access('accountsPayable', 'eliminar'), async (req, res) => {
+router.delete('/requests/:id', ...access('apFood', 'eliminar'), async (req, res) => {
     try {
         const [result] = await pool.query(
-            `DELETE FROM ap_requests WHERE id = ?`,
+            `DELETE FROM ap_food_requests WHERE id = ?`,
             [req.params.id]
         );
 
@@ -1259,7 +1259,7 @@ router.delete('/requests/:id', ...access('accountsPayable', 'eliminar'), async (
 
         res.json({ success: true });
     } catch (error) {
-        console.error('Accounts Payable request could not be deleted:', error);
+        console.error('AP Food request could not be deleted:', error);
         if (tableSetupMessage(error, res)) return;
         res.status(500).json({ success: false, message: 'Request could not be deleted' });
     }
