@@ -17,8 +17,7 @@ const MODULE_ACTIONS = {
     usuarios: [...PERMISSION_ACTIONS],
     controlRestaurants: ['ver', 'crear', 'editar', 'eliminar'],
     permisos: ['ver', 'editar'],
-    perfil: ['ver', 'editar'],
-    chat: ['ver', 'crear', 'editar', 'eliminar', 'exportar']
+    perfil: ['ver', 'editar']
 };
 
 const ADMIN_MODULES = new Set([
@@ -49,8 +48,7 @@ const START_MODULES = [
     'propertyManagement',
     'propertyManagementDocuments',
     'apFood',
-    'apFoodDocuments',
-    'chat'
+    'apFoodDocuments'
 ];
 
 const ROLE_DEFAULT_MODULES = {

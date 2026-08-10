@@ -209,15 +209,6 @@ html body .main :is(.table-container,
     box-sizing: border-box;
 }
 
-html body .main>.chat-page {
-    width: min(calc(100% - (var(--xbfs-view-gutter-x) * 2)),
-            var(--xbfs-view-max-width));
-    max-width: var(--xbfs-view-max-width);
-    min-width: 0;
-    margin: var(--xbfs-view-gutter-y) auto var(--xbfs-view-bottom-space);
-    box-sizing: border-box;
-}
-
 html body .main :is(.xbfs-page-hero,
     .page-container > .page-header,
     .property-management-page > .page-header,
@@ -1531,17 +1522,11 @@ html.sidebar-collapsed-preset body .sidebar :is(.sidebar-menu-link,
 html body .sidebar :is(.sidebar-menu-link,
     .nav-btn,
     .sidebar-profile-link,
-    .sidebar-action)>span:not(.sidebar-chat-badge) {
+    .sidebar-action)>span {
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-}
-
-html body .sidebar .sidebar-chat-badge:not([hidden]) {
-    position: absolute;
-    right: 10px;
-    z-index: 3;
 }
 
 html body .sidebar :is(.sidebar-menu-link,
@@ -1889,8 +1874,7 @@ html body :is(.btn-primary,
     .source-amortization-confirm-btn,
     .source-concept-confirm-btn,
     .pm-qc-button,
-    .pm-full-action,
-    .chat-send-btn) {
+    .pm-full-action) {
     border: 1px solid var(--xb-color-text);
     background: linear-gradient(180deg, #262626 0%, #090909 100%);
     color: #fff;
@@ -1912,8 +1896,7 @@ html body :is(.btn-primary,
     .source-amortization-confirm-btn,
     .source-concept-confirm-btn,
     .pm-qc-button,
-    .pm-full-action,
-    .chat-send-btn):hover:not(:disabled) {
+    .pm-full-action):hover:not(:disabled) {
     border-color: var(--xb-color-border-strong);
     background: linear-gradient(180deg, #383838 0%, #131313 100%);
     color: #fff;
@@ -1935,8 +1918,7 @@ html body :is(.btn-primary,
     .source-amortization-confirm-btn,
     .source-concept-confirm-btn,
     .pm-qc-button,
-    .pm-full-action,
-    .chat-send-btn):disabled {
+    .pm-full-action):disabled {
     opacity: .48;
     cursor: not-allowed;
     transform: none;
@@ -2834,7 +2816,6 @@ html body :is(.btn-primary,
     .source-concept-confirm-btn,
     .pm-qc-button,
     .pm-full-action,
-    .chat-send-btn,
     .save-restaurant-state,
     .stat-icon.blue,
     .summary-icon.is-#171717,
@@ -2865,7 +2846,6 @@ html body :is(.btn-primary,
     .source-concept-confirm-btn,
     .pm-qc-button,
     .pm-full-action,
-    .chat-send-btn,
     .save-restaurant-state,
     .admin-view-tab.active,
     .document-tab.active,

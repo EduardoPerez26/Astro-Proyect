@@ -19,8 +19,7 @@ function obtenerRutaInicial(usuario) {
         apFood:
             '/views/departments/dashboard-ap-food',
         apFoodDocuments:
-            '/views/departments/ap-food-documents',
-        chat: '/views/chat'
+            '/views/departments/ap-food-documents'
     };
 
     const aliases = {
@@ -107,7 +106,6 @@ function obtenerRutaInicial(usuario) {
         'propertyManagementDocuments',
         'apFood',
         'apFoodDocuments',
-        'chat',
         'reportCenter',
         'dashboardAdmin',
         'systemCenter',

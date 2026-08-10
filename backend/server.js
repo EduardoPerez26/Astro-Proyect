@@ -31,7 +31,6 @@ const comparacionesRoutes = require('./routes/departments/ar/comparaciones.route
 const taxRatesRoutes = require('./routes/departments/ar/taxRates.routes');
 const storeTaxCatalogRoutes = require('./routes/departments/ar/storeTaxCatalog.routes');
 const propertyManagementRoutes = require('./routes/departments/property-management/propertyManagement.routes');
-const chatRoutes = require('./routes/chat.routes');
 const chatbotRoutes = require('./routes/chatbot.routes');
 const notificacionesRoutes = require('./routes/notificaciones.routes');
 const notificationsStreamRotes = require ('./routes/notificationsStream.routes');
@@ -155,7 +154,6 @@ app.get('/api', (req, res) => {
             conciliaciones: '/api/conciliaciones',
             dashboard: '/api/dashboard/resumen',
             propertyManagement: '/api/property-management',
-            chat: '/api/chat',
             chatbot: '/api/chatbot',
             notificaciones: '/api/notificaciones',
             systemErrors: '/api/notificaciones/system-errors',
@@ -193,7 +191,6 @@ app.use('/api/comparaciones', comparacionesRoutes);
 app.use('/api/tax-rates', taxRatesRoutes);
 app.use('/api/store-tax-catalog', storeTaxCatalogRoutes);
 app.use('/api/property-management', propertyManagementRoutes);
-app.use('/api/chat', chatRoutes);
 app.use('/api/chatbot', chatbotRoutes);
 app.use('/api/notificaciones', notificacionesRoutes);
 app.use('/api/notifications-stream',notificationsStreamRotes);

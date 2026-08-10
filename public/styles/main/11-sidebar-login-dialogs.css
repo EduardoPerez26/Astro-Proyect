@@ -3537,8 +3537,7 @@ html body .login-forgot-link:hover {
         .stores-page,
         .schedule-dashboard,
         .prepaid-page,
-        .operations-admin,
-        .chat-page) {
+        .operations-admin) {
         scroll-behavior: auto;
     }
 

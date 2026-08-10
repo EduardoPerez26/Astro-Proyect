@@ -281,19 +281,6 @@
                 }
             ]
         },
-        '/views/chat': {
-            title: 'Chat',
-            summary: 'Mensajería interna del equipo.',
-            sections: [
-                {
-                    heading: 'Qué puedes hacer aquí',
-                    items: [
-                        'Buscar una conversación existente.',
-                        'Iniciar un nuevo chat con el botón "+".'
-                    ]
-                }
-            ]
-        },
         '/views/conciliacion': {
             title: 'Conciliación',
             summary: 'Concilia movimientos entre el sistema y los reportes de tienda.',

@@ -26,7 +26,7 @@
     function getLinkLabel(link) {
         return String(
             link.dataset.sidebarLabel ||
-            link.querySelector('span:not(.sidebar-chat-badge)')?.textContent ||
+            link.querySelector('span')?.textContent ||
             link.textContent ||
             ''
         ).replace(/\s+/g, ' ').trim();
@@ -167,8 +167,7 @@
             '/views/departments/property-management': ['Operations', 'Property Management', 'Workspace'],
             '/views/departments/property-management-documents': ['Operations', 'Property Management', 'Documents'],
             '/views/departments/prepaid-amortization': ['Operations', 'Property Management', 'Prepaid Bills'],
-            '/views/perfil': ['Operations', 'Account', 'Profile and security'],
-            '/views/chat': ['Operations', 'Account', 'Chat']
+            '/views/perfil': ['Operations', 'Account', 'Profile and security']
         };
 
         const parts = map[path] || ['Operations'];

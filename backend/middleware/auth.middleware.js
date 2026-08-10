@@ -249,12 +249,6 @@ const PERMISSION_MAPPING = {
     view_permisos: ['permisos', 'ver'],
     manage_permissions: ['permisos', 'editar'],
 
-    view_chat: ['chat', 'ver'],
-    send_chat: ['chat', 'crear'],
-    edit_chat: ['chat', 'editar'],
-    delete_chat: ['chat', 'eliminar'],
-    export_chat: ['chat', 'exportar'],
-
     view_restaurantes: [
         ['tiendas', 'ver'],
         ['controlRestaurants', 'ver']

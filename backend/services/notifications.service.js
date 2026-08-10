@@ -1,5 +1,5 @@
 const { pool } = require('../config/database');
-const { sendToUser , sendToUsers} = require('./sse.service');
+const { sendToUser } = require('./sse.service');
 const VALID_PRIORITIES = new Set(['low', 'normal', 'high']);
 
 function normalizePriority(priority) {
@@ -137,58 +137,7 @@ async function createNotificationsForUsers(usuarioIds = [], options = {}) {
     };
 }
 
-async function createChatMessageNotifications({
-    conversacionId,
-    senderId,
-    senderName,
-    mensaje,
-    messageId
-}) {
-    const [recipients] = await pool.query(`
-        SELECT cu.usuario_id
-        FROM chat_conversaciones_usuarios cu
-        WHERE cu.conversacion_id = ?
-          AND cu.usuario_id <> ?
-    `, [conversacionId, senderId]);
-
-    const recipientIds = recipients.map(row => row.usuario_id);
-
-    if (!recipientIds.length) {
-        return { inserted: 0, userIds: [] };
-    }
-
-    const cleanMessage = normalizeText(mensaje, 'New message');
-    const preview = cleanMessage.length > 120
-        ? `${cleanMessage.slice(0, 117)}...`
-        : cleanMessage;
-
-    const result = await createNotificationsForUsers(recipientIds, {
-        creadoPor: senderId,
-        tipo: 'chat',
-        prioridad: 'normal',
-        titulo: `New message from ${normalizeText(senderName, 'User')}`,
-        mensaje: preview,
-        urlAccion: `/views/chat?conversation=${conversacionId}`,
-        metadata: {
-            conversacion_id: conversacionId,
-            mensaje_id: messageId,
-            sender_id: senderId
-        }
-    });
-
-    sendToUsers(recipientIds,'chat-message',{
-        conversacion_id: conversacionId,
-        mensaje_id:messageId,
-        sender_id:senderId,
-        sender_name: senderName,
-        mensaje:cleanMessage
-    });
-
-    return result;
-}
-
 module.exports = {
     createNotification,
-    createNotificationsForUsers,
-    createChatMessageNotifications
+    createNotificationsForUsers
 };

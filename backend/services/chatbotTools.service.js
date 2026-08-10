@@ -108,7 +108,7 @@ const TOOL_DEFINITIONS = [
                 user_id: { type: 'integer', description: 'ID of the user, from find_user.' },
                 module: {
                     type: 'string',
-                    enum: ['dashboardAdmin', 'systemCenter', 'approvalCenter', 'reportCenter', 'auditCenter', 'systemErrors', 'tiendas', 'documentos', 'historial', 'propertyManagement', 'propertyManagementDocuments', 'usuarios', 'controlRestaurants', 'permisos', 'perfil', 'chat'],
+                    enum: ['dashboardAdmin', 'systemCenter', 'approvalCenter', 'reportCenter', 'auditCenter', 'systemErrors', 'tiendas', 'documentos', 'historial', 'propertyManagement', 'propertyManagementDocuments', 'usuarios', 'controlRestaurants', 'permisos', 'perfil'],
                     description: 'Screen/module name as used in the sidebar.'
                 },
                 action: {

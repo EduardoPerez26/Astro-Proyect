@@ -37,8 +37,7 @@ const MODULE_ACTIONS = {
     usuarios: ['ver', 'crear', 'editar', 'eliminar', 'exportar'],
     controlRestaurants: ['ver', 'crear', 'editar', 'eliminar'],
     permisos: ['ver', 'editar'],
-    perfil: ['ver', 'editar'],
-    chat: ['ver', 'crear', 'editar', 'eliminar', 'exportar']
+    perfil: ['ver', 'editar']
 };
 
 const MODULE_ROLE_LIMITS = {
@@ -253,17 +252,6 @@ const MENU_SECTIONS = [
         path: '/views/restaurantes',
         required: true,
         administrative: true
-    },
-    {
-        id: 'chat',
-        name: 'Chat',
-        description: 'Internal user messaging',
-        icon: 'fa-comments',
-        iconClass: 'chat',
-        department: 'Information Technology',
-        path: '/views/chat',
-        required: false,
-        initialOption: true
     }
 ];
 
@@ -288,8 +276,7 @@ const PERMISSION_TEMPLATES = {
             historial: ['ver', 'exportar'],
             propertyManagementDocuments: ['ver', 'exportar'],
             apFoodDocuments: ['ver', 'exportar'],
-            perfil: ['ver', 'editar'],
-            chat: ['ver', 'crear']
+            perfil: ['ver', 'editar']
         }
     },
     arOperator: {
@@ -299,8 +286,7 @@ const PERMISSION_TEMPLATES = {
             tiendas: ['ver', 'crear', 'editar', 'exportar'],
             documentos: ['ver', 'crear', 'editar', 'exportar'],
             historial: ['ver', 'exportar'],
-            perfil: ['ver', 'editar'],
-            chat: ['ver', 'crear']
+            perfil: ['ver', 'editar']
         }
     },
     propertyManagement: {
@@ -310,8 +296,7 @@ const PERMISSION_TEMPLATES = {
             propertyManagement: ['ver', 'crear', 'editar', 'exportar'],
             propertyManagementDocuments: ['ver', 'crear', 'editar', 'exportar'],
             historial: ['ver', 'exportar'],
-            perfil: ['ver', 'editar'],
-            chat: ['ver', 'crear']
+            perfil: ['ver', 'editar']
         }
     },
     apFood: {
@@ -321,8 +306,7 @@ const PERMISSION_TEMPLATES = {
             apFood: ['ver', 'crear', 'editar', 'exportar'],
             apFoodDocuments: ['ver', 'crear', 'editar', 'exportar'],
             historial: ['ver', 'exportar'],
-            perfil: ['ver', 'editar'],
-            chat: ['ver', 'crear']
+            perfil: ['ver', 'editar']
         }
     },
     itAdmin: {
@@ -337,8 +321,7 @@ const PERMISSION_TEMPLATES = {
             usuarios: ['ver', 'crear', 'editar', 'eliminar', 'exportar'],
             controlRestaurants: ['ver', 'crear', 'editar', 'eliminar'],
             permisos: ['ver', 'editar'],
-            perfil: ['ver', 'editar'],
-            chat: ['ver', 'crear', 'editar']
+            perfil: ['ver', 'editar']
         }
     },
     readOnly: {
@@ -447,10 +430,10 @@ async function loadUserData() {
 
         // Sample permissions
         const defaultPermissions = {
-            1: { dashboardAdmin: true, systemCenter: true, approvalCenter: true, reportCenter: true, auditCenter: true, systemErrors: true, tiendas: true, documentos: true, perfil: true, permisos: true, historial: true, usuarios: true, controlRestaurants: true, propertyManagement: true, propertyManagementDocuments: true, apFood: true, apFoodDocuments: true, chat: true, paginaInicio: 'dashboardAdmin' },
-            2: { approvalCenter: true, reportCenter: true, tiendas: true, documentos: true, perfil: true, permisos: false, historial: true, usuarios: false, controlRestaurants: false, propertyManagement: false, propertyManagementDocuments: false, apFood: false, apFoodDocuments: false, chat: false, paginaInicio: 'approvalCenter' },
-            3: { tiendas: true, documentos: true, perfil: true, permisos: false, historial: false, usuarios: false, controlRestaurants: false, propertyManagement: false, propertyManagementDocuments: false, apFood: false, apFoodDocuments: false, chat: false, paginaInicio: 'tiendas' },
-            4: { tiendas: true, documentos: false, perfil: true, permisos: false, historial: false, usuarios: false, controlRestaurants: false, propertyManagement: true, propertyManagementDocuments: true, apFood: false, apFoodDocuments: false, chat: false, paginaInicio: 'propertyManagement' }
+            1: { dashboardAdmin: true, systemCenter: true, approvalCenter: true, reportCenter: true, auditCenter: true, systemErrors: true, tiendas: true, documentos: true, perfil: true, permisos: true, historial: true, usuarios: true, controlRestaurants: true, propertyManagement: true, propertyManagementDocuments: true, apFood: true, apFoodDocuments: true, paginaInicio: 'dashboardAdmin' },
+            2: { approvalCenter: true, reportCenter: true, tiendas: true, documentos: true, perfil: true, permisos: false, historial: true, usuarios: false, controlRestaurants: false, propertyManagement: false, propertyManagementDocuments: false, apFood: false, apFoodDocuments: false, paginaInicio: 'approvalCenter' },
+            3: { tiendas: true, documentos: true, perfil: true, permisos: false, historial: false, usuarios: false, controlRestaurants: false, propertyManagement: false, propertyManagementDocuments: false, apFood: false, apFoodDocuments: false, paginaInicio: 'tiendas' },
+            4: { tiendas: true, documentos: false, perfil: true, permisos: false, historial: false, usuarios: false, controlRestaurants: false, propertyManagement: true, propertyManagementDocuments: true, apFood: false, apFoodDocuments: false, paginaInicio: 'propertyManagement' }
         };
 
         currentUser.permisos = normalizeLegacyPermissions(defaultPermissions[currentUser.id] || {});

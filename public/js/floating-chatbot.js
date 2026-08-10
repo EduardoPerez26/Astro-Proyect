@@ -90,8 +90,7 @@
         { label: 'Permissions', path: '/views/permisos', keywords: ['permiso', 'permission'] },
         { label: 'Restaurant control', path: '/views/restaurantes', keywords: ['restaurante', 'restaurant'] },
         { label: 'System errors', path: '/views/system-errors', keywords: ['system error', 'error del sistema'] },
-        { label: 'Profile & security', path: '/views/perfil', keywords: ['perfil', 'profile', 'password', 'contraseña', 'mfa'] },
-        { label: 'Team chat', path: '/views/chat', keywords: ['team chat', 'chat interno', 'internal messaging'] }
+        { label: 'Profile & security', path: '/views/perfil', keywords: ['perfil', 'profile', 'password', 'contraseña', 'mfa'] }
     ];
 
     const SUGGESTION_CHIPS = [

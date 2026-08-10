@@ -152,7 +152,6 @@ document.addEventListener('DOMContentLoaded', async function () {
             cerrarSesion();
         });
     }
-    iniciarContadorChat();
     configurarMenuPerfil();
 });
 
@@ -410,8 +409,7 @@ const START_PERMISSION_ORDER = [
     'propertyManagement',
     'propertyManagementDocuments',
     'apFood',
-    'apFoodDocuments',
-    'chat'
+    'apFoodDocuments'
 ];
 
 function resolverPaginaInicioPermitida(permisos, fallback = null) {
@@ -492,8 +490,7 @@ function obtenerPermissions(usuario) {
         'propertyManagement',
         'propertyManagementDocuments',
         'apFood',
-        'apFoodDocuments',
-        'chat'
+        'apFoodDocuments'
     ];
     const defaultPermissions = {
         'superadmin': {
@@ -513,8 +510,7 @@ function obtenerPermissions(usuario) {
             propertyManagement: true,
             propertyManagementDocuments: true,
             apFood: true,
-            apFoodDocuments: true,
-            chat: true
+            apFoodDocuments: true
         },
         'admin': {
             dashboardAdmin: true,
@@ -533,8 +529,7 @@ function obtenerPermissions(usuario) {
             propertyManagement: false,
             propertyManagementDocuments: false,
             apFood: false,
-            apFoodDocuments: false,
-            chat: false
+            apFoodDocuments: false
         },
         'supervisor': {
             approvalCenter: true,
@@ -552,8 +547,7 @@ function obtenerPermissions(usuario) {
             propertyManagement: false,
             propertyManagementDocuments: false,
             apFood: false,
-            apFoodDocuments: false,
-            chat: false
+            apFoodDocuments: false
 
         },
         'usuario': {
@@ -572,8 +566,7 @@ function obtenerPermissions(usuario) {
             propertyManagement: false,
             propertyManagementDocuments: false,
             apFood: false,
-            apFoodDocuments: false,
-            chat: false
+            apFoodDocuments: false
         }
     };
 
@@ -668,8 +661,7 @@ function verificarAccesoPagina(permisos) {
         '/views/departments/dashboard-ap-food': 'apFood',
         '/views/departments/ap-food': 'apFood',
         '/views/departments/ap-food-prepaid': 'apFood',
-        '/views/departments/ap-food-documents': 'apFoodDocuments',
-        '/views/chat': 'chat'
+        '/views/departments/ap-food-documents': 'apFoodDocuments'
     };
 
     const requiredPermission = routePermissions[currentPath];
@@ -709,8 +701,7 @@ function verificarAccesoPagina(permisos) {
                 propertyManagement: '/views/departments/dashboard-property',
                 propertyManagementDocuments: '/views/departments/property-management-documents',
                 apFood: '/views/departments/dashboard-ap-food',
-                apFoodDocuments: '/views/departments/ap-food-documents',
-                chat: '/views/chat'
+                apFoodDocuments: '/views/departments/ap-food-documents'
             };
             const paginaConfigurada = permisos.paginaInicio;
             const destinoConfigurado = paginaConfigurada && permisos[paginaConfigurada]
@@ -730,95 +721,10 @@ function verificarAccesoPagina(permisos) {
                                     ? '/views/departments/dashboard-ap-food'
                                     : permisos.apFoodDocuments
                                         ? '/views/departments/ap-food-documents'
-                                        : permisos.chat
-                                            ? '/views/chat'
-                                            : window.AppPermissions?.isAdmin(usuario) && permisos.dashboardAdmin
-                                                ? '/views/dashboard-admin'
-                                                : '/');
+                                        : window.AppPermissions?.isAdmin(usuario) && permisos.dashboardAdmin
+                                            ? '/views/dashboard-admin'
+                                            : '/');
             window.location.href = destino;
         });
     }
 }
-
-let chatUnreadInterval = null;
-let previousChatUnreadTotal = null;
-
-async function actualizarContadorChat() {
-    const badge = document.getElementById('chatUnreadBadge');
-    const token = localStorage.getItem('token');
-
-    if (!badge || !window.API_URL || !token) return;
-
-    const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
-    const permisos = obtenerPermissions(usuario);
-
-    if (!permisos.chat) {
-        badge.hidden = true;
-        previousChatUnreadTotal = null;
-        return;
-    }
-
-    try {
-        const response = await fetch(`${window.API_URL}/chat/no-leidos`, {
-            headers: {
-                Authorization: `Bearer ${token}`
-            }
-        });
-
-        const data = await response.json();
-
-        if (!response.ok || !data.success) {
-            throw new Error(data.message || 'No se pudo cargar el contador de chat');
-        }
-
-        const total = Number(data.total || 0);
-        const chatLink = badge.closest('.sidebar-menu-link');
-
-        badge.hidden = total <= 0;
-        badge.textContent = total > 99 ? '99+' : String(total);
-        badge.title = total > 0
-            ? `${total} unread chat message${total === 1 ? '' : 's'}`
-            : '';
-        badge.setAttribute(
-            'aria-label',
-            total > 0
-                ? `${total} unread chat message${total === 1 ? '' : 's'}`
-                : 'No unread chat messages'
-        );
-        chatLink?.classList.toggle('has-unread-chat', total > 0);
-
-        const currentPath = window.location.pathname;
-
-        if (
-            previousChatUnreadTotal !== null &&
-            total > previousChatUnreadTotal &&
-            currentPath !== '/views/chat'
-        ) {
-            Swal.fire({
-                toast: true,
-                position: 'top-end',
-                icon: 'info',
-                title: 'New chat message',
-                showConfirmButton: false,
-                timer: 2500,
-                timerProgressBar: true
-            });
-        }
-
-        previousChatUnreadTotal = total;
-    } catch (error) {
-        console.warn('Chat unread counter error:', error);
-    }
-}
-
-function iniciarContadorChat() {
-    if (chatUnreadInterval) return;
-
-    actualizarContadorChat();
-
-    chatUnreadInterval = setInterval(() => {
-        actualizarContadorChat();
-    }, 15000);
-}
-
-window.actualizarContadorChat = actualizarContadorChat;

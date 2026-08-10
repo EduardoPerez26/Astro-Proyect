@@ -3579,48 +3579,6 @@ html body .main .reconciliation-page #uploadSection .taco-bell-saved-reconciliat
     transform: scale(1.48);
 }
 
-html body .sidebar .sidebar-menu-link.has-unread-chat {
-    padding-right: 44px;
-}
-
-html body .sidebar.collapsed .sidebar-menu-link.has-unread-chat {
-    overflow: visible;
-    padding-right: 11px;
-}
-
-html.sidebar-collapsed-preset body .sidebar .sidebar-menu-link.has-unread-chat {
-    overflow: visible;
-    padding-right: 11px;
-}
-
-html body .sidebar.collapsed .sidebar-menu-link .sidebar-chat-badge:not([hidden]) {
-    position: absolute;
-    top: 4px;
-    right: 5px;
-    display: inline-flex;
-    min-width: 18px;
-    height: 18px;
-    padding: 0 5px;
-    border: 2px solid var(--xb-color-text);
-    font-size: 10px;
-    box-shadow: none;
-    z-index: 4;
-}
-
-html.sidebar-collapsed-preset body .sidebar .sidebar-menu-link .sidebar-chat-badge:not([hidden]) {
-    position: absolute;
-    top: 4px;
-    right: 5px;
-    display: inline-flex;
-    min-width: 18px;
-    height: 18px;
-    padding: 0 5px;
-    border: 2px solid var(--xb-color-text);
-    font-size: 10px;
-    box-shadow: none;
-    z-index: 4;
-}
-
 .notification-center {
     position: relative;
     display: inline-flex;

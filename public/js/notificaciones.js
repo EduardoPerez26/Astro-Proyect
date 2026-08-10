@@ -275,7 +275,6 @@
 
     function getNotificationIcon(type) {
         const icons = {
-            chat: 'fa-solid fa-comments',
             document: 'fa-solid fa-file-excel',
             approval: 'fa-solid fa-clipboard-check',
             reconciliation: 'fa-solid fa-scale-balanced',
