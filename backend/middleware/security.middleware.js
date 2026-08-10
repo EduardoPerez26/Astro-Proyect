@@ -120,9 +120,7 @@ function createRateLimiter({
             lastCleanup = now;
         }
 
-        const ip = String(req.headers['x-forwarded-for'] || '')
-            .split(',')[0]
-            .trim() || req.ip || req.socket?.remoteAddress || 'unknown';
+        const ip = req.ip || req.socket?.remoteAddress || 'unknown';
         const identity = resolveRateLimitIdentity(req) || `ip:${ip}`;
         const key = `${keyPrefix}:${identity}`;
         const current = buckets.get(key);

@@ -186,9 +186,8 @@ function inclusiveMonthCount(startDate, endDate) {
 
 
 function normalizeAmortizationMode(value) {
-    return String(value || 'NORMAL').toUpperCase() === 'CLOSEOUT'
-        ? 'CLOSEOUT'
-        : 'NORMAL';
+    const normalized = String(value || 'NORMAL').toUpperCase();
+    return ['CLOSEOUT', 'PASSTHROUGH', 'ACCRUAL'].includes(normalized) ? normalized : 'NORMAL';
 }
 
 function sqlMonth(value) {
@@ -246,6 +245,39 @@ function getCloseoutPreview(row, startDate, endDate, closeoutDate) {
     };
 }
 
+function firstDayOfNextMonth(dateStr) {
+    const parts = parseSqlDateParts(dateStr);
+    if (!parts) return '';
+    const targetYear = parts.year + Math.floor(parts.month / 12);
+    const targetMonth = parts.month % 12;
+    return formatSqlDate(new Date(Date.UTC(targetYear, targetMonth, 1)));
+}
+
+function getAccrualClosurePreview(row, closureDate, actualBillAmount) {
+    const amortization = getRowAmortization(row);
+    const totalMonths = amortization.months;
+    const closureMonth = sqlMonth(closureDate);
+    const startMonth = sqlMonth(amortization.start);
+    const endMonth = sqlMonth(amortization.end);
+
+    if (!totalMonths || !closureMonth || closureMonth < startMonth || closureMonth > endMonth) {
+        return null;
+    }
+    const closureSqlDate = `${closureMonth}-01`;
+    const monthsThroughClosure = inclusiveMonthCount(amortization.start, closureSqlDate);
+    const amountPaid = Number(row.amount_paid || 0);
+    const accruedThroughClosure = roundCurrency(amountPaid * monthsThroughClosure / totalMonths);
+    const remainder = roundCurrency(Number(actualBillAmount || 0) - accruedThroughClosure);
+
+    return {
+        totalMonths,
+        monthsThroughClosure,
+        closureDate: closureSqlDate,
+        accruedThroughClosure,
+        remainder
+    };
+}
+
 function getRowAmortization(row = {}) {
     const defaultStart = sqlDate(state.selectedSchedule?.amortization_start);
     const defaultEnd = sqlDate(state.selectedSchedule?.amortization_end);
@@ -261,6 +293,8 @@ function getRowAmortization(row = {}) {
         mode,
         closeoutDate,
         isCloseout: mode === 'CLOSEOUT' && Boolean(closeoutDate),
+        isPassthrough: mode === 'PASSTHROUGH',
+        isAccrual: mode === 'ACCRUAL',
         isCustom: Boolean(start && end && (start !== defaultStart || end !== defaultEnd))
     };
 }
@@ -776,7 +810,7 @@ function renderSourceRows(rows) {
 
                 <td class="source-row-actions source-sticky-actions">
                     <div class="source-row-action-group" role="group" aria-label="Source row actions">
-                        <button
+                                                <button
                             type="button"
                             class="source-action-btn source-action-edit"
                             data-edit-source-amortization="${escapeHtml(rowKey)}"
@@ -785,9 +819,21 @@ function renderSourceRows(rows) {
                         >
                             <i class="fa-solid fa-calendar-days" aria-hidden="true"></i>
                         </button>
+                        ${period.isAccrual ? `
+                        <button
+                            type="button"
+                            class="source-action-btn source-action-accrual-close"
+                            data-close-accrual="${escapeHtml(rowKey)}"
+                            title="Close accrual and transfer remainder to 132020"
+                            aria-label="Close accrual for store ${escapeHtml(row.store_number || '')}"
+                        >
+                            <i class="fa-solid fa-right-left" aria-hidden="true"></i>
+                        </button>
+                        ` : ''}
                         <button
                             type="button"
                             class="source-action-btn source-action-accounts"
+
                             data-edit-source-accounts="${escapeHtml(rowKey)}"
                             title="Edit GL accounts for this row"
                             aria-label="Edit GL accounts for store ${escapeHtml(row.store_number || '')}"
@@ -858,7 +904,7 @@ function serializeSourceRow(row, index) {
         expense_account: String(row.expense_account || '').trim() || null,
         amortization_start: amortization.start || null,
         amortization_end: amortization.end || null,
-        amortization_mode: amortization.isCloseout ? 'CLOSEOUT' : 'NORMAL',
+        amortization_mode: amortization.mode,
         closeout_date: amortization.isCloseout ? amortization.closeoutDate : null,
         is_manual: Number(row.is_manual || 0)
     };
@@ -1299,8 +1345,83 @@ function ensureCloseoutModalStyles() {
             line-height: 1.4 !important;
         }
 
+        .amort-mode-group {
+            display: grid !important;
+            grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+            gap: 9px !important;
+        }
+
+        .amort-mode-option {
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 7px !important;
+            padding: 11px !important;
+            border: 1px solid #e5e5e5 !important;
+            border-radius: 13px !important;
+            background: #fafafa !important;
+            cursor: pointer !important;
+            position: relative !important;
+            transition: border-color .12s ease, background .12s ease, box-shadow .12s ease !important;
+        }
+
+        .amort-mode-option:hover {
+            border-color: #c7c7c7 !important;
+        }
+
+        .amort-mode-option:has(input:checked) {
+            border-color: #1a1a1a !important;
+            background: #ffffff !important;
+            box-shadow: 0 0 0 1px #1a1a1a inset !important;
+        }
+
+        .amort-mode-option input {
+            position: absolute !important;
+            top: 10px !important;
+            right: 10px !important;
+            width: 15px !important;
+            height: 15px !important;
+            margin: 0 !important;
+            accent-color: #1a1a1a !important;
+        }
+
+        .amort-mode-icon {
+            width: 28px !important;
+            height: 28px !important;
+            border-radius: 9px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            background: #ececec !important;
+            color: #555555 !important;
+            font-size: 12px !important;
+        }
+
+        .amort-mode-option:has(input:checked) .amort-mode-icon {
+            background: #1a1a1a !important;
+            color: #ffffff !important;
+        }
+
+        .amort-mode-copy {
+            display: grid !important;
+            gap: 2px !important;
+            padding-right: 16px !important;
+        }
+
+        .amort-mode-copy strong {
+            font-size: 12px !important;
+            font-weight: 850 !important;
+            color: #1a1a1a !important;
+        }
+
+        .amort-mode-copy small {
+            font-size: 10px !important;
+            line-height: 1.35 !important;
+            color: #7a7a7a !important;
+        }
+
         .source-closeout-month {
             display: grid !important;
+            grid-template-columns: 200px !important;
             gap: 7px !important;
             margin: 0 !important;
         }
@@ -1346,9 +1467,18 @@ function ensureCloseoutModalStyles() {
     document.head.appendChild(style);
 }
 
-function sourceAmortizationPreviewText(row, start, end, closeoutEnabled, closeoutDate) {
+function sourceAmortizationPreviewText(row, start, end, closeoutEnabled, closeoutDate, passthroughEnabled, accrualEnabled) {
+    if (passthroughEnabled) {
+        return "Pass-through line: no fixed monthly amount. Each month's value will come directly from that month's GL upload for this store.";
+    }
+
     const months = inclusiveMonthCount(start, end);
     if (!months) return 'Select a valid original amortization period.';
+
+    if (accrualEnabled) {
+        const monthlyAccrual = roundCurrency(Number(row.amount_paid || 0) / months);
+        return `${months} monthly accrual entries of ${money(monthlyAccrual)} will build up the liability balance. Nothing is paid yet - close this out manually once the real bill is paid.`;
+    }
 
     if (!closeoutEnabled) {
         return `${months} monthly amortization entries will be generated.`;
@@ -1364,13 +1494,18 @@ function sourceAmortizationPreviewText(row, start, end, closeoutEnabled, closeou
 
 function sourceAmortizationModalHtml(row, defaults) {
     const closeoutEnabled = defaults.isCloseout;
+    const passthroughEnabled = defaults.isPassthrough;
+    const accrualEnabled = defaults.isAccrual;
+    const currentMode = defaults.mode || 'NORMAL';
     const closeoutMonth = sqlMonth(defaults.closeoutDate);
     const previewText = sourceAmortizationPreviewText(
         row,
         defaults.start,
         defaults.end,
         closeoutEnabled,
-        defaults.closeoutDate
+        defaults.closeoutDate,
+        passthroughEnabled,
+        accrualEnabled
     );
 
     return `
@@ -1405,28 +1540,55 @@ function sourceAmortizationModalHtml(row, defaults) {
                 </label>
             </div>
 
-            <div class="source-closeout-panel">
-                <label class="source-closeout-toggle">
-                    <input id="rowCloseoutEnabled" type="checkbox" ${closeoutEnabled ? 'checked' : ''}>
-                    <span class="source-closeout-toggle-copy">
-                        <strong>Store closed — amortize remaining balance</strong>
-                        <small>Keep the original term. The unamortized balance will be posted completely in the closure month.</small>
+                        <div class="amort-mode-group" role="radiogroup" aria-label="Amortization behavior">
+                <label class="amort-mode-option">
+                    <input type="radio" name="rowAmortMode" value="NORMAL" ${currentMode === 'NORMAL' ? 'checked' : ''}>
+                    <span class="amort-mode-icon"><i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i></span>
+                    <span class="amort-mode-copy">
+                        <strong>Normal</strong>
+                        <small>Even monthly amortization</small>
                     </span>
                 </label>
-
-                <label class="source-closeout-month ${closeoutEnabled ? '' : 'is-disabled'}" id="rowCloseoutMonthField">
-                    <span>Closure month</span>
-                    <input id="rowCloseoutMonth" class="swal2-input" type="month" value="${escapeHtml(closeoutMonth)}" ${closeoutEnabled ? '' : 'disabled'}>
+                <label class="amort-mode-option">
+                    <input type="radio" name="rowAmortMode" value="CLOSEOUT" ${currentMode === 'CLOSEOUT' ? 'checked' : ''}>
+                    <span class="amort-mode-icon"><i class="fa-solid fa-store-slash" aria-hidden="true"></i></span>
+                    <span class="amort-mode-copy">
+                        <strong>Store closed</strong>
+                        <small>Post the rest in the closure month</small>
+                    </span>
+                </label>
+                <label class="amort-mode-option">
+                    <input type="radio" name="rowAmortMode" value="PASSTHROUGH" ${currentMode === 'PASSTHROUGH' ? 'checked' : ''}>
+                    <span class="amort-mode-icon"><i class="fa-solid fa-shuffle" aria-hidden="true"></i></span>
+                    <span class="amort-mode-copy">
+                        <strong>Pass-through</strong>
+                        <small>Amount comes from each GL upload</small>
+                    </span>
+                </label>
+                <label class="amort-mode-option">
+                    <input type="radio" name="rowAmortMode" value="ACCRUAL" ${currentMode === 'ACCRUAL' ? 'checked' : ''}>
+                    <span class="amort-mode-icon"><i class="fa-solid fa-scale-unbalanced" aria-hidden="true"></i></span>
+                    <span class="amort-mode-copy">
+                        <strong>Accrual</strong>
+                        <small>Builds a liability, no bill yet</small>
+                    </span>
                 </label>
             </div>
 
-            <div class="source-amortization-preview ${closeoutEnabled ? 'closeout' : ''}" id="rowAmortizationPreview">
-                <i class="fa-solid ${closeoutEnabled ? 'fa-store-slash' : 'fa-clock-rotate-left'}" aria-hidden="true"></i>
+            <label class="source-closeout-month ${closeoutEnabled ? '' : 'is-disabled'}" id="rowCloseoutMonthField">
+                <span>Closure month</span>
+                <input id="rowCloseoutMonth" class="swal2-input" type="month" value="${escapeHtml(closeoutMonth)}" ${closeoutEnabled ? '' : 'disabled'}>
+            </label>
+
+            <div class="source-amortization-preview ${(closeoutEnabled && !passthroughEnabled && !accrualEnabled) ? 'closeout' : ''}" id="rowAmortizationPreview">
+
+                <i class="fa-solid ${accrualEnabled ? 'fa-scale-unbalanced' : closeoutEnabled ? 'fa-store-slash' : 'fa-clock-rotate-left'}" aria-hidden="true"></i>
                 <span>${escapeHtml(previewText)}</span>
             </div>
         </div>
     `;
 }
+
 
 
 async function editSourceAmortization(rowKey) {
@@ -1446,29 +1608,43 @@ async function editSourceAmortization(rowKey) {
             return;
         }
 
-        const closeoutEnabled = window.confirm(
-            'Did the store close? Press OK to amortize the remaining balance in the closure month.'
+        const passthroughEnabled = window.confirm(
+            "Is this a pass-through line (no fixed monthly amount - filled from each month's GL upload)? Press OK for yes."
         );
+
+        let accrualEnabled = false;
+        let closeoutEnabled = false;
         let closeoutDate = '';
-        if (closeoutEnabled) {
-            const closeoutMonth = window.prompt(
-                'Closure month (YYYY-MM):',
-                sqlMonth(current.closeoutDate) || start.slice(0, 7)
-            )?.trim();
-            closeoutDate = monthInputToSqlDate(closeoutMonth);
-            if (!closeoutDate || closeoutDate.slice(0, 7) < start.slice(0, 7) || closeoutDate.slice(0, 7) > end.slice(0, 7)) {
-                showToast('The closure month must be inside the original amortization period.', 'error');
-                return;
+        if (!passthroughEnabled) {
+            accrualEnabled = window.confirm(
+                'Is this an accrual (a provision with no bill yet, e.g. 232000)? Press OK for yes.'
+            );
+            if (!accrualEnabled) {
+                closeoutEnabled = window.confirm(
+                    'Did the store close? Press OK to amortize the remaining balance in the closure month.'
+                );
+                if (closeoutEnabled) {
+                    const closeoutMonth = window.prompt(
+                        'Closure month (YYYY-MM):',
+                        sqlMonth(current.closeoutDate) || start.slice(0, 7)
+                    )?.trim();
+                    closeoutDate = monthInputToSqlDate(closeoutMonth);
+                    if (!closeoutDate || closeoutDate.slice(0, 7) < start.slice(0, 7) || closeoutDate.slice(0, 7) > end.slice(0, 7)) {
+                        showToast('The closure month must be inside the original amortization period.', 'error');
+                        return;
+                    }
+                }
             }
         }
 
         values = {
             start,
             end,
-            amortizationMode: closeoutEnabled ? 'CLOSEOUT' : 'NORMAL',
+            amortizationMode: passthroughEnabled ? 'PASSTHROUGH' : accrualEnabled ? 'ACCRUAL' : closeoutEnabled ? 'CLOSEOUT' : 'NORMAL',
             closeoutDate: closeoutEnabled ? closeoutDate : null
         };
     } else {
+
         ensureAmortizationModalStyles();
         ensureCloseoutModalStyles();
 
@@ -1510,24 +1686,30 @@ async function editSourceAmortization(rowKey) {
 
                 const startInput = popup.querySelector('#rowAmortizationStart');
                 const endInput = popup.querySelector('#rowAmortizationEnd');
-                const closeoutToggle = popup.querySelector('#rowCloseoutEnabled');
+                const modeInputs = popup.querySelectorAll('input[name="rowAmortMode"]');
                 const closeoutMonthInput = popup.querySelector('#rowCloseoutMonth');
                 const closeoutMonthField = popup.querySelector('#rowCloseoutMonthField');
                 const previewBox = popup.querySelector('#rowAmortizationPreview');
                 const previewIcon = previewBox?.querySelector('i');
                 const preview = previewBox?.querySelector('span');
 
+                const getSelectedMode = () =>
+                    popup.querySelector('input[name="rowAmortMode"]:checked')?.value || 'NORMAL';
+
                 const updatePreview = () => {
                     const start = startInput?.value || '';
                     const end = endInput?.value || '';
-                    const closeoutEnabled = Boolean(closeoutToggle?.checked);
+                    const mode = getSelectedMode();
+                    const closeoutEnabled = mode === 'CLOSEOUT';
+                    const passthroughEnabled = mode === 'PASSTHROUGH';
+                    const accrualEnabled = mode === 'ACCRUAL';
                     const closeoutDate = monthInputToSqlDate(closeoutMonthInput?.value);
 
                     if (closeoutMonthInput) closeoutMonthInput.disabled = !closeoutEnabled;
                     closeoutMonthField?.classList.toggle('is-disabled', !closeoutEnabled);
                     previewBox?.classList.toggle('closeout', closeoutEnabled);
                     if (previewIcon) {
-                        previewIcon.className = `fa-solid ${closeoutEnabled ? 'fa-store-slash' : 'fa-clock-rotate-left'}`;
+                        previewIcon.className = `fa-solid ${accrualEnabled ? 'fa-scale-unbalanced' : passthroughEnabled ? 'fa-shuffle' : closeoutEnabled ? 'fa-store-slash' : 'fa-clock-rotate-left'}`;
                     }
                     if (preview) {
                         preview.textContent = sourceAmortizationPreviewText(
@@ -1535,10 +1717,13 @@ async function editSourceAmortization(rowKey) {
                             start,
                             end,
                             closeoutEnabled,
-                            closeoutDate
+                            closeoutDate,
+                            passthroughEnabled,
+                            accrualEnabled
                         );
                     }
                 };
+
 
                 popup.querySelectorAll('[data-amortization-months]').forEach(button => {
                     button.addEventListener('click', () => {
@@ -1555,15 +1740,13 @@ async function editSourceAmortization(rowKey) {
 
                 startInput?.addEventListener('change', updatePreview);
                 endInput?.addEventListener('change', updatePreview);
-                closeoutToggle?.addEventListener('change', () => {
-                    if (
-                        closeoutToggle.checked &&
-                        closeoutMonthInput &&
-                        !closeoutMonthInput.value
-                    ) {
-                        closeoutMonthInput.value = sqlMonth(startInput?.value);
-                    }
-                    updatePreview();
+                modeInputs.forEach(input => {
+                    input.addEventListener('change', () => {
+                        if (input.value === 'CLOSEOUT' && closeoutMonthInput && !closeoutMonthInput.value) {
+                            closeoutMonthInput.value = sqlMonth(startInput?.value);
+                        }
+                        updatePreview();
+                    });
                 });
                 closeoutMonthInput?.addEventListener('change', updatePreview);
                 updatePreview();
@@ -1571,7 +1754,8 @@ async function editSourceAmortization(rowKey) {
             preConfirm: () => {
                 const start = document.getElementById('rowAmortizationStart')?.value || '';
                 const end = document.getElementById('rowAmortizationEnd')?.value || '';
-                const closeoutEnabled = Boolean(document.getElementById('rowCloseoutEnabled')?.checked);
+                const mode = document.querySelector('input[name="rowAmortMode"]:checked')?.value || 'NORMAL';
+                const closeoutEnabled = mode === 'CLOSEOUT';
                 const closeoutDate = monthInputToSqlDate(
                     document.getElementById('rowCloseoutMonth')?.value || ''
                 );
@@ -1599,11 +1783,12 @@ async function editSourceAmortization(rowKey) {
                 return {
                     start,
                     end,
-                    amortizationMode: closeoutEnabled ? 'CLOSEOUT' : 'NORMAL',
+                    amortizationMode: mode,
                     closeoutDate: closeoutEnabled ? closeoutDate : null
                 };
             }
         });
+
 
         if (!result.isConfirmed) return;
         values = result.value;
@@ -1617,7 +1802,11 @@ async function editSourceAmortization(rowKey) {
     markSourceDirty();
     renderSourceRows(state.sourceRows);
 
-    if (values.amortizationMode === 'CLOSEOUT') {
+    if (values.amortizationMode === 'PASSTHROUGH') {
+        showToast('Row set to pass-through. Its monthly amounts will come from the GL uploads for this store.', 'success');
+    } else if (values.amortizationMode === 'ACCRUAL') {
+        showToast(`Row set to accrual. It will build up a ${money(row.amount_paid)} liability balance over ${inclusiveMonthCount(values.start, values.end)} months.`, 'success');
+    } else if (values.amortizationMode === 'CLOSEOUT') {
         const preview = getCloseoutPreview(row, values.start, values.end, values.closeoutDate);
         showToast(
             `Store closeout set for ${formatMonthLabel(values.closeoutDate)}. Remaining balance: ${money(preview?.closeoutAmount || 0)}.`,
@@ -2132,6 +2321,221 @@ async function addManualSourceRow() {
     showToast('Manual concept added. Generate or regenerate the schedule to apply it.', 'success');
 }
 
+function accrualClosureModalHtml(row, defaults) {
+    return `
+        <div class="source-concept-modal-body">
+            <p class="source-modal-helper">
+                Cap this accrual at what was actually accrued through the closure month, and move the rest into a new 132020 line.
+            </p>
+            <div class="source-concept-grid source-concept-grid-stack">
+                <label><span>Closure month</span><input id="accrualClosureMonth" class="swal2-input" type="month" value="${escapeHtml(defaults.closureMonth)}"></label>
+                <label><span>Actual bill amount</span><input id="accrualActualAmount" class="swal2-input" type="number" min="0.01" step="0.01" value="${escapeHtml(defaults.actualAmount)}"></label>
+            </div>
+            <div class="source-concept-grid source-concept-grid-stack">
+                <label><span>New 132020 line - Prepaid GL</span><input id="accrualNewPrepaidAccount" class="swal2-input" value="${escapeHtml(defaults.newPrepaidAccount)}"></label>
+                <label><span>New 132020 line - Expense GL</span><input id="accrualNewExpenseAccount" class="swal2-input" value="${escapeHtml(defaults.newExpenseAccount)}"></label>
+            </div>
+            <div class="source-concept-grid source-concept-grid-stack">
+                <label><span>New line start date</span><input id="accrualNewStart" class="swal2-input" type="date" value="${escapeHtml(defaults.newStart)}"></label>
+                <label><span>New line end date</span><input id="accrualNewEnd" class="swal2-input" type="date" value="${escapeHtml(defaults.newEnd)}"></label>
+            </div>
+            <div class="source-amortization-preview" id="accrualClosurePreview">
+                <i class="fa-solid fa-right-left" aria-hidden="true"></i>
+                <span>Enter a closure month and the actual bill amount to see the split.</span>
+            </div>
+        </div>
+    `;
+}
+
+async function closeAccrualToPrepaid(rowKey) {
+    const row = state.sourceRows.find(item => String(item._draft_id) === String(rowKey));
+    if (!row) return;
+
+    const amortization = getRowAmortization(row);
+    if (!amortization.isAccrual) {
+        showToast('This action is only available for accrual rows.', 'error');
+        return;
+    }
+
+    const closureMonthDefault = sqlMonth(amortization.end) || sqlMonth(amortization.start);
+    const newStartDefault = firstDayOfNextMonth(`${closureMonthDefault}-01`);
+    const defaults = {
+        closureMonth: closureMonthDefault,
+        actualAmount: row.amount_paid || '',
+        newPrepaidAccount: '132020',
+        newExpenseAccount: row.expense_account || state.selectedSchedule?.expense_account || '708500',
+        newStart: newStartDefault,
+        newEnd: newStartDefault ? addMonthsMinusOneDay(newStartDefault, 6) : ''
+    };
+
+    let values;
+
+    if (!window.Swal) {
+        const closureMonth = window.prompt('Closure month (YYYY-MM):', defaults.closureMonth)?.trim();
+        if (!closureMonth) return;
+        const actualAmount = Number(window.prompt('Actual bill amount:', String(defaults.actualAmount)));
+        if (!Number.isFinite(actualAmount) || actualAmount <= 0) return;
+
+        const preview = getAccrualClosurePreview(row, monthInputToSqlDate(closureMonth), actualAmount);
+        if (!preview) {
+            showToast("The closure month must be inside this row's amortization period.", 'error');
+            return;
+        }
+
+        const newPrepaidAccount = window.prompt('New 132020 line - Prepaid GL account:', defaults.newPrepaidAccount)?.trim();
+        if (!newPrepaidAccount) return;
+        const newStart = window.prompt('New line start date (YYYY-MM-DD):', defaults.newStart)?.trim();
+        if (!newStart || !parseSqlDateParts(newStart)) return;
+        const newEnd = window.prompt('New line end date (YYYY-MM-DD):', defaults.newEnd)?.trim();
+        if (!newEnd || !parseSqlDateParts(newEnd) || newEnd < newStart) return;
+
+        values = {
+            closureDate: preview.closureDate,
+            accruedThroughClosure: preview.accruedThroughClosure,
+            remainder: preview.remainder,
+            newPrepaidAccount,
+            newExpenseAccount: defaults.newExpenseAccount,
+            newStart,
+            newEnd
+        };
+    } else {
+        const result = await window.Swal.fire({
+            title: 'Close accrual & transfer to 132020',
+            html: accrualClosureModalHtml(row, defaults),
+            width: 'min(720px, calc(100vw - 32px))',
+            showCancelButton: true,
+            confirmButtonText: 'Apply',
+            cancelButtonText: 'Cancel',
+            focusConfirm: false,
+            didOpen: () => {
+                const closureInput = document.getElementById('accrualClosureMonth');
+                const amountInput = document.getElementById('accrualActualAmount');
+                const startInput = document.getElementById('accrualNewStart');
+                const endInput = document.getElementById('accrualNewEnd');
+                const previewBox = document.getElementById('accrualClosurePreview');
+                const previewSpan = previewBox?.querySelector('span');
+
+                const updatePreview = () => {
+                    const closureDate = monthInputToSqlDate(closureInput?.value);
+                    const actualAmount = Number(amountInput?.value);
+                    const preview = closureDate && Number.isFinite(actualAmount) && actualAmount > 0
+                        ? getAccrualClosurePreview(row, closureDate, actualAmount)
+                        : null;
+
+                    if (previewSpan) {
+                        previewSpan.textContent = preview
+                            ? `Accrued through ${formatMonthLabel(preview.closureDate)}: ${money(preview.accruedThroughClosure)}. Remainder to 132020: ${money(preview.remainder)}.`
+                            : 'Enter a closure month and the actual bill amount to see the split.';
+                    }
+
+                    if (preview && startInput && !startInput.dataset.userEdited) {
+                        startInput.value = firstDayOfNextMonth(preview.closureDate);
+                    }
+                    if (startInput?.value && endInput && !endInput.dataset.userEdited) {
+                        endInput.value = addMonthsMinusOneDay(startInput.value, 6);
+                    }
+                };
+
+                // Both 'change' and 'input' are wired on the month field -
+                // some browsers only fire 'change' on blur for type="month",
+                // which can leave the auto-filled start/end dates stale if
+                // the user picks a value and confirms without blurring first.
+                closureInput?.addEventListener('change', updatePreview);
+                closureInput?.addEventListener('input', updatePreview);
+                amountInput?.addEventListener('input', updatePreview);
+                startInput?.addEventListener('change', () => {
+                    startInput.dataset.userEdited = '1';
+                    updatePreview();
+                });
+                endInput?.addEventListener('change', () => { endInput.dataset.userEdited = '1'; });
+                updatePreview();
+            },
+            preConfirm: () => {
+                const closureDate = monthInputToSqlDate(document.getElementById('accrualClosureMonth')?.value);
+                const actualAmount = Number(document.getElementById('accrualActualAmount')?.value);
+                const newPrepaidAccount = document.getElementById('accrualNewPrepaidAccount')?.value?.trim();
+                const newExpenseAccount = document.getElementById('accrualNewExpenseAccount')?.value?.trim();
+                const newStart = document.getElementById('accrualNewStart')?.value;
+                const newEnd = document.getElementById('accrualNewEnd')?.value;
+
+                if (!Number.isFinite(actualAmount) || actualAmount <= 0) {
+                    window.Swal.showValidationMessage('Enter the actual bill amount.');
+                    return false;
+                }
+                const preview = getAccrualClosurePreview(row, closureDate, actualAmount);
+                if (!preview) {
+                    window.Swal.showValidationMessage("The closure month must be inside this row's amortization period.");
+                    return false;
+                }
+                if (!newPrepaidAccount) {
+                    window.Swal.showValidationMessage('The new 132020 line needs a Prepaid GL account.');
+                    return false;
+                }
+                if (!newStart || !newEnd || newEnd < newStart) {
+                    window.Swal.showValidationMessage('The new line needs a valid start and end date.');
+                    return false;
+                }
+
+                return {
+                    closureDate: preview.closureDate,
+                    accruedThroughClosure: preview.accruedThroughClosure,
+                    remainder: preview.remainder,
+                    newPrepaidAccount,
+                    newExpenseAccount: newExpenseAccount || defaults.newExpenseAccount,
+                    newStart,
+                    newEnd
+                };
+            }
+        });
+
+        if (!result.isConfirmed) return;
+        values = result.value;
+    }
+
+    row.amount_paid = values.accruedThroughClosure;
+    row.amortization_end = values.closureDate;
+    row.memo_description = `${row.memo_description || ''} | Closed ${values.closureDate}: capped at accrued amount, remainder moved to 132020`.trim();
+
+    // A NORMAL row with $0 (or negative) amount_paid gets rejected when the
+    // rows are saved (there's nothing to amortize), which would silently
+    // block "Generate Schedule" entirely. Only create the 132020 line when
+    // there's an actual positive remainder to transfer.
+    const hasRemainder = values.remainder > 0.004;
+    if (hasRemainder) {
+        state.sourceRows.push({
+            store_number: row.store_number,
+            payee: row.payee,
+            doc_number: row.doc_number ? `${row.doc_number} (accrual remainder)` : 'Accrual remainder',
+            doc_date: values.closureDate,
+            posted_date: values.closureDate,
+            tax_year: row.tax_year,
+            amount_paid: values.remainder,
+            prepaid_account: values.newPrepaidAccount,
+            expense_account: values.newExpenseAccount,
+            amortization_start: values.newStart,
+            amortization_end: values.newEnd,
+            amortization_mode: 'NORMAL',
+            closeout_date: '',
+            memo_description: `Remainder from accrual row for ${row.store_number} (${row.payee || 'accrual'}), closed ${values.closureDate}`,
+            is_manual: 1,
+            source_row_number: state.sourceRows.length + 1,
+            _draft_id: `accrual-remainder-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+        });
+    }
+
+    markSourceDirty();
+    renderSourceRows(state.sourceRows);
+    activateTab('source');
+    showToast(
+        hasRemainder
+            ? `Accrual closed. ${money(values.accruedThroughClosure)} stays here, ${money(values.remainder)} moved to a new 132020 line. Regenerate the schedule to apply.`
+            : values.remainder < 0
+                ? `Accrual closed. ${money(values.accruedThroughClosure)} stays here. You over-accrued by ${money(-values.remainder)} - no 132020 line was created; review the actual bill amount.`
+                : `Accrual closed. ${money(values.accruedThroughClosure)} stays here. Nothing left to transfer to 132020.`,
+        'success'
+    );
+}
+
 function handleSourceRowsClick(event) {
     const selectCheckbox = event.target.closest('[data-source-row-select]');
     if (selectCheckbox) {
@@ -2184,6 +2588,13 @@ function handleSourceRowsClick(event) {
         return;
     }
 
+    const closeAccrualButton = event.target.closest('[data-close-accrual]');
+    if (closeAccrualButton) {
+        closeAccrualToPrepaid(closeAccrualButton.dataset.closeAccrual).catch(error => showToast(error.message, 'error'));
+        return;
+    }
+
+
     const rowButton = event.target.closest('[data-remove-source-row]');
     if (rowButton) {
         removeSourceRow(rowButton.dataset.removeSourceRow).catch(error => showToast(error.message, 'error'));
@@ -2210,15 +2621,20 @@ function buildScheduleViewModels(rows) {
     const storeTotals = new Map();
     baseSorted.forEach(row => {
         const billMonths = monthsByBill.get(Number(row.id)) || [];
-        const yearAmortization = billMonths
-            .filter(month => Number(month.period_year) === scheduleYear)
-            .reduce((total, month) => total + Number(month.expected_amount || 0), 0);
-        const endingBalance = Number(row.amount_paid || 0) - yearAmortization;
+        const isAccrual = normalizeAmortizationMode(row.amortization_mode) === 'ACCRUAL';
+        const endingBalance = isAccrual
+            ? -billMonths
+                .filter(month => Number(month.period_year) <= scheduleYear)
+                .reduce((sum, month) => sum + Number(month.expected_amount || 0), 0)
+            : Number(row.amount_paid || 0) - billMonths
+                .filter(month => Number(month.period_year) === scheduleYear)
+                .reduce((total, month) => total + Number(month.expected_amount || 0), 0);
         storeTotals.set(String(row.store_number || ''), (storeTotals.get(String(row.store_number || '')) || 0) + endingBalance);
     });
 
     return baseSorted.map(row => {
         const billMonths = monthsByBill.get(Number(row.id)) || [];
+        const isAccrual = normalizeAmortizationMode(row.amortization_mode) === 'ACCRUAL';
         const monthValues = Array.from({ length: 12 }, (_, index) => {
             const match = billMonths.find(month => Number(month.period_year) === scheduleYear && Number(month.period_month) === index + 1);
             return match ? Number(match.expected_amount || 0) : 0;
@@ -2229,14 +2645,18 @@ function buildScheduleViewModels(rows) {
         const priorBalance = priorMonths.length
             ? priorMonths.reduce((sum, month) => sum - Number(month.expected_amount || 0), amountPaid)
             : 0;
-        const endingBalance = amountPaid - billMonths
+        const cumulativeThroughYear = billMonths
             .filter(month => Number(month.period_year) <= scheduleYear)
             .reduce((sum, month) => sum + Number(month.expected_amount || 0), 0);
+        const endingBalance = isAccrual
+            ? -cumulativeThroughYear
+            : amountPaid - cumulativeThroughYear;
         const storeEnding = storeTotals.get(String(row.store_number || '')) || 0;
 
-        return { row, entity: getBillEntity(row), monthValues, ytd, amountPaid, priorBalance, endingBalance, storeEnding };
+        return { row, entity: getBillEntity(row), monthValues, ytd, amountPaid, priorBalance, endingBalance, storeEnding, isAccrual };
     });
 }
+
 
 function renderBillRows(rows) {
     els.saveScheduleFooter?.classList.toggle('hidden', !rows.length);
@@ -2284,7 +2704,7 @@ function renderBillRows(rows) {
 
 
         sortedGroup.forEach(vm => {
-            const { row, monthValues, ytd, amountPaid, priorBalance, endingBalance, storeEnding } = vm;
+            const { row, monthValues, ytd, amountPaid, priorBalance, endingBalance, storeEnding, isAccrual } = vm;
             html.push(`
                 <tr>
                     <td title="${escapeHtml(row.payee || '')}">${escapeHtml(row.payee || '')}</td>
@@ -2299,11 +2719,12 @@ function renderBillRows(rows) {
                     <td class="number monthly-amount">${money(row.monthly_amount)}</td>
                     ${monthValues.map(value => `<td class="number month-amount">${value ? `(${money(value).replace('$', '')})` : '-'}</td>`).join('')}
                     <td class="number ytd-amount">${ytd ? `(${money(ytd).replace('$', '')})` : '-'}</td>
-                    <td class="number ending-balance">${money(Math.max(endingBalance, 0))}</td>
+                    <td class="number ending-balance">${isAccrual ? money(endingBalance) : money(Math.max(endingBalance, 0))}</td>
                     <td class="number store-balance">${money(Math.max(storeEnding, 0))}</td>
                 </tr>
             `);
         });
+
 
         const subtotal = computeScheduleTotals(groupViewModels);
 
@@ -2521,14 +2942,30 @@ async function handleAppendBillSource(event) {
     if (!file || !state.selectedScheduleId || isUploadingBillSource) return;
 
     const scheduleYear = Number(state.selectedSchedule?.schedule_year || new Date().getFullYear());
-    const range = await promptAmortizationRange(
-        { start: `${scheduleYear}-09-01`, end: `${scheduleYear}-12-31` },
+    // No period prompt here - every appended row gets the schedule's own
+    // amortization period as a starting default (same fallback the backend
+    // already applies), and gets reviewed/adjusted per row afterward in
+    // Source Rows ("Edit amortization"), where the actual bill dates and
+    // amounts are visible instead of being guessed blind before upload.
+    const range = {
+        start: sqlDate(state.selectedSchedule?.amortization_start) || `${scheduleYear}-09-01`,
+        end: sqlDate(state.selectedSchedule?.amortization_end) || `${scheduleYear}-08-31`
+    };
+
+    // Defaults to the schedule's own GL accounts, so appending a file for the
+    // same account (the common case) doesn't require changing anything here.
+    // Override this to fold a different account's bills (e.g. 132020) into
+    // this same schedule.
+    const accounts = await promptAccounts(
         {
-            title: 'Amortization period for this payment',
-            description: "This period will apply to every row in the uploaded file. It does not have to match the original schedule's period - use the range that covers this new payment."
-        }
+            prepaid_account: state.selectedSchedule?.prepaid_account || '138500',
+            expense_account: state.selectedSchedule?.expense_account || '708500',
+            description: "GL accounts for the rows in this uploaded file. Change these if this file belongs to a different GL account than the schedule's default."
+        },
+        'GL accounts for this file',
+        'Continue'
     );
-    if (!range) return;
+    if (!accounts) return;
 
     isUploadingBillSource = true;
     const originalHtml = els.appendBillSourceBtn?.innerHTML;
@@ -2541,6 +2978,8 @@ async function handleAppendBillSource(event) {
     formData.append('billSourceFile', file);
     formData.append('amortization_start', range.start);
     formData.append('amortization_end', range.end);
+    formData.append('prepaid_account', accounts.prepaid_account);
+    formData.append('expense_account', accounts.expense_account);
 
     try {
         const data = await apiFetch(`/prepaids/${state.selectedScheduleId}/append-bill-source`, {
@@ -2549,7 +2988,7 @@ async function handleAppendBillSource(event) {
             headers: authHeaders(false)
         });
         showToast(
-            `Added ${data.appended_rows} new bill row${data.appended_rows === 1 ? '' : 's'} for ${shortDate(data.amortization_start)} to ${shortDate(data.amortization_end)}. Regenerate the schedule to include them.`,
+            `Added ${data.appended_rows} new bill row${data.appended_rows === 1 ? '' : 's'} with a default period of ${shortDate(data.amortization_start)} to ${shortDate(data.amortization_end)}. Review each row's amortization in Source Rows before generating.`,
             'success'
         );
         await loadScheduleDetail(state.selectedScheduleId);

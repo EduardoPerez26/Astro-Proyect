@@ -204,10 +204,14 @@ async function executeTool(name, args, req) {
         }
 
         case 'list_departments': {
-            const [rows] = await pool.query(
-                'SELECT id, nombre FROM departamentos WHERE activo = TRUE ORDER BY nombre'
-            );
-            return { departments: rows };
+            const { ok, status, data } = await callInternalApi(req, 'GET', '/departamentos');
+            if (!ok) return { error: data.message || `Request failed with status ${status}` };
+
+            return {
+                departments: (data.departamentos || [])
+                    .filter(dept => Boolean(dept.activo))
+                    .map(dept => ({ id: dept.id, nombre: dept.nombre }))
+            };
         }
 
         case 'create_user': {

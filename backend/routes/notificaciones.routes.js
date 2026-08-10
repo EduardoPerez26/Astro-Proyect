@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 
 const { pool } = require('../config/database');
-const { verificarToken, esAdmin } = require('../middleware/auth.middleware');
+const { verificarToken, esAdmin, checkPermission } = require('../middleware/auth.middleware');
 const { isAdminRole } = require('../config/permissions');
 const { createNotificationsForUsers } = require('../services/notifications.service');
 
@@ -305,7 +305,7 @@ router.get('/no-leidas', async (req, res) => {
 });
 
 
-router.get('/system-errors', esAdmin, async (req, res) => {
+router.get('/system-errors', esAdmin, checkPermission('view_system_errors'), async (req, res) => {
     try {
         const limit = parseLimit(req.query.limit, 25, 100);
         const offset = parseOffset(req.query.offset);
@@ -385,7 +385,7 @@ router.get('/system-errors', esAdmin, async (req, res) => {
     }
 });
 
-router.get('/system-errors/:id', esAdmin, async (req, res) => {
+router.get('/system-errors/:id', esAdmin, checkPermission('view_system_errors'), async (req, res) => {
     try {
         const errorId = Number(req.params.id);
 
@@ -418,7 +418,7 @@ router.get('/system-errors/:id', esAdmin, async (req, res) => {
     }
 });
 
-router.put('/system-errors/:id/resolved', esAdmin, async (req, res) => {
+router.put('/system-errors/:id/resolved', esAdmin, checkPermission('edit_system_errors'), async (req, res) => {
     try {
         const usuarioId = getUsuarioId(req);
         const fallbackResolvedBy = getUsuarioLabelFromRequest(req);
@@ -477,7 +477,7 @@ router.put('/system-errors/:id/resolved', esAdmin, async (req, res) => {
     }
 });
 
-router.put('/system-errors/:id/reopen', esAdmin, async (req, res) => {
+router.put('/system-errors/:id/reopen', esAdmin, checkPermission('edit_system_errors'), async (req, res) => {
     try {
         const errorId = Number(req.params.id);
 

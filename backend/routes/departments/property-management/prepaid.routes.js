@@ -20,6 +20,7 @@ const {
 } = require('../../../services/departments/property-management/prepaid/prepaidScheduleWorkbook');
 const {
     calculateBillAmortization,
+    buildPassthroughMonths,
     defaultAmortizationPeriod,
     inferTaxYearFromText,
     parseDate,
@@ -30,11 +31,13 @@ const {
 const {
     calculateBillAmortizationWithCloseout
 } = require('../../../services/departments/property-management/prepaid/prepaidCloseoutCalculator');
+const { excelFileFilter } = require('../../../utils/uploadFileValidation');
 
 const router = express.Router();
 const upload = multer({
     storage: multer.memoryStorage(),
-    limits: { fileSize: Number(process.env.PREPAID_FILE_SIZE_MB || process.env.MAX_FILE_SIZE_MB || 75) * 1024 * 1024 }
+    limits: { fileSize: Number(process.env.PREPAID_FILE_SIZE_MB || process.env.MAX_FILE_SIZE_MB || 75) * 1024 * 1024 },
+    fileFilter: excelFileFilter
 });
 
 const draftSchedules = new Map();
@@ -148,7 +151,8 @@ function monthlyValidationKey(row = {}) {
     return [
         Number(row.period_year || 0),
         Number(row.period_month || 0),
-        cleanText(row.store_number)
+        cleanText(row.store_number),
+        cleanText(row.prepaid_account)
     ].join('|');
 }
 
@@ -261,83 +265,109 @@ function applyMonthlyGlByStore(
     const groups = new Map();
 
     for (const row of monthRows) {
-        const storeNumber = cleanText(row.store_number);
+        const groupKey = [
+            cleanText(row.store_number),
+            cleanText(row.prepaid_account)
+        ].join('::');
 
-        if (!groups.has(storeNumber)) {
-            groups.set(storeNumber, []);
+        if (!groups.has(groupKey)) {
+            groups.set(groupKey, { storeNumber: cleanText(row.store_number), rows: [] });
         }
 
-        groups.get(storeNumber).push(row);
+        groups.get(groupKey).rows.push(row);
     }
 
     let matched = 0;
     let differences = 0;
     let missing = 0;
 
-    for (const [storeNumber, rows] of groups) {
-        const expectedTotal = roundMoney(
-            rows.reduce(
-                (sum, row) =>
-                    sum + Number(row.expected_amount || 0),
-                0
-            )
+    for (const { storeNumber, rows } of groups.values()) {
+        const passthroughRows = rows.filter(
+            row => normalizeAmortizationMode(row.amortization_mode) === 'PASSTHROUGH'
+        );
+        const regularRows = rows.filter(
+            row => normalizeAmortizationMode(row.amortization_mode) !== 'PASSTHROUGH'
         );
 
         const actualTotal = roundMoney(
             actualByStore.get(String(storeNumber)) || 0
         );
 
-        const storeDifference = roundMoney(
-            actualTotal - expectedTotal
+        const regularExpectedTotal = roundMoney(
+            regularRows.reduce((sum, row) => sum + Number(row.expected_amount || 0), 0)
         );
 
-        let status = 'MATCHED';
+        // A pass-through line has no expectation of its own: whatever GL
+        // activity is left over after the scheduled/regular bills for this
+        // store+account+month IS the line. If nothing is left over, it stays
+        // at zero that month (expensed directly, never touched the balance
+        // sheet). Known limitation: if a regular bill AND a pass-through line
+        // share the same store+account+month, a wrong regular posting gets
+        // absorbed into the pass-through amount instead of flagged - there's
+        // no per-transaction detail to split them further.
+        const passthroughActualTotal = passthroughRows.length
+            ? roundMoney(actualTotal - regularExpectedTotal)
+            : 0;
 
-        if (
-            Math.abs(actualTotal) <= 0.01
-            && Math.abs(expectedTotal) > 0.01
-        ) {
-            status = 'MISSING_GL';
-            missing += 1;
-        } else if (Math.abs(storeDifference) > 0.01) {
-            status = 'DIFFERENCE';
-            differences += 1;
-        } else {
-            matched += 1;
+        let regularStatus = 'MATCHED';
+        if (regularRows.length) {
+            if (Math.abs(actualTotal) <= 0.01 && Math.abs(regularExpectedTotal) > 0.01) {
+                regularStatus = 'MISSING_GL';
+            } else if (!passthroughRows.length && Math.abs(roundMoney(actualTotal - regularExpectedTotal)) > 0.01) {
+                regularStatus = 'DIFFERENCE';
+            }
         }
 
+        if (regularStatus === 'MISSING_GL') missing += 1;
+        else if (regularStatus === 'DIFFERENCE') differences += 1;
+        else matched += 1;
+
         let allocatedActual = 0;
-
-        rows.forEach((row, index) => {
+        regularRows.forEach((row, index) => {
             const expected = roundMoney(row.expected_amount);
-
             let actual = 0;
 
-            if (index === rows.length - 1) {
-                actual = roundMoney(
-                    actualTotal - allocatedActual
-                );
-            } else if (Math.abs(expectedTotal) > 0.01) {
-                actual = roundMoney(
-                    actualTotal * (expected / expectedTotal)
-                );
-                allocatedActual = roundMoney(
-                    allocatedActual + actual
-                );
+            if (passthroughRows.length) {
+                // A pass-through line is absorbing whatever is left over, so
+                // the regular bills are assumed to have posted as scheduled.
+                actual = expected;
+            } else if (index === regularRows.length - 1) {
+                actual = roundMoney(actualTotal - allocatedActual);
+            } else if (Math.abs(regularExpectedTotal) > 0.01) {
+                actual = roundMoney(actualTotal * (expected / regularExpectedTotal));
+                allocatedActual = roundMoney(allocatedActual + actual);
             }
 
             row.gl_actual_amount = actual;
             row.difference = roundMoney(actual - expected);
-            row.status = status;
+            row.status = regularStatus;
             row.validation_basis = 'STORE_PERIOD_TOTAL';
-            row.store_expected_amount = expectedTotal;
+            row.store_expected_amount = regularExpectedTotal;
             row.store_gl_actual_amount = actualTotal;
-            row.store_difference_amount = storeDifference;
+            row.store_difference_amount = roundMoney(actualTotal - regularExpectedTotal);
             row.store_bill_count = rows.length;
+            if (glUpload) row.gl_upload = glUpload;
+        });
 
-            if (glUpload) {
-                row.gl_upload = glUpload;
-            }
+        let allocatedPassthrough = 0;
+        passthroughRows.forEach((row, index) => {
+            const actual = index === passthroughRows.length - 1
+                ? roundMoney(passthroughActualTotal - allocatedPassthrough)
+                : roundMoney(passthroughActualTotal / passthroughRows.length);
+            allocatedPassthrough = roundMoney(allocatedPassthrough + actual);
+
+            // The pass-through line's "expected" IS whatever the GL showed -
+            // there's nothing precomputed to compare it against.
+            row.expected_amount = actual;
+            row.gl_actual_amount = actual;
+            row.difference = 0;
+            row.status = 'MATCHED';
+            row.validation_basis = 'STORE_PERIOD_TOTAL';
+            row.store_expected_amount = regularExpectedTotal;
+            row.store_gl_actual_amount = actualTotal;
+            row.store_difference_amount = roundMoney(actualTotal - regularExpectedTotal);
+            row.store_bill_count = rows.length;
+            if (glUpload) row.gl_upload = glUpload;
         });
     }
 
@@ -361,6 +391,7 @@ function applyMonthlyGlByStore(
             )
     };
 }
+
 
 // Months before the schedule's own year (e.g. 2025 months on a 2026 schedule)
 // came from a restructuring where no reliable monthly GL breakdown exists — only
@@ -652,9 +683,8 @@ function cleanSqlDate(value, fallback = null) {
 }
 
 function normalizeAmortizationMode(value) {
-    return String(value || 'NORMAL').trim().toUpperCase() === 'CLOSEOUT'
-        ? 'CLOSEOUT'
-        : 'NORMAL';
+    const normalized = String(value || 'NORMAL').trim().toUpperCase();
+    return ['CLOSEOUT', 'PASSTHROUGH', 'ACCRUAL'].includes(normalized) ? normalized : 'NORMAL';
 }
 
 function getSourceRowReviewMetadata(row = {}, schedule = {}) {
@@ -714,7 +744,10 @@ function validateCloseoutSettings({ rowNumber, amortizationStart, amortizationEn
     }
 }
 
-function calculateSourceAmortization(sourceMetadata, amountPaid, amortizationStart, amortizationEnd) {
+function calculateSourceAmortization(sourceMetadata, amountPaid, amortizationStart, amortizationEnd, scheduleYear) {
+    if (sourceMetadata.amortizationMode === 'PASSTHROUGH') {
+        return buildPassthroughMonths(scheduleYear);
+    }
     if (sourceMetadata.amortizationMode === 'CLOSEOUT') {
         return calculateBillAmortizationWithCloseout({
             amountPaid,
@@ -957,18 +990,6 @@ router.get('/:scheduleId', ...access('ver'), async (req, res) => {
     }
 });
 
-// Appends the bills from a newly uploaded file to an ALREADY loaded/saved
-// schedule (draft or persisted), instead of starting a brand-new schedule
-// like /upload-bill-source does. Existing rows keep whatever amortization
-// period they already resolve to (their own explicit dates, or the
-// schedule's own amortization_start/end) - only the newly appended rows get
-// the period computed here, baked in explicitly, so they don't inherit or
-// disturb the schedule-level fallback used by the older rows.
-//
-// Default period: unless amortization_start/end are given explicitly, new
-// rows are amortized only across the months of the schedule's own
-// schedule_year that come after September - i.e. Sep-Dec of that year, not
-// the full Sep-Aug PTAX cycle that would spill 8 months into next year.
 router.post('/:scheduleId/append-bill-source', ...access('editar'), upload.single('billSourceFile'), async (req, res) => {
     const connection = await pool.getConnection();
 
@@ -983,11 +1004,12 @@ router.post('/:scheduleId/append-bill-source', ...access('editar'), upload.singl
 
         if (draft) {
             const parsed = parsePrepaidBillSource(req.file.buffer, {
-                sourceAccount: draft.schedule.source_account,
-                prepaidAccount: draft.schedule.prepaid_account,
-                expenseAccount: draft.schedule.expense_account,
+                sourceAccount: cleanAccount(req.body.source_account, draft.schedule.source_account),
+                prepaidAccount: cleanAccount(req.body.prepaid_account || req.body.gl_account, draft.schedule.prepaid_account),
+                expenseAccount: cleanAccount(req.body.expense_account || req.body.expense_gl_account, draft.schedule.expense_account),
                 taxYear: draft.schedule.tax_year
             });
+
 
             if (!parsed.rows.length) {
                 return res.status(400).json({
@@ -1056,11 +1078,12 @@ router.post('/:scheduleId/append-bill-source', ...access('editar'), upload.singl
         }
 
         const parsed = parsePrepaidBillSource(req.file.buffer, {
-            sourceAccount: schedule.source_account,
-            prepaidAccount: schedule.prepaid_account,
-            expenseAccount: schedule.expense_account,
+            sourceAccount: cleanAccount(req.body.source_account, schedule.source_account),
+            prepaidAccount: cleanAccount(req.body.prepaid_account || req.body.gl_account, schedule.prepaid_account),
+            expenseAccount: cleanAccount(req.body.expense_account || req.body.expense_gl_account, schedule.expense_account),
             taxYear: schedule.tax_year
         });
+
 
         if (!parsed.rows.length) {
             return res.status(400).json({
@@ -1184,20 +1207,24 @@ router.put('/:scheduleId/source-rows', ...access('editar'), async (req, res) => 
                 const docDate = cleanSqlDate(input.doc_date || input.posted_date, existing?.doc_date || existing?.posted_date || null);
                 const postedDate = cleanSqlDate(input.posted_date || input.doc_date, existing?.posted_date || existing?.doc_date || docDate);
 
-                if (!storeNumber || !payee || !docDate || !Number.isFinite(amountPaid) || amountPaid <= 0) {
-                    return res.status(400).json({
-                        success: false,
-                        message: `Row ${index + 1} requires a store, concept, bill date, and amount greater than zero.`
-                    });
-                }
-
                 const existingMetadata = getSourceRowReviewMetadata(existing || {}, draft.schedule);
                 const isManual = Number(input.is_manual ?? (existingMetadata.isManual ? 1 : 0)) === 1;
-                const amortizationStart = cleanSqlDate(input.amortization_start, existingMetadata.amortizationStart || draft.schedule.amortization_start);
-                const amortizationEnd = cleanSqlDate(input.amortization_end, existingMetadata.amortizationEnd || draft.schedule.amortization_end);
                 const amortizationMode = normalizeAmortizationMode(
                     input.amortization_mode ?? existingMetadata.amortizationMode
                 );
+
+                // Pass-through rows (e.g. circumstantial 132020 CAM/rent items) start
+                // at $0 - their amount comes from each month's GL upload, not from a
+                // known bill total, so they're exempt from the "amount > 0" rule.
+                if (!storeNumber || !payee || !docDate || !Number.isFinite(amountPaid) || (amortizationMode !== 'PASSTHROUGH' && amountPaid <= 0)) {
+                    return res.status(400).json({
+                        success: false,
+                        message: `Row ${index + 1} requires a store, concept, bill date, and (unless it is a pass-through row) an amount greater than zero.`
+                    });
+                }
+
+                const amortizationStart = cleanSqlDate(input.amortization_start, existingMetadata.amortizationStart || draft.schedule.amortization_start);
+                const amortizationEnd = cleanSqlDate(input.amortization_end, existingMetadata.amortizationEnd || draft.schedule.amortization_end);
                 const closeoutDate = amortizationMode === 'CLOSEOUT'
                     ? cleanSqlDate(input.closeout_date, existingMetadata.closeoutDate)
                     : null;
@@ -1332,15 +1359,21 @@ router.put('/:scheduleId/source-rows', ...access('editar'), async (req, res) => 
                 existing?.posted_date || existing?.doc_date || docDate
             );
 
-            if (!storeNumber || !payee || !docDate || !Number.isFinite(amountPaid) || amountPaid <= 0) {
+            const existingMetadata = getSourceRowReviewMetadata(existing || {}, schedule);
+            const isManual = Number(input.is_manual ?? (existingMetadata.isManual ? 1 : 0)) === 1;
+            const amortizationMode = normalizeAmortizationMode(
+                input.amortization_mode ?? existingMetadata.amortizationMode
+            );
+
+            // Pass-through rows start at $0 - see the matching comment in the draft
+            // branch above.
+            if (!storeNumber || !payee || !docDate || !Number.isFinite(amountPaid) || (amortizationMode !== 'PASSTHROUGH' && amountPaid <= 0)) {
                 return res.status(400).json({
                     success: false,
-                    message: `Row ${index + 1} requires a store, concept, bill date, and amount greater than zero.`
+                    message: `Row ${index + 1} requires a store, concept, bill date, and (unless it is a pass-through row) an amount greater than zero.`
                 });
             }
 
-            const existingMetadata = getSourceRowReviewMetadata(existing || {}, schedule);
-            const isManual = Number(input.is_manual ?? (existingMetadata.isManual ? 1 : 0)) === 1;
             const amortizationStart = cleanSqlDate(
                 input.amortization_start,
                 existingMetadata.amortizationStart || schedule.amortization_start
@@ -1348,9 +1381,6 @@ router.put('/:scheduleId/source-rows', ...access('editar'), async (req, res) => 
             const amortizationEnd = cleanSqlDate(
                 input.amortization_end,
                 existingMetadata.amortizationEnd || schedule.amortization_end
-            );
-            const amortizationMode = normalizeAmortizationMode(
-                input.amortization_mode ?? existingMetadata.amortizationMode
             );
             const closeoutDate = amortizationMode === 'CLOSEOUT'
                 ? cleanSqlDate(input.closeout_date, existingMetadata.closeoutDate)
@@ -1603,9 +1633,11 @@ router.post('/:scheduleId/generate', ...access('crear'), async (req, res) => {
                     sourceMetadata,
                     source.amount_paid,
                     amortizationStart,
-                    amortizationEnd
+                    amortizationEnd,
+                    draft.schedule.schedule_year
                 );
                 const billId = nextDraftBillId--;
+                const billPrepaidAccount = source.prepaid_account || draft.schedule.prepaid_account;
                 const bill = {
                     id: billId,
                     schedule_id: scheduleId,
@@ -1618,13 +1650,13 @@ router.post('/:scheduleId/generate', ...access('crear'), async (req, res) => {
                     tax_year: source.tax_year || draft.schedule.tax_year,
                     amount_paid: source.amount_paid,
                     source_account: source.source_account || draft.schedule.source_account,
-                    prepaid_account: source.prepaid_account || draft.schedule.prepaid_account,
+                    prepaid_account: billPrepaidAccount,
                     expense_account: source.expense_account || draft.schedule.expense_account,
                     amortization_start: amortizationStart,
                     amortization_end: amortizationEnd,
                     total_months: calculation.totalMonths,
                     monthly_amount: calculation.monthlyAmount,
-                    amortization_mode: calculation.isCloseout ? 'CLOSEOUT' : 'NORMAL',
+                    amortization_mode: sourceMetadata.amortizationMode,
                     closeout_date: calculation.closeoutDate || null,
                     closeout_amount: calculation.closeoutAmount ?? null
                 };
@@ -1640,6 +1672,8 @@ router.post('/:scheduleId/generate', ...access('crear'), async (req, res) => {
                         entity_code: source.entity_code || draft.schedule.brand,
                         payee: source.payee,
                         doc_number: source.doc_number,
+                        prepaid_account: billPrepaidAccount,
+                        amortization_mode: sourceMetadata.amortizationMode,
                         period_year: month.period_year,
                         period_month: month.period_month,
                         period_code: month.period_code,
@@ -1650,6 +1684,7 @@ router.post('/:scheduleId/generate', ...access('crear'), async (req, res) => {
                     });
                 }
             }
+
 
             draft.schedule.generated_at = new Date();
             refreshDraftCounts(draft);
@@ -1701,10 +1736,12 @@ router.post('/:scheduleId/generate', ...access('crear'), async (req, res) => {
                 sourceMetadata,
                 source.amount_paid,
                 amortizationStart,
-                amortizationEnd
+                amortizationEnd,
+                schedule.schedule_year
             );
 
             const billId = nextBillId--;
+            const billPrepaidAccount = source.prepaid_account || schedule.prepaid_account;
             bills.push({
                 id: billId,
                 schedule_id: scheduleId,
@@ -1717,13 +1754,13 @@ router.post('/:scheduleId/generate', ...access('crear'), async (req, res) => {
                 tax_year: source.tax_year || schedule.tax_year,
                 amount_paid: source.amount_paid,
                 source_account: source.source_account || schedule.source_account,
-                prepaid_account: source.prepaid_account || schedule.prepaid_account,
+                prepaid_account: billPrepaidAccount,
                 expense_account: source.expense_account || schedule.expense_account,
                 amortization_start: amortizationStart,
                 amortization_end: amortizationEnd,
                 total_months: calculation.totalMonths,
                 monthly_amount: calculation.monthlyAmount,
-                amortization_mode: calculation.isCloseout ? 'CLOSEOUT' : 'NORMAL',
+                amortization_mode: sourceMetadata.amortizationMode,
                 closeout_date: calculation.closeoutDate || null,
                 closeout_amount: calculation.closeoutAmount ?? null
             });
@@ -1739,6 +1776,8 @@ router.post('/:scheduleId/generate', ...access('crear'), async (req, res) => {
                     entity_code: source.entity_code || schedule.brand,
                     payee: source.payee,
                     doc_number: source.doc_number,
+                    prepaid_account: billPrepaidAccount,
+                    amortization_mode: sourceMetadata.amortizationMode,
                     period_year: month.period_year,
                     period_month: month.period_month,
                     period_code: month.period_code,
@@ -1749,6 +1788,7 @@ router.post('/:scheduleId/generate', ...access('crear'), async (req, res) => {
                 });
             });
         }
+
 
         const generatedAt = new Date();
         const payload = buildPersistentScheduleData(schedule, {
@@ -1802,13 +1842,19 @@ router.post('/upload-gl', ...access('crear'), upload.single('glFile'), async (re
         const inferredPeriod = inferGlPeriod(parsed);
         const periodYear = parseYear(
             req.body.period_year
-                || req.body.schedule_year
-                || inferredPeriod.year,
+            || req.body.schedule_year
+            || inferredPeriod.year,
             inferredPeriod.year
         );
         const periodMonth = parseMonth(
             req.body.period_month || inferredPeriod.month
         );
+        // When a schedule mixes GL accounts, scope this upload to just the
+        // rows for that account so it can't overwrite another account's
+        // comparison for the same store/month. Falls back to the account
+        // detected from the file's own header line, then to "no filter"
+        // (today's behavior) for single-account schedules.
+        const glAccount = cleanAccount(req.body.prepaid_account || req.body.gl_account, '') || parsed.sourceAccount || null;
 
         if (!scheduleId) {
             return res.status(400).json({
@@ -1830,6 +1876,7 @@ router.post('/upload-gl', ...access('crear'), upload.single('glFile'), async (re
             sheet_name: parsed.sheetName,
             parsed_row_count: parsed.details.length,
             period_code: periodCode(periodMonth, periodYear),
+            gl_account: glAccount,
             uploaded_by: getUserId(req),
             uploaded_at: new Date().toISOString()
         };
@@ -1840,7 +1887,9 @@ router.post('/upload-gl', ...access('crear'), upload.single('glFile'), async (re
             const periodRows = draft.months.filter(month =>
                 Number(month.period_year) === periodYear
                 && Number(month.period_month) === periodMonth
+                && (!glAccount || cleanText(month.prepaid_account) === glAccount)
             );
+
 
             const validation = applyMonthlyGlByStore(
                 periodRows,
@@ -1879,7 +1928,9 @@ router.post('/upload-gl', ...access('crear'), upload.single('glFile'), async (re
         const monthRows = payload.months.filter(row =>
             Number(row.period_year) === periodYear
             && Number(row.period_month) === periodMonth
+            && (!glAccount || cleanText(row.prepaid_account) === glAccount)
         );
+
 
         const validation = applyMonthlyGlByStore(
             monthRows,
@@ -1891,7 +1942,7 @@ router.post('/upload-gl', ...access('crear'), upload.single('glFile'), async (re
 
         const status =
             summary.difference_count
-            || summary.missing_gl_count
+                || summary.missing_gl_count
                 ? 'DIFFERENCE'
                 : summary.pending_count
                     ? 'GENERATED'

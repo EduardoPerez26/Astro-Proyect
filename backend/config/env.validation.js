@@ -11,6 +11,21 @@ const RECOMMENDED_ENV = [
     'MFA_ENCRYPTION_KEY'
 ];
 
+const MIN_SECRET_LENGTH = 32;
+const KNOWN_PLACEHOLDER_SECRETS = new Set([
+    'replace_with_a_long_random_secret',
+    'replace_with_another_long_random_secret',
+    'changeme',
+    'secret',
+    'password'
+]);
+
+function isWeakSecret(value) {
+    const trimmed = String(value || '').trim();
+    if (trimmed.length < MIN_SECRET_LENGTH) return true;
+    return KNOWN_PLACEHOLDER_SECRETS.has(trimmed.toLowerCase());
+}
+
 const OPTIONAL_INTEGRATIONS = [
     {
         name: 'Sage Intacct',
@@ -81,6 +96,22 @@ function validateEnvironment() {
         console.warn(`[config] ${message}`);
     }
 
+    if (isWeakSecret(process.env.JWT_SECRET)) {
+        const message = `JWT_SECRET is missing or too weak (must be at least ${MIN_SECRET_LENGTH} random characters).`;
+
+        if (isProduction) {
+            throw new Error(message);
+        }
+
+        console.warn(`[config] ${message}`);
+    }
+
+    if (isProduction && isWeakSecret(process.env.MFA_ENCRYPTION_KEY)) {
+        throw new Error(
+            `MFA_ENCRYPTION_KEY is required in production and must be at least ${MIN_SECRET_LENGTH} random characters.`
+        );
+    }
+
     if (status.missingRecommended.length) {
         console.warn(
             `[config] Recommended environment variables are not set: ${status.missingRecommended.join(', ')}`
@@ -95,6 +126,7 @@ function validateEnvironment() {
 
     return status;
 }
+
 
 module.exports = {
     getConfigurationStatus,

@@ -22,6 +22,7 @@ const {
     registrarIntentoLogin,
     contarIntentosFallidos
 } = require('../services/securityAudit.service');
+const { validatePasswordStrength } = require('../utils/passwordPolicy');
 const {
     cifrarSecreto,
     descifrarSecreto,
@@ -735,7 +736,7 @@ router.post('/mfa/login', async (req, res) => {
             });
         }
 
-        const decoded = jwt.verify(mfaToken, process.env.JWT_SECRET);
+        const decoded = jwt.verify(mfaToken, process.env.JWT_SECRET, { algorithms: ['HS256'] });
 
         if (decoded.purpose !== 'mfa-login') {
             return res.status(401).json({
@@ -1010,10 +1011,18 @@ router.post(
         const requestedRole = rol || 'usuario';
 
         // Validate required fields
-        if (!username || !password || !nombre_completo || !email) {
+         if (!username || !password || !nombre_completo || !email) {
             return res.status(400).json({
                 error: true,
                 mensaje: 'All fields are required'
+            });
+        }
+
+        const passwordError = validatePasswordStrength(password);
+        if (passwordError) {
+            return res.status(400).json({
+                error: true,
+                mensaje: passwordError
             });
         }
 
@@ -1041,7 +1050,7 @@ router.post(
         }
 
         // Encrypt password
-        const salt = await bcrypt.genSalt(10);
+        const salt = await bcrypt.genSalt(12);
         const passwordHash = await bcrypt.hash(password, salt);
 
         // Insert user
@@ -1120,6 +1129,36 @@ router.get('/profile', verificarToken, async (req, res) => {
     }
 });
 
+async function revocarOtrasSesiones(usuarioId, tokenActual) {
+    const hashActual = tokenHash(tokenActual);
+
+    try {
+        await pool.query(
+            `UPDATE sesiones
+             SET activa = FALSE,
+                 fecha_expiracion = NOW(),
+                 fecha_revocacion = NOW(),
+                 revocada_por = ?,
+                 motivo_revocacion = 'password_changed'
+             WHERE usuario_id = ?
+               AND activa = TRUE
+               AND token_hash != ?`,
+            [usuarioId, usuarioId, hashActual]
+        );
+    } catch (error) {
+        if (error.code === 'ER_BAD_FIELD_ERROR') {
+            await pool.query(
+                `UPDATE sesiones
+                 SET activa = FALSE, fecha_expiracion = NOW()
+                 WHERE usuario_id = ? AND token != ?`,
+                [usuarioId, tokenActual]
+            );
+        } else if (!esErrorEsquemaSesiones(error)) {
+            throw error;
+        }
+    }
+}
+
 async function actualizarPerfil(req, res) {
     const fotoSubida = obtenerFotoPerfilSubida(req);
     const nuevaFotoUrl = construirUrlFotoPerfil(fotoSubida);
@@ -1148,11 +1187,12 @@ async function actualizarPerfil(req, res) {
                 });
             }
 
-            if (passwordNueva.length < 6) {
+            const passwordError = validatePasswordStrength(passwordNueva);
+            if (passwordError) {
                 eliminarFotoPerfil(nuevaFotoUrl);
                 return res.status(400).json({
                     error: true,
-                    mensaje: 'The new password must be at least 6 characters.'
+                    mensaje: passwordError
                 });
             }
 
@@ -1199,7 +1239,7 @@ async function actualizarPerfil(req, res) {
                 });
             }
 
-            const salt = await bcrypt.genSalt(10);
+            const salt = await bcrypt.genSalt(12);
             const passwordHash = await bcrypt.hash(passwordNueva, salt);
 
             cambios.push('password = ?');
@@ -1221,6 +1261,10 @@ async function actualizarPerfil(req, res) {
                  WHERE id = ?`,
                 params
             );
+
+            if (cambiaPassword) {
+                await revocarOtrasSesiones(req.usuario.id, req.authToken);
+            }
 
             if (
                 nuevaFotoUrl &&

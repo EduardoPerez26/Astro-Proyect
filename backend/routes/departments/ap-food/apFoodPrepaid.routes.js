@@ -30,11 +30,13 @@ const {
 const {
     calculateBillAmortizationWithCloseout
 } = require('../../../services/departments/ap-food/prepaid/prepaidCloseoutCalculator');
+const { excelFileFilter } = require('../../../utils/uploadFileValidation');
 
 const router = express.Router();
 const upload = multer({
     storage: multer.memoryStorage(),
-    limits: { fileSize: Number(process.env.AP_PREPAID_FILE_SIZE_MB || process.env.MAX_FILE_SIZE_MB || 75) * 1024 * 1024 }
+    limits: { fileSize: Number(process.env.AP_PREPAID_FILE_SIZE_MB || process.env.MAX_FILE_SIZE_MB || 75) * 1024 * 1024 },
+    fileFilter: excelFileFilter
 });
 
 const draftSchedules = new Map();

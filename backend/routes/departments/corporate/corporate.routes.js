@@ -139,6 +139,7 @@ function nextReportRun(frequency, deliveryHour = 8) {
 // -----------------------------------------------------------------------------
 router.get(
     '/overview',
+    checkPermission('documentos', 'ver'),
     async (req, res) => {
         try {
             const [reportRows, workflowRows] = await Promise.all([

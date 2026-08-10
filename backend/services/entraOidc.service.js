@@ -133,7 +133,7 @@ async function createAuthorizationContext({ rememberSession = false }) {
 }
 
 function verifyAuthorizationContext(contextToken, returnedState) {
-    const context = jwt.verify(contextToken, process.env.JWT_SECRET);
+    const context = jwt.verify(contextToken, process.env.JWT_SECRET, { algorithms: ['HS256'] });
     if (context.purpose !== 'entra-oauth-context' || context.state !== returnedState) {
         const error = new Error('Microsoft sign-in state validation failed.');
         error.code = 'ENTRA_STATE_INVALID';

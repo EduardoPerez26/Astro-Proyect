@@ -133,6 +133,26 @@ function calculateBillAmortization({ amountPaid, amortizationStart, amortization
     };
 }
 
+function buildPassthroughMonths(scheduleYear) {
+    const year = Number(scheduleYear);
+    if(!year){
+        return { totalMonths: 0, monthlyAmount: null, months: [] };
+    }
+
+    const months = Array.from({ length: 12 }, (_, index) => ({
+        period_year: year,
+        period_month: index + 1,
+        period_code: periodCode(index + 1, year),
+        expected_amount: 0
+    }));
+
+    return {
+        totalMonths: months.length,
+        monthlyAmount: null,
+        months
+    };
+}
+
 module.exports = {
     roundMoney,
     parseDate,
@@ -140,5 +160,6 @@ module.exports = {
     periodCode,
     defaultAmortizationPeriod,
     inferTaxYearFromText,
-    calculateBillAmortization
+    calculateBillAmortization,
+    buildPassthroughMonths
 };

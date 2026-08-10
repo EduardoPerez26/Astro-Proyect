@@ -12,6 +12,7 @@ const {
     isSuperAdmin
 } = require('../../config/permissions');
 const { registrarEventoSeguridad } = require('../../services/securityAudit.service');
+const { validatePasswordStrength } = require('../../utils/passwordPolicy');
 
 const VALID_ROLES = new Set(['superadmin', 'admin', 'supervisor', 'usuario']);
 
@@ -290,7 +291,15 @@ router.put(
         }
 
         if (password) {
-            const salt = await bcrypt.genSalt(10);
+            const passwordError = validatePasswordStrength(password);
+            if (passwordError) {
+                return res.status(400).json({
+                    error: true,
+                    mensaje: passwordError
+                });
+            }
+
+            const salt = await bcrypt.genSalt(12);
             const passwordHash = await bcrypt.hash(password, salt);
             updates.push('password = ?');
             params.push(passwordHash);
@@ -648,6 +657,14 @@ router.post(
             });
         }
 
+        const passwordError = validatePasswordStrength(password);
+        if (passwordError) {
+            return res.status(400).json({
+                success: false,
+                message: passwordError
+            });
+        }
+
         if (!VALID_ROLES.has(requestedRole) || !canManageRole(req.usuario, requestedRole)) {
             return res.status(403).json({
                 success: false,
@@ -669,7 +686,7 @@ router.post(
         }
 
         // Hash password
-        const salt = await bcrypt.genSalt(10);
+        const salt = await bcrypt.genSalt(12);
         const passwordHash = await bcrypt.hash(password, salt);
         const departamentoId = Number(departamento_id) || null;
 

@@ -111,6 +111,32 @@ function extractSourceAccount(rows) {
     return '';
 }
 
+// A single GL export can contain more than one account's activity, laid out
+// as sequential sections rather than a per-row account column:
+//   138000 - PREPAID PROPERTY TAX (Balance forward As of 11/01/2025)
+//   ...rows belonging to 138000...
+//   Totals for 138000 - PREPAID PROPERTY TAX
+//   132020 - PREPAID RENT RE TAXES (Balance forward As of 11/01/2025)
+//   ...rows belonging to 132020...
+//   Totals for 132020 - PREPAID RENT RE TAXES
+// Every section opens with its own "<account> - <name>..." row, so detecting
+// it here and updating a running "current account" as rows are walked
+// classifies each row by whichever section it actually falls under.
+//
+// Not every such header marks a prepaid account, though: a report can also
+// be pulled straight off the AP/clearing account that FUNDS the prepaid
+// (e.g. "246000 - PERSONAL PROPERTY TAX PAYABLE (Balance forward...)" for a
+// file whose bills are meant to land in prepaid account 138500). That's a
+// different account entirely and must not overwrite the caller's
+// prepaid_account default - only a section whose own name says "PREPAID"
+// is treated as a per-row account override. Single-prepaid-account files
+// (only one "PREPAID..." row, at the very top) behave exactly as before.
+function extractAccountSectionStart(row) {
+    const match = normalizeText(row[0]).match(/^(\d{4,8})\s*-\s*(.+)$/);
+    if (!match) return null;
+    return /\bPREPAID\b/i.test(match[2]) ? match[1] : null;
+}
+
 function extractPayee(memo) {
     const match = normalizeText(memo).match(/Bill\s*-\s*([^:]+):/i);
     return match ? normalizeText(match[1]) : '';
@@ -140,9 +166,42 @@ function isPaidPtaxBill({ doc, memo, amountPaid }) {
     const text = `${doc} ${memo}`;
     return amountPaid > 0
         && /^Bill\s*-/i.test(memo)
-        && /\bPTAX\b|PROPERTY TAX|PERSONAL\s*\/\s*UNSECURED|PERSONAL PROPERTY/i.test(text)
-        && /\bPAID\b/i.test(text);
+        && /\bPTAX\b|PROPERTY TAX|PERSONAL\s*\/\s*UNSECURED|PERSONAL PROPERTY|\bRENT\b|\bCAM\b/i.test(text);
 }
+
+// Intacct tags a reversing entry's Doc as "Reversed - <original doc>". When
+// both the original and its reversal show up as separate "Bill -" rows for
+// the same store with exactly offsetting amounts, neither one is a real
+// charge to amortize - it's a credit that got corrected right back out.
+// Excluding both keeps a corrected/typo'd credit from being counted as two
+// separate bills.
+function findReversedPairIndexes(candidates) {
+    const excluded = new Set();
+
+    candidates.forEach((candidate, index) => {
+        if (excluded.has(index)) return;
+        const match = normalizeText(candidate.doc_number).match(/^Reversed\s*-\s*(.+)$/i);
+        if (!match) return;
+
+        const originalDoc = match[1].toLowerCase();
+        const originalIndex = candidates.findIndex((other, otherIndex) =>
+            otherIndex !== index
+            && !excluded.has(otherIndex)
+            && other.store_number === candidate.store_number
+            && normalizeText(other.doc_number).toLowerCase() === originalDoc
+        );
+        if (originalIndex < 0) return;
+
+        const netAmount = roundMoney(candidate.signed_amount + candidates[originalIndex].signed_amount);
+        if (Math.abs(netAmount) <= 0.01) {
+            excluded.add(index);
+            excluded.add(originalIndex);
+        }
+    });
+
+    return excluded;
+}
+
 
 function parsePrepaidBillSource(buffer, options = {}) {
     const { sheetName, rows } = readWorkbookRows(buffer);
@@ -159,11 +218,23 @@ function parsePrepaidBillSource(buffer, options = {}) {
     const sourceAccount = normalizeText(options.sourceAccount || extractSourceAccount(rows) || '246000');
     const prepaidAccount = normalizeText(options.prepaidAccount || '138500');
     const expenseAccount = normalizeText(options.expenseAccount || '708500');
-    const rowsOut = [];
     const skippedRows = [];
+    // Starts at the file-level default/override, then follows whatever
+    // section markers actually appear as rows are walked in order.
+    let currentPrepaidAccount = prepaidAccount;
+
+    // First pass: collect every row that looks like a paid bill. Reversal
+    // pairs can only be matched once all of them are known (a "Reversed -"
+    // row can appear before or after the entry it reverses), so nothing is
+    // finalized into rowsOut yet.
+    const candidates = [];
 
     rows.slice(headerIndex + 1).forEach((row, offset) => {
         const sourceRowNumber = headerIndex + offset + 2;
+
+        const sectionAccount = extractAccountSectionStart(row);
+        if (sectionAccount) currentPrepaidAccount = sectionAccount;
+
         if (isSkippable(row)) return;
 
         const doc = getCell(row, headerMap, 'doc');
@@ -184,7 +255,7 @@ function parsePrepaidBillSource(buffer, options = {}) {
             return;
         }
 
-        rowsOut.push({
+        candidates.push({
             source_row_number: sourceRowNumber,
             posted_date: toSqlDate(getCell(row, headerMap, 'postedDate')),
             doc_date: toSqlDate(getCell(row, headerMap, 'docDate')),
@@ -200,13 +271,30 @@ function parsePrepaidBillSource(buffer, options = {}) {
             payee: extractPayee(memo),
             tax_year: taxYear,
             amount_paid: amountPaid,
+            signed_amount: roundMoney(debit - credit),
             source_account: sourceAccount,
-            prepaid_account: prepaidAccount,
+            prepaid_account: currentPrepaidAccount,
             expense_account: expenseAccount,
             include_in_schedule: true,
             exception_reason: '',
             raw_json: row
         });
+    });
+
+    const reversedIndexes = findReversedPairIndexes(candidates);
+    const rowsOut = [];
+
+    candidates.forEach((candidate, index) => {
+        const { signed_amount, ...row } = candidate;
+        if (reversedIndexes.has(index)) {
+            skippedRows.push({
+                source_row_number: candidate.source_row_number,
+                reason: 'Credited then reversed for the same amount - net effect is $0',
+                raw: candidate.raw_json
+            });
+            return;
+        }
+        rowsOut.push(row);
     });
 
     return {
@@ -237,6 +325,7 @@ function parseMonthlyGlActuals(buffer) {
 
     const headerMap = buildHeaderMap(rows[headerIndex]);
     const metadata = extractMetadata(rows);
+    const sourceAccount = extractSourceAccount(rows);
     const actualByStore = new Map();
     const details = [];
 
@@ -277,8 +366,9 @@ function parseMonthlyGlActuals(buffer) {
         });
     });
 
-    return { sheetName, metadata, actualByStore, details };
+    return { sheetName, metadata, sourceAccount, actualByStore, details };
 }
+
 
 module.exports = {
     parsePrepaidBillSource,

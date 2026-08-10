@@ -13,11 +13,10 @@ function isSchemaError(error) {
 }
 
 function getClientIp(req) {
-    const forwarded = String(req.headers['x-forwarded-for'] || '')
-        .split(',')[0]
-        .trim();
-
-    return forwarded || req.ip || req.socket?.remoteAddress || '';
+    // server.js ya define app.set('trust proxy', 1), así que Express calcula
+    // req.ip correctamente respetando ese límite de saltos confiables.
+    // Leer el header crudo permite que el cliente inyecte su propio valor.
+    return req.ip || req.socket?.remoteAddress || '';
 }
 
 function getUserAgent(req) {
@@ -79,7 +78,6 @@ async function registrarIntentoLogin({
 
 async function contarIntentosFallidos({
     username,
-    req,
     ventanaMinutos = 15
 }) {
     try {
@@ -87,12 +85,10 @@ async function contarIntentosFallidos({
             `SELECT COUNT(*) AS total
              FROM seguridad_login_intentos
              WHERE username = ?
-               AND ip_address = ?
                AND exitoso = FALSE
                AND fecha_creacion >= DATE_SUB(NOW(), INTERVAL ? MINUTE)`,
             [
                 String(username || '').slice(0, 120),
-                getClientIp(req),
                 Number(ventanaMinutos || 15)
             ]
         );

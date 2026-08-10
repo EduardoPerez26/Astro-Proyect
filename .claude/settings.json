@@ -6,7 +6,18 @@
       "Bash(echo \"exit:$?\")",
       "Read(//tmp/**)",
       "PowerShell(Get-NetTCPConnection -LocalPort 3001 -State Listen -ErrorAction SilentlyContinue)",
-      "Bash(node -e ' *)"
+      "Bash(node -e ' *)",
+      "Bash(node --check \"routes/departments/property-management/_tmp_rpt.routes.js\")",
+      "Bash(node --check \"backend/routes/departments/property-management/_tmp_rpt.routes.js\")",
+      "Bash(node \"C:\\\\Users\\\\EDUARD~1\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Users-EduardoP-rez-OneDrive---XB-Franchise-Solutions-Desktop-astro\\\\4307ceb3-cf8a-4dde-970d-954487aa7c2f\\\\scratchpad\\\\test_rpt_routes.js\")",
+      "Bash(cp \"C:\\\\Users\\\\EDUARD~1\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Users-EduardoP-rez-OneDrive---XB-Franchise-Solutions-Desktop-astro\\\\4307ceb3-cf8a-4dde-970d-954487aa7c2f\\\\scratchpad\\\\test_rpt_routes.js\" backend/_tmp_test_rpt_routes.js)",
+      "Bash(node _tmp_test_rpt_routes.js)",
+      "Bash(node \"backend/_tmp_test_rpt_routes.js\")",
+      "Bash(cp \"C:\\\\Users\\\\EDUARD~1\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Users-EduardoP-rez-OneDrive---XB-Franchise-Solutions-Desktop-astro\\\\4307ceb3-cf8a-4dde-970d-954487aa7c2f\\\\scratchpad\\\\test_rpt_routes.js\" \"backend/_tmp_test_rpt_routes.js\")",
+      "Bash(sed -i \"s#require\\('./routes/departments/property-management/_tmp_rpt.routes.js'\\)#require\\('./routes/departments/property-management/rpt.routes.js'\\)#\" \"backend/_tmp_test_rpt_routes.js\")",
+      "Bash(node \"_tmp_test_rpt_routes.js\")",
+      "Bash(echo \"listo, sin residuos: $?\")",
+      "Bash(node --check \"services/departments/property-management/rpt/rptScheduleWorkbook.js\")"
     ]
   }
 }

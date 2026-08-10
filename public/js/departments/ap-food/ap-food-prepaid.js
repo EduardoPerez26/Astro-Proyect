@@ -1255,52 +1255,83 @@ function ensureCloseoutModalStyles() {
             white-space: normal !important;
         }
 
-        .source-closeout-panel {
+                .amort-mode-group {
             display: grid !important;
-            grid-template-columns: minmax(0, 1fr) 210px !important;
-            gap: 14px !important;
-            align-items: stretch !important;
-            padding: 14px 16px !important;
-            border: 1px solid #f2d2a8 !important;
-            border-radius: 15px !important;
-            background: #fffaf3 !important;
+            grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+            gap: 9px !important;
         }
 
-        .source-closeout-toggle {
+        .amort-mode-option {
             display: flex !important;
-            align-items: flex-start !important;
-            gap: 11px !important;
-            margin: 0 !important;
+            flex-direction: column !important;
+            gap: 7px !important;
+            padding: 11px !important;
+            border: 1px solid #e5e5e5 !important;
+            border-radius: 13px !important;
+            background: #fafafa !important;
             cursor: pointer !important;
+            position: relative !important;
+            transition: border-color .12s ease, background .12s ease, box-shadow .12s ease !important;
         }
 
-        .source-closeout-toggle input {
-            width: 18px !important;
-            height: 18px !important;
-            margin: 2px 0 0 !important;
-            accent-color: #a8550b !important;
-            flex: 0 0 auto !important;
+        .amort-mode-option:hover {
+            border-color: #c7c7c7 !important;
         }
 
-        .source-closeout-toggle-copy {
+        .amort-mode-option:has(input:checked) {
+            border-color: #1a1a1a !important;
+            background: #ffffff !important;
+            box-shadow: 0 0 0 1px #1a1a1a inset !important;
+        }
+
+        .amort-mode-option input {
+            position: absolute !important;
+            top: 10px !important;
+            right: 10px !important;
+            width: 15px !important;
+            height: 15px !important;
+            margin: 0 !important;
+            accent-color: #1a1a1a !important;
+        }
+
+        .amort-mode-icon {
+            width: 28px !important;
+            height: 28px !important;
+            border-radius: 9px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            background: #ececec !important;
+            color: #555555 !important;
+            font-size: 12px !important;
+        }
+
+        .amort-mode-option:has(input:checked) .amort-mode-icon {
+            background: #1a1a1a !important;
+            color: #ffffff !important;
+        }
+
+        .amort-mode-copy {
             display: grid !important;
-            gap: 3px !important;
+            gap: 2px !important;
+            padding-right: 16px !important;
         }
 
-        .source-closeout-toggle-copy strong {
-            color: #6f3600 !important;
-            font-size: 13px !important;
-            font-weight: 900 !important;
+        .amort-mode-copy strong {
+            font-size: 12px !important;
+            font-weight: 850 !important;
+            color: #1a1a1a !important;
         }
 
-        .source-closeout-toggle-copy small {
-            color: #8c6947 !important;
-            font-size: 11px !important;
-            line-height: 1.4 !important;
+        .amort-mode-copy small {
+            font-size: 10px !important;
+            line-height: 1.35 !important;
+            color: #7a7a7a !important;
         }
 
         .source-closeout-month {
             display: grid !important;
+            grid-template-columns: 200px !important;
             gap: 7px !important;
             margin: 0 !important;
         }
@@ -1337,11 +1368,12 @@ function ensureCloseoutModalStyles() {
             color: #8a4505 !important;
         }
 
-        @media (max-width: 620px) {
-            .source-closeout-panel {
-                grid-template-columns: 1fr !important;
+               @media (max-width: 620px) {
+            .amort-mode-group {
+                grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
             }
         }
+
     `;
     document.head.appendChild(style);
 }

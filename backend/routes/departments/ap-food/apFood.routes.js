@@ -19,11 +19,13 @@ const {
     getIntacctConfigStatus
 } = require('../../../services/intacct/intacctConfig.service');
 const { createNotificationsForUsers } = require('../../../services/notifications.service');
+const { documentFileFilter } = require('../../../utils/uploadFileValidation');
 
 const router = express.Router();
 const upload = multer({
     storage: multer.memoryStorage(),
-    limits: { fileSize: Number(process.env.AP_FILE_SIZE_MB || process.env.MAX_FILE_SIZE_MB || 75) * 1024 * 1024 }
+    limits: { fileSize: Number(process.env.AP_FILE_SIZE_MB || process.env.MAX_FILE_SIZE_MB || 75) * 1024 * 1024 },
+    fileFilter: documentFileFilter
 });
 const access = (module, action) => [
     verificarToken,
@@ -323,6 +325,7 @@ router.get('/documents/:id/download', ...access('apFoodDocuments', 'exportar'), 
             ? file.archivo_blob
             : Buffer.from(file.archivo_blob);
 
+        res.setHeader('X-Content-Type-Options', 'nosniff');
         res.setHeader('Content-Type', file.tipo_mime || 'application/octet-stream');
         res.setHeader('Content-Length', content.length);
         res.setHeader(
