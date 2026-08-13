@@ -7,6 +7,7 @@ const { pool } = require('../../../config/database');
 const {
     getScheduleExportPath,
     savePropertyManagementScheduleWorkbook,
+    buildScheduleWorkbookBuffer,
     deleteSavedPropertyManagementScheduleWorkbook
 } = require('../../../services/departments/property-management/propertyManagementScheduleWorkbook');
 const {
@@ -149,10 +150,14 @@ function parseSchedulePayload(body = {}) {
         : Array.isArray(data?.headers)
             ? data.headers
             : [];
+    const quarterReviewTotal = Number.isFinite(Number(body.quarterReviewTotal))
+        ? Number(body.quarterReviewTotal)
+        : (Number.isFinite(Number(data?.quarterReviewTotal)) ? Number(data.quarterReviewTotal) : 0);
 
     return {
         headers,
         rows,
+        quarterReviewTotal,
         source: data?.source || 'property-management',
         savedAt: new Date().toISOString()
     };
@@ -803,16 +808,34 @@ router.get('/schedules/:id/export', ...access('propertyManagement', 'exportar'),
             .replace(/^-+|-+$/g, '')
             .slice(0, 90) || 'property-management-schedule'}.xlsx`;
 
-        const exportPath = getScheduleExportPath(schedule);
-        if (fs.existsSync(exportPath)) {
-            return sendWorkbookDownload(res, { path: exportPath, filename: downloadName }, downloadName);
-        }
-
+        // Never trust the cached copy on disk here -- the workbook now
+        // contains live formulas/values derived from datos_json, and a
+        // stale file would silently drift from it. Always rebuild fresh
+        // (same policy the sibling Prepaid export route already follows).
         const savedWorkbook = await persistPropertyManagementScheduleWorkbook(schedule.id);
         return sendWorkbookDownload(res, savedWorkbook, downloadName);
     } catch (error) {
         console.error('Property Management schedule export could not be created:', error);
         if (tableSetupMessage(error, res)) return;
+        res.status(500).json({ success: false, message: error.message || 'Schedule export could not be created' });
+    }
+});
+
+router.post('/schedules/export', ...access('propertyManagement', 'exportar'), async (req, res) => {
+    try {
+        const rows = Array.isArray(req.body?.rows) ? req.body.rows : [];
+
+        if (!rows.length) {
+            return res.status(400).json({ success: false, message: 'The schedule does not have rows to export' });
+        }
+
+        const name = String(req.body?.name || 'Property Management Schedule').trim().slice(0, 180);
+        const quarterReviewTotal = Number(req.body?.quarterReviewTotal || 0);
+
+        const workbook = await buildScheduleWorkbookBuffer({ rows, name, quarterReviewTotal });
+        sendWorkbookDownload(res, workbook, workbook.filename);
+    } catch (error) {
+        console.error('Property Management schedule export could not be created:', error);
         res.status(500).json({ success: false, message: error.message || 'Schedule export could not be created' });
     }
 });

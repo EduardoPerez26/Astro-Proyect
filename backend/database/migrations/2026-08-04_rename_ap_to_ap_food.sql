@@ -51,4 +51,4 @@ WHERE JSON_CONTAINS_PATH(permisos, 'one', '$.accountsPayableDocuments');
 -- Stored landing-page preference
 UPDATE usuarios
 SET permisos = JSON_SET(permisos, '$.paginaInicio', 'apFood')
-WHERE permisos->>'$.paginaInicio' = 'accountsPayable';
+WHERE JSON_UNQUOTE(JSON_EXTRACT(permisos, '$.paginaInicio')) = 'accountsPayable';

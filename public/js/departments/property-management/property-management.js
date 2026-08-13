@@ -240,6 +240,7 @@
         month: '',
         rowType: ''
     };
+    let scheduleSort = { key: null, dir: 'asc'};
 
     function initializeUploadDropzone(inputId, dropzoneSelector) {
         const input = document.getElementById(inputId);
@@ -367,7 +368,7 @@
 
         document
             .getElementById('pmScheduleTable')
-            ?.addEventListener('focusout', handleScheduleCellEdit);
+            ?.addEventListener('click', handleScheduleSortClick);
 
         document
             .querySelectorAll('[data-pm-filter]')
@@ -1838,23 +1839,16 @@
             return scheduleRowBelongsToTaxYear(row, taxPeriodMonth, targetYear);
         });
 
-        const quarterReturnRow = currentYearQuarterRows.find(row =>
+        // Only show Quarter Review once the store's actual quarterly return has
+        // been filed/paid (a row whose memo matches "Q<n> RETURN"). Don't
+        // preview the number on an arbitrary monthly activity row before that
+        // return exists -- applyQuarterReviewToGroup already skips writing
+        // anything when this returns null, and the Quarter Review Cards /
+        // export totals recompute the figure independently (getQuarterGroupTotals),
+        // so they're unaffected by where -- or whether -- it's displayed here.
+        return currentYearQuarterRows.find(row =>
             quarterReturnPattern.test(String(row[0] || ''))
-        );
-
-        if (quarterReturnRow) return quarterReturnRow;
-
-        // If the quarter return has not been paid yet, still show the quarter formula
-        // once for the store by placing it on the last current-year activity row for
-        // that quarter. This keeps the export total aligned with the quarter cards.
-        if (currentYearQuarterRows.length) {
-            return currentYearQuarterRows[currentYearQuarterRows.length - 1];
-        }
-
-        // Some quarters may only have collected amounts in the Sales Tax summary row
-        // and no payment/detail row yet. In that case use the summary row as the
-        // anchor so the quarter review total is still visible.
-        return summaryRow || null;
+        ) || null;
     }
 
     function calculateQuarterReviewBalance(groupRows, summaryRow, quarter) {
@@ -2222,18 +2216,17 @@
         const filtered = getFilteredScheduleRows(result.rows);
         const visibleRows = filtered.rows;
         updateScheduleFilterCount(filtered.rows.length, result.rows.length, visibleRows.length);
-        table.innerHTML = `
+                table.innerHTML = `
             <thead>
-                <tr>
-                    ${SCHEDULE_HEADERS.map(header => `<th>${escapeHtml(header).replace(/\n/g, '<br>')}</th>`).join('')}
-                </tr>
+                ${renderScheduleTableHead()}
             </thead>
             <tbody>
                 ${visibleRows.length
-                ? visibleRows.map(item => renderScheduleTableRow(item.row, item.index)).join('')
+                ? renderScheduleBodyRows(visibleRows)
                 : renderEmptyScheduleRows()}
             </tbody>
         `;
+
         updateMonthEditor();
     }
 
@@ -2787,7 +2780,192 @@
         return first && last ? `${first}-${last}` : '';
     }
 
-    function renderScheduleTableRow(row, rowIndex) {
+    // Location (1) and Entity (2) are the store-grouping key (see
+    // getScheduleRowGroupKey): every row within a group already shares the
+    // same value, so sorting by either column can never reorder anything —
+    // it only looked like it did because toggling desc reverses whatever
+    // order the rows already happened to be in. Not offering sort on them
+    // avoids that false affordance.
+    const SCHEDULE_NON_SORTABLE_COLUMNS = new Set([1, 2]);
+
+    function renderScheduleTableHead() {
+        return `
+            <tr>
+                ${SCHEDULE_HEADERS.map((header, index) => {
+            if (SCHEDULE_NON_SORTABLE_COLUMNS.has(index)) {
+                return `<th>${escapeHtml(header).replace(/\n/g, '<br>')}</th>`;
+            }
+
+            const sortClass = scheduleSort.key === index
+                ? (scheduleSort.dir === 'desc' ? 'sort-desc' : 'sort-asc')
+                : '';
+
+            return `<th data-sort="${index}" class="${sortClass}">${escapeHtml(header).replace(/\n/g, '<br>')}</th>`;
+        }).join('')}
+            </tr>
+        `;
+    }
+
+    function compareScheduleSortValues(a,b) {
+        if (a instanceof Date && b instanceof Date) return a - b;
+        if (typeof a === 'number' && typeof b === 'number') return a - b;
+
+        return String(a ?? '').localeCompare(String(b ?? ''), undefined, { numeric: true, sensitivity: 'base'});
+    }
+
+    function applyScheduleSort(items) {
+         if (scheduleSort.key === null) return items;
+
+         const key = scheduleSort.key;
+         const sorted = [...items].sort((a, b) => compareScheduleSortValues(a.row[key], b.row[key]));
+
+         return scheduleSort.dir === 'desc' ? sorted.reverse() : sorted;
+    }
+
+    // Each store group is represented by its "Sales Tax" summary row for
+    // sorting purposes (falling back to the first row if a group has no
+    // summary row yet), since that's the row a collapsed group shows.
+    function getScheduleGroupSortValue(groupItems, key) {
+        const summaryItem = groupItems.find(item => item.row[0] === 'Sales Tax');
+        return (summaryItem || groupItems[0])?.row[key];
+    }
+
+    function sortScheduleGroupOrder(groupOrder, groups) {
+        if (scheduleSort.key === null) return groupOrder;
+
+        const key = scheduleSort.key;
+        const sorted = [...groupOrder].sort((keyA, keyB) => compareScheduleSortValues(
+            getScheduleGroupSortValue(groups.get(keyA), key),
+            getScheduleGroupSortValue(groups.get(keyB), key)
+        ));
+
+        return scheduleSort.dir === 'desc' ? sorted.reverse() : sorted;
+    }
+
+    function handleScheduleSortClick(event){
+        const th = event.target.closest('th[data-sort]');
+        if (!th) return;
+
+        const key = Number(th.dataset.sort);
+
+        if(scheduleSort.key === key) {
+            scheduleSort.dir = scheduleSort.dir === 'asc' ? 'desc' : 'asc';
+        }else {
+            scheduleSort.key = key;
+            scheduleSort.dir = 'asc';
+        }
+
+        // Sorting only changes display order, not the underlying data, so this
+        // re-renders directly from the current rows instead of going through
+        // getScheduleResult() -> recalculateScheduleRows(), which re-derives
+        // balances/quarter review for every store and is expensive enough to
+        // freeze the UI for a moment on a click that doesn't need it.
+        renderSchedulePreview({
+            rows: scheduleRows,
+            storeCount: scheduleStoreCount,
+            totalBalance: getScheduleTotalBalance(scheduleRows)
+        });
+    }
+
+    function getQuarterReviewGroupTotal(groupRows, summaryRow) {
+        if (!summaryRow) return 0;
+
+        return roundMoney(
+            Object.keys(QUARTER_MONTHS).reduce((sum, quarterText) => {
+                const quarter = Number(quarterText);
+                return sum + getQuarterGroupTotals(groupRows, summaryRow, quarter).difference;
+            }, 0)
+        );
+    }
+
+    function renderScheduleBodyRows(visibleRows) {
+        const groupOrder = [];
+        const groups = new Map();
+
+        visibleRows.forEach(item => {
+            const key = getScheduleRowGroupKey(item.row) || '(No location)';
+
+            if (!groups.has(key)) {
+                groups.set(key, []);
+                groupOrder.push(key);
+            }
+
+            groups.get(key).push(item);
+        });
+
+        const html = [];
+
+        sortScheduleGroupOrder(groupOrder, groups).forEach(key => {
+            const groupItems = groups.get(key);
+            const summaryItems = groupItems.filter(item => item.row[0] === 'Sales Tax');
+            const detailItems = applyScheduleSort(
+                groupItems.filter(item => item.row[0] !== 'Sales Tax')
+            );
+
+            [...summaryItems, ...detailItems].forEach(item => {
+                html.push(renderScheduleTableRow(item.row));
+            });
+        });
+
+        html.push(renderScheduleTotalRow(visibleRows.map(item => item.row)));
+
+        return html.join('');
+    }
+
+    function computeScheduleColumnSums(rows) {
+        const sums = {
+            amountPaid: 0,
+            priorBalance: 0,
+            months: Array(24).fill(0),
+            ytdBal: 0,
+            ytdBalPerStore: 0
+        };
+
+        rows.forEach(row => {
+            sums.amountPaid += Number(row[7] || 0);
+            sums.priorBalance += Number(row[8] || 0);
+            for (let i = 0; i < 24; i += 1) {
+                sums.months[i] += Number(row[9 + i] || 0);
+            }
+            sums.ytdBal += Number(row[33] || 0);
+            sums.ytdBalPerStore += Number(row[34] || 0);
+        });
+
+        sums.amountPaid = roundMoney(sums.amountPaid);
+        sums.priorBalance = roundMoney(sums.priorBalance);
+        sums.months = sums.months.map(roundMoney);
+        sums.ytdBal = roundMoney(sums.ytdBal);
+        sums.ytdBalPerStore = roundMoney(sums.ytdBalPerStore);
+
+        return sums;
+    }
+
+    // Mirrors the Excel export's totals row (appendScheduleAttachedTotalsExportRows
+    // in the backend workbook builder): every column is a straight sum except
+    // QUARTER REVIEW, which reuses getScheduleQuarterReviewTotal instead of
+    // summing column 35 directly -- that column also carries the Prior Yr
+    // Balance Forward reconciliation on some rows, so a blind sum would
+    // double-count it (see applyPriorYearBalanceForwardReview).
+    function renderScheduleTotalRow(rows) {
+        if (!rows.length) return '';
+
+        const sums = computeScheduleColumnSums(rows);
+        const quarterReviewTotal = getScheduleQuarterReviewTotal(rows);
+
+        const cells = [
+            `<td colspan="7"><span class="schedule-sticky-label">Total</span></td>`,
+            `<td class="is-number">${formatNumber(sums.amountPaid)}</td>`,
+            `<td class="is-number">${formatNumber(sums.priorBalance)}</td>`,
+            ...sums.months.map(value => `<td class="is-number">${formatNumber(value)}</td>`),
+            `<td class="is-number">${formatNumber(sums.ytdBal)}</td>`,
+            `<td class="is-number">${formatNumber(sums.ytdBalPerStore)}</td>`,
+            `<td class="is-number">${formatNumber(quarterReviewTotal)}</td>`
+        ];
+
+        return `<tr class="schedule-total-row">${cells.join('')}</tr>`;
+    }
+
+    function renderScheduleTableRow(row) {
         const isSummary = row[0] === 'Sales Tax';
 
         return `
@@ -2795,7 +2973,6 @@
                 ${row.map((value, index) => {
             const isNumber = typeof value === 'number';
             const isGeneralNumber = index === 3; // GL Acct should not look like an amount
-            const editable = isEditableScheduleColumn(index);
             const display = value instanceof Date
                 ? formatDateForDisplay(value)
                 : isNumber
@@ -2803,14 +2980,7 @@
                     : value;
 
             return `
-                        <td
-                            class="${[
-                    isNumber && !isGeneralNumber ? 'is-number' : '',
-                    editable ? 'is-editable' : ''
-                ].filter(Boolean).join(' ')}"
-                            ${editable ? 'contenteditable="true"' : ''}
-                            data-row-index="${rowIndex}"
-                            data-column-index="${index}"
+                        <td class="${isNumber && !isGeneralNumber ? 'is-number' : ''}"
                         >${escapeHtml(display)}</td>
                     `;
         }).join('')}
@@ -4363,773 +4533,72 @@
         return Boolean(Number(row[7] || 0));
     }
 
-    function applyScheduleNumberFormats(worksheet, rowCount) {
-        const numberFormat = '#,##0.00;(#,##0.00);-';
+    async function exportScheduleWorkbook() {
+        if (!scheduleRows.length) return;
 
-        for (let rowIndex = 7; rowIndex < rowCount; rowIndex += 1) {
-            const glAccountAddress = window.XLSX.utils.encode_cell({
-                r: rowIndex,
-                c: 3
+        const button = document.getElementById('pmSaveScheduleBtn');
+        const originalHtml = button?.innerHTML;
+        if (button) {
+            button.disabled = true;
+            button.innerHTML = '<i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i> Preparing Excel';
+        }
+
+        try {
+            const response = await apiFetch('/schedules/export', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    rows: serializeScheduleRows(scheduleRows),
+                    name: getScheduleName(),
+                    quarterReviewTotal: getScheduleQuarterReviewTotal(scheduleRows)
+                })
             });
 
-            const glAccountCell = worksheet[glAccountAddress];
-
-            if (glAccountCell && typeof glAccountCell.v === 'number') {
-                glAccountCell.z = 'General';
+            if (!response.ok) {
+                const payload = await readJsonResponse(response);
+                throw new Error(payload.message || 'The schedule could not be exported');
             }
 
-            for (let columnIndex = 7; columnIndex <= 35; columnIndex += 1) {
-                const cellAddress = window.XLSX.utils.encode_cell({
-                    r: rowIndex,
-                    c: columnIndex
-                });
-
-                const cell = worksheet[cellAddress];
-
-                if (!cell || typeof cell.v !== 'number') continue;
-
-                cell.z = numberFormat;
-
-                cell.s = {
-                    ...(cell.s || {}),
-                    numFmt: numberFormat
-                };
-            }
-        }
-    }
-
-
-    function exportScheduleWorkbook() {
-        if (!scheduleRows.length || !window.XLSX) return;
-
-        const year = getScheduleYear(scheduleRows);
-        const entities = Array.from(
-            new Set(scheduleRows.map(row => row[2]).filter(Boolean))
-        ).sort();
-
-        const aoa = [
-            [
-                'COMPANY NAME: Quikserve Burger King',
-                '',
-                'Prepared by:',
-                'Properties Dpmt / Property Management'
-            ],
-            [`COMPANY: ${entities.join(', ') || 'Property Management'}`],
-            ['GL ACCOUNT NAME: SALES TAX PAYABLE'],
-            ['GL ACCOUNT #: 241000'],
-            [`YEAR: ${year}`],
-            MONTH_ROW,
-            SCHEDULE_HEADERS,
-            ...scheduleRows
-        ];
-
-        const scheduleEndExcelRow = aoa.length;
-        const totalsStartRow = aoa.length;
-
-        appendScheduleAttachedTotalsExportRows(aoa, scheduleRows);
-
-        const worksheet = window.XLSX.utils.aoa_to_sheet(aoa, {
-            cellDates: true
-        });
-
-        const workbook = window.XLSX.utils.book_new();
-
-        worksheet['!cols'] = [
-            { wch: 72 }, // Entry / Payee
-            { wch: 10 }, // Location
-            { wch: 7 },  // Entity
-            { wch: 9 },  // GL Acct
-            { wch: 18 }, // Reference Info.
-            { wch: 6 },  // STATE
-            { wch: 11 }, // Date
-            { wch: 12 }, // Amount Paid
-            { wch: 16 }, // Prior Yr End Balance Forward
-            ...Array.from({ length: 24 }, () => ({ wch: 16 })),
-            { wch: 13 },
-            { wch: 16 },
-            { wch: 16 }
-        ];
-
-        worksheet['!rows'] = [
-            { hpt: 15 },
-            { hpt: 15 },
-            { hpt: 15 },
-            { hpt: 18 },
-            { hpt: 15 },
-            { hpt: 22 },
-            { hpt: 34 },
-            ...Array.from({ length: Math.max(scheduleRows.length, 1) }, () => ({ hpt: 13 })),
-            { hpt: 18 },
-            { hpt: 20 },
-            { hpt: 20 },
-            { hpt: 20 }
-        ];
-
-        worksheet['!merges'] = [
-            {
-                s: { r: 3, c: 0 },
-                e: { r: 3, c: 4 }
-            }
-        ];
-
-        worksheet['!autofilter'] = {
-            ref: `A7:AJ${scheduleEndExcelRow}`
-        };
-
-        applyCompletedScheduleWorkbookStyle(worksheet, scheduleEndExcelRow);
-        applyScheduleAttachedTotalsExportStyle(worksheet, totalsStartRow);
-
-        window.XLSX.utils.book_append_sheet(workbook, worksheet, 'Schedule 2026');
-
-        window.XLSX.writeFile(
-            workbook,
-            `Property Management - Schedule 2026 ${timestampForFile()}.xlsx`,
-            {
-                cellStyles: true,
-                bookType: 'xlsx'
-            }
-        );
-    }
-
-    function appendScheduleAttachedTotalsExportRows(aoa, rows) {
-        const totals = getMonthlyPaidCollectedTotals(rows);
-
-        const monthRow = emptyExportSummaryRow();
-        const labelRow = emptyExportSummaryRow();
-        const valueRow = emptyExportSummaryRow();
-        const differenceRow = emptyExportSummaryRow();
-
-        totals.forEach(item => {
-            const paidColumn = PAID_COL_BY_MONTH[item.month];
-            const collectedColumn = COLLECTED_COL_BY_MONTH[item.month];
-
-            if (paidColumn === undefined || collectedColumn === undefined) return;
-
-            monthRow[paidColumn] = item.name;
-
-            labelRow[paidColumn] = 'PAID';
-            labelRow[collectedColumn] = 'COLLECTED';
-
-            valueRow[paidColumn] = Number(item.paid || 0);
-            valueRow[collectedColumn] = Number(item.collectedDisplay || 0);
-
-            differenceRow[paidColumn] = 'DIFF.';
-            differenceRow[collectedColumn] = Number(item.difference || 0);
-        });
-
-        monthRow[33] = 'YTD TOTALS';
-        labelRow[33] = 'YTD BAL';
-        labelRow[34] = 'YTD BAL PER STORE';
-        labelRow[35] = 'QUARTER REVIEW';
-        valueRow[33] = getScheduleColumnTotal(rows, 33);
-        valueRow[34] = getScheduleColumnTotal(rows, 34);
-        valueRow[35] = getScheduleColumnTotal(rows, 35);
-
-        aoa.push(
-            monthRow,
-            labelRow,
-            valueRow,
-            differenceRow
-        );
-    }
-
-    function getScheduleColumnTotal(rows, columnIndex) {
-        return roundMoney((rows || []).reduce((sum, row) => {
-            const value = parseMoney(row?.[columnIndex]);
-            return value === null ? sum : sum + value;
-        }, 0));
-    }
-
-    function emptyExportSummaryRow() {
-        return Array.from({ length: SCHEDULE_HEADERS.length }, () => '');
-    }
-
-    function applyScheduleAttachedTotalsExportStyle(worksheet, startRow) {
-        const monthRow = startRow;
-        const labelRow = startRow + 1;
-        const valueRow = startRow + 2;
-        const differenceRow = startRow + 3;
-        const moneyFormat = '$#,##0.00;($#,##0.00);$0.00';
-        const border = createBorder('000000');
-
-        const monthStyle = {
-            font: {
-                name: 'Arial',
-                bold: true,
-                sz: 10,
-                color: { rgb: 'FFFFFF' }
-            },
-            fill: {
-                fgColor: { rgb: '102A43' }
-            },
-            alignment: {
-                horizontal: 'center',
-                vertical: 'center'
-            },
-            border
-        };
-
-        const labelStyle = {
-            font: {
-                name: 'Arial',
-                bold: true,
-                sz: 9,
-                color: { rgb: '415A70' }
-            },
-            fill: {
-                fgColor: { rgb: 'F2F6FA' }
-            },
-            alignment: {
-                horizontal: 'center',
-                vertical: 'center',
-                wrapText: true
-            },
-            border
-        };
-
-        const valueStyle = {
-            font: {
-                name: 'Arial',
-                bold: true,
-                sz: 10,
-                color: { rgb: '082033' }
-            },
-            fill: {
-                fgColor: { rgb: 'FFFFFF' }
-            },
-            alignment: {
-                horizontal: 'right',
-                vertical: 'center'
-            },
-            border,
-            numFmt: moneyFormat
-        };
-
-        const diffLabelStyle = {
-            font: {
-                name: 'Arial',
-                bold: true,
-                sz: 9,
-                color: { rgb: '415A70' }
-            },
-            fill: {
-                fgColor: { rgb: 'F2F6FA' }
-            },
-            alignment: {
-                horizontal: 'center',
-                vertical: 'center'
-            },
-            border
-        };
-
-        const diffValueStyle = {
-            font: {
-                name: 'Arial',
-                bold: true,
-                sz: 10,
-                color: { rgb: '9A6400' }
-            },
-            fill: {
-                fgColor: { rgb: 'FFF4E5' }
-            },
-            alignment: {
-                horizontal: 'right',
-                vertical: 'center'
-            },
-            border,
-            numFmt: moneyFormat
-        };
-
-        worksheet['!merges'] = worksheet['!merges'] || [];
-
-        for (let month = 1; month <= 12; month += 1) {
-            const paidColumn = PAID_COL_BY_MONTH[month];
-            const collectedColumn = COLLECTED_COL_BY_MONTH[month];
-
-            if (paidColumn === undefined || collectedColumn === undefined) continue;
-
-            worksheet['!merges'].push({
-                s: { r: monthRow, c: paidColumn },
-                e: { r: monthRow, c: collectedColumn }
-            });
-
-            setExportCellStyle(worksheet, monthRow, paidColumn, monthStyle);
-            setExportCellStyle(worksheet, monthRow, collectedColumn, monthStyle);
-
-            setExportCellStyle(worksheet, labelRow, paidColumn, labelStyle);
-            setExportCellStyle(worksheet, labelRow, collectedColumn, labelStyle);
-
-            setExportCellStyle(worksheet, valueRow, paidColumn, valueStyle, moneyFormat);
-            setExportCellStyle(worksheet, valueRow, collectedColumn, valueStyle, moneyFormat);
-
-            setExportCellStyle(worksheet, differenceRow, paidColumn, diffLabelStyle);
-            setExportCellStyle(worksheet, differenceRow, collectedColumn, diffValueStyle, moneyFormat);
-        }
-
-        worksheet['!merges'].push({
-            s: { r: monthRow, c: 33 },
-            e: { r: monthRow, c: 35 }
-        });
-
-        [33, 34, 35].forEach(column => {
-            setExportCellStyle(worksheet, monthRow, column, monthStyle);
-            setExportCellStyle(worksheet, labelRow, column, labelStyle);
-            setExportCellStyle(worksheet, valueRow, column, valueStyle, moneyFormat);
-        });
-    }
-
-    function setExportCellStyle(worksheet, rowIndex, columnIndex, style, numberFormat = '') {
-        const address = window.XLSX.utils.encode_cell({
-            r: rowIndex,
-            c: columnIndex
-        });
-
-        if (!worksheet[address]) {
-            worksheet[address] = {
-                t: 's',
-                v: ''
-            };
-        }
-
-        worksheet[address].s = style;
-
-        if (numberFormat && typeof worksheet[address].v === 'number') {
-            worksheet[address].z = numberFormat;
-            worksheet[address].s = {
-                ...worksheet[address].s,
-                numFmt: numberFormat
-            };
-        }
-    }
-
-    function applyCompletedScheduleWorkbookStyle(worksheet, rowCount) {
-        const lastColumn = SCHEDULE_HEADERS.length - 1;
-        const latestMonth = getLatestScheduleMonth(scheduleRows);
-
-        const colors = {
-            dark: '3F3F3F',
-            black: '000000',
-            white: 'FFFFFF',
-            yellow: 'FFFF00',
-            paleYellow: 'FFFDE9',
-            paleGreen: 'E2F0D9',
-            blue: '4472C4',
-            lightBlue: 'EEF4FA',
-
-            gridBlue: '000000',
-            gridLight: '000000',
-            dataGray: 'D9D9D9',
-            lightGray: 'E6E6E6',
-            magenta: 'C000C0',
-            text: '000000'
-        };
-
-        const thinBlueBorder = createBorder('000000');
-        const thinLightBorder = createBorder('000000');
-
-        const metaStyle = {
-            font: {
-                name: 'Arial',
-                sz: 8,
-                bold: true,
-                color: { rgb: colors.black }
-            },
-            alignment: {
-                vertical: 'center'
-            }
-        };
-
-        const glAccountStyle = {
-            fill: {
-                patternType: 'solid',
-                fgColor: { rgb: colors.yellow }
-            },
-            font: {
-                name: 'Arial',
-                sz: 11,
-                bold: true,
-                color: { rgb: colors.black }
-            },
-            alignment: {
-                vertical: 'center'
-            }
-        };
-
-        const monthHeaderStyle = {
-            fill: {
-                patternType: 'solid',
-                fgColor: { rgb: colors.dark }
-            },
-            font: {
-                name: 'Arial',
-                sz: 10,
-                bold: true,
-                color: { rgb: colors.white }
-            },
-            alignment: {
-                horizontal: 'center',
-                vertical: 'center',
-                wrapText: true
-            },
-            border: thinLightBorder
-        };
-
-        const columnHeaderStyle = {
-            fill: {
-                patternType: 'solid',
-                fgColor: { rgb: colors.dark }
-            },
-            font: {
-                name: 'Arial',
-                sz: 10,
-                bold: true,
-                color: { rgb: colors.white }
-            },
-            alignment: {
-                horizontal: 'center',
-                vertical: 'center',
-                wrapText: true,
-                shrinkToFit: true
-            },
-            border: thinBlueBorder
-        };
-
-        const leftDataStyle = {
-            fill: {
-                patternType: 'solid',
-                fgColor: { rgb: 'F2F2F2' }
-            },
-            font: {
-                name: 'Arial',
-                sz: 8,
-                color: { rgb: colors.black }
-            },
-            alignment: {
-                horizontal: 'left',
-                vertical: 'center',
-                wrapText: false,
-                shrinkToFit: false
-            },
-            border: thinLightBorder
-        };
-
-        const amountDataStyle = {
-            fill: {
-                patternType: 'solid',
-                fgColor: { rgb: 'F2F2F2' }
-            },
-            font: {
-                name: 'Arial',
-                sz: 8,
-                color: { rgb: colors.black }
-            },
-            alignment: {
-                horizontal: 'right',
-                vertical: 'center',
-                wrapText: false,
-                shrinkToFit: false
-            },
-            border: thinLightBorder
-        };
-
-        const selectedMonthDataStyle = {
-            fill: {
-                patternType: 'solid',
-                fgColor: { rgb: 'FFF2CC' }
-            },
-            font: {
-                name: 'Arial',
-                sz: 8,
-                color: { rgb: colors.black }
-            },
-            alignment: {
-                horizontal: 'right',
-                vertical: 'center',
-                wrapText: false,
-                shrinkToFit: false
-            },
-            border: thinLightBorder
-        };
-
-        const ytdStyle = {
-            fill: {
-                patternType: 'solid',
-                fgColor: { rgb: colors.dark }
-            },
-            font: {
-                name: 'Arial',
-                sz: 8,
-                bold: true,
-                color: { rgb: colors.white }
-            },
-            alignment: {
-                horizontal: 'right',
-                vertical: 'center'
-            },
-            border: thinLightBorder
-        };
-
-        const ytdPerStoreHeaderStyle = {
-            fill: {
-                patternType: 'solid',
-                fgColor: { rgb: colors.blue }
-            },
-            font: {
-                name: 'Arial',
-                sz: 10,
-                bold: true,
-                color: { rgb: colors.white }
-            },
-            alignment: {
-                horizontal: 'center',
-                vertical: 'center',
-                wrapText: true,
-                shrinkToFit: true
-            },
-            border: thinLightBorder
-        };
-
-        const ytdPerStoreDataStyle = {
-            fill: {
-                patternType: 'solid',
-                fgColor: { rgb: colors.lightBlue }
-            },
-            font: {
-                name: 'Arial',
-                sz: 8,
-                color: { rgb: colors.black }
-            },
-            alignment: {
-                horizontal: 'right',
-                vertical: 'center'
-            },
-            border: thinLightBorder
-        };
-
-        const quarterStyle = {
-            fill: {
-                patternType: 'solid',
-                fgColor: { rgb: colors.white }
-            },
-            font: {
-                name: 'Arial',
-                sz: 10,
-                bold: false,
-                color: { rgb: colors.black }
-            },
-            alignment: {
-                horizontal: 'center',
-                vertical: 'center',
-                wrapText: true,
-                shrinkToFit: true
-            },
-            border: thinLightBorder
-        };
-
-
-        // Top metadata rows
-        setRangeStyle(worksheet, 0, 0, 4, lastColumn, metaStyle);
-
-        // GL account yellow row
-        setRangeStyle(worksheet, 3, 0, 3, 4, glAccountStyle);
-
-        // Month row, equivalent to row 6 in Excel
-        setRangeStyle(worksheet, 5, 0, 5, 8, {
-            fill: {
-                patternType: 'solid',
-                fgColor: { rgb: colors.white }
-            },
-            font: {
-                name: 'Arial',
-                sz: 8,
-                color: { rgb: colors.black }
-            }
-        });
-
-        setRangeStyle(worksheet, 5, 9, 5, 32, monthHeaderStyle);
-        setRangeStyle(worksheet, 5, 33, 5, 33, ytdStyle);
-        setRangeStyle(worksheet, 5, 34, 5, 34, ytdPerStoreHeaderStyle);
-        setRangeStyle(worksheet, 5, 35, 5, 35, quarterStyle);
-
-        // Header row, equivalent to row 7 in Excel
-        setRangeStyle(worksheet, 6, 0, 6, 33, columnHeaderStyle);
-        setRangeStyle(worksheet, 6, 34, 6, 34, ytdPerStoreHeaderStyle);
-        setRangeStyle(worksheet, 6, 35, 6, 35, quarterStyle);
-
-        // Data rows
-        for (let rowIndex = 7; rowIndex < rowCount; rowIndex += 1) {
-            const entryCell = getWorksheetCell(worksheet, rowIndex, 0);
-            const entry = String(entryCell?.v || '');
-
-            const isSummaryRow = entry === 'Sales Tax';
-
-            for (let columnIndex = 0; columnIndex <= lastColumn; columnIndex += 1) {
-                let styleToApply = amountDataStyle;
-
-                if (columnIndex <= 8) {
-                    styleToApply = leftDataStyle;
-                }
-
-                if (columnIndex === 33) {
-                    styleToApply = ytdStyle;
-                }
-
-                if (columnIndex === 34) {
-                    styleToApply = ytdPerStoreDataStyle;
-                }
-
-                if (columnIndex === 35) {
-                    styleToApply = quarterStyle;
-                }
-
-                if (
-                    latestMonth &&
-                    (
-                        columnIndex === PAID_COL_BY_MONTH[latestMonth] ||
-                        columnIndex === COLLECTED_COL_BY_MONTH[latestMonth]
-                    )
-                ) {
-                    styleToApply = selectedMonthDataStyle;
-                }
-
-                setCellStyle(worksheet, rowIndex, columnIndex, styleToApply);
-
-                if (isSummaryRow) {
-                    applyCellStylePatch(worksheet, rowIndex, columnIndex, {
-                        font: {
-                            name: 'Arial',
-                            sz: 8,
-                            bold: true,
-                            color: {
-                                rgb: columnIndex === 33
-                                    ? colors.white
-                                    : colors.black
-                            }
-                        }
-                    });
-                }
-            }
-
-            // Entity and GL Account magenta, like the completed workbook
-            applyCellStylePatch(worksheet, rowIndex, 2, {
-                font: {
-                    name: 'Arial',
-                    sz: 8,
-                    bold: true,
-                    color: { rgb: colors.magenta }
-                }
-            });
-
-            applyCellStylePatch(worksheet, rowIndex, 3, {
-                font: {
-                    name: 'Arial',
-                    sz: 8,
-                    bold: true,
-                    color: { rgb: colors.magenta }
-                }
-            });
-        }
-
-        applyScheduleNumberFormats(worksheet, rowCount);
-    }
-
-    function createBorder(rgb) {
-        return {
-            top: {
-                style: 'thin',
-                color: { rgb }
-            },
-            bottom: {
-                style: 'thin',
-                color: { rgb }
-            },
-            left: {
-                style: 'thin',
-                color: { rgb }
-            },
-            right: {
-                style: 'thin',
-                color: { rgb }
-            }
-        };
-    }
-
-    function getWorksheetCell(worksheet, rowIndex, columnIndex) {
-        const address = window.XLSX.utils.encode_cell({
-            r: rowIndex,
-            c: columnIndex
-        });
-
-        return worksheet[address];
-    }
-
-    function ensureWorksheetCell(worksheet, rowIndex, columnIndex) {
-        const address = window.XLSX.utils.encode_cell({
-            r: rowIndex,
-            c: columnIndex
-        });
-
-        if (!worksheet[address]) {
-            worksheet[address] = {
-                t: 's',
-                v: ''
-            };
-        }
-
-        return worksheet[address];
-    }
-
-    function setCellStyle(worksheet, rowIndex, columnIndex, style) {
-        const cell = ensureWorksheetCell(worksheet, rowIndex, columnIndex);
-        cell.s = cloneExcelStyle(style);
-    }
-
-    function applyCellStylePatch(worksheet, rowIndex, columnIndex, patch) {
-        const cell = ensureWorksheetCell(worksheet, rowIndex, columnIndex);
-
-        cell.s = deepMergeExcelStyle(
-            cell.s || {},
-            cloneExcelStyle(patch)
-        );
-    }
-
-    function setRangeStyle(worksheet, startRow, startCol, endRow, endCol, style) {
-        for (let rowIndex = startRow; rowIndex <= endRow; rowIndex += 1) {
-            for (let columnIndex = startCol; columnIndex <= endCol; columnIndex += 1) {
-                setCellStyle(worksheet, rowIndex, columnIndex, style);
+            const blob = await response.blob();
+            const disposition = response.headers.get('content-disposition') || '';
+            const encodedName = disposition.match(/filename\*=UTF-8''([^;]+)/i)?.[1];
+            const quotedName = disposition.match(/filename="([^"]+)"/i)?.[1];
+            const plainName = disposition.match(/filename=([^;]+)/i)?.[1]?.trim();
+            const filename = encodedName
+                ? decodeURIComponent(encodedName)
+                : (quotedName || plainName || 'Property-Management-Schedule.xlsx');
+
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            URL.revokeObjectURL(url);
+            setScheduleStatus('Schedule downloaded. Nothing was uploaded to the server.', 'success');
+        } catch (error) {
+            setScheduleStatus(error.message || 'The schedule could not be downloaded.', 'error');
+        } finally {
+            if (button) {
+                button.disabled = false;
+                button.innerHTML = originalHtml;
             }
         }
     }
 
-    function cloneExcelStyle(style) {
-        return JSON.parse(JSON.stringify(style || {}));
-    }
+    function getScheduleQuarterReviewTotal(rows) {
+        const groups = groupScheduleRowsByStore(rows);
+        let total = 0;
 
-    function deepMergeExcelStyle(target, source) {
-        const output = {
-            ...target
-        };
-
-        Object.keys(source || {}).forEach(key => {
-            const sourceValue = source[key];
-            const targetValue = output[key];
-
-            if (
-                sourceValue &&
-                typeof sourceValue === 'object' &&
-                !Array.isArray(sourceValue) &&
-                targetValue &&
-                typeof targetValue === 'object' &&
-                !Array.isArray(targetValue)
-            ) {
-                output[key] = deepMergeExcelStyle(targetValue, sourceValue);
-            } else {
-                output[key] = sourceValue;
-            }
+        groups.forEach(groupRows => {
+            const summaryRow = groupRows.find(row => row[0] === 'Sales Tax');
+            total += getQuarterReviewGroupTotal(groupRows, summaryRow);
         });
 
-        return output;
+        return roundMoney(total);
     }
+
 
 
 
@@ -5831,11 +5300,7 @@
         }
 
         if (action === 'download') {
-            exportScheduleWorkbook();
-            setScheduleStatus(
-                'Schedule downloaded. Nothing was uploaded to the server.',
-                'success'
-            );
+            await exportScheduleWorkbook();
             return;
         }
 
@@ -5858,6 +5323,7 @@
                 periodo_mes: getLatestScheduleMonth(scheduleRows),
                 rows: serializeScheduleRows(scheduleRows),
                 headers: SCHEDULE_HEADERS,
+                quarterReviewTotal: getScheduleQuarterReviewTotal(scheduleRows),
                 total_tiendas: result.storeCount,
                 total_filas: result.rows.length,
                 balance_total: result.totalBalance,
@@ -6471,22 +5937,6 @@
         return String(a[0] || '').localeCompare(String(b[0] || ''));
     }
 
-    function handleScheduleCellEdit(event) {
-        const cell = event.target.closest('td[data-row-index][data-column-index]');
-        if (!cell || !cell.classList.contains('is-editable')) return;
-
-        const rowIndex = Number(cell.dataset.rowIndex);
-        const columnIndex = Number(cell.dataset.columnIndex);
-        const row = scheduleRows[rowIndex];
-
-        if (!row) return;
-
-        row[columnIndex] = parseEditableScheduleValue(cell.textContent, columnIndex);
-        recalculateScheduleRows();
-        renderSchedulePreview(getScheduleResult());
-        setScheduleStatus('Table updated. Save the schedule to keep these changes.', 'info');
-    }
-
     function createManualStoreRow({ summaryRow, store, month, amount, collected = 0, dateValue, memo }) {
         const row = emptyScheduleRow();
         const paidColumn = PAID_COL_BY_MONTH[month];
@@ -6713,24 +6163,8 @@
         return value;
     }
 
-    function parseEditableScheduleValue(value, columnIndex) {
-        const text = String(value || '').trim();
-        if (!text) return '';
-        if (columnIndex === 6) return parseDateValue(text) || text;
-        if (isNumericScheduleColumn(columnIndex)) {
-            const parsed = parseMoney(text);
-            return parsed === null ? '' : roundMoney(parsed);
-        }
-
-        return text;
-    }
-
     function isNumericScheduleColumn(index) {
         return index === 3 || (index >= 7 && index <= 35);
-    }
-
-    function isEditableScheduleColumn(index) {
-        return index >= 0 && index <= 32;
     }
 
     async function apiJson(path, options = {}) {

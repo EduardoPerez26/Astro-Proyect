@@ -62,8 +62,14 @@
         const head = table.tHead;
         if (!head) return false;
 
+        // innerHTML (not textContent) so sort-state classes on <th> (e.g.
+        // sort-asc/sort-desc from click-to-sort headers) are part of the
+        // signature too -- otherwise clicking a sort header while this clone
+        // is visible changes nothing in the signature, the clone never
+        // re-syncs, and its arrow stays stuck on whatever was active when it
+        // was first created.
         const signature = Array.from(head.rows)
-            .map(row => `${row.cells.length}:${row.textContent.trim()}`)
+            .map(row => `${row.cells.length}:${row.innerHTML}`)
             .join('|');
 
         if (item.signature !== signature) {
@@ -119,12 +125,17 @@
         const headerHeight = table.tHead.getBoundingClientRect().height || 38;
         const viewportTop = 0;
         const hasInternalVerticalScroll = wrap.scrollHeight > wrap.clientHeight + 2;
-        // .prepaid-page tables have working native `position: sticky` headers (their
-        // <table> no longer clips overflow, see 04-prepaid-corporate-metrics.css), so
-        // this clone is only needed there for the page-scrolled-past-the-wrap case
+        // .prepaid-page tables and .pm-schedule-table have working native
+        // `position: sticky` headers (their <table> no longer clips overflow --
+        // see 04-prepaid-corporate-metrics.css for prepaid and the
+        // .pm-schedule-table override in 02-profile-documents-pm.css), so this
+        // clone is only needed there for the page-scrolled-past-the-wrap case
         // below, not for scrolling within the wrap itself -- otherwise the native
-        // sticky header and this clone render on top of each other.
-        const nativeStickyHandlesInternalScroll = !!table.closest('.prepaid-page');
+        // sticky header and this clone render on top of each other. Other
+        // .property-management-page tables (documents/preview tables) still rely
+        // on the clone for internal-wrap scrolling.
+        const nativeStickyHandlesInternalScroll = !!table.closest('.prepaid-page')
+            || table.classList.contains('pm-schedule-table');
         const scrolledInsideWrap = !nativeStickyHandlesInternalScroll
             && hasInternalVerticalScroll
             && wrap.scrollTop > 0;

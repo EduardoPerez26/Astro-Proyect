@@ -82,6 +82,7 @@ const BK_ACCOUNT_MAP = {
     'Door Dash Pay': ['dd', 'credit'],
     'Grub Hub Pay': ['gh', 'credit'],
     'Uber Eats Pay': ['uber', 'credit'],
+    'MPF Tax - 3rd Party': ['mpfTax3rdParty', 'debit'],
     'GC Redeem': ['gcRedeem', 'credit'],
     'BK App-Gift Card': ['gcRedeem', 'credit'],
     'Total Cash Deposit': ['cashDeposit', 'credit'],
@@ -148,6 +149,7 @@ const BK_DAILY_SALES_LINES = [
     { memo: 'DoorDash', acctNo: 113000, field: 'dd', type: 'debit', deptId: 'DDD' },
     { memo: 'GrubHub', acctNo: 115000, field: 'gh', type: 'debit', deptId: 'GHD' },
     { memo: 'Uber', acctNo: 116000, field: 'uber', type: 'debit', deptId: 'UBD' },
+    { memo: 'MPF Tax - 3rd Party', acctNo: 116000, field: 'mpfTax3rdParty', type: 'debit', deptId: 'UBD' },
     { memo: 'Open Checks', acctNo: 676000, field: 'openChecks', type: 'debit', deptId: 'CASH' }
 ];
 
@@ -392,6 +394,7 @@ function crearRegistroBurgerKing(store, unitName, date) {
         dd: 0,
         gh: 0,
         uber: 0,
+        mpfTax3rdParty: 0,
         gcRedeem: 0,
         cashDeposit: 0,
         kiosk: 0,
