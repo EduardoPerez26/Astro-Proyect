@@ -169,6 +169,7 @@ window.RestaurantConfigs = {
             { key: 'dd', label: 'Door Dash Pay' },
             { key: 'gh', label: 'Grub Hub Pay' },
             { key: 'uber', label: 'Uber Eats Pay' },
+            { key: 'mpfTax3rdParty', label: 'MPF Tax - 3rd Party' },
 
             { key: 'wlPayments', label: 'Total White Label Payments' },
 

@@ -149,7 +149,7 @@ const BK_DAILY_SALES_LINES = [
     { memo: 'DoorDash', acctNo: 113000, field: 'dd', type: 'debit', deptId: 'DDD' },
     { memo: 'GrubHub', acctNo: 115000, field: 'gh', type: 'debit', deptId: 'GHD' },
     { memo: 'Uber', acctNo: 116000, field: 'uber', type: 'debit', deptId: 'UBD' },
-    { memo: 'MPF Tax - 3rd Party', acctNo: 116000, field: 'mpfTax3rdParty', type: 'debit', deptId: 'UBD' },
+    { memo: 'MPF Tax - 3rd Party', acctNo: 241000, field: 'mpfTax3rdParty', type: 'credit' },
     { memo: 'Open Checks', acctNo: 676000, field: 'openChecks', type: 'debit', deptId: 'CASH' }
 ];
 
@@ -605,6 +605,7 @@ async function generarConciliacionBurgerKing() {
                 row.totalRevenue =
                     row.netSales +
                     row.salesTax +
+                    row.mpfTax3rdParty +
                     row.gcSold +
                     row.paidOut +
                     row.donations +
@@ -2914,6 +2915,7 @@ function generarDiscrepanciesBurgerKing() {
                 totalRevenue: row.totalRevenue,
                 netSales: row.netSales,
                 salesTax: row.salesTax,
+                'Sales Tax - MPF': redondearBurgerKing(row.mpfTax3rdParty || 0),
                 overShort,
                 cashDifference,
                 openChecks,
