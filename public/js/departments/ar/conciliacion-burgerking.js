@@ -22,7 +22,6 @@ const BK_EXCLUDED_OUTPUT_LOCATIONS = new Set([
 ]);
 
 const BK_WHITE_LABEL_ACCOUNTS = [
-    'AMEX - White Label Total',
     'Diners - White Label Total',
     'Discover - White Label Total',
     'MC - White Label Total',
@@ -73,6 +72,7 @@ const BK_ACCOUNT_MAP = {
     'Discount - Whopper Guarantee': ['discWhopperGuarantee', 'credit'],
 
     'AMEX': ['amex', 'credit'],
+    'AMEX - White Label Total': ['amex', 'credit'],
     'Visa': ['visa', 'credit'],
     'MC': ['mastercard', 'credit'],
     'Discover': ['discover', 'credit'],
@@ -2835,12 +2835,16 @@ async function generarTaxAnalysisBurgerKing() {
 
         const taxCalculation = taxableSales * taxRate;
 
+        const totalTax =
+            Number(row.salesTax || 0) +
+            Number(row.mpfTax3rdParty || 0);
+
         const taxDifference =
-            Number(row.salesTax || 0) - taxCalculation;
+            totalTax - taxCalculation;
 
         const rateCalculation =
             taxableSales !== 0
-                ? Number(row.salesTax || 0) / taxableSales
+                ? totalTax / taxableSales
                 : 0;
 
         const rateDifference =
@@ -2852,6 +2856,7 @@ async function generarTaxAnalysisBurgerKing() {
             taxableSales: redondearBurgerKing(taxableSales),
             taxCalculation: redondearBurgerKing(taxCalculation),
             salesTax: Number(row.salesTax || 0),
+            mpfTax3rdParty: Number(row.mpfTax3rdParty || 0),
             taxDifference: redondearBurgerKing(taxDifference),
             rateCalculation,
             rateDifference
