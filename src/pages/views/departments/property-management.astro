@@ -16,12 +16,22 @@ import DashboardLayout from "../../../layouts/DashboardLayout.astro";
                 </p>
             </div>
 
-            <div class="page-header-actions property-window-switcher" aria-label="Property Management windows">
-                <a class="btn btn-secondary" href="/views/departments/prepaid-amortization">
-                    <i class="fa-solid fa-building-columns" aria-hidden="true"></i>
+            <div
+                class="page-header-actions property-window-switcher"
+                aria-label="Property Management windows"
+            >
+                <a
+                    class="btn btn-secondary"
+                    href="/views/departments/prepaid-amortization"
+                >
+                    <i class="fa-solid fa-building-columns" aria-hidden="true"
+                    ></i>
                     Prepaid Bills
                 </a>
-                <a class="btn btn-secondary" href="/views/departments/property-management-documents">
+                <a
+                    class="btn btn-secondary"
+                    href="/views/departments/property-management-documents"
+                >
                     <i class="fa-solid fa-folder-tree" aria-hidden="true"></i>
                     Documents
                 </a>
@@ -64,11 +74,15 @@ import DashboardLayout from "../../../layouts/DashboardLayout.astro";
                             for="pmDimensionBalanceFile"
                         >
                             <span class="pm-upload-drop-icon">
-                                <i class="fa-solid fa-cloud-arrow-up" aria-hidden="true"></i>
+                                <i
+                                    class="fa-solid fa-cloud-arrow-up"
+                                    aria-hidden="true"></i>
                             </span>
 
                             <strong>Dimension Balance report</strong>
-                            <span>Drag and drop the file here or click to browse</span>
+                            <span
+                                >Drag and drop the file here or click to browse</span
+                            >
                         </label>
 
                         <input
@@ -83,7 +97,9 @@ import DashboardLayout from "../../../layouts/DashboardLayout.astro";
                                 class="pm-upload-selected-name"
                                 id="pmDimensionBalanceFileName"
                             >
-                                <span class="pm-upload-file-empty">No file selected</span>
+                                <span class="pm-upload-file-empty"
+                                    >No file selected</span
+                                >
                             </div>
 
                             <button
@@ -93,7 +109,8 @@ import DashboardLayout from "../../../layouts/DashboardLayout.astro";
                                 disabled
                                 aria-label="Remove Dimension Balance report"
                             >
-                                <i class="fa-solid fa-trash" aria-hidden="true"></i>
+                                <i class="fa-solid fa-trash" aria-hidden="true"
+                                ></i>
                             </button>
                         </div>
 
@@ -103,7 +120,10 @@ import DashboardLayout from "../../../layouts/DashboardLayout.astro";
                     </div>
                 </div>
 
-                <div class="upload-card pm-upload-panel" id="salesDetailUploadCard">
+                <div
+                    class="upload-card pm-upload-panel"
+                    id="salesDetailUploadCard"
+                >
                     <div class="pm-upload-panel-header">
                         <div>
                             <h3>Upload monthly files</h3>
@@ -117,16 +137,32 @@ import DashboardLayout from "../../../layouts/DashboardLayout.astro";
                     </div>
 
                     <div class="pm-upload-panel-body">
+                        <label class="pm-field pm-upload-mode-field">
+                            <span>File covers</span>
+                            <select id="pmMonthlyLedgerFileMode">
+                                <option value="single"
+                                    >One month per file (default)</option
+                                >
+                                <option value="multi"
+                                    >Several months in one file (Jan 1 through
+                                    last complete month)</option
+                                >
+                            </select>
+                        </label>
                         <label
                             class="pm-upload-drop-area"
                             for="pmMonthlyLedgerFile"
                         >
                             <span class="pm-upload-drop-icon">
-                                <i class="fa-solid fa-file-arrow-up" aria-hidden="true"></i>
+                                <i
+                                    class="fa-solid fa-file-arrow-up"
+                                    aria-hidden="true"></i>
                             </span>
 
                             <strong>Monthly GL files</strong>
-                            <span>Drag and drop files here or click to browse</span>
+                            <span
+                                >Drag and drop files here or click to browse</span
+                            >
                         </label>
 
                         <input
@@ -142,7 +178,9 @@ import DashboardLayout from "../../../layouts/DashboardLayout.astro";
                                 class="pm-upload-selected-name"
                                 id="pmMonthlyLedgerFileName"
                             >
-                                <span class="pm-upload-file-empty">No files selected</span>
+                                <span class="pm-upload-file-empty"
+                                    >No files selected</span
+                                >
                             </div>
 
                             <button
@@ -152,7 +190,8 @@ import DashboardLayout from "../../../layouts/DashboardLayout.astro";
                                 disabled
                                 aria-label="Remove monthly files"
                             >
-                                <i class="fa-solid fa-trash" aria-hidden="true"></i>
+                                <i class="fa-solid fa-trash" aria-hidden="true"
+                                ></i>
                             </button>
                         </div>
 
@@ -162,53 +201,80 @@ import DashboardLayout from "../../../layouts/DashboardLayout.astro";
                     </div>
                 </div>
 
-                <section
-                    class="pm-manager-card summary-card pm-saved-work-card"
-                    aria-labelledby="pmSavedScheduleTitle"
+                <div
+                    class="upload-card pm-upload-panel"
+                    id="pmGlUploadHistoryCard"
                 >
-                    <div class="pm-manager-card-header">
-                        <span class="pm-manager-icon">
-                            <i class="fa-solid fa-database" aria-hidden="true"
-                            ></i>
-                        </span>
-
+                    <div class="pm-upload-panel-header">
                         <div>
-                            <span>Saved work</span>
-                            <h3 id="pmSavedScheduleTitle">
-                                Property Management schedules
-                            </h3>
+                            <h3>Monthly GL files applied</h3>
+                            <p>
+                                Files feeding the current schedule. Remove one
+                                to undo just its data and re-upload a corrected
+                                version.
+                            </p>
                         </div>
                     </div>
 
-                    <label class="pm-field">
-                        <span>Schedule name</span>
-                        <input
-                            id="pmScheduleName"
-                            type="text"
-                            value="Schedule 2026"
-                        />
-                    </label>
+                    <div class="pm-upload-panel-body">
+                        <div id="pmGlUploadHistory" class="pm-gl-history-list">
+                            <p class="pm-gl-history-empty">
+                                No monthly GL files applied yet.
+                            </p>
+                        </div>
 
-                    <div class="pm-inline-controls">
-                        <select
-                            id="pmSavedScheduleSelect"
-                            aria-label="Saved Property Management schedules"
+                        <div
+                            class="pm-saved-work-inline"
+                            aria-labelledby="pmSavedScheduleTitle"
                         >
-                            <option value="">No saved schedules loaded</option>
-                        </select>
+                            <div class="pm-manager-card-header">
+                                <span class="pm-manager-icon">
+                                    <i
+                                        class="fa-solid fa-database"
+                                        aria-hidden="true"></i>
+                                </span>
 
-                        <button
-                            type="button"
-                            class="btn btn-secondary"
-                            id="pmLoadScheduleBtn"
-                        >
-                            <i
-                                class="fa-solid fa-folder-open"
-                                aria-hidden="true"></i>
-                            Open
-                        </button>
+                                <div>
+                                    <span>Saved work</span>
+                                    <h3 id="pmSavedScheduleTitle">
+                                        Property Management schedules
+                                    </h3>
+                                </div>
+                            </div>
+
+                            <label class="pm-field">
+                                <span>Schedule name</span>
+                                <input
+                                    id="pmScheduleName"
+                                    type="text"
+                                    value="Schedule 2026"
+                                />
+                            </label>
+
+                            <div class="pm-inline-controls">
+                                <select
+                                    id="pmSavedScheduleSelect"
+                                    aria-label="Saved Property Management schedules"
+                                >
+                                    <option value=""
+                                        >No saved schedules loaded</option
+                                    >
+                                </select>
+
+                                <button
+                                    type="button"
+                                    class="btn btn-secondary"
+                                    id="pmLoadScheduleBtn"
+                                >
+                                    <i
+                                        class="fa-solid fa-folder-open"
+                                        aria-hidden="true"></i>
+                                    Open
+                                </button>
+                            </div>
+                        </div>
                     </div>
-                </section>
+                </div>
             </div>
 
             <div
@@ -404,6 +470,19 @@ import DashboardLayout from "../../../layouts/DashboardLayout.astro";
                                 <i class="fa-solid fa-xmark" aria-hidden="true"
                                 ></i>
                                 Clear filters
+                            </button>
+                            <button
+                                type="button"
+                                class="btn btn-secondary"
+                                id="pmEditGlAcctBtn"
+                                disabled
+                            >
+                                <i
+                                    class="fa-solid fa-building-columns"
+                                    aria-hidden="true"></i>
+                                <span id="pmEditGlAcctBtnLabel"
+                                    >Edit GL Acct</span
+                                >
                             </button>
                         </div>
                     </div>
@@ -941,13 +1020,13 @@ import DashboardLayout from "../../../layouts/DashboardLayout.astro";
         </section>
     </div>
 
-<script
-    is:inline
-    src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"
-></script>
+    <script
+        is:inline
+        src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"
+    ></script>
 
-<script
-    is:inline
-    src="/js/departments/property-management/property-management.js?v=20260722-no-localstorage"
-></script>
+    <script
+        is:inline
+        src="/js/departments/property-management/property-management.js?v=20260722-no-localstorage"
+    ></script>
 </DashboardLayout>

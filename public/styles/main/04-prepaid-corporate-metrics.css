@@ -1536,6 +1536,27 @@ body .main .property-management-page #pmUploadSection .pm-upload-panel .pm-uploa
     background: var(--xb-color-surface);
 }
 
+/* La tarjeta "Upload monthly files" tiene un elemento extra (el selector
+   "File covers") antes del drop-area, así que necesita una fila más al
+   principio -- si no, esa fila de arriba (pensada para el drop-area, mínimo
+   145px) le toca al selector en vez de al drop-area. */
+body .main .property-management-page #pmUploadSection #salesDetailUploadCard .pm-upload-panel-body {
+    grid-template-rows: auto minmax(145px, 1fr) auto auto;
+}
+
+body .main .property-management-page #pmUploadSection .pm-upload-mode-field {
+    gap: 4px;
+}
+
+body .main .property-management-page #pmUploadSection .pm-upload-mode-field span {
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: .03em;
+    color: var(--xb-color-text-muted, var(--xb-color-text));
+    opacity: .75;
+}
+
 body .main .property-management-page #pmUploadSection .pm-upload-panel .pm-upload-drop-area {
     display: flex;
     flex-direction: column;
@@ -2151,15 +2172,19 @@ html body .main :is(#pmDocumentsTable, .pm-documents-table, .pm-schedule-table, 
     border-spacing: 0;
 }
 
+/* IMPORTANTE: thead/thead-tr NO deben ser position:sticky. Las <th>
+   individuales ya son sticky (top:0) más abajo -- eso alcanza para el pegado
+   vertical. Un <thead>/<tr> sticky envolviendo <th> que ADEMÁS necesitan
+   sticky en left (columnas congeladas horizontalmente, ver
+   02-profile-documents-pm.css / .prepaid-schedule-matrix) rompe el sticky
+   left de esas <th> en varios navegadores -- por eso el body (donde tbody/tr
+   NUNCA son sticky, solo las td congeladas) se queda pegado al hacer scroll
+   horizontal y el header no. */
 html body .main :is(#pmDocumentsTable, .pm-documents-table, .pm-schedule-table, .preview-table, .preview-excel-table, .prepaid-table, .prepaid-source-table, .prepaid-schedule-matrix, .prepaid-difference-modal-table table) thead {
-    position: sticky;
-    top: 0;
     z-index: 80;
 }
 
 html body .main :is(#pmDocumentsTable, .pm-documents-table, .pm-schedule-table, .preview-table, .preview-excel-table, .prepaid-table, .prepaid-source-table, .prepaid-schedule-matrix, .prepaid-difference-modal-table table) thead tr {
-    position: sticky;
-    top: 0;
     z-index: 80;
 }
 

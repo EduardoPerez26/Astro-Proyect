@@ -72,7 +72,7 @@ const BK_ACCOUNT_MAP = {
     'Discount - Whopper Guarantee': ['discWhopperGuarantee', 'credit'],
 
     'AMEX': ['amex', 'credit'],
-    'AMEX - White Label Total': ['amex', 'credit'],
+    'AMEX - White Label Total': ['amexWl', 'credit'],
     'Visa': ['visa', 'credit'],
     'MC': ['mastercard', 'credit'],
     'Discover': ['discover', 'credit'],
@@ -142,7 +142,9 @@ const BK_DAILY_SALES_LINES = [
     { memo: 'Discounts & Promotions - Whopper Guarantee', acctNo: 444000, field: 'discWhopperGuarantee', type: 'debit' },
 
     { memo: 'Credit Card Expected', acctNo: 111500, field: 'ccTotals', type: 'debit' },
+    { memo: 'Credit Card Expected - White Label', acctNo: 111500, field: 'wlPayments', type: 'debit' },
     { memo: 'Amex Expected Deposit', acctNo: 111500, field: 'amex', type: 'debit' },
+    { memo: 'Amex Expected Deposit - White Label', acctNo: 111500, field: 'amexWl', type: 'debit' },
     { memo: 'EBT Expected', acctNo: 111500, field: 'ebt', type: 'debit', deptId: 'EBT' },
     { memo: 'Gift Card Redeemed', acctNo: 202900, field: 'gcRedeem', type: 'debit' },
     { memo: 'Cash Expected Deposit', acctNo: 102000, field: 'cashExpected', type: 'debit' },
@@ -387,6 +389,7 @@ function crearRegistroBurgerKing(store, unitName, date) {
         discWhopperGuarantee: 0,
 
         amex: 0,
+        amexWl: 0,
         visa: 0,
         mastercard: 0,
         discover: 0,
@@ -618,7 +621,6 @@ async function generarConciliacionBurgerKing() {
                     row.visa +
                     row.mastercard +
                     row.discover +
-                    row.wlPayments +
                     row.bkApp +
                     row.instore +
                     row.paypal +
@@ -628,6 +630,7 @@ async function generarConciliacionBurgerKing() {
                 row.cashExpected =
                     row.totalRevenue -
                     row.amex -
+                    row.amexWl -
                     row.visa -
                     row.mastercard -
                     row.discover -
@@ -646,13 +649,15 @@ async function generarConciliacionBurgerKing() {
 
                 row.paymentsTotal =
                     row.amex +
+                    row.amexWl +
                     row.ebt +
                     row.dd +
                     row.gh +
                     row.uber +
                     row.gcRedeem +
                     row.cashExpected +
-                    row.ccTotals;
+                    row.ccTotals +
+                    row.wlPayments;
 
                 row.oS =
                     row.totalRevenue -
@@ -2835,20 +2840,33 @@ async function generarTaxAnalysisBurgerKing() {
 
         const taxCalculation = taxableSales * taxRate;
 
-        const totalTax =
-            Number(row.salesTax || 0) +
-            Number(row.mpfTax3rdParty || 0);
-
+        // taxDifference compara solo la venta gravable no-Uber contra su
+        // impuesto reportado (salesTax). El componente Uber se compara
+        // aparte en uberTaxDifference (mpfTax3rdParty vs uberSales * taxRate),
+        // ya que taxableSales excluye las ventas de Uber.
         const taxDifference =
-            totalTax - taxCalculation;
+            Number(row.salesTax || 0) - taxCalculation;
 
         const rateCalculation =
             taxableSales !== 0
-                ? totalTax / taxableSales
+                ? Number(row.salesTax || 0) / taxableSales
                 : 0;
 
         const rateDifference =
             rateCalculation - taxRate;
+
+        // Ventas de Uber (Uber Eats Pay) netas del MPF Tax - 3rd Party
+        // (el monto de Uber Eats Pay reportado por el POS incluye ese
+        // impuesto, así que se resta para obtener la venta neta) y su
+        // impuesto esperado, comparado contra el MPF Tax - 3rd Party
+        // que reporta el POS.
+        const uberSales =
+            Number(row.uber || 0) - Number(row.mpfTax3rdParty || 0);
+
+        const uberTaxCalculation = uberSales * taxRate;
+
+        const uberTaxDifference =
+            Number(row.mpfTax3rdParty || 0) - uberTaxCalculation;
 
         return {
             store: row.store,
@@ -2856,7 +2874,10 @@ async function generarTaxAnalysisBurgerKing() {
             taxableSales: redondearBurgerKing(taxableSales),
             taxCalculation: redondearBurgerKing(taxCalculation),
             salesTax: Number(row.salesTax || 0),
+            uberSales: redondearBurgerKing(uberSales),
+            uberTaxCalculation: redondearBurgerKing(uberTaxCalculation),
             mpfTax3rdParty: Number(row.mpfTax3rdParty || 0),
+            uberTaxDifference: redondearBurgerKing(uberTaxDifference),
             taxDifference: redondearBurgerKing(taxDifference),
             rateCalculation,
             rateDifference

@@ -3410,9 +3410,14 @@ label {
    genérica en 03-property-management-stores.css pone overflow:hidden en
    cualquier <table>, incluida esta. Sin este override, position:sticky en
    los th/td resuelve contra la tabla en vez de .pm-schedule-table-wrap y
-   nunca se ve "pegado" al hacer scroll. */
-body .main .property-management-page .pm-schedule-table {
-    overflow: visible;
+   nunca se ve "pegado" al hacer scroll de verdad (con poco scroll no se
+   nota porque el contenido casi no se movió de su posición natural).
+   !important es intencional: esta regla necesita ganarle SIEMPRE a la
+   genérica de 03-property-management-stores.css sin depender de un empate
+   de especificidad entre archivos. */
+body .main .property-management-page .pm-schedule-table,
+body .main #pmScheduleTable {
+    overflow: visible !important;
 }
 
 /* Encabezados con click-to-sort */
@@ -3444,72 +3449,113 @@ body .main .property-management-page .pm-schedule-table {
     opacity: 1;
 }
 
-/* Congelar las primeras 3 columnas (Entry/Payee, Location, Entity), como
-   freeze panes de Excel. La fila de Total queda excluida porque su primera
-   celda usa colspan y no tiene 3 columnas discretas. */
+/* Congelar las primeras 4 columnas (checkbox, Entry/Payee, Location,
+   Entity), como freeze panes de Excel. La fila de Total queda excluida
+   porque su celda de datos usa colspan y no tiene 4 columnas discretas
+   (sí tiene su propia td.pm-schedule-select-col vacía en la columna 1,
+   ver renderScheduleTotalRow). */
 .pm-schedule-table-wrap .pm-schedule-table thead th:nth-child(1),
 .pm-schedule-table-wrap .pm-schedule-table tbody tr:not(.schedule-total-row) td:nth-child(1) {
     position: sticky;
     left: 0;
-    width: 260px;
-    min-width: 260px;
-    max-width: 260px;
+    width: 40px;
+    min-width: 40px;
+    max-width: 40px;
     overflow: hidden;
-    text-overflow: ellipsis;
+    box-sizing: border-box;
 }
 
 .pm-schedule-table-wrap .pm-schedule-table thead th:nth-child(2),
 .pm-schedule-table-wrap .pm-schedule-table tbody tr:not(.schedule-total-row) td:nth-child(2) {
     position: sticky;
-    left: 260px;
-    width: 90px;
-    min-width: 90px;
-    max-width: 90px;
+    left: 40px;
+    width: 260px;
+    min-width: 260px;
+    max-width: 260px;
     overflow: hidden;
     text-overflow: ellipsis;
+    /* Sin esto el navegador usa content-box (default): el padding (10px 9px
+       en th, ver .pm-schedule-table th/td) y el borde de 1px se suman AFUERA
+       de este width, así que la columna real termina ocupando más de lo
+       declarado -- y el left: de las columnas siguientes queda mal
+       calculado, arrancando adentro de esta columna. border-box hace que
+       width incluya padding+borde, para que el ancho declarado y el left de
+       la siguiente columna coincidan de verdad. */
+    box-sizing: border-box;
 }
 
 .pm-schedule-table-wrap .pm-schedule-table thead th:nth-child(3),
 .pm-schedule-table-wrap .pm-schedule-table tbody tr:not(.schedule-total-row) td:nth-child(3) {
     position: sticky;
-    left: 350px;
+    left: 300px;
     width: 90px;
     min-width: 90px;
     max-width: 90px;
     overflow: hidden;
     text-overflow: ellipsis;
+    box-sizing: border-box;
+}
+
+.pm-schedule-table-wrap .pm-schedule-table thead th:nth-child(4),
+.pm-schedule-table-wrap .pm-schedule-table tbody tr:not(.schedule-total-row) td:nth-child(4) {
+    position: sticky;
+    left: 390px;
+    width: 90px;
+    min-width: 90px;
+    max-width: 90px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    box-sizing: border-box;
 }
 
 .pm-schedule-table-wrap .pm-schedule-table thead th:nth-child(1),
 .pm-schedule-table-wrap .pm-schedule-table thead th:nth-child(2),
-.pm-schedule-table-wrap .pm-schedule-table thead th:nth-child(3) {
-    z-index: 95;
+.pm-schedule-table-wrap .pm-schedule-table thead th:nth-child(3),
+.pm-schedule-table-wrap .pm-schedule-table thead th:nth-child(4) {
+    z-index: 999 !important;
+    transform: translateZ(0);
+}
+
+.pm-schedule-table-wrap .pm-schedule-table thead th:nth-child(4) {
+    box-shadow: 2px 0 6px rgba(0, 0, 0, .4), 1px 0 0 rgba(255, 255, 255, .3);
 }
 
 .pm-schedule-table-wrap .pm-schedule-table tbody tr:not(.schedule-total-row) td:nth-child(1),
 .pm-schedule-table-wrap .pm-schedule-table tbody tr:not(.schedule-total-row) td:nth-child(2),
-.pm-schedule-table-wrap .pm-schedule-table tbody tr:not(.schedule-total-row) td:nth-child(3) {
+.pm-schedule-table-wrap .pm-schedule-table tbody tr:not(.schedule-total-row) td:nth-child(3),
+.pm-schedule-table-wrap .pm-schedule-table tbody tr:not(.schedule-total-row) td:nth-child(4) {
+    position: sticky;
+    z-index: 50;
     background: var(--xb-color-surface);
-    z-index: 5;
+    transform: translateZ(0);
+}
+
+.pm-schedule-table-wrap .pm-schedule-table tbody tr:not(.schedule-total-row) td:nth-child(4) {
     box-shadow: 2px 0 4px rgba(0, 0, 0, .12);
 }
 
 .pm-schedule-table-wrap .pm-schedule-table tbody tr:nth-child(even):not(.schedule-total-row) td:nth-child(1),
 .pm-schedule-table-wrap .pm-schedule-table tbody tr:nth-child(even):not(.schedule-total-row) td:nth-child(2),
 .pm-schedule-table-wrap .pm-schedule-table tbody tr:nth-child(even):not(.schedule-total-row) td:nth-child(3),
+.pm-schedule-table-wrap .pm-schedule-table tbody tr:nth-child(even):not(.schedule-total-row) td:nth-child(4),
 .pm-schedule-table-wrap .pm-schedule-table tbody tr.is-store-summary td:nth-child(1),
 .pm-schedule-table-wrap .pm-schedule-table tbody tr.is-store-summary td:nth-child(2),
-.pm-schedule-table-wrap .pm-schedule-table tbody tr.is-store-summary td:nth-child(3) {
+.pm-schedule-table-wrap .pm-schedule-table tbody tr.is-store-summary td:nth-child(3),
+.pm-schedule-table-wrap .pm-schedule-table tbody tr.is-store-summary td:nth-child(4) {
     background: var(--xb-color-surface-subtle);
 }
 
-/* Fila de Total al final de la tabla generada. Mismo color que el resto de
-   la tabla (sin fondo/texto especial) -- solo un borde superior para
-   distinguirla como fila de totales. pointer-events: none evita que el mouse
-   dispare :hover sobre esta fila en absoluto, así las reglas genéricas de
-   hover de tabla (body .main :is(table, ...) tbody tr:hover td, en
-   03-property-management-stores.css) nunca llegan a aplicarse aquí -- no hay
-   nada en esta fila con lo que interactuar. */
+.pm-schedule-table .pm-schedule-select-col {
+    padding: 0 !important;
+    text-align: center;
+    vertical-align: middle;
+}
+
+.pm-schedule-table .pm-schedule-select-col .pm-schedule-row-checkbox {
+    margin: 0;
+    cursor: pointer;
+}
+
 .pm-schedule-table tr.schedule-total-row {
     pointer-events: none;
 }

@@ -215,6 +215,9 @@
     let searchTerm = '';
     let stageFilter = '';
     let scheduleRows = [];
+    let glUploadHistory = [];
+    let selectedScheduleRowIndexes = new Set();
+    let lastScheduleRowCheckboxIndex = null;
     let scheduleStoreCount = 0;
     let currentScheduleId = null;
     let linkedDocumentIds = [];
@@ -336,9 +339,9 @@
             .getElementById('pmClearMonthlyLedgerFileBtn')
             ?.addEventListener('click', clearMonthlyLedgerFiles);
 
-
-
-
+        document
+            .getElementById('pmGlUploadHistory')
+            ?.addEventListener('click', handleGlUploadHistoryClick);
 
         document
             .getElementById('pmSaveScheduleBtn')
@@ -368,7 +371,11 @@
 
         document
             .getElementById('pmScheduleTable')
-            ?.addEventListener('click', handleScheduleSortClick);
+            ?.addEventListener('click', handleScheduleTableClick);
+
+        document
+            .getElementById('pmEditGlAcctBtn')
+            ?.addEventListener('click', handleEditGlAcctClick);
 
         document
             .querySelectorAll('[data-pm-filter]')
@@ -885,6 +892,8 @@
         const { showStatus = true } = options;
 
         scheduleRows = [];
+        glUploadHistory = [];
+        clearScheduleSelection();
         scheduleStoreCount = 0;
         currentScheduleId = null;
         linkedDocumentIds = [];
@@ -1002,6 +1011,8 @@
         );
 
         scheduleRows = [];
+        glUploadHistory = [];
+        clearScheduleSelection();
         scheduleStoreCount = 0;
         currentScheduleId = null;
         linkedDocumentIds = [];
@@ -1114,6 +1125,8 @@
             console.error('Dimension Balance import error:', error);
 
             scheduleRows = [];
+            glUploadHistory = [];
+            clearScheduleSelection();
             scheduleStoreCount = 0;
             currentScheduleId = null;
             linkedDocumentIds = [];
@@ -1302,6 +1315,8 @@
         } catch (error) {
             console.error('Property Management schedule error:', error);
             scheduleRows = [];
+            glUploadHistory = [];
+            clearScheduleSelection();
             scheduleStoreCount = 0;
             currentScheduleId = null;
             linkedDocumentIds = [];
@@ -1701,8 +1716,9 @@
         return normalized === 12 ? 1 : normalized + 1;
     }
 
-    function normalizeMonthlyLedgerTransaction(transaction, sourceName = '') {
-        if (!transaction?.debit) return transaction;
+    function normalizeMonthlyLedgerTransaction(transaction, sourceName = '', isMultiMonth = false) {
+        if (!transaction?.debit || isMultiMonth) return transaction;
+
 
         const sourcePaymentMonth = getPaymentMonthFromMonthlySource(sourceName);
         if (!sourcePaymentMonth) return transaction;
@@ -2197,6 +2213,8 @@
             renderMonthlyPaidCollectedSummary([]);
             populateScheduleFilterOptions([]);
             updateMonthEditor();
+            renderGlUploadHistory();
+            updateScheduleSelectionUI();
             return;
         }
 
@@ -2228,7 +2246,42 @@
         `;
 
         updateMonthEditor();
+        updateScheduleSelectionUI();
     }
+
+    function renderGlUploadHistory() {
+        const container = document.getElementById('pmGlUploadHistory');
+        if (!container) return;
+
+        if (!glUploadHistory.length) {
+            container.innerHTML = '<p class="pm-gl-history-empty">No monthly GL files applied yet.</p>';
+            return;
+        }
+
+        container.innerHTML = glUploadHistory.map(entry => {
+            const monthLabels = entry.months.map(month => MONTH_NAMES[month]).join(', ');
+            const uploadedLabel = new Date(entry.uploadedAt).toLocaleString();
+
+            return `
+                <div class="pm-gl-history-row" data-gl-upload-id="${escapeHtml(entry.id)}">
+                    <div class="pm-gl-history-info">
+                        <strong>${escapeHtml(entry.fileName)}</strong>
+                        <span>${escapeHtml(monthLabels)} &middot; ${entry.storeCount} store${entry.storeCount === 1 ? '' : 's'} &middot; ${escapeHtml(uploadedLabel)}</span>
+                    </div>
+                    <button
+                        type="button"
+                        class="btn btn-secondary pm-gl-history-remove"
+                        data-remove-gl-upload="${escapeHtml(entry.id)}"
+                        title="Remove this file and clear its data from the schedule"
+                        aria-label="Remove ${escapeHtml(entry.fileName)}"
+                    >
+                        <i class="fa-solid fa-trash" aria-hidden="true"></i>
+                    </button>
+                </div>
+            `;
+        }).join('');
+    }
+
 
     function renderQuarterReviewCards(rows) {
         const container = document.getElementById('pmQuarterReviewCards');
@@ -2780,31 +2833,31 @@
         return first && last ? `${first}-${last}` : '';
     }
 
-    // Location (1) and Entity (2) are the store-grouping key (see
-    // getScheduleRowGroupKey): every row within a group already shares the
-    // same value, so sorting by either column can never reorder anything —
-    // it only looked like it did because toggling desc reverses whatever
-    // order the rows already happened to be in. Not offering sort on them
-    // avoids that false affordance.
     const SCHEDULE_NON_SORTABLE_COLUMNS = new Set([1, 2]);
 
     function renderScheduleTableHead() {
         return `
             <tr>
+                <th class="pm-schedule-select-col">
+                    <input type="checkbox" id="pmScheduleSelectAll" class="pm-schedule-row-checkbox" aria-label="Select all rows" />
+                </th>
                 ${SCHEDULE_HEADERS.map((header, index) => {
+            const headerText = escapeHtml(header).replace(/\n/g, '<br>');
+
             if (SCHEDULE_NON_SORTABLE_COLUMNS.has(index)) {
-                return `<th>${escapeHtml(header).replace(/\n/g, '<br>')}</th>`;
+                return `<th>${headerText}</th>`;
             }
 
             const sortClass = scheduleSort.key === index
                 ? (scheduleSort.dir === 'desc' ? 'sort-desc' : 'sort-asc')
                 : '';
 
-            return `<th data-sort="${index}" class="${sortClass}">${escapeHtml(header).replace(/\n/g, '<br>')}</th>`;
+            return `<th data-sort="${index}" class="${sortClass}">${headerText}</th>`;
         }).join('')}
             </tr>
         `;
     }
+
 
     function compareScheduleSortValues(a,b) {
         if (a instanceof Date && b instanceof Date) return a - b;
@@ -2953,6 +3006,7 @@
         const quarterReviewTotal = getScheduleQuarterReviewTotal(rows);
 
         const cells = [
+            `<td class="pm-schedule-select-col"></td>`,
             `<td colspan="7"><span class="schedule-sticky-label">Total</span></td>`,
             `<td class="is-number">${formatNumber(sums.amountPaid)}</td>`,
             `<td class="is-number">${formatNumber(sums.priorBalance)}</td>`,
@@ -2967,9 +3021,19 @@
 
     function renderScheduleTableRow(row) {
         const isSummary = row[0] === 'Sales Tax';
+        const rowIndex = scheduleRows.indexOf(row);
 
         return `
             <tr class="${isSummary ? 'is-store-summary' : ''}">
+                <td class="pm-schedule-select-col">
+                    <input
+                        type="checkbox"
+                        class="pm-schedule-row-checkbox"
+                        data-schedule-row-select="${rowIndex}"
+                        aria-label="Select row"
+                        ${selectedScheduleRowIndexes.has(rowIndex) ? 'checked' : ''}
+                    />
+                </td>
                 ${row.map((value, index) => {
             const isNumber = typeof value === 'number';
             const isGeneralNumber = index === 3; // GL Acct should not look like an amount
@@ -2988,10 +3052,146 @@
         `;
     }
 
+    function clearScheduleSelection() {
+        selectedScheduleRowIndexes.clear();
+        lastScheduleRowCheckboxIndex = null;
+    }
+
+    function updateScheduleSelectionUI() {
+        const validIndexes = new Set(scheduleRows.map((_, index) => index));
+        Array.from(selectedScheduleRowIndexes).forEach(index => {
+            if (!validIndexes.has(index)) selectedScheduleRowIndexes.delete(index);
+        });
+
+        const selectedCount = selectedScheduleRowIndexes.size;
+        const button = document.getElementById('pmEditGlAcctBtn');
+        const label = document.getElementById('pmEditGlAcctBtnLabel');
+
+        if (button) button.disabled = selectedCount === 0;
+        if (label) {
+            label.textContent = selectedCount
+                ? `Edit GL Acct (${selectedCount} selected)`
+                : 'Edit GL Acct';
+        }
+
+        const selectAll = document.getElementById('pmScheduleSelectAll');
+        if (selectAll) {
+            const total = scheduleRows.length;
+            selectAll.disabled = !total;
+            selectAll.checked = total > 0 && selectedCount === total;
+            selectAll.indeterminate = selectedCount > 0 && selectedCount < total;
+        }
+    }
+
+    function handleScheduleSelectAllChange(checkbox) {
+        if (checkbox.checked) {
+            scheduleRows.forEach((_, index) => selectedScheduleRowIndexes.add(index));
+        } else {
+            selectedScheduleRowIndexes.clear();
+        }
+
+        lastScheduleRowCheckboxIndex = null;
+        renderSchedulePreview(getScheduleResult());
+    }
+
+    function handleScheduleRowCheckboxClick(event, checkbox) {
+        const index = Number(checkbox.dataset.scheduleRowSelect);
+        if (!Number.isInteger(index)) return;
+
+        if (event.shiftKey && lastScheduleRowCheckboxIndex !== null) {
+            const boxes = Array.from(
+                document.querySelectorAll('#pmScheduleTable [data-schedule-row-select]')
+            );
+            const lastPos = boxes.findIndex(
+                box => Number(box.dataset.scheduleRowSelect) === lastScheduleRowCheckboxIndex
+            );
+            const currentPos = boxes.indexOf(checkbox);
+
+            if (lastPos !== -1 && currentPos !== -1) {
+                const [start, end] = lastPos < currentPos ? [lastPos, currentPos] : [currentPos, lastPos];
+                const shouldSelect = checkbox.checked;
+
+                for (let i = start; i <= end; i += 1) {
+                    const boxIndex = Number(boxes[i].dataset.scheduleRowSelect);
+                    if (shouldSelect) {
+                        selectedScheduleRowIndexes.add(boxIndex);
+                    } else {
+                        selectedScheduleRowIndexes.delete(boxIndex);
+                    }
+                    boxes[i].checked = shouldSelect;
+                }
+            }
+        } else if (checkbox.checked) {
+            selectedScheduleRowIndexes.add(index);
+        } else {
+            selectedScheduleRowIndexes.delete(index);
+        }
+
+        lastScheduleRowCheckboxIndex = index;
+        updateScheduleSelectionUI();
+    }
+
+    function handleScheduleTableClick(event) {
+        const selectAllBox = event.target.closest('#pmScheduleSelectAll');
+        if (selectAllBox) {
+            handleScheduleSelectAllChange(selectAllBox);
+            return;
+        }
+
+        const rowCheckbox = event.target.closest('[data-schedule-row-select]');
+        if (rowCheckbox) {
+            handleScheduleRowCheckboxClick(event, rowCheckbox);
+            return;
+        }
+
+        handleScheduleSortClick(event);
+    }
+
+    async function handleEditGlAcctClick() {
+        const selectedCount = selectedScheduleRowIndexes.size;
+        if (!selectedCount) return;
+
+        const result = await Swal.fire({
+            title: `Edit GL Acct for ${selectedCount} row${selectedCount === 1 ? '' : 's'}`,
+            input: 'text',
+            inputLabel: 'New GL Acct',
+            inputPlaceholder: 'e.g. 241000',
+            showCancelButton: true,
+            confirmButtonText: 'Apply',
+            cancelButtonText: 'Cancel',
+            confirmButtonColor: '#1F1F1F',
+            inputValidator: value => {
+                if (!value || !value.trim()) return 'Enter a GL Acct value.';
+                return undefined;
+            }
+        });
+
+        if (!result.isConfirmed) return;
+
+        const rawValue = result.value.trim();
+        const numericValue = Number(rawValue);
+        const finalValue = rawValue !== '' && Number.isFinite(numericValue)
+            ? numericValue
+            : rawValue;
+
+        selectedScheduleRowIndexes.forEach(index => {
+            const row = scheduleRows[index];
+            if (row) row[3] = finalValue;
+        });
+
+        clearScheduleSelection();
+        recalculateScheduleRows();
+        renderSchedulePreview(getScheduleResult());
+        setScheduleStatus(
+            `GL Acct updated to "${finalValue}" for ${selectedCount} row${selectedCount === 1 ? '' : 's'}. Save the schedule to keep this change.`,
+            'success'
+        );
+    }
+
     function renderEmptyScheduleRows() {
         return `
             <tr>
-                <td class="pm-table-empty" colspan="${SCHEDULE_HEADERS.length}">
+                <td class="pm-table-empty" colspan="${SCHEDULE_HEADERS.length + 1}">
                     No rows match the selected filters.
                 </td>
             </tr>
@@ -5323,6 +5523,7 @@
                 periodo_mes: getLatestScheduleMonth(scheduleRows),
                 rows: serializeScheduleRows(scheduleRows),
                 headers: SCHEDULE_HEADERS,
+                glUploads: glUploadHistory,
                 quarterReviewTotal: getScheduleQuarterReviewTotal(scheduleRows),
                 total_tiendas: result.storeCount,
                 total_filas: result.rows.length,
@@ -5393,6 +5594,8 @@
             const data = schedule.datos_json || {};
 
             scheduleRows = normalizeLoadedScheduleRows(data.rows || []);
+            glUploadHistory = Array.isArray(data.glUploads) ? data.glUploads : [];
+            clearScheduleSelection();
             scheduleStoreCount = countScheduleStores(scheduleRows);
             currentScheduleId = schedule.id;
             linkedDocumentIds = Array.isArray(payload.documentIds) ? payload.documentIds : [];
@@ -5401,6 +5604,7 @@
             if (nameInput) nameInput.value = schedule.nombre || 'Schedule 2026';
 
             renderSchedulePreview(getScheduleResult());
+            renderGlUploadHistory();
             const message = options.successMessage || 'Saved schedule opened. You can edit it and save new monthly activity.';
             setScheduleStatus(message, 'success');
             showServerResult('success', 'Schedule opened', message);
@@ -5460,6 +5664,7 @@
             }
         }
 
+        clearScheduleSelection();
         recalculateScheduleRows();
         renderSchedulePreview(getScheduleResult());
         clearMonthInputs();
@@ -5500,6 +5705,7 @@
             memo
         }));
 
+        clearScheduleSelection();
         recalculateScheduleRows();
         renderSchedulePreview(getScheduleResult());
         clearMonthInputs();
@@ -5535,7 +5741,8 @@
                 try {
                     const rows = await readWorkbookRowsFromFile(file, file.name || 'Monthly report');
                     const transactions = parseGeneralLedger(rows);
-                    const result = applyMonthlyLedgerTransactions(transactions, file.name);
+                    const isMultiMonth = document.getElementById('pmMonthlyLedgerFileMode')?.value === 'multi';
+                    const result = applyMonthlyLedgerTransactions(transactions, file.name, { isMultiMonth });
 
                     importedResults.push({ file, result });
 
@@ -5585,15 +5792,18 @@
         );
     }
 
-    function applyMonthlyLedgerTransactions(transactions, sourceName = '') {
-        const sourceMonth = getPaymentMonthFromMonthlySource(sourceName);
+    function applyMonthlyLedgerTransactions(transactions, sourceName = '', options = {}) {
+        const isMultiMonth = Boolean(options.isMultiMonth);
+        const sourceMonth = isMultiMonth ? null : getPaymentMonthFromMonthlySource(sourceName);
         const usableTransactions = transactions
             .filter(item =>
                 item?.location && item?.postedDate && (item.debit || item.credit)
             )
             .map(transaction =>
-                normalizeMonthlyLedgerTransaction(transaction, sourceName)
+                normalizeMonthlyLedgerTransaction(transaction, sourceName, isMultiMonth)
             );
+
+
 
         if (!usableTransactions.length) {
             throw new Error('The monthly file does not contain usable transactions.');
@@ -5706,7 +5916,25 @@
             .sort(compareScheduleRowsForInsert)
             .forEach(row => insertRowForStore(row[1], row));
 
+        // insertRowForStore splices new rows into the middle of scheduleRows,
+        // shifting the indexes any prior row-selection was keyed on -- clear
+        // it so a stale index can't apply the next GL Acct edit to the wrong row.
+        clearScheduleSelection();
+
         recalculateScheduleRows();
+
+         const uploadId = `gl-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+         glUploadHistory.push({
+            id: uploadId,
+            fileName: sourceName || 'Monthly GL file',
+            uploadedAt: new Date().toISOString(),
+            storeCount: affectedStores.size,
+            months: Array.from(new Set([...summaryMonths, ...paymentMonths])).sort((a, b) => a - b),
+            collectedDeltas: Array.from(collectedByStoreMonth.entries()),
+            paymentKeys: Array.from(paymentRemovalKeys)
+         });
+         renderGlUploadHistory();
+
 
         return {
             months: Array.from(new Set([...summaryMonths, ...paymentMonths])).sort((a, b) => a - b),
@@ -5891,6 +6119,63 @@
         });
 
         return originalLength - scheduleRows.length;
+    }
+
+    async function handleGlUploadHistoryClick(event) {
+        const button = event.target.closest('[data-remove-gl-upload]');
+        if (!button) return;
+
+        const uploadId = button.dataset.removeGlUpload;
+        const entry = glUploadHistory.find(item => item.id === uploadId);
+        if (!entry) return;
+
+        const result = await Swal.fire({
+            icon: 'warning',
+            title: `Remove "${entry.fileName}"?`,
+            text: 'This clears only the data this file added to the schedule. Other months and files are not affected.',
+            showCancelButton: true,
+            confirmButtonText: 'Remove',
+            cancelButtonText: 'Cancel',
+            confirmButtonColor: '#b3261e'
+        });
+
+        if (!result.isConfirmed) return;
+
+        removeGlUpload(uploadId);
+    }
+
+    function removeGlUpload(uploadId) {
+        const index = glUploadHistory.findIndex(entry => entry.id === uploadId);
+        if (index === -1) return;
+
+        const entry = glUploadHistory[index];
+
+        entry.collectedDeltas.forEach(([key, amount]) => {
+            const [store, monthText] = key.split('||');
+            const month = Number(monthText);
+            const collectedColumn = COLLECTED_COL_BY_MONTH[month];
+            const summaryRow = findStoreSummaryRow(store);
+
+            if (!summaryRow || collectedColumn === undefined) return;
+
+            summaryRow[collectedColumn] = roundMoney(
+                Number(summaryRow[collectedColumn] || 0) - Number( amount || 0)
+            );
+        });
+
+        removeImportedRowsForPaymentKeys(new Set(entry.paymentKeys));
+
+        glUploadHistory.splice(index, 1);
+        clearScheduleSelection();
+
+        recalculateScheduleRows();
+        renderSchedulePreview(getScheduleResult());
+        renderGlUploadHistory();
+
+        setScheduleStatus(
+            `Removed "${entry.fileName}". Save the schedule to keep this change.`,
+            'success'
+        );
     }
 
     function removeImportedRowsForMonths(months) {

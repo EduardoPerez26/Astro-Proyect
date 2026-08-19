@@ -1167,20 +1167,36 @@ html body .property-documents-page .pm-schedule-info {
     min-height: 100%;
 }
 
-.pm-saved-work-card {
-    grid-template-rows: auto auto minmax(40px, 1fr);
+/* "Saved work" ahora vive adentro de la tarjeta "Monthly GL files applied"
+   (ver #pmGlUploadHistoryCard en property-management.astro) en vez de ser
+   su propia tarjeta en la grilla de 3 columnas -- como 4to elemento de esa
+   grilla siempre le tocaba solo, en una fila nueva con dos celdas vacías al
+   lado. Separado por un borde superior, como una segunda sección dentro de
+   la misma tarjeta. */
+.pm-saved-work-inline {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--xb-color-border);
     display: flex;
     flex-direction: column;
-    gap: 22px;
-    padding: 28px;
-    border: 1px solid var(--xb-color-border);
-    border-radius: 18px;
-    background: var(--xb-color-surface);
+    gap: 12px;
 }
 
-.pm-saved-work-card .pm-inline-controls {
-    align-self: end;
-    margin-top: auto;
+.pm-saved-work-inline .pm-manager-card-header {
+    padding-bottom: 0;
+    border-bottom: 0;
+}
+
+.pm-saved-work-inline .pm-field {
+    margin-top: 0;
+}
+
+.pm-saved-work-inline .pm-inline-controls {
+    align-self: stretch;
+}
+
+.pm-saved-work-inline .pm-inline-controls select {
+    min-width: 0;
 }
 
 .pm-review-heading {

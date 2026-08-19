@@ -153,11 +153,17 @@ function parseSchedulePayload(body = {}) {
     const quarterReviewTotal = Number.isFinite(Number(body.quarterReviewTotal))
         ? Number(body.quarterReviewTotal)
         : (Number.isFinite(Number(data?.quarterReviewTotal)) ? Number(data.quarterReviewTotal) : 0);
+    const glUploads = Array.isArray(body.glUploads)
+        ? body.glUploads
+        : Array.isArray(data?.glUploads)
+            ? data.glUploads
+            : [];
 
     return {
         headers,
         rows,
         quarterReviewTotal,
+        glUploads,
         source: data?.source || 'property-management',
         savedAt: new Date().toISOString()
     };

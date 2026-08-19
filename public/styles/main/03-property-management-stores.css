@@ -350,6 +350,10 @@ body .main :is(table, .admin-table, .data-table, .documents-table, .pm-schedule-
     border-radius: 8px;
 }
 
+body .main .property-management-page .pm-schedule-table {
+    overflow: visible !important;
+}
+
 body .main :is(table, .admin-table, .data-table, .documents-table, .pm-schedule-table, .pm-documents-table, .comparison-detail-table) thead th {
     position: sticky;
     top: 0;
